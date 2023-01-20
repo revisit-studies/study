@@ -13,15 +13,20 @@ async function fetchStudyConfig(configLocation: string) {
 }
 
 export default function StudyController() {
+  // Get the whole study config
   const [studyConfig, setStudyConfig] = useState<StudyConfig | null>(null);
   useEffect(() => {
     const fetchData = async () => setStudyConfig(await fetchStudyConfig('/src/configs/config-demo.hjson'));
     fetchData();
   }, [])
 
-  const studyFlow = useMemo(() => studyConfig !== null ? studyConfig.sequence : [])
+  const studySequence = useMemo(() => studyConfig !== null ? studyConfig.sequence : [])
+
+  // Get the current study section and config for that sectoin
   const [currentIndex, setCurrentIndex] = useState(0);
-  const currentStudySection = useMemo(() => currentIndex < studyFlow.length ? studyFlow[currentIndex] : 'endOfStudy');
+  const currentStudySection = useMemo(() => currentIndex < studySequence.length ? studySequence[currentIndex] : 'endOfStudy');
+
+  // A helper function that will allow the components to move us to the next section
   function goToNextSection() {
     setCurrentIndex(currentIndex + 1);
   }
