@@ -10,17 +10,11 @@ import {
   Burger,
   useMantineTheme,
 } from '@mantine/core';
-import { parseStudyConfig } from './parser/parser';
+import StudyController from './controllers/StudyController';
 
 export default function AppShellDemo() {
   const theme = useMantineTheme();
   const [opened, setOpened] = useState(false);
-
-  let [studyConfig, setStudyConfig] = useState('');
-
-  fetch('/src/configs/cleveland-config.hjson')
-    .then((hjsonData) => hjsonData.text())
-    .then((data) => setStudyConfig(JSON.stringify(parseStudyConfig(data))));
 
   return (
     <AppShell
@@ -66,7 +60,7 @@ export default function AppShellDemo() {
         </Header>
       }
     >
-      <Text>Resize app to see responsive navbar in action {studyConfig}</Text>
+      <StudyController />
     </AppShell>
   );
 }
