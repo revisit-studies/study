@@ -6,7 +6,7 @@ export default function Consent({ goToNextSection }: { goToNextSection: () => vo
   const [consent, setConsent] = useState("");
 
   useEffect(() => {
-    fetch("src/markdowns/Consent.md")
+    fetch("src/markdowns/consent.md")
       .then((response) => response.text())
       .then((text) =>  setConsent(text));
   }, []);
