@@ -31,6 +31,10 @@ export default function StudyController() {
     () => currentIndex < studySequence.length ? studySequence[currentIndex] : 'endOfStudy',
     [currentIndex, studySequence],
   );
+  const currentStudySectionConfig = useMemo(
+    () => studyConfig !== null ? studyConfig.components[currentStudySection] : null,
+    [studyConfig, currentStudySection],
+  );
 
   // A helper function that will allow the components to move us to the next section
   function goToNextSection() {
@@ -40,7 +44,7 @@ export default function StudyController() {
 
   return (
     <div>
-      { currentStudySection.includes('consent') && <Consent goToNextSection={ goToNextSection }/> }
+      { currentStudySection.includes('consent') && <Consent goToNextSection={ goToNextSection } currentStudySectionConfig={ currentStudySectionConfig }/> }
       { currentStudySection.includes('practice') && <div>practice component here <Button onClick={goToNextSection}>Accept</Button></div> }
       { currentStudySection.includes('trials') && <div>trials component here <Button onClick={goToNextSection}>Accept</Button></div> }
       { currentStudySection.includes('survey') && <div>survey component here <Button onClick={goToNextSection}>Accept</Button></div> }
