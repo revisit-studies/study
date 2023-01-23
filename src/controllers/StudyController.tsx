@@ -20,11 +20,17 @@ export default function StudyController() {
     fetchData();
   }, [])
 
-  const studySequence = useMemo(() => studyConfig !== null ? studyConfig.sequence : [])
+  const studySequence = useMemo(
+    () => studyConfig !== null ? studyConfig.sequence : [],
+    [studyConfig],
+  )
 
-  // Get the current study section and config for that sectoin
+  // Get the current study section and config for that section
   const [currentIndex, setCurrentIndex] = useState(0);
-  const currentStudySection = useMemo(() => currentIndex < studySequence.length ? studySequence[currentIndex] : 'endOfStudy');
+  const currentStudySection = useMemo(
+    () => currentIndex < studySequence.length ? studySequence[currentIndex] : 'endOfStudy',
+    [currentIndex, studySequence],
+  );
 
   // A helper function that will allow the components to move us to the next section
   function goToNextSection() {
