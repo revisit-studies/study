@@ -14,7 +14,8 @@
     "@types/hjson": "^2.4.3",
     "hjson": "^3.2.2",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-markdown": "^8.0.5"
   },
   "devDependencies": {
     "@types/react": "^18.0.24",
