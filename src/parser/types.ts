@@ -15,7 +15,7 @@ interface StudyComponent {
     type: 'consent' | 'training' | 'practice' | 'attention-test' | 'trials';
 }
 
-interface ConsentComponent extends StudyComponent {
+export interface ConsentComponent extends StudyComponent {
     path: string;
 }
 

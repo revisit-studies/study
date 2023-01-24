@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@mantine/core';
 
 import { parseStudyConfig } from '../parser/parser';
-import { StudyConfig } from '../parser/types';
+import { ConsentComponent, StudyConfig } from '../parser/types';
 
 import Consent from '../components/Consent';
 
@@ -31,6 +31,10 @@ export default function StudyController() {
     () => currentIndex < studySequence.length ? studySequence[currentIndex] : 'endOfStudy',
     [currentIndex, studySequence],
   );
+  const currentStudySectionConfig = useMemo(
+    () => studyConfig !== null ? studyConfig.components[currentStudySection] : null,
+    [studyConfig, currentStudySection],
+  );
 
   // A helper function that will allow the components to move us to the next section
   function goToNextSection() {
@@ -40,8 +44,10 @@ export default function StudyController() {
 
   return (
     <div>
-      { currentStudySection.includes('consent') && <Consent goToNextSection={ goToNextSection }/> }
+      { currentStudySection.includes('consent') && currentStudySectionConfig !== null && <Consent goToNextSection={ goToNextSection } currentStudySectionConfig={ currentStudySectionConfig as ConsentComponent }/> }
+      { currentStudySection.includes('training') && <div>training component here <Button onClick={goToNextSection}>Accept</Button></div> }
       { currentStudySection.includes('practice') && <div>practice component here <Button onClick={goToNextSection}>Accept</Button></div> }
+      { currentStudySection.includes('attention') && <div>attention component here <Button onClick={goToNextSection}>Accept</Button></div> }
       { currentStudySection.includes('trials') && <div>trials component here <Button onClick={goToNextSection}>Accept</Button></div> }
       { currentStudySection.includes('survey') && <div>survey component here <Button onClick={goToNextSection}>Accept</Button></div> }
       { currentStudySection.includes('endOfStudy') && <div>Thanks for completing the study</div> }
