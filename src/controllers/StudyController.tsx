@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { Button } from '@mantine/core';
 
 import { parseStudyConfig } from '../parser/parser';
-import { ConsentComponent, StudyConfig } from '../parser/types';
+import { ConsentComponent, StudyConfig, TrialsComponent } from '../parser/types';
 
 import Consent from '../components/Consent';
+import Trial from '../components/Trial';
 
 
 async function fetchStudyConfig(configLocation: string) {
@@ -16,7 +17,7 @@ export default function StudyController() {
   // Get the whole study config
   const [studyConfig, setStudyConfig] = useState<StudyConfig | null>(null);
   useEffect(() => {
-    const fetchData = async () => setStudyConfig(await fetchStudyConfig('/src/configs/config-demo.hjson'));
+    const fetchData = async () => setStudyConfig(await fetchStudyConfig('/src/configs/config-cleveland.hjson'));
     fetchData();
   }, [])
 
@@ -48,7 +49,7 @@ export default function StudyController() {
       { currentStudySection.includes('training') && <div>training component here <Button onClick={goToNextSection}>Accept</Button></div> }
       { currentStudySection.includes('practice') && <div>practice component here <Button onClick={goToNextSection}>Accept</Button></div> }
       { currentStudySection.includes('attention') && <div>attention component here <Button onClick={goToNextSection}>Accept</Button></div> }
-      { currentStudySection.includes('trials') && <div>trials component here <Button onClick={goToNextSection}>Accept</Button></div> }
+      { currentStudySection.includes('trials') && <div><Trial goToNextSection={goToNextSection} currentStudySectionConfig={currentStudySectionConfig as TrialsComponent} /></div> }
       { currentStudySection.includes('survey') && <div>survey component here <Button onClick={goToNextSection}>Accept</Button></div> }
       { currentStudySection.includes('endOfStudy') && <div>Thanks for completing the study</div> }
     </div>

@@ -31,7 +31,7 @@ interface AttentionComponent extends StudyComponent {
     // TODO
 }
 
-interface TrialsComponent extends StudyComponent {
+export interface TrialsComponent extends StudyComponent {
     order: string[];
     trials: { [key: string]: Trial };
 }
