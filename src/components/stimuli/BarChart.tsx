@@ -1,7 +1,10 @@
 import { useChartDimensions } from "./hooks/useChartDimensions";
 import * as d3 from "d3";
 
-import PropTypes from "prop-types";
+import { Bars } from "./chartcomponents/Bars";
+import { NumericAxisV } from "./chartcomponents/NumericAxisV";
+import { OrdinalAxisHWithDotMarks } from "./chartcomponents/OrdinalAxisHWithDotMarks";
+
 const chartSettings = {
   marginBottom: 40,
   marginLeft: 40,
@@ -22,17 +25,56 @@ const BarChart = () => {
 
   const yScale = d3.scaleLinear().domain([100, 0]).range([0, dms.boundedWidth]);
 
+  const yAxisTickFilter = (ticks: any[]) => {
+    return ticks.filter((t, i) => i === 0 || i === ticks.length - 1);
+  };
+
+  const xAxisTickFilter = (ticks: any[]) => {
+    return ticks.filter((t, i) => data.selectedIndices.includes(i));
+  };
+
+  const data = {
+    data: [
+      { name: "A", value: "30" },
+      { name: "B", value: "40" },
+      { name: "C", value: "50" },
+      { name: "D", value: "40" },
+      { name: "E", value: "60" },
+    ],
+    selectedIndices: [1, 4],
+  };
+
   return (
     <div className="Chart__wrapper" ref={ref} style={{ height: "400" }}>
       <svg width={dms.width} height={dms.height}>
-        <g transform={`translate(${[dms.marginLeft, dms.marginTop].join(",")})`}>
+        <g
+          transform={`translate(${[dms.marginLeft, dms.marginTop].join(",")})`}
+        >
           <g transform={`translate(${[tickLength, dms.boundedHeight].join(",")})`}>
-            <text>bars will be here.</text>
+            <OrdinalAxisHWithDotMarks
+              domain={xScale.domain()}
+              range={xScale.range()}
+              withTick={true}
+              tickLen={0}
+              tickFilter={xAxisTickFilter}
+            />
+          </g>         
+         <g transform={`translate(${[0, 0].join(",")})`}>
+            <NumericAxisV
+              domain={yScale.domain()}
+              range={yScale.range()}
+              withTick={true}
+              tickLen={tickLength}
+              tickFilter={yAxisTickFilter}
+            />
           </g>
-          <g transform={`translate(${[0, 0].join(",")})`}>
-  
-          </g>
-          <g transform={`translate(${[0, 0].join(",")})`}>
+            <g transform={`translate(${[0, 0].join(",")})`}>
+            <Bars
+              data={data.data}
+              xScale={xScale}
+              yScale={yScale}
+              height={dms.boundedHeight}
+            />
           </g>
         </g>
       </svg>
