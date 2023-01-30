@@ -17,6 +17,18 @@ const BarChart = () => {
   const tickLength = 6;
   const [ref, dms] = useChartDimensions(chartSettings);
 
+  // TODO: move this to config
+  const data = {
+    data: [
+      { name: "A", value: "30" },
+      { name: "B", value: "40" },
+      { name: "C", value: "50" },
+      { name: "D", value: "40" },
+      { name: "E", value: "60" },
+    ],
+    selectedIndices: [1, 4],
+  };
+
   const xScale = d3
     .scaleBand()
     .domain(["A", "B", "C", "D", "E"])
@@ -31,17 +43,6 @@ const BarChart = () => {
 
   const xAxisTickFilter = (ticks: any[]) => {
     return ticks.filter((t, i) => data.selectedIndices.includes(i));
-  };
-
-  const data = {
-    data: [
-      { name: "A", value: "30" },
-      { name: "B", value: "40" },
-      { name: "C", value: "50" },
-      { name: "D", value: "40" },
-      { name: "E", value: "60" },
-    ],
-    selectedIndices: [1, 4],
   };
 
   return (

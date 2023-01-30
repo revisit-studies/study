@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import * as core from "@mantine/core";
 
@@ -21,8 +21,6 @@ export default function Trials({
   // current active stimuli presented to the user
   const stimulus = currentStudySectionConfig.trials[stimuliSequence[stimuliIndex]];
 
-  console.log(currentStudySectionConfig, stimulus);
-
   const showNextStimuli = () => {
     setStimuliIndex(stimuliIndex + 1);
   };
@@ -37,6 +35,7 @@ export default function Trials({
       <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
       <Suspense fallback={<div>Loading...</div>}>
         <StimulusComponent />
+        <div>Placeholder for input. read config</div>
       </Suspense>
       
       <core.Group position="right" spacing="xs" mt="xl">
