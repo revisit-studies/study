@@ -23,8 +23,6 @@ export const useChartDimensions = (passedSettings: Dimensions): [React.RefObject
   const [height, setHeight] = useState(0);
 
   useEffect(() => {
-    // if (dimensions.width && dimensions.height) return [ref, dimensions];
-
     const element = ref.current;
     if (element) {
       const resizeObserver = new ResizeObserver((entries) => {
@@ -33,8 +31,8 @@ export const useChartDimensions = (passedSettings: Dimensions): [React.RefObject
   
         const entry = entries[0];
   
-        if (width != entry.contentRect.width) setWidth(entry.contentRect.width);
-        if (height != entry.contentRect.height) setHeight(entry.contentRect.height);
+        if (width !== entry.contentRect.width) setWidth(entry.contentRect.width);
+        if (height !== entry.contentRect.height) setHeight(entry.contentRect.height);
       });
       resizeObserver.observe(element);
   
@@ -48,7 +46,6 @@ export const useChartDimensions = (passedSettings: Dimensions): [React.RefObject
     height: dimensions.height || height,
   });
 
-  // return [ref, newSettings];
   return [ref, newSettings];
 };
 

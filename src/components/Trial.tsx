@@ -16,7 +16,6 @@ export default function Trials({
   // const [answer, setAnswer] = useState("");
 
   const stimuliSequence = useMemo(() => {
-    // TODO: determine trial sequence by order or by randomization
     return currentStudySectionConfig.order;
   }, [currentStudySectionConfig]);
 
@@ -29,7 +28,6 @@ export default function Trials({
 
   const isLastStimulus = stimuliIndex === stimuliSequence.length - 1;
 
-  // TODO: is there a better way to do this?
   const StimulusComponent = lazy(() => import(/* @vite-ignore */`${stimulus.stimulus.path}`));
 
   return (
@@ -42,9 +40,9 @@ export default function Trials({
       
       <core.Group position="right" spacing="xs" mt="xl">
         {isLastStimulus ? (
-          <core.Button onClick={goToNextSection}>Next Section</core.Button>
+          <core.Button onClick={goToNextSection}>Next</core.Button>
         ) : (
-          <core.Button onClick={showNextStimuli}>Next Stimuli</core.Button>
+          <core.Button onClick={showNextStimuli}>Next</core.Button>
         )}
       </core.Group>
     </div>
