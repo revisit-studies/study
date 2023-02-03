@@ -3,7 +3,7 @@ import ReactMarkdown from "react-markdown";
 import * as core from "@mantine/core";
 
 import { TrialsComponent } from "../parser/types";
-import TextInput from "./stimuli/inputcomponents/TextInput";
+import TextInput from "../components/stimuli/inputcomponents/TextInput";
 
 export default function Trials({
   goToNextSection,
@@ -13,7 +13,6 @@ export default function Trials({
   currentStudySectionConfig: TrialsComponent;
 }) {
   const [stimuliIndex, setStimuliIndex] = useState(0);
-  // const [answer, setAnswer] = useState("");
 
   const stimuliSequence = useMemo(() => {
     return currentStudySectionConfig.order;
@@ -28,14 +27,14 @@ export default function Trials({
 
   const isLastStimulus = stimuliIndex === stimuliSequence.length - 1;
 
-  const StimulusComponent = lazy(() => import(/* @vite-ignore */`${stimulus.stimulus.path}`));
+  const StimulusComponent = lazy(() => import(/* @vite-ignore */`../components/${stimulus.stimulus.path}`));
 
   return (
     <div>
       <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
       <Suspense fallback={<div>Loading...</div>}>
         <StimulusComponent />
-          <TextInput placeholder={"The answer is range from 0 - 100"} label={"Your answer"} />
+        <TextInput placeholder={"The answer is range from 0 - 100"} label={"Your answer"} />
       </Suspense>
       
       <core.Group position="right" spacing="xs" mt="xl">

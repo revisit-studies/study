@@ -5,7 +5,7 @@ import { parseStudyConfig } from '../parser/parser';
 import { ConsentComponent, StudyConfig, TrialsComponent } from '../parser/types';
 
 import Consent from '../components/Consent';
-import Trial from '../components/Trial';
+import TrialController from './TrialController';
 
 
 async function fetchStudyConfig(configLocation: string) {
@@ -49,7 +49,7 @@ export default function StudyController() {
       { currentStudySection.includes('training') && <div>training component here <Button onClick={goToNextSection}>Accept</Button></div> }
       { currentStudySection.includes('practice') && <div>practice component here <Button onClick={goToNextSection}>Accept</Button></div> }
       { currentStudySection.includes('attention') && <div>attention component here <Button onClick={goToNextSection}>Accept</Button></div> }
-      { currentStudySection.includes('trials') && <div><Trial goToNextSection={goToNextSection} currentStudySectionConfig={currentStudySectionConfig as TrialsComponent} /></div> }
+      { currentStudySection.includes('trials') && <div><TrialController goToNextSection={goToNextSection} currentStudySectionConfig={currentStudySectionConfig as TrialsComponent} /></div> }
       { currentStudySection.includes('survey') && <div>survey component here <Button onClick={goToNextSection}>Accept</Button></div> }
       { currentStudySection.includes('endOfStudy') && <div>Thanks for completing the study</div> }
     </div>
