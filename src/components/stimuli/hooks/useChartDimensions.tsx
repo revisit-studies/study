@@ -1,13 +1,12 @@
-import { ResizeObserver } from "@juggle/resize-observer";
 import { useEffect, useRef, useState } from "react";
 
 interface Dimensions {
-  marginTop: number,
-  marginBottom: number,
-  marginRight: number,
-  marginLeft: number,
-  height: number,
-  width: number,
+  marginTop?: number,
+  marginBottom?: number,
+  marginRight?: number,
+  marginLeft?: number,
+  height?: number,
+  width?: number,
 }
 
 interface BoundedDimensions extends Dimensions {
@@ -46,6 +45,7 @@ export const useChartDimensions = (passedSettings: Dimensions): [React.RefObject
     height: dimensions.height || height,
   });
 
+
   return [ref, newSettings];
 };
 
@@ -60,13 +60,13 @@ const combineChartDimensions = (dimensions: Dimensions): BoundedDimensions => {
   };
   return {
     ...parsedDimensions,
-    boundedHeight: Math.max(
+    boundedHeight: parsedDimensions.height? Math.max(
       parsedDimensions.height - parsedDimensions.marginTop - parsedDimensions.marginBottom,
       0,
-    ),
-    boundedWidth: Math.max(
+    ) : 0,
+    boundedWidth:  parsedDimensions.width?Math.max(
       parsedDimensions.width - parsedDimensions.marginLeft - parsedDimensions.marginRight,
       0,
-    ),
+    ) : 0,
   };
 };

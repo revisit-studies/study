@@ -10,9 +10,9 @@ export const NumericAxisV = ({
 }) => {
   const ticks = useMemo(() => {
     const yScale = d3.scaleLinear().domain(domain).range(range);
-    const width = range[1] - range[0];
+    const height = range[1] - range[0];
     const pixelsPerTick = 30;
-    const numberOfTicksTarget = Math.max(1, Math.floor(width / pixelsPerTick));
+    const numberOfTicksTarget = Math.max(1, Math.floor(height / pixelsPerTick));
     return tickFilter(
       yScale.ticks(numberOfTicksTarget).map((value) => ({
         value,

@@ -52,7 +52,7 @@ const PieChart = () => {
     .filter((arc, i) => data.selectedIndices.includes(i));
 
   return (
-    <div className="Chart__wrapper" ref={ref} style={{ height: "400px" }}>
+    <div className="Chart__wrapper" ref={ref} style={{height:400}}>
       <svg width={dms.width} height={dms.height}>
         <g
           transform={`translate(${[
