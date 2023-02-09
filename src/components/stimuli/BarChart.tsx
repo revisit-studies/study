@@ -1,6 +1,5 @@
 import { useChartDimensions } from "./hooks/useChartDimensions";
 import * as d3 from "d3";
-
 import { Bars } from "./chartcomponents/Bars";
 import { NumericAxisV } from "./chartcomponents/NumericAxisV";
 import { OrdinalAxisHWithDotMarks } from "./chartcomponents/OrdinalAxisHWithDotMarks";
@@ -13,21 +12,10 @@ const chartSettings = {
   width: 400,
   height:400
 };
-const BarChart = () => {
+
+const BarChart = ({ data } : { data: any }) => {
   const tickLength = 6;
   const [ref, dms] = useChartDimensions(chartSettings);
-
-  // TODO: move this to config
-  const data = {
-    data: [
-      { name: "A", value: "30" },
-      { name: "B", value: "40" },
-      { name: "C", value: "50" },
-      { name: "D", value: "40" },
-      { name: "E", value: "60" },
-    ],
-    selectedIndices: [1, 4],
-  };
 
   const xScale = d3
     .scaleBand()

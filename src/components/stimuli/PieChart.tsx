@@ -14,21 +14,9 @@ const chartSettings = {
 
 const angleGen = d3.pie<any>().value((d: any) => d.value);
 
-const PieChart = () => {
+export const PieChart = ({ data } : { data: any }) => {
   const radius = 150;
   const [ref, dms] = useChartDimensions(chartSettings);
-
-  // TODO: move this to config
-  const data = {
-    data: [
-      { name: "A", value: "30" },
-      { name: "B", value: "40" },
-      { name: "C", value: "50" },
-      { name: "D", value: "40" },
-      { name: "E", value: "60" },
-    ],
-    selectedIndices: [1, 4],
-  };
 
   const angles = angleGen(data.data);
   const arcsGen = angles.map((angle) =>
@@ -56,8 +44,8 @@ const PieChart = () => {
       <svg width={dms.width} height={dms.height}>
         <g
           transform={`translate(${[
-            dms.marginLeft + radius,
-            dms.marginTop + radius,
+            (dms.marginLeft || 0) + radius,
+            (dms.marginTop || 0) + radius,
           ].join(",")})`}
         >
           <Slices arcs={arcsGen} />
