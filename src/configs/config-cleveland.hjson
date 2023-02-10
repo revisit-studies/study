@@ -31,7 +31,7 @@
         }
         trials1: {
             type: "trials",
-            order: ["barChart1", "pieChart1"],
+            order: ["bubbleChart1", "stackedBarChart1", "barChart1", "pieChart1", "stackedBarChart2"],
             randomization-scheme: "latin-square",
             subset-count: 2,
             attention-checks: {
@@ -41,6 +41,66 @@
                 interval: 10 
             }
             trials: {
+                bubbleChart1: {
+                    description: "A chart with correct answer of 0.66",
+                    instruction: "What is the percentage of the **smaller** bar compared to the larger bar, highlighted with a dot.",
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component 
+                        type: "react-component",
+                        // can be a URL or a local path
+                        path: "./stimuli/BubbleChart.tsx",
+                        parameters: {
+                            data: [
+                                { name: "A", value: "30" },
+                                { name: "B", value: "40" },
+                                { name: "C", value: "50" },
+                                { name: "D", value: "40" },
+                                { name: "E", value: "60" },
+                            ],
+                            selectedIndices: [1, 4],
+                        }
+                    },
+                },
+                stackedBarChart1: {
+                    description: "A chart with correct answer of 0.66",
+                    instruction: "What is the percentage of the **smaller** bar compared to the larger bar, highlighted with a dot.",
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component 
+                        type: "react-component",
+                        // can be a URL or a local path
+                        path: "./stimuli/StackedBarChart.tsx",
+                        parameters: {
+                            data: [
+                                { name: "A", value: "30" },
+                                { name: "B", value: "40" },
+                                { name: "C", value: "50" },
+                                { name: "D", value: "40" },
+                                { name: "E", value: "60" },
+                            ],
+                            selectedIndices: [1, 4],
+                        }
+                    },
+                },
+                stackedBarChart2: {
+                    description: "A chart with correct answer of 0.66",
+                    instruction: "What is the percentage of the **smaller** bar compared to the larger bar, highlighted with a dot.",
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component 
+                        type: "react-component",
+                        // can be a URL or a local path
+                        path: "./stimuli/StackedBarChart.tsx",
+                        parameters: {
+                            data: [
+                                { name: "A", value: "10" },
+                                { name: "B", value: "20" },
+                                { name: "C", value: "40" },
+                                { name: "D", value: "50" },
+                                { name: "E", value: "100" },
+                            ],
+                            selectedIndices: [1, 4],
+                        }
+                    },
+                },
                 barChart1: {
                     description: "A chart with correct answer of 0.66",
                     instruction: "What is the percentage of the **smaller** bar compared to the larger bar, highlighted with a dot.",
