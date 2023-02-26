@@ -14,8 +14,9 @@ const chartSettings = {
 
 const angleGen = d3.pie<any>().value((d: any) => d.value);
 
-export const PieChart = ({ data } : { data: any }) => {
-  const radius = 150;
+const radius = 150;
+
+export const PieChart = ({ data }: { data: any }) => {
   const [ref, dms] = useChartDimensions(chartSettings);
 
   const angles = angleGen(data.data);
@@ -40,12 +41,12 @@ export const PieChart = ({ data } : { data: any }) => {
     .filter((arc, i) => data.selectedIndices.includes(i));
 
   return (
-    <div className="Chart__wrapper" ref={ref} style={{height:400}}>
+    <div className="Chart__wrapper" ref={ref} style={{ height: 400 }}>
       <svg width={dms.width} height={dms.height}>
         <g
           transform={`translate(${[
-            (dms.marginLeft || 0) + radius,
-            (dms.marginTop || 0) + radius,
+            dms.marginLeft + radius,
+            dms.marginTop + radius,
           ].join(",")})`}
         >
           <Slices arcs={arcsGen} />

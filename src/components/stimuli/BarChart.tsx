@@ -10,10 +10,10 @@ const chartSettings = {
   marginTop: 15,
   marginRight: 15,
   width: 400,
-  height:400
+  height: 400,
 };
 
-const BarChart = ({ data } : { data: any }) => {
+const BarChart = ({ data }: { data: any }) => {
   const tickLength = 6;
   const [ref, dms] = useChartDimensions(chartSettings);
 
@@ -23,7 +23,10 @@ const BarChart = ({ data } : { data: any }) => {
     .range([0, dms.boundedWidth])
     .padding(0.2);
 
-  const yScale = d3.scaleLinear().domain([100, 0]).range([0, dms.boundedHeight]);
+  const yScale = d3
+    .scaleLinear()
+    .domain([100, 0])
+    .range([0, dms.boundedHeight]);
 
   const yAxisTickFilter = (ticks: any[]) => {
     return ticks.filter((t, i) => i === 0 || i === ticks.length - 1);
@@ -34,12 +37,16 @@ const BarChart = ({ data } : { data: any }) => {
   };
 
   return (
-    <div className="Chart__wrapper" ref={ref} style={{height:400}}>
+    <div className="Chart__wrapper" ref={ref} style={{ height: 400 }}>
       <svg width={dms.width} height={dms.height}>
         <g
           transform={`translate(${[dms.marginLeft, dms.marginTop].join(",")})`}
         >
-          <g transform={`translate(${[tickLength, dms.boundedHeight].join(",")})`}>
+          <g
+            transform={`translate(${[tickLength, dms.boundedHeight].join(
+              ","
+            )})`}
+          >
             <OrdinalAxisHWithDotMarks
               domain={xScale.domain()}
               range={xScale.range()}
@@ -47,8 +54,8 @@ const BarChart = ({ data } : { data: any }) => {
               tickLen={0}
               tickFilter={xAxisTickFilter}
             />
-          </g>         
-         <g transform={`translate(${[0, 0].join(",")})`}>
+          </g>
+          <g transform={`translate(${[0, 0].join(",")})`}>
             <NumericAxisV
               domain={yScale.domain()}
               range={yScale.range()}
@@ -57,7 +64,7 @@ const BarChart = ({ data } : { data: any }) => {
               tickFilter={yAxisTickFilter}
             />
           </g>
-            <g transform={`translate(${[0, 0].join(",")})`}>
+          <g transform={`translate(${[0, 0].join(",")})`}>
             <Bars
               data={data.data}
               xScale={xScale}

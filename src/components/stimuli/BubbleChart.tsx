@@ -23,13 +23,13 @@ const createBubbleData = (
     .pack()
     .size([width - 10, height - 10])
     .padding(1.5);
-  const bubbleNodes = d3.hierarchy(jsonData).sum((d: any) => d.value); // return bubble(bubbleNodes)
+  const bubbleNodes = d3.hierarchy(jsonData).sum((d: any) => d.value);
   return bubble(bubbleNodes)
     .descendants()
     .filter((d: any) => !d.children);
 };
 
-const createMarkPositions = (bubbleData:any[], selected:number[]) => {
+const createMarkPositions = (bubbleData: any[], selected: number[]) => {
   return bubbleData.filter((d, i) => selected.includes(i));
 };
 
@@ -41,7 +41,11 @@ const BubbleChart = ({ data }: { data: any }) => {
   return (
     <div className="Chart__wrapper" ref={ref} style={{ height: "400px" }}>
       <svg width={dms.width} height={dms.height}>
-        <g transform={`translate(${[(dms.marginLeft || 0) / 2, (dms.marginTop || 0) / 2].join(",")})`}>
+        <g
+          transform={`translate(${[dms.marginLeft / 2, dms.marginTop / 2].join(
+            ","
+          )})`}
+        >
           <Bubbles data={bubbleData} />
           <DotMarks positions={markPositions} />
         </g>

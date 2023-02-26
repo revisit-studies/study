@@ -58,7 +58,7 @@ const StackedBarChart = ({ data }: { data: any }) => {
   };
   
   const series = createSeries(data.data);
-  const barWidth = Math.min(dms.width || 100, dms.height || 100) / 2 - 20;
+  const barWidth = Math.min(dms.width, dms.height) / 2 - 20;
   const markPositions = createMarkPositions(series, data.selectedIndices, barWidth);
 
   return (
