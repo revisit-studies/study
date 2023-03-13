@@ -16,7 +16,7 @@ const angleGen = d3.pie<any>().value((d: any) => d.value);
 
 const radius = 150;
 
-export const PieChart = ({ data }: { data: any }) => {
+const PieChart = ({ data }: { data: any }) => {
   const [ref, dms] = useChartDimensions(chartSettings);
 
   const angles = angleGen(data.data);

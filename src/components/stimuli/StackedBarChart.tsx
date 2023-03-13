@@ -20,7 +20,7 @@ const StackedBarChart = ({ data }: { data: any }) => {
 
   const xScale = d3
     .scaleBand()
-    .domain(["A", "B", "C", "D", "E"])
+    .domain(data.data.map((d: { name: any }) => d.name))
     .range([0, dms.boundedWidth])
     .padding(0.2);
   const yScale = d3.scaleLinear().domain([100, 0]).range([0, dms.boundedWidth]);
@@ -33,18 +33,20 @@ const StackedBarChart = ({ data }: { data: any }) => {
     return ticks.filter((t, i) => data.selectedIndices.includes(i));
   };
 
-  const createSeries = (seriesData:any[]) => {
+  const createSeries = (seriesData: any[]) => {
     const dataArr = seriesData.map((d) => +d.value);
     const sumOfData = dataArr.reduce((curSum, val) => {
       return Number(curSum) + Number(val);
     });
     const dividen = sumOfData / 100;
-    const obj1: {[key: string]: number} = {};
+    const obj1: { [key: string]: number } = {};
     for (let i = 0; i < dataArr.length; i++) {
       obj1[String.fromCharCode(i + 65)] = dataArr[i] / dividen;
     }
     const dataset = [obj1];
-    return d3.stack().keys(["A", "B", "C", "D", "E"])(dataset);
+    return d3.stack().keys(data.data.map((d: { name: any }) => d.name))(
+      dataset
+    );
   };
 
   const createMarkPositions = (data: any[], selected: any[], X: number) => {
@@ -56,10 +58,14 @@ const StackedBarChart = ({ data }: { data: any }) => {
       };
     });
   };
-  
+
   const series = createSeries(data.data);
   const barWidth = Math.min(dms.width, dms.height) / 2 - 20;
-  const markPositions = createMarkPositions(series, data.selectedIndices, barWidth);
+  const markPositions = createMarkPositions(
+    series,
+    data.selectedIndices,
+    barWidth
+  );
 
   return (
     <div className="Chart__wrapper" ref={ref} style={{ height: "400" }}>
@@ -80,7 +86,7 @@ const StackedBarChart = ({ data }: { data: any }) => {
               tickFilter={xAxisTickFilter}
             />
           </g>
-          <g transform={`translate(${[0, 0].join(",")})`}>
+          <g transform="translate(0, 0)">
             <NumericAxisV
               domain={yScale.domain()}
               range={yScale.range()}
@@ -89,7 +95,7 @@ const StackedBarChart = ({ data }: { data: any }) => {
               tickFilter={yAxisTickFilter}
             />
           </g>
-          <g transform={`translate(${[0, 0].join(",")})`}>
+          <g transform={`translate(0, 0)`}>
             <StackedBars data={series} barWidth={barWidth} yScale={yScale} />
             <DotMarks positions={markPositions} />
           </g>

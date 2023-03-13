@@ -19,7 +19,7 @@ const BarChart = ({ data }: { data: any }) => {
 
   const xScale = d3
     .scaleBand()
-    .domain(["A", "B", "C", "D", "E"])
+    .domain(data.data.map((d: { name: any }) => d.name))
     .range([0, dms.boundedWidth])
     .padding(0.2);
 
