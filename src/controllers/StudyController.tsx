@@ -7,6 +7,9 @@ import { ConsentComponent, StudyConfig, TrialsComponent } from '../parser/types'
 import Consent from '../components/Consent';
 import TrialController from './TrialController';
 
+import { useSelector, useDispatch } from 'react-redux'
+import { nextSection, trrack, type RootState } from '../store/'
+
 
 async function fetchStudyConfig(configLocation: string) {
   const config = await (await fetch(configLocation)).text();
@@ -14,6 +17,8 @@ async function fetchStudyConfig(configLocation: string) {
 }
 
 export default function StudyController() {
+  const dispatch = useDispatch()
+
   // Get the whole study config
   const [studyConfig, setStudyConfig] = useState<StudyConfig | null>(null);
   useEffect(() => {
@@ -27,7 +32,7 @@ export default function StudyController() {
   )
 
   // Get the current study section and config for that section
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const currentIndex = useSelector((state: RootState) => state.study.currentIndex)
   const currentStudySection = useMemo(
     () => currentIndex < studySequence.length ? studySequence[currentIndex] : 'endOfStudy',
     [currentIndex, studySequence],
@@ -39,7 +44,8 @@ export default function StudyController() {
 
   // A helper function that will allow the components to move us to the next section
   function goToNextSection() {
-    setCurrentIndex(currentIndex + 1);
+    dispatch(nextSection());
+    console.log(trrack.getState());
   }
 
 
