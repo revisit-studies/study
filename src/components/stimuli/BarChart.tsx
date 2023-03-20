@@ -13,13 +13,13 @@ const chartSettings = {
   height: 400,
 };
 
-const BarChart = ({ data }: { data: any }) => {
+const BarChart = ({ parameters }: { parameters: any }) => {
   const tickLength = 6;
   const [ref, dms] = useChartDimensions(chartSettings);
 
   const xScale = d3
     .scaleBand()
-    .domain(data.data.map((d: { name: any }) => d.name))
+    .domain(parameters.data.map((d: { name: any }) => d.name))
     .range([0, dms.boundedWidth])
     .padding(0.2);
 
@@ -33,7 +33,7 @@ const BarChart = ({ data }: { data: any }) => {
   };
 
   const xAxisTickFilter = (ticks: any[]) => {
-    return ticks.filter((t, i) => data.selectedIndices.includes(i));
+    return ticks.filter((t, i) => parameters.selectedIndices.includes(i));
   };
 
   return (
@@ -66,7 +66,7 @@ const BarChart = ({ data }: { data: any }) => {
           </g>
           <g transform={`translate(${[0, 0].join(",")})`}>
             <Bars
-              data={data.data}
+              data={parameters.data}
               xScale={xScale}
               yScale={yScale}
               height={dms.boundedHeight}

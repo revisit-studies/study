@@ -33,7 +33,7 @@ export default function Trials({
     <div>
       <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
       <Suspense fallback={<div>Loading...</div>}>
-        <StimulusComponent data={stimulus.stimulus.parameters} />
+        <StimulusComponent parameters={stimulus.stimulus.parameters} />
         <TextInput placeholder={"Please input a value ranging from 0 to 100"} label={"Your answer"} />
       </Suspense>
       

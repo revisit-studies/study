@@ -13,7 +13,7 @@ const chartSettings = {
 };
 
 const createBubbleData = (
-  { data }: { data: any[] },
+  { data: data }: { data: any[] },
   width = 100,
   height = 100
 ) => {
@@ -33,10 +33,10 @@ const createMarkPositions = (bubbleData: any[], selected: number[]) => {
   return bubbleData.filter((d, i) => selected.includes(i));
 };
 
-const BubbleChart = ({ data }: { data: any }) => {
+const BubbleChart = ({ parameters }: { parameters: any }) => {
   const [ref, dms] = useChartDimensions(chartSettings);
-  const bubbleData = createBubbleData(data, dms.width, dms.height);
-  const markPositions = createMarkPositions(bubbleData, data.selectedIndices);
+  const bubbleData = createBubbleData(parameters, dms.width, dms.height);
+  const markPositions = createMarkPositions(bubbleData, parameters.selectedIndices);
 
   return (
     <div className="Chart__wrapper" ref={ref} style={{ height: "400px" }}>

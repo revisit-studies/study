@@ -14,13 +14,13 @@ const chartSettings = {
   width: 400,
 };
 
-const StackedBarChart = ({ data }: { data: any }) => {
+const StackedBarChart = ({ parameters }: { parameters: any }) => {
   const tickLength = 6;
   const [ref, dms] = useChartDimensions(chartSettings);
 
   const xScale = d3
     .scaleBand()
-    .domain(data.data.map((d: { name: any }) => d.name))
+    .domain(parameters.data.map((d: { name: any }) => d.name))
     .range([0, dms.boundedWidth])
     .padding(0.2);
   const yScale = d3.scaleLinear().domain([100, 0]).range([0, dms.boundedWidth]);
@@ -30,7 +30,7 @@ const StackedBarChart = ({ data }: { data: any }) => {
   };
 
   const xAxisTickFilter = (ticks: any[]) => {
-    return ticks.filter((t, i) => data.selectedIndices.includes(i));
+    return ticks.filter((t, i) => parameters.selectedIndices.includes(i));
   };
 
   const createSeries = (seriesData: any[]) => {
@@ -44,7 +44,7 @@ const StackedBarChart = ({ data }: { data: any }) => {
       obj1[String.fromCharCode(i + 65)] = dataArr[i] / dividen;
     }
     const dataset = [obj1];
-    return d3.stack().keys(data.data.map((d: { name: any }) => d.name))(
+    return d3.stack().keys(parameters.data.map((d: { name: any }) => d.name))(
       dataset
     );
   };
@@ -59,11 +59,11 @@ const StackedBarChart = ({ data }: { data: any }) => {
     });
   };
 
-  const series = createSeries(data.data);
+  const series = createSeries(parameters.data);
   const barWidth = Math.min(dms.width, dms.height) / 2 - 20;
   const markPositions = createMarkPositions(
     series,
-    data.selectedIndices,
+    parameters.selectedIndices,
     barWidth
   );
 
