@@ -1,7 +1,7 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit'
-import { configureTrrackableStore } from '@trrack/redux';
+import { type PayloadAction } from '@reduxjs/toolkit'
+import { configureTrrackableStore, createTrrackableSlice } from '@trrack/redux';
 
-const studySlice = createSlice({
+const studySlice = createTrrackableSlice({
   name: 'studySlice',
   initialState: {
     currentIndex: 0

@@ -45,7 +45,6 @@ export default function StudyController() {
   // A helper function that will allow the components to move us to the next section
   function goToNextSection() {
     dispatch(nextSection());
-    console.log(trrack.getState());
   }
 
 
