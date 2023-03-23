@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { TextInput} from "@mantine/core";
 
 type inputProps = {
     placeholder: string,
     label: string,
-
+    updateAnswerInParent: (answer: string) => void,
 }
-export default function StringInput({placeholder="",label="" }: inputProps) {
+
+export default function StringInput({ placeholder="", label="", updateAnswerInParent=(answer) => { } }: inputProps) {
     const [answer, setAnswer] = useState("");
 
     return (
@@ -15,7 +16,7 @@ export default function StringInput({placeholder="",label="" }: inputProps) {
                 placeholder={placeholder}
                 label={label}
                 value={answer}
-                onChange={(e)=>{setAnswer(e.currentTarget.value)}}
+                onChange={(e)=>{setAnswer(e.currentTarget.value); updateAnswerInParent(answer)}}
                 radius={"lg"}
                 size={"md"}
             />

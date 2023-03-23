@@ -1,22 +1,33 @@
 import { type PayloadAction } from '@reduxjs/toolkit'
 import { configureTrrackableStore, createTrrackableSlice } from '@trrack/redux';
 
+interface State {
+  currentIndex: number;
+  answers: Array<{ [id: string]: unknown }>,
+}
+
+const initialState: State = {
+  currentIndex: 0,
+  answers: [],
+}
+
 const studySlice = createTrrackableSlice({
   name: 'studySlice',
-  initialState: {
-    currentIndex: 0
-  },
+  initialState,
   reducers: {
     nextSection: state => {
       state.currentIndex += 1;
     },
     gotoSection: (state, sectionNum: PayloadAction<number>) => {
       state.currentIndex = sectionNum.payload;
-    }
+    },
+    saveAnswer: (state, answer: PayloadAction<{ [id: string]: unknown }>) => {
+      state.answers.push(answer);
+    },
   }
 });
 
-export const { nextSection, gotoSection } = studySlice.actions;
+export const { nextSection, gotoSection, saveAnswer } = studySlice.actions;
 
 export const { store, trrack, trrackStore } = configureTrrackableStore({
   reducer: {

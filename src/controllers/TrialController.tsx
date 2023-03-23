@@ -5,6 +5,9 @@ import * as core from "@mantine/core";
 import { TrialsComponent } from "../parser/types";
 import TextInput from "../components/stimuli/inputcomponents/TextInput";
 
+import { useDispatch } from "react-redux";
+import { saveAnswer } from '../store/'
+
 export default function Trials({
   goToNextSection,
   currentStudySectionConfig,
@@ -12,6 +15,7 @@ export default function Trials({
   goToNextSection: () => void;
   currentStudySectionConfig: TrialsComponent;
 }) {
+  const dispatch = useDispatch();
   const [stimuliIndex, setStimuliIndex] = useState(0);
 
   const stimuliSequence = useMemo(() => {
@@ -19,9 +23,12 @@ export default function Trials({
   }, [currentStudySectionConfig]);
 
   // current active stimuli presented to the user
-  const stimulus = currentStudySectionConfig.trials[stimuliSequence[stimuliIndex]];
+  const stimulusID = stimuliSequence[stimuliIndex];
+  const stimulus = currentStudySectionConfig.trials[stimulusID];
 
+  const [answer, setAnswer] = useState("");
   const showNextStimuli = () => {
+    dispatch(saveAnswer({ [stimulusID]: answer }));
     setStimuliIndex(stimuliIndex + 1);
   };
 
@@ -34,7 +41,7 @@ export default function Trials({
       <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
       <Suspense fallback={<div>Loading...</div>}>
         <StimulusComponent />
-        <TextInput placeholder={"The answer is range from 0 - 100"} label={"Your answer"} />
+        <TextInput placeholder={"The answer is range from 0 - 100"} label={"Your answer"} updateAnswerInParent={setAnswer} />
       </Suspense>
       
       <core.Group position="right" spacing="xs" mt="xl">
