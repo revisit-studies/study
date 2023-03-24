@@ -22,7 +22,7 @@ const studySlice = createTrrackableSlice({
       state.currentIndex = sectionNum.payload;
     },
     saveAnswer: (state, answer: PayloadAction<{ [id: string]: unknown }>) => {
-      state.answers.push(answer);
+      state.answers.push(answer.payload);
     },
   }
 });
