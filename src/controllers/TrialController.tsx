@@ -27,9 +27,14 @@ export default function Trials({
   const stimulus = currentStudySectionConfig.trials[stimulusID];
 
   const [answer, setAnswer] = useState("");
-  const showNextStimuli = () => {
+  const goToNext = () => {
     dispatch(saveAnswer({ [stimulusID]: answer }));
-    setStimuliIndex(stimuliIndex + 1);
+
+    if (isLastStimulus) {
+      goToNextSection()
+    } else {
+      setStimuliIndex(stimuliIndex + 1);
+    }
   };
 
   const isLastStimulus = stimuliIndex === stimuliSequence.length - 1;
@@ -45,11 +50,7 @@ export default function Trials({
       </Suspense>
       
       <core.Group position="right" spacing="xs" mt="xl">
-        {isLastStimulus ? (
-          <core.Button onClick={goToNextSection}>Next</core.Button>
-        ) : (
-          <core.Button onClick={showNextStimuli}>Next</core.Button>
-        )}
+        <core.Button onClick={goToNext}>Next</core.Button>
       </core.Group>
     </div>
   );
