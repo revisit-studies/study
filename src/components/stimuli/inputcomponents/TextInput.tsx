@@ -16,7 +16,7 @@ export default function StringInput({ placeholder="", label="", updateAnswerInPa
                 placeholder={placeholder}
                 label={label}
                 value={answer}
-                onChange={(e)=>{setAnswer(e.currentTarget.value); updateAnswerInParent(answer)}}
+                onChange={(e)=>{setAnswer(e.currentTarget.value); updateAnswerInParent(e.currentTarget.value)}}
                 radius={"lg"}
                 size={"md"}
             />
