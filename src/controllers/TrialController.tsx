@@ -33,8 +33,8 @@ export default function Trials({
       if (isLastStimulus) {
         goToNextSection()
       } else {
-        inputRef.current = null;
         setStimuliIndex(stimuliIndex + 1);
+        inputRef.current.value = '';
       }
     }
   };
@@ -50,7 +50,7 @@ export default function Trials({
       <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
       <Suspense fallback={<div>Loading...</div>}>
         <StimulusComponent />
-        <TextInput placeholder={"The answer is range from 0 - 100"} label={"Your answer"} ref={inputRef} key={stimuliIndex}/>
+        <TextInput placeholder={"The answer is range from 0 - 100"} label={"Your answer"} ref={inputRef}/>
       </Suspense>
       
       <core.Group position="right" spacing="xs" mt="xl">
