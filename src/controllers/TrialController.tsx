@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import * as core from "@mantine/core";
 
@@ -26,16 +26,20 @@ export default function Trials({
   const stimulusID = stimuliSequence[stimuliIndex];
   const stimulus = currentStudySectionConfig.trials[stimulusID];
 
-  const [answer, setAnswer] = useState("");
   const goToNext = () => {
-    dispatch(saveAnswer({ [stimulusID]: answer }));
+    if (inputRef.current !== null) {
+      dispatch(saveAnswer({ [stimulusID]: inputRef.current.value }));
 
-    if (isLastStimulus) {
-      goToNextSection()
-    } else {
-      setStimuliIndex(stimuliIndex + 1);
+      if (isLastStimulus) {
+        goToNextSection()
+      } else {
+        inputRef.current = null;
+        setStimuliIndex(stimuliIndex + 1);
+      }
     }
   };
+
+  const inputRef = useRef<null | HTMLInputElement>(null);
 
   const isLastStimulus = stimuliIndex === stimuliSequence.length - 1;
 
@@ -46,7 +50,7 @@ export default function Trials({
       <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
       <Suspense fallback={<div>Loading...</div>}>
         <StimulusComponent />
-        <TextInput placeholder={"The answer is range from 0 - 100"} label={"Your answer"} updateAnswerInParent={setAnswer} />
+        <TextInput placeholder={"The answer is range from 0 - 100"} label={"Your answer"} ref={inputRef} key={stimuliIndex}/>
       </Suspense>
       
       <core.Group position="right" spacing="xs" mt="xl">

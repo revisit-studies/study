@@ -1,25 +1,25 @@
-import { useState } from "react";
+import { useState, forwardRef, type Ref } from "react";
 import { TextInput} from "@mantine/core";
 
 type inputProps = {
     placeholder: string,
     label: string,
-    updateAnswerInParent: (answer: string) => void,
 }
 
-export default function StringInput({ placeholder="", label="", updateAnswerInParent=(answer) => { } }: inputProps) {
+export default forwardRef(function StringInput({ placeholder="", label="" }: inputProps, ref: Ref<HTMLInputElement>) {
     const [answer, setAnswer] = useState("");
 
     return (
         <>
             <TextInput
+                ref={ref}
                 placeholder={placeholder}
                 label={label}
                 value={answer}
-                onChange={(e)=>{setAnswer(e.currentTarget.value); updateAnswerInParent(e.currentTarget.value)}}
+                onChange={(e)=>{setAnswer(e.currentTarget.value)}}
                 radius={"lg"}
                 size={"md"}
             />
         </>
     );
-};
+});
