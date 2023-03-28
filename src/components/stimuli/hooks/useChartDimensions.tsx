@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 
 interface Dimensions {
-  marginTop?: number,
-  marginBottom?: number,
-  marginRight?: number,
-  marginLeft?: number,
-  height?: number,
-  width?: number,
+  marginTop: number,
+  marginBottom: number,
+  marginRight: number,
+  marginLeft: number,
+  height: number,
+  width: number,
 }
 
 interface BoundedDimensions extends Dimensions {

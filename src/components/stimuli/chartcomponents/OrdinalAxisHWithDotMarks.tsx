@@ -6,7 +6,7 @@ export const OrdinalAxisHWithDotMarks = ({
   range = [10, 100],
   withTick = true,
   tickLen = 5,
-  tickFilter = (t:any[]) => t,
+  tickFilter = (t: any[]) => t,
 }) => {
   const ticks = useMemo(() => {
     const xScale = d3.scaleBand().domain(domain).range(range).padding(0.2);
@@ -14,13 +14,23 @@ export const OrdinalAxisHWithDotMarks = ({
       domain.map((value) => ({
         value,
         xOffset: (xScale(value) || 0) + xScale.bandwidth() / 2 - 5,
-      })),
+      }))
     );
   }, [domain.join("-"), range.join("-")]);
   return (
     <g>
       <path
-        d={["M", range[0], tickLen, "v", -tickLen, "H", range[1], "v", tickLen].join(" ")}
+        d={[
+          "M",
+          range[0],
+          tickLen,
+          "v",
+          -tickLen,
+          "H",
+          range[1],
+          "v",
+          tickLen,
+        ].join(" ")}
         fill="none"
         stroke="currentColor"
       />
