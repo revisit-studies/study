@@ -4,9 +4,11 @@ import { saveInteraction } from "../../../store";
 export const Slices = ({
   stimulusID,
   arcs,
+  data,
 }: {
   stimulusID: string;
   arcs: any[];
+  data: any[];
 }) => {
   const dispatch = useDispatch();
 
@@ -15,7 +17,7 @@ export const Slices = ({
       saveInteraction({
         id: stimulusID,
         action: "mouseEnter",
-        objectID: d,
+        objectID: d.name,
       })
     );
   };
@@ -25,7 +27,7 @@ export const Slices = ({
       saveInteraction({
         id: stimulusID,
         action: "mouseLeave",
-        objectID: d,
+        objectID: d.name,
       })
     );
   };
@@ -38,8 +40,8 @@ export const Slices = ({
           d={arc()}
           fill="transparent"
           stroke="currentColor"
-          onMouseEnter={() => handleMouseEnter(i)}
-          onMouseLeave={() => handleMouseLeave(i)}
+          onMouseEnter={() => handleMouseEnter(data[i])}
+          onMouseLeave={() => handleMouseLeave(data[i])}
         />
       ))}
     </g>
