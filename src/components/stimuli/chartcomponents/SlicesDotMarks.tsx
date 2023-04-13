@@ -1,6 +1,4 @@
-import PropTypes from "prop-types";
-
-export const SlicesDotMarks = ({ positions }: {positions: any[]}) => {
+export const SlicesDotMarks = ({ positions }: { positions: any[] }) => {
   return (
     <g>
       {positions.map((arc, i) => (
@@ -10,8 +8,4 @@ export const SlicesDotMarks = ({ positions }: {positions: any[]}) => {
       ))}
     </g>
   );
-};
-
-SlicesDotMarks.propTypes = {
-  positions: PropTypes.arrayOf(PropTypes.func),
 };

@@ -20,7 +20,6 @@ export default function Consent({ goToNextSection, currentStudySectionConfig }: 
       <Group
         position="right"
         spacing="xs"
-        mt="xl"
       >
         <Button variant="subtle">Deny</Button>
         <Button onClick={goToNextSection}>Accept</Button>

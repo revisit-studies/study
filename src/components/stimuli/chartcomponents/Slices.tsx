@@ -1,4 +1,4 @@
-export const Slices = ({ arcs }: {arcs: any[]}) => {
+export const Slices = ({ arcs }: { arcs: any[] }) => {
   return (
     <g>
       {arcs.map((arc, i) => (
@@ -7,4 +7,3 @@ export const Slices = ({ arcs }: {arcs: any[]}) => {
     </g>
   );
 };
-

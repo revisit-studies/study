@@ -6,7 +6,7 @@ export const NumericAxisV = ({
   range = [10, 100],
   withTick = true,
   tickLen = 5,
-  tickFilter = (t:any) => t,
+  tickFilter = (t: any) => t,
 }) => {
   const ticks = useMemo(() => {
     const yScale = d3.scaleLinear().domain(domain).range(range);
@@ -17,19 +17,21 @@ export const NumericAxisV = ({
       yScale.ticks(numberOfTicksTarget).map((value) => ({
         value,
         xOffset: yScale(value),
-      })),
+      }))
     );
   }, [domain.join("-"), range.join("-")]);
   return (
     <g>
       <path
-        d={["M", 0, range[0], "h", tickLen, "V", range[1], "h", -tickLen].join(" ")}
+        d={["M", 0, range[0], "h", tickLen, "V", range[1], "h", -tickLen].join(
+          " "
+        )}
         fill="none"
         stroke="currentColor"
       />
 
       {withTick &&
-        ticks.map(({ value, xOffset }: {value: any, xOffset: any}) => (
+        ticks.map(({ value, xOffset }: { value: any; xOffset: any }) => (
           <g key={value} transform={`translate(0,${xOffset})`}>
             <line x2={`${tickLen}`} stroke="currentColor" />
             <text
