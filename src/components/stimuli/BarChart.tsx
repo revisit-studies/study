@@ -13,7 +13,7 @@ const chartSettings = {
   height: 400,
 };
 
-const BarChart = ({ parameters }: { parameters: any }) => {
+const BarChart = ({ parameters, stimulusID }: { parameters: any, stimulusID: string }) => {
   const tickLength = 6;
   const [ref, dms] = useChartDimensions(chartSettings);
 
@@ -67,6 +67,7 @@ const BarChart = ({ parameters }: { parameters: any }) => {
           <g transform={`translate(${[0, 0].join(",")})`}>
             <Bars
               data={parameters.data}
+              stimulusID={stimulusID}
               xScale={xScale}
               yScale={yScale}
               height={dms.boundedHeight}
