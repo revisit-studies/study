@@ -57,16 +57,10 @@
                         type: "website",
                         // can be a URL or a local path
                         path: "stimuli-d3/bar-chart.html",
-                        // parameters: {
-                        //     data: [
-                        //         { name: "A", value: "30" },
-                        //         { name: "B", value: "40" },
-                        //         { name: "C", value: "50" },
-                        //         { name: "D", value: "40" },
-                        //         { name: "E", value: "60" },
-                        //     ],
-                        //     selectedIndices: [1, 4],
-                        // }
+                        // style that will be applied to iframe
+                        style: {
+                            height: "500px"
+                        }
                     },
                 },
             },

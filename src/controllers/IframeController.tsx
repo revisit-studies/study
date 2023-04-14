@@ -1,13 +1,22 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-const IframeController = ({ path }: { path?: string }) => {
+const defaultStyle = {
+  height: "300px",
+  width: "100%",
+  border: 0,
+};
+
+const IframeController = ({ path, style={} }: { path?: string; style?: { [key: string]: any } }) => {
   const ref = useRef<HTMLIFrameElement>(null);
+
+  const iframeStyle = { ...defaultStyle, ...style };
+
   return (
     <div>
       <iframe
         ref={ref}
         src={`html-stimuli/${path}`}
-        style={{ height: "60vh", width: "100%" }}
+        style={iframeStyle}
       ></iframe>
     </div>
   );
