@@ -12,7 +12,8 @@
             "University of Utah",
             "WPI",
             "University of Toronto"
-        ]
+        ],
+        contactEmail: "test@test.com"
     },
     components: {
         consent: {

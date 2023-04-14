@@ -5,6 +5,7 @@ interface StudyMetadata {
     date: Date;
     description?: string;
     organization?: string[];
+    contactEmail: string
 }
 
 interface StudyComponents {
