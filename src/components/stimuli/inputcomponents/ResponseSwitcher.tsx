@@ -11,15 +11,16 @@ import dropdownInput from "./DropdownInput";
 import radioInput from "./RadioInput";
 import sliderInput from "./SliderInput";
 import {Response} from "../../../parser/types";
+import NumericInput from "./NumericInput";
 
 export default forwardRef(function ResponseSwitcher({id,type,desc,prompt,options,required}: Response, ref: Ref<HTMLInputElement>) {
 
-
     return (
         <>
-            {type && type.includes("short-text") && <TextInput placeholder={desc} label={prompt} ref={ref}/>}
-            {type && type.includes("dropdown") && <DropdownInput title={prompt} placeholder={desc} dropdownData={options}/>}
-            {type && type.includes("radio") && <RadioInput title={prompt} desc={desc} radioData={options}/>}
+            {type && type.includes("short-text") && <TextInput placeholder={desc} label={prompt} required={required} ref={ref}/>}
+            {type && type.includes("dropdown") && <DropdownInput title={prompt} placeholder={desc} dropdownData={options} ref={ref}/>}
+            {type && type.includes("radio") && <RadioInput title={prompt} desc={desc} radioData={options} ref={ref}/>}
+            {type && type.includes("numeric") && <NumericInput label={prompt} placeholder={desc} required={required} ref={ref}/>}
             {/*{props.type.includes("slider") && <SliderInput title={title} desc={desc} sliderData={data as sliderProps[]}/>}*/}
 
         </>

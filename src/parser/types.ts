@@ -60,10 +60,14 @@ export interface Option {
 export interface Response {
     id: string;
     prompt: string;
-    type: 'numerical' | 'short-text' | 'long-text' | 'likert' | 'dropdown' | 'slider' | 'Radio';
+    type: 'numerical' | 'short-text' | 'long-text' | 'likert' | 'dropdown' | 'slider' | 'radio';
     desc: string;
     required: boolean
     options?: Option[];
+}
+
+export interface Responses {
+    questions: Response[];
 }
 
 // Add types for response
