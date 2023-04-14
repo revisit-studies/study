@@ -1,61 +1,146 @@
-import { lazy, Suspense, useMemo, useRef, useState } from "react";
+import { useForm } from "@mantine/form";
+import { lazy, Suspense, useEffect, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
-import * as core from "@mantine/core";
 
+import { Group, TextInput } from "@mantine/core";
+import { useParams } from "react-router-dom";
+import { NextButton } from "../components/NextButton";
 import { TrialsComponent } from "../parser/types";
-import TextInput from "../components/stimuli/inputcomponents/TextInput";
+import { useCurrentStep } from "../routes";
+import {
+  saveTrialAnswer,
+  useAppDispatch,
+  useAppSelector,
+  useNextStep,
+  useTrialStatus,
+} from "../store";
 
-import { useDispatch } from "react-redux";
-import { saveAnswer } from '../store/'
+export function useTrialsConfig() {
+  const currentStep = useCurrentStep();
 
-export default function Trials({
-  goToNextSection,
-  currentStudySectionConfig,
-}: {
-  goToNextSection: () => void;
-  currentStudySectionConfig: TrialsComponent;
-}) {
-  const dispatch = useDispatch();
-  const [stimuliIndex, setStimuliIndex] = useState(0);
+  return useAppSelector((state) => {
+    const { config } = state.study;
+    const component = currentStep ? config?.components[currentStep] : null;
 
-  const stimuliSequence = useMemo(() => {
-    return currentStudySectionConfig.order;
-  }, [currentStudySectionConfig]);
+    if (!config || !currentStep || component?.type !== "trials") return null;
 
-  // current active stimuli presented to the user
-  const stimulusID = stimuliSequence[stimuliIndex];
-  const stimulus = currentStudySectionConfig.trials[stimulusID];
+    return config.components[currentStep] as TrialsComponent;
+  });
+}
 
-  const goToNext = () => {
-    if (inputRef.current !== null) {
-      dispatch(saveAnswer({ [stimulusID]: inputRef.current.value }));
+export function useNextTrialId(currentTrial: string | null) {
+  const config = useTrialsConfig();
 
-      if (isLastStimulus) {
-        goToNextSection()
-      } else {
-        setStimuliIndex(stimuliIndex + 1);
-        inputRef.current.value = '';
-      }
-    }
-  };
+  if (!currentTrial || !config) return null;
 
-  const inputRef = useRef<null | HTMLInputElement>(null);
+  const { order } = config;
 
-  const isLastStimulus = stimuliIndex === stimuliSequence.length - 1;
+  const idx = order.findIndex((t) => t === currentTrial);
 
-  const StimulusComponent = lazy(() => import(/* @vite-ignore */`../components/${stimulus.stimulus.path}`));
+  if (idx === -1) return null;
+
+  return order[idx + 1] || null;
+}
+
+export default function TrialController() {
+  const dispatch = useAppDispatch();
+  const currentStep = useCurrentStep();
+  const nextStep = useNextStep();
+  const { trialId = null } = useParams<{ trialId: string }>();
+  const config = useTrialsConfig();
+  const nextTrailId = useNextTrialId(trialId);
+  const trialStatus = useTrialStatus(trialId);
+
+  const answerField = useForm({
+    initialValues: {
+      input: trialStatus.answer || "",
+    },
+    transformValues(values) {
+      return {
+        answer: parseFloat(values.input),
+      };
+    },
+    validate: {
+      input: (value) => {
+        if (value.length === 0) return null;
+        const ans = parseFloat(value);
+        if (isNaN(ans)) return "Please enter a number";
+        return ans < 0 || ans > 100 ? "The answer is range from 0 - 100" : null;
+      },
+    },
+    validateInputOnChange: ["input"],
+  });
+
+  useEffect(() => {
+    answerField.setFieldValue("input", trialStatus.answer || "");
+  }, [trialStatus.answer]);
+
+  if (!trialId || !config) return null;
+
+  const stimulus = config.trials[trialId];
+  const componentPath = stimulus.stimulus.path;
+
+  const StimulusComponent = useMemo(() => {
+    if (!componentPath || componentPath.length === 0) return null;
+
+    return lazy(
+      () => import(/* @vite-ignore */ `../components/${componentPath}`)
+    );
+  }, [componentPath]);
 
   return (
-    <div>
+    <div key={trialId}>
       <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
-      <Suspense fallback={<div>Loading...</div>}>
-        <StimulusComponent parameters={stimulus.stimulus.parameters} />
-        <TextInput placeholder={"The answer is range from 0 - 100"} label={"Your answer"} ref={inputRef}/>
-      </Suspense>
-      
-      <core.Group position="right" spacing="xs" mt="xl">
-        <core.Button onClick={goToNext}>Next</core.Button>
-      </core.Group>
+      {StimulusComponent && (
+        <Suspense fallback={<div>Loading...</div>}>
+          <StimulusComponent parameters={stimulus.stimulus.parameters} />
+          <TextInput
+            disabled={trialStatus.complete}
+            {...answerField.getInputProps("input")}
+            placeholder={"The answer is range from 0 - 100"}
+            label={"Your answer"}
+            radius={"lg"}
+            size={"md"}
+          />
+        </Suspense>
+      )}
+
+      <Group position="right" spacing="xs" mt="xl">
+        {nextTrailId ? (
+          <NextButton
+            disabled={
+              !trialStatus.complete &&
+              (answerField.values.input.length === 0 ||
+                !answerField.isValid("input"))
+            }
+            to={`/${currentStep}/${nextTrailId}`}
+            process={() => {
+              if (trialStatus.complete) {
+                answerField.setFieldValue("input", "");
+              }
+
+              const answer = answerField.getTransformedValues().answer;
+
+              dispatch(
+                saveTrialAnswer({
+                  trialName: currentStep,
+                  trialId,
+                  answer: answer.toString(),
+                })
+              );
+
+              answerField.setFieldValue("input", "");
+            }}
+          />
+        ) : (
+          <NextButton
+            to={`/${nextStep}`}
+            process={() => {
+              // complete trials
+            }}
+          />
+        )}
+      </Group>
     </div>
   );
 }
