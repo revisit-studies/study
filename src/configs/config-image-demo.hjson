@@ -1,0 +1,58 @@
+{
+    config-version: 1,
+    study-metadata: {
+        title: "A demo for embedding a stimulus in an image file. ",
+        version: "pilot",
+        authors: [
+            "The reVISit Team"
+        ],
+        date: "2023-04-14",
+        description: "Demonstrating how to embed a stimulus via an image.",
+        organizations: [
+            "University of Utah",
+            "WPI",
+            "University of Toronto"
+        ]
+    },
+    components: {
+        trials1: {
+            type: "trials",
+            order: ["barChart", "barChart"],
+            randomization-scheme: "latin-square",
+            subset-count: 2,
+            attention-checks: {
+                check: "attention1",
+                pattern: random
+                // one check after 10 trials 
+                interval: 10
+            }
+            response:{
+                id: "cm-response"
+                type: "numeric",
+                prompt: "Your answer:",
+                desc: "Enter your answer here, range from 0 - 100",
+                options:[],
+                required: true,
+            },
+            trials: {
+                barChart: {
+                    description: "What does the description do? ",
+                    instruction:  **Question:** How many frogs are in the image?",
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component 
+                        type: "image",
+                        // can be a URL or a local path
+                        path: "stimuli-image/one-frog.jpg",
+                        // style that will be applied to iframe
+                        style: {
+                            height: "500px"
+                        }
+                    },
+                },
+            },
+        },
+    },
+    sequence: [
+        "trials1",
+    ]
+}
