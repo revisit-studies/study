@@ -84,6 +84,7 @@ export interface Response {
   desc: string;
   required: boolean;
   options?: Option[];
+  preset?: string;
 }
 
 export interface Responses {

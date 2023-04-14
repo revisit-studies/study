@@ -47,10 +47,11 @@
             }
             response:{
                 id: "cm-response"
-                type: "numeric",
+                type: "likert",
                 prompt: "Your answer!!",
                 desc: "Enter your answer here, range from 0 - 100",
-                options:[],
+                //options:[{label:"1", value:"1"}],
+                preset: "7",
                 required: true,
             },
             trials: {
