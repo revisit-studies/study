@@ -42,8 +42,8 @@
             }
             response:{
                 id: "cm-response"
-                type: "short-text",
-                prompt: "Your answer",
+                type: "numeric",
+                prompt: "Your answer!!",
                 desc: "Enter your answer here, range from 0 - 100",
                 options:[],
                 required: true,

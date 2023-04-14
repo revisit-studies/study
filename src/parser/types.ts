@@ -74,10 +74,14 @@ export interface Response {
     | "likert"
     | "dropdown"
     | "slider"
-    | "Radio";
+    | "radio";
   desc: string;
   required: boolean;
   options?: Option[];
+}
+
+export interface Responses {
+  questions: Response[];
 }
 
 // Add types for response

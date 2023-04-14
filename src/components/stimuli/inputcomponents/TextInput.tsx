@@ -6,10 +6,11 @@ import { forwardRef, type Ref } from "react";
 type inputProps = {
   placeholder: string;
   label: string;
+  required: boolean;
 };
 
 export default forwardRef(function StringInput(
-  { placeholder = "", label = "" }: inputProps,
+  { placeholder = "", label = "", required }: inputProps,
   ref: Ref<HTMLInputElement>
 ) {
   return (
@@ -20,6 +21,7 @@ export default forwardRef(function StringInput(
         label={label}
         radius={"lg"}
         size={"md"}
+        withAsterisk={required}
       />
     </>
   );
