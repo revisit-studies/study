@@ -16,7 +16,13 @@ const angleGen = d3.pie<any>().value((d: any) => d.value);
 
 const radius = 150;
 
-const PieChart = ({ parameters: data }: { parameters: any }) => {
+const PieChart = ({
+  parameters: data,
+  stimulusID,
+}: {
+  parameters: any;
+  stimulusID: string;
+}) => {
   const [ref, dms] = useChartDimensions(chartSettings);
 
   const angles = angleGen(data.data);
@@ -49,7 +55,7 @@ const PieChart = ({ parameters: data }: { parameters: any }) => {
             dms.marginTop + radius,
           ].join(",")})`}
         >
-          <Slices arcs={arcsGen} />
+          <Slices arcs={arcsGen} data={data.data} stimulusID={stimulusID} />
           <SlicesDotMarks positions={labelArcs} />
         </g>
       </svg>
