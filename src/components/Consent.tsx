@@ -5,12 +5,12 @@ import { ConsentComponent, StudyConfig } from '../parser/types';
 
 export default function Consent({ goToNextSection, currentStudySectionConfig, studyConfig}: { goToNextSection: () => void; currentStudySectionConfig: ConsentComponent; studyConfig: StudyConfig }) {
   const [consent, setConsent] = useState("");
-  const [showText, setShowText] = useState(false);
+  const [signatureRequired, setSignatureRequired] = useState(false);
   const [isEnabled, setEnabled] = useState(false);
   const txtInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setShowText(((studyConfig?.components.consent) as ConsentComponent)?.signatureRequired)
+    setSignatureRequired(((studyConfig?.components.consent) as ConsentComponent)?.signatureRequired)
     setEnabled(((studyConfig?.components.consent) as ConsentComponent)?.signatureRequired ? true : false)
   }, [studyConfig]);
 
@@ -31,7 +31,7 @@ export default function Consent({ goToNextSection, currentStudySectionConfig, st
   return (
     <div>
       <ReactMarkdown>{consent}</ReactMarkdown>
-      {showText && (
+      {signatureRequired && (
         <Group position="left" spacing="xs">
           <TextInput ref={txtInput} placeholder={"Please sign your name"} onChange={handleTextInput} />
         </Group>
