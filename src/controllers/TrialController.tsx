@@ -53,7 +53,7 @@ export default function Trials({
   return (
     <div>
     <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
-      {stimulus.stimulus.type === 'website' && <IframeController path={stimulus.stimulus.path}/>}
+      {stimulus.stimulus.type === 'website' && <IframeController path={stimulus.stimulus.path} style={stimulus.stimulus.style} />}
       {stimulus.stimulus.type === 'react-component' && <ReactComponentController stimulusID={stimulusID} stimulus={stimulus.stimulus} />}
       
         {/* <StimulusComponent parameters={stimulus.stimulus.parameters} /> */}
