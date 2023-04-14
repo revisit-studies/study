@@ -42,11 +42,10 @@
             }
             response:{
                 id: "cm-response"
-                type: "likert",
+                type: "checkbox",
                 prompt: "Your answer!!",
                 desc: "Enter your answer here, range from 0 - 100",
-                //options:[{label:"1", value:"1"}],
-                preset: "7",
+                options:[{label:"1", value:"1"}],
                 required: true,
             },
             trials: {
