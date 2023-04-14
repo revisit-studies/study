@@ -40,15 +40,23 @@
                 // one check after 10 trials 
                 interval: 10
             }
+            response:{
+                id: "cm-response"
+                type: "numeric",
+                prompt: "Your answer!!",
+                desc: "Enter your answer here, range from 0 - 100",
+                options:[],
+                required: true,
+            },
             trials: {
                 barChart: {
                     description: "A chart with correct answer of 0.66",
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 
-                        type: "javascript",
+                        type: "website",
                         // can be a URL or a local path
-                        path: "./stimuli-d3/bar-chart.html",
+                        path: "stimuli-d3/bar-chart.html",
                         // parameters: {
                         //     data: [
                         //         { name: "A", value: "30" },

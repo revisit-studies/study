@@ -1,12 +1,14 @@
-import { lazy, Suspense, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
+import { useDispatch } from "react-redux";
 import * as core from "@mantine/core";
 
 import { TrialsComponent } from "../parser/types";
 import TextInput from "../components/stimuli/inputcomponents/TextInput";
 
-import { useDispatch } from "react-redux";
 import { saveAnswer } from '../store/'
+import IframeController from "./IframeController";
+import ReactComponentController from "./ReactComponentController";
 import {RadioIcon} from "@mantine/core/lib/Radio/RadioIcon";
 import RadioInput from "../components/stimuli/inputcomponents/RadioInput";
 import SliderInput from "../components/stimuli/inputcomponents/SliderInput";
@@ -48,14 +50,13 @@ export default function Trials({
 
   const isLastStimulus = stimuliIndex === stimuliSequence.length - 1;
 
-  const StimulusComponent = lazy(() => import(/* @vite-ignore */`../components/${stimulus.stimulus.path}`));
-
-  console.log(response)
   return (
     <div>
     <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
-      <Suspense fallback={<div>Loading...</div>}>
-        <StimulusComponent stimulusID={stimulusID} parameters={stimulus.stimulus.parameters} />
+      {stimulus.stimulus.type === 'website' && <IframeController path={stimulus.stimulus.path}/>}
+      {stimulus.stimulus.type === 'react-component' && <ReactComponentController stimulusID={stimulusID} stimulus={stimulus.stimulus} />}
+      
+        {/* <StimulusComponent parameters={stimulus.stimulus.parameters} /> */}
         <ResponseSwitcher id={response.id} type={response.type}
                           desc={response.desc}
                           prompt={response.prompt}
@@ -64,8 +65,6 @@ export default function Trials({
                           ref={inputRef}/>
         {/*<TextInput placeholder={"The answer is range from 0 - 100"} label={"Your answer"} ref={inputRef}/>*/}
 
-
-      </Suspense>
       
       <core.Group position="right" spacing="xs" mt="xl">
         <core.Button onClick={goToNext}>Next</core.Button>
