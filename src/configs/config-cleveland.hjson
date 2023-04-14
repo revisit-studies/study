@@ -13,7 +13,8 @@
             "WPI",
             "University of Toronto"
         ],
-        contactEmail: "test@test.com"
+        contactEmail: "test@test.com",
+        helpTextPath: "src/markdowns/help.md",
     },
     components: {
         consent: {

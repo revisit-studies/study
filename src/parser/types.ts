@@ -5,7 +5,8 @@ interface StudyMetadata {
     date: Date;
     description?: string;
     organization?: string[];
-    contactEmail: string
+    contactEmail: string;
+    helpTextPath?: string;
 }
 
 interface StudyComponents {

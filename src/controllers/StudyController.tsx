@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActionIcon, AppShell, Aside, Button, Flex, Grid, Header, Image, Menu, Modal, Navbar, Progress, Space, Text } from '@mantine/core';
 import { IconDotsVertical, IconMail, IconSchema } from '@tabler/icons-react';
+import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import { useDisclosure } from '@mantine/hooks';
+import { useSelector, useDispatch } from 'react-redux';
 
 import { parseStudyConfig } from '../parser/parser';
 import { ConsentComponent, StudyConfig, TrialsComponent } from '../parser/types';
@@ -8,11 +11,9 @@ import { ConsentComponent, StudyConfig, TrialsComponent } from '../parser/types'
 import Consent from '../components/Consent';
 import TrialController from './TrialController';
 
-import { useSelector, useDispatch } from 'react-redux'
-import { nextSection, type RootState } from '../store/'
+import { nextSection, type RootState } from '../store/';
 
-import logoUrl from '../assets/revisitLogoSquare.svg'
-import { useDisclosure } from '@mantine/hooks';
+import logoUrl from '../assets/revisitLogoSquare.svg';
 
 
 async function fetchStudyConfig(configLocation: string) {
@@ -60,6 +61,14 @@ export default function StudyController() {
 
   const [showAdmin, setShowAdmin] = useState(false);
 
+  const helpTextPath = studyConfig?.['study-metadata'].helpTextPath;
+  const [helpText, setHelpText] = useState('');
+  useEffect(() => {
+    fetch(helpTextPath !== undefined ? helpTextPath : '')
+      .then((response) => response.text())
+      .then((text) =>  setHelpText(text));
+  }, [helpTextPath]);
+
   return (
     <AppShell
       navbarOffsetBreakpoint="sm"
@@ -91,7 +100,7 @@ export default function StudyController() {
 
             <Grid.Col span={4}>
               <Flex align="center" justify="flex-end">
-                <Button variant="outline" onClick={open}>Help</Button>
+                {helpText !== "" && <Button variant="outline" onClick={open}>Help</Button>}
 
                 <Space w="md"></Space>
 
@@ -121,7 +130,7 @@ export default function StudyController() {
     >
 
       <Modal opened={helpModalVisible} onClose={close} title="Help">
-        <div>hello</div>
+        <ReactMarkdown>{helpText}</ReactMarkdown>
       </Modal>
 
       <div>
