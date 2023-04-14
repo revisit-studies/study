@@ -1,27 +1,17 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Button, Group, TextInput } from '@mantine/core';
 import { ConsentComponent, StudyConfig } from '../parser/types';
-import { parseStudyConfig } from '../parser/parser';
 
-async function fetchStudyConfig(configLocation: string) {
-  const config = await (await fetch(configLocation)).text();
-  return parseStudyConfig(config);
-}
-
-export default function Consent({ goToNextSection, currentStudySectionConfig }: { goToNextSection: () => void; currentStudySectionConfig: ConsentComponent }) {
+export default function Consent({ goToNextSection, currentStudySectionConfig, studyConfig}: { goToNextSection: () => void; currentStudySectionConfig: ConsentComponent; studyConfig: StudyConfig }) {
   const [consent, setConsent] = useState("");
   const [showText, setShowText] = useState(false);
-
-  // Get the whole study config
-  const [studyConfig, setStudyConfig] = useState<StudyConfig | null>(null);
-  useEffect(() => {
-    const fetchData = async () => setStudyConfig(await fetchStudyConfig('/src/configs/config-cleveland.hjson'));
-    fetchData();
-  }, [])
+  const [isEnabled, setEnabled] = useState(false);
+  const txtInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setShowText(((studyConfig?.components.consent) as ConsentComponent)?.signature)
+    setShowText(((studyConfig?.components.consent) as ConsentComponent)?.signatureRequired)
+    setEnabled(((studyConfig?.components.consent) as ConsentComponent)?.signatureRequired ? true : false)
   }, [studyConfig]);
 
   useEffect(() => {
@@ -30,12 +20,20 @@ export default function Consent({ goToNextSection, currentStudySectionConfig }: 
       .then((text) =>  setConsent(text));
   }, []);
 
+  const handleTextInput = () => {
+    txtInput.current?.value.length ? setEnabled(false) : setEnabled(true);
+  }
+
+  const handleDeny = () => {
+    window.close();
+  }
+
   return (
     <div>
       <ReactMarkdown>{consent}</ReactMarkdown>
       {showText && (
         <Group position="left" spacing="xs">
-          <TextInput placeholder={"Please sign your name"} />
+          <TextInput ref={txtInput} placeholder={"Please sign your name"} onChange={handleTextInput} />
         </Group>
       )}        
       <Group
@@ -43,8 +41,8 @@ export default function Consent({ goToNextSection, currentStudySectionConfig }: 
         spacing="xs"
         style={{ marginTop: 10 }}
       >
-        <Button variant="subtle">Deny</Button>
-        <Button onClick={goToNextSection}>Accept</Button>
+        <Button variant="subtle" onClick={handleDeny}>Deny</Button>
+        <Button onClick={goToNextSection} disabled={isEnabled}>Accept</Button>
       </Group>
     </div>
   );
