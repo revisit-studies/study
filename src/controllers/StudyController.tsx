@@ -22,7 +22,7 @@ export default function StudyController() {
   // Get the whole study config
   const [studyConfig, setStudyConfig] = useState<StudyConfig | null>(null);
   useEffect(() => {
-    const fetchData = async () => setStudyConfig(await fetchStudyConfig('/src/configs/config-cleveland.hjson'));
+    const fetchData = async () => setStudyConfig(await fetchStudyConfig('/src/configs/config-d3-demo.hjson'));
     fetchData();
   }, [])
 
