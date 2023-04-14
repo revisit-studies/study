@@ -3,16 +3,11 @@ import ReactMarkdown from "react-markdown";
 import { Button, Group, TextInput } from '@mantine/core';
 import { ConsentComponent, StudyConfig } from '../parser/types';
 
-export default function Consent({ goToNextSection, currentStudySectionConfig, studyConfig}: { goToNextSection: () => void; currentStudySectionConfig: ConsentComponent; studyConfig: StudyConfig }) {
+export default function Consent({ goToNextSection, goToEnd, currentStudySectionConfig}: { goToNextSection: () => void; goToEnd: () => void; currentStudySectionConfig: ConsentComponent; }) {
   const [consent, setConsent] = useState("");
-  const [signatureRequired, setSignatureRequired] = useState(false);
-  const [isEnabled, setEnabled] = useState(false);
+  const signatureRequired = currentStudySectionConfig.signatureRequired;
+  const [disableContinue, setDisableContinue] = useState(true);
   const txtInput = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setSignatureRequired(((studyConfig?.components.consent) as ConsentComponent)?.signatureRequired)
-    setEnabled(((studyConfig?.components.consent) as ConsentComponent)?.signatureRequired ? true : false)
-  }, [studyConfig]);
 
   useEffect(() => {
     fetch(currentStudySectionConfig.path)
@@ -20,13 +15,7 @@ export default function Consent({ goToNextSection, currentStudySectionConfig, st
       .then((text) =>  setConsent(text));
   }, []);
 
-  const handleTextInput = () => {
-    txtInput.current?.value.length ? setEnabled(false) : setEnabled(true);
-  }
-
-  const handleDeny = () => {
-    window.close();
-  }
+  const handleTextInput = () => setDisableContinue(txtInput.current?.value.length === 0);
 
   return (
     <div>
@@ -41,8 +30,8 @@ export default function Consent({ goToNextSection, currentStudySectionConfig, st
         spacing="xs"
         style={{ marginTop: 10 }}
       >
-        <Button variant="subtle" onClick={handleDeny}>Deny</Button>
-        <Button onClick={goToNextSection} disabled={isEnabled}>Accept</Button>
+        <Button variant="subtle" onClick={goToEnd}>Deny</Button>
+        <Button onClick={goToNextSection} disabled={disableContinue}>Accept</Button>
       </Group>
     </div>
   );
