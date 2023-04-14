@@ -7,14 +7,11 @@ const defaultStyle = {
 };
 
 const IframeController = ({ path, style={} }: { path?: string; style?: { [key: string]: any } }) => {
-  const ref = useRef<HTMLIFrameElement>(null);
-
   const iframeStyle = { ...defaultStyle, ...style };
 
   return (
     <div>
       <iframe
-        ref={ref}
         src={`html-stimuli/${path}`}
         style={iframeStyle}
       ></iframe>
