@@ -11,7 +11,7 @@ interface StudyComponents {
     [key: string]: StudyComponent;
 }
 
-interface StudyComponent {
+export interface StudyComponent {
     type: 'consent' | 'training' | 'practice' | 'attention-test' | 'trials';
 }
 

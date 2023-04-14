@@ -14,7 +14,7 @@ const chartSettings = {
   width: 400,
 };
 
-const StackedBarChart = ({ parameters }: { parameters: any }) => {
+const StackedBarChart = ({ parameters, stimulusID }: { parameters: any, stimulusID: string }) => {
   const tickLength = 6;
   const [ref, dms] = useChartDimensions(chartSettings);
 
@@ -96,7 +96,7 @@ const StackedBarChart = ({ parameters }: { parameters: any }) => {
             />
           </g>
           <g transform={`translate(0, 0)`}>
-            <StackedBars data={series} barWidth={barWidth} yScale={yScale} />
+            <StackedBars data={series} barWidth={barWidth} yScale={yScale} stimulusID={stimulusID} />
             <DotMarks positions={markPositions} />
           </g>
         </g>
