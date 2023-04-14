@@ -10,15 +10,16 @@ import {
   Space,
   Title,
 } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
 import { IconDotsVertical, IconMail, IconSchema } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useCurrentStep } from "../../routes";
 import { useAppSelector, useCurrentTrial } from "../../store";
+import { useFlagsDispatch } from "../../store/flags";
 
 export default function AppHeader() {
   const studyConfig = useAppSelector((state) => state.study.config);
+  const flagsDispatch = useFlagsDispatch();
 
   const location = useLocation();
   const currentStep = useCurrentStep();
@@ -31,21 +32,10 @@ export default function AppHeader() {
   });
 
   const progressBarCurrent = 2;
-  const progressBarMax = 10;
+  const progressBarMax = studyConfig?.sequence.length || 0;
   const progressPercent = (progressBarCurrent / progressBarMax) * 100;
 
-  const [helpModalVisible, { open, close }] = useDisclosure(false);
   const [menuOpened, setMenuOpened] = useState(false);
-
-  const [showAdmin, setShowAdmin] = useState(false);
-
-  const helpTextPath = studyConfig?.["study-metadata"].helpTextPath;
-  const [helpText, setHelpText] = useState("");
-  useEffect(() => {
-    fetch(helpTextPath !== undefined ? helpTextPath : "")
-      .then((response) => response.text())
-      .then((text) => setHelpText(text));
-  }, [helpTextPath]);
 
   const logoPath = studyConfig?.["study-metadata"].logoPath;
   const withProgressBar = studyConfig?.["study-metadata"].withProgressBar;
@@ -69,11 +59,8 @@ export default function AppHeader() {
 
         <Grid.Col span={4}>
           <Flex align="center" justify="flex-end">
-            {helpText !== "" && (
-              <Button variant="outline" onClick={open}>
-                Help
-              </Button>
-            )}
+            {studyConfig?.["study-metadata"].helpTextPath !== undefined && <Button variant="outline" 
+            onClick={() => flagsDispatch(toggleShowHelpText())}>Help</Button>}
 
             <Space w="md"></Space>
 
@@ -91,19 +78,10 @@ export default function AppHeader() {
               </Menu.Target>
 
               <Menu.Dropdown>
-                <Menu.Item
-                  icon={<IconSchema size={14} />}
-                  onClick={() => setShowAdmin(!showAdmin)}
-                >
-                  Admin Mode
-                </Menu.Item>
-                <Menu.Item
-                  component="a"
-                  href={
-                    studyConfig !== null
-                      ? `mailto:${studyConfig["study-metadata"].contactEmail}`
-                      : undefined
-                  }
+                <Menu.Item icon={<IconSchema size={14} />} onClick={() => flagsDispatch(toggleShowAdmin())}>Admin Mode</Menu.Item>
+                <Menu.Item 
+                  component="a" 
+                  href={studyConfig !== null ? `mailto:${studyConfig['study-metadata'].contactEmail}` : undefined}
                   icon={<IconMail size={14} />}
                 >
                   Contact
