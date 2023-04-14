@@ -6,14 +6,13 @@ import NumericInput from "./NumericInput";
 import LikertInput from "./LikertInput";
 import CheckBoxInput from "./CheckBoxInput";
 import RadioInput from "./RadioInput";
+import TextAreaInput from "./TextAreaInput";
 
 
 type Props = {
   response: Response;
   status: TrialResult;
 };
-
-
 
 export default function ResponseSwitcher({ response }: Props) {
   const { type, desc, prompt, options, required, preset } = response;
@@ -43,6 +42,9 @@ export default function ResponseSwitcher({ response }: Props) {
       )}
       {type === "checkbox" && (
           <CheckBoxInput label={prompt} desc={desc} required={required} checkboxData={options}/>
+      )}
+      {type === "long-text" && (
+          <TextAreaInput placeholder={desc} label={prompt} required={required}/>
       )}
       {/*{props.type.includes("slider") && <SliderInput title={title} desc={desc} sliderData={data as sliderProps[]}/>}*/}
     </>
