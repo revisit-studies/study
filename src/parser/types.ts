@@ -80,11 +80,13 @@ export interface Response {
     | "likert"
     | "dropdown"
     | "slider"
-    | "radio";
+    | "radio"
+    | "checkbox";
   desc: string;
   required: boolean;
   options?: Option[];
   preset?: string;
+
 }
 
 export interface Responses {

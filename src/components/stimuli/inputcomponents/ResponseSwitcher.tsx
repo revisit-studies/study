@@ -4,12 +4,16 @@ import TextInput from "../../stimuli/inputcomponents/TextInput";
 import DropdownInput from "./DropdownInput";
 import NumericInput from "./NumericInput";
 import LikertInput from "./LikertInput";
+import CheckBoxInput from "./CheckBoxInput";
 import RadioInput from "./RadioInput";
+
 
 type Props = {
   response: Response;
   status: TrialResult;
 };
+
+
 
 export default function ResponseSwitcher({ response }: Props) {
   const { type, desc, prompt, options, required, preset } = response;
@@ -36,6 +40,9 @@ export default function ResponseSwitcher({ response }: Props) {
       )}
       {type === "likert" && (
           <LikertInput title={prompt} desc={desc} likertPreset={preset as string} />
+      )}
+      {type === "checkbox" && (
+          <CheckBoxInput label={prompt} desc={desc} required={required} checkboxData={options}/>
       )}
       {/*{props.type.includes("slider") && <SliderInput title={title} desc={desc} sliderData={data as sliderProps[]}/>}*/}
     </>
