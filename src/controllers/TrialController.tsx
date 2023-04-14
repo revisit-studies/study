@@ -101,6 +101,7 @@ export default function TrialController() {
 
   console.log(response);
   return (
+
     <div key={trialId}>
       <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
       <TrialProvenanceContext.Provider value={trialProvenance}>

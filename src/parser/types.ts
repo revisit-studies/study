@@ -80,7 +80,8 @@ export interface Response {
   required: boolean;
   options?: Option[];
   preset?: string;
-
+  max?: number;
+  min?: number;
 }
 
 export interface Responses {
