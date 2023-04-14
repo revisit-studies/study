@@ -8,7 +8,7 @@ import Consent from '../components/Consent';
 import TrialController from './TrialController';
 
 import { useSelector, useDispatch } from 'react-redux'
-import { nextSection, trrack, type RootState } from '../store/'
+import { nextSection, gotoSection, trrack, type RootState } from '../store/'
 
 
 async function fetchStudyConfig(configLocation: string) {
@@ -32,7 +32,7 @@ export default function StudyController() {
   )
 
   // Get the current study section and config for that section
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const currentIndex = useSelector((state: RootState) => state.study.currentIndex)
   const currentStudySection = useMemo(
     () => currentIndex < studySequence.length ? studySequence[currentIndex] : 'endOfStudy',
     [currentIndex, studySequence],
@@ -48,7 +48,7 @@ export default function StudyController() {
   }
 
   function goToEnd() {
-    setCurrentIndex(studySequence.length);
+    dispatch(gotoSection(studySequence.length));
   }
 
   return (
