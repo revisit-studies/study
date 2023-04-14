@@ -16,8 +16,9 @@
     },
     components: {
         consent: {
-            type: "consent"
-            path: "src/markdowns/consent.md"
+            type: "consent",
+            path: "src/markdowns/consent.md",
+            signature: true
         },
         training1: {
             type: "training"

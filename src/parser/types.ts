@@ -17,6 +17,7 @@ interface StudyComponent {
 
 export interface ConsentComponent extends StudyComponent {
     path: string;
+    signature: boolean;
 }
 
 interface TrainingComponent extends StudyComponent {
