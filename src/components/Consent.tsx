@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { Button, Group, TextInput } from '@mantine/core';
-import { ConsentComponent, StudyConfig } from '../parser/types';
+import { ConsentComponent} from '../parser/types';
+import { useDispatch } from "react-redux";
+import { saveConsent } from "../store";
 
 export default function Consent({ goToNextSection, goToEnd, currentStudySectionConfig}: { goToNextSection: () => void; goToEnd: () => void; currentStudySectionConfig: ConsentComponent; }) {
   const [consent, setConsent] = useState("");
   const signatureRequired = currentStudySectionConfig.signatureRequired;
   const [disableContinue, setDisableContinue] = useState(true);
   const txtInput = useRef<HTMLInputElement>(null);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     fetch(currentStudySectionConfig.path)
@@ -16,6 +19,11 @@ export default function Consent({ goToNextSection, goToEnd, currentStudySectionC
   }, []);
 
   const handleTextInput = () => setDisableContinue(txtInput.current?.value.length === 0);
+
+  const handleNextSection = () => {
+    dispatch(saveConsent({signature : txtInput.current?.value }));
+    goToNextSection;
+  }
 
   return (
     <div>
@@ -31,7 +39,7 @@ export default function Consent({ goToNextSection, goToEnd, currentStudySectionC
         style={{ marginTop: 10 }}
       >
         <Button variant="subtle" onClick={goToEnd}>Deny</Button>
-        <Button onClick={goToNextSection} disabled={disableContinue}>Accept</Button>
+        <Button onClick={handleNextSection} disabled={disableContinue}>Accept</Button>
       </Group>
     </div>
   );
