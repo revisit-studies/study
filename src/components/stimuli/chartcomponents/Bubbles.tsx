@@ -1,5 +1,4 @@
-import { useDispatch } from "react-redux";
-import { saveInteraction } from "../../../store";
+import { useHoverInteraction } from "../hooks/useHoverInteraction";
 
 export const Bubbles = ({
   data,
@@ -8,27 +7,8 @@ export const Bubbles = ({
   data: any[];
   stimulusID: string;
 }) => {
-  const dispatch = useDispatch();
-
-  const handleMouseEnter = (d: any) => {
-    dispatch(
-      saveInteraction({
-        id: stimulusID,
-        action: "mouseEnter",
-        objectID: d.name,
-      })
-    );
-  };
-
-  const handleMouseLeave = (d: any) => {
-    dispatch(
-      saveInteraction({
-        id: stimulusID,
-        action: "mouseLeave",
-        objectID: d.name,
-      })
-    );
-  };
+  const { handleMouseEnter, handleMouseLeave } =
+    useHoverInteraction(stimulusID);
 
   return (
     <g>

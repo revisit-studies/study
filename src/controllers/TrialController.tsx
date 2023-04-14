@@ -5,7 +5,6 @@ import ReactMarkdown from "react-markdown";
 import { Group } from "@mantine/core";
 import { useParams } from "react-router-dom";
 import { NextButton } from "../components/NextButton";
-import ResponseSwitcher from "../components/stimuli/inputcomponents/ResponseSwitcher";
 import { TrialsComponent } from "../parser/types";
 import { useCurrentStep } from "../routes";
 import {
@@ -15,6 +14,12 @@ import {
   useNextStep,
   useTrialStatus,
 } from "../store";
+
+import ResponseSwitcher from "../components/stimuli/inputcomponents/ResponseSwitcher";
+import {
+  createTrialProvenance,
+  TrialProvenanceContext,
+} from "../store/trialProvenance";
 
 export function useTrialsConfig() {
   const currentStep = useCurrentStep();
@@ -43,6 +48,8 @@ export function useNextTrialId(currentTrial: string | null) {
   return order[idx + 1] || null;
 }
 
+// current active stimuli presented to the user
+
 export default function TrialController() {
   const dispatch = useAppDispatch();
   const currentStep = useCurrentStep();
@@ -51,6 +58,8 @@ export default function TrialController() {
   const config = useTrialsConfig();
   const nextTrailId = useNextTrialId(trialId);
   const trialStatus = useTrialStatus(trialId);
+
+  const trialProvenance = createTrialProvenance();
 
   const answerField = useForm({
     initialValues: {
@@ -78,9 +87,9 @@ export default function TrialController() {
 
   if (!trialId || !config) return null;
 
-  const response = config?.response;
   const stimulus = config.trials[trialId];
   const componentPath = stimulus.stimulus.path;
+  const response = config.response;
 
   const StimulusComponent = useMemo(() => {
     if (!componentPath || componentPath.length === 0) return null;
@@ -93,27 +102,31 @@ export default function TrialController() {
   return (
     <div key={trialId}>
       <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
-      {StimulusComponent && (
-        <Suspense fallback={<div>Loading...</div>}>
-          <StimulusComponent parameters={stimulus.stimulus.parameters} />
-          <ResponseSwitcher
-            id={response.id}
-            type={response.type}
-            desc={response.desc}
-            prompt={response.prompt}
-            required={response.required}
-            options={response.options}
-          />
-        </Suspense>
-      )}
+      <TrialProvenanceContext.Provider value={trialProvenance}>
+        {StimulusComponent && (
+          <Suspense fallback={<div>Loading...</div>}>
+            <StimulusComponent parameters={stimulus.stimulus.parameters} />
+            <ResponseSwitcher status={trialStatus} response={response} />
+            {/* <TextInput
+            disabled={trialStatus.complete}
+            {...answerField.getInputProps("input")}
+            placeholder={"The answer is range from 0 - 100"}
+            label={"Your answer"}
+            radius={"lg"}
+            size={"md"}
+          /> */}
+          </Suspense>
+        )}
+      </TrialProvenanceContext.Provider>
+
       <Group position="right" spacing="xs" mt="xl">
         {nextTrailId ? (
           <NextButton
-            disabled={
-              !trialStatus.complete &&
-              (answerField.values.input.length === 0 ||
-                !answerField.isValid("input"))
-            }
+            // disabled={
+            //   !trialStatus.complete &&
+            //   (answerField.values.input.length === 0 ||
+            //     !answerField.isValid("input"))
+            // }
             to={`/${currentStep}/${nextTrailId}`}
             process={() => {
               if (trialStatus.complete) {

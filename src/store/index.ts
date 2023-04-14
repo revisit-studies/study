@@ -4,7 +4,7 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
 import { StudyComponent, StudyConfig } from "../parser/types";
 import { useCurrentStep } from "../routes";
 
-interface TrialResult {
+export interface TrialResult {
   complete: boolean;
   answer: string | null;
 }
