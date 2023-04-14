@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { ActionIcon, AppShell, Aside, Button, Flex, Grid, Header, Image, Menu, Modal, Navbar, Progress, Space, Text } from '@mantine/core';
+import { ActionIcon, AppShell, Aside, Button, Flex, Grid, Header, Image, Menu, Modal, Navbar, Progress, Space, Text, Title } from '@mantine/core';
 import { IconDotsVertical, IconMail, IconSchema } from '@tabler/icons-react';
 import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
 import { useDisclosure } from '@mantine/hooks';
@@ -93,7 +93,7 @@ export default function StudyController() {
               <Flex align="center">
                 <Image maw={ 40 } src={logoPath} alt="Study Logo" />
                 <Space w="md"></Space>
-                <Text>{studyConfig?.['study-metadata'].title}</Text>
+                <Title order={4}>{studyConfig?.['study-metadata'].title}</Title>
               </Flex>
             </Grid.Col>
 
