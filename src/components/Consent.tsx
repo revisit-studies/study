@@ -1,11 +1,12 @@
-import { Button, Group } from "@mantine/core";
-import { useEffect, useState } from "react";
+import { Button, Group, TextInput } from "@mantine/core";
+import { useEffect, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 
 import { ConsentComponent } from "../parser/types";
 import { useCurrentStep } from "../routes";
 import { completeStep, useAppDispatch, useAppSelector } from "../store";
 import { NextButton } from "./NextButton";
+import { useNavigate } from "react-router-dom";
 
 export function useConsentConfig() {
   const currentStep = useCurrentStep();
@@ -19,6 +20,8 @@ export function useConsentConfig() {
 }
 
 export default function Consent() {
+  const navigate = useNavigate();
+  const txtInput = useRef<HTMLInputElement>(null);
   const dispatch = useAppDispatch();
 
   const [consent, setConsent] = useState<string | null>(null);
@@ -33,15 +36,29 @@ export default function Consent() {
       .then((text) => setConsent(text));
   }, [config]);
 
+  const signatureRequired = config !== null ? config.signatureRequired : false;
+  const [disableContinue, setDisableContinue] = useState(signatureRequired);
+
+  const handleTextInput = () => setDisableContinue(txtInput.current?.value.length === 0);
+
   if (!consent) return <div>Loading...</div>;
 
   return (
     <div>
       <ReactMarkdown>{consent}</ReactMarkdown>
-
-      <Group position="right" spacing="xs">
-        <Button variant="subtle">Deny</Button>
+      {signatureRequired && (
+        <Group position="left" spacing="xs">
+          <TextInput ref={txtInput} placeholder={"Please sign your name"} onChange={handleTextInput} />
+        </Group>
+      )}        
+      <Group
+        position="left"
+        spacing="xs"
+        style={{ marginTop: 10 }}
+      >
+        <Button variant="subtle" onClick={() => navigate('/end')}>Deny</Button>
         <NextButton
+          disabled={disableContinue}
           label="Accept"
           process={() => {
             dispatch(completeStep("consent"));

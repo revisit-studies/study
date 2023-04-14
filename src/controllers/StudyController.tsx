@@ -1,6 +1,6 @@
 import { ReactNode, useEffect } from "react";
 
-import { parseStudyConfig } from "../parser/parser";
+import { parseStudyConfig } from '../parser/parser';
 
 import { useDispatch, useSelector } from "react-redux";
 import { RouterProvider } from "react-router-dom";

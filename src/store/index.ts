@@ -18,12 +18,14 @@ interface Step extends StudyComponent {
 
 interface State {
   config: StudyConfig | null;
+  consent?: {signature: unknown; timestamp: number},
   steps: Record<string, Step>;
   trials: Record<string, TrialRecord>;
 }
 
 const initialState: State = {
   config: null,
+  consent: undefined,
   steps: {},
   trials: {},
 };
@@ -59,6 +61,9 @@ const studySlice = createTrrackableSlice({
     },
     completeStep(state, step) {
       state.steps[step.payload].complete = true;
+    },
+    saveConsent: (state, response: PayloadAction<{ signature: unknown, timestamp: number }>) => {
+      state.consent = response.payload;
     },
     saveTrialAnswer(
       state,
