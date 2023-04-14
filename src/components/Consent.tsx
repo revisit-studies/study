@@ -8,7 +8,7 @@ import { saveConsent } from "../store";
 export default function Consent({ goToNextSection, goToEnd, currentStudySectionConfig}: { goToNextSection: () => void; goToEnd: () => void; currentStudySectionConfig: ConsentComponent; }) {
   const [consent, setConsent] = useState("");
   const signatureRequired = currentStudySectionConfig.signatureRequired;
-  const [disableContinue, setDisableContinue] = useState(true);
+  const [disableContinue, setDisableContinue] = useState(signatureRequired);
   const txtInput = useRef<HTMLInputElement>(null);
   const dispatch = useDispatch();
 
@@ -21,8 +21,8 @@ export default function Consent({ goToNextSection, goToEnd, currentStudySectionC
   const handleTextInput = () => setDisableContinue(txtInput.current?.value.length === 0);
 
   const handleNextSection = () => {
-    dispatch(saveConsent({signature : txtInput.current?.value }));
-    goToNextSection;
+    dispatch(saveConsent({ signature : txtInput.current?.value, timestamp: Date.now() }));
+    goToNextSection();
   }
 
   return (

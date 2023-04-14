@@ -3,14 +3,14 @@ import { configureTrrackableStore, createTrrackableSlice } from '@trrack/redux';
 
 interface State {
   currentIndex: number;
-  consent: Array<{signature: unknown}>,
+  consent?: {signature: unknown; timestamp: number},
   answers: Array<{ [id: string]: unknown }>,
   interactions: Array<{ id: string, objectID: unknown, action: string, timestamp: number }>,
 }
 
 const initialState: State = {
   currentIndex: 0,
-  consent: [],
+  consent: undefined,
   answers: [],
   interactions: [],
 }
@@ -25,8 +25,8 @@ const studySlice = createTrrackableSlice({
     gotoSection: (state, sectionNum: PayloadAction<number>) => {
       state.currentIndex = sectionNum.payload;
     },
-    saveConsent: (state, response: PayloadAction<{ signature: unknown}>) => {
-      state.consent.push(response.payload);
+    saveConsent: (state, response: PayloadAction<{ signature: unknown, timestamp: number }>) => {
+      state.consent = response.payload;
     },
     saveAnswer: (state, answer: PayloadAction<{ [id: string]: unknown }>) => {
       state.answers.push(answer.payload);
