@@ -55,7 +55,7 @@ export default function Trials({
     <div>
     <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
       <Suspense fallback={<div>Loading...</div>}>
-        <StimulusComponent parameters={stimulus.stimulus.parameters} />
+        <StimulusComponent stimulusID={stimulusID} parameters={stimulus.stimulus.parameters} />
         <ResponseSwitcher id={response.id} type={response.type}
                           desc={response.desc}
                           prompt={response.prompt}
@@ -63,6 +63,7 @@ export default function Trials({
                           options={response.options}
                           ref={inputRef}/>
         {/*<TextInput placeholder={"The answer is range from 0 - 100"} label={"Your answer"} ref={inputRef}/>*/}
+
 
       </Suspense>
       
