@@ -1,14 +1,27 @@
-export const Bubbles = ({ data }: { data: any[] }) => {
+import { useHoverInteraction } from "../hooks/useHoverInteraction";
+
+export const Bubbles = ({
+  data,
+  stimulusID,
+}: {
+  data: any[];
+  stimulusID: string;
+}) => {
+  const { handleMouseEnter, handleMouseLeave } =
+    useHoverInteraction(stimulusID);
+
   return (
     <g>
-      {data.map((d, i) => (
+      {data.map(({ bubble: d, data }, i) => (
         <circle
           key={i}
           cx={d.x}
           cy={d.y}
           r={d.r}
-          fill={"none"}
+          fill="transparent"
           stroke="currentColor"
+          onMouseEnter={() => handleMouseEnter(data)}
+          onMouseLeave={() => handleMouseLeave(data)}
         />
       ))}
     </g>
