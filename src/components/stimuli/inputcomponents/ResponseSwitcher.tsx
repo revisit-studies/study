@@ -9,13 +9,14 @@ import RadioInput from "./RadioInput";
 import TextAreaInput from "./TextAreaInput";
 
 
+
 type Props = {
   response: Response;
   status: TrialResult;
 };
 
 export default function ResponseSwitcher({ response }: Props) {
-  const { type, desc, prompt, options, required, preset } = response;
+  const { type, desc, prompt, options, required, preset,max,min } = response;
 
   if (!type) return null;
 
@@ -35,7 +36,7 @@ export default function ResponseSwitcher({ response }: Props) {
         <RadioInput title={prompt} desc={desc} radioData={options} />
       )}
       {type === "numerical" && (
-        <NumericInput label={prompt} placeholder={desc} required={required} />
+        <NumericInput label={prompt} placeholder={desc} required={required} max={max as number} min={min as number}/>
       )}
       {type === "likert" && (
           <LikertInput title={prompt} desc={desc} likertPreset={preset as string} />
