@@ -13,8 +13,6 @@ import TrialController from './TrialController';
 
 import { nextSection, type RootState } from '../store/';
 
-import logoUrl from '../assets/revisitLogoSquare.svg';
-
 
 async function fetchStudyConfig(configLocation: string) {
   const config = await (await fetch(configLocation)).text();
@@ -69,6 +67,8 @@ export default function StudyController() {
       .then((text) =>  setHelpText(text));
   }, [helpTextPath]);
 
+  const logoPath = studyConfig?.['study-metadata'].logoPath;
+
   return (
     <AppShell
       navbarOffsetBreakpoint="sm"
@@ -90,7 +90,7 @@ export default function StudyController() {
           <Grid align="center">
             <Grid.Col span={4}>
               <Flex align="center">
-                <Image maw={ 40 } src={ logoUrl } alt="Study Logo" />
+                <Image maw={ 40 } src={logoPath} alt="Study Logo" />
                 <Space w="md"></Space>
                 <Text>{studyConfig?.['study-metadata'].title}</Text>
               </Flex>

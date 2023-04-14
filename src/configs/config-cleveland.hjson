@@ -15,6 +15,7 @@
         ],
         contactEmail: "test@test.com",
         helpTextPath: "src/markdowns/help.md",
+        logoPath: "src/assets/revisitLogoSquare.svg",
     },
     components: {
         consent: {

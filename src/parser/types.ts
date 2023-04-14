@@ -7,6 +7,7 @@ interface StudyMetadata {
     organization?: string[];
     contactEmail: string;
     helpTextPath?: string;
+    logoPath: string;
 }
 
 interface StudyComponents {
