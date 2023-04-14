@@ -32,8 +32,7 @@ export default function StudyController() {
   )
 
   // Get the current study section and config for that section
-  // const [currentIndex, setCurrentIndex] = useState(0);
-  const currentIndex = useSelector((state: RootState) => state.study.currentIndex)
+  const [currentIndex, setCurrentIndex] = useState(0);
   const currentStudySection = useMemo(
     () => currentIndex < studySequence.length ? studySequence[currentIndex] : 'endOfStudy',
     [currentIndex, studySequence],
