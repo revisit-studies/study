@@ -1,15 +1,12 @@
 import { useState, forwardRef, type Ref } from "react";
 import {Group, Radio, TextInput} from "@mantine/core";
+import {Option} from "../../../parser/types";
 
-type radioProps = {
-    label:string,
-    value:string,
-}
 
 type inputProps = {
     title: string,
     desc: string,
-    radioData: radioProps[]
+    radioData?: Option[]
 }
 
 export default forwardRef(function RadioInput({ title="Your Question", desc="additional description", radioData=[] }: inputProps, ref: Ref<HTMLInputElement>) {

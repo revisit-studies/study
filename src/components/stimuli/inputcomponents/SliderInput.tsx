@@ -1,7 +1,7 @@
 import { useState, forwardRef, type Ref } from "react";
 import {Group, Radio, Slider, TextInput} from "@mantine/core";
 
-type sliderProps = {
+export type sliderProps = {
     label:string,
     value:number,
 }

@@ -32,6 +32,7 @@ interface AttentionComponent extends StudyComponent {
 }
 
 export interface TrialsComponent extends StudyComponent {
+    response: Response;
     order: string[];
     trials: { [key: string]: Trial };
 }
@@ -52,12 +53,17 @@ interface Stimulus {
 
 // Add types for stimulus
 
-interface Response {
+export interface Option {
+    label: string;
+    value: string;
+}
+export interface Response {
     id: string;
     prompt: string;
-    type: 'numerical' | 'short-text' | 'long-text' | 'likert';
-    placeholder: string;
-    required: boolean;
+    type: 'numerical' | 'short-text' | 'long-text' | 'likert' | 'dropdown' | 'slider' | 'Radio';
+    desc: string;
+    required: boolean
+    options?: Option[];
 }
 
 // Add types for response

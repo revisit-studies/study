@@ -11,6 +11,7 @@ import {RadioIcon} from "@mantine/core/lib/Radio/RadioIcon";
 import RadioInput from "../components/stimuli/inputcomponents/RadioInput";
 import SliderInput from "../components/stimuli/inputcomponents/SliderInput";
 import DropdownInput from "../components/stimuli/inputcomponents/DropdownInput";
+import ResponseSwitcher from "../components/stimuli/inputcomponents/ResponseSwitcher";
 
 export default function Trials({
   goToNextSection,
@@ -21,7 +22,6 @@ export default function Trials({
 }) {
   const dispatch = useDispatch();
   const [stimuliIndex, setStimuliIndex] = useState(0);
-
   const stimuliSequence = useMemo(() => {
     return currentStudySectionConfig.order;
   }, [currentStudySectionConfig]);
@@ -29,6 +29,7 @@ export default function Trials({
   // current active stimuli presented to the user
   const stimulusID = stimuliSequence[stimuliIndex];
   const stimulus = currentStudySectionConfig.trials[stimulusID];
+  const response = currentStudySectionConfig.response;
 
   const goToNext = () => {
     if (inputRef.current !== null) {
@@ -49,16 +50,19 @@ export default function Trials({
 
   const StimulusComponent = lazy(() => import(/* @vite-ignore */`../components/${stimulus.stimulus.path}`));
 
+  console.log(response)
   return (
     <div>
     <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
       <Suspense fallback={<div>Loading...</div>}>
         <StimulusComponent parameters={stimulus.stimulus.parameters} />
-        <TextInput placeholder={"The answer is range from 0 - 100"} label={"Your answer"} ref={inputRef}/>
-        <RadioInput title={"Your answer"} ref={inputRef} desc={"desc"} radioData={[{label: "lable1",value: "1"},{label:"label2",value:"2"}]}/>
-        <SliderInput title={"Your answer"} ref={inputRef} desc={"desc"} sliderData={[{label: "lable1",value: 1},{label:"label2",value:100}]}/>
-        <DropdownInput title={"Your answer"} ref={inputRef} placeholder={"The answer is range from 0 - 100"} dropdownData={[{label: "lable1",value: "1"},{label:"label2",value:"2"}]}/>
-
+        <ResponseSwitcher id={response.id} type={response.type}
+                          desc={response.desc}
+                          prompt={response.prompt}
+                          required={response.required}
+                          options={response.options}
+                          ref={inputRef}/>
+        {/*<TextInput placeholder={"The answer is range from 0 - 100"} label={"Your answer"} ref={inputRef}/>*/}
 
       </Suspense>
       
