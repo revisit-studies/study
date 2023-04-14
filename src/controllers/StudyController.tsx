@@ -50,7 +50,7 @@ export default function StudyController() {
 
   return (
     <div>
-      { currentStudySection.includes('consent') && currentStudySectionConfig !== null && <Consent goToNextSection={ goToNextSection } currentStudySectionConfig={ currentStudySectionConfig as ConsentComponent }/> }
+      { currentStudySection.includes('consent') && currentStudySectionConfig !== null && <Consent goToNextSection={ goToNextSection } currentStudySectionConfig={ currentStudySectionConfig as ConsentComponent } studyConfig={studyConfig as StudyConfig}/> }
       { currentStudySection.includes('training') && <div>training component here <Button onClick={goToNextSection}>Accept</Button></div> }
       { currentStudySection.includes('practice') && <div>practice component here <Button onClick={goToNextSection}>Accept</Button></div> }
       { currentStudySection.includes('attention') && <div>attention component here <Button onClick={goToNextSection}>Accept</Button></div> }
