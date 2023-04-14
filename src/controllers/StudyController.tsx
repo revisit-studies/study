@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button } from '@mantine/core';
+import { ActionIcon, AppShell, Aside, Button, Flex, Grid, Header, Image, Menu, Modal, Navbar, Progress, Space, Text } from '@mantine/core';
+import { IconDotsVertical, IconMail, IconSchema } from '@tabler/icons-react';
 
 import { parseStudyConfig } from '../parser/parser';
 import { ConsentComponent, StudyConfig, TrialsComponent } from '../parser/types';
@@ -8,7 +9,10 @@ import Consent from '../components/Consent';
 import TrialController from './TrialController';
 
 import { useSelector, useDispatch } from 'react-redux'
-import { nextSection, trrack, type RootState } from '../store/'
+import { nextSection, type RootState } from '../store/'
+
+import logoUrl from '../assets/revisitLogoSquare.svg'
+import { useDisclosure } from '@mantine/hooks';
 
 
 async function fetchStudyConfig(configLocation: string) {
@@ -47,16 +51,88 @@ export default function StudyController() {
     dispatch(nextSection());
   }
 
+  const progressBarCurrent = currentIndex;
+  const progressBarMax = studySequence.length;
+  const progressPercent = (progressBarCurrent / progressBarMax) * 100;
+
+  const [helpModalVisible, { open, close }] = useDisclosure(false);
+  const [menuOpened, setMenuOpened] = useState(false);
+
+  const [showAdmin, setShowAdmin] = useState(false);
 
   return (
-    <div>
-      { currentStudySection.includes('consent') && currentStudySectionConfig !== null && <Consent goToNextSection={ goToNextSection } currentStudySectionConfig={ currentStudySectionConfig as ConsentComponent }/> }
-      { currentStudySection.includes('training') && <div>training component here <Button onClick={goToNextSection}>Accept</Button></div> }
-      { currentStudySection.includes('practice') && <div>practice component here <Button onClick={goToNextSection}>Accept</Button></div> }
-      { currentStudySection.includes('attention') && <div>attention component here <Button onClick={goToNextSection}>Accept</Button></div> }
-      { currentStudySection.includes('trials') && <div><TrialController goToNextSection={goToNextSection} currentStudySectionConfig={currentStudySectionConfig as TrialsComponent} /></div> }
-      { currentStudySection.includes('survey') && <div>survey component here <Button onClick={goToNextSection}>Accept</Button></div> }
-      { currentStudySection.includes('endOfStudy') && <div>Thanks for completing the study</div> }
-    </div>
+    <AppShell
+      navbarOffsetBreakpoint="sm"
+      asideOffsetBreakpoint="sm"
+      navbar={
+        <Navbar p="md" width={{ lg: 300 }} style={{ zIndex: 0 }}>
+          <Text>Application navbar</Text>
+        </Navbar>
+      }
+      aside={
+          showAdmin
+          ? <Aside p="md" width={{ lg: 300 }} style={{ zIndex: 0 }}>
+            <Text>Application sidebar</Text>
+          </Aside>
+          : <></>
+      }
+      header={
+        <Header height="60" p="md">
+          <Grid align="center">
+            <Grid.Col span={4}>
+              <Flex align="center">
+                <Image maw={ 40 } src={ logoUrl } alt="Study Logo" />
+                <Space w="md"></Space>
+                <Text>{studyConfig?.['study-metadata'].title}</Text>
+              </Flex>
+            </Grid.Col>
+
+            <Grid.Col span={4}><Progress radius="md" size="lg" value={progressPercent} /></Grid.Col>
+
+            <Grid.Col span={4}>
+              <Flex align="center" justify="flex-end">
+                <Button variant="outline" onClick={open}>Help</Button>
+
+                <Space w="md"></Space>
+
+                <Menu shadow="md" width={200} zIndex={1} opened={menuOpened} onChange={setMenuOpened}>
+                  <Menu.Target>
+                  <ActionIcon size="lg">
+                      <IconDotsVertical />
+                    </ActionIcon>
+                  </Menu.Target>
+
+                  <Menu.Dropdown>
+                    <Menu.Item icon={<IconSchema size={14} />} onClick={() => setShowAdmin(!showAdmin)}>Admin Mode</Menu.Item>
+                    <Menu.Item 
+                      component="a" 
+                      href={studyConfig !== null ? `mailto:${studyConfig['study-metadata'].contactEmail}` : undefined}
+                      icon={<IconMail size={14} />}
+                    >
+                      Contact
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
+              </Flex>
+            </Grid.Col>
+          </Grid>
+        </Header>
+      }
+    >
+
+      <Modal opened={helpModalVisible} onClose={close} title="Help">
+        <div>hello</div>
+      </Modal>
+
+      <div>
+        { currentStudySection.includes('consent') && currentStudySectionConfig !== null && <Consent goToNextSection={ goToNextSection } currentStudySectionConfig={ currentStudySectionConfig as ConsentComponent }/> }
+        { currentStudySection.includes('training') && <div>training component here <Button onClick={goToNextSection}>Accept</Button></div> }
+        { currentStudySection.includes('practice') && <div>practice component here <Button onClick={goToNextSection}>Accept</Button></div> }
+        { currentStudySection.includes('attention') && <div>attention component here <Button onClick={goToNextSection}>Accept</Button></div> }
+        { currentStudySection.includes('trials') && <div><TrialController goToNextSection={goToNextSection} currentStudySectionConfig={currentStudySectionConfig as TrialsComponent} /></div> }
+        { currentStudySection.includes('survey') && <div>survey component here <Button onClick={goToNextSection}>Accept</Button></div> }
+        { currentStudySection.includes('endOfStudy') && <div>Thanks for completing the study</div> }
+      </div>
+    </AppShell>
   );
 }
