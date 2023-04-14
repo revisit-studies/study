@@ -5,6 +5,10 @@ interface StudyMetadata {
   date: Date;
   description?: string;
   organization?: string[];
+  contactEmail: string;
+  helpTextPath?: string;
+  logoPath: string;
+  withProgressBar: boolean;
 }
 
 export interface StudyComponent {
