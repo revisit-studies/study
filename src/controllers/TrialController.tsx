@@ -2,9 +2,10 @@ import { useForm } from "@mantine/form";
 import { lazy, Suspense, useEffect, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
 
-import { Group, TextInput } from "@mantine/core";
+import { Group } from "@mantine/core";
 import { useParams } from "react-router-dom";
 import { NextButton } from "../components/NextButton";
+import ResponseSwitcher from "../components/stimuli/inputcomponents/ResponseSwitcher";
 import { TrialsComponent } from "../parser/types";
 import { useCurrentStep } from "../routes";
 import {
@@ -77,6 +78,7 @@ export default function TrialController() {
 
   if (!trialId || !config) return null;
 
+  const response = config?.response;
   const stimulus = config.trials[trialId];
   const componentPath = stimulus.stimulus.path;
 
@@ -94,17 +96,16 @@ export default function TrialController() {
       {StimulusComponent && (
         <Suspense fallback={<div>Loading...</div>}>
           <StimulusComponent parameters={stimulus.stimulus.parameters} />
-          <TextInput
-            disabled={trialStatus.complete}
-            {...answerField.getInputProps("input")}
-            placeholder={"The answer is range from 0 - 100"}
-            label={"Your answer"}
-            radius={"lg"}
-            size={"md"}
+          <ResponseSwitcher
+            id={response.id}
+            type={response.type}
+            desc={response.desc}
+            prompt={response.prompt}
+            required={response.required}
+            options={response.options}
           />
         </Suspense>
       )}
-
       <Group position="right" spacing="xs" mt="xl">
         {nextTrailId ? (
           <NextButton
