@@ -8,6 +8,7 @@ interface StudyMetadata {
     contactEmail: string;
     helpTextPath?: string;
     logoPath: string;
+    withProgressBar: boolean;
 }
 
 interface StudyComponents {

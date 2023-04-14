@@ -68,6 +68,7 @@ export default function StudyController() {
   }, [helpTextPath]);
 
   const logoPath = studyConfig?.['study-metadata'].logoPath;
+  const withProgressBar = studyConfig?.['study-metadata'].withProgressBar;
 
   return (
     <AppShell
@@ -96,7 +97,9 @@ export default function StudyController() {
               </Flex>
             </Grid.Col>
 
-            <Grid.Col span={4}><Progress radius="md" size="lg" value={progressPercent} /></Grid.Col>
+            <Grid.Col span={4}>
+              {withProgressBar && <Progress radius="md" size="lg" value={progressPercent} />}
+            </Grid.Col>
 
             <Grid.Col span={4}>
               <Flex align="center" justify="flex-end">
