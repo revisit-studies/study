@@ -69,7 +69,7 @@ const studySlice = createTrrackableSlice({
       }: PayloadAction<{
         trialName: string;
         trialId: string;
-        answer: string;
+        answer: string | object;
       }>
     ) {
       state.trials[payload.trialName][payload.trialId] = {

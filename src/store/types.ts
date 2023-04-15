@@ -5,7 +5,7 @@ export type RootState = ReturnType<typeof store.getState>;
 
 export interface TrialResult {
   complete: boolean;
-  answer: string | null;
+  answer: string | object | null;
 }
 
 export type TrialRecord = Record<string, TrialResult>;
