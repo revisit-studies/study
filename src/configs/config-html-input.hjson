@@ -1,0 +1,84 @@
+{
+    config-version: 1,
+    study-metadata: {
+        title: "Cleveland McGill Example",
+        version: "pilot",
+        authors: [
+            "The reVISit Team"
+        ],
+        date: "2023-04-14",
+        description: "A simple experiment with .",
+        organizations: [
+            "University of Utah",
+            "WPI",
+            "University of Toronto"
+        ],
+        contactEmail: "test@test.com",
+        helpTextPath: "/src/markdowns/help.md",
+        logoPath: "/src/assets/revisitLogoSquare.svg",
+        withProgressBar: true,
+    },
+    components: {
+        consent: {
+            type: "consent"
+            path: "src/markdowns/consent.md"
+        },
+        training1: {
+            type: "training"
+        },
+        practice1: {
+            type: "practice",
+            max-failures: 5,
+        },
+        attention1: {
+            type: "attention-test"
+        }
+        trials1: {
+            type: "trials",
+            order: ["barChart", "barChart"],
+            randomization-scheme: "latin-square",
+            subset-count: 2,
+            attention-checks: {
+                check: "attention1",
+                pattern: random
+                // one check after 10 trials 
+                interval: 10
+            }
+            response:{
+                id: "cm-response"
+                type: "numeric",
+                prompt: "Your answer!!",
+                desc: "Enter your answer here, range from 0 - 100",
+                options:[],
+                required: true,
+            },
+            trials: {
+                barChart: {
+                    description: "A chart with correct answer of 0.66",
+                    instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?",
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component 
+                        type: "website",
+                        // can be a URL or a local path
+                        path: "stimuli-d3-interaction/bar-chart-interaction.html",
+                        // style that will be applied to iframe
+                        style: {
+                            height: "500px"
+                        }
+                    },
+                },
+            },
+        },
+        post-study-survey: {
+            type: "survey",
+        }
+    },
+    sequence: [
+        "consent",
+        "training1"
+        "practice1",
+        "attention1",
+        "trials1",
+        "post-study-survey"
+    ]
+}

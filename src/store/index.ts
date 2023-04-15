@@ -11,7 +11,7 @@ import { useCurrentStep } from "../routes";
 
 export interface TrialResult {
   complete: boolean;
-  answer: string | null;
+  answer: string | object | null;
 }
 
 type TrialRecord = Record<string, TrialResult>;
@@ -80,7 +80,7 @@ const studySlice = createTrrackableSlice({
       }: PayloadAction<{
         trialName: string;
         trialId: string;
-        answer: string;
+        answer: string | object;
       }>
     ) {
       state.trials[payload.trialName][payload.trialId] = {
