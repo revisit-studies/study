@@ -1,6 +1,7 @@
 import { type PayloadAction } from "@reduxjs/toolkit";
 import { configureTrrackableStore, createTrrackableSlice } from "@trrack/redux";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
+import { initFirebase } from "../firebase/init";
 import { StudyConfig } from "../parser/types";
 import { RootState, State, Step, StudyIdentifiers } from "./types";
 
@@ -9,6 +10,8 @@ export const PID = "PARTICIPANT_ID";
 export const SESSION_ID = "SESSION_ID";
 
 export const DEBUG = true;
+
+export const FIREBASE = initFirebase();
 
 const initialState: State = {
   studyIdentifiers: null,

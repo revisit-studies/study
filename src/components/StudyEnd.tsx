@@ -20,7 +20,9 @@ export function StudyEnd() {
   const ids = useAppSelector((s) => s.study.studyIdentifiers);
 
   const autoDownload = config?.uiConfig.autoDownloadStudy || false;
-  const autoDownloadDelay = config?.uiConfig.autoDownloadTime || -1;
+  const autoDownloadDelay = autoDownload
+    ? config?.uiConfig.autoDownloadTime || -1
+    : -1;
 
   const [delayCounter, setDelayCounter] = useState(
     Math.floor(autoDownloadDelay / 1000)
