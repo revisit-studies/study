@@ -90,7 +90,7 @@ export default function TrialController() {
           {stimulus.stimulus.type === 'react-component' && <ReactComponentController stimulusID={trialId} stimulus={stimulus.stimulus} />}
 
           {/* <StimulusComponent parameters={stimulus.stimulus.parameters} /> */}
-          <ResponseBlock response={response} />
+          <ResponseBlock responses={response} />
         </Suspense>
       </TrialProvenanceContext.Provider>
 

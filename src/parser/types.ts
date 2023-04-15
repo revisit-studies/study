@@ -44,7 +44,7 @@ interface AttentionComponent extends StudyComponent {
 }
 
 export interface TrialsComponent extends StudyComponent {
-  response: Response;
+  response: Response[];
   order: string[];
   trials: { [key: string]: Trial };
 }
@@ -90,9 +90,7 @@ export interface Response {
   min?: number;
 }
 
-export interface Responses {
-  questions: Response[];
-}
+
 
 // Add types for response
 

@@ -13,11 +13,10 @@ import {useEffect} from "react";
 
 
 type Props = {
-    response: Response;
+    responses: Response[];
 };
 
-export default function ResponseBlock({ response }: Props) {
-    const { type, desc, prompt, options, required, preset,max,min } = response;
+export default function ResponseBlock({ responses }: Props) {
 
     const dispatch = useAppDispatch();
     const currentStep = useCurrentStep();
@@ -28,7 +27,7 @@ export default function ResponseBlock({ response }: Props) {
     const trialStatus = useTrialStatus(trialId);
     const trialProvenance = createTrialProvenance();
     console.log(trialId,"trialId")
-    if (!type || !trialStatus || !trialId) return <></>;
+    if (!responses || !trialStatus || !trialId) return <></>;
 
 
     const answerField = useForm({
@@ -57,7 +56,13 @@ export default function ResponseBlock({ response }: Props) {
 
     return (
         <>
-            <ResponseSwitcher status={trialStatus} response={response} />
+            {
+                responses.map((response, index) => {
+                    return (
+                        <ResponseSwitcher key={index} status={trialStatus} response={response} />
+                    )
+                })
+            }
             <Group position="right" spacing="xs" mt="xl">
                 {nextTrailId ? (
                     <NextButton
