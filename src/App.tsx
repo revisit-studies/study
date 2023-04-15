@@ -76,6 +76,7 @@ export default function AppShellDemo() {
   useEffect(() => {
     if (!config) {
       fetchStudyConfig("/src/configs/config-cleveland.hjson").then((cfg) => {
+        // fetchStudyConfig("/src/configs/config-image-demo.hjson").then((cfg) => {
         store.dispatch(saveConfig(cfg));
       });
     }

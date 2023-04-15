@@ -12,20 +12,13 @@
             "University of Utah",
             "WPI",
             "University of Toronto"
-        ]
+        ],
+        logoPath: "/src/assets/revisitLogoSquare.svg",
     },
     components: {
         trials1: {
             type: "trials",
             order: ["frog1", "frog2"],
-            randomization-scheme: "latin-square",
-            subset-count: 2,
-            attention-checks: {
-                check: "attention1",
-                pattern: random
-                // one check after 10 trials 
-                interval: 10
-            }
             response:{
                 id: "cm-response"
                 type: "numeric",
@@ -39,7 +32,6 @@
                     description: "What does the description do? ",
                     instruction:  "**Question:** How many frogs are in the image?",
                     stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
                         type: "image",
                         // can be a URL or a local path
                         path: "one-frog.jpg",
@@ -53,7 +45,7 @@
                     description: "What does the description do? ",
                     instruction:  "**Question:** How many frogs are in the image?",
                     stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
+                        // Allowable types: image, website, react-component 
                         type: "image",
                         // can be a URL or a local path
                         path: "two-frogs.jpg",
