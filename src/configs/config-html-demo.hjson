@@ -26,14 +26,14 @@
                 // one check after 10 trials 
                 interval: 10
             }
-            response:{
+            response:[{
                 id: "cm-response"
                 type: "numeric",
                 prompt: "Your answer:",
                 desc: "Enter your answer here, range from 0 - 100",
                 options:[],
                 required: true,
-            },
+            }],
             trials: {
                 barChart: {
                     description: "What does the description do? ",
@@ -42,7 +42,7 @@
                         // Allowable types: image, javascript, website, react-component 
                         type: "website",
                         // can be a URL or a local path
-                        path: "stimuli-d3/bar-chart.html",
+                        path: "/stimuli-d3/bar-chart.html",
                         // style that will be applied to iframe
                         style: {
                             height: "500px"

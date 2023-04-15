@@ -2,7 +2,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
 import { saveTrialAnswer } from "../store";
 import { useCurrentStep } from "../routes";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { useNavigateWithParams } from "../utils/useNavigateWithParams";
 import { useNextStep } from "../store/hooks/useNextStep";
 
 const PREFIX = "@REVISIT_COMMS";
@@ -29,7 +30,7 @@ const IframeController = ({
 
   // navigation
   const currentStep = useCurrentStep();
-  const navigate = useNavigate();
+  const navigate = useNavigateWithParams();
   const computedTo = useNextStep();
 
   useEffect(() => {
