@@ -13,17 +13,18 @@ import TextAreaInput from "./TextAreaInput";
 type Props = {
   response: Response;
   status: TrialResult;
+  answer: object;
 };
 
-export default function ResponseSwitcher({ response }: Props) {
-  const { type, desc, prompt, options, required, preset,max,min } = response;
+export default function ResponseSwitcher({ response , status, answer}: Props) {
+  const { type,id, desc, prompt, options, required, preset,max,min } = response;
 
   if (!type) return null;
 
   return (
     <>
       {type === "short-text" && (
-        <TextInput placeholder={desc} label={prompt} required={required} />
+        <TextInput placeholder={desc} label={prompt} required={required} id={id} answer={answer}/>
       )}
       {type === "dropdown" && (
         <DropdownInput

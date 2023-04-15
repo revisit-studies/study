@@ -7,10 +7,12 @@ type inputProps = {
   placeholder: string;
   label: string;
   required: boolean;
+  id:string;
+    answer:object;
 };
 
 export default forwardRef(function StringInput(
-  { placeholder = "", label = "", required }: inputProps,
+  { placeholder = "", label = "", required ,answer,id}: inputProps,
   ref: Ref<HTMLInputElement>
 ) {
   return (
@@ -22,6 +24,7 @@ export default forwardRef(function StringInput(
         radius={"lg"}
         size={"md"}
         withAsterisk={required}
+        {...answer}
       />
     </>
   );

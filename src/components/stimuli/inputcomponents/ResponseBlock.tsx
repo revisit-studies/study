@@ -26,28 +26,35 @@ export default function ResponseBlock({ responses }: Props) {
     const nextTrailId = useNextTrialId(trialId);
     const trialStatus = useTrialStatus(trialId);
     const trialProvenance = createTrialProvenance();
-    console.log(trialId,"trialId")
     if (!responses || !trialStatus || !trialId) return <></>;
 
 
+    const generateInitFields = () => {
+        let initObj = {};
+
+        responses.forEach((response) => {
+            initObj = {...initObj, [response.id]: ""};
+        });
+
+        return initObj;
+    }
+
     const answerField = useForm({
-        initialValues: {
-            input: trialStatus.answer || "",
-        },
-        transformValues(values) {
-            return {
-                answer: parseFloat(values.input),
-            };
-        },
-        validate: {
-            input: (value) => {
-                if (value.length === 0) return null;
-                const ans = parseFloat(value);
-                if (isNaN(ans)) return "Please enter a number";
-                return ans < 0 || ans > 100 ? "The answer is range from 0 - 100" : null;
-            },
-        },
-        validateInputOnChange: ["input"],
+        initialValues: generateInitFields(),
+        // transformValues(values) {
+        //     return {
+        //         answer: parseFloat(values.input),
+        //     };
+        // },
+        // validate: {
+        //     input: (value) => {
+        //         if (value.length === 0) return null;
+        //         const ans = parseFloat(value);
+        //         if (isNaN(ans)) return "Please enter a number";
+        //         return ans < 0 || ans > 100 ? "The answer is range from 0 - 100" : null;
+        //     },
+        // },
+        //validateInputOnChange: ["input"],
     });
 
     useEffect(() => {
@@ -59,7 +66,7 @@ export default function ResponseBlock({ responses }: Props) {
             {
                 responses.map((response, index) => {
                     return (
-                        <ResponseSwitcher key={index} status={trialStatus} response={response} />
+                        <ResponseSwitcher key={index} status={trialStatus} answer={answerField.getInputProps(response.id)} response={response} />
                     )
                 })
             }
@@ -77,13 +84,14 @@ export default function ResponseBlock({ responses }: Props) {
                                 answerField.setFieldValue("input", "");
                             }
 
-                            const answer = answerField.getTransformedValues().answer;
+                            const answer = JSON.stringify(answerField.values);
+                            console.log(answer,"answer")
 
                             dispatch(
                                 saveTrialAnswer({
                                     trialName: currentStep,
                                     trialId,
-                                    answer: answer.toString(),
+                                    answer: answer,
                                 })
                             );
 
