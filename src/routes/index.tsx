@@ -1,20 +1,15 @@
 // npm install react-router-dom localforage match-sorter sort-by // For offline + misc
 
-import { AppShell } from "@mantine/core";
 import { ReactNode } from "react";
 import {
-  Navigate,
-  Outlet,
   RouteObject,
   createBrowserRouter,
   useLocation,
 } from "react-router-dom";
-import AppAside from "../components/interface/AppAside";
-import AppHeader from "../components/interface/AppHeader";
-import AppNavBar from "../components/interface/AppNavBar";
-import HelpModal from "../components/interface/HelpModal";
+import { Shell } from "../components/Shell";
 import TrialController from "../controllers/TrialController";
 import { StudyComponent, StudyConfig, TrialsComponent } from "../parser/types";
+import { NavigateWithParams } from "../utils/NavigateWithParams";
 
 export function createRouter(
   config: StudyConfig | null,
@@ -28,7 +23,7 @@ export function createRouter(
   const routes: RouteObject[] = [
     {
       path: "/",
-      element: <Navigate to={`/${sequence[0]}`} replace />,
+      element: <NavigateWithParams to={`/${sequence[0]}`} replace />,
     },
   ];
 
@@ -42,7 +37,7 @@ export function createRouter(
 
       const baseTrailRoute: RouteObject = {
         path: step,
-        element: <Navigate to={`/${step}/${order[0]}`} replace />,
+        element: <NavigateWithParams to={`/${step}/${order[0]}`} replace />,
       };
 
       const trialRoute: RouteObject = {
@@ -64,18 +59,7 @@ export function createRouter(
 
   const rootRoute: RouteObject = {
     path: "/",
-    element: (
-      <AppShell
-        navbarOffsetBreakpoint="sm"
-        asideOffsetBreakpoint="sm"
-        navbar={<AppNavBar />}
-        aside={<AppAside />}
-        header={<AppHeader />}
-      >
-        <HelpModal /> {/* <StudyController /> */}
-        <Outlet />
-      </AppShell>
-    ),
+    element: <Shell />,
     children: routes,
   };
 

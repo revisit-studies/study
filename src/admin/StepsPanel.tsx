@@ -1,11 +1,11 @@
 import { Badge, Group } from "@mantine/core";
-import { useNavigate } from "react-router-dom";
 import { useCurrentStep } from "../routes";
 import { useAppSelector } from "../store";
+import { useNavigateWithParams } from "../utils/useNavigateWithParams";
 
 export function StepsPanel() {
   const currentStep = useCurrentStep();
-  const navigate = useNavigate();
+  const navigate = useNavigateWithParams();
 
   const { config = null } = useAppSelector((state) => state.study);
 

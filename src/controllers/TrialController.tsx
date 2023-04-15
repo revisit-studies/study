@@ -7,13 +7,9 @@ import { useParams } from "react-router-dom";
 import { NextButton } from "../components/NextButton";
 import { TrialsComponent } from "../parser/types";
 import { useCurrentStep } from "../routes";
-import {
-  saveTrialAnswer,
-  useAppDispatch,
-  useAppSelector,
-  useNextStep,
-  useTrialStatus,
-} from "../store";
+import { saveTrialAnswer, useAppDispatch, useAppSelector } from "../store";
+import { useNextStep } from "../store/hooks/useNextStep";
+import { useTrialStatus } from "../store/hooks/useTrialStatus";
 
 import ResponseSwitcher from "../components/stimuli/inputcomponents/ResponseSwitcher";
 import {
@@ -21,6 +17,7 @@ import {
   TrialProvenanceContext,
 } from "../store/trialProvenance";
 import IframeController from "./IframeController";
+
 import ReactComponentController from "./ReactComponentController";
 import ResponseBlock from "../components/stimuli/inputcomponents/ResponseBlock";
 import ImageController from "./ImageController";
@@ -66,8 +63,6 @@ export default function TrialController() {
 
   const trialProvenance = createTrialProvenance();
 
-
-
   if (!trialId || !config) return null;
 
   const stimulus = config.trials[trialId];
@@ -88,15 +83,29 @@ export default function TrialController() {
       <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
       <TrialProvenanceContext.Provider value={trialProvenance}>
         <Suspense fallback={<div>Loading...</div>}>
-          {stimulus.stimulus.type === 'website' && <IframeController path={stimulus.stimulus.path} style={stimulus.stimulus.style} />}
-          {stimulus.stimulus.type === 'image' && <ImageController path={stimulus.stimulus.path} style={stimulus.stimulus.style} />}
-          {stimulus.stimulus.type === 'react-component' && <ReactComponentController stimulusID={trialId} stimulus={stimulus.stimulus} />}
+          {stimulus.stimulus.type === "website" && (
+            <IframeController
+              path={stimulus.stimulus.path}
+              style={stimulus.stimulus.style}
+            />
+          )}
+          {stimulus.stimulus.type === "image" && (
+            <ImageController
+              path={stimulus.stimulus.path}
+              style={stimulus.stimulus.style}
+            />
+          )}
+          {stimulus.stimulus.type === "react-component" && (
+            <ReactComponentController
+              stimulusID={trialId}
+              stimulus={stimulus.stimulus}
+            />
+          )}
 
           {/* <StimulusComponent parameters={stimulus.stimulus.parameters} /> */}
           <ResponseBlock responses={response} />
         </Suspense>
       </TrialProvenanceContext.Provider>
-
     </div>
   );
 }
