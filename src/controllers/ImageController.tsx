@@ -1,3 +1,5 @@
+import { Image } from '@mantine/core';
+
 const defaultStyle = {
   maxWidth: "100%",
 };
@@ -12,9 +14,7 @@ const ImageController = ({
   const imageStyle = { ...defaultStyle, ...style };
 
   return (
-    <div>
-      <img src={`/image-stimuli/${path}`} style={imageStyle} />
-    </div>
+    <Image mx="auto" src={`/image-stimuli/${path}`} style={imageStyle} />
   );
 };
 
