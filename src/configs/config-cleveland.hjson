@@ -64,7 +64,7 @@
 // Numerical example
              response:{
                 id: "cm-response"
-                type: "numerical",
+                type: "short-text",
                 prompt: "Your answer!!",
                 desc: "Enter your answer here, range from 0 - 100",
                 required: true,
