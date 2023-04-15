@@ -68,7 +68,7 @@ export interface Stimulus {
 
 export interface Option {
   label: string;
-  value: string;
+  value: string | number;
 }
 export interface Response {
   id: string;

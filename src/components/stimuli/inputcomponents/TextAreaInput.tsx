@@ -5,9 +5,11 @@ type inputProps = {
     placeholder: string,
     label: string,
     required: boolean,
+    answer:object;
+
 }
 
-export default forwardRef(function TextAreaInput({ placeholder="", label="" ,required}: inputProps, ref: Ref<HTMLInputElement>) {
+export default function TextAreaInput({ placeholder="", label="" ,required, answer}: inputProps ) {
     return (
         <>
             <Textarea
@@ -19,4 +21,4 @@ export default forwardRef(function TextAreaInput({ placeholder="", label="" ,req
             />
         </>
     );
-});
+};

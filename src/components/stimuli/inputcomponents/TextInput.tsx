@@ -8,17 +8,15 @@ type inputProps = {
   label: string;
   required: boolean;
   id:string;
-    answer:object;
+  answer:object;
 };
 
-export default forwardRef(function StringInput(
-  { placeholder = "", label = "", required ,answer,id}: inputProps,
-  ref: Ref<HTMLInputElement>
+export default function StringInput(
+  { placeholder = "", label = "", required ,answer,id}: inputProps
 ) {
   return (
     <>
       <TextInput
-        ref={ref}
         placeholder={placeholder}
         label={label}
         radius={"lg"}
@@ -28,4 +26,4 @@ export default forwardRef(function StringInput(
       />
     </>
   );
-});
+};

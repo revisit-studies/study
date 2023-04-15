@@ -7,9 +7,11 @@ type inputProps = {
     required: boolean,
     max: number,
     min: number,
+    answer:object;
+
 }
 
-export default forwardRef(function NumericInput({ placeholder="", label="" ,required=false,min=0,max=10}: inputProps, ref: Ref<HTMLInputElement>) {
+export default function NumericInput({ placeholder="", label="" ,required=false,min=0,max=10, answer}: inputProps) {
     return (
         <>
             <NumberInput
@@ -18,8 +20,8 @@ export default forwardRef(function NumericInput({ placeholder="", label="" ,requ
                 withAsterisk={required}
                 min={min}
                 max={max}
-                ref={ref}
+                {...answer}
             />
         </>
     );
-});
+};

@@ -7,10 +7,11 @@ import RadioInput from "./RadioInput";
 type inputProps = {
     title: string,
     desc: string,
-    likertPreset: string
+    likertPreset: string,
+    answer:object
 }
 
-export default forwardRef(function LikertInput({ title="Your Question", desc="additional description", likertPreset="5" }: inputProps, ref: Ref<HTMLInputElement>) {
+export default function LikertInput({ title="Your Question", desc="additional description", likertPreset="5", answer }: inputProps) {
 
     const radioData = [];
     for (let i = 1; i <= +likertPreset; i++) {
@@ -19,7 +20,7 @@ export default forwardRef(function LikertInput({ title="Your Question", desc="ad
 
     return (
         <>
-            <RadioInput title={title} desc={desc} radioData={radioData} ref={ref}/>
+            <RadioInput title={title} desc={desc} radioData={radioData} answer={answer}/>
         </>
     );
-});
+};

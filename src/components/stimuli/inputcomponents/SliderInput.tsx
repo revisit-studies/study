@@ -1,5 +1,6 @@
 import { useState, forwardRef, type Ref } from "react";
 import {Group, Radio, Slider, TextInput} from "@mantine/core";
+import {Option} from "../../../parser/types";
 
 export type sliderProps = {
     label:string,
@@ -9,16 +10,19 @@ export type sliderProps = {
 type inputProps = {
     title: string,
     desc: string,
-    sliderData: sliderProps[]
+    sliderData?: Option[],
+    answer:object;
+
 }
 
-export default forwardRef(function SliderInput({ title="Your Question", desc="additional description", sliderData=[] }: inputProps, ref: Ref<HTMLInputElement>) {
+export default function SliderInput({ title="Your Question", desc="additional description", sliderData=[], answer }: inputProps) {
     return (
         <>
             <Slider
-                ref={ref}
-                marks={sliderData}
+
+                marks={sliderData as sliderProps[]}
+                {...answer}
             />
         </>
     );
-});
+};

@@ -7,15 +7,18 @@ type inputProps = {
     label: string,
     required: boolean,
     checkboxData?: Option[]
+    answer:object;
+
 }
 
-export default forwardRef(function CheckBoxInput({ desc="", label="" ,required=false, checkboxData=[]}: inputProps, ref: Ref<HTMLInputElement>) {
+export default function CheckBoxInput({ desc="", label="" ,required=false, checkboxData=[], answer}: inputProps) {
     return (
         <>
             <Checkbox.Group
                 label={label}
                 description={desc}
                 withAsterisk = {required}
+                {...answer}
             >
                 <Group mt="md">
                     {
@@ -25,4 +28,4 @@ export default forwardRef(function CheckBoxInput({ desc="", label="" ,required=f
             </Checkbox.Group>
         </>
     );
-});
+};

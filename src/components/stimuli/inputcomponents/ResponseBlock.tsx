@@ -58,7 +58,10 @@ export default function ResponseBlock({ responses }: Props) {
     });
 
     useEffect(() => {
-        answerField.setFieldValue("input", trialStatus.answer || "");
+        responses.forEach((response) => {
+            const ans = trialStatus.answer ? JSON.parse(trialStatus.answer) : {};
+            answerField.setFieldValue(response.id, ans[response.id] || "");
+        });
     }, [trialStatus.answer]);
 
     return (

@@ -7,18 +7,20 @@ import {Option} from "../../../parser/types";
 type inputProps = {
     title: string,
     placeholder: string,
-    dropdownData?: Option[]
+    dropdownData?: Option[],
+    answer:object;
+
 }
 
-export default forwardRef(function DropdownInput({ title="Your Question", placeholder="additional description", dropdownData=[] }: inputProps, ref: Ref<HTMLInputElement>) {
+export default function DropdownInput({ title="Your Question", placeholder="additional description", dropdownData=[] , answer}: inputProps) {
     return (
         <>
             <Select
                 label={title}
                 placeholder={placeholder}
                 data={dropdownData}
-                ref={ref}
+                {...answer}
             />
         </>
     );
-});
+};
