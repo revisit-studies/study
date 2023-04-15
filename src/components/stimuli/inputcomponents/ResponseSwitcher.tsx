@@ -1,5 +1,4 @@
 import { Response } from "../../../parser/types";
-import { TrialResult } from "../../../store";
 import TextInput from "../../stimuli/inputcomponents/TextInput";
 import DropdownInput from "./DropdownInput";
 import NumericInput from "./NumericInput";
@@ -8,6 +7,7 @@ import CheckBoxInput from "./CheckBoxInput";
 import RadioInput from "./RadioInput";
 import TextAreaInput from "./TextAreaInput";
 import SliderInput from "./SliderInput";
+import {TrialResult} from "../../../store/types";
 
 
 
