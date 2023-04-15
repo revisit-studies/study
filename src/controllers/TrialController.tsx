@@ -20,6 +20,8 @@ import {
   createTrialProvenance,
   TrialProvenanceContext,
 } from "../store/trialProvenance";
+import IframeController from "./IframeController";
+import ReactComponentController from "./ReactComponentController";
 
 export function useTrialsConfig() {
   const currentStep = useCurrentStep();
@@ -104,20 +106,21 @@ export default function TrialController() {
     <div key={trialId}>
       <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
       <TrialProvenanceContext.Provider value={trialProvenance}>
-        {StimulusComponent && (
-          <Suspense fallback={<div>Loading...</div>}>
-            <StimulusComponent parameters={stimulus.stimulus.parameters} />
-            <ResponseSwitcher status={trialStatus} response={response} />
-            {/* <TextInput
-            disabled={trialStatus.complete}
-            {...answerField.getInputProps("input")}
-            placeholder={"The answer is range from 0 - 100"}
-            label={"Your answer"}
-            radius={"lg"}
-            size={"md"}
-          /> */}
-          </Suspense>
-        )}
+        <Suspense fallback={<div>Loading...</div>}>
+          {stimulus.stimulus.type === 'website' && <IframeController path={stimulus.stimulus.path} style={stimulus.stimulus.style} />}
+          {stimulus.stimulus.type === 'react-component' && <ReactComponentController stimulusID={trialId} stimulus={stimulus.stimulus} />}
+
+          {/* <StimulusComponent parameters={stimulus.stimulus.parameters} /> */}
+          <ResponseSwitcher status={trialStatus} response={response} />
+          {/* <TextInput
+          disabled={trialStatus.complete}
+          {...answerField.getInputProps("input")}
+          placeholder={"The answer is range from 0 - 100"}
+          label={"Your answer"}
+          radius={"lg"}
+          size={"md"}
+        /> */}
+        </Suspense>
       </TrialProvenanceContext.Provider>
 
       <Group position="right" spacing="xs" mt="xl">
