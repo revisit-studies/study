@@ -39,17 +39,45 @@
                 pattern: random
                 // one check after 10 trials 
                 interval: 10
-            }
-            response:{
+            },
+// response example:
+// Allowable types: numerical, short-text, long-text radio, checkbox, dropdown, slider, likert
+
+//dropdown example
+           // response:{
+            //    id: "cm-response"
+            //    type: "dropdown",
+            //    prompt: "Your answer!!",
+            //    desc: "Enter your answer here, range from 0 - 100",
+            //    // options is required for radio, checkbox,dropdown and slider in the following format.
+            //    options:[{label:"1", value:"1"}],
+            //    required: true,
+            //    max: 100,
+            //    min: 0
+            //},
+
+// Numerical example
+             response:{
                 id: "cm-response"
                 type: "numerical",
                 prompt: "Your answer!!",
                 desc: "Enter your answer here, range from 0 - 100",
-                options:[{label:"1", value:"1"}],
                 required: true,
+                // add max and min for the allowed range
                 max: 100,
                 min: 0
             },
+
+// Likert example
+             //response:{
+                //id: "cm-response"
+                //type: "likert",
+                //prompt: "Your answer!!",
+                //desc: "Enter your answer here, range from 0 - 100",
+                //required: true,
+                // specify the number of likert options.
+                //preset: "5"
+            //},
             trials: {
                 bubbleChart1: {
                     description: "A chart with correct answer of 0.66",
