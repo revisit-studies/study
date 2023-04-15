@@ -58,7 +58,7 @@ export interface Trial {
 }
 
 export interface Stimulus {
-  type: 'react-component' | 'image' | 'javascript' | 'website';
+  type: "react-component" | "image" | "javascript" | "website";
   path?: string;
   style?: { [key: string]: any };
   parameters?: { [key: string]: any };
@@ -103,9 +103,15 @@ export interface Answer {
 
 // Add types for answers
 
+type UIConfig = {
+  autoDownloadStudy: boolean;
+  autoDownloadTime: number;
+};
+
 export interface StudyConfig {
   "config-version": number;
   "study-metadata": StudyMetadata;
+  uiConfig: UIConfig;
   components: StudyComponents;
   sequence: string[];
 }

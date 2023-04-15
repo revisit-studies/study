@@ -7,13 +7,9 @@ import { useParams } from "react-router-dom";
 import { NextButton } from "../components/NextButton";
 import { TrialsComponent } from "../parser/types";
 import { useCurrentStep } from "../routes";
-import {
-  saveTrialAnswer,
-  useAppDispatch,
-  useAppSelector,
-  useNextStep,
-  useTrialStatus,
-} from "../store";
+import { saveTrialAnswer, useAppDispatch, useAppSelector } from "../store";
+import { useNextStep } from "../store/hooks/useNextStep";
+import { useTrialStatus } from "../store/hooks/useTrialStatus";
 
 import ResponseSwitcher from "../components/stimuli/inputcomponents/ResponseSwitcher";
 import {
@@ -21,8 +17,8 @@ import {
   TrialProvenanceContext,
 } from "../store/trialProvenance";
 import IframeController from "./IframeController";
-import ReactComponentController from "./ReactComponentController";
 import ImageController from "./ImageController";
+import ReactComponentController from "./ReactComponentController";
 
 export function useTrialsConfig() {
   const currentStep = useCurrentStep();
@@ -66,7 +62,7 @@ export default function TrialController() {
 
   const answerField = useForm({
     initialValues: {
-      input: trialStatus.answer || "",
+      input: trialStatus?.answer || "",
     },
     transformValues(values) {
       return {
@@ -85,8 +81,8 @@ export default function TrialController() {
   });
 
   useEffect(() => {
-    answerField.setFieldValue("input", trialStatus.answer || "");
-  }, [trialStatus.answer]);
+    answerField.setFieldValue("input", trialStatus?.answer || "");
+  }, [trialStatus?.answer]);
 
   if (!trialId || !config) return null;
 
@@ -107,9 +103,24 @@ export default function TrialController() {
       <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
       <TrialProvenanceContext.Provider value={trialProvenance}>
         <Suspense fallback={<div>Loading...</div>}>
-          {stimulus.stimulus.type === 'website' && <IframeController path={stimulus.stimulus.path} style={stimulus.stimulus.style} />}
-          {stimulus.stimulus.type === 'image' && <ImageController path={stimulus.stimulus.path} style={stimulus.stimulus.style} />}
-          {stimulus.stimulus.type === 'react-component' && <ReactComponentController stimulusID={trialId} stimulus={stimulus.stimulus} />}
+          {stimulus.stimulus.type === "website" && (
+            <IframeController
+              path={stimulus.stimulus.path}
+              style={stimulus.stimulus.style}
+            />
+          )}
+          {stimulus.stimulus.type === "image" && (
+            <ImageController
+              path={stimulus.stimulus.path}
+              style={stimulus.stimulus.style}
+            />
+          )}
+          {stimulus.stimulus.type === "react-component" && (
+            <ReactComponentController
+              stimulusID={trialId}
+              stimulus={stimulus.stimulus}
+            />
+          )}
 
           {/* <StimulusComponent parameters={stimulus.stimulus.parameters} /> */}
           <ResponseSwitcher status={trialStatus} response={response} />
@@ -134,7 +145,7 @@ export default function TrialController() {
             // }
             to={`/${currentStep}/${nextTrailId}`}
             process={() => {
-              if (trialStatus.complete) {
+              if (trialStatus?.complete) {
                 answerField.setFieldValue("input", "");
               }
 

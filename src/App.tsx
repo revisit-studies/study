@@ -12,6 +12,7 @@ import { createSelectorHook, Provider } from "react-redux";
 import { saveConfig, store, trrackStore } from "./store";
 
 import { RouterProvider } from "react-router-dom";
+import { StudyEnd } from "./components/StudyEnd";
 import { createRouter } from "./routes";
 import { flagsContext, flagsStore } from "./store/flags";
 
@@ -54,17 +55,13 @@ const elements: Record<StudyComponent["type"], ReactNode> = {
       <NextButton />
     </>
   ),
-  end: (
-    <>
-      <div>Fin. Thank you</div>
-      <NextButton />
-    </>
-  ),
+  end: <StudyEnd />,
 };
 
 export default function AppShellDemo() {
   const [config, setConfig] = useState<StudyConfig | null>(null);
 
+  // Subscribe to store till config is found. Then stop
   useEffect(() => {
     if (config) return;
     return store.subscribe(() => {
@@ -73,6 +70,7 @@ export default function AppShellDemo() {
     });
   });
 
+  // Fetch and set config
   useEffect(() => {
     if (!config) {
       fetchStudyConfig("/src/configs/config-cleveland.hjson").then((cfg) => {

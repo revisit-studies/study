@@ -5,8 +5,8 @@ import ReactMarkdown from "react-markdown";
 import { ConsentComponent } from "../parser/types";
 import { useCurrentStep } from "../routes";
 import { completeStep, useAppDispatch, useAppSelector } from "../store";
+import { useNavigateWithParams } from "../utils/useNavigateWithParams";
 import { NextButton } from "./NextButton";
-import { useNavigate } from "react-router-dom";
 
 export function useConsentConfig() {
   const currentStep = useCurrentStep();
@@ -20,7 +20,7 @@ export function useConsentConfig() {
 }
 
 export default function Consent() {
-  const navigate = useNavigate();
+  const navigate = useNavigateWithParams();
   const txtInput = useRef<HTMLInputElement>(null);
   const dispatch = useAppDispatch();
 
@@ -39,7 +39,8 @@ export default function Consent() {
   const signatureRequired = config !== null ? config.signatureRequired : false;
   const [disableContinue, setDisableContinue] = useState(signatureRequired);
 
-  const handleTextInput = () => setDisableContinue(txtInput.current?.value.length === 0);
+  const handleTextInput = () =>
+    setDisableContinue(txtInput.current?.value.length === 0);
 
   if (!consent) return <div>Loading...</div>;
 
@@ -48,15 +49,17 @@ export default function Consent() {
       <ReactMarkdown>{consent}</ReactMarkdown>
       {signatureRequired && (
         <Group position="left" spacing="xs">
-          <TextInput ref={txtInput} placeholder={"Please sign your name"} onChange={handleTextInput} />
+          <TextInput
+            ref={txtInput}
+            placeholder={"Please sign your name"}
+            onChange={handleTextInput}
+          />
         </Group>
-      )}        
-      <Group
-        position="left"
-        spacing="xs"
-        style={{ marginTop: 10 }}
-      >
-        <Button variant="subtle" onClick={() => navigate('/end')}>Deny</Button>
+      )}
+      <Group position="left" spacing="xs" style={{ marginTop: 10 }}>
+        <Button variant="subtle" onClick={() => navigate("/end")}>
+          Deny
+        </Button>
         <NextButton
           disabled={disableContinue}
           label="Accept"
