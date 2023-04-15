@@ -38,8 +38,8 @@ export default function AppHeader() {
   const withProgressBar = studyConfig?.['study-metadata'].withProgressBar;
 
   return (
-    <Header height="60" p="md">
-      <Grid align="center">
+    <Header height="70" p="md">
+      <Grid mt={-7} align="center">
         <Grid.Col span={4}>
           <Flex align="center">
             <Image maw={40} src={logoPath} alt="Study Logo" />
