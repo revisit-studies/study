@@ -8,7 +8,6 @@ type inputProps = {
     required: boolean,
     checkboxData?: Option[]
     answer:object;
-
 }
 
 export default function CheckBoxInput({ desc="", label="" ,required=false, checkboxData=[], answer}: inputProps) {

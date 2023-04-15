@@ -12,14 +12,14 @@ type inputProps = {
     desc: string,
     sliderData?: Option[],
     answer:object;
+    required: boolean,
 
 }
 
-export default function SliderInput({ title="Your Question", desc="additional description", sliderData=[], answer }: inputProps) {
+export default function SliderInput({ title="Your Question", desc="additional description", sliderData=[], answer,required }: inputProps) {
     return (
         <>
             <Slider
-
                 marks={sliderData as sliderProps[]}
                 {...answer}
             />

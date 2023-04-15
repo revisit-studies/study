@@ -33,16 +33,17 @@ export default function ResponseSwitcher({ response , status, answer}: Props) {
           placeholder={desc}
           dropdownData={options}
           answer={answer}
+          required={required}
         />
       )}
       {type === "radio" && (
-        <RadioInput title={prompt} desc={desc} radioData={options}answer={answer} />
+        <RadioInput title={prompt} desc={desc} radioData={options}answer={answer} required={required}/>
       )}
       {type === "numerical" && (
         <NumericInput label={prompt} placeholder={desc} required={required} answer={answer} max={max as number} min={min as number}/>
       )}
       {type === "likert" && (
-          <LikertInput title={prompt} desc={desc} likertPreset={preset as string} answer={answer}/>
+          <LikertInput title={prompt} desc={desc} likertPreset={preset as string} answer={answer} required={required}/>
       )}
       {type === "checkbox" && (
           <CheckBoxInput label={prompt} desc={desc} required={required} checkboxData={options} answer={answer}/>
@@ -50,7 +51,7 @@ export default function ResponseSwitcher({ response , status, answer}: Props) {
       {type === "long-text" && (
           <TextAreaInput placeholder={desc} label={prompt} required={required} answer={answer}/>
       )}
-      {type === "slider" && <SliderInput title={prompt} desc={desc} sliderData={options} answer={answer}/>}
+      {type === "slider" && <SliderInput title={prompt} desc={desc} sliderData={options} answer={answer} required={required}/>}
     </>
   );
 }

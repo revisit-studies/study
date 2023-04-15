@@ -10,7 +10,6 @@ type inputProps = {
     answer:object;
 
 }
-
 export default function NumericInput({ placeholder="", label="" ,required=false,min=0,max=10, answer}: inputProps) {
     return (
         <>

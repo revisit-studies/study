@@ -2,15 +2,13 @@ import { Response } from "../../../parser/types";
 import {saveTrialAnswer, TrialResult, useAppDispatch, useNextStep, useTrialStatus} from "../../../store";
 import ResponseSwitcher from "./ResponseSwitcher";
 import {NextButton} from "../../NextButton";
-import {Group} from "@mantine/core";
+import {Button, Group} from "@mantine/core";
 import {useCurrentStep} from "../../../routes";
 import {useParams} from "react-router-dom";
 import {createTrialProvenance} from "../../../store/trialProvenance";
 import {useNextTrialId, useTrialsConfig} from "../../../controllers/TrialController";
 import {useForm} from "@mantine/form";
 import {useEffect} from "react";
-
-
 
 type Props = {
     responses: Response[];
@@ -39,22 +37,20 @@ export default function ResponseBlock({ responses }: Props) {
         return initObj;
     }
 
+    const generateValidation = () => {
+        let validateObj = {};
+
+        responses.forEach((response) => {
+            if(response.required)
+                validateObj = {...validateObj, [response.id]: (value:string) => (value.length === 0 ? 'Empty input' : null)};
+        });
+
+        return validateObj;
+    }
+
     const answerField = useForm({
         initialValues: generateInitFields(),
-        // transformValues(values) {
-        //     return {
-        //         answer: parseFloat(values.input),
-        //     };
-        // },
-        // validate: {
-        //     input: (value) => {
-        //         if (value.length === 0) return null;
-        //         const ans = parseFloat(value);
-        //         if (isNaN(ans)) return "Please enter a number";
-        //         return ans < 0 || ans > 100 ? "The answer is range from 0 - 100" : null;
-        //     },
-        // },
-        //validateInputOnChange: ["input"],
+        validate: generateValidation(),
     });
 
     useEffect(() => {
@@ -66,6 +62,7 @@ export default function ResponseBlock({ responses }: Props) {
 
     return (
         <>
+            <form onSubmit={answerField.onSubmit(console.log)}>
             {
                 responses.map((response, index) => {
                     return (
@@ -73,14 +70,11 @@ export default function ResponseBlock({ responses }: Props) {
                     )
                 })
             }
-            <Group position="right" spacing="xs" mt="xl">
+
+                <Group position="right" spacing="xs" mt="xl">
                 {nextTrailId ? (
                     <NextButton
-                        // disabled={
-                        //   !trialStatus.complete &&
-                        //   (answerField.values.input.length === 0 ||
-                        //     !answerField.isValid("input"))
-                        // }
+                        disabled={!answerField.isValid()}
                         to={`/${currentStep}/${nextTrailId}`}
                         process={() => {
                             if (trialStatus.complete) {
@@ -110,6 +104,7 @@ export default function ResponseBlock({ responses }: Props) {
                     />
                 )}
             </Group>
+            </form>
         </>
     );
 }
