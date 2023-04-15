@@ -12,25 +12,19 @@ import {
 } from "@mantine/core";
 import { IconDotsVertical, IconMail, IconSchema } from "@tabler/icons-react";
 import { useState } from "react";
-import { useLocation } from "react-router-dom";
 import { useCurrentStep } from "../../routes";
-import { useAppSelector, useCurrentTrial } from "../../store";
-import { toggleShowAdmin, toggleShowHelpText, useFlagsDispatch } from "../../store/flags";
-
+import { useAppSelector } from "../../store";
+import {
+  toggleShowAdmin,
+  toggleShowHelpText,
+  useFlagsDispatch,
+} from "../../store/flags";
 
 export default function AppHeader() {
   const studyConfig = useAppSelector((state) => state.study.config);
   const flagsDispatch = useFlagsDispatch();
 
-  const location = useLocation();
   const currentStep = useCurrentStep();
-  const trialId = useCurrentTrial();
-
-  console.log({
-    location,
-    currentStep,
-    trialId,
-  });
 
   const progressBarCurrent = studyConfig?.sequence.indexOf(currentStep) || 0;
   const progressBarMax = studyConfig?.sequence.length || 0;
@@ -60,8 +54,14 @@ export default function AppHeader() {
 
         <Grid.Col span={4}>
           <Flex align="center" justify="flex-end">
-            {studyConfig?.["study-metadata"].helpTextPath !== undefined && <Button variant="outline" 
-            onClick={() => flagsDispatch(toggleShowHelpText())}>Help</Button>}
+            {studyConfig?.["study-metadata"].helpTextPath !== undefined && (
+              <Button
+                variant="outline"
+                onClick={() => flagsDispatch(toggleShowHelpText())}
+              >
+                Help
+              </Button>
+            )}
 
             <Space w="md"></Space>
 
@@ -79,10 +79,19 @@ export default function AppHeader() {
               </Menu.Target>
 
               <Menu.Dropdown>
-                <Menu.Item icon={<IconSchema size={14} />} onClick={() => flagsDispatch(toggleShowAdmin())}>Admin Mode</Menu.Item>
-                <Menu.Item 
-                  component="a" 
-                  href={studyConfig !== null ? `mailto:${studyConfig['study-metadata'].contactEmail}` : undefined}
+                <Menu.Item
+                  icon={<IconSchema size={14} />}
+                  onClick={() => flagsDispatch(toggleShowAdmin())}
+                >
+                  Admin Mode
+                </Menu.Item>
+                <Menu.Item
+                  component="a"
+                  href={
+                    studyConfig !== null
+                      ? `mailto:${studyConfig["study-metadata"].contactEmail}`
+                      : undefined
+                  }
                   icon={<IconMail size={14} />}
                 >
                   Contact

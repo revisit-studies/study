@@ -18,6 +18,12 @@
         logoPath: "/src/assets/revisitLogoSquare.svg",
         withProgressBar: true,
     },
+    uiConfig: {
+        // starts the automatic download of the data after study completion 
+        autoDownloadStudy: false,
+        // start download after x milliseconds
+        autoDownloadTime: 5000
+    },
     components: {
         consent: {
             type: "consent",

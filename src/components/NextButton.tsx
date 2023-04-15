@@ -1,7 +1,8 @@
 import { Button } from "@mantine/core";
-import { To, useNavigate } from "react-router-dom";
+import { To } from "react-router-dom";
 import { useCurrentStep } from "../routes";
-import { useNextStep } from "../store";
+import { useNextStep } from "../store/hooks/useNextStep";
+import { useNavigateWithParams } from "../utils/useNavigateWithParams";
 
 type Props = {
   label?: string;
@@ -18,7 +19,7 @@ export function NextButton({
   disabled = false,
   replace = false,
 }: Props) {
-  const navigate = useNavigate();
+  const navigate = useNavigateWithParams();
   const computedTo = useNextStep();
   const current = useCurrentStep();
 
