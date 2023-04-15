@@ -17,6 +17,7 @@ import {
   TrialProvenanceContext,
 } from "../store/trialProvenance";
 import IframeController from "./IframeController";
+import ImageController from "./ImageController";
 import ReactComponentController from "./ReactComponentController";
 
 export function useTrialsConfig() {
@@ -61,7 +62,7 @@ export default function TrialController() {
 
   const answerField = useForm({
     initialValues: {
-      input: trialStatus.answer || "",
+      input: trialStatus?.answer || "",
     },
     transformValues(values) {
       return {
@@ -80,8 +81,8 @@ export default function TrialController() {
   });
 
   useEffect(() => {
-    answerField.setFieldValue("input", trialStatus.answer || "");
-  }, [trialStatus.answer]);
+    answerField.setFieldValue("input", trialStatus?.answer || "");
+  }, [trialStatus?.answer]);
 
   if (!trialId || !config) return null;
 
@@ -104,6 +105,12 @@ export default function TrialController() {
         <Suspense fallback={<div>Loading...</div>}>
           {stimulus.stimulus.type === "website" && (
             <IframeController
+              path={stimulus.stimulus.path}
+              style={stimulus.stimulus.style}
+            />
+          )}
+          {stimulus.stimulus.type === "image" && (
+            <ImageController
               path={stimulus.stimulus.path}
               style={stimulus.stimulus.style}
             />
@@ -138,7 +145,7 @@ export default function TrialController() {
             // }
             to={`/${currentStep}/${nextTrailId}`}
             process={() => {
-              if (trialStatus.complete) {
+              if (trialStatus?.complete) {
                 answerField.setFieldValue("input", "");
               }
 

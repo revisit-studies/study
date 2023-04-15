@@ -17,7 +17,7 @@
     components: {
         trials1: {
             type: "trials",
-            order: ["barChart", "barChart"],
+            order: ["frog1", "frog2"],
             randomization-scheme: "latin-square",
             subset-count: 2,
             attention-checks: {
@@ -35,17 +35,31 @@
                 required: true,
             },
             trials: {
-                barChart: {
+                frog1: {
                     description: "What does the description do? ",
-                    instruction:  **Question:** How many frogs are in the image?",
+                    instruction:  "**Question:** How many frogs are in the image?",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 
                         type: "image",
                         // can be a URL or a local path
-                        path: "stimuli-image/one-frog.jpg",
+                        path: "one-frog.jpg",
                         // style that will be applied to iframe
                         style: {
-                            height: "500px"
+                            width: "500px"
+                        }
+                    },
+                },
+                frog2: {
+                    description: "What does the description do? ",
+                    instruction:  "**Question:** How many frogs are in the image?",
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component 
+                        type: "image",
+                        // can be a URL or a local path
+                        path: "two-frogs.jpg",
+                        // style that will be applied to iframe
+                        style: {
+                            width: "500px"
                         }
                     },
                 },
