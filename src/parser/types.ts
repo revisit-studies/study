@@ -57,9 +57,10 @@ export interface Trial {
   answers?: Answer[];
 }
 
-interface Stimulus {
-  type: "react-component" | "image" | "javascript" | "website";
+export interface Stimulus {
+  type: 'react-component' | 'image' | 'javascript' | 'website';
   path?: string;
+  style?: { [key: string]: any };
   parameters?: { [key: string]: any };
 }
 
