@@ -22,6 +22,7 @@ import {
 } from "../store/trialProvenance";
 import IframeController from "./IframeController";
 import ReactComponentController from "./ReactComponentController";
+import ImageController from "./ImageController";
 
 export function useTrialsConfig() {
   const currentStep = useCurrentStep();
@@ -107,6 +108,7 @@ export default function TrialController() {
       <TrialProvenanceContext.Provider value={trialProvenance}>
         <Suspense fallback={<div>Loading...</div>}>
           {stimulus.stimulus.type === 'website' && <IframeController path={stimulus.stimulus.path} style={stimulus.stimulus.style} />}
+          {stimulus.stimulus.type === 'image' && <ImageController path={stimulus.stimulus.path} style={stimulus.stimulus.style} />}
           {stimulus.stimulus.type === 'react-component' && <ReactComponentController stimulusID={trialId} stimulus={stimulus.stimulus} />}
 
           {/* <StimulusComponent parameters={stimulus.stimulus.parameters} /> */}

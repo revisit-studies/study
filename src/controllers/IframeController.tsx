@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 const defaultStyle = {
-  height: "300px",
+  minHeight: "300px",
   width: "100%",
   border: 0,
 };
