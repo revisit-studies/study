@@ -66,17 +66,24 @@ export default function AppShellDemo() {
   const [config, setConfig] = useState<StudyConfig | null>(null);
 
   useEffect(() => {
+    if (config) return;
+    return store.subscribe(() => {
+      const cfg = store.getState().study.config;
+      if (cfg) setConfig(cfg);
+    });
+  });
+
+  useEffect(() => {
     if (!config) {
       fetchStudyConfig("/src/configs/config-cleveland.hjson").then((cfg) => {
-        if (!config) {
-          setConfig(cfg);
-        }
+        store.dispatch(saveConfig(cfg));
       });
-    } else {
-      const cfg = store.getState().study.config;
-      if (!cfg) store.dispatch(saveConfig(config));
     }
   }, [config]);
+
+  const storeCfg = () => store.getState().study.config;
+
+  if (!storeCfg()) return null; // Don't load anything till store config is set
 
   const router = createRouter(config, elements);
 

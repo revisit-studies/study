@@ -14,14 +14,14 @@
             "University of Toronto"
         ],
         contactEmail: "test@test.com",
-        helpTextPath: "src/markdowns/help.md",
-        logoPath: "src/assets/revisitLogoSquare.svg",
+        helpTextPath: "/src/markdowns/help.md",
+        logoPath: "/src/assets/revisitLogoSquare.svg",
         withProgressBar: true,
     },
     components: {
         consent: {
             type: "consent",
-            path: "src/markdowns/consent.md",
+            path: "/src/markdowns/consent.md",
             signatureRequired: true
         },
         training1: {
