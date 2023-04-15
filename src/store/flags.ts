@@ -1,11 +1,11 @@
 import { configureStore, createSlice } from "@reduxjs/toolkit";
 import { createContext } from "react";
-import { createSelectorHook } from "react-redux";
+import { createDispatchHook, createSelectorHook } from "react-redux";
 
 const flags = createSlice({
   name: "flags",
   initialState: {
-    showAdmin: true,
+    showAdmin: false,
     showHelpText: false,
   },
   reducers: {
@@ -26,3 +26,4 @@ export const flagsStore = configureStore({
 
 export const flagsContext = createContext(null);
 export const useFlagsSelector = createSelectorHook(flagsContext as any);
+export const useFlagsDispatch = createDispatchHook(flagsContext as any);

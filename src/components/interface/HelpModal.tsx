@@ -1,5 +1,5 @@
 import { Modal } from "@mantine/core";
-import { useFlagsSelector } from "../../store/flags";
+import { toggleShowHelpText, useFlagsDispatch, useFlagsSelector } from "../../store/flags";
 import ReactMarkdown from "react-markdown";
 import { useAppSelector } from "../../store";
 import { useEffect, useState } from "react";
@@ -8,6 +8,8 @@ import { useEffect, useState } from "react";
 export default function HelpModal() {
   const showHelpText = useFlagsSelector((state: any) => state.showHelpText)
   const config = useAppSelector((state) => state.study.config);
+
+  const flagsDispatch = useFlagsDispatch();
 
   const [helpText, setHelpText] = useState('');
 
@@ -21,7 +23,7 @@ export default function HelpModal() {
   }, [config]);
 
   return (
-    <Modal opened={showHelpText} onClose={close} title="Help">
+    <Modal opened={showHelpText} onClose={() => flagsDispatch(toggleShowHelpText())} title="Help">
       <ReactMarkdown>{helpText}</ReactMarkdown>
     </Modal>
   )
