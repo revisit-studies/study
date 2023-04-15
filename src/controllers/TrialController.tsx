@@ -1,17 +1,10 @@
-import { useForm } from "@mantine/form";
 import { lazy, Suspense, useEffect, useMemo } from "react";
 import ReactMarkdown from "react-markdown";
-
-import { Group } from "@mantine/core";
 import { useParams } from "react-router-dom";
-import { NextButton } from "../components/NextButton";
 import { TrialsComponent } from "../parser/types";
 import { useCurrentStep } from "../routes";
-import { saveTrialAnswer, useAppDispatch, useAppSelector } from "../store";
-import { useNextStep } from "../store/hooks/useNextStep";
-import { useTrialStatus } from "../store/hooks/useTrialStatus";
+import {  useAppSelector } from "../store";
 
-import ResponseSwitcher from "../components/stimuli/inputcomponents/ResponseSwitcher";
 import {
   createTrialProvenance,
   TrialProvenanceContext,
@@ -53,13 +46,8 @@ export function useNextTrialId(currentTrial: string | null) {
 // current active stimuli presented to the user
 
 export default function TrialController() {
-  const dispatch = useAppDispatch();
-  const currentStep = useCurrentStep();
-  const nextStep = useNextStep();
   const { trialId = null } = useParams<{ trialId: string }>();
   const config = useTrialsConfig();
-  const nextTrailId = useNextTrialId(trialId);
-  const trialStatus = useTrialStatus(trialId);
 
   const trialProvenance = createTrialProvenance();
 

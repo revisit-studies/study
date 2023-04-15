@@ -15,6 +15,7 @@ import { RouterProvider } from "react-router-dom";
 import { StudyEnd } from "./components/StudyEnd";
 import { createRouter } from "./routes";
 import { flagsContext, flagsStore } from "./store/flags";
+import SurveyController from "./controllers/SurveyController";
 
 const trrackContext = createContext<TrrackStoreType>(undefined!);
 export const useTrrackSelector = createSelectorHook(trrackContext as any);
@@ -51,8 +52,7 @@ const elements: Record<StudyComponent["type"], ReactNode> = {
   trials: <TrialController />,
   survey: (
     <>
-      <div>survey component goes here</div>
-      <NextButton />
+     <SurveyController />
     </>
   ),
   end: <StudyEnd />,

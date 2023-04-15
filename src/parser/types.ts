@@ -49,6 +49,10 @@ export interface TrialsComponent extends StudyComponent {
   trials: { [key: string]: Trial };
 }
 
+export interface SurveyComponent extends StudyComponent {
+  questions: Response[];
+}
+
 export interface Trial {
   description: string;
   instruction: string;
