@@ -7,22 +7,23 @@ type inputProps = {
   placeholder: string;
   label: string;
   required: boolean;
+  id:string;
+  answer:object;
 };
 
-export default forwardRef(function StringInput(
-  { placeholder = "", label = "", required }: inputProps,
-  ref: Ref<HTMLInputElement>
+export default function StringInput(
+  { placeholder = "", label = "", required ,answer,id}: inputProps
 ) {
   return (
     <>
       <TextInput
-        ref={ref}
         placeholder={placeholder}
         label={label}
         radius={"lg"}
         size={"md"}
         withAsterisk={required}
+        {...answer}
       />
     </>
   );
-});
+};

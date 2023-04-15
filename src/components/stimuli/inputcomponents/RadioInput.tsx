@@ -6,17 +6,20 @@ import {Option} from "../../../parser/types";
 type inputProps = {
     title: string,
     desc: string,
-    radioData?: Option[]
+    radioData?: Option[],
+    required: boolean,
+    answer:object;
 }
 
-export default forwardRef(function RadioInput({ title="Your Question", desc="additional description", radioData=[] }: inputProps, ref: Ref<HTMLInputElement>) {
+export default function RadioInput({ title="Your Question", desc="additional description", radioData=[], answer, required }: inputProps) {
     return (
         <>
             <Radio.Group
                 name="radioInput"
                 label={title}
                 description={desc}
-                ref={ref}
+                withAsterisk={required}
+                {...answer}
             >
                 <Group mt="xs">
                     {
@@ -31,4 +34,4 @@ export default forwardRef(function RadioInput({ title="Your Question", desc="add
             </Radio.Group>
         </>
     );
-});
+};

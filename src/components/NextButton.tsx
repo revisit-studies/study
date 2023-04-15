@@ -24,7 +24,7 @@ export function NextButton({
   const current = useCurrentStep();
 
   return (
-    <Button
+    <Button type="submit"
       disabled={disabled || (to === "auto" && !computedTo)}
       onClick={async () => {
         if (process) process();
