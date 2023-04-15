@@ -1,7 +1,12 @@
 import { type PayloadAction } from "@reduxjs/toolkit";
 import { configureTrrackableStore, createTrrackableSlice } from "@trrack/redux";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
-import { StudyComponent, StudyConfig } from "../parser/types";
+import { useLocation } from "react-router-dom";
+import {
+  StudyComponent,
+  StudyConfig,
+  isTrialsComponent,
+} from "../parser/types";
 import { useCurrentStep } from "../routes";
 
 export interface TrialResult {
@@ -18,7 +23,7 @@ interface Step extends StudyComponent {
 
 interface State {
   config: StudyConfig | null;
-  consent?: {signature: unknown; timestamp: number},
+  consent?: { signature: unknown; timestamp: number };
   steps: Record<string, Step>;
   trials: Record<string, TrialRecord>;
 }
@@ -62,7 +67,10 @@ const studySlice = createTrrackableSlice({
     completeStep(state, step) {
       state.steps[step.payload].complete = true;
     },
-    saveConsent: (state, response: PayloadAction<{ signature: unknown, timestamp: number }>) => {
+    saveConsent: (
+      state,
+      response: PayloadAction<{ signature: unknown; timestamp: number }>
+    ) => {
       state.consent = response.payload;
     },
     saveTrialAnswer(
@@ -107,12 +115,70 @@ export function useNextStep() {
   return steps[currentStep].next || "end";
 }
 
-export function useTrialStatus(trialId: string | null): TrialResult {
+/**
+ * Get total number of trials and completed trials for given trial group.
+ * Useful for progress calculation.
+ * Can write similar function for overall progress
+ */
+export function useCompletedTrialMetric(trialName: string) {
+  const { config, trials } = useAppSelector((state) => state.study);
+  const trialConfig = config?.components[trialName];
+
+  if (trialConfig && isTrialsComponent(trialConfig)) {
+    const totalTrials = trialConfig.order.length;
+    const totalCompleted = Object.values(trials[trialName]).filter(
+      (t) => t.complete
+    ).length;
+
+    return {
+      name: trialName,
+      totalTrials,
+      completedTrials: totalCompleted,
+    };
+  }
+  return null;
+}
+
+/**
+ *
+ * @returns Returns current trial if any else null
+ */
+export function useCurrentTrial() {
+  const currentStep = useCurrentStep();
+
+  const { config, trials } = useAppSelector((state) => state.study);
+
+  if (
+    currentStep.length === 0 ||
+    !config ||
+    config.components[currentStep].type !== "trials"
+  )
+    return null;
+
+  const trialId = useLocation().pathname.split("/")[2]; // Assumes /<trialname>/:id
+
+  return {
+    trailName: currentStep,
+    trialId,
+  };
+}
+
+/**
+ *
+ * @param trialId Trial id for which to get status
+ * @returns TrialResult object with complete status and any answer if present. Returns null if not in trial step
+ */
+export function useTrialStatus(trialId: string | null): TrialResult | null {
   const currentStep = useCurrentStep();
   const { config, trials } = useAppSelector((state) => state.study);
 
-  if (!trialId || !config || config.components[currentStep].type !== "trials")
-    throw new Error("Not called from a trial route");
+  if (
+    currentStep.length === 0 ||
+    !trialId ||
+    !config ||
+    config.components[currentStep].type !== "trials"
+  )
+    return null;
 
   const status: TrialResult | null = trials[currentStep][trialId];
 

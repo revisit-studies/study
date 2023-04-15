@@ -109,3 +109,10 @@ export interface StudyConfig {
   components: StudyComponents;
   sequence: string[];
 }
+
+// Typecasting functions
+export function isTrialsComponent(
+  component: StudyComponent
+): component is TrialsComponent {
+  return component.type === "trials";
+}
