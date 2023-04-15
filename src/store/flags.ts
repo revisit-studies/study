@@ -5,7 +5,7 @@ import { createDispatchHook, createSelectorHook } from "react-redux";
 const flags = createSlice({
   name: "flags",
   initialState: {
-    showAdmin: true,
+    showAdmin: false,
     showHelpText: false,
   },
   reducers: {
