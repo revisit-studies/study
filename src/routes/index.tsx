@@ -1,12 +1,18 @@
 // npm install react-router-dom localforage match-sorter sort-by // For offline + misc
 
+import { AppShell } from "@mantine/core";
 import { ReactNode } from "react";
 import {
   Navigate,
+  Outlet,
   RouteObject,
   createBrowserRouter,
   useLocation,
 } from "react-router-dom";
+import AppAside from "../components/interface/AppAside";
+import AppHeader from "../components/interface/AppHeader";
+import AppNavBar from "../components/interface/AppNavBar";
+import HelpModal from "../components/interface/HelpModal";
 import TrialController from "../controllers/TrialController";
 import { StudyComponent, StudyConfig, TrialsComponent } from "../parser/types";
 
@@ -56,7 +62,24 @@ export function createRouter(
     }
   });
 
-  return createBrowserRouter(routes);
+  const rootRoute: RouteObject = {
+    path: "/",
+    element: (
+      <AppShell
+        navbarOffsetBreakpoint="sm"
+        asideOffsetBreakpoint="sm"
+        navbar={<AppNavBar />}
+        aside={<AppAside />}
+        header={<AppHeader />}
+      >
+        <HelpModal /> {/* <StudyController /> */}
+        <Outlet />
+      </AppShell>
+    ),
+    children: routes,
+  };
+
+  return createBrowserRouter([rootRoute]);
 }
 
 export function useCurrentStep() {

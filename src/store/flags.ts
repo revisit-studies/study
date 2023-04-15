@@ -3,9 +3,9 @@ import { createContext } from "react";
 import { createSelectorHook } from "react-redux";
 
 const flags = createSlice({
-  name: 'flags',
+  name: "flags",
   initialState: {
-    showAdmin: false,
+    showAdmin: true,
     showHelpText: false,
   },
   reducers: {
@@ -14,15 +14,15 @@ const flags = createSlice({
     },
     toggleShowHelpText: (state) => {
       state.showHelpText = !state.showHelpText;
-    }
-  }
+    },
+  },
 });
 
 export const { toggleShowAdmin, toggleShowHelpText } = flags.actions;
 
 export const flagsStore = configureStore({
-  reducer: flags.reducer
-})
+  reducer: flags.reducer,
+});
 
 export const flagsContext = createContext(null);
 export const useFlagsSelector = createSelectorHook(flagsContext as any);
