@@ -1,5 +1,5 @@
 import { Response } from "../../../parser/types";
-import {saveTrialAnswer, TrialResult, useAppDispatch, useNextStep, useTrialStatus} from "../../../store";
+import {saveTrialAnswer, useAppDispatch} from "../../../store";
 import ResponseSwitcher from "./ResponseSwitcher";
 import {NextButton} from "../../NextButton";
 import {Button, Group} from "@mantine/core";
@@ -9,6 +9,8 @@ import {createTrialProvenance} from "../../../store/trialProvenance";
 import {useNextTrialId, useTrialsConfig} from "../../../controllers/TrialController";
 import {useForm} from "@mantine/form";
 import {useEffect} from "react";
+import {useNextStep} from "../../../store/hooks/useNextStep";
+import {useTrialStatus} from "../../../store/hooks/useTrialStatus";
 
 type Props = {
     responses: Response[];
