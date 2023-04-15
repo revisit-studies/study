@@ -37,7 +37,7 @@
             trials: {
                 frog1: {
                     description: "What does the description do? ",
-                    instruction:  **Question:** How many frogs are in the image?",
+                    instruction:  "**Question:** How many frogs are in the image?",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 
                         type: "image",
@@ -51,7 +51,7 @@
                 },
                 frog2: {
                     description: "What does the description do? ",
-                    instruction:  **Question:** How many frogs are in the image?",
+                    instruction:  "**Question:** How many frogs are in the image?",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 
                         type: "image",
