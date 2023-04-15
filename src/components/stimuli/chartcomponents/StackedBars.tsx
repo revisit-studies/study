@@ -1,5 +1,4 @@
-import { useDispatch } from "react-redux";
-import { saveInteraction } from "../../../store";
+import { useHoverInteraction } from "../hooks/useHoverInteraction";
 
 export const StackedBars = ({
   data,
@@ -12,27 +11,8 @@ export const StackedBars = ({
   yScale: any;
   stimulusID: string;
 }) => {
-  const dispatch = useDispatch();
-
-  const handleMouseEnter = (d: any) => {
-    dispatch(
-      saveInteraction({
-        id: stimulusID,
-        action: "mouseEnter",
-        objectID: d.key,
-      })
-    );
-  };
-
-  const handleMouseLeave = (d: any) => {
-    dispatch(
-      saveInteraction({
-        id: stimulusID,
-        action: "mouseLeave",
-        objectID: d.key,
-      })
-    );
-  };
+  const { handleMouseEnter, handleMouseLeave } =
+    useHoverInteraction(stimulusID);
 
   return (
     <g>

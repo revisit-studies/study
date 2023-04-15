@@ -1,62 +1,82 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Button } from '@mantine/core';
+import { ReactNode, useEffect } from "react";
 
 import { parseStudyConfig } from '../parser/parser';
-import { ConsentComponent, StudyConfig, TrialsComponent } from '../parser/types';
 
-import Consent from '../components/Consent';
-import TrialController from './TrialController';
-
-import { useSelector, useDispatch } from 'react-redux'
-import { nextSection, trrack, type RootState } from '../store/'
-
+import { useDispatch, useSelector } from "react-redux";
+import { RouterProvider } from "react-router-dom";
+import Consent from "../components/Consent";
+import { NextButton } from "../components/NextButton";
+import { Status } from "../components/Status";
+import { StudyComponent } from "../parser/types";
+import { createRouter } from "../routes";
+import { saveConfig, type RootState } from "../store/";
+import TrialController from "./TrialController";
 
 async function fetchStudyConfig(configLocation: string) {
   const config = await (await fetch(configLocation)).text();
   return parseStudyConfig(config);
 }
 
+const elements: Record<StudyComponent["type"], ReactNode> = {
+  consent: (
+    <>
+      <Consent />
+      <Status />
+    </>
+  ),
+  training: (
+    <>
+      <div>training component goes here</div>
+      <NextButton />
+      <Status />
+    </>
+  ),
+  practice: (
+    <>
+      <div>practice component goes here</div>
+      <NextButton />
+      <Status />
+    </>
+  ),
+  "attention-test": (
+    <>
+      <div>attention test component goes here</div>
+      <NextButton />
+      <Status />
+    </>
+  ),
+  trials: <TrialController />,
+  survey: (
+    <>
+      <div>survey component goes here</div>
+      <NextButton />
+      <Status />
+    </>
+  ),
+  end: (
+    <>
+      <div>Fin. Thank you</div>
+      <NextButton />
+      <Status />
+    </>
+  ),
+};
+
 export default function StudyController() {
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
 
   // Get the whole study config
-  const [studyConfig, setStudyConfig] = useState<StudyConfig | null>(null);
+  const studyConfig = useSelector((state: RootState) => state.study.config);
+
   useEffect(() => {
-    const fetchData = async () => setStudyConfig(await fetchStudyConfig('/src/configs/config-image-demo.hjson'));
-    fetchData();
-  }, [])
+    fetchStudyConfig("/src/configs/config-cleveland.hjson").then((config) => {
+      if (!studyConfig) dispatch(saveConfig(config));
+    });
+  }, [studyConfig]);
 
-  const studySequence = useMemo(
-    () => studyConfig !== null ? studyConfig.sequence : [],
-    [studyConfig],
-  )
+  const router = createRouter(studyConfig, elements);
 
-  // Get the current study section and config for that section
-  const currentIndex = useSelector((state: RootState) => state.study.currentIndex)
-  const currentStudySection = useMemo(
-    () => currentIndex < studySequence.length ? studySequence[currentIndex] : 'endOfStudy',
-    [currentIndex, studySequence],
-  );
-  const currentStudySectionConfig = useMemo(
-    () => studyConfig !== null ? studyConfig.components[currentStudySection] : null,
-    [studyConfig, currentStudySection],
-  );
+  if (!router) return <div>Loading...</div>;
 
-  // A helper function that will allow the components to move us to the next section
-  function goToNextSection() {
-    dispatch(nextSection());
-  }
-
-
-  return (
-    <div>
-      { currentStudySection.includes('consent') && currentStudySectionConfig !== null && <Consent goToNextSection={ goToNextSection } currentStudySectionConfig={ currentStudySectionConfig as ConsentComponent }/> }
-      { currentStudySection.includes('training') && <div>training component here <Button onClick={goToNextSection}>Accept</Button></div> }
-      { currentStudySection.includes('practice') && <div>practice component here <Button onClick={goToNextSection}>Accept</Button></div> }
-      { currentStudySection.includes('attention') && <div>attention component here <Button onClick={goToNextSection}>Accept</Button></div> }
-      { currentStudySection.includes('trials') && <div><TrialController goToNextSection={goToNextSection} currentStudySectionConfig={currentStudySectionConfig as TrialsComponent} /></div> }
-      { currentStudySection.includes('survey') && <div>survey component here <Button onClick={goToNextSection}>Accept</Button></div> }
-      { currentStudySection.includes('endOfStudy') && <div>Thanks for completing the study</div> }
-    </div>
-  );
+  return <RouterProvider router={router} />;
 }

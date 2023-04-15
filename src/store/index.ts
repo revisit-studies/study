@@ -1,38 +1,89 @@
-import { type PayloadAction } from '@reduxjs/toolkit'
-import { configureTrrackableStore, createTrrackableSlice } from '@trrack/redux';
+import { type PayloadAction } from "@reduxjs/toolkit";
+import { configureTrrackableStore, createTrrackableSlice } from "@trrack/redux";
+import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
+import { StudyComponent, StudyConfig } from "../parser/types";
+import { useCurrentStep } from "../routes";
+
+export interface TrialResult {
+  complete: boolean;
+  answer: string | null;
+}
+
+type TrialRecord = Record<string, TrialResult>;
+
+interface Step extends StudyComponent {
+  complete: boolean;
+  next: string | null;
+}
 
 interface State {
-  currentIndex: number;
-  answers: Array<{ [id: string]: unknown }>,
-  interactions: Array<{ id: string, objectID: unknown, action: string, timestamp: number }>,
+  config: StudyConfig | null;
+  consent?: {signature: unknown; timestamp: number},
+  steps: Record<string, Step>;
+  trials: Record<string, TrialRecord>;
 }
 
 const initialState: State = {
-  currentIndex: 0,
-  answers: [],
-  interactions: [],
-}
+  config: null,
+  consent: undefined,
+  steps: {},
+  trials: {},
+};
 
 const studySlice = createTrrackableSlice({
-  name: 'studySlice',
+  name: "studySlice",
   initialState,
   reducers: {
-    nextSection: state => {
-      state.currentIndex += 1;
+    saveConfig(state, config: PayloadAction<StudyConfig>) {
+      const { payload } = config;
+      // Set the config
+      state.config = payload;
+
+      // Create steps record to store complete status
+      const steps: Record<string, Step> = {};
+      payload.sequence.forEach((id, idx, arr) => {
+        const component = payload.components[id];
+        steps[id] = {
+          ...component,
+          complete: false,
+          next: arr[idx + 1] || null,
+        };
+      });
+      state.steps = steps;
+
+      // Create answers record for trail type steps
+      const trialSteps = payload.sequence.filter(
+        (step) => payload.components[step].type === "trials"
+      );
+      trialSteps.forEach((trialName) => {
+        state.trials[trialName] = {};
+      });
     },
-    gotoSection: (state, sectionNum: PayloadAction<number>) => {
-      state.currentIndex = sectionNum.payload;
+    completeStep(state, step) {
+      state.steps[step.payload].complete = true;
     },
-    saveAnswer: (state, answer: PayloadAction<{ [id: string]: unknown }>) => {
-      state.answers.push(answer.payload);
+    saveConsent: (state, response: PayloadAction<{ signature: unknown, timestamp: number }>) => {
+      state.consent = response.payload;
     },
-    saveInteraction: (state, interaction: PayloadAction<{ id: string, objectID: unknown, action: string }>) => {
-      state.interactions.push({...interaction.payload, timestamp: Date.now()});
+    saveTrialAnswer(
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        trialName: string;
+        trialId: string;
+        answer: string;
+      }>
+    ) {
+      state.trials[payload.trialName][payload.trialId] = {
+        complete: true,
+        answer: payload.answer,
+      };
     },
-  }
+  },
 });
 
-export const { nextSection, gotoSection, saveAnswer, saveInteraction } = studySlice.actions;
+export const { saveConfig, completeStep, saveTrialAnswer } = studySlice.actions;
 
 export const { store, trrack, trrackStore } = configureTrrackableStore({
   reducer: {
@@ -40,5 +91,37 @@ export const { store, trrack, trrackStore } = configureTrrackableStore({
   },
   slices: [studySlice],
 });
+
+export const useAppDispatch = useDispatch;
+export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
+
+export function useNextStep() {
+  const currentStep = useCurrentStep();
+
+  const { config, steps } = useAppSelector((state) => state.study);
+
+  if (currentStep === "end") return null;
+
+  if (!config) return null;
+
+  return steps[currentStep].next || "end";
+}
+
+export function useTrialStatus(trialId: string | null): TrialResult {
+  const currentStep = useCurrentStep();
+  const { config, trials } = useAppSelector((state) => state.study);
+
+  if (!trialId || !config || config.components[currentStep].type !== "trials")
+    throw new Error("Not called from a trial route");
+
+  const status: TrialResult | null = trials[currentStep][trialId];
+
+  return (
+    status || {
+      complete: false,
+      answer: null,
+    }
+  );
+}
 
 export type RootState = ReturnType<typeof store.getState>;

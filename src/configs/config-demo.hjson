@@ -18,6 +18,7 @@
         consent: {
             type: "consent"
             path: "src/markdowns/consent.md"
+            signature: false
         },
         training1: {
             type: "training"

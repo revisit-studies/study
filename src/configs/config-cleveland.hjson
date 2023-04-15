@@ -12,12 +12,17 @@
             "University of Utah",
             "WPI",
             "University of Toronto"
-        ]
+        ],
+        contactEmail: "test@test.com",
+        helpTextPath: "src/markdowns/help.md",
+        logoPath: "src/assets/revisitLogoSquare.svg",
+        withProgressBar: true,
     },
     components: {
         consent: {
-            type: "consent"
-            path: "src/markdowns/consent.md"
+            type: "consent",
+            path: "src/markdowns/consent.md",
+            signatureRequired: true
         },
         training1: {
             type: "training"

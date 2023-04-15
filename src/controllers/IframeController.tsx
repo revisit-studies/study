@@ -12,7 +12,7 @@ const IframeController = ({ path, style={} }: { path?: string; style?: { [key: s
   return (
     <div>
       <iframe
-        src={`html-stimuli/${path}`}
+        src={`/html-stimuli/${path}`}
         style={iframeStyle}
       ></iframe>
     </div>
