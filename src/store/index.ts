@@ -1,34 +1,20 @@
 import { type PayloadAction } from "@reduxjs/toolkit";
 import { configureTrrackableStore, createTrrackableSlice } from "@trrack/redux";
 import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
-import { useLocation } from "react-router-dom";
-import {
-  StudyComponent,
-  StudyConfig,
-  isTrialsComponent,
-} from "../parser/types";
-import { useCurrentStep } from "../routes";
+import { initFirebase } from "../firebase/init";
+import { StudyConfig } from "../parser/types";
+import { RootState, State, Step, StudyIdentifiers } from "./types";
 
-export interface TrialResult {
-  complete: boolean;
-  answer: string | object | null;
-}
+export const STUDY_ID = "STUDY_ID";
+export const PID = "PARTICIPANT_ID";
+export const SESSION_ID = "SESSION_ID";
 
-type TrialRecord = Record<string, TrialResult>;
+export const DEBUG = true;
 
-interface Step extends StudyComponent {
-  complete: boolean;
-  next: string | null;
-}
-
-interface State {
-  config: StudyConfig | null;
-  consent?: { signature: unknown; timestamp: number };
-  steps: Record<string, Step>;
-  trials: Record<string, TrialRecord>;
-}
+export const FIREBASE = initFirebase();
 
 const initialState: State = {
+  studyIdentifiers: null,
   config: null,
   consent: undefined,
   steps: {},
@@ -39,6 +25,9 @@ const studySlice = createTrrackableSlice({
   name: "studySlice",
   initialState,
   reducers: {
+    setStudyIdentifiers(state, { payload }: PayloadAction<StudyIdentifiers>) {
+      state.studyIdentifiers = payload;
+    },
     saveConfig(state, config: PayloadAction<StudyConfig>) {
       const { payload } = config;
       // Set the config
@@ -91,7 +80,12 @@ const studySlice = createTrrackableSlice({
   },
 });
 
-export const { saveConfig, completeStep, saveTrialAnswer } = studySlice.actions;
+export const {
+  saveConfig,
+  completeStep,
+  saveTrialAnswer,
+  setStudyIdentifiers,
+} = studySlice.actions;
 
 export const { store, trrack, trrackStore } = configureTrrackableStore({
   reducer: {
@@ -102,92 +96,3 @@ export const { store, trrack, trrackStore } = configureTrrackableStore({
 
 export const useAppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
-
-export function useNextStep() {
-  const currentStep = useCurrentStep();
-
-  const { config, steps } = useAppSelector((state) => state.study);
-
-  if (currentStep === "end") return null;
-
-  if (!config) return null;
-
-  return steps[currentStep].next || "end";
-}
-
-/**
- * Get total number of trials and completed trials for given trial group.
- * Useful for progress calculation.
- * Can write similar function for overall progress
- */
-export function useCompletedTrialMetric(trialName: string) {
-  const { config, trials } = useAppSelector((state) => state.study);
-  const trialConfig = config?.components[trialName];
-
-  if (trialConfig && isTrialsComponent(trialConfig)) {
-    const totalTrials = trialConfig.order.length;
-    const totalCompleted = Object.values(trials[trialName]).filter(
-      (t) => t.complete
-    ).length;
-
-    return {
-      name: trialName,
-      totalTrials,
-      completedTrials: totalCompleted,
-    };
-  }
-  return null;
-}
-
-/**
- *
- * @returns Returns current trial if any else null
- */
-export function useCurrentTrial() {
-  const currentStep = useCurrentStep();
-
-  const { config, trials } = useAppSelector((state) => state.study);
-
-  if (
-    currentStep.length === 0 ||
-    !config ||
-    config.components[currentStep]?.type !== "trials"
-  )
-    return null;
-
-  const trialId = useLocation().pathname.split("/")[2]; // Assumes /<trialname>/:id
-
-  return {
-    trailName: currentStep,
-    trialId,
-  };
-}
-
-/**
- *
- * @param trialId Trial id for which to get status
- * @returns TrialResult object with complete status and any answer if present. Returns null if not in trial step
- */
-export function useTrialStatus(trialId: string | null): TrialResult | null {
-  const currentStep = useCurrentStep();
-  const { config, trials } = useAppSelector((state) => state.study);
-
-  if (
-    currentStep.length === 0 ||
-    !trialId ||
-    !config ||
-    config.components[currentStep]?.type !== "trials"
-  )
-    return null;
-
-  const status: TrialResult | null = trials[currentStep][trialId];
-
-  return (
-    status || {
-      complete: false,
-      answer: null,
-    }
-  );
-}
-
-export type RootState = ReturnType<typeof store.getState>;

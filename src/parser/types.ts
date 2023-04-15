@@ -44,7 +44,7 @@ interface AttentionComponent extends StudyComponent {
 }
 
 export interface TrialsComponent extends StudyComponent {
-  response: Response;
+  response: Response[];
   order: string[];
   trials: { [key: string]: Trial };
 }
@@ -58,7 +58,7 @@ export interface Trial {
 }
 
 export interface Stimulus {
-  type: 'react-component' | 'image' | 'javascript' | 'website';
+  type: "react-component" | "image" | "javascript" | "website";
   path?: string;
   style?: { [key: string]: any };
   parameters?: { [key: string]: any };
@@ -68,7 +68,7 @@ export interface Stimulus {
 
 export interface Option {
   label: string;
-  value: string;
+  value: string | number;
 }
 export interface Response {
   id: string;
@@ -80,15 +80,17 @@ export interface Response {
     | "likert"
     | "dropdown"
     | "slider"
-    | "radio";
+    | "radio"
+    | "checkbox";
   desc: string;
   required: boolean;
   options?: Option[];
+  preset?: string;
+  max?: number;
+  min?: number;
 }
 
-export interface Responses {
-  questions: Response[];
-}
+
 
 // Add types for response
 
@@ -103,9 +105,15 @@ export interface Answer {
 
 // Add types for answers
 
+type UIConfig = {
+  autoDownloadStudy: boolean;
+  autoDownloadTime: number;
+};
+
 export interface StudyConfig {
   "config-version": number;
   "study-metadata": StudyMetadata;
+  uiConfig: UIConfig;
   components: StudyComponents;
   sequence: string[];
 }

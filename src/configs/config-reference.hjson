@@ -25,6 +25,10 @@
         logoPath: "src/assets/revisitLogoSquare.svg",
         // show a progress bar for the study progress 
         withProgressBar: true,
+        // starts the automatic download of the data after study completion 
+        autoDownloadStudy: true,
+        // start download after x milliseconds
+        autoDownloadTime: 3000
     },
     // components of thes study; allowable types: consent, training, practice, attentionTest, trials
     components: {

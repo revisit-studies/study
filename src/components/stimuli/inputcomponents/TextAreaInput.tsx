@@ -1,25 +1,23 @@
 import { useState, forwardRef, type Ref } from "react";
-import {NumberInput, TextInput} from "@mantine/core";
+import {Textarea, TextInput} from "@mantine/core";
 
 type inputProps = {
     placeholder: string,
     label: string,
     required: boolean,
-    max: number,
-    min: number,
     answer:object;
 
 }
-export default function NumericInput({ placeholder="", label="" ,required=false,min=0,max=10, answer}: inputProps) {
+
+export default function TextAreaInput({ placeholder="", label="" ,required, answer}: inputProps ) {
     return (
         <>
-            <NumberInput
+            <Textarea
                 placeholder={placeholder}
                 label={label}
+                radius={"lg"}
+                size={"md"}
                 withAsterisk={required}
-                min={min}
-                max={max}
-                {...answer}
             />
         </>
     );

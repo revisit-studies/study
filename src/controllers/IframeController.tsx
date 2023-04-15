@@ -1,13 +1,14 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useDispatch } from "react-redux";
-import { saveTrialAnswer, useNextStep } from "../store";
+import { saveTrialAnswer } from "../store";
 import { useCurrentStep } from "../routes";
 import { useNavigate, useParams } from "react-router-dom";
+import { useNextStep } from "../store/hooks/useNextStep";
 
 const PREFIX = "@REVISIT_COMMS";
 
 const defaultStyle = {
-  height: "300px",
+  minHeight: "300px",
   width: "100%",
   border: 0,
 };
@@ -41,20 +42,16 @@ const IframeController = ({
         data.iframeId === iframeId &&
         trialId
       ) {
-        switch (data.type) {
-          case `${PREFIX}/ANSWERS`:
-            dispatch(
-              saveTrialAnswer({
-                trialName: currentStep,
-                trialId,
-                answer: data.message as object,
-              })
-            );
+        if (data.type === `${PREFIX}/ANSWERS`) {
+          dispatch(
+            saveTrialAnswer({
+              trialName: currentStep,
+              trialId,
+              answer: data.message as object,
+            })
+          );
 
-            navigate(`/${computedTo}`, { replace: false });
-            break;
-          default:
-            break;
+          navigate(`/${computedTo}`, { replace: false });
         }
       }
     };

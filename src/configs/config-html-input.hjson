@@ -44,14 +44,17 @@
                 // one check after 10 trials 
                 interval: 10
             }
-            response:{
-                id: "cm-response"
+            response:[{
+                id: "cm-response",
                 type: "numeric",
                 prompt: "Your answer!!",
                 desc: "Enter your answer here, range from 0 - 100",
                 options:[],
                 required: true,
-            },
+                required: true,
+                max: 100,
+                min: 0,
+            }],
             trials: {
                 barChart: {
                     description: "A chart with correct answer of 0.66",
