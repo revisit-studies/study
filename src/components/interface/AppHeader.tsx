@@ -15,7 +15,8 @@ import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useCurrentStep } from "../../routes";
 import { useAppSelector, useCurrentTrial } from "../../store";
-import { useFlagsDispatch } from "../../store/flags";
+import { toggleShowAdmin, toggleShowHelpText, useFlagsDispatch } from "../../store/flags";
+
 
 export default function AppHeader() {
   const studyConfig = useAppSelector((state) => state.study.config);
@@ -31,7 +32,7 @@ export default function AppHeader() {
     trialId,
   });
 
-  const progressBarCurrent = 2;
+  const progressBarCurrent = studyConfig?.sequence.indexOf(currentStep) || 0;
   const progressBarMax = studyConfig?.sequence.length || 0;
   const progressPercent = (progressBarCurrent / progressBarMax) * 100;
 
