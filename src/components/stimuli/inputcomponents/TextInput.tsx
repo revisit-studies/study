@@ -19,7 +19,7 @@ export default function StringInput(
       <TextInput
         placeholder={placeholder}
         label={label}
-        radius={"lg"}
+        radius={"md"}
         size={"md"}
         withAsterisk={required}
         {...answer}

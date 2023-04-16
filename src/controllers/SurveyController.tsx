@@ -14,6 +14,7 @@ import IframeController from "./IframeController";
 import ReactComponentController from "./ReactComponentController";
 import ResponseBlock from "../components/stimuli/inputcomponents/ResponseBlock";
 import ImageController from "./ImageController";
+import SurveyResponseBlock from "../components/stimuli/inputcomponents/SurveyResponseBlock";
 
 
 export function useTrialsConfig() {
@@ -46,7 +47,7 @@ export default function SurveyController() {
 
     <div key={"survey"}>
       <TrialProvenanceContext.Provider value={trialProvenance}>
-        <ResponseBlock responses={questions} />
+        <SurveyResponseBlock responses={questions} />
       </TrialProvenanceContext.Provider>
     </div>
   );

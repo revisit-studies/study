@@ -23,6 +23,8 @@ export default function DropdownInput({ title="Your Question", placeholder="addi
                 placeholder={placeholder}
                 data={dropdownData as dropdownOpton[]}
                 withAsterisk={required}
+                radius={"md"}
+                size={"md"}
                 {...answer}
             />
         </>

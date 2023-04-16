@@ -15,7 +15,7 @@ export default function TextAreaInput({ placeholder="", label="" ,required, answ
             <Textarea
                 placeholder={placeholder}
                 label={label}
-                radius={"lg"}
+                radius={"md"}
                 size={"md"}
                 withAsterisk={required}
             />
