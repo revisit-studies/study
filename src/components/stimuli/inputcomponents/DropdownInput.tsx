@@ -1,6 +1,5 @@
-import { useState, forwardRef, type Ref } from "react";
-import {Group, Radio, Select, TextInput} from "@mantine/core";
-import {Option} from "../../../parser/types";
+import {Select} from '@mantine/core';
+import {Option} from '../../../parser/types';
 
 type dropdownOpton = {
     label: string,
@@ -15,7 +14,7 @@ type inputProps = {
     required: boolean,
 }
 
-export default function DropdownInput({ title="Your Question", placeholder="additional description", dropdownData=[] , required, answer}: inputProps) {
+export default function DropdownInput({ title='Your Question', placeholder='additional description', dropdownData=[] , required, answer}: inputProps) {
     return (
         <>
             <Select
@@ -27,4 +26,4 @@ export default function DropdownInput({ title="Your Question", placeholder="addi
             />
         </>
     );
-};
+}

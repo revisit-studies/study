@@ -2,7 +2,7 @@ import {
   NavigateOptions,
   useNavigate,
   useSearchParams,
-} from "react-router-dom";
+} from 'react-router-dom';
 
 export function useNavigateWithParams(): (
   to: string,

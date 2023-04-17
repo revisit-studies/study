@@ -1,6 +1,6 @@
-import { AppShell } from "@mantine/core";
-import { useEffect } from "react";
-import { Outlet, useSearchParams } from "react-router-dom";
+import { AppShell } from '@mantine/core';
+import { useEffect } from 'react';
+import { Outlet, useSearchParams } from 'react-router-dom';
 import {
   PID,
   SESSION_ID,
@@ -8,11 +8,11 @@ import {
   setStudyIdentifiers,
   useAppDispatch,
   useAppSelector,
-} from "../store";
-import AppAside from "./interface/AppAside";
-import AppHeader from "./interface/AppHeader";
-import AppNavBar from "./interface/AppNavBar";
-import HelpModal from "./interface/HelpModal";
+} from '../store';
+import AppAside from './interface/AppAside';
+import AppHeader from './interface/AppHeader';
+import AppNavBar from './interface/AppNavBar';
+import HelpModal from './interface/HelpModal';
 
 export function Shell() {
   // get and set study identifiers from url
@@ -32,7 +32,7 @@ export function Shell() {
   );
 }
 
-function useStudyIdentifiers(_opts: { debug?: boolean } = {}) {
+function useStudyIdentifiers() {
   const dispatch = useAppDispatch();
   const studyIdentifiers = useAppSelector((s) => s.study.studyIdentifiers);
 
@@ -41,8 +41,8 @@ function useStudyIdentifiers(_opts: { debug?: boolean } = {}) {
   useEffect(() => {
     if (studyIdentifiers) return;
 
-    const studyId = urlParams.get(STUDY_ID) || "DEBUG";
-    const pid = urlParams.get(PID) || "DEBUG";
+    const studyId = urlParams.get(STUDY_ID) || 'DEBUG';
+    const pid = urlParams.get(PID) || 'DEBUG';
     const sessionId = urlParams.get(SESSION_ID) || crypto.randomUUID();
 
     setUrlParams(

@@ -1,3 +1,4 @@
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const SlicesDotMarks = ({ positions }: { positions: any[] }) => {
   return (
     <g>

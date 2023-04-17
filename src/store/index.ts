@@ -1,13 +1,13 @@
-import { type PayloadAction } from "@reduxjs/toolkit";
-import { configureTrrackableStore, createTrrackableSlice } from "@trrack/redux";
-import { TypedUseSelectorHook, useDispatch, useSelector } from "react-redux";
-import { initFirebase } from "../firebase/init";
-import { StudyConfig } from "../parser/types";
-import { RootState, State, Step, StudyIdentifiers } from "./types";
+import { type PayloadAction } from '@reduxjs/toolkit';
+import { configureTrrackableStore, createTrrackableSlice } from '@trrack/redux';
+import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
+import { initFirebase } from '../firebase/init';
+import { StudyConfig } from '../parser/types';
+import { RootState, State, Step, StudyIdentifiers } from './types';
 
-export const STUDY_ID = "STUDY_ID";
-export const PID = "PARTICIPANT_ID";
-export const SESSION_ID = "SESSION_ID";
+export const STUDY_ID = 'STUDY_ID';
+export const PID = 'PARTICIPANT_ID';
+export const SESSION_ID = 'SESSION_ID';
 
 export const DEBUG = true;
 
@@ -22,7 +22,7 @@ const initialState: State = {
 };
 
 const studySlice = createTrrackableSlice({
-  name: "studySlice",
+  name: 'studySlice',
   initialState,
   reducers: {
     setStudyIdentifiers(state, { payload }: PayloadAction<StudyIdentifiers>) {
@@ -47,7 +47,7 @@ const studySlice = createTrrackableSlice({
 
       // Create answers record for trail type steps
       const trialSteps = payload.sequence.filter(
-        (step) => payload.components[step].type === "trials"
+        (step) => payload.components[step].type === 'trials'
       );
       trialSteps.forEach((trialName) => {
         state.trials[trialName] = {};

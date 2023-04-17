@@ -1,6 +1,5 @@
-import { useState, forwardRef, type Ref } from "react";
-import {Group, Radio, TextInput} from "@mantine/core";
-import {Option} from "../../../parser/types";
+import {Group, Radio} from '@mantine/core';
+import {Option} from '../../../parser/types';
 
 
 type inputProps = {
@@ -11,7 +10,7 @@ type inputProps = {
     answer:object;
 }
 
-export default function RadioInput({ title="Your Question", desc="additional description", radioData=[], answer, required }: inputProps) {
+export default function RadioInput({ title='Your Question', desc='additional description', radioData=[], answer, required }: inputProps) {
     return (
         <>
             <Radio.Group
@@ -26,7 +25,7 @@ export default function RadioInput({ title="Your Question", desc="additional des
                         radioData.map((radio) => {
                             return (
                                 <Radio value={radio.value} label={radio.label} />
-                            )
+                            );
                         })
                     }
 
@@ -34,4 +33,4 @@ export default function RadioInput({ title="Your Question", desc="additional des
             </Radio.Group>
         </>
     );
-};
+}

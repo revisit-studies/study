@@ -1,12 +1,12 @@
-import { Button, Group, TextInput } from "@mantine/core";
-import { useEffect, useRef, useState } from "react";
-import ReactMarkdown from "react-markdown";
+import { Button, Group, TextInput } from '@mantine/core';
+import { useEffect, useRef, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
 
-import { ConsentComponent } from "../parser/types";
-import { useCurrentStep } from "../routes";
-import { completeStep, useAppDispatch, useAppSelector } from "../store";
-import { useNavigateWithParams } from "../utils/useNavigateWithParams";
-import { NextButton } from "./NextButton";
+import { ConsentComponent } from '../parser/types';
+import { useCurrentStep } from '../routes';
+import { completeStep, useAppDispatch, useAppSelector } from '../store';
+import { useNavigateWithParams } from '../utils/useNavigateWithParams';
+import { NextButton } from './NextButton';
 
 export function useConsentConfig() {
   const currentStep = useCurrentStep();
@@ -14,7 +14,7 @@ export function useConsentConfig() {
   return useAppSelector((state) => {
     const { config } = state.study;
 
-    if (!config || currentStep !== "consent") return null;
+    if (!config || currentStep !== 'consent') return null;
     return config.components[currentStep] as ConsentComponent;
   });
 }
@@ -51,20 +51,20 @@ export default function Consent() {
         <Group position="left" spacing="xs">
           <TextInput
             ref={txtInput}
-            placeholder={"Please sign your name"}
+            placeholder={'Please sign your name'}
             onChange={handleTextInput}
           />
         </Group>
       )}
       <Group position="left" spacing="xs" style={{ marginTop: 10 }}>
-        <Button variant="subtle" onClick={() => navigate("/end")}>
+        <Button variant="subtle" onClick={() => navigate('/end')}>
           Deny
         </Button>
         <NextButton
           disabled={disableContinue}
           label="Accept"
           process={() => {
-            dispatch(completeStep("consent"));
+            dispatch(completeStep('consent'));
           }}
         />
       </Group>

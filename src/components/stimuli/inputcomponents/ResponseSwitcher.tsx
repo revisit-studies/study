@@ -1,33 +1,31 @@
-import { Response } from "../../../parser/types";
-import TextInput from "../../stimuli/inputcomponents/TextInput";
-import DropdownInput from "./DropdownInput";
-import NumericInput from "./NumericInput";
-import LikertInput from "./LikertInput";
-import CheckBoxInput from "./CheckBoxInput";
-import RadioInput from "./RadioInput";
-import TextAreaInput from "./TextAreaInput";
-import SliderInput from "./SliderInput";
-import {TrialResult} from "../../../store/types";
+import { Response } from '../../../parser/types';
+import TextInput from '../../stimuli/inputcomponents/TextInput';
+import DropdownInput from './DropdownInput';
+import NumericInput from './NumericInput';
+import LikertInput from './LikertInput';
+import CheckBoxInput from './CheckBoxInput';
+import RadioInput from './RadioInput';
+import TextAreaInput from './TextAreaInput';
+import SliderInput from './SliderInput';
 
 
 
 type Props = {
   response: Response;
-  status: TrialResult;
   answer: object;
 };
 
-export default function ResponseSwitcher({ response , status, answer}: Props) {
-  const { type,id, desc, prompt, options, required, preset,max,min } = response;
+export default function ResponseSwitcher({ response, answer}: Props) {
+  const { type, desc, prompt, options, required, preset, max, min } = response;
 
   if (!type) return null;
 
   return (
     <>
-      {type === "short-text" && (
-        <TextInput placeholder={desc} label={prompt} required={required} id={id} answer={answer}/>
+      {type === 'short-text' && (
+        <TextInput placeholder={desc} label={prompt} required={required} answer={answer}/>
       )}
-      {type === "dropdown" && (
+      {type === 'dropdown' && (
         <DropdownInput
           title={prompt}
           placeholder={desc}
@@ -36,22 +34,22 @@ export default function ResponseSwitcher({ response , status, answer}: Props) {
           required={required}
         />
       )}
-      {type === "radio" && (
+      {type === 'radio' && (
         <RadioInput title={prompt} desc={desc} radioData={options}answer={answer} required={required}/>
       )}
-      {type === "numerical" && (
+      {type === 'numerical' && (
         <NumericInput label={prompt} placeholder={desc} required={required} answer={answer} max={max as number} min={min as number}/>
       )}
-      {type === "likert" && (
+      {type === 'likert' && (
           <LikertInput title={prompt} desc={desc} likertPreset={preset as string} answer={answer} required={required}/>
       )}
-      {type === "checkbox" && (
+      {type === 'checkbox' && (
           <CheckBoxInput label={prompt} desc={desc} required={required} checkboxData={options} answer={answer}/>
       )}
-      {type === "long-text" && (
-          <TextAreaInput placeholder={desc} label={prompt} required={required} answer={answer}/>
+      {type === 'long-text' && (
+          <TextAreaInput placeholder={desc} label={prompt} required={required}/>
       )}
-      {type === "slider" && <SliderInput title={prompt} desc={desc} sliderData={options} answer={answer} required={required}/>}
+      {type === 'slider' && <SliderInput title={prompt} desc={desc} sliderData={options} answer={answer} required={required}/>}
     </>
   );
 }

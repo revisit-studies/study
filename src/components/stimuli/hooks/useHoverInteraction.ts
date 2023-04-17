@@ -1,14 +1,14 @@
-import { useCallback, useContext } from "react";
-import { TrialProvenanceContext } from "../../../store/trialProvenance";
+import { useCallback, useContext } from 'react';
+import { TrialProvenanceContext } from '../../../store/trialProvenance';
 
 export function useHoverInteraction(id: string) {
   const { actions } = useContext(TrialProvenanceContext);
 
   const handleMouseEnter = useCallback(
-    (d: any) => {
-      actions.saveInteraction("Hover start", {
+    (d: { name: string }) => {
+      actions.saveInteraction('Hover start', {
         id,
-        action: "mouseEnter",
+        action: 'mouseEnter',
         objectID: d.name,
       });
     },
@@ -16,10 +16,10 @@ export function useHoverInteraction(id: string) {
   );
 
   const handleMouseLeave = useCallback(
-    (d: any) => {
-      actions.saveInteraction("Hover Complete", {
+    (d: { name: string }) => {
+      actions.saveInteraction('Hover Complete', {
         id,
-        action: "mouseLeave",
+        action: 'mouseLeave',
         objectID: d.name,
       });
     },

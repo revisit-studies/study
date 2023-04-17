@@ -1,4 +1,4 @@
-import { useHoverInteraction } from "../hooks/useHoverInteraction";
+import { useHoverInteraction } from '../hooks/useHoverInteraction';
 
 export const StackedBars = ({
   data,
@@ -6,8 +6,10 @@ export const StackedBars = ({
   yScale,
   stimulusID,
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any[];
   barWidth: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   yScale: any;
   stimulusID: string;
 }) => {

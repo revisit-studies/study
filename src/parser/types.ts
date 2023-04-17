@@ -13,13 +13,13 @@ interface StudyMetadata {
 
 export interface StudyComponent {
   type:
-    | "consent"
-    | "training"
-    | "practice"
-    | "attention-test"
-    | "trials"
-    | "survey"
-    | "end";
+    | 'consent'
+    | 'training'
+    | 'practice'
+    | 'attention-test'
+    | 'trials'
+    | 'survey'
+    | 'end';
 }
 
 interface StudyComponents {
@@ -31,17 +31,11 @@ export interface ConsentComponent extends StudyComponent {
   signatureRequired: boolean;
 }
 
-interface TrainingComponent extends StudyComponent {
-  // TODO
-}
+export type TrainingComponent = StudyComponent
 
-interface PracticeComponent extends StudyComponent {
-  // TODO
-}
+export type PracticeComponent = StudyComponent
 
-interface AttentionComponent extends StudyComponent {
-  // TODO
-}
+export type AttentionComponent = StudyComponent
 
 export interface TrialsComponent extends StudyComponent {
   response: Response[];
@@ -58,9 +52,11 @@ export interface Trial {
 }
 
 export interface Stimulus {
-  type: "react-component" | "image" | "javascript" | "website";
+  type: 'react-component' | 'image' | 'javascript' | 'website';
   path?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   style?: { [key: string]: any };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   parameters?: { [key: string]: any };
 }
 
@@ -74,14 +70,14 @@ export interface Response {
   id: string;
   prompt: string;
   type:
-    | "numerical"
-    | "short-text"
-    | "long-text"
-    | "likert"
-    | "dropdown"
-    | "slider"
-    | "radio"
-    | "checkbox";
+    | 'numerical'
+    | 'short-text'
+    | 'long-text'
+    | 'likert'
+    | 'dropdown'
+    | 'slider'
+    | 'radio'
+    | 'checkbox';
   desc: string;
   required: boolean;
   options?: Option[];
@@ -96,11 +92,12 @@ export interface Response {
 
 export interface Answer {
   id: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   answer: any;
-  "acceptable-low"?: number;
-  "acceptable-high"?: number;
-  "answer-callback"?: string;
-  "answer-regex"?: string;
+  'acceptable-low'?: number;
+  'acceptable-high'?: number;
+  'answer-callback'?: string;
+  'answer-regex'?: string;
 }
 
 // Add types for answers
@@ -111,8 +108,8 @@ type UIConfig = {
 };
 
 export interface StudyConfig {
-  "config-version": number;
-  "study-metadata": StudyMetadata;
+  'config-version': number;
+  'study-metadata': StudyMetadata;
   uiConfig: UIConfig;
   components: StudyComponents;
   sequence: string[];
@@ -122,5 +119,5 @@ export interface StudyConfig {
 export function isTrialsComponent(
   component: StudyComponent
 ): component is TrialsComponent {
-  return component.type === "trials";
+  return component.type === 'trials';
 }

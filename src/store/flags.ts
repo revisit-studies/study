@@ -1,9 +1,9 @@
-import { configureStore, createSlice } from "@reduxjs/toolkit";
-import { createContext } from "react";
-import { createDispatchHook, createSelectorHook } from "react-redux";
+import { configureStore, createSlice } from '@reduxjs/toolkit';
+import { createContext } from 'react';
+import { createDispatchHook, createSelectorHook } from 'react-redux';
 
 const flags = createSlice({
-  name: "flags",
+  name: 'flags',
   initialState: {
     showAdmin: false,
     showHelpText: false,
@@ -24,6 +24,9 @@ export const flagsStore = configureStore({
   reducer: flags.reducer,
 });
 
-export const flagsContext = createContext(null);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export const flagsContext: any = createContext(null);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const useFlagsSelector = createSelectorHook(flagsContext as any);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const useFlagsDispatch = createDispatchHook(flagsContext as any);

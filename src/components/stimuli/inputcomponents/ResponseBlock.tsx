@@ -1,16 +1,15 @@
-import { Response } from "../../../parser/types";
-import {saveTrialAnswer, useAppDispatch} from "../../../store";
-import ResponseSwitcher from "./ResponseSwitcher";
-import {NextButton} from "../../NextButton";
-import {Button, Group} from "@mantine/core";
-import {useCurrentStep} from "../../../routes";
-import {useParams} from "react-router-dom";
-import {createTrialProvenance} from "../../../store/trialProvenance";
-import {useNextTrialId, useTrialsConfig} from "../../../controllers/TrialController";
-import {useForm} from "@mantine/form";
-import {useEffect} from "react";
-import {useNextStep} from "../../../store/hooks/useNextStep";
-import {useTrialStatus} from "../../../store/hooks/useTrialStatus";
+import { Response } from '../../../parser/types';
+import {saveTrialAnswer, useAppDispatch} from '../../../store';
+import ResponseSwitcher from './ResponseSwitcher';
+import {NextButton} from '../../NextButton';
+import {Group} from '@mantine/core';
+import {useCurrentStep} from '../../../routes';
+import {useParams} from 'react-router-dom';
+import {useNextTrialId} from '../../../controllers/TrialController';
+import {useForm} from '@mantine/form';
+import {useEffect} from 'react';
+import {useNextStep} from '../../../store/hooks/useNextStep';
+import {useTrialStatus} from '../../../store/hooks/useTrialStatus';
 
 type Props = {
     responses: Response[];
@@ -22,10 +21,9 @@ export default function ResponseBlock({ responses }: Props) {
     const currentStep = useCurrentStep();
     const nextStep = useNextStep();
     const { trialId = null } = useParams<{ trialId: string }>();
-    const config = useTrialsConfig();
     const nextTrailId = useNextTrialId(trialId);
     const trialStatus = useTrialStatus(trialId);
-    const trialProvenance = createTrialProvenance();
+    
     if (!responses || !trialStatus || !trialId) return <></>;
 
 
@@ -33,11 +31,11 @@ export default function ResponseBlock({ responses }: Props) {
         let initObj = {};
 
         responses.forEach((response) => {
-            initObj = {...initObj, [response.id]: ""};
+            initObj = {...initObj, [response.id]: ''};
         });
 
         return initObj;
-    }
+    };
 
     const generateValidation = () => {
         let validateObj = {};
@@ -48,7 +46,7 @@ export default function ResponseBlock({ responses }: Props) {
         });
 
         return validateObj;
-    }
+    };
 
     const answerField = useForm({
         initialValues: generateInitFields(),
@@ -58,7 +56,7 @@ export default function ResponseBlock({ responses }: Props) {
     useEffect(() => {
         responses.forEach((response) => {
             const ans = trialStatus.answer ? JSON.parse(trialStatus.answer) : {};
-            answerField.setFieldValue(response.id, ans[response.id] || "");
+            answerField.setFieldValue(response.id, ans[response.id] || '');
         });
     }, [trialStatus.answer]);
 
@@ -69,7 +67,7 @@ export default function ResponseBlock({ responses }: Props) {
                 responses.map((response, index) => {
                     return (
                         <ResponseSwitcher key={index} status={trialStatus} answer={answerField.getInputProps(response.id)} response={response} />
-                    )
+                    );
                 })
             }
 
@@ -80,11 +78,11 @@ export default function ResponseBlock({ responses }: Props) {
                         to={`/${currentStep}/${nextTrailId}`}
                         process={() => {
                             if (trialStatus.complete) {
-                                answerField.setFieldValue("input", "");
+                                answerField.setFieldValue('input', '');
                             }
 
                             const answer = JSON.stringify(answerField.values);
-                            console.log(answer,"answer")
+                            console.log(answer,'answer');
 
                             dispatch(
                                 saveTrialAnswer({
@@ -94,7 +92,7 @@ export default function ResponseBlock({ responses }: Props) {
                                 })
                             );
 
-                            answerField.setFieldValue("input", "");
+                            answerField.setFieldValue('input', '');
                         }}
                     />
                 ) : (
