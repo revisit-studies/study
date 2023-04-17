@@ -1,5 +1,5 @@
 import { Response } from "../../../parser/types";
-import {saveTrialAnswer, useAppDispatch} from "../../../store";
+import {saveSurvey, saveTrialAnswer, useAppDispatch} from "../../../store";
 import ResponseSwitcher from "./ResponseSwitcher";
 import {NextButton} from "../../NextButton";
 import {Button, Group} from "@mantine/core";
@@ -48,24 +48,15 @@ export default function SurveyResponseBlock({ responses }: Props) {
             }
 
                 <Group position="right" spacing="xs" mt="xl">
-
                         <NextButton
                             disabled={!answerField.isValid()}
                             to={`/${nextStep}`}
                             process={() => {
-                                console.log(answerField.values)
-                                const answer = JSON.stringify(answerField.values);
                                 dispatch(
-                                    saveTrialAnswer({
-                                        trialName: currentStep,
-                                        trialId:"survey",
-                                        answer: answer,
-                                    })
+                                    saveSurvey(answerField.values)
                                 );
-                                answerField.setFieldValue("input", "");
                             }}
                         />
-
                 </Group>
             </form>
         </>
