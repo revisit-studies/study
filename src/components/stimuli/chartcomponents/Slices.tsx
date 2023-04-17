@@ -1,4 +1,4 @@
-import { useHoverInteraction } from "../hooks/useHoverInteraction";
+import { useHoverInteraction } from '../hooks/useHoverInteraction';
 
 export const Slices = ({
   stimulusID,
@@ -6,7 +6,9 @@ export const Slices = ({
   data,
 }: {
   stimulusID: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   arcs: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any[];
 }) => {
   const { handleMouseEnter, handleMouseLeave } =

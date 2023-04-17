@@ -1,16 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { useDispatch } from "react-redux";
-import { saveTrialAnswer } from "../store";
-import { useCurrentStep } from "../routes";
-import { useParams } from "react-router-dom";
-import { useNavigateWithParams } from "../utils/useNavigateWithParams";
-import { useNextStep } from "../store/hooks/useNextStep";
+import { useEffect, useMemo } from 'react';
+import { useDispatch } from 'react-redux';
+import { saveTrialAnswer } from '../store';
+import { useCurrentStep } from '../routes';
+import { useParams } from 'react-router-dom';
+import { useNavigateWithParams } from '../utils/useNavigateWithParams';
+import { useNextStep } from '../store/hooks/useNextStep';
 
-const PREFIX = "@REVISIT_COMMS";
+const PREFIX = '@REVISIT_COMMS';
 
 const defaultStyle = {
-  minHeight: "300px",
-  width: "100%",
+  minHeight: '300px',
+  width: '100%',
   border: 0,
 };
 
@@ -19,6 +19,7 @@ const IframeController = ({
   style = {},
 }: {
   path?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   style?: { [key: string]: any };
 }) => {
   const iframeStyle = { ...defaultStyle, ...style };
@@ -37,8 +38,8 @@ const IframeController = ({
     const handler = (e: MessageEvent) => {
       const data = e.data;
       if (
-        typeof data === "object" &&
-        "type" in data &&
+        typeof data === 'object' &&
+        'type' in data &&
         data.type.substring(0, PREFIX.length) === PREFIX &&
         data.iframeId === iframeId &&
         trialId
@@ -57,9 +58,9 @@ const IframeController = ({
       }
     };
 
-    window.addEventListener("message", handler);
+    window.addEventListener('message', handler);
 
-    return () => window.removeEventListener("message", handler);
+    return () => window.removeEventListener('message', handler);
   }, []);
 
   return (

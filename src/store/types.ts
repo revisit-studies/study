@@ -1,5 +1,5 @@
-import { StudyComponent, StudyConfig } from "../parser/types";
-import { store } from "./index";
+import { StudyComponent, StudyConfig } from '../parser/types';
+import { store } from './index';
 
 export type RootState = ReturnType<typeof store.getState>;
 

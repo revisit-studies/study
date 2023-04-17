@@ -1,5 +1,5 @@
-import { Suspense, lazy } from "react";
-import { Stimulus } from "../parser/types";
+import { Suspense, lazy } from 'react';
+import { Stimulus } from '../parser/types';
 
 const ReactComponentController = ({
   stimulusID,

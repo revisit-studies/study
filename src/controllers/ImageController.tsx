@@ -1,7 +1,7 @@
 import { Image } from '@mantine/core';
 
 const defaultStyle = {
-  maxWidth: "100%",
+  maxWidth: '100%',
 };
 
 const ImageController = ({
@@ -9,6 +9,7 @@ const ImageController = ({
   style = {},
 }: {
   path?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   style?: { [key: string]: any };
 }) => {
   const imageStyle = { ...defaultStyle, ...style };

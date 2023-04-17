@@ -1,5 +1,5 @@
-import { ScaleBand, ScaleLinear } from "d3";
-import { useHoverInteraction } from "../hooks/useHoverInteraction";
+import { ScaleBand, ScaleLinear } from 'd3';
+import { useHoverInteraction } from '../hooks/useHoverInteraction';
 
 export const Bars = ({
   stimulusID,
@@ -9,6 +9,7 @@ export const Bars = ({
   height,
 }: {
   stimulusID: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
   yScale: ScaleLinear<number, number>;
   xScale: ScaleBand<string>;
@@ -19,7 +20,9 @@ export const Bars = ({
 
   return (
     <g>
-      {data.map((d: any, i: number) => (
+      {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      data.map((d: any, i: number) => (
         <rect
           key={i}
           x={xScale(d.name)}

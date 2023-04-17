@@ -1,5 +1,4 @@
-import { useState, forwardRef, type Ref } from "react";
-import {NumberInput, TextInput} from "@mantine/core";
+import {NumberInput} from '@mantine/core';
 
 type inputProps = {
     placeholder: string,
@@ -10,7 +9,7 @@ type inputProps = {
     answer:object;
 
 }
-export default function NumericInput({ placeholder="", label="" ,required=false,min=0,max=10, answer}: inputProps) {
+export default function NumericInput({ placeholder='', label='' ,required=false,min=0,max=10, answer}: inputProps) {
     return (
         <>
             <NumberInput
@@ -23,4 +22,4 @@ export default function NumericInput({ placeholder="", label="" ,required=false,
             />
         </>
     );
-};
+}

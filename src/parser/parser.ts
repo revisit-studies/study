@@ -2,12 +2,12 @@ import { parse as hjsonParse } from 'hjson';
 import { StudyConfig } from './types';
 
 export function parseStudyConfig(fileData: string) {
-    let data = hjsonParse(fileData);
+    const data = hjsonParse(fileData);
     
     if (validateStudyConfig(data)) {
         return data;
     } else {
-        throw Error("There was an issue validating your file");
+        throw Error('There was an issue validating your file');
     }
 }
 

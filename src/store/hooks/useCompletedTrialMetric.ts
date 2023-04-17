@@ -1,5 +1,5 @@
-import { useAppSelector } from "..";
-import { isTrialsComponent } from "../../parser/types";
+import { useAppSelector } from '..';
+import { isTrialsComponent } from '../../parser/types';
 
 /**
  * Get total number of trials and completed trials for given trial group.

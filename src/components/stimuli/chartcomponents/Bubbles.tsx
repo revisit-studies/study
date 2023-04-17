@@ -1,9 +1,10 @@
-import { useHoverInteraction } from "../hooks/useHoverInteraction";
+import { useHoverInteraction } from '../hooks/useHoverInteraction';
 
 export const Bubbles = ({
   data,
   stimulusID,
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any[];
   stimulusID: string;
 }) => {

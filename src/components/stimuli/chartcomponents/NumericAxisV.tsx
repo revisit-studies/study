@@ -1,11 +1,12 @@
-import * as d3 from "d3";
-import { useMemo } from "react";
+import * as d3 from 'd3';
+import { useMemo } from 'react';
 
 export const NumericAxisV = ({
   domain = [0, 100],
   range = [10, 100],
   withTick = true,
   tickLen = 5,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tickFilter = (t: any) => t,
 }) => {
   const ticks = useMemo(() => {
@@ -19,27 +20,28 @@ export const NumericAxisV = ({
         xOffset: yScale(value),
       }))
     );
-  }, [domain.join("-"), range.join("-")]);
+  }, [domain.join('-'), range.join('-')]);
   return (
     <g>
       <path
-        d={["M", 0, range[0], "h", tickLen, "V", range[1], "h", -tickLen].join(
-          " "
+        d={['M', 0, range[0], 'h', tickLen, 'V', range[1], 'h', -tickLen].join(
+          ' '
         )}
         fill="none"
         stroke="currentColor"
       />
 
       {withTick &&
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ticks.map(({ value, xOffset }: { value: any; xOffset: any }) => (
           <g key={value} transform={`translate(0,${xOffset})`}>
             <line x2={`${tickLen}`} stroke="currentColor" />
             <text
               key={value}
               style={{
-                fontSize: "10px",
-                textAnchor: "middle",
-                transform: "translateX(-10px)",
+                fontSize: '10px',
+                textAnchor: 'middle',
+                transform: 'translateX(-10px)',
               }}
             >
               {value}

@@ -1,6 +1,6 @@
-import { useAppSelector } from "..";
-import { useCurrentStep } from "../../routes";
-import { TrialResult } from "../types";
+import { useAppSelector } from '..';
+import { useCurrentStep } from '../../routes';
+import { TrialResult } from '../types';
 
 /**
  *
@@ -16,7 +16,7 @@ export function useTrialStatus(trialId: string | null): TrialResult | null {
     currentStep.length === 0 ||
     !trialId ||
     !config ||
-    config.components[currentStep]?.type !== "trials"
+    config.components[currentStep]?.type !== 'trials'
   )
     return null;
 

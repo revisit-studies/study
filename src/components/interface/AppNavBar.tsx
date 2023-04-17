@@ -1,4 +1,4 @@
-import { Navbar, Text } from "@mantine/core";
+import { Navbar, Text } from '@mantine/core';
 
 export default function AppNavBar() {
   return (
