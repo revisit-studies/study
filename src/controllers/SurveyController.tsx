@@ -41,8 +41,6 @@ export default function SurveyController() {
   if (!config || !config) return null;
 
   const questions = config.questions;
-  console.log(questions,"questions")
-
   return (
 
     <div key={"survey"}>

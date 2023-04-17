@@ -1,5 +1,5 @@
 import { Response } from "../../../parser/types";
-import {saveSurvey, saveTrialAnswer, useAppDispatch} from "../../../store";
+import {saveSurvey, saveTrialAnswer, useAppDispatch, useAppSelector} from "../../../store";
 import ResponseSwitcher from "./ResponseSwitcher";
 import {NextButton} from "../../NextButton";
 import {Button, Group} from "@mantine/core";
@@ -20,11 +20,8 @@ type Props = {
 export default function SurveyResponseBlock({ responses }: Props) {
 
     const dispatch = useAppDispatch();
-    const currentStep = useCurrentStep();
     const nextStep = useNextStep();
-    const config = useTrialsConfig();
-
-
+    const { survey } = useAppSelector((state) => state.study);
 
 
     const answerField = useForm({
@@ -33,8 +30,10 @@ export default function SurveyResponseBlock({ responses }: Props) {
     });
 
     useEffect(() => {
-
-    }, []);
+        for (const [key, value] of Object.entries(survey)) {
+            answerField.setFieldValue(key,value)
+        }
+    }, [survey]);
 
     return (
         <>
