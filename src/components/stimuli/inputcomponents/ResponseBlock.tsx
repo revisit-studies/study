@@ -11,6 +11,7 @@ import {useForm} from "@mantine/form";
 import {useEffect} from "react";
 import {useNextStep} from "../../../store/hooks/useNextStep";
 import {useTrialStatus} from "../../../store/hooks/useTrialStatus";
+import {generateInitFields, generateValidation} from "./utils";
 
 type Props = {
     responses: Response[];
@@ -29,30 +30,9 @@ export default function ResponseBlock({ responses }: Props) {
     if (!responses || !trialStatus || !trialId) return <></>;
 
 
-    const generateInitFields = () => {
-        let initObj = {};
-
-        responses.forEach((response) => {
-            initObj = {...initObj, [response.id]: ""};
-        });
-
-        return initObj;
-    }
-
-    const generateValidation = () => {
-        let validateObj = {};
-
-        responses.forEach((response) => {
-            if(response.required)
-                validateObj = {...validateObj, [response.id]: (value:string) => (value.length === 0 ? 'Empty input' : null)};
-        });
-
-        return validateObj;
-    }
-
     const answerField = useForm({
-        initialValues: generateInitFields(),
-        validate: generateValidation(),
+        initialValues: generateInitFields(responses),
+        validate: generateValidation(responses),
     });
 
     useEffect(() => {

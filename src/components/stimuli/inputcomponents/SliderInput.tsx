@@ -23,6 +23,7 @@ export default function SliderInput({ title="Your Question", desc="additional de
             <Text fz={"md"} fw={500}>{title}</Text>
             <Text fz={"sm"} fw={400} c={"#868e96"}>{desc}</Text>
             <Slider
+                labelAlwaysOn
                 sx={{marginTop: "5px",marginBottom: "30px"}}
                 marks={sliderData as sliderProps[]}
                 {...answer}

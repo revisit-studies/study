@@ -18,6 +18,7 @@ export default function TextAreaInput({ placeholder="", label="" ,required, answ
                 radius={"md"}
                 size={"md"}
                 withAsterisk={required}
+                {...answer}
             />
         </>
     );
