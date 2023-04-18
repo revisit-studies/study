@@ -18,7 +18,7 @@ export default function RadioInput({ title='Your Question', desc='additional des
                 label={title}
                 description={desc}
                 withAsterisk={required}
-                size={"md"}
+                size={'md'}
                 {...answer}
             >
                 <Group mt="xs">

@@ -1,6 +1,6 @@
-import { useState, forwardRef, type Ref } from "react";
-import {Group, Radio, Slider, Text, TextInput} from "@mantine/core";
-import {Option} from "../../../parser/types";
+import { useState, forwardRef, type Ref } from 'react';
+import {Group, Radio, Slider, Text, TextInput} from '@mantine/core';
+import {Option} from '../../../parser/types';
 
 export type sliderProps = {
     label:string,
@@ -15,14 +15,14 @@ type inputProps = {
     required: boolean,
 }
 
-export default function SliderInput({ title="Your Question", desc="additional description", sliderData=[], answer,required }: inputProps) {
+export default function SliderInput({ title='Your Question', desc='additional description', sliderData=[], answer,required }: inputProps) {
     return (
         <>
-            <Text fz={"md"} fw={500}>{title}</Text>
-            <Text fz={"sm"} fw={400} c={"#868e96"}>{desc}</Text>
+            <Text fz={'md'} fw={500}>{title}</Text>
+            <Text fz={'sm'} fw={400} c={'#868e96'}>{desc}</Text>
             <Slider
                 labelAlwaysOn
-                sx={{marginTop: "5px",marginBottom: "30px"}}
+                sx={{marginTop: '5px',marginBottom: '30px'}}
                 marks={sliderData as sliderProps[]}
                 {...answer}
                 styles={(theme) =>({
@@ -54,7 +54,7 @@ export default function SliderInput({ title="Your Question", desc="additional de
                         justifyContent: 'center',
                         alignItems: 'center',
                         fontWeight: 700,
-                        color:"orange",
+                        color:'orange',
                         backgroundColor: 'transparent',
                     },
                 })}

@@ -1,20 +1,20 @@
-import { lazy, Suspense, useEffect, useMemo } from "react";
-import ReactMarkdown from "react-markdown";
-import { useParams } from "react-router-dom";
-import {SurveyComponent, TrialsComponent} from "../parser/types";
-import { useCurrentStep } from "../routes";
-import {  useAppSelector } from "../store";
+import { lazy, Suspense, useEffect, useMemo } from 'react';
+import ReactMarkdown from 'react-markdown';
+import { useParams } from 'react-router-dom';
+import {SurveyComponent, TrialsComponent} from '../parser/types';
+import { useCurrentStep } from '../routes';
+import {  useAppSelector } from '../store';
 
 import {
   createTrialProvenance,
   TrialProvenanceContext,
-} from "../store/trialProvenance";
-import IframeController from "./IframeController";
+} from '../store/trialProvenance';
+import IframeController from './IframeController';
 
-import ReactComponentController from "./ReactComponentController";
-import ResponseBlock from "../components/stimuli/inputcomponents/ResponseBlock";
-import ImageController from "./ImageController";
-import SurveyResponseBlock from "../components/stimuli/inputcomponents/SurveyResponseBlock";
+import ReactComponentController from './ReactComponentController';
+import ResponseBlock from '../components/stimuli/inputcomponents/ResponseBlock';
+import ImageController from './ImageController';
+import SurveyResponseBlock from '../components/stimuli/inputcomponents/SurveyResponseBlock';
 
 
 export function useTrialsConfig() {
@@ -24,7 +24,7 @@ export function useTrialsConfig() {
     const { config } = state.study;
     const component = currentStep ? config?.components[currentStep] : null;
 
-    if (!config || !currentStep || component?.type !== "survey") return null;
+    if (!config || !currentStep || component?.type !== 'survey') return null;
 
     return config.components[currentStep] as SurveyComponent;
   });
@@ -43,7 +43,7 @@ export default function SurveyController() {
   const questions = config.questions;
   return (
 
-    <div key={"survey"}>
+    <div key={'survey'}>
       <TrialProvenanceContext.Provider value={trialProvenance}>
         <SurveyResponseBlock responses={questions} />
       </TrialProvenanceContext.Provider>

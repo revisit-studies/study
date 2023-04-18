@@ -1,9 +1,9 @@
-import { lazy, Suspense, useEffect, useMemo } from "react";
-import ReactMarkdown from "react-markdown";
-import { useParams } from "react-router-dom";
-import { TrialsComponent } from "../parser/types";
-import { useCurrentStep } from "../routes";
-import {  useAppSelector } from "../store";
+import { lazy, Suspense, useEffect, useMemo } from 'react';
+import ReactMarkdown from 'react-markdown';
+import { useParams } from 'react-router-dom';
+import { TrialsComponent } from '../parser/types';
+import { useCurrentStep } from '../routes';
+import {  useAppSelector } from '../store';
 
 import {
   createTrialProvenance,

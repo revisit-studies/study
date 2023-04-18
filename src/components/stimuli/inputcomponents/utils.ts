@@ -1,4 +1,4 @@
-import {Response} from "../../../parser/types";
+import {Response} from '../../../parser/types';
 
 export const generateInitFields = (responses: Response[]) => {
     let initObj = {};
@@ -6,7 +6,7 @@ export const generateInitFields = (responses: Response[]) => {
         initObj = {...initObj, [response.id]: null};
     });
     return initObj;
-}
+};
 export const generateValidation = (responses: Response[]) => {
     let validateObj = {};
     responses.forEach((response) => {
@@ -15,4 +15,4 @@ export const generateValidation = (responses: Response[]) => {
         }
     });
     return validateObj;
-}
+};

@@ -10,11 +10,11 @@ import { StudyComponent, StudyConfig } from './parser/types';
 import { TrrackStoreType } from '@trrack/redux';
 import { createSelectorHook, Provider } from 'react-redux';
 import { saveConfig, store, trrackStore } from './store';
-import { RouterProvider } from "react-router-dom";
-import { StudyEnd } from "./components/StudyEnd";
-import { createRouter } from "./routes";
-import { flagsContext, flagsStore } from "./store/flags";
-import SurveyController from "./controllers/SurveyController";
+import { RouterProvider } from 'react-router-dom';
+import { StudyEnd } from './components/StudyEnd';
+import { createRouter } from './routes';
+import { flagsContext, flagsStore } from './store/flags';
+import SurveyController from './controllers/SurveyController';
 
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion
