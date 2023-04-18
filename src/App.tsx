@@ -1,31 +1,32 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useEffect, useState } from 'react';
 
-import { ReactNode } from "react";
-import Consent from "./components/Consent";
-import { NextButton } from "./components/NextButton";
-import TrialController from "./controllers/TrialController";
-import { parseStudyConfig } from "./parser/parser";
-import { StudyComponent, StudyConfig } from "./parser/types";
+import { ReactNode } from 'react';
+import Consent from './components/Consent';
+import { NextButton } from './components/NextButton';
+import TrialController from './controllers/TrialController';
+import { parseStudyConfig } from './parser/parser';
+import { StudyComponent, StudyConfig } from './parser/types';
 
-import { TrrackStoreType } from "@trrack/redux";
-import { createSelectorHook, Provider } from "react-redux";
-import { saveConfig, store, trrackStore } from "./store";
-
+import { TrrackStoreType } from '@trrack/redux';
+import { createSelectorHook, Provider } from 'react-redux';
+import { saveConfig, store, trrackStore } from './store';
 import { RouterProvider } from "react-router-dom";
 import { StudyEnd } from "./components/StudyEnd";
 import { createRouter } from "./routes";
 import { flagsContext, flagsStore } from "./store/flags";
 import SurveyController from "./controllers/SurveyController";
 
-const trrackContext = createContext<TrrackStoreType>(undefined!);
-export const useTrrackSelector = createSelectorHook(trrackContext as any);
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion
+const trrackContext: any = createContext<TrrackStoreType>(undefined!);
+export const useTrrackSelector = createSelectorHook(trrackContext);
 
 async function fetchStudyConfig(configLocation: string) {
   const config = await (await fetch(configLocation)).text();
   return parseStudyConfig(config);
 }
 
-const elements: Record<StudyComponent["type"], ReactNode> = {
+const elements: Record<StudyComponent['type'], ReactNode> = {
   consent: (
     <>
       <Consent />
@@ -43,7 +44,7 @@ const elements: Record<StudyComponent["type"], ReactNode> = {
       <NextButton />
     </>
   ),
-  "attention-test": (
+  'attention-test': (
     <>
       <div>attention test component goes here</div>
       <NextButton />
@@ -73,7 +74,7 @@ export default function AppShellDemo() {
   // Fetch and set config
   useEffect(() => {
     if (!config) {
-      fetchStudyConfig("/src/configs/config-cleveland.hjson").then((cfg) => {
+      fetchStudyConfig('/src/configs/config-cleveland.hjson').then((cfg) => {
         // fetchStudyConfig("/src/configs/config-image-demo.hjson").then((cfg) => {
         store.dispatch(saveConfig(cfg));
       });
@@ -87,9 +88,9 @@ export default function AppShellDemo() {
   const router = createRouter(config, elements);
 
   return (
-    <Provider store={trrackStore} context={trrackContext as any}>
+    <Provider store={trrackStore} context={trrackContext}>
       <Provider store={store}>
-        <Provider store={flagsStore} context={flagsContext as any}>
+        <Provider store={flagsStore} context={flagsContext}>
           {router && <RouterProvider router={router} />}
         </Provider>
       </Provider>

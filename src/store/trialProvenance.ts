@@ -1,5 +1,5 @@
-import { Registry, initializeTrrack } from "@trrack/core";
-import { createContext } from "react";
+import { Registry, initializeTrrack } from '@trrack/core';
+import { createContext } from 'react';
 
 type Interaction = {
   id: string;
@@ -15,8 +15,8 @@ type TrialState = {
 export function createTrialProvenance() {
   const registry = Registry.create();
   const saveInteractionAction = registry.register(
-    "save-interaction",
-    (state, interaction: Omit<Interaction, "timestamp">) => {
+    'save-interaction',
+    (state, interaction: Omit<Interaction, 'timestamp'>) => {
       state.interactions.push({ ...interaction, timestamp: Date.now() });
     }
   );
@@ -31,7 +31,7 @@ export function createTrialProvenance() {
   return {
     trrack,
     actions: {
-      saveInteraction(label: string, args: any) {
+      saveInteraction(label: string, args: Omit<Interaction, 'timestamp'>) {
         trrack.apply(label, saveInteractionAction(args));
       },
     },
@@ -40,12 +40,13 @@ export function createTrialProvenance() {
 
 export type TrialProvenance = ReturnType<
   typeof createTrialProvenance
->["trrack"];
+>['trrack'];
 export type TrialProvenanceActions = ReturnType<
   typeof createTrialProvenance
->["actions"];
+>['actions'];
 
 export const TrialProvenanceContext = createContext<{
   trrack: TrialProvenance;
   actions: TrialProvenanceActions;
+// eslint-disable-next-line @typescript-eslint/no-non-null-assertion
 }>(null!);

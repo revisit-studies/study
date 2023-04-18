@@ -1,7 +1,4 @@
-import { useState, forwardRef, type Ref } from "react";
-import {Group, Radio, TextInput} from "@mantine/core";
-import {Option} from "../../../parser/types";
-import RadioInput from "./RadioInput";
+import RadioInput from './RadioInput';
 
 
 type inputProps = {
@@ -12,7 +9,7 @@ type inputProps = {
     answer:object
 }
 
-export default function LikertInput({ title="Your Question", desc="additional description", likertPreset="5", answer , required}: inputProps) {
+export default function LikertInput({ title='Your Question', desc='additional description', likertPreset='5', answer , required}: inputProps) {
 
     const radioData = [];
     for (let i = 1; i <= +likertPreset; i++) {
@@ -24,4 +21,4 @@ export default function LikertInput({ title="Your Question", desc="additional de
             <RadioInput title={title} desc={desc} radioData={radioData} answer={answer} required={required}/>
         </>
     );
-};
+}

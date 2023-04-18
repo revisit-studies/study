@@ -8,12 +8,12 @@ import {  useAppSelector } from "../store";
 import {
   createTrialProvenance,
   TrialProvenanceContext,
-} from "../store/trialProvenance";
-import IframeController from "./IframeController";
+} from '../store/trialProvenance';
+import IframeController from './IframeController';
 
-import ReactComponentController from "./ReactComponentController";
-import ResponseBlock from "../components/stimuli/inputcomponents/ResponseBlock";
-import ImageController from "./ImageController";
+import ReactComponentController from './ReactComponentController';
+import ResponseBlock from '../components/stimuli/inputcomponents/ResponseBlock';
+import ImageController from './ImageController';
 
 
 export function useTrialsConfig() {
@@ -23,7 +23,7 @@ export function useTrialsConfig() {
     const { config } = state.study;
     const component = currentStep ? config?.components[currentStep] : null;
 
-    if (!config || !currentStep || component?.type !== "trials") return null;
+    if (!config || !currentStep || component?.type !== 'trials') return null;
 
     return config.components[currentStep] as TrialsComponent;
   });
@@ -54,36 +54,26 @@ export default function TrialController() {
   if (!trialId || !config) return null;
 
   const stimulus = config.trials[trialId];
-  const componentPath = stimulus.stimulus.path;
   const response = config.response;
 
-  const StimulusComponent = useMemo(() => {
-    if (!componentPath || componentPath.length === 0) return null;
-
-    return lazy(
-      () => import(/* @vite-ignore */ `../components/${componentPath}`)
-    );
-  }, [componentPath]);
-
   return (
-
     <div key={trialId}>
       <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
       <TrialProvenanceContext.Provider value={trialProvenance}>
         <Suspense fallback={<div>Loading...</div>}>
-          {stimulus.stimulus.type === "website" && (
+          {stimulus.stimulus.type === 'website' && (
             <IframeController
               path={stimulus.stimulus.path}
               style={stimulus.stimulus.style}
             />
           )}
-          {stimulus.stimulus.type === "image" && (
+          {stimulus.stimulus.type === 'image' && (
             <ImageController
               path={stimulus.stimulus.path}
               style={stimulus.stimulus.style}
             />
           )}
-          {stimulus.stimulus.type === "react-component" && (
+          {stimulus.stimulus.type === 'react-component' && (
             <ReactComponentController
               stimulusID={trialId}
               stimulus={stimulus.stimulus}

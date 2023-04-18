@@ -1,15 +1,15 @@
-import { Button, Text } from "@mantine/core";
-import { useEffect, useState } from "react";
-import { trrack, useAppSelector } from "../store";
-import { useStudyConfig } from "../store/hooks/useStudyConfig";
+import { Button, Text } from '@mantine/core';
+import { useEffect, useState } from 'react';
+import { trrack, useAppSelector } from '../store';
+import { useStudyConfig } from '../store/hooks/useStudyConfig';
 
 function download(graph: unknown, filename: string) {
   const dataStr =
-    "data:text/json;charset=utf-8," +
+    'data:text/json;charset=utf-8,' +
     encodeURIComponent(JSON.stringify(graph, null, 2));
-  const downloadAnchorNode = document.createElement("a");
-  downloadAnchorNode.setAttribute("href", dataStr);
-  downloadAnchorNode.setAttribute("download", filename);
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute('href', dataStr);
+  downloadAnchorNode.setAttribute('download', filename);
   document.body.appendChild(downloadAnchorNode); // required for firefox
   downloadAnchorNode.click();
   downloadAnchorNode.remove();
@@ -41,7 +41,7 @@ export function StudyEnd() {
   if (!config || !ids) return null;
 
   const graph = trrack.graph.backend;
-  const filename = `${config["study-metadata"].title} ${ids.pid} ${ids.session_id}.json`;
+  const filename = `${config['study-metadata'].title} ${ids.pid} ${ids.session_id}.json`;
 
   if (delayCounter === 0) {
     download(graph, filename);

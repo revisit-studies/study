@@ -1,28 +1,28 @@
 // npm install react-router-dom localforage match-sorter sort-by // For offline + misc
 
-import { ReactNode } from "react";
+import { ReactNode } from 'react';
 import {
   RouteObject,
   createBrowserRouter,
   useLocation,
-} from "react-router-dom";
-import { Shell } from "../components/Shell";
-import TrialController from "../controllers/TrialController";
-import { StudyComponent, StudyConfig, TrialsComponent } from "../parser/types";
-import { NavigateWithParams } from "../utils/NavigateWithParams";
+} from 'react-router-dom';
+import { Shell } from '../components/Shell';
+import TrialController from '../controllers/TrialController';
+import { StudyComponent, StudyConfig, TrialsComponent } from '../parser/types';
+import { NavigateWithParams } from '../utils/NavigateWithParams';
 
 export function createRouter(
   config: StudyConfig | null,
-  elements: Record<StudyComponent["type"], ReactNode>
+  elements: Record<StudyComponent['type'], ReactNode>
 ) {
   if (!config) return null;
   const { sequence, components } = config;
 
-  const enhancedSequence = [...sequence, "end"];
+  const enhancedSequence = [...sequence, 'end'];
 
   const routes: RouteObject[] = [
     {
-      path: "/",
+      path: '/',
       element: <NavigateWithParams to={`/${sequence[0]}`} replace />,
     },
   ];
@@ -30,9 +30,9 @@ export function createRouter(
   enhancedSequence.forEach((step) => {
     const component = components[step] || null;
 
-    const comp = elements[component?.type || "end"];
+    const comp = elements[component?.type || 'end'];
 
-    if (component?.type === "trials") {
+    if (component?.type === 'trials') {
       const { order } = component as TrialsComponent;
 
       const baseTrailRoute: RouteObject = {
@@ -58,7 +58,7 @@ export function createRouter(
   });
 
   const rootRoute: RouteObject = {
-    path: "/",
+    path: '/',
     element: <Shell />,
     children: routes,
   };
@@ -68,5 +68,5 @@ export function createRouter(
 
 export function useCurrentStep() {
   const location = useLocation();
-  return location.pathname.split("/")[1];
+  return location.pathname.split('/')[1];
 }

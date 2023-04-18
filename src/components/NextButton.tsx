@@ -1,37 +1,35 @@
-import { Button } from "@mantine/core";
-import { To } from "react-router-dom";
-import { useCurrentStep } from "../routes";
-import { useNextStep } from "../store/hooks/useNextStep";
-import { useNavigateWithParams } from "../utils/useNavigateWithParams";
+import { Button } from '@mantine/core';
+import { To } from 'react-router-dom';
+import { useNextStep } from '../store/hooks/useNextStep';
+import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 
 type Props = {
   label?: string;
   disabled?: boolean;
   process?: null | (() => void | Promise<void>);
-  to?: To | "auto";
+  to?: To | 'auto';
   replace?: boolean;
 };
 
 export function NextButton({
-  label = "Next",
+  label = 'Next',
   process = null,
-  to = "auto",
+  to = 'auto',
   disabled = false,
   replace = false,
 }: Props) {
   const navigate = useNavigateWithParams();
   const computedTo = useNextStep();
-  const current = useCurrentStep();
 
   return (
     <Button type="submit"
-      disabled={disabled || (to === "auto" && !computedTo)}
+      disabled={disabled || (to === 'auto' && !computedTo)}
       onClick={async () => {
         if (process) process();
-        if (to === "auto" && computedTo) {
+        if (to === 'auto' && computedTo) {
           navigate(`/${computedTo}`, { replace });
         }
-        if (to !== "auto") {
+        if (to !== 'auto') {
           navigate(to, { replace });
         }
       }}

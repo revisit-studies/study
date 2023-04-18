@@ -1,11 +1,12 @@
-import * as d3 from "d3";
-import { useMemo } from "react";
+import * as d3 from 'd3';
+import { useMemo } from 'react';
 
 export const OrdinalAxisHWithDotMarks = ({
-  domain = ["A", "B", "C", "D", "E"],
+  domain = ['A', 'B', 'C', 'D', 'E'],
   range = [10, 100],
   withTick = true,
   tickLen = 5,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tickFilter = (t: any[]) => t,
 }) => {
   const ticks = useMemo(() => {
@@ -16,25 +17,26 @@ export const OrdinalAxisHWithDotMarks = ({
         xOffset: (xScale(value) || 0) + xScale.bandwidth() / 2 - 5,
       }))
     );
-  }, [domain.join("-"), range.join("-")]);
+  }, [domain.join('-'), range.join('-')]);
   return (
     <g>
       <path
         d={[
-          "M",
+          'M',
           range[0],
           tickLen,
-          "v",
+          'v',
           -tickLen,
-          "H",
+          'H',
           range[1],
-          "v",
+          'v',
           tickLen,
-        ].join(" ")}
+        ].join(' ')}
         fill="none"
         stroke="currentColor"
       />
       {withTick &&
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ticks.map(({ value, xOffset }: any) => (
           <g key={value} transform={`translate(${xOffset}, 10)`}>
             <circle key={value} r={2} cx={0} cy={0}>

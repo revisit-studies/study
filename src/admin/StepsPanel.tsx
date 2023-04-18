@@ -1,7 +1,7 @@
-import { Badge, Group } from "@mantine/core";
-import { useCurrentStep } from "../routes";
-import { useAppSelector } from "../store";
-import { useNavigateWithParams } from "../utils/useNavigateWithParams";
+import { Badge, Group } from '@mantine/core';
+import { useCurrentStep } from '../routes';
+import { useAppSelector } from '../store';
+import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 
 export function StepsPanel() {
   const currentStep = useCurrentStep();
@@ -17,9 +17,9 @@ export function StepsPanel() {
         <Badge
           key={step}
           style={{
-            cursor: "pointer",
+            cursor: 'pointer',
           }}
-          color={step === currentStep ? "red" : "blue"}
+          color={step === currentStep ? 'red' : 'blue'}
           onClick={() => navigate(`/${step}`)}
           size="xs"
         >

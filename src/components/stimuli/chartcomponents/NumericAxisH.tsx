@@ -1,17 +1,21 @@
-import * as d3 from "d3";
-import { useMemo } from "react";
+import * as d3 from 'd3';
+import { useMemo } from 'react';
 
 export const NumericAxisH = ({
   domain = [0, 100],
   range = [10, 100],
   withTick = true,
   tickLen = 5,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tickFilter = (t: any) => t,
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   domain: any[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   range: any[];
   withTick: boolean;
   tickLen: number;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tickFilter: (t: any) => any;
 }) => {
   const ticks = useMemo(() => {
@@ -25,21 +29,21 @@ export const NumericAxisH = ({
         xOffset: xScale(value),
       }))
     );
-  }, [domain.join("-"), range.join("-")]);
+  }, [domain.join('-'), range.join('-')]);
   return (
     <g>
       <path
         d={[
-          "M",
+          'M',
           range[0],
           tickLen,
-          "v",
+          'v',
           -tickLen,
-          "H",
+          'H',
           range[1],
-          "v",
+          'v',
           tickLen,
-        ].join(" ")}
+        ].join(' ')}
         fill="none"
         stroke="currentColor"
       />
@@ -51,9 +55,9 @@ export const NumericAxisH = ({
             <text
               key={value}
               style={{
-                fontSize: "10px",
-                textAnchor: "middle",
-                transform: "translateY(20px)",
+                fontSize: '10px',
+                textAnchor: 'middle',
+                transform: 'translateY(20px)',
               }}
             >
               {value}

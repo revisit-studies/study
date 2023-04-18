@@ -1,6 +1,6 @@
-import { useLocation } from "react-router-dom";
-import { useAppSelector } from "..";
-import { useCurrentStep } from "../../routes";
+import { useLocation } from 'react-router-dom';
+import { useAppSelector } from '..';
+import { useCurrentStep } from '../../routes';
 
 /**
  *
@@ -10,16 +10,16 @@ import { useCurrentStep } from "../../routes";
 export function useCurrentTrial() {
   const currentStep = useCurrentStep();
 
-  const { config, trials } = useAppSelector((state) => state.study);
+  const { config } = useAppSelector((state) => state.study);
 
   if (
     currentStep.length === 0 ||
     !config ||
-    config.components[currentStep]?.type !== "trials"
+    config.components[currentStep]?.type !== 'trials'
   )
     return null;
 
-  const trialId = useLocation().pathname.split("/")[2]; // Assumes /<trialname>/:id
+  const trialId = useLocation().pathname.split('/')[2]; // Assumes /<trialname>/:id
 
   return {
     trailName: currentStep,

@@ -10,16 +10,14 @@ import SliderInput from "./SliderInput";
 import {TrialResult} from "../../../store/types";
 import {Box, Divider} from "@mantine/core";
 
-
-
 type Props = {
   response: Response;
   status?: TrialResult;
   answer: object;
 };
 
-export default function ResponseSwitcher({ response , status, answer}: Props) {
-  const { type,id, desc, prompt, options, required, preset,max,min } = response;
+export default function ResponseSwitcher({ response, answer}: Props) {
+  const { type, desc, prompt, options, required, preset, max, min } = response;
 
   if (!type) return null;
 
@@ -55,8 +53,6 @@ export default function ResponseSwitcher({ response , status, answer}: Props) {
         )}
         {type === "slider" && <SliderInput title={prompt} desc={desc} sliderData={options} answer={answer} required={required}/>}
       </Box>
-
-
     </>
   );
 }

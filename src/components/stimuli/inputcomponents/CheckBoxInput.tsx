@@ -1,6 +1,5 @@
-import { useState, forwardRef, type Ref } from "react";
-import {Checkbox, Group, NumberInput, TextInput} from "@mantine/core";
-import {Option} from "../../../parser/types";
+import {Checkbox, Group} from '@mantine/core';
+import {Option} from '../../../parser/types';
 
 type inputProps = {
     desc: string,
@@ -10,7 +9,7 @@ type inputProps = {
     answer:object;
 }
 
-export default function CheckBoxInput({ desc="", label="" ,required=false, checkboxData=[], answer}: inputProps) {
+export default function CheckBoxInput({ desc='', label='' ,required=false, checkboxData=[], answer}: inputProps) {
     return (
         <>
             <Checkbox.Group
@@ -27,4 +26,4 @@ export default function CheckBoxInput({ desc="", label="" ,required=false, check
             </Checkbox.Group>
         </>
     );
-};
+}

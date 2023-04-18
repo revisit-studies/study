@@ -1,5 +1,5 @@
-import { useCurrentStep } from "../routes";
-import { useAppSelector } from "../store";
+import { useCurrentStep } from '../routes';
+import { useAppSelector } from '../store';
 
 export function Status() {
   const currentStep = useCurrentStep();
@@ -7,8 +7,8 @@ export function Status() {
 
   const status =
     steps[currentStep] && steps[currentStep].complete
-      ? "complete"
-      : "incomplete";
+      ? 'complete'
+      : 'incomplete';
 
   return <div>{status}</div>;
 }

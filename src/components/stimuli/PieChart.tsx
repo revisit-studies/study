@@ -1,7 +1,7 @@
-import * as d3 from "d3";
-import { Slices } from "./chartcomponents/Slices";
-import { SlicesDotMarks } from "./chartcomponents/SlicesDotMarks";
-import { useChartDimensions } from "./hooks/useChartDimensions";
+import * as d3 from 'd3';
+import { Slices } from './chartcomponents/Slices';
+import { SlicesDotMarks } from './chartcomponents/SlicesDotMarks';
+import { useChartDimensions } from './hooks/useChartDimensions';
 
 const chartSettings = {
   marginBottom: 40,
@@ -12,6 +12,7 @@ const chartSettings = {
   width: 500,
 };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const angleGen = d3.pie<any>().value((d: any) => d.value);
 
 const radius = 150;
@@ -20,6 +21,7 @@ const PieChart = ({
   parameters: data,
   stimulusID,
 }: {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   parameters: any;
   stimulusID: string;
 }) => {
@@ -53,7 +55,7 @@ const PieChart = ({
           transform={`translate(${[
             dms.marginLeft + radius,
             dms.marginTop + radius,
-          ].join(",")})`}
+          ].join(',')})`}
         >
           <Slices arcs={arcsGen} data={data.data} stimulusID={stimulusID} />
           <SlicesDotMarks positions={labelArcs} />

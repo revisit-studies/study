@@ -23,12 +23,10 @@ export default function ResponseBlock({ responses }: Props) {
     const currentStep = useCurrentStep();
     const nextStep = useNextStep();
     const { trialId = null } = useParams<{ trialId: string }>();
-    const config = useTrialsConfig();
     const nextTrailId = useNextTrialId(trialId);
     const trialStatus = useTrialStatus(trialId);
-    const trialProvenance = createTrialProvenance();
+    
     if (!responses || !trialStatus || !trialId) return <></>;
-
 
     const answerField = useForm({
         initialValues: generateInitFields(responses),
@@ -38,7 +36,7 @@ export default function ResponseBlock({ responses }: Props) {
     useEffect(() => {
         responses.forEach((response) => {
             const ans = trialStatus.answer ? JSON.parse(trialStatus.answer) : {};
-            answerField.setFieldValue(response.id, ans[response.id] || "");
+            answerField.setFieldValue(response.id, ans[response.id] || '');
         });
     }, [trialStatus.answer]);
 
@@ -49,7 +47,7 @@ export default function ResponseBlock({ responses }: Props) {
                 responses.map((response, index) => {
                     return (
                         <ResponseSwitcher key={index} status={trialStatus} answer={answerField.getInputProps(response.id)} response={response} />
-                    )
+                    );
                 })
             }
 
@@ -60,11 +58,11 @@ export default function ResponseBlock({ responses }: Props) {
                         to={`/${currentStep}/${nextTrailId}`}
                         process={() => {
                             if (trialStatus.complete) {
-                                answerField.setFieldValue("input", "");
+                                answerField.setFieldValue('input', '');
                             }
 
                             const answer = JSON.stringify(answerField.values);
-                            console.log(answer,"answer")
+                            console.log(answer,'answer');
 
                             dispatch(
                                 saveTrialAnswer({
@@ -74,7 +72,7 @@ export default function ResponseBlock({ responses }: Props) {
                                 })
                             );
 
-                            answerField.setFieldValue("input", "");
+                            answerField.setFieldValue('input', '');
                         }}
                     />
                 ) : (

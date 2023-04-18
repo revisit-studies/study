@@ -11,7 +11,7 @@ export const DotMarks = ({
           cx={d.x}
           cy={d.y}
           r={2}
-          fill={"black"}
+          fill={'black'}
           stroke="currentColor"
         />
       ))}

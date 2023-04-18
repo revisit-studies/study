@@ -1,8 +1,9 @@
-import { Aside } from "@mantine/core";
-import { StepsPanel } from "../../admin/StepsPanel";
-import { useFlagsSelector } from "../../store/flags";
+import { Aside } from '@mantine/core';
+import { StepsPanel } from '../../admin/StepsPanel';
+import { useFlagsSelector } from '../../store/flags';
 
 export default function AppAside() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const showAdmin = useFlagsSelector((state: any) => state.showAdmin);
 
   return showAdmin ? (
