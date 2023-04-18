@@ -4,9 +4,10 @@ type inputProps = {
     placeholder: string,
     label: string,
     required: boolean,
+    answer:object;
 }
 
-export default function TextAreaInput({ placeholder='', label='', required}: inputProps ) {
+export default function TextAreaInput({ placeholder='', label='', required, answer}: inputProps ) {
     return (
         <>
             <Textarea

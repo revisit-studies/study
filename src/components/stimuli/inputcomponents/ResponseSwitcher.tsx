@@ -25,7 +25,7 @@ export default function ResponseSwitcher({ response, answer}: Props) {
     <>
       <Box sx={{margin:10, padding:5}}>
         {type === "short-text" && (
-            <TextInput placeholder={desc} label={prompt} required={required} id={id} answer={answer}/>
+            <TextInput placeholder={desc} label={prompt} required={required} answer={answer}/>
         )}
         {type === "dropdown" && (
             <DropdownInput

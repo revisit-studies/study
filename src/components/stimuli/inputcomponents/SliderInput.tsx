@@ -8,8 +8,11 @@ export type sliderProps = {
 }
 
 type inputProps = {
+    title: string,
+    desc: string,
     sliderData?: Option[],
     answer:object;
+    required: boolean,
 }
 
 export default function SliderInput({ title="Your Question", desc="additional description", sliderData=[], answer,required }: inputProps) {
