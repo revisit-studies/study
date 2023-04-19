@@ -5,7 +5,7 @@ import {NextButton} from '../../NextButton';
 import {Group} from '@mantine/core';
 import {useCurrentStep} from '../../../routes';
 import {useParams} from 'react-router-dom';
-import {useNextTrialId} from '../../../controllers/TrialController';
+import {useNextPracticeId} from '../../../controllers/PracticeController';
 import {useForm} from '@mantine/form';
 import {useEffect} from 'react';
 import {useNextStep} from '../../../store/hooks/useNextStep';
@@ -21,12 +21,11 @@ export default function PracticeResponseBlock({ responses }: Props) {
     const currentStep = useCurrentStep();
     const nextStep = useNextStep();
     const { trialId = null } = useParams<{ trialId: string }>();
-    const nextTrailId = useNextTrialId(trialId);
+    const nextTrailId = useNextPracticeId(trialId);
     const trialStatus = useTrialStatus(trialId);
 
     if (!responses || !trialStatus || !trialId) return <></>;
 
-    console.log(nextTrailId, trialId);
     const generateInitFields = () => {
         let initObj = {};
 

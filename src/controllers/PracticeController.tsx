@@ -31,7 +31,7 @@ export function useTrialsConfig() {
   });
 }
 
-export function useNextTrialId(currentTrial: string | null) {
+export function useNextPracticeId(currentTrial: string | null) {
   console.log('Here');
   const config = useTrialsConfig();
   console.log(config, currentTrial);
