@@ -4,6 +4,7 @@ import { ReactNode } from 'react';
 import Consent from './components/Consent';
 import { NextButton } from './components/NextButton';
 import TrialController from './controllers/TrialController';
+import PracticeController from './controllers/PracticeController';
 import { parseStudyConfig } from './parser/parser';
 import { StudyComponent, StudyConfig } from './parser/types';
 
@@ -37,12 +38,7 @@ const elements: Record<StudyComponent['type'], ReactNode> = {
       <NextButton />
     </>
   ),
-  practice: (
-    <>
-      <div>practice component goes here</div>
-      <NextButton />
-    </>
-  ),
+  practice:  <PracticeController />,
   'attention-test': (
     <>
       <div>attention test component goes here</div>

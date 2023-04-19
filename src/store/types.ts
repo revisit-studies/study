@@ -8,7 +8,11 @@ export interface TrialResult {
   answer: string | object | null;
 }
 
+export type PracticeResult = TrialResult;
+
 export type TrialRecord = Record<string, TrialResult>;
+
+export type PracticeRecord = Record<string, PracticeResult>;
 
 export interface Step extends StudyComponent {
   complete: boolean;
@@ -28,4 +32,5 @@ export interface State {
   consent?: { signature: unknown; timestamp: number };
   steps: Record<string, Step>;
   trials: Record<string, TrialRecord>;
+  practice: Record<string, PracticeRecord>;
 }

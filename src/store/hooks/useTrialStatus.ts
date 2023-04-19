@@ -1,3 +1,4 @@
+/* eslint-disable linebreak-style */
 import { useAppSelector } from '..';
 import { useCurrentStep } from '../../routes';
 import { TrialResult } from '../types';
@@ -10,17 +11,17 @@ import { TrialResult } from '../types';
 
 export function useTrialStatus(trialId: string | null): TrialResult | null {
   const currentStep = useCurrentStep();
-  const { config, trials } = useAppSelector((state) => state.study);
+  const { config, trials, practice } = useAppSelector((state) => state.study);
 
   if (
     currentStep.length === 0 ||
     !trialId ||
     !config ||
-    config.components[currentStep]?.type !== 'trials'
+    (config.components[currentStep]?.type !== 'trials' && config.components[currentStep]?.type !== 'practice')
   )
     return null;
 
-  const status: TrialResult | null = trials[currentStep][trialId];
+  const status: TrialResult | null = (config.components[currentStep]?.type == 'trials') ? trials[currentStep][trialId] : practice[currentStep][trialId];
 
   return (
     status || {

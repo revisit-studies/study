@@ -1,6 +1,8 @@
+/* eslint-disable linebreak-style */
 import { useLocation } from 'react-router-dom';
 import { useAppSelector } from '..';
 import { useCurrentStep } from '../../routes';
+import { current } from '@reduxjs/toolkit';
 
 /**
  *
@@ -11,11 +13,11 @@ export function useCurrentTrial() {
   const currentStep = useCurrentStep();
 
   const { config } = useAppSelector((state) => state.study);
-
+  
   if (
     currentStep.length === 0 ||
     !config ||
-    config.components[currentStep]?.type !== 'trials'
+    (config.components[currentStep]?.type !== 'trials' && config.components[currentStep]?.type !== 'practice')
   )
     return null;
 

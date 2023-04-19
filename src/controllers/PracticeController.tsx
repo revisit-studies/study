@@ -1,8 +1,10 @@
+/* eslint-disable linebreak-style */
 import { Suspense } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 import { useParams } from 'react-router-dom';
-import { TrialsComponent } from '../parser/types';
+// eslint-disable-next-line linebreak-style
+import { PracticeComponent } from '../parser/types';
 import { useCurrentStep } from '../routes';
 import { useAppSelector } from '../store';
 
@@ -13,7 +15,7 @@ import {
 import IframeController from './IframeController';
 
 import ReactComponentController from './ReactComponentController';
-import ResponseBlock from '../components/stimuli/inputcomponents/ResponseBlock';
+import PracticeResponseBlock from '../components/stimuli/inputcomponents/PracticeResponseBlock';
 import ImageController from './ImageController';
 
 
@@ -23,20 +25,20 @@ export function useTrialsConfig() {
   return useAppSelector((state) => {
     const { config } = state.study;
     const component = currentStep ? config?.components[currentStep] : null;
+    if (!config || !currentStep || component?.type !== 'practice') return null;
 
-    if (!config || !currentStep || component?.type !== 'trials') return null;
-
-    return config.components[currentStep] as TrialsComponent;
+    return config.components[currentStep] as PracticeComponent;
   });
 }
 
 export function useNextTrialId(currentTrial: string | null) {
+  console.log('Here');
   const config = useTrialsConfig();
-
+  console.log(config, currentTrial);
   if (!currentTrial || !config) return null;
 
   const { order } = config;
-
+  console.log(order, currentTrial);
   const idx = order.findIndex((t) => t === currentTrial);
 
   if (idx === -1) return null;
@@ -46,7 +48,7 @@ export function useNextTrialId(currentTrial: string | null) {
 
 // current active stimuli presented to the user
 
-export default function TrialController() {
+export default function PracticeController() {
   const { trialId = null } = useParams<{ trialId: string }>();
   const config = useTrialsConfig();
 
@@ -54,10 +56,9 @@ export default function TrialController() {
 
   if (!trialId || !config) return null;
 
-  const stimulus = config.trials[trialId];
-  
+  const stimulus = config.practice[trialId];
   const response = config.response;
-
+  
   return (
     <div key={trialId}>
       <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
@@ -83,7 +84,7 @@ export default function TrialController() {
           )}
 
           {/* <StimulusComponent parameters={stimulus.stimulus.parameters} /> */}
-          <ResponseBlock responses={response} />
+          <PracticeResponseBlock responses={response} />
         </Suspense>
       </TrialProvenanceContext.Provider>
     </div>

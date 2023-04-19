@@ -33,7 +33,11 @@ export interface ConsentComponent extends StudyComponent {
 
 export type TrainingComponent = StudyComponent
 
-export type PracticeComponent = StudyComponent
+export interface PracticeComponent extends StudyComponent {
+  response: Response[];
+  order: string[];
+  practice: { [key: string]: Trial };
+}
 
 export type AttentionComponent = StudyComponent
 
@@ -120,4 +124,10 @@ export function isTrialsComponent(
   component: StudyComponent
 ): component is TrialsComponent {
   return component.type === 'trials';
+}
+
+export function isPracticeComponent(
+  component: StudyComponent
+): component is PracticeComponent {
+  return component.type === 'practice';
 }

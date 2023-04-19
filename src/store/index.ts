@@ -1,3 +1,5 @@
+/* eslint-disable linebreak-style */
+/* eslint-disable semi */
 import { type PayloadAction } from '@reduxjs/toolkit';
 import { configureTrrackableStore, createTrrackableSlice } from '@trrack/redux';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
@@ -19,6 +21,7 @@ const initialState: State = {
   consent: undefined,
   steps: {},
   trials: {},
+  practice: {}
 };
 
 const studySlice = createTrrackableSlice({
@@ -52,6 +55,13 @@ const studySlice = createTrrackableSlice({
       trialSteps.forEach((trialName) => {
         state.trials[trialName] = {};
       });
+
+      const practiceSteps = payload.sequence.filter(
+        (step) => payload.components[step].type === 'practice'
+      );
+      practiceSteps.forEach((trialName) => {
+        state.practice[trialName] = {};
+      });
     },
     completeStep(state, step) {
       state.steps[step.payload].complete = true;
@@ -75,7 +85,21 @@ const studySlice = createTrrackableSlice({
       state.trials[payload.trialName][payload.trialId] = {
         complete: true,
         answer: payload.answer,
-      };
+      }},
+      savePracticeAnswer(
+        state,
+        {
+          payload,
+        }: PayloadAction<{
+          trialName: string;
+          trialId: string;
+          answer: string | object;
+        }>
+      ) {
+        state.practice[payload.trialName][payload.trialId] = {
+          complete: true,
+          answer: payload.answer,
+        };
     },
   },
 });
@@ -84,6 +108,7 @@ export const {
   saveConfig,
   completeStep,
   saveTrialAnswer,
+  savePracticeAnswer,
   setStudyIdentifiers,
 } = studySlice.actions;
 
