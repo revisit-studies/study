@@ -59,8 +59,8 @@ const studySlice = createTrrackableSlice({
       const practiceSteps = payload.sequence.filter(
         (step) => payload.components[step].type === 'practice'
       );
-      practiceSteps.forEach((trialName) => {
-        state.practice[trialName] = {};
+      practiceSteps.forEach((practiceName) => {
+        state.practice[practiceName] = {};
       });
     },
     completeStep(state, step) {
@@ -91,12 +91,12 @@ const studySlice = createTrrackableSlice({
         {
           payload,
         }: PayloadAction<{
-          trialName: string;
-          trialId: string;
+          practiceName: string;
+          practiceId: string;
           answer: string | object;
         }>
       ) {
-        state.practice[payload.trialName][payload.trialId] = {
+        state.practice[payload.practiceName][payload.practiceId] = {
           complete: true,
           answer: payload.answer,
         };

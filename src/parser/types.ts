@@ -62,6 +62,8 @@ export interface Stimulus {
   style?: { [key: string]: any };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   parameters?: { [key: string]: any };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  correctAnswer?: any;
 }
 
 // Add types for stimulus

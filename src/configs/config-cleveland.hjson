@@ -74,7 +74,8 @@
                                 { name: "E", value: "60" },
                             ],
                             selectedIndices: [1, 4],
-                        }
+                        },
+                        correctAnswer: 23,
                     },
                 },
                 stackedBarChart1: {
@@ -94,7 +95,8 @@
                                 { name: "E", value: "60" },
                             ],
                             selectedIndices: [1, 4],
-                        }
+                        },
+                        correctAnswer: 30,
                     },
                 }, 
                 barChart1: {
@@ -114,7 +116,8 @@
                                 { name: "E", value: "60" },
                             ],
                             selectedIndices: [1, 4],
-                        }
+                        },
+                        correctAnswer: 40,
                     },
 
                 },
@@ -135,7 +138,8 @@
                                 { name: "E", value: "60" },
                             ],
                             selectedIndices: [1, 4],
-                        }
+                        },
+                        correctAnswer: 50,
                     },
                 },
             },

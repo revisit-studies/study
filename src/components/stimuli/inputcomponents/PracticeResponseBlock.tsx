@@ -2,29 +2,33 @@ import { Response } from '../../../parser/types';
 import {savePracticeAnswer, useAppDispatch} from '../../../store';
 import ResponseSwitcher from './ResponseSwitcher';
 import {NextButton} from '../../NextButton';
-import {Group} from '@mantine/core';
+import {Group, Text, Button} from '@mantine/core';
 import {useCurrentStep} from '../../../routes';
 import {useParams} from 'react-router-dom';
 import {useNextPracticeId} from '../../../controllers/PracticeController';
 import {useForm} from '@mantine/form';
-import {useEffect} from 'react';
+import {useEffect, useState} from 'react';
 import {useNextStep} from '../../../store/hooks/useNextStep';
 import {useTrialStatus} from '../../../store/hooks/useTrialStatus';
 
 type Props = {
     responses: Response[];
+    //eslint-disable-next-line @typescript-eslint/no-explicit-any
+    correctAnswer?: any;
 };
 
-export default function PracticeResponseBlock({ responses }: Props) {
+export default function PracticeResponseBlock({ responses, correctAnswer }: Props) {
 
     const dispatch = useAppDispatch();
     const currentStep = useCurrentStep();
     const nextStep = useNextStep();
-    const { trialId = null } = useParams<{ trialId: string }>();
-    const nextTrailId = useNextPracticeId(trialId);
-    const trialStatus = useTrialStatus(trialId);
+    const { trialId: practiceId = null } = useParams<{ trialId: string }>();
+    const nextPracticeId = useNextPracticeId(practiceId);
+    const practiceStatus = useTrialStatus(practiceId);
+    const [disableNext, setDisableNext] = useState(true);
+    const [correctAnswers, setCorrectAnswers] = useState(0);
 
-    if (!responses || !trialStatus || !trialId) return <></>;
+    if (!responses || !practiceStatus || !practiceId) return <></>;
 
     const generateInitFields = () => {
         let initObj = {};
@@ -52,51 +56,60 @@ export default function PracticeResponseBlock({ responses }: Props) {
         validate: generateValidation(),
     });
 
+    const handleResponseCheck = () => {
+        if (JSON.stringify(answerField.values) === correctAnswer) 
+          setCorrectAnswers(correctAnswers + 1);
+        setDisableNext(false);
+    };
+
     useEffect(() => {
         responses.forEach((response) => {
-            const ans = trialStatus.answer ? JSON.parse(trialStatus.answer) : {};
+            const ans = practiceStatus.answer ? JSON.parse(practiceStatus.answer as string) : {};
             answerField.setFieldValue(response.id, ans[response.id] || '');
         });
-    }, [trialStatus.answer]);
+    }, [practiceStatus.answer]);
+    console.log(answerField.isValid(), !disableNext);
 
     return (
         <>
-            <form onSubmit={answerField.onSubmit(console.log)}>
+            <form>
             {
                 responses.map((response, index) => {
                     return (
-                        <ResponseSwitcher key={index} status={trialStatus} answer={answerField.getInputProps(response.id)} response={response} />
+                        <ResponseSwitcher key={index} status={practiceStatus} answer={answerField.getInputProps(response.id)} response={response} />
                     );
                 })
             }
+            {!disableNext && (<Text>The correct answer is: {correctAnswer}</Text>)}
 
-                <Group position="right" spacing="xs" mt="xl">
-                {nextTrailId ? (
+            <Group position="right" spacing="xs" mt="xl">
+                <Button onClick={handleResponseCheck} disabled={!answerField.isValid()}>Check Answer</Button>
+                {nextPracticeId ? (
                     <NextButton
-                        disabled={!answerField.isValid()}
-                        to={`/${currentStep}/${nextTrailId}`}
+                        disabled={disableNext}
+                        to={`/${currentStep}/${nextPracticeId}`}
                         process={() => {
-                            if (trialStatus.complete) {
+                            if (practiceStatus.complete) {
                                 answerField.setFieldValue('input', '');
                             }
 
                             const answer = JSON.stringify(answerField.values);
-                            console.log(answer,'answer');
 
                             dispatch(
                                 savePracticeAnswer({
-                                    trialName: currentStep,
-                                    trialId,
+                                    practiceName: currentStep,
+                                    practiceId,
                                     answer: answer,
                                 })
                             );
-
+                            setDisableNext(true);
                             answerField.setFieldValue('input', '');
                         }}
                     />
                 ) : (
                     <NextButton
                         to={`/${nextStep}`}
+                        disabled={disableNext}
                         process={() => {
                             // complete trials
                         }}

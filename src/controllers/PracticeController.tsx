@@ -19,7 +19,7 @@ import PracticeResponseBlock from '../components/stimuli/inputcomponents/Practic
 import ImageController from './ImageController';
 
 
-export function useTrialsConfig() {
+export function usePracticeConfig() {
   const currentStep = useCurrentStep();
 
   return useAppSelector((state) => {
@@ -31,15 +31,13 @@ export function useTrialsConfig() {
   });
 }
 
-export function useNextPracticeId(currentTrial: string | null) {
-  console.log('Here');
-  const config = useTrialsConfig();
-  console.log(config, currentTrial);
-  if (!currentTrial || !config) return null;
+export function useNextPracticeId(currentPractice: string | null) {
+  const config = usePracticeConfig();
+  
+  if (!currentPractice || !config) return null;
 
   const { order } = config;
-  console.log(order, currentTrial);
-  const idx = order.findIndex((t) => t === currentTrial);
+  const idx = order.findIndex((t) => t === currentPractice);
 
   if (idx === -1) return null;
 
@@ -47,20 +45,19 @@ export function useNextPracticeId(currentTrial: string | null) {
 }
 
 // current active stimuli presented to the user
-
 export default function PracticeController() {
-  const { trialId = null } = useParams<{ trialId: string }>();
-  const config = useTrialsConfig();
-
+  const { trialId: practiceId = null } = useParams<{ trialId: string }>();
+  
+  const config = usePracticeConfig();
   const trialProvenance = createTrialProvenance();
 
-  if (!trialId || !config) return null;
+  if (!practiceId || !config) return null;
 
-  const stimulus = config.practice[trialId];
+  const stimulus = config.practice[practiceId];
   const response = config.response;
   
   return (
-    <div key={trialId}>
+    <div key={practiceId}>
       <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
       <TrialProvenanceContext.Provider value={trialProvenance}>
         <Suspense fallback={<div>Loading...</div>}>
@@ -78,13 +75,12 @@ export default function PracticeController() {
           )}
           {stimulus.stimulus.type === 'react-component' && (
             <ReactComponentController
-              stimulusID={trialId}
+              stimulusID={practiceId}
               stimulus={stimulus.stimulus}
             />
           )}
 
-          {/* <StimulusComponent parameters={stimulus.stimulus.parameters} /> */}
-          <PracticeResponseBlock responses={response} />
+          <PracticeResponseBlock responses={response} correctAnswer={stimulus.stimulus.correctAnswer} />
         </Suspense>
       </TrialProvenanceContext.Provider>
     </div>
