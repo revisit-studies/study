@@ -49,7 +49,7 @@ export function useNextTrialId(currentTrial: string | null) {
 export default function TrialController() {
   const { trialId = null } = useParams<{ trialId: string }>();
   const config = useTrialsConfig();
-
+  
   const trialProvenance = createTrialProvenance();
 
   if (!trialId || !config) return null;
@@ -83,7 +83,7 @@ export default function TrialController() {
           )}
 
           {/* <StimulusComponent parameters={stimulus.stimulus.parameters} /> */}
-          <ResponseBlock responses={response} />
+          <ResponseBlock responses={response} correctAnswer={useCurrentStep() === 'practice1' ? stimulus.stimulus?.correctAnswer : null}/>
         </Suspense>
       </TrialProvenanceContext.Provider>
     </div>

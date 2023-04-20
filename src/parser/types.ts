@@ -33,11 +33,7 @@ export interface ConsentComponent extends StudyComponent {
 
 export type TrainingComponent = StudyComponent
 
-export interface PracticeComponent extends StudyComponent {
-  response: Response[];
-  order: string[];
-  practice: { [key: string]: Trial };
-}
+export type PracticeComponent = TrialsComponent
 
 export type AttentionComponent = StudyComponent
 

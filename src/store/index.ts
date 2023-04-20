@@ -21,7 +21,6 @@ const initialState: State = {
   consent: undefined,
   steps: {},
   trials: {},
-  practice: {}
 };
 
 const studySlice = createTrrackableSlice({
@@ -55,13 +54,6 @@ const studySlice = createTrrackableSlice({
       trialSteps.forEach((trialName) => {
         state.trials[trialName] = {};
       });
-
-      const practiceSteps = payload.sequence.filter(
-        (step) => payload.components[step].type === 'practice'
-      );
-      practiceSteps.forEach((practiceName) => {
-        state.practice[practiceName] = {};
-      });
     },
     completeStep(state, step) {
       state.steps[step.payload].complete = true;
@@ -86,21 +78,6 @@ const studySlice = createTrrackableSlice({
         complete: true,
         answer: payload.answer,
       }},
-      savePracticeAnswer(
-        state,
-        {
-          payload,
-        }: PayloadAction<{
-          practiceName: string;
-          practiceId: string;
-          answer: string | object;
-        }>
-      ) {
-        state.practice[payload.practiceName][payload.practiceId] = {
-          complete: true,
-          answer: payload.answer,
-        };
-    },
   },
 });
 
@@ -108,7 +85,6 @@ export const {
   saveConfig,
   completeStep,
   saveTrialAnswer,
-  savePracticeAnswer,
   setStudyIdentifiers,
 } = studySlice.actions;
 

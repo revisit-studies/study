@@ -34,7 +34,7 @@
             type: "training"
         },
         practice1: {
-            type: "practice",
+            type: "trials",
             order: ["bubbleChart1", "stackedBarChart1", "barChart1", "pieChart1"],
             randomization-scheme: "latin-square",
             subset-count: 2,
@@ -57,7 +57,7 @@
                     max: 100,
                     min: 0
                 }], 
-            practice: {
+            trials: {
                 bubbleChart1: {
                     description: "A chart with correct answer of 0.66",
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?",

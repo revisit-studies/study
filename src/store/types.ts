@@ -32,5 +32,4 @@ export interface State {
   consent?: { signature: unknown; timestamp: number };
   steps: Record<string, Step>;
   trials: Record<string, TrialRecord>;
-  practice: Record<string, PracticeRecord>;
 }
