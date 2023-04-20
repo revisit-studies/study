@@ -45,6 +45,7 @@
                 interval: 10
             },          
             response:[
+                //Can change response type
                 //text example
                 {
                     id: "cm-response2"
