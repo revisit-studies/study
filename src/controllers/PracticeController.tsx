@@ -28,5 +28,5 @@ export default function PracticeController() {
     
     const response = config.response;
 
-    return <StimulusController trialId={trialId} stimulus={trial} response={response} />;
+    return <StimulusController trialId={trialId} stimulus={trial} response={response} type="practice"/>;
 }

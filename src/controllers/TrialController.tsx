@@ -44,5 +44,5 @@ export default function TrialController() {
   
   const response = config.response;
 
-  return <StimulusController trialId={trialId} stimulus={trial} response={response} />;
+  return <StimulusController trialId={trialId} stimulus={trial} response={response} type="trials"/>;
 }

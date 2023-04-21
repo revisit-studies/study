@@ -15,8 +15,8 @@ import ImageController from './ImageController';
 
 // current active stimuli presented to the user
 
-export default function StimulusController({trialId, stimulus, response}: {trialId: string, stimulus:Trial, response:Response[]}) {
-    const trialProvenance = createTrialProvenance();
+export default function StimulusController({trialId, stimulus, response, type}: {trialId: string, stimulus:Trial, response:Response[], type: 'trials' | 'practice'}) {
+  const trialProvenance = createTrialProvenance();
 
   return (
     <div>
@@ -27,6 +27,7 @@ export default function StimulusController({trialId, stimulus, response}: {trial
             <IframeController
               path={stimulus.stimulus.path}
               style={stimulus.stimulus.style}
+              type={type}
             />
           )}
           {stimulus.stimulus.type === 'image' && (
@@ -42,7 +43,7 @@ export default function StimulusController({trialId, stimulus, response}: {trial
             />
           )}
 
-          <ResponseBlock responses={response} correctAnswer={useCurrentStep().includes('practice') ? stimulus.stimulus?.correctAnswer : null}/>
+          <ResponseBlock responses={response} correctAnswer={useCurrentStep().includes('practice') ? stimulus.stimulus?.correctAnswer : null} type={type}/>
         </Suspense>
       </TrialProvenanceContext.Provider>
     </div>

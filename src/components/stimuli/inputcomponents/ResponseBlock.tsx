@@ -5,7 +5,7 @@ import {NextButton} from '../../NextButton';
 import {Group, Text, Button} from '@mantine/core';
 import {useCurrentStep} from '../../../routes';
 import {useParams} from 'react-router-dom';
-import {useNextTrialId} from '../../../controllers/TrialController';
+import {useNextTrialId} from '../../../controllers/utils';
 import {useForm} from '@mantine/form';
 import {useEffect, useState} from 'react';
 import {useNextStep} from '../../../store/hooks/useNextStep';
@@ -15,16 +15,17 @@ type Props = {
     responses: Response[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     correctAnswer?: any;
+    type: 'trials' | 'practice';
 };
 
-export default function ResponseBlock({ responses, correctAnswer }: Props) {
+export default function ResponseBlock({ responses, correctAnswer, type }: Props) {
 
     const dispatch = useAppDispatch();
     const currentStep = useCurrentStep();
     const nextStep = useNextStep();
     const { trialId = null } = useParams<{ trialId: string }>();
-    const nextTrailId = useNextTrialId(trialId);
-    const trialStatus = useTrialStatus(trialId);
+    const nextTrailId = useNextTrialId(trialId, type);
+    const trialStatus = useTrialStatus(trialId, type);
     const [disableNext, setDisableNext] = useState(true);
     const [correctAnswers, setCorrectAnswers] = useState(0);
     
@@ -100,6 +101,7 @@ export default function ResponseBlock({ responses, correctAnswer }: Props) {
                                     trialName: currentStep,
                                     trialId,
                                     answer: answer,
+                                    type
                                 })
                             );
 
