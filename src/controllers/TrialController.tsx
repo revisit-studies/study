@@ -4,13 +4,11 @@ import { useParams } from 'react-router-dom';
 import { TrialsComponent } from '../parser/types';
 import { useCurrentStep } from '../routes';
 import {  useAppSelector } from '../store';
-
 import {
   createTrialProvenance,
   TrialProvenanceContext,
 } from '../store/trialProvenance';
 import IframeController from './IframeController';
-
 import ReactComponentController from './ReactComponentController';
 import ResponseBlock from '../components/stimuli/inputcomponents/ResponseBlock';
 import ImageController from './ImageController';

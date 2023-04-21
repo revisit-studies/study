@@ -17,7 +17,7 @@ import ImageController from './ImageController';
 import SurveyResponseBlock from '../components/stimuli/inputcomponents/SurveyResponseBlock';
 
 
-export function useTrialsConfig() {
+export function useSurveyConfig() {
   const currentStep = useCurrentStep();
 
   return useAppSelector((state) => {
@@ -34,7 +34,7 @@ export function useTrialsConfig() {
 // current active stimuli presented to the user
 
 export default function SurveyController() {
-  const config = useTrialsConfig();
+  const config = useSurveyConfig();
 
   const trialProvenance = createTrialProvenance();
 

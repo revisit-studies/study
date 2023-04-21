@@ -62,8 +62,6 @@ export default function ResponseBlock({ responses }: Props) {
                             }
 
                             const answer = JSON.stringify(answerField.values);
-                            console.log(answer,'answer');
-
                             dispatch(
                                 saveTrialAnswer({
                                     trialName: currentStep,
@@ -71,7 +69,6 @@ export default function ResponseBlock({ responses }: Props) {
                                     answer: answer,
                                 })
                             );
-
                             answerField.setFieldValue('input', '');
                         }}
                     />
