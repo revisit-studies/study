@@ -1,7 +1,7 @@
 import { Button, Flex, Navbar, NumberInput, Space, Text, Textarea } from '@mantine/core';
 
 export default function AppNavBar() {
-  const trialHasSideBar = true;
+  const trialHasSideBar = useStudyConfig()?.uiConfig.sidebar;
   const trialHasSideBarResponses = true;
   const trialHasSideBarUI = false;
 

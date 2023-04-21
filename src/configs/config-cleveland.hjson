@@ -22,7 +22,8 @@
         // starts the automatic download of the data after study completion 
         autoDownloadStudy: false,
         // start download after x milliseconds
-        autoDownloadTime: 5000
+        autoDownloadTime: 5000,
+        sidebar: true,
     },
     components: {
         consent: {

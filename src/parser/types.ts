@@ -105,6 +105,7 @@ export interface Answer {
 type UIConfig = {
   autoDownloadStudy: boolean;
   autoDownloadTime: number;
+  sidebar: boolean;
 };
 
 export interface StudyConfig {
