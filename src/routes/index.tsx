@@ -10,6 +10,7 @@ import { Shell } from '../components/Shell';
 import TrialController from '../controllers/TrialController';
 import { StudyComponent, StudyConfig, TrialsComponent} from '../parser/types';
 import { NavigateWithParams } from '../utils/NavigateWithParams';
+import PracticeController from '../controllers/PracticeController';
 
 export function createRouter(
   config: StudyConfig | null,
@@ -41,7 +42,7 @@ export function createRouter(
       };
       const trialRoute: RouteObject = {
         path: `${step}/:trialId`,
-        element: <TrialController />,
+        element: component?.type === 'trials' ? <TrialController /> : <PracticeController />,
       };
      
       routes.push(baseTrailRoute);
