@@ -1,8 +1,6 @@
-/* eslint-disable linebreak-style */
 import { useLocation } from 'react-router-dom';
 import { useAppSelector } from '..';
 import { useCurrentStep } from '../../routes';
-import { current } from '@reduxjs/toolkit';
 
 /**
  *

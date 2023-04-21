@@ -24,7 +24,7 @@
             type: "training"
         },
         practice1: {
-            type: "trials",
+            type: "practice",
             order: ["bubbleChart1", "stackedBarChart1", "barChart1", "pieChart1"],
             randomization-scheme: "latin-square",
             subset-count: 2,

@@ -1,5 +1,3 @@
-/* eslint-disable linebreak-style */
-/* eslint-disable semi */
 import { type PayloadAction } from '@reduxjs/toolkit';
 import { configureTrrackableStore, createTrrackableSlice } from '@trrack/redux';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
@@ -77,7 +75,7 @@ const studySlice = createTrrackableSlice({
       state.trials[payload.trialName][payload.trialId] = {
         complete: true,
         answer: payload.answer,
-      }},
+      };},
   },
 });
 

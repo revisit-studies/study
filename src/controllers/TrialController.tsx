@@ -55,7 +55,7 @@ export default function TrialController() {
   if (!trialId || !config) return null;
 
   const stimulus = config.trials[trialId];
-  
+
   const response = config.response;
 
   return (
@@ -82,8 +82,7 @@ export default function TrialController() {
             />
           )}
 
-          {/* <StimulusComponent parameters={stimulus.stimulus.parameters} /> */}
-          <ResponseBlock responses={response} correctAnswer={useCurrentStep() === 'practice1' ? stimulus.stimulus?.correctAnswer : null}/>
+          <ResponseBlock responses={response} correctAnswer={useCurrentStep().includes('practice') ? stimulus.stimulus?.correctAnswer : null}/>
         </Suspense>
       </TrialProvenanceContext.Provider>
     </div>
