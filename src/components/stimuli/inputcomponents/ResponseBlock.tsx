@@ -1,23 +1,23 @@
 import { Response } from '../../../parser/types';
-import {saveTrialAnswer, useAppDispatch} from '../../../store';
+import {saveSurvey, saveTrialAnswer, useAppDispatch} from '../../../store';
 import ResponseSwitcher from './ResponseSwitcher';
 import {NextButton} from '../../NextButton';
-import {Button, Group} from '@mantine/core';
+import { Group} from '@mantine/core';
 import {useCurrentStep} from '../../../routes';
 import {useParams} from 'react-router-dom';
-import {createTrialProvenance} from '../../../store/trialProvenance';
-import {useNextTrialId, useTrialsConfig} from '../../../controllers/TrialController';
-import {useForm} from '@mantine/form';
+import {useNextTrialId} from '../../../controllers/TrialController';
 import {useEffect} from 'react';
 import {useNextStep} from '../../../store/hooks/useNextStep';
 import {useTrialStatus} from '../../../store/hooks/useTrialStatus';
 import {createAnswerField} from './utils';
+import {useSurvey} from '../../../store/hooks/useSurvey';
 
 type Props = {
     responses: Response[];
+    stage: string;
 };
 
-export default function ResponseBlock({ responses }: Props) {
+export default function ResponseBlock({ responses, stage}: Props) {
 
     const dispatch = useAppDispatch();
     const currentStep = useCurrentStep();
@@ -25,17 +25,25 @@ export default function ResponseBlock({ responses }: Props) {
     const { trialId = null } = useParams<{ trialId: string }>();
     const nextTrailId = useNextTrialId(trialId);
     const trialStatus = useTrialStatus(trialId);
-
-    if (!responses || !trialStatus || !trialId) return <></>;
-
+    const survey = useSurvey();
     const answerField = createAnswerField(responses);
 
-    useEffect(() => {
-        responses.forEach((response) => {
-            const ans = (trialStatus.answer && typeof trialStatus.answer === 'string') ? JSON.parse(trialStatus.answer) : {};
-            answerField.setFieldValue(response.id, ans[response.id] || '');
-        });
-    }, [trialStatus.answer]);
+    {
+        stage === 'trial' && trialStatus && useEffect(() => {
+            responses.forEach((response) => {
+                const ans = (trialStatus.answer && typeof trialStatus.answer === 'string') ? JSON.parse(trialStatus.answer) : {};
+                answerField.setFieldValue(response.id, ans[response.id] || '');
+            });
+        }, [trialStatus.answer]);
+    }
+
+    {
+        stage === 'survey' && useEffect(() => {
+            for (const [key, value] of Object.entries(survey)) {
+                answerField.setFieldValue(key,value);
+            }
+        }, [survey]);
+    }
 
     return (
         <>
@@ -43,43 +51,39 @@ export default function ResponseBlock({ responses }: Props) {
             {
                 responses.map((response, index) => {
                     return (
-                        <ResponseSwitcher key={index} status={trialStatus} answer={answerField.getInputProps(response.id)} response={response} />
+                            stage === 'trial'  ? <ResponseSwitcher key={index}  answer={answerField.getInputProps(response.id)} response={response} />
+                        :
+                           <ResponseSwitcher key={index} answer={answerField.getInputProps(response.id)} response={response} />
                     );
                 })
             }
 
                 <Group position="right" spacing="xs" mt="xl">
-                {nextTrailId ? (
-                    <NextButton
+                    {stage === 'trial' && <NextButton
                         disabled={!answerField.isValid()}
-                        to={`/${currentStep}/${nextTrailId}`}
+                        to={ nextTrailId? `/${currentStep}/${nextTrailId}` : `/${nextStep}`}
                         process={() => {
-                            if (trialStatus.complete) {
-                                answerField.setFieldValue('input', '');
-                            }
-
                             const answer = JSON.stringify(answerField.values);
-                            console.log(answer,'answer');
-
                             dispatch(
                                 saveTrialAnswer({
                                     trialName: currentStep,
-                                    trialId,
+                                    trialId: trialId || 'NoID',
                                     answer: answer,
                                 })
                             );
-
-                            answerField.setFieldValue('input', '');
                         }}
-                    />
-                ) : (
-                    <NextButton
+                    />}
+
+                    {stage === 'survey' && <NextButton
+                        disabled={!answerField.isValid()}
                         to={`/${nextStep}`}
                         process={() => {
-                            // complete trials
+                            dispatch(
+                                saveSurvey(answerField.values)
+                            );
                         }}
-                    />
-                )}
+                    />}
+
             </Group>
             </form>
         </>

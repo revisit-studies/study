@@ -83,7 +83,7 @@ export default function TrialController() {
           )}
 
           {/* <StimulusComponent parameters={stimulus.stimulus.parameters} /> */}
-          {trialStatus && <ResponseBlock responses={responses}   />}
+          {trialStatus && <ResponseBlock responses={responses}  stage={'trial'} />}
         </Suspense>
       </TrialProvenanceContext.Provider>
     </div>

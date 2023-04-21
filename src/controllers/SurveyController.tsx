@@ -45,7 +45,7 @@ export default function SurveyController() {
 
     <div key={'survey'}>
       <TrialProvenanceContext.Provider value={trialProvenance}>
-        <SurveyResponseBlock responses={questions} />
+        <ResponseBlock responses={questions} stage={'survey'}/>
       </TrialProvenanceContext.Provider>
     </div>
   );
