@@ -11,7 +11,8 @@ import {useForm} from '@mantine/form';
 import {useEffect} from 'react';
 import {useNextStep} from '../../../store/hooks/useNextStep';
 import {useTrialStatus} from '../../../store/hooks/useTrialStatus';
-import {generateInitFields, generateValidation} from './utils';
+import {createAnswerField} from './utils';
+import {useSurvey} from '../../../store/hooks/useSurvey';
 
 type Props = {
     responses: Response[];
@@ -21,13 +22,9 @@ export default function SurveyResponseBlock({ responses }: Props) {
 
     const dispatch = useAppDispatch();
     const nextStep = useNextStep();
-    const { survey } = useAppSelector((state) => state.study);
+    const survey = useSurvey();
 
-
-    const answerField = useForm({
-        initialValues: generateInitFields(responses),
-        validate: generateValidation(responses),
-    });
+    const answerField = createAnswerField(responses);
 
     useEffect(() => {
         for (const [key, value] of Object.entries(survey)) {

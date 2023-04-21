@@ -1,13 +1,14 @@
 import {Response} from '../../../parser/types';
+import {useForm} from '@mantine/form';
 
-export const generateInitFields = (responses: Response[]) => {
+ const generateInitFields = (responses: Response[]) => {
     let initObj = {};
     responses.forEach((response) => {
         initObj = {...initObj, [response.id]: null};
     });
     return initObj;
 };
-export const generateValidation = (responses: Response[]) => {
+ const generateValidation = (responses: Response[]) => {
     let validateObj = {};
     responses.forEach((response) => {
         if(response.required){
@@ -16,3 +17,12 @@ export const generateValidation = (responses: Response[]) => {
     });
     return validateObj;
 };
+
+
+ export const createAnswerField = (responses: Response[]) => {
+     const answerField = useForm({
+         initialValues: generateInitFields(responses),
+         validate: generateValidation(responses),
+     });
+     return answerField;
+ };

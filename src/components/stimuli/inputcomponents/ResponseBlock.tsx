@@ -11,7 +11,7 @@ import {useForm} from '@mantine/form';
 import {useEffect} from 'react';
 import {useNextStep} from '../../../store/hooks/useNextStep';
 import {useTrialStatus} from '../../../store/hooks/useTrialStatus';
-import {generateInitFields, generateValidation} from './utils';
+import {createAnswerField} from './utils';
 
 type Props = {
     responses: Response[];
@@ -25,13 +25,10 @@ export default function ResponseBlock({ responses }: Props) {
     const { trialId = null } = useParams<{ trialId: string }>();
     const nextTrailId = useNextTrialId(trialId);
     const trialStatus = useTrialStatus(trialId);
-    
+
     if (!responses || !trialStatus || !trialId) return <></>;
 
-    const answerField = useForm({
-        initialValues: generateInitFields(responses),
-        validate: generateValidation(responses),
-    });
+    const answerField = createAnswerField(responses);
 
     useEffect(() => {
         responses.forEach((response) => {
@@ -62,6 +59,8 @@ export default function ResponseBlock({ responses }: Props) {
                             }
 
                             const answer = JSON.stringify(answerField.values);
+                            console.log(answer,'answer');
+
                             dispatch(
                                 saveTrialAnswer({
                                     trialName: currentStep,
@@ -69,6 +68,7 @@ export default function ResponseBlock({ responses }: Props) {
                                     answer: answer,
                                 })
                             );
+
                             answerField.setFieldValue('input', '');
                         }}
                     />

@@ -12,6 +12,9 @@ import IframeController from './IframeController';
 import ReactComponentController from './ReactComponentController';
 import ResponseBlock from '../components/stimuli/inputcomponents/ResponseBlock';
 import ImageController from './ImageController';
+import {useNextStep} from '../store/hooks/useNextStep';
+import {useTrialStatus} from '../store/hooks/useTrialStatus';
+import {createAnswerField} from '../components/stimuli/inputcomponents/utils';
 
 
 export function useTrialsConfig() {
@@ -44,15 +47,16 @@ export function useNextTrialId(currentTrial: string | null) {
 // current active stimuli presented to the user
 
 export default function TrialController() {
-  const { trialId = null } = useParams<{ trialId: string }>();
   const config = useTrialsConfig();
-
+  const { trialId = null } = useParams<{ trialId: string }>();
+  const trialStatus = useTrialStatus(trialId);
   const trialProvenance = createTrialProvenance();
 
   if (!trialId || !config) return null;
 
   const stimulus = config.trials[trialId];
-  const response = config.response;
+  const responses = config.response;
+  const answerField = createAnswerField(responses);
 
   return (
     <div key={trialId}>
@@ -79,7 +83,7 @@ export default function TrialController() {
           )}
 
           {/* <StimulusComponent parameters={stimulus.stimulus.parameters} /> */}
-          <ResponseBlock responses={response} />
+          {trialStatus && <ResponseBlock responses={responses}   />}
         </Suspense>
       </TrialProvenanceContext.Provider>
     </div>
