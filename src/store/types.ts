@@ -31,5 +31,6 @@ export interface State {
   config: StudyConfig | null;
   consent?: { signature: unknown; timestamp: number };
   steps: Record<string, Step>;
+  practice: Record<string, TrialRecord>;
   trials: Record<string, TrialRecord>;
 }
