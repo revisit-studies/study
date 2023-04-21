@@ -15,6 +15,7 @@ import { RouterProvider } from 'react-router-dom';
 import { StudyEnd } from './components/StudyEnd';
 import { createRouter } from './routes';
 import { flagsContext, flagsStore } from './store/flags';
+import PracticeController from './controllers/PracticeController';
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion
 const trrackContext: any = createContext<TrrackStoreType>(undefined!);
@@ -37,7 +38,7 @@ const elements: Record<StudyComponent['type'], ReactNode> = {
       <NextButton />
     </>
   ),
-  practice:  <TrialController />,
+  practice:  <PracticeController />,
   'attention-test': (
     <>
       <div>attention test component goes here</div>

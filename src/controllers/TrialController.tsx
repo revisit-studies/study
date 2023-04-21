@@ -1,20 +1,8 @@
-import { Suspense } from 'react';
-import ReactMarkdown from 'react-markdown';
-
 import { useParams } from 'react-router-dom';
-import { TrialsComponent } from '../parser/types';
+import { TrialsComponent} from '../parser/types';
 import { useCurrentStep } from '../routes';
 import { useAppSelector } from '../store';
-
-import {
-  createTrialProvenance,
-  TrialProvenanceContext,
-} from '../store/trialProvenance';
-import IframeController from './IframeController';
-
-import ReactComponentController from './ReactComponentController';
-import ResponseBlock from '../components/stimuli/inputcomponents/ResponseBlock';
-import ImageController from './ImageController';
+import StimulusController from './StimulusController';
 
 
 export function useTrialsConfig() {
@@ -49,42 +37,12 @@ export function useNextTrialId(currentTrial: string | null) {
 export default function TrialController() {
   const { trialId = null } = useParams<{ trialId: string }>();
   const config = useTrialsConfig();
-  
-  const trialProvenance = createTrialProvenance();
 
   if (!trialId || !config) return null;
 
-  const stimulus = config.trials[trialId];
-
+  const trial = config.trials[trialId]; 
+  
   const response = config.response;
 
-  return (
-    <div key={trialId}>
-      <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
-      <TrialProvenanceContext.Provider value={trialProvenance}>
-        <Suspense fallback={<div>Loading...</div>}>
-          {stimulus.stimulus.type === 'website' && (
-            <IframeController
-              path={stimulus.stimulus.path}
-              style={stimulus.stimulus.style}
-            />
-          )}
-          {stimulus.stimulus.type === 'image' && (
-            <ImageController
-              path={stimulus.stimulus.path}
-              style={stimulus.stimulus.style}
-            />
-          )}
-          {stimulus.stimulus.type === 'react-component' && (
-            <ReactComponentController
-              stimulusID={trialId}
-              stimulus={stimulus.stimulus}
-            />
-          )}
-
-          <ResponseBlock responses={response} correctAnswer={useCurrentStep().includes('practice') ? stimulus.stimulus?.correctAnswer : null}/>
-        </Suspense>
-      </TrialProvenanceContext.Provider>
-    </div>
-  );
+  return <StimulusController trialId={trialId} stimulus={trial} response={response} />;
 }
