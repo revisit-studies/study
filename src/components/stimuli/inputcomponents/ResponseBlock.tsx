@@ -46,7 +46,7 @@ export default function ResponseBlock({ responses, correctAnswer }: Props) {
 
         responses.forEach((response) => {
             if(response.required)
-                validateObj = {...validateObj, [response.id]: (value:string) => (value.length === 0 ? 'Empty input' : null)};
+                validateObj = {...validateObj, [response.id]: (value: string | undefined) => (value === undefined ? 'Empty input' : null)};
         });
 
         return validateObj;
