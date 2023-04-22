@@ -25,7 +25,7 @@ const ConfigSwitcher = ({ onChange }: { onChange: (path: string) => void }) => {
       setConfigs(
         cfg.configsList.map((configId) => ({ ...cfg.configs[configId] }))
       );
-      if (studyConfig && cfg.configsList.indexOf(studyConfig)!== -1) {
+      if (studyConfig && cfg.configsList.includes(studyConfig)) {
         onChange(cfg.configs[studyConfig].path);
       }
     });
