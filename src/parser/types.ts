@@ -13,13 +13,13 @@ interface StudyMetadata {
 
 export interface StudyComponent {
   type:
-    | 'consent'
-    | 'training'
-    | 'practice'
-    | 'attention-test'
-    | 'trials'
-    | 'survey'
-    | 'end';
+  | 'consent'
+  | 'training'
+  | 'practice'
+  | 'attention-test'
+  | 'trials'
+  | 'survey'
+  | 'end';
 }
 
 interface StudyComponents {
@@ -31,7 +31,7 @@ export interface ConsentComponent extends StudyComponent {
   signatureRequired: boolean;
 }
 
-export type TrainingComponent = StudyComponent
+export type TrainingComponent = StudyComponent;
 
 export interface PracticeComponent extends StudyComponent {
   response: Response[];
@@ -39,7 +39,7 @@ export interface PracticeComponent extends StudyComponent {
   trials: { [key: string]: Trial };
 }
 
-export type AttentionComponent = StudyComponent
+export type AttentionComponent = StudyComponent;
 
 export interface TrialsComponent extends StudyComponent {
   response: Response[];
@@ -76,14 +76,14 @@ export interface Response {
   id: string;
   prompt: string;
   type:
-    | 'numerical'
-    | 'short-text'
-    | 'long-text'
-    | 'likert'
-    | 'dropdown'
-    | 'slider'
-    | 'radio'
-    | 'checkbox';
+  | 'numerical'
+  | 'short-text'
+  | 'long-text'
+  | 'likert'
+  | 'dropdown'
+  | 'slider'
+  | 'radio'
+  | 'checkbox';
   desc: string;
   required: boolean;
   options?: Option[];
@@ -91,8 +91,6 @@ export interface Response {
   max?: number;
   min?: number;
 }
-
-
 
 // Add types for response
 
@@ -119,6 +117,13 @@ export interface StudyConfig {
   uiConfig: UIConfig;
   components: StudyComponents;
   sequence: string[];
+}
+
+export interface GlobalConfig {
+  configsList: string[];
+  configs: {
+    [key: string]: { title: string; path: string; description: string };
+  };
 }
 
 // Typecasting functions

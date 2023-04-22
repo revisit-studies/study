@@ -16,6 +16,7 @@ import { StudyEnd } from './components/StudyEnd';
 import { createRouter } from './routes';
 import { flagsContext, flagsStore } from './store/flags';
 import PracticeController from './controllers/PracticeController';
+import ConfigSwitcher from './components/ConfigSwitcher';
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion
 const trrackContext: any = createContext<TrrackStoreType>(undefined!);
@@ -56,6 +57,7 @@ const elements: Record<StudyComponent['type'], ReactNode> = {
 };
 
 export default function AppShellDemo() {
+  const [activeStudyPath, setActiveStudyPath] = useState<string>();
   const [config, setConfig] = useState<StudyConfig | null>(null);
 
   // Subscribe to store till config is found. Then stop
@@ -69,15 +71,20 @@ export default function AppShellDemo() {
 
   // Fetch and set config
   useEffect(() => {
-    if (!config) {
-      fetchStudyConfig('/src/configs/config-cleveland.hjson').then((cfg) => {
-        // fetchStudyConfig("/src/configs/config-image-demo.hjson").then((cfg) => {
+    if (!config && activeStudyPath) {
+      fetchStudyConfig(`/src/configs/${activeStudyPath}`).then((cfg) => {
         store.dispatch(saveConfig(cfg));
       });
     }
-  }, [config]);
+  }, [config, activeStudyPath]);
+
+  const handleConfigChange = (path: string) => {
+    setActiveStudyPath(path);
+  };
 
   const storeCfg = () => store.getState().study.config;
+
+  if (!activeStudyPath) return <ConfigSwitcher onChange={handleConfigChange}/>;
 
   if (!storeCfg()) return null; // Don't load anything till store config is set
 

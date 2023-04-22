@@ -1,0 +1,26 @@
+{
+  configsList: ["cleveland", "html-demo", "html-input", "image-demo"],
+  configs: {
+    "cleveland": {
+      title: "Cleveland Experiment",
+      path: "config-cleveland.hjson",
+      description: "Cleveland McGill's graphical perception comparison task",
+    },
+    "html-demo": {
+      title: "HTML Demo",
+      path: "config-html-demo.hjson",
+      description: "Demo of stimuli using html files",
+    },
+    "html-input": {
+      title: "HTML Input Demo",
+      path: "config-html-input.hjson",
+      description: "Demo of stimuli using html files. Answers are collected within the html file and sent to the ReVisit.",
+    },
+    "image-demo": {
+      title: "Image Demo",
+      path: "config-image-demo.hjson",
+      description: "A demo for embedding a stimulus in an image file.",
+    },
+
+  }
+}
