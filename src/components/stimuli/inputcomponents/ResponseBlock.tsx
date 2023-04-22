@@ -7,7 +7,7 @@ import {useCurrentStep} from '../../../routes';
 import {useParams} from 'react-router-dom';
 import {useNextTrialId} from '../../../controllers/utils';
 import {useForm} from '@mantine/form';
-import {useEffect, useState} from 'react';
+import {useEffect, useState, useRef} from 'react';
 import {useNextStep} from '../../../store/hooks/useNextStep';
 import {useTrialStatus} from '../../../store/hooks/useTrialStatus';
 
@@ -27,8 +27,6 @@ export default function ResponseBlock({ responses, correctAnswer, type }: Props)
     const nextTrailId = useNextTrialId(trialId, type);
     const trialStatus = useTrialStatus(trialId, type);
     const [disableNext, setDisableNext] = useState(true);
-    const [correctAnswers, setCorrectAnswers] = useState(0);
-    
     if (!responses || !trialStatus || !trialId) return <></>;
 
 
@@ -59,9 +57,7 @@ export default function ResponseBlock({ responses, correctAnswer, type }: Props)
     });
 
     const handleResponseCheck = () => {
-        if (JSON.stringify(answerField.values) === correctAnswer) 
-          setCorrectAnswers(correctAnswers + 1);
-        setDisableNext(false);
+          setDisableNext(!disableNext);
     };
 
     useEffect(() => {
@@ -81,7 +77,7 @@ export default function ResponseBlock({ responses, correctAnswer, type }: Props)
                     );
                 })
             }
-            {!disableNext && (<Text>The correct answer is: {correctAnswer}</Text>)}
+            {!disableNext && <Text>The correct answer is: {correctAnswer}</Text>}
             <Group position="right" spacing="xs" mt="xl">
                 {!(correctAnswer === null) ? <Button onClick={handleResponseCheck} disabled={!answerField.isValid()}>Check Answer</Button> : null}
                 {nextTrailId ? (
@@ -104,7 +100,7 @@ export default function ResponseBlock({ responses, correctAnswer, type }: Props)
                                     type
                                 })
                             );
-
+                            setDisableNext(!disableNext);
                             answerField.setFieldValue('input', '');
                         }}
                     />
