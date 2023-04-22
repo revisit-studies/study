@@ -43,7 +43,7 @@ export default function StimulusController({trialId, stimulus, response, type}: 
             />
           )}
 
-          <ResponseBlock responses={response} correctAnswer={useCurrentStep().includes('practice') ? stimulus.stimulus?.correctAnswer : null} type={type}/>
+          <ResponseBlock key={trialId} responses={response} correctAnswer={useCurrentStep().includes('practice') ? stimulus.stimulus?.correctAnswer : null} type={type}/>
         </Suspense>
       </TrialProvenanceContext.Provider>
     </div>
