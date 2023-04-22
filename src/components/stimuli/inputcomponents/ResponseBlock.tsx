@@ -82,7 +82,7 @@ export default function ResponseBlock({ responses, correctAnswer, type }: Props)
                 {!(correctAnswer === null) ? <Button onClick={handleResponseCheck} disabled={!answerField.isValid()}>Check Answer</Button> : null}
                 {nextTrailId ? (
                     <NextButton
-                        disabled={!(correctAnswer === null) ? disableNext : !answerField.isValid()}
+                        disabled={correctAnswer !== null ? disableNext : !answerField.isValid()}
                         to={`/${currentStep}/${nextTrailId}`}
                         process={() => {
                             if (trialStatus.complete) {
@@ -107,7 +107,7 @@ export default function ResponseBlock({ responses, correctAnswer, type }: Props)
                 ) : (
                     <NextButton
                         to={`/${nextStep}`}
-                        disabled={!(correctAnswer === null) ? disableNext : false}
+                        disabled={correctAnswer === null || disableNext}
                         process={() => {
                             // complete trials
                         }}
