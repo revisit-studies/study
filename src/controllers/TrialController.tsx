@@ -55,13 +55,14 @@ export default function TrialController() {
   if (!trialId || !config) return null;
 
   const stimulus = config.trials[trialId];
-  const response = config.response;
 
   return (
     <div key={trialId}>
       <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
       <TrialProvenanceContext.Provider value={trialProvenance}>
         <Suspense fallback={<div>Loading...</div>}>
+          <ResponseBlock location="aboveStimulus"/>
+
           {stimulus.stimulus.type === 'website' && (
             <IframeController
               path={stimulus.stimulus.path}
@@ -81,8 +82,7 @@ export default function TrialController() {
             />
           )}
 
-          {/* <StimulusComponent parameters={stimulus.stimulus.parameters} /> */}
-          <ResponseBlock responses={response} />
+          <ResponseBlock location="belowStimulus"/>
         </Suspense>
       </TrialProvenanceContext.Provider>
     </div>

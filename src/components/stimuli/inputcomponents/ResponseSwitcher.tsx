@@ -15,7 +15,7 @@ type Props = {
   answer: object;
 };
 
-export default function ResponseSwitcher({ response, answer}: Props) {
+export default function ResponseSwitcher({ response, answer }: Props) {
   const { type, desc, prompt, options, required, preset, max, min } = response;
 
   if (!type) return null;
@@ -49,7 +49,7 @@ export default function ResponseSwitcher({ response, answer}: Props) {
       {type === 'long-text' && (
           <TextAreaInput placeholder={desc} label={prompt} required={required}/>
       )}
-      {type === 'slider' && <SliderInput title={prompt} desc={desc} sliderData={options} answer={answer} required={required}/>}
+      {type === 'slider' && <SliderInput sliderData={options} answer={answer}/>}
     </>
   );
 }

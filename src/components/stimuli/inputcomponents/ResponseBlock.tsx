@@ -1,21 +1,24 @@
-import { Response } from '../../../parser/types';
+import { ResponseLocation } from '../../../parser/types';
 import {saveTrialAnswer, useAppDispatch} from '../../../store';
 import ResponseSwitcher from './ResponseSwitcher';
 import {NextButton} from '../../NextButton';
 import {Group} from '@mantine/core';
 import {useCurrentStep} from '../../../routes';
 import {useParams} from 'react-router-dom';
-import {useNextTrialId} from '../../../controllers/TrialController';
+import {useNextTrialId, useTrialsConfig} from '../../../controllers/TrialController';
 import {useForm} from '@mantine/form';
-import {useEffect} from 'react';
+import {useMemo} from 'react';
 import {useNextStep} from '../../../store/hooks/useNextStep';
 import {useTrialStatus} from '../../../store/hooks/useTrialStatus';
 
 type Props = {
-    responses: Response[];
+    location: ResponseLocation;
 };
 
-export default function ResponseBlock({ responses }: Props) {
+export default function ResponseBlock({ location }: Props) {
+
+    const trialConfig = useTrialsConfig();
+    const responses = useMemo(() => trialConfig?.response.filter((response) => response.location === location) || [], [trialConfig, location]);
 
     const dispatch = useAppDispatch();
     const currentStep = useCurrentStep();
@@ -23,9 +26,6 @@ export default function ResponseBlock({ responses }: Props) {
     const { trialId = null } = useParams<{ trialId: string }>();
     const nextTrailId = useNextTrialId(trialId);
     const trialStatus = useTrialStatus(trialId);
-    
-    if (!responses || !trialStatus || !trialId) return <></>;
-
 
     const generateInitFields = () => {
         let initObj = {};
@@ -42,7 +42,7 @@ export default function ResponseBlock({ responses }: Props) {
 
         responses.forEach((response) => {
             if(response.required)
-                validateObj = {...validateObj, [response.id]: (value:string) => (value.length === 0 ? 'Empty input' : null)};
+                validateObj = {...validateObj, [response.id]: (value:string) => (value === undefined ? 'Empty input' : null)};
         });
 
         return validateObj;
@@ -53,20 +53,13 @@ export default function ResponseBlock({ responses }: Props) {
         validate: generateValidation(),
     });
 
-    useEffect(() => {
-        responses.forEach((response) => {
-            const ans = trialStatus.answer ? JSON.parse(trialStatus.answer) : {};
-            answerField.setFieldValue(response.id, ans[response.id] || '');
-        });
-    }, [trialStatus.answer]);
-
-    return (
+    return trialStatus !== null && trialId !== null && responses.length > 0 ? (
         <>
             <form onSubmit={answerField.onSubmit(console.log)}>
             {
                 responses.map((response, index) => {
                     return (
-                        <ResponseSwitcher key={index} status={trialStatus} answer={answerField.getInputProps(response.id)} response={response} />
+                        <ResponseSwitcher key={index} answer={answerField.getInputProps(response.id)} response={response} />
                     );
                 })
             }
@@ -106,5 +99,5 @@ export default function ResponseBlock({ responses }: Props) {
             </Group>
             </form>
         </>
-    );
+    ) : null;
 }
