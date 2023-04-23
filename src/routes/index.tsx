@@ -8,8 +8,9 @@ import {
 } from 'react-router-dom';
 import { Shell } from '../components/Shell';
 import TrialController from '../controllers/TrialController';
-import { StudyComponent, StudyConfig, TrialsComponent } from '../parser/types';
+import { StudyComponent, StudyConfig, TrialsComponent} from '../parser/types';
 import { NavigateWithParams } from '../utils/NavigateWithParams';
+import PracticeController from '../controllers/PracticeController';
 
 export function createRouter(
   config: StudyConfig | null,
@@ -31,23 +32,23 @@ export function createRouter(
     const component = components[step] || null;
 
     const comp = elements[component?.type || 'end'];
-
-    if (component?.type === 'trials') {
+    
+    if (component?.type === 'trials' || component?.type === 'practice') {
       const { order } = component as TrialsComponent;
 
       const baseTrailRoute: RouteObject = {
         path: step,
         element: <NavigateWithParams to={`/${step}/${order[0]}`} replace />,
       };
-
       const trialRoute: RouteObject = {
         path: `${step}/:trialId`,
-        element: <TrialController />,
+        element: component?.type === 'trials' ? <TrialController /> : <PracticeController />,
       };
-
+     
       routes.push(baseTrailRoute);
       routes.push(trialRoute);
-    } else {
+    }  
+    else {
       const route: RouteObject = {
         path: step,
         element: comp,

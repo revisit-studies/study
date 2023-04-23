@@ -9,6 +9,9 @@ export type sliderProps = {
 type inputProps = {
     sliderData?: Option[],
     answer:object;
+    title: string;
+    desc: string;
+    required: boolean;
 }
 
 export default function SliderInput({ sliderData=[], answer }: inputProps) {
