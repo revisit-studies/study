@@ -61,7 +61,7 @@ const IframeController = ({
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, []);
+  }, [computedTo, currentStep, dispatch, iframeId, navigate, trialId]);
 
   return (
     <div>

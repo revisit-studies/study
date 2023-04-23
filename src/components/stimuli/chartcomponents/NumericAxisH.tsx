@@ -29,7 +29,7 @@ export const NumericAxisH = ({
         xOffset: xScale(value),
       }))
     );
-  }, [domain.join('-'), range.join('-')]);
+  }, [domain, range, tickFilter]);
   return (
     <g>
       <path

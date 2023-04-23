@@ -24,7 +24,7 @@ export default function RadioInput({ title='Your Question', desc='additional des
                     {
                         radioData.map((radio) => {
                             return (
-                                <Radio value={radio.value} label={radio.label} />
+                                <Radio value={radio.value} label={radio.label} key={radio.label}/>
                             );
                         })
                     }

@@ -17,7 +17,7 @@ export const OrdinalAxisHWithDotMarks = ({
         xOffset: (xScale(value) || 0) + xScale.bandwidth() / 2 - 5,
       }))
     );
-  }, [domain.join('-'), range.join('-')]);
+  }, [domain, range, tickFilter]);
   return (
     <g>
       <path
