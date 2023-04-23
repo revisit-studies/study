@@ -1,9 +1,11 @@
-import { Button, Flex, Navbar, NumberInput, Space, Text, Textarea } from '@mantine/core';
+import { Navbar, Text } from '@mantine/core';
+import { useStudyConfig } from '../../store/hooks/useStudyConfig';
+import ResponseBlock from '../stimuli/inputcomponents/ResponseBlock';
 
 export default function AppNavBar() {
   const trialHasSideBar = useStudyConfig()?.uiConfig.sidebar;
   const trialHasSideBarResponses = true;
-  const trialHasSideBarUI = false;
+  const trialHasSideBarUI = true;
 
   return trialHasSideBar ? (
     <Navbar width={{ lg: 300 }} style={{ zIndex: 0 }}>
@@ -13,19 +15,7 @@ export default function AppNavBar() {
 
       {trialHasSideBarResponses && 
       <Navbar.Section bg="gray.1" p="xl" grow>
-        <NumberInput></NumberInput>
-
-        <Space h="xl"></Space>
-
-        <Textarea
-          label="Please explain your answer below"
-          placeholder="Type something..."
-          minRows={5}
-        ></Textarea>
-
-        <Space h="xl"></Space>
-
-        <Flex justify="end"><Button>Submit</Button></Flex>
+          <ResponseBlock location="sidebar"/>
       </Navbar.Section>}
 
       {trialHasSideBarUI && 
