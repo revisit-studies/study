@@ -15,6 +15,7 @@ import { RouterProvider } from 'react-router-dom';
 import { StudyEnd } from './components/StudyEnd';
 import { createRouter } from './routes';
 import { flagsContext, flagsStore } from './store/flags';
+import PracticeController from './controllers/PracticeController';
 import ConfigSwitcher from './components/ConfigSwitcher';
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion
@@ -38,12 +39,7 @@ const elements: Record<StudyComponent['type'], ReactNode> = {
       <NextButton />
     </>
   ),
-  practice: (
-    <>
-      <div>practice component goes here</div>
-      <NextButton />
-    </>
-  ),
+  practice:  <PracticeController />,
   'attention-test': (
     <>
       <div>attention test component goes here</div>

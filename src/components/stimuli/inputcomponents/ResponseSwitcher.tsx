@@ -13,6 +13,7 @@ import SliderInput from './SliderInput';
 type Props = {
   response: Response;
   answer: object;
+  status: object;
 };
 
 export default function ResponseSwitcher({ response, answer}: Props) {

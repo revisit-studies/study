@@ -33,7 +33,11 @@ export interface ConsentComponent extends StudyComponent {
 
 export type TrainingComponent = StudyComponent;
 
-export type PracticeComponent = StudyComponent;
+export interface PracticeComponent extends StudyComponent {
+  response: Response[];
+  order: string[];
+  trials: { [key: string]: Trial };
+}
 
 export type AttentionComponent = StudyComponent;
 
@@ -58,6 +62,8 @@ export interface Stimulus {
   style?: { [key: string]: any };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   parameters?: { [key: string]: any };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  correctAnswer?: any;
 }
 
 // Add types for stimulus
@@ -125,4 +131,10 @@ export function isTrialsComponent(
   component: StudyComponent
 ): component is TrialsComponent {
   return component.type === 'trials';
+}
+
+export function isPracticeComponent(
+  component: StudyComponent
+): component is PracticeComponent {
+  return component.type === 'practice';
 }

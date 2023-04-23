@@ -18,6 +18,7 @@ const initialState: State = {
   config: null,
   consent: undefined,
   steps: {},
+  practice: {},
   trials: {},
 };
 
@@ -52,6 +53,14 @@ const studySlice = createTrrackableSlice({
       trialSteps.forEach((trialName) => {
         state.trials[trialName] = {};
       });
+
+      // Create answers record for practice type steps
+      const practiceSteps = payload.sequence.filter(
+        (step) => payload.components[step].type === 'practice'
+      );
+      practiceSteps.forEach((trialName) => {
+        state.practice[trialName] = {};
+      });
     },
     completeStep(state, step) {
       state.steps[step.payload].complete = true;
@@ -70,13 +79,13 @@ const studySlice = createTrrackableSlice({
         trialName: string;
         trialId: string;
         answer: string | object;
+        type: 'trials' | 'practice';
       }>
     ) {
-      state.trials[payload.trialName][payload.trialId] = {
+      state[payload.type][payload.trialName][payload.trialId] = {
         complete: true,
         answer: payload.answer,
-      };
-    },
+      };},
   },
 });
 
