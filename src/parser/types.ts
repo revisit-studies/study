@@ -66,6 +66,7 @@ export interface Option {
   label: string;
   value: string | number;
 }
+export type ResponseLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus';
 export interface Response {
   id: string;
   prompt: string;
@@ -84,6 +85,7 @@ export interface Response {
   preset?: string;
   max?: number;
   min?: number;
+  location?: ResponseLocation;
 }
 
 
