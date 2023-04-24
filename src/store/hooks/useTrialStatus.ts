@@ -8,7 +8,7 @@ import { TrialResult } from '../types';
  * @returns TrialResult object with complete status and any answer if present. Returns null if not in trial step
  */
 
-export function useTrialStatus(trialId: string | null, type: 'trials' | 'practice'): TrialResult | null {
+export function useTrialStatus(trialId: string | null, type: 'trials' | 'practice' ): TrialResult | null {
   const currentStep = useCurrentStep();
   const study = useAppSelector((state) => state.study);
 

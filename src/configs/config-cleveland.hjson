@@ -410,8 +410,66 @@
                 }
             },
         },
-        post-study-survey: {
+        post-study-survey1: {
             type: "survey",
+            questions:[{
+                            id: "q1"
+                            type: "dropdown",
+                            prompt: "Do you want to take this study everyday",
+                            desc: "Enter your preference",
+                            // options is required for radio, checkbox,dropdown and slider in the following format.
+                            options:[{label:"Yes", value:"Yes"},{label:"Sure", value:"Sure"},{label:"Of Course", value:"Of Course"}],
+                            required: true,
+                            max: 100,
+                            min: 0
+                        },
+            //text example
+                            {
+                                id: "q2"
+                                type: "numerical",
+                                prompt: "Your age",
+                                desc: "Enter your age here, range from 0 - 100",
+                                required: true,
+                                // add max and min for the allowed range
+                                max: 100,
+                                min: 0
+                            },
+            //likert example
+                            {
+                                id: "q3"
+                                type: "likert",
+                                prompt: "From scale 1-5 how much do you like this study",
+                                desc: "Likert question",
+                                required: true,
+                                //specify the number of likert options.
+                                preset: "5"
+                            },
+            //text example
+                            {
+                                id: "q4"
+                                type: "short-text",
+                                prompt: "Any comments?",
+                                desc: "Enter your comments here",
+                                required: true,
+                            },
+             //text example
+                            {
+                                id: "q5"
+                                type: "long-text",
+                                prompt: "Any long comments?",
+                                desc: "Enter your long comments here",
+                                required: true,
+                            },
+              //slider example
+                            {
+                                id: "q6"
+                                type: "slider",
+                                prompt: "Rate how is your experience",
+                                desc: "range from 0-100",
+                                options:[{label:"Bad", value:0},{label:"Mid", value:50},{label:"Good", value:100}],
+                                required: true,
+                            },
+                        ],
         }
     },
     sequence: [
@@ -420,6 +478,6 @@
         "practice1",
         "attention1",
         "trials1",
-        "post-study-survey"
+        "post-study-survey1"
     ]
 }

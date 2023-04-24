@@ -6,17 +6,17 @@ import { NextButton } from './components/NextButton';
 import TrialController from './controllers/TrialController';
 import { parseStudyConfig } from './parser/parser';
 import { StudyComponent, StudyConfig } from './parser/types';
-
 import { TrrackStoreType } from '@trrack/redux';
 import { createSelectorHook, Provider } from 'react-redux';
 import { saveConfig, store, trrackStore } from './store';
-
 import { RouterProvider } from 'react-router-dom';
 import { StudyEnd } from './components/StudyEnd';
 import { createRouter } from './routes';
 import { flagsContext, flagsStore } from './store/flags';
+import SurveyController from './controllers/SurveyController';
 import PracticeController from './controllers/PracticeController';
 import ConfigSwitcher from './components/ConfigSwitcher';
+
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion
 const trrackContext: any = createContext<TrrackStoreType>(undefined!);
@@ -49,8 +49,7 @@ const elements: Record<StudyComponent['type'], ReactNode> = {
   trials: <TrialController />,
   survey: (
     <>
-      <div>survey component goes here</div>
-      <NextButton />
+     <SurveyController />
     </>
   ),
   end: <StudyEnd />,

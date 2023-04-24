@@ -33,4 +33,5 @@ export interface State {
   steps: Record<string, Step>;
   practice: Record<string, TrialRecord>;
   trials: Record<string, TrialRecord>;
+  survey: Record<string, string|number>;
 }

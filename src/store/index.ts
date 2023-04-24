@@ -20,6 +20,7 @@ const initialState: State = {
   steps: {},
   practice: {},
   trials: {},
+  survey: {}
 };
 
 const studySlice = createTrrackableSlice({
@@ -85,11 +86,16 @@ const studySlice = createTrrackableSlice({
       state[payload.type][payload.trialName][payload.trialId] = {
         complete: true,
         answer: payload.answer,
-      };},
+      };
+    },
+    saveSurvey(state, { payload }: PayloadAction<Record<string, string|number>>) {
+      state.survey = payload;
+    }
   },
 });
 
 export const {
+  saveSurvey,
   saveConfig,
   completeStep,
   saveTrialAnswer,

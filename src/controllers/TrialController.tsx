@@ -11,8 +11,8 @@ export default function TrialController() {
 
   if (!trialId || !config) return null;
 
-  const trial = config.trials[trialId]; 
-  
+  const trial = config.trials[trialId];
+
   const response = config.response;
 
   return <StimulusController trialId={trialId} stimulus={trial} response={response} type="trials"/>;
