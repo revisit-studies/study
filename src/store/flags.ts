@@ -1,12 +1,14 @@
-import { configureStore, createSlice } from '@reduxjs/toolkit';
+import { PayloadAction, configureStore, createSlice } from '@reduxjs/toolkit';
 import { createContext } from 'react';
 import { createDispatchHook, createSelectorHook } from 'react-redux';
+import { ResponseLocation } from '../parser/types';
 
 const flags = createSlice({
   name: 'flags',
   initialState: {
     showAdmin: false,
     showHelpText: false,
+    responseBlocksValid: { aboveStimulus: false, belowStimulus: false, sidebar: false},
   },
   reducers: {
     toggleShowAdmin: (state) => {
@@ -15,10 +17,16 @@ const flags = createSlice({
     toggleShowHelpText: (state) => {
       state.showHelpText = !state.showHelpText;
     },
+    resetResponseBlockValidation: (state) => {
+      state.responseBlocksValid = { aboveStimulus: false, belowStimulus: false, sidebar: false};
+    },
+    updateResponseBlockValidation: (state, payload: PayloadAction<{ location: ResponseLocation, status: boolean }>) => {
+      state.responseBlocksValid[payload.payload.location] = payload.payload.status;
+    }
   },
 });
 
-export const { toggleShowAdmin, toggleShowHelpText } = flags.actions;
+export const { toggleShowAdmin, toggleShowHelpText, resetResponseBlockValidation, updateResponseBlockValidation } = flags.actions;
 
 export const flagsStore = configureStore({
   reducer: flags.reducer,

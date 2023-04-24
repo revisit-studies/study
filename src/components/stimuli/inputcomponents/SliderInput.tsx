@@ -1,4 +1,4 @@
-import {Group, Radio, Slider, Text, TextInput} from '@mantine/core';
+import {Slider, Text} from '@mantine/core';
 import {Option} from '../../../parser/types';
 
 export type sliderProps = {
@@ -14,7 +14,7 @@ type inputProps = {
     required: boolean;
 }
 
-export default function SliderInput({ title='Your Question', desc='additional description', sliderData=[], answer,required }: inputProps) {
+export default function SliderInput({ title='Your Question', desc='additional description', sliderData=[], answer, required }: inputProps) {
     return (
         <>
             <Text fz={'md'} fw={500}>{title}</Text>

@@ -20,6 +20,7 @@ import {useForm} from '@mantine/form';
 
 
  export const createAnswerField = (responses: Response[]) => {
+     // eslint-disable-next-line react-hooks/rules-of-hooks
      const answerField = useForm({
          initialValues: generateInitFields(responses),
          validate: generateValidation(responses),

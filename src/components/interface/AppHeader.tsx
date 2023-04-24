@@ -26,7 +26,9 @@ export default function AppHeader() {
 
   const currentStep = useCurrentStep();
 
-  const progressBarCurrent = studyConfig?.sequence.indexOf(currentStep) || 0;
+  const progressBarCurrent = studyConfig !== null 
+  ? currentStep === 'end' ? 100 : studyConfig.sequence.indexOf(currentStep) 
+  : 0;
   const progressBarMax = studyConfig?.sequence.length || 0;
   const progressPercent = (progressBarCurrent / progressBarMax) * 100;
 
@@ -36,8 +38,8 @@ export default function AppHeader() {
   const withProgressBar = studyConfig?.['study-metadata'].withProgressBar;
 
   return (
-    <Header height="60" p="md">
-      <Grid align="center">
+    <Header height="70" p="md">
+      <Grid mt={-7} align="center">
         <Grid.Col span={4}>
           <Flex align="center">
             <Image maw={40} src={logoPath} alt="Study Logo" />

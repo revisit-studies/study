@@ -45,10 +45,13 @@ export interface TrialsComponent extends StudyComponent {
   response: Response[];
   order: string[];
   trials: { [key: string]: Trial };
+  nextButtonLocation?: string;
+  instructionLocation?: string;
 }
 
 export interface SurveyComponent extends StudyComponent {
-  questions: Response[];
+  response: Response[];
+  nextButtonLocation: undefined;
 }
 
 export interface Trial {
@@ -76,6 +79,7 @@ export interface Option {
   label: string;
   value: string | number;
 }
+export type ResponseLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus';
 export interface Response {
   id: string;
   prompt: string;
@@ -94,6 +98,7 @@ export interface Response {
   preset?: string;
   max?: number;
   min?: number;
+  location?: ResponseLocation;
 }
 
 // Add types for response
@@ -113,6 +118,7 @@ export interface Answer {
 type UIConfig = {
   autoDownloadStudy: boolean;
   autoDownloadTime: number;
+  sidebar: boolean;
 };
 
 export interface StudyConfig {

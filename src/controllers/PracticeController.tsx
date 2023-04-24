@@ -11,8 +11,6 @@ export default function PracticeController() {
     if (!trialId || !config) return null;
   
     const trial = config.trials[trialId];
-    
-    const response = config.response;
 
-    return <StimulusController trialId={trialId} stimulus={trial} response={response} type="practice"/>;
+    return <StimulusController trialId={trialId} stimulus={trial}/>;
 }

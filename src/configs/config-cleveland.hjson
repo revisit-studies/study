@@ -22,7 +22,8 @@
         // starts the automatic download of the data after study completion 
         autoDownloadStudy: false,
         // start download after x milliseconds
-        autoDownloadTime: 5000
+        autoDownloadTime: 5000,
+        sidebar: true,
     },
     components: {
         consent: {
@@ -43,7 +44,10 @@
                 pattern: random
                 // one check after 10 trials 
                 interval: 10
-            },          
+            },
+            // nextButtonLocation: 'sidebar' | 'aboveStimulus' | 'belowStimulus'
+            nextButtonLocation: belowStimulus
+            instructionLocation: aboveStimulus
             response:[
                 //Can change response type
                 //text example
@@ -55,7 +59,8 @@
                     required: true,
                     // add max and min for the allowed range
                     max: 100,
-                    min: 0
+                    min: 0,
+                    location: belowStimulus
                 }], 
             trials: {
                 bubbleChart1: {
@@ -159,12 +164,14 @@
                 // one check after 10 trials 
                 interval: 10
             },
+            nextButtonLocation: sidebar
+            instructionLocation: sidebar
 // response example:
 // Allowable types: numerical, short-text, long-text radio, checkbox, dropdown, slider, likert
 //dropdown example
             response:[{
                 id: "cm-response1"
-                type: "dropdown",
+                type: "numerical",
                 prompt: "Your answer!!",
                 desc: "Enter your answer here, range from 0 - 100",
                 // options is required for radio, checkbox,dropdown and slider in the following format.
@@ -172,6 +179,8 @@
                 required: true,
                 max: 100,
                 min: 0
+                // location: 'sidebar' | 'aboveStimulus' | 'belowStimulus'
+                location: 'sidebar'
             },
 //text example
                 {
@@ -183,25 +192,27 @@
                     // add max and min for the allowed range
                     max: 100,
                     min: 0
+                    location: aboveStimulus
                 },
 //likert example
                 {
                     id: "cm-response3"
                     type: "likert",
                     prompt: "Your answer!!",
-                    desc: "Enter your answer here, range from 0 - 100",
+                    desc: "Enter your likert answer here",
                     required: true,
                     //specify the number of likert options.
                     preset: "5"
+                    location: belowStimulus
                 }
 //text example
                 {
                     id: "cm-response4"
                     type: "short-text",
                     prompt: "Your answer!!",
-                    desc: "Enter your answer here, range from 0 - 100",
+                    desc: "Enter your short text answer here",
                     required: true,
-
+                    location: aboveStimulus
                 }
 
             ],
@@ -209,6 +220,8 @@
                 bubbleChart1: {
                     description: "A chart with correct answer of 0.66",
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?",
+                    // instructionLocation: 'sidebar' | 'aboveStimulus' | 'belowStimulus'
+                    instructionLocation: "sidebar",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 
                         type: "react-component",
@@ -412,7 +425,7 @@
         },
         post-study-survey1: {
             type: "survey",
-            questions:[{
+            response:[{
                             id: "q1"
                             type: "dropdown",
                             prompt: "Do you want to take this study everyday",

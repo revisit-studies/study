@@ -8,16 +8,15 @@ import RadioInput from './RadioInput';
 import TextAreaInput from './TextAreaInput';
 import SliderInput from './SliderInput';
 import {TrialResult} from '../../../store/types';
-import {Box, Divider} from '@mantine/core';
+import {Box} from '@mantine/core';
 
 type Props = {
   response: Response;
   status?: TrialResult;
   answer: object;
-  status: object;
 };
 
-export default function ResponseSwitcher({ response, answer}: Props) {
+export default function ResponseSwitcher({ response, answer }: Props) {
   const { type, desc, prompt, options, required, preset, max, min } = response;
 
   if (!type) return null;

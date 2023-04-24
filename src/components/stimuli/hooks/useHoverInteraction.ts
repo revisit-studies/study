@@ -12,7 +12,7 @@ export function useHoverInteraction(id: string) {
         objectID: d.name,
       });
     },
-    [id]
+    [actions, id]
   );
 
   const handleMouseLeave = useCallback(
@@ -23,7 +23,7 @@ export function useHoverInteraction(id: string) {
         objectID: d.name,
       });
     },
-    [id]
+    [actions, id]
   );
 
   return { handleMouseEnter, handleMouseLeave };

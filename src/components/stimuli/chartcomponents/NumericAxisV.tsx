@@ -20,7 +20,7 @@ export const NumericAxisV = ({
         xOffset: yScale(value),
       }))
     );
-  }, [domain.join('-'), range.join('-')]);
+  }, [domain, range, tickFilter]);
   return (
     <g>
       <path

@@ -66,5 +66,5 @@ function useStudyIdentifiers() {
         session_id: sessionId,
       })
     );
-  }, [urlParams]);
+  }, [dispatch, setUrlParams, studyIdentifiers, urlParams]);
 }

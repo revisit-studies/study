@@ -1,6 +1,7 @@
-import { PracticeComponent, TrialsComponent } from '../parser/types';
+import { PracticeComponent, SurveyComponent, TrialsComponent } from '../parser/types';
 import { useCurrentStep } from '../routes';
 import { useAppSelector } from '../store';
+import { StudyComponent } from '../parser/types';
 
 export function usePracticeConfig() {
   const currentStep = useCurrentStep();
@@ -22,16 +23,31 @@ export function useTrialsConfig() {
     const { config } = state.study;
     const component = currentStep ? config?.components[currentStep] : null;
 
-    if (!config || !currentStep || component?.type !== 'trials') return null;
+    if (!config || !currentStep || !['trials', 'practice'].includes(component?.type || '')) return null;
 
     return config.components[currentStep] as TrialsComponent;
   });
 }
 
-export function useNextTrialId(currentTrial: string | null, type: 'trials' | 'practice' | 'survey') {
-  if(type === 'survey') return null;
+export function useSurveyConfig() {
+  const currentStep = useCurrentStep();
 
-  const config = type === 'trials' ? useTrialsConfig() : usePracticeConfig();
+  return useAppSelector((state) => {
+    const { config } = state.study;
+    const component = currentStep ? config?.components[currentStep] : null;
+
+    if (!config || !currentStep || !['survey'].includes(component?.type || '')) return null;
+
+    return config.components[currentStep] as SurveyComponent;
+  });
+}
+
+export function useNextTrialId(currentTrial: string | null, type?: StudyComponent['type']) {
+  const trialsConfig = useTrialsConfig();
+  const practiceConfig = usePracticeConfig();
+  const config = type === 'trials' ? trialsConfig : practiceConfig;
+  
+  if(type === 'survey') return null;
 
   if (!currentTrial || !config) return null;
 
