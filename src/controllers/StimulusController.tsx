@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 import { Trial} from '../parser/types';
@@ -12,11 +12,17 @@ import IframeController from './IframeController';
 import ReactComponentController from './ReactComponentController';
 import ResponseBlock from '../components/stimuli/inputcomponents/ResponseBlock';
 import ImageController from './ImageController';
+import { resetResponseBlockValidation, useFlagsDispatch } from '../store/flags';
 
 // current active stimuli presented to the user
 
 export default function StimulusController({trialId, stimulus}: {trialId: string, stimulus:Trial}) {
   const trialProvenance = createTrialProvenance();
+  const flagStoreDispatch = useFlagsDispatch();
+
+  useEffect(() => {
+    flagStoreDispatch(resetResponseBlockValidation());
+  }, [trialId]);
 
   return (
     <div>

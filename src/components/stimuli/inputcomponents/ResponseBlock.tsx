@@ -7,9 +7,10 @@ import {useCurrentStep} from '../../../routes';
 import {useParams} from 'react-router-dom';
 import {useNextTrialId, useTrialsConfig} from '../../../controllers/utils';
 import {useForm} from '@mantine/form';
-import {useState, useMemo} from 'react';
+import {useState, useMemo, useEffect} from 'react';
 import {useNextStep} from '../../../store/hooks/useNextStep';
 import {useTrialStatus} from '../../../store/hooks/useTrialStatus';
+import { updateResponseBlockValidation, useFlagsDispatch, useFlagsSelector } from '../../../store/flags';
 
 type Props = {
     location: ResponseLocation;
@@ -31,6 +32,9 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
     const trialStatus = useTrialStatus(trialId, type);
     const [disableNext, setDisableNext] = useState(true);
     const showNextButton = useMemo(() => trialConfig?.nextButtonLocation === undefined ? location === 'belowStimulus' : trialConfig.nextButtonLocation === location, [location, trialConfig]);
+
+    const flagStoreDispatch = useFlagsDispatch();
+    const responseBlocksValid = useFlagsSelector((state: any) => state.responseBlocksValid);
 
     const generateInitFields = () => {
         let initObj = {};
@@ -58,9 +62,13 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
         validate: generateValidation(),
     });
 
+    useEffect(() => {
+        flagStoreDispatch(updateResponseBlockValidation({ location, status: answerField.isValid() }));
+    });
+
     const handleResponseCheck = () => {
         setDisableNext(!disableNext);
-  };
+    };
 
     return trialStatus !== null && trialId !== null && responses.length > 0 ? (
         <>
@@ -77,7 +85,7 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
                 {(correctAnswer !== undefined) ? <Button onClick={handleResponseCheck} disabled={!answerField.isValid()}>Check Answer</Button> : null}
                 {showNextButton && (nextTrailId ? (
                     <NextButton
-                        disabled={correctAnswer !== undefined ? disableNext : !answerField.isValid()}
+                        disabled={correctAnswer !== undefined ? disableNext : !Object.values(responseBlocksValid).every((x) => x)}
                         to={`/${currentStep}/${nextTrailId}`}
                         process={() => {
                             if (trialStatus.complete) {
@@ -85,7 +93,6 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
                             }
 
                             const answer = JSON.stringify(answerField.values);
-                            console.log(answer,'answer');
 
                             dispatch(
                                 saveTrialAnswer({
