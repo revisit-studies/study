@@ -1,4 +1,5 @@
 import { useAppSelector } from '..';
+import { StudyComponent } from '../../parser/types';
 import { useCurrentStep } from '../../routes';
 import { TrialResult } from '../types';
 
@@ -8,7 +9,7 @@ import { TrialResult } from '../types';
  * @returns TrialResult object with complete status and any answer if present. Returns null if not in trial step
  */
 
-export function useTrialStatus(trialId: string | null, type: 'trials' | 'practice'): TrialResult | null {
+export function useTrialStatus(trialId: string | null, type?: StudyComponent['type']): TrialResult | null {
   const currentStep = useCurrentStep();
   const study = useAppSelector((state) => state.study);
 
@@ -20,7 +21,7 @@ export function useTrialStatus(trialId: string | null, type: 'trials' | 'practic
   )
     return null;
 
-  const status: TrialResult | null = study[type][currentStep][trialId];
+  const status: TrialResult | null = type === 'trials' || type === 'practice' ? study[type][currentStep][trialId] : null;
 
   return (
     status || {

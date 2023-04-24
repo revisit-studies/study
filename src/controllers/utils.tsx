@@ -1,6 +1,7 @@
 import { PracticeComponent, TrialsComponent } from '../parser/types';
 import { useCurrentStep } from '../routes';
 import { useAppSelector } from '../store';
+import { StudyComponent } from '../parser/types';
 
 export function usePracticeConfig() {
   const currentStep = useCurrentStep();
@@ -28,7 +29,7 @@ export function useTrialsConfig() {
   });
 }
 
-export function useNextTrialId(currentTrial: string | null, type: 'trials' | 'practice') {
+export function useNextTrialId(currentTrial: string | null, type?: StudyComponent['type']) {
   const trialsConfig = useTrialsConfig();
   const practiceConfig = usePracticeConfig();
   const config = type === 'trials' ? trialsConfig : practiceConfig;

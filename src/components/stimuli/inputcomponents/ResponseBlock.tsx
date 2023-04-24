@@ -14,13 +14,13 @@ import {useTrialStatus} from '../../../store/hooks/useTrialStatus';
 type Props = {
     location: ResponseLocation;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    correctAnswer?: any;
-    type: 'trials' | 'practice'
+    correctAnswer?: string | number;
 };
 
-export default function ResponseBlock({ location, correctAnswer, type  }: Props) {
+export default function ResponseBlock({ location, correctAnswer  }: Props) {
 
     const trialConfig = useTrialsConfig();
+    const type = trialConfig?.type;
     const responses = useMemo(() => trialConfig?.response.filter((response) => response.location === location) || [], [trialConfig, location]);
 
     const dispatch = useAppDispatch();
@@ -74,10 +74,10 @@ export default function ResponseBlock({ location, correctAnswer, type  }: Props)
             }
             {!disableNext && <Text>The correct answer is: {correctAnswer}</Text>}
             <Group position="right" spacing="xs" mt="xl">
-                {!(correctAnswer === null) ? <Button onClick={handleResponseCheck} disabled={!answerField.isValid()}>Check Answer</Button> : null}
+                {(correctAnswer !== undefined) ? <Button onClick={handleResponseCheck} disabled={!answerField.isValid()}>Check Answer</Button> : null}
                 {nextTrailId ? (
                     <NextButton
-                        disabled={correctAnswer !== null ? disableNext : !answerField.isValid()}
+                        disabled={correctAnswer !== undefined ? disableNext : !answerField.isValid()}
                         to={`/${currentStep}/${nextTrailId}`}
                         process={() => {
                             if (trialStatus.complete) {

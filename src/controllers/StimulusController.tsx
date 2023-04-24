@@ -15,7 +15,7 @@ import ImageController from './ImageController';
 
 // current active stimuli presented to the user
 
-export default function StimulusController({trialId, stimulus, type}: {trialId: string, stimulus:Trial, type: 'trials' | 'practice'}) {
+export default function StimulusController({trialId, stimulus}: {trialId: string, stimulus:Trial}) {
   const trialProvenance = createTrialProvenance();
 
   return (
@@ -23,13 +23,12 @@ export default function StimulusController({trialId, stimulus, type}: {trialId: 
       <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
       <TrialProvenanceContext.Provider value={trialProvenance}>
         <Suspense fallback={<div>Loading...</div>}>
-          <ResponseBlock location="aboveStimulus" correctAnswer={useCurrentStep().includes('practice') ? stimulus.stimulus?.correctAnswer : null} type={type}/>
+          <ResponseBlock location="aboveStimulus" correctAnswer={useCurrentStep().includes('practice') ? stimulus.stimulus?.correctAnswer : undefined}/>
 
           {stimulus.stimulus.type === 'website' && (
             <IframeController
               path={stimulus.stimulus.path}
               style={stimulus.stimulus.style}
-              type={type}
             />
           )}
           {stimulus.stimulus.type === 'image' && (
@@ -45,7 +44,7 @@ export default function StimulusController({trialId, stimulus, type}: {trialId: 
             />
           )}
 
-          <ResponseBlock location="belowStimulus" correctAnswer={useCurrentStep().includes('practice') ? stimulus.stimulus?.correctAnswer : null} type={type}/>
+          <ResponseBlock location="belowStimulus" correctAnswer={useCurrentStep().includes('practice') ? stimulus.stimulus?.correctAnswer : undefined}/>
         </Suspense>
       </TrialProvenanceContext.Provider>
     </div>

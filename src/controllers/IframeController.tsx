@@ -5,6 +5,7 @@ import { useCurrentStep } from '../routes';
 import { useParams } from 'react-router-dom';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 import { useNextStep } from '../store/hooks/useNextStep';
+import { useTrialsConfig } from './utils';
 
 const PREFIX = '@REVISIT_COMMS';
 
@@ -17,12 +18,10 @@ const defaultStyle = {
 const IframeController = ({
   path,
   style = {},
-  type,
 }: {
   path?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   style?: { [key: string]: any };
-  type: 'trials' | 'practice',
 }) => {
   const iframeStyle = { ...defaultStyle, ...style };
 
@@ -35,6 +34,8 @@ const IframeController = ({
   const currentStep = useCurrentStep();
   const navigate = useNavigateWithParams();
   const computedTo = useNextStep();
+
+  const trialConfig = useTrialsConfig();
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
@@ -52,7 +53,7 @@ const IframeController = ({
               trialName: currentStep,
               trialId,
               answer: data.message as object,
-              type
+              type: trialConfig?.type,
             })
           );
 
@@ -64,7 +65,7 @@ const IframeController = ({
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [computedTo, currentStep, dispatch, iframeId, navigate, trialId]);
+  }, [computedTo, currentStep, dispatch, iframeId, navigate, trialConfig?.type, trialId]);
 
   return (
     <div>

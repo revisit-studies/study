@@ -2,7 +2,7 @@ import { type PayloadAction } from '@reduxjs/toolkit';
 import { configureTrrackableStore, createTrrackableSlice } from '@trrack/redux';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { initFirebase } from '../firebase/init';
-import { StudyConfig } from '../parser/types';
+import { StudyComponent, StudyConfig } from '../parser/types';
 import { RootState, State, Step, StudyIdentifiers } from './types';
 
 export const STUDY_ID = 'STUDY_ID';
@@ -79,13 +79,16 @@ const studySlice = createTrrackableSlice({
         trialName: string;
         trialId: string;
         answer: string | object;
-        type: 'trials' | 'practice';
+        type?: StudyComponent['type'];
       }>
     ) {
-      state[payload.type][payload.trialName][payload.trialId] = {
-        complete: true,
-        answer: payload.answer,
-      };},
+      if (payload.type === 'trials' || payload.type === 'practice') {
+        state[payload.type][payload.trialName][payload.trialId] = {
+          complete: true,
+          answer: payload.answer,
+        };
+      }
+    },
   },
 });
 
