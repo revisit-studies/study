@@ -5,7 +5,7 @@ import { initFirebase } from '../firebase/init';
 import { StudyConfig } from '../parser/types';
 import { RootState, State, Step, StudyIdentifiers } from './types';
 
-export const STUDY_ID  = 'STUDY_ID2';
+export const STUDY_ID  = 'STUDY_ID6';
 export const PID  = 'PARTICIPANT_ID1';
 export const SESSION_ID  = 'SESSION_ID';
 

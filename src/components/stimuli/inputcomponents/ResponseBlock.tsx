@@ -1,5 +1,5 @@
 import { Response } from '../../../parser/types';
-import {saveTrialAnswer, useAppDispatch} from '../../../store';
+import {PID, saveTrialAnswer, STUDY_ID, useAppDispatch} from '../../../store';
 import ResponseSwitcher from './ResponseSwitcher';
 import {NextButton} from '../../NextButton';
 import {Group, Text, Button} from '@mantine/core';
@@ -10,6 +10,7 @@ import {useForm} from '@mantine/form';
 import {useEffect, useState, useRef} from 'react';
 import {useNextStep} from '../../../store/hooks/useNextStep';
 import {useTrialStatus} from '../../../store/hooks/useTrialStatus';
+import {saveTrial} from '../../../firebase/queries';
 
 type Props = {
     responses: Response[];
@@ -90,8 +91,6 @@ export default function ResponseBlock({ responses, correctAnswer, type }: Props)
                             }
 
                             const answer = JSON.stringify(answerField.values);
-                            console.log(answer,'answer');
-
                             dispatch(
                                 saveTrialAnswer({
                                     trialName: currentStep,
@@ -100,6 +99,8 @@ export default function ResponseBlock({ responses, correctAnswer, type }: Props)
                                     type
                                 })
                             );
+                            saveTrial(PID, STUDY_ID, trialId,currentStep,answer,type);
+
                             setDisableNext(!disableNext);
                             answerField.setFieldValue('input', '');
                         }}

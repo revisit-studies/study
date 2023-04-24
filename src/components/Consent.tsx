@@ -65,8 +65,7 @@ export default function Consent() {
           process={() => {
             const userData = {};
             dispatch(completeStep('consent'));
-            const studyData = {[STUDY_ID]: {'expID': STUDY_ID, 'timeStamp': Date.now()}};
-            addExpToUser(PID, studyData);
+            addExpToUser(PID, STUDY_ID);
           }}
         />
       </Group>
