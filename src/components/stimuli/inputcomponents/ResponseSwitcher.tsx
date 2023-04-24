@@ -14,6 +14,7 @@ type Props = {
   response: Response;
   status?: TrialResult;
   answer: object;
+  status: object;
 };
 
 export default function ResponseSwitcher({ response, answer}: Props) {

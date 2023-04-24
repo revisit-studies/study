@@ -6,7 +6,6 @@ import { NextButton } from './components/NextButton';
 import TrialController from './controllers/TrialController';
 import { parseStudyConfig } from './parser/parser';
 import { StudyComponent, StudyConfig } from './parser/types';
-
 import { TrrackStoreType } from '@trrack/redux';
 import { createSelectorHook, Provider } from 'react-redux';
 import { saveConfig, store, trrackStore } from './store';
@@ -15,6 +14,8 @@ import { StudyEnd } from './components/StudyEnd';
 import { createRouter } from './routes';
 import { flagsContext, flagsStore } from './store/flags';
 import SurveyController from './controllers/SurveyController';
+import PracticeController from './controllers/PracticeController';
+import ConfigSwitcher from './components/ConfigSwitcher';
 
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion
@@ -38,12 +39,7 @@ const elements: Record<StudyComponent['type'], ReactNode> = {
       <NextButton />
     </>
   ),
-  practice: (
-    <>
-      <div>practice component goes here</div>
-      <NextButton />
-    </>
-  ),
+  practice:  <PracticeController />,
   'attention-test': (
     <>
       <div>attention test component goes here</div>
@@ -60,6 +56,7 @@ const elements: Record<StudyComponent['type'], ReactNode> = {
 };
 
 export default function AppShellDemo() {
+  const [activeStudyPath, setActiveStudyPath] = useState<string>();
   const [config, setConfig] = useState<StudyConfig | null>(null);
 
   // Subscribe to store till config is found. Then stop
@@ -73,15 +70,20 @@ export default function AppShellDemo() {
 
   // Fetch and set config
   useEffect(() => {
-    if (!config) {
-      fetchStudyConfig('/src/configs/config-cleveland.hjson').then((cfg) => {
-        // fetchStudyConfig("/src/configs/config-image-demo.hjson").then((cfg) => {
+    if (!config && activeStudyPath) {
+      fetchStudyConfig(`/src/configs/${activeStudyPath}`).then((cfg) => {
         store.dispatch(saveConfig(cfg));
       });
     }
-  }, [config]);
+  }, [config, activeStudyPath]);
+
+  const handleConfigChange = (path: string) => {
+    setActiveStudyPath(path);
+  };
 
   const storeCfg = () => store.getState().study.config;
+
+  if (!activeStudyPath) return <ConfigSwitcher onChange={handleConfigChange}/>;
 
   if (!storeCfg()) return null; // Don't load anything till store config is set
 

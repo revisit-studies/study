@@ -1,4 +1,3 @@
-import { useState, forwardRef, type Ref } from 'react';
 import {Group, Radio, Slider, Text, TextInput} from '@mantine/core';
 import {Option} from '../../../parser/types';
 
@@ -12,7 +11,7 @@ type inputProps = {
     desc: string,
     sliderData?: Option[],
     answer:object;
-    required: boolean,
+    required: boolean;
 }
 
 export default function SliderInput({ title='Your Question', desc='additional description', sliderData=[], answer,required }: inputProps) {

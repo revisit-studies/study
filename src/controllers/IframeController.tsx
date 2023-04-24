@@ -17,10 +17,12 @@ const defaultStyle = {
 const IframeController = ({
   path,
   style = {},
+  type,
 }: {
   path?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   style?: { [key: string]: any };
+  type: 'trials' | 'practice',
 }) => {
   const iframeStyle = { ...defaultStyle, ...style };
 
@@ -50,6 +52,7 @@ const IframeController = ({
               trialName: currentStep,
               trialId,
               answer: data.message as object,
+              type
             })
           );
 

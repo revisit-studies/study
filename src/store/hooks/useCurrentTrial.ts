@@ -11,11 +11,11 @@ export function useCurrentTrial() {
   const currentStep = useCurrentStep();
 
   const { config } = useAppSelector((state) => state.study);
-
+  
   if (
     currentStep.length === 0 ||
     !config ||
-    config.components[currentStep]?.type !== 'trials'
+    (config.components[currentStep]?.type !== 'trials' && config.components[currentStep]?.type !== 'practice')
   )
     return null;
 
