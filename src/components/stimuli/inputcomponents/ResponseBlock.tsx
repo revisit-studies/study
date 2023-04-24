@@ -17,7 +17,7 @@ type Props = {
     responses: Response[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     correctAnswer?: any;
-    type: 'trials' | 'practice' | 'survey';
+    type: 'trials' | 'practice' ;
 };
 
 export default function ResponseBlock({ responses, correctAnswer, type }: Props) {
@@ -100,34 +100,50 @@ export default function ResponseBlock({ responses, correctAnswer, type }: Props)
             {!disableNext && <Text>The correct answer is: {correctAnswer}</Text>}
             <Group position="right" spacing="xs" mt="xl">
                 {!(correctAnswer === null) ? <Button onClick={handleResponseCheck} disabled={!answerField.isValid()}>Check Answer</Button> : null}
-                {nextTrailId &&
+                {nextTrailId ? (
                     <NextButton
                         disabled={correctAnswer !== null ? disableNext : !answerField.isValid()}
                         to={`/${currentStep}/${nextTrailId}`}
                         process={() => {
+                            if (trialStatus.complete) {
+                                answerField.setFieldValue('input', '');
+                            }
+
                             const answer = JSON.stringify(answerField.values);
+                            console.log(answer,'answer');
+
                             dispatch(
                                 saveTrialAnswer({
                                     trialName: currentStep,
-                                    trialId: trialId || 'NoID',
+                                    trialId,
                                     answer: answer,
                                     type
                                 })
                             );
                             setDisableNext(!disableNext);
+                            answerField.setFieldValue('input', '');
                         }}
-                    />}
-
-                    {type === 'survey' && <NextButton
-                        // disabled={!answerField.isValid()}
+                    />
+                ) : (
+                    <NextButton
                         to={`/${nextStep}`}
-                        // disabled={correctAnswer === null || disableNext}
+                        disabled={correctAnswer === null || disableNext}
                         process={() => {
-                            dispatch(
-                                saveSurvey(answerField.values)
-                            );
+                            // complete trials
                         }}
-                    />}
+                    />
+                )}
+
+                    {/*{type === 'survey' && <NextButton*/}
+                    {/*    // disabled={!answerField.isValid()}*/}
+                    {/*    to={`/${nextStep}`}*/}
+                    {/*    // disabled={correctAnswer === null || disableNext}*/}
+                    {/*    process={() => {*/}
+                    {/*        dispatch(*/}
+                    {/*            saveSurvey(answerField.values)*/}
+                    {/*        );*/}
+                    {/*    }}*/}
+                    {/*/>}*/}
 
             </Group>
             </form>
