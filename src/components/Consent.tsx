@@ -4,13 +4,13 @@ import ReactMarkdown from 'react-markdown';
 
 import { ConsentComponent } from '../parser/types';
 import { useCurrentStep } from '../routes';
-import { completeStep, useAppDispatch, useAppSelector } from '../store';
+import {completeStep, STUDY_ID, useAppDispatch, useAppSelector} from '../store';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 import { NextButton } from './NextButton';
+import {addUser} from '../firebase/queries';
 
 export function useConsentConfig() {
   const currentStep = useCurrentStep();
-
   return useAppSelector((state) => {
     const { config } = state.study;
 
@@ -65,6 +65,7 @@ export default function Consent() {
           label="Accept"
           process={() => {
             dispatch(completeStep('consent'));
+            addUser({id:'test', exp: [STUDY_ID]});
           }}
         />
       </Group>
