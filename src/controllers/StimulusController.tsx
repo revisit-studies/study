@@ -26,7 +26,7 @@ export default function StimulusController({trialId, stimulus}: {trialId: string
 
   useEffect(() => {
     flagStoreDispatch(resetResponseBlockValidation());
-  }, [trialId]);
+  }, [flagStoreDispatch, trialId]);
 
   return (
     <div>

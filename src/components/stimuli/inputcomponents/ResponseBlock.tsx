@@ -1,16 +1,17 @@
 import { ResponseLocation } from '../../../parser/types';
-import {saveTrialAnswer, useAppDispatch} from '../../../store';
+import {saveSurvey, saveTrialAnswer, useAppDispatch} from '../../../store';
 import ResponseSwitcher from './ResponseSwitcher';
 import {NextButton} from '../../NextButton';
 import {Group, Text, Button} from '@mantine/core';
 import {useCurrentStep} from '../../../routes';
 import {useParams} from 'react-router-dom';
-import {useNextTrialId, useTrialsConfig} from '../../../controllers/utils';
+import {useNextTrialId, useSurveyConfig, useTrialsConfig} from '../../../controllers/utils';
 import {useForm} from '@mantine/form';
 import {useState, useMemo, useEffect} from 'react';
+import { updateResponseBlockValidation, useFlagsDispatch, useFlagsSelector } from '../../../store/flags';
 import {useNextStep} from '../../../store/hooks/useNextStep';
 import {useTrialStatus} from '../../../store/hooks/useTrialStatus';
-import { updateResponseBlockValidation, useFlagsDispatch, useFlagsSelector } from '../../../store/flags';
+import {useSurvey} from '../../../store/hooks/useSurvey';
 
 type Props = {
     location: ResponseLocation;
@@ -21,8 +22,10 @@ type Props = {
 export default function ResponseBlock({ location, correctAnswer  }: Props) {
 
     const trialConfig = useTrialsConfig();
-    const type = trialConfig?.type;
-    const responses = useMemo(() => trialConfig?.response.filter((response) => response.location === location) || [], [trialConfig, location]);
+    const surveyConfig = useSurveyConfig();
+    const currentConfig = surveyConfig === null ? trialConfig : surveyConfig;
+    const type = currentConfig?.type;
+    const responses = useMemo(() => currentConfig?.response.filter((response) => (response.location === location || (response.location === undefined && location === 'belowStimulus'))) || [], [currentConfig, location]);
 
     const dispatch = useAppDispatch();
     const currentStep = useCurrentStep();
@@ -31,7 +34,7 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
     const nextTrailId = useNextTrialId(trialId, type);
     const trialStatus = useTrialStatus(trialId, type);
     const [disableNext, setDisableNext] = useState(true);
-    const showNextButton = useMemo(() => trialConfig?.nextButtonLocation === undefined ? location === 'belowStimulus' : trialConfig.nextButtonLocation === location, [location, trialConfig]);
+    const showNextButton = useMemo(() => currentConfig?.nextButtonLocation === undefined ? location === 'belowStimulus' : currentConfig.nextButtonLocation === location, [location, currentConfig]);
 
     const flagStoreDispatch = useFlagsDispatch();
     const responseBlocksValid = useFlagsSelector((state: any) => state.responseBlocksValid);
@@ -70,7 +73,7 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
         setDisableNext(!disableNext);
     };
 
-    return trialStatus !== null && trialId !== null && responses.length > 0 ? (
+    return responses.length > 0 ? (
         <>
             <form onSubmit={answerField.onSubmit(console.log)}>
             {
@@ -82,40 +85,33 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
             }
             {!disableNext && <Text>The correct answer is: {correctAnswer}</Text>}
             <Group position="right" spacing="xs" mt="xl">
-                {(correctAnswer !== undefined) ? <Button onClick={handleResponseCheck} disabled={!answerField.isValid()}>Check Answer</Button> : null}
-                {showNextButton && (nextTrailId ? (
+                {(correctAnswer !== undefined && type === 'practice') ? <Button onClick={handleResponseCheck} disabled={!answerField.isValid()}>Check Answer</Button> : null}
+                {showNextButton && 
                     <NextButton
-                        disabled={correctAnswer !== undefined ? disableNext : !Object.values(responseBlocksValid).every((x) => x)}
-                        to={`/${currentStep}/${nextTrailId}`}
+                        disabled={type === 'practice' ? disableNext : !Object.values(responseBlocksValid).every((x) => x)}
+                        to={nextTrailId? `/${currentStep}/${nextTrailId}` : `/${nextStep}`}
                         process={() => {
-                            if (trialStatus.complete) {
-                                answerField.setFieldValue('input', '');
-                            }
-
                             const answer = JSON.stringify(answerField.values);
 
-                            dispatch(
-                                saveTrialAnswer({
-                                    trialName: currentStep,
-                                    trialId,
-                                    answer: answer,
-                                    type
-                                })
-                            );
-                            setDisableNext(!disableNext);
-                            answerField.setFieldValue('input', '');
+                            if(type === 'survey'){
+                                dispatch(
+                                    saveSurvey(answerField.values)
+                                );
+                            }else{
+                                dispatch(
+                                    saveTrialAnswer({
+                                        trialName: currentStep,
+                                        trialId: trialId || 'NoID',
+                                        answer: answer,
+                                        type
+                                    })
+                                );
+                                setDisableNext(!disableNext);
+                            }
+
                         }}
-                    />
-                ) : (
-                    <NextButton
-                        to={`/${nextStep}`}
-                        disabled={correctAnswer === null || disableNext}
-                        process={() => {
-                            // complete trials
-                        }}
-                    />
-                ))}
-            </Group>
+                    />}
+                </Group>
             </form>
         </>
     ) : null;

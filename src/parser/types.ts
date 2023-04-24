@@ -49,6 +49,11 @@ export interface TrialsComponent extends StudyComponent {
   instructionLocation?: string;
 }
 
+export interface SurveyComponent extends StudyComponent {
+  response: Response[];
+  nextButtonLocation: undefined;
+}
+
 export interface Trial {
   description: string;
   instruction: string;

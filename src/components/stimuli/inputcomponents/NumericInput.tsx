@@ -16,6 +16,8 @@ export default function NumericInput({ placeholder='', label='' ,required=false,
                 placeholder={placeholder}
                 label={label}
                 withAsterisk={required}
+                radius={'md'}
+                size={'md'}
                 min={min}
                 max={max}
                 {...answer}
