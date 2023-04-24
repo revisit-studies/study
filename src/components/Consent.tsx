@@ -4,11 +4,10 @@ import ReactMarkdown from 'react-markdown';
 
 import { ConsentComponent } from '../parser/types';
 import { useCurrentStep } from '../routes';
-import {completeStep, STUDY_ID, useAppDispatch, useAppSelector} from '../store';
+import {completeStep, PID, STUDY_ID, useAppDispatch, useAppSelector} from '../store';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 import { NextButton } from './NextButton';
-import {addUser} from '../firebase/queries';
-
+import {addExpToUser} from '../firebase/queries';
 export function useConsentConfig() {
   const currentStep = useCurrentStep();
   return useAppSelector((state) => {
@@ -64,8 +63,10 @@ export default function Consent() {
           disabled={disableContinue}
           label="Accept"
           process={() => {
+            const userData = {};
             dispatch(completeStep('consent'));
-            addUser({id:'test', exp: [STUDY_ID]});
+            const studyData = {[STUDY_ID]: {'expID': STUDY_ID, 'timeStamp': Date.now()}};
+            addExpToUser(PID, studyData);
           }}
         />
       </Group>

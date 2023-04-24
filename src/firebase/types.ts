@@ -1,4 +1,4 @@
-export interface user{
-    id: string;
-    exp: string[]
+export interface expMeta{
+    expId: string;
+    timestamp: number;
 }

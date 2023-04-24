@@ -1,12 +1,12 @@
 import {doc,setDoc,getDoc} from 'firebase/firestore';
-import {user} from './types';
+import {expMeta} from './types';
 import {FIREBASE} from '../store';
 
 const fb = FIREBASE.fStore;
 const app = FIREBASE.app;
-export const addUser = async (user: user) => {
+export const addExpToUser = async (userId: string, data: object) => {
     try {
-        const docRef = setDoc(doc(fb, 'users', user.id), user, {merge: true});
+        const docRef = setDoc(doc(fb, 'users', userId), data, {merge: true});
         return docRef;
     } catch (e) {
         console.error('Firebase error adding user: ', e);
