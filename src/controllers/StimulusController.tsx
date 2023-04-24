@@ -13,6 +13,7 @@ import ReactComponentController from './ReactComponentController';
 import ResponseBlock from '../components/stimuli/inputcomponents/ResponseBlock';
 import ImageController from './ImageController';
 import { resetResponseBlockValidation, useFlagsDispatch } from '../store/flags';
+import { useTrialsConfig } from './utils';
 
 // current active stimuli presented to the user
 
@@ -20,13 +21,16 @@ export default function StimulusController({trialId, stimulus}: {trialId: string
   const trialProvenance = createTrialProvenance();
   const flagStoreDispatch = useFlagsDispatch();
 
+  const config = useTrialsConfig();
+  const instructionAbove = config?.instructionLocation === 'aboveStimulus';
+
   useEffect(() => {
     flagStoreDispatch(resetResponseBlockValidation());
   }, [trialId]);
 
   return (
     <div>
-      <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
+      {instructionAbove && <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>}
       <TrialProvenanceContext.Provider value={trialProvenance}>
         <Suspense fallback={<div>Loading...</div>}>
           <ResponseBlock location="aboveStimulus" correctAnswer={useCurrentStep().includes('practice') ? stimulus.stimulus?.correctAnswer : undefined}/>

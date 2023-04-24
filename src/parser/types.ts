@@ -46,6 +46,7 @@ export interface TrialsComponent extends StudyComponent {
   order: string[];
   trials: { [key: string]: Trial };
   nextButtonLocation?: string;
+  instructionLocation?: string;
 }
 
 export interface Trial {
