@@ -30,7 +30,7 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
     const nextTrailId = useNextTrialId(trialId, type);
     const trialStatus = useTrialStatus(trialId, type);
     const [disableNext, setDisableNext] = useState(true);
-
+    const showNextButton = useMemo(() => trialConfig?.nextButtonLocation === undefined ? location === 'belowStimulus' : trialConfig.nextButtonLocation === location, [location, trialConfig]);
 
     const generateInitFields = () => {
         let initObj = {};
@@ -47,7 +47,7 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
 
         responses.forEach((response) => {
             if(response.required)
-                validateObj = {...validateObj, [response.id]: (value: string | undefined) => (value === undefined ? 'Empty input' : null)};
+                validateObj = {...validateObj, [response.id]: (value: string | undefined) => (value === undefined || value.length === 0 ? 'Empty input' : null)};
         });
 
         return validateObj;
@@ -75,7 +75,7 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
             {!disableNext && <Text>The correct answer is: {correctAnswer}</Text>}
             <Group position="right" spacing="xs" mt="xl">
                 {(correctAnswer !== undefined) ? <Button onClick={handleResponseCheck} disabled={!answerField.isValid()}>Check Answer</Button> : null}
-                {nextTrailId ? (
+                {showNextButton && (nextTrailId ? (
                     <NextButton
                         disabled={correctAnswer !== undefined ? disableNext : !answerField.isValid()}
                         to={`/${currentStep}/${nextTrailId}`}
@@ -107,7 +107,7 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
                             // complete trials
                         }}
                     />
-                )}
+                ))}
             </Group>
             </form>
         </>

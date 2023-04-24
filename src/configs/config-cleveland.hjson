@@ -44,7 +44,9 @@
                 pattern: random
                 // one check after 10 trials 
                 interval: 10
-            },          
+            },
+            // nextButtonLocation: 'sidebar' | 'aboveStimulus' | 'belowStimulus'
+            nextButtonLocation: belowStimulus
             response:[
                 //Can change response type
                 //text example
@@ -161,6 +163,7 @@
                 // one check after 10 trials 
                 interval: 10
             },
+            nextButtonLocation: sidebar
 // response example:
 // Allowable types: numerical, short-text, long-text radio, checkbox, dropdown, slider, likert
 //dropdown example
