@@ -410,7 +410,7 @@
                 }
             },
         },
-        post-study-survey: {
+        post-study-survey1: {
             type: "survey",
             questions:[{
                             id: "q1"
@@ -478,6 +478,6 @@
         "practice1",
         "attention1",
         "trials1",
-        "post-study-survey"
+        "post-study-survey1"
     ]
 }

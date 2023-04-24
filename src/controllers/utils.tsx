@@ -29,6 +29,8 @@ export function useTrialsConfig() {
 }
 
 export function useNextTrialId(currentTrial: string | null, type: 'trials' | 'practice' | 'survey') {
+  if(type === 'survey') return null;
+
   const config = type === 'trials' ? useTrialsConfig() : usePracticeConfig();
 
   if (!currentTrial || !config) return null;
