@@ -71,7 +71,7 @@ export default function AppShellDemo() {
   // Fetch and set config
   useEffect(() => {
     if (!config && activeStudyPath) {
-      fetchStudyConfig(`/src/configs/${activeStudyPath}`).then((cfg) => {
+      fetchStudyConfig(`/configs/${activeStudyPath}`).then((cfg) => {
         store.dispatch(saveConfig(cfg));
       });
     }
