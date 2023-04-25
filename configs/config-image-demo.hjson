@@ -1,64 +1,77 @@
 {
-    config-version: 1,
-    study-metadata: {
-        title: "A demo for embedding a stimulus in an image file. ",
-        version: "pilot",
-        authors: [
-            "The reVISit Team"
-        ],
-        date: "2023-04-14",
-        description: "Demonstrating how to embed a stimulus via an image.",
-        organizations: [
-            "University of Utah",
-            "WPI",
-            "University of Toronto"
-        ],
-        logoPath: "/assets/revisitLogoSquare.svg",
-    },
-    components: {
-        trials1: {
-            type: "trials",
-            order: ["frog1", "frog2"],
-            response:{
-                id: "cm-response"
-                type: "numeric",
-                prompt: "Your answer:",
-                desc: "Enter your answer here, range from 0 - 100",
-                options:[],
-                required: true,
-            },
-            trials: {
-                frog1: {
-                    description: "What does the description do? ",
-                    instruction:  "**Question:** How many frogs are in the image?",
-                    stimulus: {
-                        type: "image",
+  "config-version": 1,
+  "study-metadata": {
+    "title": "A demo for embedding a stimulus in an image file.",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-14",
+    "description": "Demonstrating how to embed a stimulus via an image.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ],
+    "logoPath": "/assets/revisitLogoSquare.svg"
+  },
+  "uiConfig": {
+        // starts the automatic download of the data after study completion 
+    "autoDownloadStudy": false,
+        // start download after x milliseconds
+    "autoDownloadTime": 5000,
+    "sidebar": true
+  },
+  "components": {
+    "trials1": {
+      "type": "trials",
+      "order": [
+        "frog1",
+        "frog2"
+      ],
+      "response": [
+        {
+          "id": "cm-response",
+          "type": "numerical",
+          "prompt": "Your answer:",
+          "desc": "Enter your answer here, range from 0 - 100",
+          "options": [],
+          "required": true,
+          "location": "sidebar"
+        }
+      ],
+      "trials": {
+        "frog1": {
+          "description": "What does the description do? ",
+          "instruction": "**Question:** How many frogs are in the image?",
+          "stimulus": {
+            "type": "image",
                         // can be a URL or a local path
-                        path: "one-frog.jpg",
+            "path": "one-frog.jpg",
                         // style that will be applied to iframe
-                        style: {
-                            width: "500px"
-                        }
-                    },
-                },
-                frog2: {
-                    description: "What does the description do? ",
-                    instruction:  "**Question:** How many frogs are in the image?",
-                    stimulus: {
-                        // Allowable types: image, website, react-component 
-                        type: "image",
-                        // can be a URL or a local path
-                        path: "two-frogs.jpg",
-                        // style that will be applied to iframe
-                        style: {
-                            width: "500px"
-                        }
-                    },
-                },
-            },
+            "style": {
+              "width": "500px"
+            }
+          }
         },
-    },
-    sequence: [
-        "trials1",
-    ]
+        "frog2": {
+          "description": "What does the description do? ",
+          "instruction": "**Question:** How many frogs are in the image?",
+          "stimulus": {
+                        // Allowable types: image, website, react-component 
+            "type": "image",
+                        // can be a URL or a local path
+            "path": "two-frogs.jpg",
+                        // style that will be applied to iframe
+            "style": {
+              "width": "500px"
+            }
+          }
+        }
+      }
+    }
+  },
+  "sequence": [
+    "trials1"
+  ]
 }
