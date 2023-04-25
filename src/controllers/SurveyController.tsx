@@ -3,7 +3,7 @@ import {SurveyComponent} from '../parser/types';
 import { useCurrentStep } from '../routes';
 import {  useAppSelector } from '../store';
 
-import ResponseBlock from '../components/stimuli/inputcomponents/ResponseBlock';
+import ResponseBlock from '../components/response/ResponseBlock';
 
 
 export function useSurveyConfig() {

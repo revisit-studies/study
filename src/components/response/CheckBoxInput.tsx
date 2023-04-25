@@ -1,5 +1,5 @@
 import {Checkbox, Group} from '@mantine/core';
-import {Option} from '../../../parser/types';
+import {Option} from '../../parser/types';
 
 type inputProps = {
     desc: string,

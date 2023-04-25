@@ -1,87 +1,78 @@
 {
-    config-version: 1,
+    config-version: 1
     study-metadata: {
-        title: "Cleveland McGill Example",
-        version: "pilot",
+        title: "Cleveland McGill Example"
+        version: "pilot"
         authors: [
             "The reVISit Team"
-        ],
-        date: "2023-04-14",
-        description: "A simple experiment with .",
+        ]
+        date: "2023-04-14"
+        description: "A simple experiment with ."
         organizations: [
-            "University of Utah",
-            "WPI",
+            "University of Utah"
+            "WPI"
             "University of Toronto"
-        ],
-        contactEmail: "test@test.com",
-        helpTextPath: "/markdowns/help.md",
-        logoPath: "/assets/revisitLogoSquare.svg",
-        withProgressBar: true,
-    },
+        ]
+        contactEmail: "test@test.com"
+        helpTextPath: "/markdowns/help.md"
+        logoPath: "/assets/revisitLogoSquare.svg"
+        withProgressBar: true
+    }
+    uiConfig: {
+        // starts the automatic download of the data after study completion 
+        autoDownloadStudy: false
+        // start download after x milliseconds
+        autoDownloadTime: 5000
+        sidebar: false
+    }
     components: {
         consent: {
             type: "consent"
             path: "markdowns/consent.md"
-        },
-        training1: {
-            type: "training"
-        },
-        practice1: {
-            type: "practice",
-            max-failures: 5,
-        },
-        attention1: {
-            type: "attention-test"
         }
         trials1: {
-            type: "trials",
-            order: ["barChart", "barChart"],
-            randomization-scheme: "latin-square",
-            subset-count: 2,
+            type: "trials"
+            order: ["barChart", "barChart"]
+            randomization-scheme: "latin-square"
+            subset-count: 2
+            instructionLocation: aboveStimulus
             attention-checks: {
-                check: "attention1",
+                check: "attention1"
                 pattern: random
                 // one check after 10 trials 
                 interval: 10
             }
             response:[{
-                id: "cm-response",
-                type: "numeric",
-                prompt: "Your answer!!",
-                desc: "Enter your answer here, range from 0 - 100",
-                options:[],
-                required: true,
-                required: true,
-                max: 100,
-                min: 0,
-            }],
+                id: "cm-response"
+                type: "numerical"
+                prompt: "Your answer!!"
+                desc: "Enter your answer here, range from 0 - 100"
+                options:[]
+                required: true
+                required: true
+                max: 100
+                min: 0
+            }]
             trials: {
                 barChart: {
-                    description: "A chart with correct answer of 0.66",
-                    instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?",
+                    description: ""
+                    instruction: "Click on the largest bar"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 
-                        type: "website",
+                        type: "website"
                         // can be a URL or a local path
-                        path: "stimuli-d3-interaction/bar-chart-interaction.html",
+                        path: "stimuli-d3-interaction/bar-chart-interaction.html"
                         // style that will be applied to iframe
                         style: {
                             height: "500px"
                         }
-                    },
-                },
-            },
-        },
-        post-study-survey: {
-            type: "survey",
+                    }
+                }
+            }
         }
-    },
+    }
     sequence: [
-        "consent",
-        "training1"
-        "practice1",
-        "attention1",
-        "trials1",
-        "post-study-survey"
+        "consent"
+        "trials1"
     ]
 }

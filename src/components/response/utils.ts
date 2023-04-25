@@ -1,4 +1,4 @@
-import {Response} from '../../../parser/types';
+import {Response} from '../../parser/types';
 import {useForm} from '@mantine/form';
 
  const generateInitFields = (responses: Response[]) => {
