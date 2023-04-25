@@ -4,8 +4,7 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { initFirebase } from '../firebase/init';
 import { StudyComponent, StudyConfig } from '../parser/types';
 import { RootState, State, Step, StudyIdentifiers } from './types';
-import {addExpToUser} from '../firebase/queries';
-// import {saveTrial} from "../firebase/queries";
+import {addExpToUser, saveSurveyToFB, saveTrialToFB} from '../firebase/queries';
 
 export const STUDY_ID  = 'STUDY_ID';
 export const PID  = 'PARTICIPANT_ID';
@@ -95,13 +94,19 @@ const studySlice = createTrrackableSlice({
         //add to firebase
         const identifier = state.studyIdentifiers;
         if(identifier){
-          // saveTrial(identifier.pid, identifier.study_id, payload.trialId, payload.trialName, payload.answer, payload.type)
+          saveTrialToFB(FIREBASE.fStore,identifier.pid, identifier.study_id,
+              payload.trialId, payload.trialName, payload.answer, payload.type);
         }
 
       }
     },
     saveSurvey(state, { payload }: PayloadAction<Record<string, string|number>>) {
       state.survey = payload;
+      //add to firebase
+      const identifier = state.studyIdentifiers;
+      if(identifier){
+        saveSurveyToFB(FIREBASE.fStore,identifier.pid, identifier.study_id, payload);
+      }
     }
   },
 });

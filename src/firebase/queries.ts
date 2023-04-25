@@ -1,54 +1,57 @@
 import {doc,setDoc,getDoc} from 'firebase/firestore';
-import {useIdentifiers} from '../store/hooks/useIdentifiers';
-import firebase from 'firebase/compat';
-import Firestore = firebase.firestore.Firestore;
-// const fb = FIREBASE.fStore;
-// const app = FIREBASE.app;
-// const studyIdentifiers = useIdentifiers();
-// const pid = studyIdentifiers?.pid || 'test';
-// const studyID = studyIdentifiers?.study_id || 'test';
-// const sessionID = studyIdentifiers?.session_id || 'test';
-export const addExpToUser = async (fb:any,studyID : string, pid : string, signature : string) => {
-    const data = {[studyID]: {'studyID': studyID, 'signature': signature, 'timeStamp': Date.now()}};
+
+
+const saveToFB = async (fb:any, path:string, data:any, errMsg:string) => {
     try {
-        const docRef = setDoc(doc(fb, 'users', pid), data, {merge: true});
+        const docRef = setDoc(doc(fb,path), data, {merge: true});
         return docRef;
     } catch (e) {
-        console.error('Firebase error adding user: ', e);
+        console.error(errMsg, e);
+    }
+};
+export const addExpToUser = async (fb:any,studyID : string, pid : string, signature : string) => {
+    const data = {[studyID]: {'studyID': studyID, 'signature': signature, 'timeStamp': Date.now()}};
+    const path = `$users/${pid}`;
+
+    saveToFB(fb, path, data, 'Firebase error adding experiment to user: ');
+};
+
+export const saveTrialToFB = async (fb:any, pid:string, studyID:string, trialID: string, currentStep: string
+                                      ,answer:string | object, type:'trials' | 'practice' ) => {
+
+    const path = `${studyID}/${pid}`;
+    const data = {[trialID]: {
+            'trialID': trialID,
+            'timeStamp': Date.now(),
+            'answer': answer,
+            'type': type,
+            'step': currentStep,
+            'expID': studyID,
+    }};
+   return saveToFB(fb, path, data, 'Firebase error adding trial: ');
+};
+
+export const saveSurveyToFB = async (fb:any, pid:string, studyID:string, survey:Record<string, string|number>) => {
+    const path = `${studyID}-survey/${pid}`;
+    const data = survey;
+    saveToFB(fb, path, survey, 'Firebase error adding survey: ');
+};
+
+
+export const getUser = async (fb:any,pid: string) => {
+    try {
+        const docRef = doc(fb, 'users', pid);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            return docSnap.data();
+        } else {
+            return null;
+        }
+    } catch (e) {
+        console.error('Firebase error loading user: ', e);
     }
 };
 
-// export const getUser = async (id: string) => {
-//     try {
-//         const docRef = doc(fb, 'users', id);
-//         const docSnap = await getDoc(docRef);
-//         if (docSnap.exists()) {
-//             return docSnap.data();
-//         } else {
-//             return null;
-//         }
-//     } catch (e) {
-//         console.error('Firebase error loading user: ', e);
-//     }
-// };
-//
-// export const saveTrial = async (trialID: string, currentStep: string
-//                                       ,answer:string | object, type:'trials' | 'practice' ) => {
-//     const data = {[trialID]: {
-//             'trialID': trialID,
-//             'timeStamp': Date.now(),
-//             'answer': answer,
-//             'type': type,
-//             'step': currentStep,
-//             'expID': studyID,
-//     }};
-//     try {
-//         const docRef = setDoc(doc(fb, studyID, pid), data, {merge: true});
-//         return docRef;
-//     } catch (e) {
-//         console.error('Firebase error adding data: ', e);
-//     }
-// };
-//
-//
-//
+
+
+
