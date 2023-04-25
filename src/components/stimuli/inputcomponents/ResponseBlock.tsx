@@ -12,6 +12,7 @@ import { updateResponseBlockValidation, useFlagsDispatch, useFlagsSelector } fro
 import {useNextStep} from '../../../store/hooks/useNextStep';
 import {useTrialStatus} from '../../../store/hooks/useTrialStatus';
 import {useSurvey} from '../../../store/hooks/useSurvey';
+import {createAnswerField} from './utils';
 
 type Props = {
     location: ResponseLocation;
@@ -26,7 +27,6 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
     const currentConfig = surveyConfig === null ? trialConfig : surveyConfig;
     const type = currentConfig?.type;
     const responses = useMemo(() => currentConfig?.response.filter((response) => (response.location === location || (response.location === undefined && location === 'belowStimulus'))) || [], [currentConfig, location]);
-
     const dispatch = useAppDispatch();
     const currentStep = useCurrentStep();
     const nextStep = useNextStep();
@@ -35,35 +35,9 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
     const trialStatus = useTrialStatus(trialId, type);
     const [disableNext, setDisableNext] = useState(true);
     const showNextButton = useMemo(() => currentConfig?.nextButtonLocation === undefined ? location === 'belowStimulus' : currentConfig.nextButtonLocation === location, [location, currentConfig]);
-
     const flagStoreDispatch = useFlagsDispatch();
     const responseBlocksValid = useFlagsSelector((state: any) => state.responseBlocksValid);
-
-    const generateInitFields = () => {
-        let initObj = {};
-
-        responses.forEach((response) => {
-            initObj = {...initObj, [response.id]: ''};
-        });
-
-        return initObj;
-    };
-
-    const generateValidation = () => {
-        let validateObj = {};
-
-        responses.forEach((response) => {
-            if(response.required)
-                validateObj = {...validateObj, [response.id]: (value: string | undefined) => (value === undefined || value.length === 0 ? 'Empty input' : null)};
-        });
-
-        return validateObj;
-    };
-
-    const answerField = useForm({
-        initialValues: generateInitFields(),
-        validate: generateValidation(),
-    });
+    const answerField = createAnswerField(responses);
 
     useEffect(() => {
         flagStoreDispatch(updateResponseBlockValidation({ location, status: answerField.isValid() }));
@@ -75,7 +49,7 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
 
     return responses.length > 0 ? (
         <>
-            <form onSubmit={answerField.onSubmit(console.log)}>
+            <form onSubmit={answerField.onSubmit((values) => console.log(values))}>
             {
                 responses.map((response, index) => {
                     return (

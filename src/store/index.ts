@@ -4,9 +4,11 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { initFirebase } from '../firebase/init';
 import { StudyComponent, StudyConfig } from '../parser/types';
 import { RootState, State, Step, StudyIdentifiers } from './types';
+import {addExpToUser} from '../firebase/queries';
+// import {saveTrial} from "../firebase/queries";
 
-export const STUDY_ID  = 'STUDY_ID6';
-export const PID  = 'PARTICIPANT_ID1';
+export const STUDY_ID  = 'STUDY_ID';
+export const PID  = 'PARTICIPANT_ID';
 export const SESSION_ID  = 'SESSION_ID';
 
 export const DEBUG = true;
@@ -68,9 +70,11 @@ const studySlice = createTrrackableSlice({
     },
     saveConsent: (
       state,
-      response: PayloadAction<{ signature: unknown; timestamp: number }>
+      response: PayloadAction<{ signature: string, timestamp: number }>
     ) => {
       state.consent = response.payload;
+      addExpToUser(FIREBASE.fStore, state.studyIdentifiers?.study_id || 'test',
+          state.studyIdentifiers?.pid || 'test', response.payload.signature as string);
     },
     saveTrialAnswer(
       state,
@@ -88,6 +92,12 @@ const studySlice = createTrrackableSlice({
           complete: true,
           answer: payload.answer,
         };
+        //add to firebase
+        const identifier = state.studyIdentifiers;
+        if(identifier){
+          // saveTrial(identifier.pid, identifier.study_id, payload.trialId, payload.trialName, payload.answer, payload.type)
+        }
+
       }
     },
     saveSurvey(state, { payload }: PayloadAction<Record<string, string|number>>) {
@@ -102,6 +112,7 @@ export const {
   completeStep,
   saveTrialAnswer,
   setStudyIdentifiers,
+  saveConsent
 } = studySlice.actions;
 
 export const { store, trrack, trrackStore } = configureTrrackableStore({

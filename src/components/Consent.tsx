@@ -4,7 +4,7 @@ import ReactMarkdown from 'react-markdown';
 
 import { ConsentComponent } from '../parser/types';
 import { useCurrentStep } from '../routes';
-import {completeStep, PID, STUDY_ID, useAppDispatch, useAppSelector} from '../store';
+import {completeStep, FIREBASE, PID, saveConsent, STUDY_ID, useAppDispatch, useAppSelector} from '../store';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 import { NextButton } from './NextButton';
 import {addExpToUser} from '../firebase/queries';
@@ -65,7 +65,8 @@ export default function Consent() {
           process={() => {
             const userData = {};
             dispatch(completeStep('consent'));
-            addExpToUser(PID, STUDY_ID);
+            dispatch(saveConsent({ signature: txtInput.current?.value || '', timestamp:Date.now()}));
+
           }}
         />
       </Group>
