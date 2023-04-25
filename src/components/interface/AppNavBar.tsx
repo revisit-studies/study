@@ -1,6 +1,6 @@
 import { Navbar, Text } from '@mantine/core';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
-import ResponseBlock from '../stimuli/inputcomponents/ResponseBlock';
+import ResponseBlock from '../../components/response/ResponseBlock';
 import ReactMarkdown from 'react-markdown';
 import { useTrialsConfig } from '../../controllers/utils';
 import { useParams } from 'react-router-dom';

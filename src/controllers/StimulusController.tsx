@@ -10,7 +10,7 @@ import {
 } from '../store/trialProvenance';
 import IframeController from './IframeController';
 import ReactComponentController from './ReactComponentController';
-import ResponseBlock from '../components/stimuli/inputcomponents/ResponseBlock';
+import ResponseBlock from '../components/response/ResponseBlock';
 import ImageController from './ImageController';
 import { resetResponseBlockValidation, useFlagsDispatch } from '../store/flags';
 import { useTrialsConfig } from './utils';

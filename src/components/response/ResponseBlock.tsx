@@ -1,17 +1,16 @@
-import { ResponseLocation } from '../../../parser/types';
-import {saveSurvey, saveTrialAnswer, useAppDispatch} from '../../../store';
+import { Group, Button, Text } from '@mantine/core';
+import { useForm } from '@mantine/form';
+import { useMemo, useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
+import { useTrialsConfig, useSurveyConfig, useNextTrialId } from '../../controllers/utils';
+import { ResponseLocation } from '../../parser/types';
+import { useCurrentStep } from '../../routes';
+import { useAppDispatch, saveSurvey, saveTrialAnswer } from '../../store';
+import { useFlagsDispatch, useFlagsSelector, updateResponseBlockValidation } from '../../store/flags';
+import { useNextStep } from '../../store/hooks/useNextStep';
+import { useTrialStatus } from '../../store/hooks/useTrialStatus';
+import { NextButton } from '../NextButton';
 import ResponseSwitcher from './ResponseSwitcher';
-import {NextButton} from '../../NextButton';
-import {Group, Text, Button} from '@mantine/core';
-import {useCurrentStep} from '../../../routes';
-import {useParams} from 'react-router-dom';
-import {useNextTrialId, useSurveyConfig, useTrialsConfig} from '../../../controllers/utils';
-import {useForm} from '@mantine/form';
-import {useState, useMemo, useEffect} from 'react';
-import { updateResponseBlockValidation, useFlagsDispatch, useFlagsSelector } from '../../../store/flags';
-import {useNextStep} from '../../../store/hooks/useNextStep';
-import {useTrialStatus} from '../../../store/hooks/useTrialStatus';
-import {useSurvey} from '../../../store/hooks/useSurvey';
 
 type Props = {
     location: ResponseLocation;
@@ -25,7 +24,7 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
     const surveyConfig = useSurveyConfig();
     const currentConfig = surveyConfig === null ? trialConfig : surveyConfig;
     const type = currentConfig?.type;
-    const responses = useMemo(() => currentConfig?.response.filter((response) => (response.location === location || (response.location === undefined && location === 'belowStimulus'))) || [], [currentConfig, location]);
+    const responses = useMemo(() => currentConfig?.response?.filter((response) => (response.location === location || (response.location === undefined && location === 'belowStimulus'))) || [], [currentConfig, location]);
 
     const dispatch = useAppDispatch();
     const currentStep = useCurrentStep();
@@ -73,7 +72,7 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
         setDisableNext(!disableNext);
     };
 
-    return responses.length > 0 ? (
+    return <>{responses.length > 0 ? (
         <>
             <form onSubmit={answerField.onSubmit(console.log)}>
             {
@@ -84,35 +83,36 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
                 })
             }
             {!disableNext && <Text>The correct answer is: {correctAnswer}</Text>}
-            <Group position="right" spacing="xs" mt="xl">
-                {(correctAnswer !== undefined && type === 'practice') ? <Button onClick={handleResponseCheck} disabled={!answerField.isValid()}>Check Answer</Button> : null}
-                {showNextButton && 
-                    <NextButton
-                        disabled={type === 'practice' ? disableNext : !Object.values(responseBlocksValid).every((x) => x)}
-                        to={nextTrailId? `/${currentStep}/${nextTrailId}` : `/${nextStep}`}
-                        process={() => {
-                            const answer = JSON.stringify(answerField.values);
-
-                            if(type === 'survey'){
-                                dispatch(
-                                    saveSurvey(answerField.values)
-                                );
-                            }else{
-                                dispatch(
-                                    saveTrialAnswer({
-                                        trialName: currentStep,
-                                        trialId: trialId || 'NoID',
-                                        answer: answer,
-                                        type
-                                    })
-                                );
-                                setDisableNext(!disableNext);
-                            }
-
-                        }}
-                    />}
-                </Group>
             </form>
         </>
-    ) : null;
+    ) : null}
+    <Group position="right" spacing="xs" mt="xl">
+        {(correctAnswer !== undefined && type === 'practice') ? <Button onClick={handleResponseCheck} disabled={!answerField.isValid()}>Check Answer</Button> : null}
+        {showNextButton && 
+            <NextButton
+                disabled={type === 'practice' ? disableNext : !Object.values(responseBlocksValid).every((x) => x)}
+                to={nextTrailId? `/${currentStep}/${nextTrailId}` : `/${nextStep}`}
+                process={() => {
+                    const answer = JSON.stringify(answerField.values);
+
+                    if(type === 'survey'){
+                        dispatch(
+                            saveSurvey(answerField.values)
+                        );
+                    }else{
+                        dispatch(
+                            saveTrialAnswer({
+                                trialName: currentStep,
+                                trialId: trialId || 'NoID',
+                                answer: answer,
+                                type
+                            })
+                        );
+                        setDisableNext(!disableNext);
+                    }
+
+                }}
+            />}
+        </Group>
+    </>;
 }

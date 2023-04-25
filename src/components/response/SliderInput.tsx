@@ -1,5 +1,5 @@
 import {Slider, Text} from '@mantine/core';
-import {Option} from '../../../parser/types';
+import {Option} from '../../parser/types';
 
 export type sliderProps = {
     label:string,

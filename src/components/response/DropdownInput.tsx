@@ -1,5 +1,5 @@
 import {Select} from '@mantine/core';
-import {Option} from '../../../parser/types';
+import {Option} from '../../parser/types';
 
 type dropdownOpton = {
     label: string,

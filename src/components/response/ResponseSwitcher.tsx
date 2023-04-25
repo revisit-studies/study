@@ -1,14 +1,14 @@
-import { Response } from '../../../parser/types';
-import TextInput from '../../stimuli/inputcomponents/TextInput';
-import DropdownInput from './DropdownInput';
-import NumericInput from './NumericInput';
-import LikertInput from './LikertInput';
+import { Box, TextInput } from '@mantine/core';
+import { TrialResult } from '../../store/types';
 import CheckBoxInput from './CheckBoxInput';
+import DropdownInput from './DropdownInput';
+import LikertInput from './LikertInput';
+import NumericInput from './NumericInput';
 import RadioInput from './RadioInput';
-import TextAreaInput from './TextAreaInput';
 import SliderInput from './SliderInput';
-import {TrialResult} from '../../../store/types';
-import {Box} from '@mantine/core';
+import TextAreaInput from './TextAreaInput';
+import { Response } from '../../parser/types';
+
 
 type Props = {
   response: Response;
@@ -25,7 +25,7 @@ export default function ResponseSwitcher({ response, answer }: Props) {
     <>
       <Box sx={{margin:10, padding:5}}>
         {type === 'short-text' && (
-            <TextInput placeholder={desc} label={prompt} required={required} answer={answer}/>
+            <TextInput placeholder={desc} label={prompt} required={required}/>
         )}
         {type === 'dropdown' && (
             <DropdownInput
