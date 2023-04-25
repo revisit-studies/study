@@ -7,204 +7,81 @@
             "The reVISit Team"
         ],
         date: "2022-11-18",
+        // NOT USED: Use in landing page
         description: "A replication of the Cleveland McGill study with quiz feedback.",
         organizations: [
             "University of Utah",
             "WPI",
             "University of Toronto"
-        ],
+        ]
+    },
+    uiConfig:
+    {
+        // used in UI ... 
         contactEmail: "test@test.com",
-        helpTextPath: "/src/markdowns/help.md",
-        logoPath: "/src/assets/revisitLogoSquare.svg",
+        // used to populate help module
+        helpTextPath: "markdowns/help.md",
+        // used on top left logo 
+        logoPath: "assets/revisitLogoSquare.svg",
+        // show a progress bar for the study progress 
         withProgressBar: true,
-    },
-    uiConfig: {
         // starts the automatic download of the data after study completion 
-        autoDownloadStudy: false,
+        autoDownloadStudy: true,
         // start download after x milliseconds
-        autoDownloadTime: 5000
+        autoDownloadTime: 3000
     },
+    // components of thes study; allowable types: consent, training, practice, attentionTest, trials
     components: {
+        // consent configuration
         consent: {
             type: "consent",
-            path: "/src/markdowns/consent.md",
+            path: "/markdowns/consent.md",
+            // is a signature filed required or not 
             signatureRequired: true
         },
+        // traning is passive; thourgh text / figures / video in markdown
         training1: {
             type: "training"
+            path: "..."
         },
+        // TODO speck out by Akim 
         practice1: {
             type: "practice",
-            order: ["bubbleChart1", "stackedBarChart1", "barChart1", "pieChart1"],
-            randomization-scheme: "latin-square",
-            subset-count: 2,
-            attention-checks: {
-                check: "attention1",
-                pattern: random
-                // one check after 10 trials 
-                interval: 10
-            },          
-            response:[
-                //Can change response type
-                //text example
-                {
-                    id: "cm-response2"
-                    type: "numerical",
-                    prompt: "Your answer!!",
-                    desc: "Enter your answer here, range from 0 - 100",
-                    required: true,
-                    // add max and min for the allowed range
-                    max: 100,
-                    min: 0
-                }], 
-            trials: {
-                bubbleChart1: {
-                    description: "A chart with correct answer of 0.66",
-                    instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?",
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "react-component",
-                        // can be a URL or a local path
-                        path: "./stimuli/BubbleChart.tsx",
-                        parameters: {
-                            data: [
-                                { name: "A", value: "30" },
-                                { name: "B", value: "40" },
-                                { name: "C", value: "50" },
-                                { name: "D", value: "40" },
-                                { name: "E", value: "60" },
-                            ],
-                            selectedIndices: [1, 4],
-                        },
-                        correctAnswer: 23,
-                    },
-                },
-                stackedBarChart1: {
-                    description: "A chart with correct answer of 0.66",
-                    instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?",
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "react-component",
-                        // can be a URL or a local path
-                        path: "./stimuli/StackedBarChart.tsx",
-                        parameters: {
-                            data: [
-                                { name: "A", value: "30" },
-                                { name: "B", value: "40" },
-                                { name: "C", value: "50" },
-                                { name: "D", value: "40" },
-                                { name: "E", value: "60" },
-                            ],
-                            selectedIndices: [1, 4],
-                        },
-                        correctAnswer: 30,
-                    },
-                }, 
-                barChart1: {
-                    description: "A chart with correct answer of 0.66",
-                    instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?",
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "react-component",
-                        // can be a URL or a local path
-                        path: "./stimuli/BarChart.tsx",
-                        parameters: {
-                            data: [
-                                { name: "A", value: "30" },
-                                { name: "B", value: "40" },
-                                { name: "C", value: "50" },
-                                { name: "D", value: "40" },
-                                { name: "E", value: "60" },
-                            ],
-                            selectedIndices: [1, 4],
-                        },
-                        correctAnswer: 40,
-                    },
-
-                },
-                pieChart1: {
-                    description: "Pie chart",
-                    instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?",
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "react-component",
-                        // can be a URL or a local path
-                        path: "./stimuli/PieChart.tsx",
-                        parameters: {
-                            data: [
-                                { name: "A", value: "30" },
-                                { name: "B", value: "40" },
-                                { name: "C", value: "50" },
-                                { name: "D", value: "40" },
-                                { name: "E", value: "60" },
-                            ],
-                            selectedIndices: [1, 4],
-                        },
-                        correctAnswer: 50,
-                    },
-                },
-            },
+            max-failures: 5,
         },
+        // TODO 
         attention1: {
-            type: "attention-test"
+            type: "attentionTest"
         }
+        // a set of trials 
         trials1: {
             type: "trials",
+            // the order in which the trials are displayed 
             order: ["bubbleChart1", "stackedBarChart1", "barChart1", "pieChart1", "stackedBarChart2","bubbleChart2", "stackedBarChart3", "barChart2", "pieChart2", "stackedBarChart4"],
-            randomization-scheme: "latin-square",
-            subset-count: 2,
+            // TODO NOT IMPLEMENTED
+            randomization: {
+                randomization-scheme: "latin-square",
+                subset-count: 2,
+            }
+            // TODO NOT IMPLEMENTED
             attention-checks: {
                 check: "attention1",
                 pattern: random
                 // one check after 10 trials 
                 interval: 10
-            },
-// response example:
-// Allowable types: numerical, short-text, long-text radio, checkbox, dropdown, slider, likert
-//dropdown example
-            response:[{
-                id: "cm-response1"
-                type: "dropdown",
+            }
+            // Generic response for all trials; can be overridden on a per-trial basis
+            response:{
+                // REMOVE
+                id: "cm-response"
+                // YIREN FIXES EVERYTHING
+                type: "numeric",
                 prompt: "Your answer!!",
                 desc: "Enter your answer here, range from 0 - 100",
-                // options is required for radio, checkbox,dropdown and slider in the following format.
-                options:[{label:"1", value:"1"},{label:"2", value:"2"},{label:"3", value:"3"}],
+                options:[],
                 required: true,
-                max: 100,
-                min: 0
             },
-//text example
-                {
-                    id: "cm-response2"
-                    type: "numerical",
-                    prompt: "Your answer!!",
-                    desc: "Enter your answer here, range from 0 - 100",
-                    required: true,
-                    // add max and min for the allowed range
-                    max: 100,
-                    min: 0
-                },
-//likert example
-                {
-                    id: "cm-response3"
-                    type: "likert",
-                    prompt: "Your answer!!",
-                    desc: "Enter your answer here, range from 0 - 100",
-                    required: true,
-                    //specify the number of likert options.
-                    preset: "5"
-                }
-//text example
-                {
-                    id: "cm-response4"
-                    type: "short-text",
-                    prompt: "Your answer!!",
-                    desc: "Enter your answer here, range from 0 - 100",
-                    required: true,
-
-                }
-
-            ],
+            // the actual list of trials 
             trials: {
                 bubbleChart1: {
                     description: "A chart with correct answer of 0.66",

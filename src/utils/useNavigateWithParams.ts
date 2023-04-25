@@ -1,11 +1,12 @@
 import {
   NavigateOptions,
+  To,
   useNavigate,
   useSearchParams,
 } from 'react-router-dom';
 
 export function useNavigateWithParams(): (
-  to: string,
+  to: To,
   options?: NavigateOptions
 ) => void {
   const navigate = useNavigate();
@@ -14,7 +15,7 @@ export function useNavigateWithParams(): (
   return (to, opts) => {
     navigate(
       {
-        pathname: to,
+        pathname: to.toString(),
         search: url.toString(),
       },
       opts

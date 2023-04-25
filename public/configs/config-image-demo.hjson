@@ -13,7 +13,7 @@
             "WPI",
             "University of Toronto"
         ],
-        logoPath: "/src/assets/revisitLogoSquare.svg",
+        logoPath: "/assets/revisitLogoSquare.svg",
     },
     components: {
         trials1: {

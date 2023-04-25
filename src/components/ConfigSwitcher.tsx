@@ -21,7 +21,7 @@ const ConfigSwitcher = ({ onChange }: { onChange: (path: string) => void }) => {
     const queryParameters = new URLSearchParams(window.location.search);
     const studyConfig = queryParameters.get('studyConfig');
   
-    fetchStudyConfig('/src/configs/global.hjson').then((cfg) => {
+    fetchStudyConfig('/configs/global.hjson').then((cfg) => {
       setConfigs(
         cfg.configsList.map((configId) => ({ ...cfg.configs[configId] }))
       );

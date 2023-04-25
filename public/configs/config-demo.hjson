@@ -17,7 +17,7 @@
     components: {
         consent: {
             type: "consent"
-            path: "src/markdowns/consent.md"
+            path: "markdowns/consent.md"
             signature: false
         },
         training1: {

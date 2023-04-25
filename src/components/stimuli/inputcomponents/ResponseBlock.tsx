@@ -1,25 +1,31 @@
-import { Response } from '../../../parser/types';
-import {PID, saveTrialAnswer, STUDY_ID, useAppDispatch} from '../../../store';
+import { ResponseLocation } from '../../../parser/types';
+import {saveSurvey, saveTrialAnswer, useAppDispatch} from '../../../store';
 import ResponseSwitcher from './ResponseSwitcher';
 import {NextButton} from '../../NextButton';
 import {Group, Text, Button} from '@mantine/core';
 import {useCurrentStep} from '../../../routes';
 import {useParams} from 'react-router-dom';
-import {useNextTrialId} from '../../../controllers/utils';
+import {useNextTrialId, useSurveyConfig, useTrialsConfig} from '../../../controllers/utils';
 import {useForm} from '@mantine/form';
-import {useEffect, useState, useRef} from 'react';
+import {useState, useMemo, useEffect} from 'react';
+import { updateResponseBlockValidation, useFlagsDispatch, useFlagsSelector } from '../../../store/flags';
 import {useNextStep} from '../../../store/hooks/useNextStep';
 import {useTrialStatus} from '../../../store/hooks/useTrialStatus';
-import {saveTrial} from '../../../firebase/queries';
+import {useSurvey} from '../../../store/hooks/useSurvey';
 
 type Props = {
-    responses: Response[];
+    location: ResponseLocation;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    correctAnswer?: any;
-    type: 'trials' | 'practice';
+    correctAnswer?: string | number;
 };
 
-export default function ResponseBlock({ responses, correctAnswer, type }: Props) {
+export default function ResponseBlock({ location, correctAnswer  }: Props) {
+
+    const trialConfig = useTrialsConfig();
+    const surveyConfig = useSurveyConfig();
+    const currentConfig = surveyConfig === null ? trialConfig : surveyConfig;
+    const type = currentConfig?.type;
+    const responses = useMemo(() => currentConfig?.response.filter((response) => (response.location === location || (response.location === undefined && location === 'belowStimulus'))) || [], [currentConfig, location]);
 
     const dispatch = useAppDispatch();
     const currentStep = useCurrentStep();
@@ -28,8 +34,10 @@ export default function ResponseBlock({ responses, correctAnswer, type }: Props)
     const nextTrailId = useNextTrialId(trialId, type);
     const trialStatus = useTrialStatus(trialId, type);
     const [disableNext, setDisableNext] = useState(true);
-    if (!responses || !trialStatus || !trialId) return <></>;
+    const showNextButton = useMemo(() => currentConfig?.nextButtonLocation === undefined ? location === 'belowStimulus' : currentConfig.nextButtonLocation === location, [location, currentConfig]);
 
+    const flagStoreDispatch = useFlagsDispatch();
+    const responseBlocksValid = useFlagsSelector((state: any) => state.responseBlocksValid);
 
     const generateInitFields = () => {
         let initObj = {};
@@ -46,7 +54,7 @@ export default function ResponseBlock({ responses, correctAnswer, type }: Props)
 
         responses.forEach((response) => {
             if(response.required)
-                validateObj = {...validateObj, [response.id]: (value: string | undefined) => (value === undefined ? 'Empty input' : null)};
+                validateObj = {...validateObj, [response.id]: (value: string | undefined) => (value === undefined || value.length === 0 ? 'Empty input' : null)};
         });
 
         return validateObj;
@@ -57,65 +65,54 @@ export default function ResponseBlock({ responses, correctAnswer, type }: Props)
         validate: generateValidation(),
     });
 
+    useEffect(() => {
+        flagStoreDispatch(updateResponseBlockValidation({ location, status: answerField.isValid() }));
+    });
+
     const handleResponseCheck = () => {
-          setDisableNext(!disableNext);
+        setDisableNext(!disableNext);
     };
 
-    useEffect(() => {
-        responses.forEach((response) => {
-            const ans = trialStatus.answer ? JSON.parse(trialStatus.answer as string) : {};
-            answerField.setFieldValue(response.id, ans[response.id] || '');
-        });
-    }, [trialStatus.answer]);
-
-    return (
+    return responses.length > 0 ? (
         <>
             <form onSubmit={answerField.onSubmit(console.log)}>
             {
                 responses.map((response, index) => {
                     return (
-                        <ResponseSwitcher key={index} status={trialStatus} answer={answerField.getInputProps(response.id)} response={response} />
+                        <ResponseSwitcher key={index} answer={answerField.getInputProps(response.id)} response={response} />
                     );
                 })
             }
             {!disableNext && <Text>The correct answer is: {correctAnswer}</Text>}
             <Group position="right" spacing="xs" mt="xl">
-                {!(correctAnswer === null) ? <Button onClick={handleResponseCheck} disabled={!answerField.isValid()}>Check Answer</Button> : null}
-                {nextTrailId ? (
+                {(correctAnswer !== undefined && type === 'practice') ? <Button onClick={handleResponseCheck} disabled={!answerField.isValid()}>Check Answer</Button> : null}
+                {showNextButton && 
                     <NextButton
-                        disabled={correctAnswer !== null ? disableNext : !answerField.isValid()}
-                        to={`/${currentStep}/${nextTrailId}`}
+                        disabled={type === 'practice' ? disableNext : !Object.values(responseBlocksValid).every((x) => x)}
+                        to={nextTrailId? `/${currentStep}/${nextTrailId}` : `/${nextStep}`}
                         process={() => {
-                            if (trialStatus.complete) {
-                                answerField.setFieldValue('input', '');
+                            const answer = JSON.stringify(answerField.values);
+
+                            if(type === 'survey'){
+                                dispatch(
+                                    saveSurvey(answerField.values)
+                                );
+                            }else{
+                                dispatch(
+                                    saveTrialAnswer({
+                                        trialName: currentStep,
+                                        trialId: trialId || 'NoID',
+                                        answer: answer,
+                                        type
+                                    })
+                                );
+                                setDisableNext(!disableNext);
                             }
 
-                            const answer = JSON.stringify(answerField.values);
-                            dispatch(
-                                saveTrialAnswer({
-                                    trialName: currentStep,
-                                    trialId,
-                                    answer: answer,
-                                    type
-                                })
-                            );
-                            saveTrial(PID, STUDY_ID, trialId,currentStep,answer,type);
-
-                            setDisableNext(!disableNext);
-                            answerField.setFieldValue('input', '');
                         }}
-                    />
-                ) : (
-                    <NextButton
-                        to={`/${nextStep}`}
-                        disabled={correctAnswer === null || disableNext}
-                        process={() => {
-                            // complete trials
-                        }}
-                    />
-                )}
-            </Group>
+                    />}
+                </Group>
             </form>
         </>
-    );
+    ) : null;
 }

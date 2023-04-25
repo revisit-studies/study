@@ -37,7 +37,7 @@ export const useChartDimensions = (passedSettings: Dimensions): [React.RefObject
   
       return () => resizeObserver.unobserve(element);
     }
-  }, []);
+  }, [height, width]);
 
   const newSettings = combineChartDimensions({
     ...dimensions,

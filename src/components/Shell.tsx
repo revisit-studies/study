@@ -43,7 +43,8 @@ function useStudyIdentifiers() {
 
     const studyId = urlParams.get(STUDY_ID) || 'DEBUG';
     const pid = urlParams.get(PID) || 'DEBUG';
-    const sessionId = urlParams.get(SESSION_ID) || crypto.randomUUID();
+    // const sessionId = urlParams.get(SESSION_ID) || crypto.randomUUID();
+    const sessionId = urlParams.get(SESSION_ID) || 'DEBUG';
 
     setUrlParams(
       {
@@ -65,5 +66,5 @@ function useStudyIdentifiers() {
         session_id: sessionId,
       })
     );
-  }, [urlParams]);
+  }, [dispatch, setUrlParams, studyIdentifiers, urlParams]);
 }

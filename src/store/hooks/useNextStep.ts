@@ -6,7 +6,7 @@ export function useNextStep() {
 
   const { config, steps } = useAppSelector((state) => state.study);
 
-  if (currentStep === 'end') return null;
+  if (currentStep === 'end' || currentStep === '') return null;
 
   if (!config) return null;
 

@@ -18,13 +18,14 @@ export default function RadioInput({ title='Your Question', desc='additional des
                 label={title}
                 description={desc}
                 withAsterisk={required}
+                size={'md'}
                 {...answer}
             >
                 <Group mt="xs">
                     {
                         radioData.map((radio) => {
                             return (
-                                <Radio value={radio.value} label={radio.label} />
+                                <Radio value={radio.value} label={radio.label} key={radio.label}/>
                             );
                         })
                     }
