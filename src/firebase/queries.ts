@@ -9,9 +9,10 @@ const saveToFB = async (fb:any, path:string, data:any, errMsg:string) => {
         console.error(errMsg, e);
     }
 };
+
 export const addExpToUser = async (fb:any,studyID : string, pid : string, signature : string) => {
     const data = {[studyID]: {'studyID': studyID, 'signature': signature, 'timeStamp': Date.now()}};
-    const path = `$users/${pid}`;
+    const path = `users/${pid}`;
 
     saveToFB(fb, path, data, 'Firebase error adding experiment to user: ');
 };
