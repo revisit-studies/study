@@ -38,10 +38,9 @@ export const saveSurveyToFB = async (fb:any, pid:string, studyID:string, survey:
     saveToFB(fb, path, survey, 'Firebase error adding survey: ');
 };
 
-
-export const getUser = async (fb:any,pid: string) => {
+const getData = async (fb:any, path:string, errMsg:string) => {
     try {
-        const docRef = doc(fb, 'users', pid);
+        const docRef = doc(fb, path);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
             return docSnap.data();
@@ -49,9 +48,27 @@ export const getUser = async (fb:any,pid: string) => {
             return null;
         }
     } catch (e) {
-        console.error('Firebase error loading user: ', e);
+        console.error(errMsg, e);
     }
 };
+
+
+export const getUser = async (fb:any,pid: string) => {
+    const path = `users/${pid}`;
+    return await getData(fb,path,'error reading user data: ');
+};
+
+export const getTrial = async (fb:any,studyID:string,pid: string) => {
+    const path = `${studyID}/${pid}`;
+    return await getData(fb,path,'error reading trial data: ');
+};
+
+export const getSurvey = async (fb:any,studyID:string,pid: string) => {
+    const path = `${studyID}-survey/${pid}`;
+    return await getData(fb,path,'error reading survey data: ');
+};
+
+
 
 
 
