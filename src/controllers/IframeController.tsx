@@ -7,6 +7,7 @@ import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 import { useNextStep } from '../store/hooks/useNextStep';
 import { useTrialsConfig } from './utils';
 
+
 const PREFIX = '@REVISIT_COMMS';
 
 const defaultStyle = {
@@ -27,7 +28,9 @@ const IframeController = ({
 
   const dispatch = useDispatch();
 
-  const iframeId = useMemo(() => crypto.randomUUID(), []);
+  // const iframeId = useMemo(() => crypto.randomUUID(), []);
+  const iframeId = useMemo(() => window.crypto.randomUUID(), []);
+
   const { trialId = null } = useParams<{ trialId: string }>();
 
   // navigation

@@ -1,6 +1,11 @@
 {
-  configsList: ["cleveland", "html-demo", "html-input", "image-demo"],
+  configsList: ["NVMV","cleveland", "html-demo", "html-input", "image-demo"],
   configs: {
+    "NVMV": {
+      title: "NVMV",
+      path: "config-html-NVMV.hjson",
+      description: "Multivariate Network Visualization - Nodelink evaluation",
+    },
     "cleveland": {
       title: "Cleveland Experiment",
       path: "config-cleveland.hjson",
