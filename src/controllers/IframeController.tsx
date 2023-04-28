@@ -45,9 +45,6 @@ const IframeController = ({
       const data = e.data;
       if (
         typeof data === 'object' &&
-        'type' in data &&
-        data.type.substring(0, PREFIX.length) === PREFIX &&
-        data.iframeId === iframeId &&
         trialId
       ) {
         if (data.type === `${PREFIX}/ANSWERS`) {
@@ -55,12 +52,12 @@ const IframeController = ({
             saveTrialAnswer({
               trialName: currentStep,
               trialId,
-              answer: data.message as object,
+              answer: JSON.stringify({[trialId]: data.message}) ,
               type: trialConfig?.type,
             })
           );
 
-          navigate(`/${computedTo}`, { replace: false });
+          // navigate(`/${computedTo}`, { replace: false });
         }
       }
     };

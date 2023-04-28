@@ -43,9 +43,10 @@
                 interval: 10
             }
             response:[{
-                id: "nl-response"
-                type: "short-text",
-                prompt: "Please enter names here.",
+                //to use iframe input, id must match trialID
+                id: "task0"
+                type: "iframe",
+                prompt: "Selected name(s) will show here",
                 desc: ""
                 required: true
                 location: sidebar

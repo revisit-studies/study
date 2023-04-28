@@ -225,6 +225,7 @@ function screenTest(width, height) {
 
 //If there is a value, check for validity
 d3.select('#answerBox').on('input', function() {
+  console.log("answer checked")
   updateAnswer(d3.select('#answerBox').property('value'));
 });
 
@@ -246,6 +247,8 @@ d3.select('#freeFormAnswer').on('input', function() {
 //function that updates the answer in the side panel as well as in the results field in tasks
 //answer is either an array of node objects or a string from the answer box;
 function updateAnswer(answer,type) {
+  Revisit.postAnswers(answer.map((a)=>a.name));
+
   //Update answer inside taskList;
   let taskObj = taskList[currentTask];
   let answerType = typeof answer;

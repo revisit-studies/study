@@ -1,17 +1,20 @@
-import {List, NumberInput} from '@mantine/core';
+import {List, Text} from '@mantine/core';
+import {useEffect} from 'react';
 
 type inputProps = {
     desc: string,
-    label: string,
+    title: string,
     required: boolean,
-    answer:Array<string>;
-
+    answer:Array<string> | string;
 }
-export default function IframeInput({ desc='', label='' ,required=false, answer}: inputProps) {
+export default function IframeInput({ desc='', title='' ,required=false, answer}: inputProps) {
     return (
         <>
+            <Text fz={'md'} fw={500}>{title}</Text>
+            <Text fz={'sm'} fw={400} c={'#868e96'}>{desc}</Text>
+
             <List>
-                {answer.map((item)=><List.Item> {item}</List.Item>)}
+                {Array.isArray(answer) && answer.map((item)=><List.Item> {item}</List.Item>)}
             </List>
         </>
     );

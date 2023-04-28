@@ -10,7 +10,7 @@ import { useFlagsDispatch, useFlagsSelector, updateResponseBlockValidation } fro
 import { useNextStep } from '../../store/hooks/useNextStep';
 import { useTrialStatus } from '../../store/hooks/useTrialStatus';
 import { NextButton } from '../NextButton';
-import ResponseSwitcher from './ResponseSwitcher';
+import ResponseSwitcher, {arrayObj} from './ResponseSwitcher';
 import {useSurvey} from '../../store/hooks/useSurvey';
 import { createAnswerField, generateInitFields} from './utils';
 
@@ -51,6 +51,7 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
 
     useEffect(() => {
         if(watchFiled){
+
             responses.forEach((response) => {
                 const ans = (watchFiled && typeof watchFiled === 'string') ? JSON.parse(watchFiled) : watchFiled;
                 answerField.setFieldValue(response.id,ans[response.id] || '');
@@ -70,7 +71,10 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
             {
                 responses.map((response, index) => {
                     return (
-                        <ResponseSwitcher key={index} answer={answerField.getInputProps(response.id)} response={response} />
+                        response.type === 'iframe' ?
+                            <ResponseSwitcher key={index} answer={answerField.getInputProps(response.id) as arrayObj} response={response} />
+                            :
+                            <ResponseSwitcher key={index} answer={answerField.getInputProps(response.id)} response={response} />
                     );
                 })
             }

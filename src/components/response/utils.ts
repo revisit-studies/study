@@ -15,7 +15,7 @@ export const generateValidation = (responses : Response[]) => {
     const validationFunc = (type : string) => {
 
         if(type === 'iframe'){
-            return function(value: Array<string>){return value.length===0;};
+            return function(value: Array<string>){return Array.isArray(value)?value.length===0:true;};
         }
         else if(type === 'numerical' || type === 'slider'){
             return  (value: string | number) => {
@@ -23,7 +23,7 @@ export const generateValidation = (responses : Response[]) => {
             };
         }
         else{
-            return function(value: string){return value.length===0;};}
+            return function(value: string){return value?value.length===0 : true;};}
     };
 
     let validateObj = {};
