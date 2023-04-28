@@ -85,7 +85,7 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
         {(correctAnswer !== undefined && type === 'practice') ? <Button onClick={handleResponseCheck} disabled={!answerField.isValid()}>Check Answer</Button> : null}
         {showNextButton && 
             <NextButton
-                disabled={type === 'practice' ? disableNext : !answerField.isValid()}
+                disabled={type === 'practice' ? disableNext : !Object.values(responseBlocksValid).every((x) => x)}
                 to={nextTrailId? `/${currentStep}/${nextTrailId}` : `/${nextStep}`}
                 process={() => {
                     const answer = JSON.stringify(answerField.values);
