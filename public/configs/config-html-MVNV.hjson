@@ -67,12 +67,6 @@
             order: ["task1"]
             nextButtonLocation: sidebar
             subset-count: 2
-            attention-checks: {
-                check: "attention1"
-                pattern: random
-                // one check after 10 trials
-                interval: 10
-            }
             response:[{
                 id: "task1"
                 type: "iframe",
@@ -131,7 +125,6 @@
         trials3: {
             type: "trials"
             order: ["task3"]
-            randomization-scheme: "latin-square"
             nextButtonLocation: sidebar
             subset-count: 2
             response:[{
@@ -144,7 +137,7 @@
             }]
             trials: {
                 task3: {
-                    description:  ",
+                    description: "",
                     instruction:  "**Question:** Find all of Lane's European Neighbors",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -332,7 +325,7 @@
             response:[{
                 id: "task9"
                 type: "iframe",
-                prompt: "Selected node(s) will show here ",
+                prompt: "Selected name(s) will show here",
                 desc: ""
                 required: true
                 location: sidebar
