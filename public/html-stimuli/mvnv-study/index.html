@@ -857,6 +857,13 @@ Using a Validated Design and Crowdsourcing Approach</a>
 
         let repeatVisitor;
 
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Get the value of a query parameter
+        const hitID = urlParams.get('trialid');
+
+        // Log the value of the query parameter
+
         switch(runMode){
             case 'survey':
                 track = false;
@@ -871,7 +878,7 @@ Using a Validated Design and Crowdsourcing Approach</a>
                 sequence = [
                     // 'modules/training.html',
                     // 'modules/trials.html',
-                    'modules/hit.html',
+                    `modules/${hitID}.html`,
                     // 'modules/submit.html'
                 ];
 

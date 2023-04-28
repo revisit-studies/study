@@ -30,9 +30,9 @@
         training: {
             type: "training"
         },
-        trials1: {
+        trials0: {
             type: "trials"
-            order: ["task1"]
+            order: ["task0"]
             randomization-scheme: "latin-square"
             nextButtonLocation: sidebar
             subset-count: 2
@@ -51,11 +51,48 @@
                 location: sidebar
             }]
             trials: {
-                task1: {
+                task0: {
                     description: "What does the description do? "
                     instruction:  **Question:** Find the North American with the most Tweets"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 
+                        type: "website"
+                        // can be a URL or a local path
+                        path: "/mvnv-study/index.html",
+                        // style that will be applied to iframe
+                        style: {
+                            height: "500px"
+                        }
+                    }
+                }
+            }
+        },
+        trials1: {
+            type: "trials"
+            order: ["task1"]
+            randomization-scheme: "latin-square"
+            nextButtonLocation: sidebar
+            subset-count: 2
+            attention-checks: {
+                check: "attention1"
+                pattern: random
+                // one check after 10 trials
+                interval: 10
+            }
+            response:[{
+                id: "nl-response2"
+                type: "short-text",
+                prompt: "Please enter names here.",
+                desc: ""
+                required: true
+                location: sidebar
+            }]
+            trials: {
+                task1: {
+                    description: "What does the description do? "
+                    instruction:  **Question:** Find the North American with the most Tweets"
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component
                         type: "website"
                         // can be a URL or a local path
                         path: "/mvnv-study/index.html",
@@ -80,7 +117,7 @@
                 interval: 10
             }
             response:[{
-                id: "nl-response"
+                id: "nl-response2"
                 type: "short-text",
                 prompt: "Please enter names here.",
                 desc: ""
@@ -88,9 +125,194 @@
                 location: sidebar
             }]
             trials: {
-                task1: {
+                task2: {
                     description: "What does the description do? "
-                    instruction:  **Question:** Find the European person or institution with the least likes"
+                    instruction:  **Question:** Find the North American with the most Tweets"
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component
+                        type: "website"
+                        // can be a URL or a local path
+                        path: "/mvnv-study/index.html",
+                        // style that will be applied to iframe
+                        style: {
+                            height: "500px"
+                        }
+                    }
+                }
+            }
+        },
+        trials3: {
+            type: "trials"
+            order: ["task3"]
+            randomization-scheme: "latin-square"
+            nextButtonLocation: sidebar
+            subset-count: 2
+            attention-checks: {
+                check: "attention1"
+                pattern: random
+                // one check after 10 trials
+                interval: 10
+            }
+            response:[{
+                id: "nl-response2"
+                type: "short-text",
+                prompt: "Please enter names here.",
+                desc: ""
+                required: true
+                location: sidebar
+            }]
+            trials: {
+                task3: {
+                    description: "What does the description do? "
+                    instruction:  **Question:** Find the North American with the most Tweets"
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component
+                        type: "website"
+                        // can be a URL or a local path
+                        path: "/mvnv-study/index.html",
+                        // style that will be applied to iframe
+                        style: {
+                            height: "500px"
+                        }
+                    }
+                }
+            }
+        },
+        trials4: {
+            type: "trials"
+            order: ["task4"]
+            randomization-scheme: "latin-square"
+            nextButtonLocation: sidebar
+            subset-count: 2
+            attention-checks: {
+                check: "attention1"
+                pattern: random
+                // one check after 10 trials
+                interval: 10
+            }
+            response:[{
+                id: "nl-response2"
+                type: "short-text",
+                prompt: "Please enter names here.",
+                desc: ""
+                required: true
+                location: sidebar
+            }]
+            trials: {
+                task4: {
+                    description: "What does the description do? "
+                    instruction:  **Question:** Find the North American with the most Tweets"
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component
+                        type: "website"
+                        // can be a URL or a local path
+                        path: "/mvnv-study/index.html",
+                        // style that will be applied to iframe
+                        style: {
+                            height: "500px"
+                        }
+                    }
+                }
+            }
+        },
+        trials5: {
+            type: "trials"
+            order: ["task5"]
+            randomization-scheme: "latin-square"
+            nextButtonLocation: sidebar
+            subset-count: 2
+            attention-checks: {
+                check: "attention1"
+                pattern: random
+                // one check after 10 trials
+                interval: 10
+            }
+            response:[{
+                id: "nl-response2"
+                type: "short-text",
+                prompt: "Please enter names here.",
+                desc: ""
+                required: true
+                location: sidebar
+            }]
+            trials: {
+                task5: {
+                    description: "What does the description do? "
+                    instruction:  **Question:** Find the North American with the most Tweets"
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component
+                        type: "website"
+                        // can be a URL or a local path
+                        path: "/mvnv-study/index.html",
+                        // style that will be applied to iframe
+                        style: {
+                            height: "500px"
+                        }
+                    }
+                }
+            }
+        },
+        trials6: {
+            type: "trials"
+            order: ["task6"]
+            randomization-scheme: "latin-square"
+            nextButtonLocation: sidebar
+            subset-count: 2
+            attention-checks: {
+                check: "attention1"
+                pattern: random
+                // one check after 10 trials
+                interval: 10
+            }
+            response:[{
+                id: "nl-response2"
+                type: "short-text",
+                prompt: "Please enter names here.",
+                desc: ""
+                required: true
+                location: sidebar
+            }]
+            trials: {
+                task6: {
+                    description: "What does the description do? "
+                    instruction:  **Question:** Find the North American with the most Tweets"
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component
+                        type: "website"
+                        // can be a URL or a local path
+                        path: "/mvnv-study/index.html",
+                        // style that will be applied to iframe
+                        style: {
+                            height: "500px"
+                        }
+                    }
+                }
+            }
+        },
+        trials7: {
+            type: "trials"
+            order: ["task7"]
+            randomization-scheme: "latin-square"
+            nextButtonLocation: sidebar
+            subset-count: 2
+            attention-checks: {
+                check: "attention1"
+                pattern: random
+                // one check after 10 trials
+                interval: 10
+            }
+            response:[{
+                id: "nl-response2"
+                type: "short-text",
+                prompt: "Please enter names here.",
+                desc: ""
+                required: true
+                location: sidebar
+            }]
+            trials: {
+                task7: {
+                    description: "What does the description do? "
+                    instruction:  **Question:** Find the North American with the most Tweets"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
@@ -108,6 +330,13 @@
     sequence: [
         "consent",
         "training",
-        "trials1"
+        "trials0",
+        "trials1",
+        "trials2",
+        "trials3",
+        "trials4",
+        "trials5",
+        "trials6",
+        "trials7"
     ]
 }

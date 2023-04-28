@@ -2,7 +2,8 @@
 </div>
 
 <script>
-  (function () {
+    const OVERRIDETASKNUM = 1;
+  (async function () {
     experimentr.hideNext();
 
 
@@ -28,7 +29,7 @@
 
       d3.select('.modalStartStudy').classed('is-active', false);
 
-      await loadTasks(vis, mode);
+      await loadTasks(vis, mode,OVERRIDETASKNUM);
 
       //set up  user on firestore to track answers and usage;
       //only do this on user's first visit to the
@@ -52,7 +53,7 @@
 
       resetPanel();
     }
-      startStudy();
+      await startStudy();
 
 
   })()

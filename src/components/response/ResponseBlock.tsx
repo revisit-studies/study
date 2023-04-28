@@ -94,7 +94,7 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
                 to={nextTrailId? `/${currentStep}/${nextTrailId}` : `/${nextStep}`}
                 process={() => {
                     const answer = JSON.stringify(answerField.values);
-
+                    answerField.setValues(generateInitFields());
                     if(type === 'survey'){
                         dispatch(
                             saveSurvey(answerField.values)

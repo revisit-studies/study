@@ -1079,7 +1079,7 @@ async function assignVisType() {
   });
 }
 
-async function loadTasks(visType, tasksType) {
+async function loadTasks(visType, tasksType, taskNum) {
   //reset currentTask to 0
 
    //check if taskNum was passed in through the URL
@@ -1149,7 +1149,7 @@ async function loadTasks(visType, tasksType) {
     //remove the last task;
     let lastTask = taskListEntries.pop();
     //Randomly order the tasks.
-    shuffle(taskListEntries);
+    //shuffle(taskListEntries);
 
     //add back last last
     taskListEntries = taskListEntries.concat([lastTask]);

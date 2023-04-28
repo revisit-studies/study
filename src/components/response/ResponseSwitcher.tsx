@@ -1,4 +1,4 @@
-import { Box, TextInput } from '@mantine/core';
+import { Box } from '@mantine/core';
 import { TrialResult } from '../../store/types';
 import CheckBoxInput from './CheckBoxInput';
 import DropdownInput from './DropdownInput';
@@ -8,6 +8,7 @@ import RadioInput from './RadioInput';
 import SliderInput from './SliderInput';
 import TextAreaInput from './TextAreaInput';
 import { Response } from '../../parser/types';
+import StringInput from './StringInput';
 
 
 type Props = {
@@ -25,7 +26,7 @@ export default function ResponseSwitcher({ response, answer }: Props) {
     <>
       <Box sx={{margin:10, padding:5}}>
         {type === 'short-text' && (
-            <TextInput placeholder={desc} label={prompt} required={required}/>
+            <StringInput placeholder={desc} label={prompt} required={required} answer={answer}/>
         )}
         {type === 'dropdown' && (
             <DropdownInput

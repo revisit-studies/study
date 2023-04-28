@@ -29,7 +29,7 @@ const IframeController = ({
   const dispatch = useDispatch();
 
   // const iframeId = useMemo(() => crypto.randomUUID(), []);
-  const iframeId = useMemo(() => window.crypto.randomUUID(), []);
+  const iframeId = useMemo(() =>  crypto.randomUUID? crypto.randomUUID() : `testID-${Date.now()}`, []);
 
   const { trialId = null } = useParams<{ trialId: string }>();
 
@@ -73,7 +73,7 @@ const IframeController = ({
   return (
     <div>
       <iframe
-        src={`/html-stimuli/${path}?id=${iframeId}`}
+        src={`/html-stimuli/${path}?trialid=${trialId}`}
         style={iframeStyle}
       ></iframe>
     </div>
