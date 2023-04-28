@@ -7,10 +7,9 @@ import {
   useLocation,
 } from 'react-router-dom';
 import { Shell } from '../components/Shell';
-import TrialController from '../controllers/TrialController';
+import TrialPracticeController from '../controllers/TrialPracticeController';
 import { StudyComponent, StudyConfig, TrialsComponent} from '../parser/types';
 import { NavigateWithParams } from '../utils/NavigateWithParams';
-import PracticeController from '../controllers/PracticeController';
 
 export function createRouter(
   config: StudyConfig | null,
@@ -42,7 +41,7 @@ export function createRouter(
       };
       const trialRoute: RouteObject = {
         path: `${step}/:trialId`,
-        element: component?.type === 'trials' ? <TrialController /> : <PracticeController />,
+        element: <TrialPracticeController />,
       };
      
       routes.push(baseTrailRoute);

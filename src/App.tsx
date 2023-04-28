@@ -3,7 +3,7 @@ import { createContext, useEffect, useState } from 'react';
 import { ReactNode } from 'react';
 import Consent from './components/Consent';
 import { NextButton } from './components/NextButton';
-import TrialController from './controllers/TrialController';
+import TrialPracticeController from './controllers/TrialPracticeController';
 import { parseStudyConfig } from './parser/parser';
 import { StudyComponent, StudyConfig } from './parser/types';
 import { TrrackStoreType } from '@trrack/redux';
@@ -14,7 +14,6 @@ import { StudyEnd } from './components/StudyEnd';
 import { createRouter } from './routes';
 import { flagsContext, flagsStore } from './store/flags';
 import SurveyController from './controllers/SurveyController';
-import PracticeController from './controllers/PracticeController';
 import ConfigSwitcher from './components/ConfigSwitcher';
 
 
@@ -39,14 +38,14 @@ const elements: Record<StudyComponent['type'], ReactNode> = {
       <NextButton />
     </>
   ),
-  practice:  <PracticeController />,
+  practice:  <TrialPracticeController />,
   'attention-test': (
     <>
       <div>attention test component goes here</div>
       <NextButton />
     </>
   ),
-  trials: <TrialController />,
+  trials: <TrialPracticeController />,
   survey: (
     <>
      <SurveyController />

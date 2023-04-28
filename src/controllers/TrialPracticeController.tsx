@@ -1,13 +1,13 @@
 import { useParams } from 'react-router-dom';
 import StimulusController from './StimulusController';
-import { useTrialsConfig } from './utils';
-
-
-// current active stimuli presented to the user
+import { useTrialsConfig, usePracticeConfig } from './utils';
 
 export default function TrialController() {
   const { trialId = null } = useParams<{ trialId: string }>();
-  const config = useTrialsConfig();
+  const trialConfig = useTrialsConfig();
+  const practiceConfig = usePracticeConfig();
+
+  const config = trialConfig !== null ? trialConfig : practiceConfig;
 
   if (!trialId || !config) return null;
 
