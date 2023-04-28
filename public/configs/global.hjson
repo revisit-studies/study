@@ -4,7 +4,7 @@
     "MVNV": {
       title: "MVNV",
       path: "config-html-MVNV.hjson",
-      description: "Multivariate Network Visualization - Nodelink evaluation",
+      description: "Multivariate Network Visualization - Adjacency matrix evaluation",
     },
     "cleveland": {
       title: "Cleveland Experiment",
