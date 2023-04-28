@@ -91,7 +91,8 @@ export interface Response {
   | 'dropdown'
   | 'slider'
   | 'radio'
-  | 'checkbox';
+  | 'checkbox'
+  | 'iframe';
   desc: string;
   required: boolean;
   options?: Option[];

@@ -9,12 +9,13 @@ import SliderInput from './SliderInput';
 import TextAreaInput from './TextAreaInput';
 import { Response } from '../../parser/types';
 import StringInput from './StringInput';
+import IframeInput from './IframeInput';
 
 
 type Props = {
   response: Response;
   status?: TrialResult;
-  answer: object;
+  answer: object | Array<string>
 };
 
 export default function ResponseSwitcher({ response, answer }: Props) {
@@ -53,6 +54,8 @@ export default function ResponseSwitcher({ response, answer }: Props) {
             <TextAreaInput placeholder={desc} label={prompt} required={required} answer={answer}/>
         )}
         {type === 'slider' && <SliderInput title={prompt} desc={desc} sliderData={options} answer={answer} required={required}/>}
+        {type === 'iframe' && <IframeInput label={prompt} desc={desc} answer={answer as Array<string>} required={required}/>}
+
       </Box>
     </>
   );
