@@ -50,10 +50,13 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
     });
 
     useEffect(() => {
-        responses.forEach((response) => {
-            const ans = (watchFiled && typeof watchFiled === 'string') ? JSON.parse(watchFiled) : watchFiled;
-            answerField.setFieldValue(response.id,ans[response.id] || '');
-        });
+        if(watchFiled){
+            responses.forEach((response) => {
+                const ans = (watchFiled && typeof watchFiled === 'string') ? JSON.parse(watchFiled) : watchFiled;
+                answerField.setFieldValue(response.id,ans[response.id] || '');
+            });
+        }
+
     }, [watchFiled]);
 
 
@@ -71,7 +74,7 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
                     );
                 })
             }
-            {!disableNext && <Text>The correct answer is: {correctAnswer}</Text>}
+            {!disableNext && correctAnswer &&<Text>The correct answer is: {correctAnswer}</Text>}
             </form>
         </>
     ) : null}

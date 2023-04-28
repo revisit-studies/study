@@ -17,11 +17,6 @@ export const generateValidation = (responses : Response[]) => {
         if(type === 'iframe'){
             return function(value: Array<string>){return value.length===0;};
         }
-        else if(type === 'checkbox') {
-            return function (value: object) {
-                return Object.keys(value).length === 0;
-            };
-        }
         else if(type === 'numerical' || type === 'slider'){
             return  (value: string | number) => {
                 return typeof value !== 'number';
