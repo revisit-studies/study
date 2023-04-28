@@ -1,7 +1,7 @@
 import { Badge, Group } from '@mantine/core';
-import { useCurrentStep } from '../routes';
-import { useAppSelector } from '../store';
-import { useNavigateWithParams } from '../utils/useNavigateWithParams';
+import { useCurrentStep } from '../../routes';
+import { useAppSelector } from '../../store';
+import { useNavigateWithParams } from '../../utils/useNavigateWithParams';
 
 export function StepsPanel() {
   const currentStep = useCurrentStep();
