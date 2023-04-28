@@ -10,7 +10,9 @@ import { useFlagsDispatch, useFlagsSelector, updateResponseBlockValidation } fro
 import { useNextStep } from '../../store/hooks/useNextStep';
 import { useTrialStatus } from '../../store/hooks/useTrialStatus';
 import { NextButton } from '../NextButton';
-import ResponseSwitcher from './ResponseSwitcher';
+import ResponseSwitcher, {arrayObj} from './ResponseSwitcher';
+import {useSurvey} from '../../store/hooks/useSurvey';
+import { createAnswerField, generateInitFields} from './utils';
 
 type Props = {
     location: ResponseLocation;
@@ -22,6 +24,7 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
 
     const trialConfig = useTrialsConfig();
     const surveyConfig = useSurveyConfig();
+    const survey = useSurvey();
     const currentConfig = surveyConfig === null ? trialConfig : surveyConfig;
     const type = currentConfig?.type;
     const responses = useMemo(() => currentConfig?.response?.filter((response) => (response.location === location || (response.location === undefined && location === 'belowStimulus'))) || [], [currentConfig, location]);
@@ -38,35 +41,24 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
     const flagStoreDispatch = useFlagsDispatch();
     const responseBlocksValid = useFlagsSelector((state: any) => state.responseBlocksValid);
 
-    const generateInitFields = () => {
-        let initObj = {};
 
-        responses.forEach((response) => {
-            initObj = {...initObj, [response.id]: ''};
-        });
+    const answerField = createAnswerField(responses);
 
-        return initObj;
-    };
-
-    const generateValidation = () => {
-        let validateObj = {};
-
-        responses.forEach((response) => {
-            if(response.required)
-                validateObj = {...validateObj, [response.id]: (value: string | undefined) => (value === undefined || value.length === 0 ? 'Empty input' : null)};
-        });
-
-        return validateObj;
-    };
-
-    const answerField = useForm({
-        initialValues: generateInitFields(),
-        validate: generateValidation(),
-    });
-
+    const watchFiled = type === 'survey' ? survey : trialStatus?.answer;
     useEffect(() => {
         flagStoreDispatch(updateResponseBlockValidation({ location, status: answerField.isValid() }));
     });
+
+    useEffect(() => {
+        if(watchFiled){
+            responses.forEach((response) => {
+                const ans = (watchFiled && typeof watchFiled === 'string') ? JSON.parse(watchFiled) : watchFiled;
+                answerField.setFieldValue(response.id,ans[response.id] || '');
+            });
+        }
+
+    }, [watchFiled]);
+
 
     const handleResponseCheck = () => {
         setDisableNext(!disableNext);
@@ -78,11 +70,14 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
             {
                 responses.map((response, index) => {
                     return (
-                        <ResponseSwitcher key={index} answer={answerField.getInputProps(response.id)} response={response} />
+                        response.type === 'iframe' ?
+                            <ResponseSwitcher key={index} answer={answerField.getInputProps(response.id) as arrayObj} response={response} />
+                            :
+                            <ResponseSwitcher key={index} answer={answerField.getInputProps(response.id)} response={response} />
                     );
                 })
             }
-            {!disableNext && <Text>The correct answer is: {correctAnswer}</Text>}
+            {!disableNext && correctAnswer &&<Text>The correct answer is: {correctAnswer}</Text>}
             </form>
         </>
     ) : null}
@@ -94,7 +89,7 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
                 to={nextTrailId? `/${currentStep}/${nextTrailId}` : `/${nextStep}`}
                 process={() => {
                     const answer = JSON.stringify(answerField.values);
-
+                    answerField.setValues(generateInitFields(responses));
                     if(type === 'survey'){
                         dispatch(
                             saveSurvey(answerField.values)

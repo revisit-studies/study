@@ -20,7 +20,7 @@ export default function AppNavBar() {
   return trialHasSideBar ? (
     <Navbar width={{ lg: 300 }} style={{ zIndex: 0 }}>
       {instructionInSideBar && instruction !== '' && <Navbar.Section bg="gray.3" p="xl">
-        <Text c="gray.9"><Text span c="orange.8" fw={700} inherit>Task 8:</Text><ReactMarkdown>{instruction}</ReactMarkdown></Text>
+        <Text c="gray.9"><Text span c="orange.8" fw={700} inherit>Task:</Text><ReactMarkdown>{instruction}</ReactMarkdown></Text>
       </Navbar.Section>}
 
       {trialHasSideBarResponses && 

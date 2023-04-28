@@ -16,6 +16,7 @@ module.exports = {
     sourceType: 'module',
   },
   plugins: ['@typescript-eslint', 'react-hooks'],
+  'ignorePatterns': ['/public/*'],
   rules: {
     'linebreak-style': ['error', 'unix'],
     quotes: ['error', 'single'],

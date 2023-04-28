@@ -32,7 +32,7 @@
         }
         trials1: {
             type: "trials"
-            order: ["barChart", "barChart"]
+            order: ["barChart"]
             randomization-scheme: "latin-square"
             subset-count: 2
             instructionLocation: aboveStimulus
@@ -43,15 +43,11 @@
                 interval: 10
             }
             response:[{
-                id: "cm-response"
-                type: "numerical"
-                prompt: "Your answer!!"
-                desc: "Enter your answer here, range from 0 - 100"
-                options:[]
+                id: "barChart"
+                type: "iframe"
+                prompt: "Your selection shows here"
+                desc: ""
                 required: true
-                required: true
-                max: 100
-                min: 0
             }]
             trials: {
                 barChart: {

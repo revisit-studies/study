@@ -1,4 +1,4 @@
-import { Box, TextInput } from '@mantine/core';
+import { Box } from '@mantine/core';
 import { TrialResult } from '../../store/types';
 import CheckBoxInput from './CheckBoxInput';
 import DropdownInput from './DropdownInput';
@@ -8,12 +8,17 @@ import RadioInput from './RadioInput';
 import SliderInput from './SliderInput';
 import TextAreaInput from './TextAreaInput';
 import { Response } from '../../parser/types';
+import StringInput from './StringInput';
+import IframeInput from './IframeInput';
 
+export type arrayObj = {
+    value: Array<string>,
+}
 
 type Props = {
   response: Response;
   status?: TrialResult;
-  answer: object;
+  answer:  arrayObj;
 };
 
 export default function ResponseSwitcher({ response, answer }: Props) {
@@ -25,7 +30,7 @@ export default function ResponseSwitcher({ response, answer }: Props) {
     <>
       <Box sx={{margin:10, padding:5}}>
         {type === 'short-text' && (
-            <TextInput placeholder={desc} label={prompt} required={required}/>
+            <StringInput placeholder={desc} label={prompt} required={required} answer={answer}/>
         )}
         {type === 'dropdown' && (
             <DropdownInput
@@ -52,6 +57,8 @@ export default function ResponseSwitcher({ response, answer }: Props) {
             <TextAreaInput placeholder={desc} label={prompt} required={required} answer={answer}/>
         )}
         {type === 'slider' && <SliderInput title={prompt} desc={desc} sliderData={options} answer={answer} required={required}/>}
+        {type === 'iframe' && <IframeInput title={prompt} desc={desc} answer={answer.value} required={required}/>}
+
       </Box>
     </>
   );
