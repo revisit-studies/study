@@ -436,7 +436,7 @@
                             max: 100
                             min: 0
                         }
-            //text example
+            //numerical example
                             {
                                 id: "q2"
                                 type: "numerical"
@@ -480,6 +480,14 @@
                                 prompt: "Rate how is your experience"
                                 desc: "range from 0-100"
                                 options:[{label:"Bad", value:0},{label:"Mid", value:50},{label:"Good", value:100}]
+                                required: true
+                            }
+                            {
+                                id: "q7"
+                                type: "radio"
+                                prompt: "Rate how is your experience"
+                                desc: "range from 0-100"
+                                options:[{label:"Bad", value:"bad"},{label:"Mid", value:"mid"},{label:"Good", value:"good"}]
                                 required: true
                             }
                         ]

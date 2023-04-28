@@ -54,7 +54,7 @@
             trials: {
                 task0: {
                     description: "What does the description do? "
-                    instruction:  **Question:** Find the North American with the most Tweets"
+                    instruction:  "**Question:** Find the North American with the most Tweets"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 
                         type: "website"
@@ -81,9 +81,9 @@
                 interval: 10
             }
             response:[{
-                id: "nl-response2"
-                type: "short-text",
-                prompt: "Please enter names here.",
+                id: "task1"
+                type: "iframe",
+                prompt: "Selected name(s) will show here",
                 desc: ""
                 required: true
                 location: sidebar
@@ -91,7 +91,7 @@
             trials: {
                 task1: {
                     description: "What does the description do? "
-                    instruction:  **Question:** Find the North American with the most Tweets"
+                    instruction:  "**Question:** Find the European person or institution with the least likes"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
@@ -118,9 +118,9 @@
                 interval: 10
             }
             response:[{
-                id: "nl-response2"
-                type: "short-text",
-                prompt: "Please enter names here.",
+                id: "task2"
+                type: "iframe",
+                prompt: "Selected name(s) will show here",
                 desc: ""
                 required: true
                 location: sidebar
@@ -128,7 +128,7 @@
             trials: {
                 task2: {
                     description: "What does the description do? "
-                    instruction:  **Question:** Find the North American with the most Tweets"
+                    instruction:  "**Question:** Which person has many interactions (edges) in this network, several followers, but few tweets and likes in general?"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
@@ -155,17 +155,17 @@
                 interval: 10
             }
             response:[{
-                id: "nl-response2"
-                type: "short-text",
-                prompt: "Please enter names here.",
+                id: "task3"
+                type: "iframe",
+                prompt: "Selected name(s) will show here",
                 desc: ""
                 required: true
                 location: sidebar
             }]
             trials: {
                 task3: {
-                    description: "What does the description do? "
-                    instruction:  **Question:** Find the North American with the most Tweets"
+                    description: "What does the description do? ",
+                    instruction:  "**Question:** Find all of Lane's European Neighbors",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
@@ -192,17 +192,17 @@
                 interval: 10
             }
             response:[{
-                id: "nl-response2"
-                type: "short-text",
-                prompt: "Please enter names here.",
+                id: "task4",
+                type: "iframe",
+                prompt: "Selected name(s) will show here",
                 desc: ""
                 required: true
                 location: sidebar
             }]
             trials: {
                 task4: {
-                    description: "What does the description do? "
-                    instruction:  **Question:** Find the North American with the most Tweets"
+                    description: "What does the description do? ",
+                    instruction:  "**Question:** Find all of giCentre's North American Neighbors",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
@@ -229,17 +229,17 @@
                 interval: 10
             }
             response:[{
-                id: "nl-response2"
-                type: "short-text",
-                prompt: "Please enter names here.",
+                id: "task5",
+                type: "iframe",
+                prompt: "Selected name(s) will show here",
                 desc: ""
                 required: true
                 location: sidebar
             }]
             trials: {
                 task5: {
-                    description: "What does the description do? "
-                    instruction:  **Question:** Find the North American with the most Tweets"
+                    description: "What does the description do? ",
+                    instruction:  "**Question:** Who had the most mention interactions with Jeffrey?",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
@@ -266,17 +266,20 @@
                 interval: 10
             }
             response:[{
-                id: "nl-response2"
-                type: "short-text",
-                prompt: "Please enter names here.",
-                desc: ""
-                required: true
+                id: "task6"
+                type: "radio"
+                prompt: "Select Answer Below"
+                desc: "Likert question"
+                required: true,
+                options:[{label:"European", value:"EU"},{label:"North American", value:"NA"}],
                 location: sidebar
+
+
             }]
             trials: {
                 task6: {
-                    description: "What does the description do? "
-                    instruction:  **Question:** Find the North American with the most Tweets"
+                    description: "What does the description do? ",
+                    instruction:  "**Question:** Does Alex have more mention interactions with North American or European accounts? Who does he have the most mentions interactions with?",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
@@ -303,17 +306,356 @@
                 interval: 10
             }
             response:[{
-                id: "nl-response2"
-                type: "short-text",
-                prompt: "Please enter names here.",
+                id: "task7"
+                type: "iframe",
+                prompt: "Selected name(s) will show here",
                 desc: ""
                 required: true
                 location: sidebar
             }]
             trials: {
                 task7: {
+                    description: "What does the description do? ",
+                    instruction:  "Among all people who have interacted with both Jeffrey and Robert, who has the most followers?",
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component
+                        type: "website"
+                        // can be a URL or a local path
+                        path: "/mvnv-study/index.html",
+                        // style that will be applied to iframe
+                        style: {
+                            height: "500px"
+                        }
+                    }
+                }
+            }
+        },
+        trials8: {
+            type: "trials"
+            order: ["task8"]
+            randomization-scheme: "latin-square"
+            nextButtonLocation: sidebar
+            subset-count: 2
+            attention-checks: {
+                check: "attention1"
+                pattern: random
+                // one check after 10 trials
+                interval: 10
+            }
+            response:[
+                {
+                    id: "task8-1"
+                    type: "radio"
+                    prompt: "Select Answer Below"
+                    desc: ""
+                    options:[{label:"Mentions", value:"Mentions"},{label:"Retweets", value:"Retweets"}]
+                    required: true,
+                    location: sidebar
+
+                },
+                {
+                    id: "task8-2"
+                    type: "short-text",
+                    prompt: "Enter Answer Below",
+                    desc: "answer text"
+                    required: true
+                    location: sidebar
+                }
+            ],
+            trials: {
+                task8: {
                     description: "What does the description do? "
-                    instruction:  **Question:** Find the North American with the most Tweets"
+                    instruction:  "**Question:** What is the most common form of interaction between Evis19 and Jon? How often has this interaction happened?"
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component
+                        type: "website"
+                        // can be a URL or a local path
+                        path: "/mvnv-study/index.html",
+                        // style that will be applied to iframe
+                        style: {
+                            height: "500px"
+                        }
+                    }
+                }
+            }
+        },
+        trials9: {
+            type: "trials"
+            order: ["task9"]
+            randomization-scheme: "latin-square"
+            nextButtonLocation: sidebar
+            subset-count: 2
+            attention-checks: {
+                check: "attention1"
+                pattern: random
+                // one check after 10 trials
+                interval: 10
+            }
+            response:[{
+                id: "task9"
+                type: "iframe",
+                prompt: "Please enter names here.",
+                desc: ""
+                required: true
+                location: sidebar
+            }]
+            trials: {
+                task9: {
+                    description: "Selected node(s) will show here "
+                    instruction:  "**Question:** Select all of Noeska’s neighbors that are people and have more friends than followers"
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component
+                        type: "website"
+                        // can be a URL or a local path
+                        path: "/mvnv-study/index.html",
+                        // style that will be applied to iframe
+                        style: {
+                            height: "500px"
+                        }
+                    }
+                }
+            }
+        },
+        trials10: {
+            type: "trials"
+            order: ["task10"]
+            randomization-scheme: "latin-square"
+            nextButtonLocation: sidebar
+            subset-count: 2
+            attention-checks: {
+                check: "attention1"
+                pattern: random
+                // one check after 10 trials
+                interval: 10
+            }
+            response:[{
+                id: "task10"
+                type: "iframe",
+                prompt: "Selected name(s) will show here",
+                desc: ""
+                required: true
+                location: sidebar
+            }]
+            trials: {
+                task10: {
+                    description: "What does the description do? "
+                    instruction:  "**Question:** Select the people who have interacted with Thomas and have more friends than followers"
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component
+                        type: "website"
+                        // can be a URL or a local path
+                        path: "/mvnv-study/index.html",
+                        // style that will be applied to iframe
+                        style: {
+                            height: "500px"
+                        }
+                    }
+                }
+            }
+        },
+        trials11: {
+            type: "trials"
+            order: ["task11"]
+            randomization-scheme: "latin-square"
+            nextButtonLocation: sidebar
+            subset-count: 2
+            attention-checks: {
+                check: "attention1"
+                pattern: random
+                // one check after 10 trials
+                interval: 10
+            }
+            response:[
+                {
+                    id: "task11"
+                    type: "iframe",
+                    prompt: "Selected name(s) will show here",
+                    desc: ""
+                    required: true
+                    location: sidebar
+                },
+                {
+                    id: "task11-2"
+                    type: "short-text",
+                    prompt: "Enter Answer Below",
+                    desc: "answer text"
+                    required: true
+                    location: sidebar
+                }
+            ],
+            trials: {
+                task11: {
+                    description: "What does the description do? ",
+                    instruction:  "**Question:** Select the people who have interacted with Thomas and have more friends than followers",
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component
+                        type: "website"
+                        // can be a URL or a local path
+                        path: "/mvnv-study/index.html",
+                        // style that will be applied to iframe
+                        style: {
+                            height: "500px"
+                        }
+                    }
+                }
+            }
+        },
+        trials12: {
+            type: "trials"
+            order: ["task12"]
+            randomization-scheme: "latin-square"
+            nextButtonLocation: sidebar
+            subset-count: 2
+            attention-checks: {
+                check: "attention1"
+                pattern: random
+                // one check after 10 trials
+                interval: 10
+            }
+            response:[{
+                id: "task12"
+                type: "iframe",
+                prompt: "Selected name(s) will show here",
+                desc: ""
+                required: true
+                location: sidebar
+            },
+                {
+                    id: "task12-1"
+                    type: "radio"
+                    prompt: "Select Answer Below"
+                    desc: ""
+                    options:[{label:"NA", value:"NA"},{label:"SA", value:"SA"},{label:"EU", value:"EU"},{label:"AS", value:"AS"}]
+                    required: true,
+                    location: sidebar
+
+                }
+            ],
+            trials: {
+                task12: {
+                    description: "What does the description do? "
+                    instruction:  "**Question:** What is the institution on a shortest path between Lane and Rob. What is its continent of origin?"
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component
+                        type: "website"
+                        // can be a URL or a local path
+                        path: "/mvnv-study/index.html",
+                        // style that will be applied to iframe
+                        style: {
+                            height: "500px"
+                        }
+                    }
+                }
+            }
+        },
+        trials13: {
+            type: "trials"
+            order: ["task13"]
+            randomization-scheme: "latin-square"
+            nextButtonLocation: sidebar
+            subset-count: 2
+            attention-checks: {
+                check: "attention1"
+                pattern: random
+                // one check after 10 trials
+                interval: 10
+            }
+            response:[{
+                id: "task13"
+                type: "iframe",
+                prompt: "Selected name(s) will show here",
+                desc: ""
+                required: true
+                location: sidebar
+            },
+                {
+                    id: "task13-1"
+                    type: "radio"
+                    prompt: "Select Answer Below"
+                    desc: ""
+                    options:[{label:"NA", value:"NA"},{label:"SA", value:"SA"},{label:"EU", value:"EU"},{label:"AS", value:"AS"}]
+                    required: true,
+                    location: sidebar
+
+                }]
+            trials: {
+                task13: {
+                    description: "What does the description do? "
+                    instruction:  "**Question:** What is the institution on a shortest path between Jason and Jon. What is its continent of origin?"
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component
+                        type: "website"
+                        // can be a URL or a local path
+                        path: "/mvnv-study/index.html",
+                        // style that will be applied to iframe
+                        style: {
+                            height: "500px"
+                        }
+                    }
+                }
+            }
+        },
+        trials14: {
+            type: "trials"
+            order: ["task14"]
+            randomization-scheme: "latin-square"
+            nextButtonLocation: sidebar
+            subset-count: 2
+            attention-checks: {
+                check: "attention1"
+                pattern: random
+                // one check after 10 trials
+                interval: 10
+            }
+            response:[{
+                id: "task14"
+                type: "iframe",
+                prompt: "Selected name(s) will show here",
+                desc: ""
+                required: true
+                location: sidebar
+            }]
+            trials: {
+                task14: {
+                    description: "What does the description do? ",
+                    instruction:  "**Question:** Of the North Americans who are two interactions away from Sereno, who has been on twitter the longest?",
+                    stimulus: {
+                        // Allowable types: image, javascript, website, react-component
+                        type: "website"
+                        // can be a URL or a local path
+                        path: "/mvnv-study/index.html",
+                        // style that will be applied to iframe
+                        style: {
+                            height: "500px"
+                        }
+                    }
+                }
+            }
+        },
+        trials15: {
+            type: "trials"
+            order: ["task15"]
+            randomization-scheme: "latin-square"
+            nextButtonLocation: sidebar
+            subset-count: 2
+            attention-checks: {
+                check: "attention1"
+                pattern: random
+                // one check after 10 trials
+                interval: 10
+            }
+            response:[{
+                id: "task15"
+                type: "long-text",
+                prompt: "Enter Findings Below",
+                desc: ""
+                required: true
+                location: sidebar
+            }]
+            trials: {
+                task15: {
+                    description: "What does the description do? ",
+                    instruction:  "**Question:** Please explore the network freely and report on your findings. Is there anything surprising or particularly interesting in the network?",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
@@ -338,6 +680,14 @@
         "trials4",
         "trials5",
         "trials6",
-        "trials7"
+        "trials7",
+        "trials8",
+        "trials9",
+        "trials10",
+        "trials11",
+        "trials12",
+        "trials13",
+        "trials14",
+        "trials15"
     ]
 }
