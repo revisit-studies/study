@@ -51,7 +51,6 @@ export default function ResponseBlock({ location, correctAnswer  }: Props) {
 
     useEffect(() => {
         if(watchFiled){
-
             responses.forEach((response) => {
                 const ans = (watchFiled && typeof watchFiled === 'string') ? JSON.parse(watchFiled) : watchFiled;
                 answerField.setFieldValue(response.id,ans[response.id] || '');
