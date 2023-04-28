@@ -39,7 +39,7 @@ const elements: Record<StudyComponent['type'], ReactNode> = {
     </>
   ),
   practice:  <TrialPracticeController />,
-  'attention-test': (
+  'attentionTest': (
     <>
       <div>attention test component goes here</div>
       <NextButton />

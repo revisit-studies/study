@@ -3,7 +3,7 @@ import { useForm } from '@mantine/form';
 import { useMemo, useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useTrialsConfig, useSurveyConfig, useNextTrialId } from '../../controllers/utils';
-import { ResponseLocation } from '../../parser/types';
+import { ResponseBlockLocation } from '../../parser/types';
 import { useCurrentStep } from '../../routes';
 import { useAppDispatch, saveSurvey, saveTrialAnswer } from '../../store';
 import { useFlagsDispatch, useFlagsSelector, updateResponseBlockValidation } from '../../store/flags';
@@ -15,7 +15,7 @@ import {useSurvey} from '../../store/hooks/useSurvey';
 import { createAnswerField, generateInitFields} from './utils';
 
 type Props = {
-    location: ResponseLocation;
+    location: ResponseBlockLocation;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     correctAnswer?: string | number;
 };

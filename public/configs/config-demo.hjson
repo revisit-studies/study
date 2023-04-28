@@ -1,6 +1,6 @@
 {
-    config-version: 1
-    study-metadata: {
+    configVersion: 1
+    studyMetadata: {
         title: "Cleveland McGill Example"
         version: "pilot"
         authors: [
@@ -143,7 +143,7 @@
             }
         }
         attention1: {
-            type: "attention-test"
+            type: "attentionTest"
         }
         trials1: {
             type: "trials"
@@ -179,7 +179,7 @@
                         required: true
                     }
                     ]
-                    answers: [
+                    correctAnswer: [
                         {
                             id: "number-answer"
                             answer: 5
@@ -188,17 +188,17 @@
                         {
                             id: "number-answer"
                             // a callback that returns a validation of the answer for field number-answer in unit interval 0-1. 
-                            answer-callback: "checkAnswer()"
+                            answerCallback: "checkAnswer()"
                         }
                         {
                             id: "text-answer"
                             answer: ["Robert", "Lane"]
-                            answer-regex: "[0-3]bert"
+                            answerRegex: "[0-3]bert"
                         }
                         {
                             id: "selection"
                             // a callback that returns a validation of the answer for field for the selection in unit interval 0-1. 
-                            answer-callback: "checkAnswer()"
+                            answerCallback: "checkAnswer()"
                         }
                     ]
 

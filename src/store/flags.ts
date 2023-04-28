@@ -1,7 +1,7 @@
 import { PayloadAction, configureStore, createSlice } from '@reduxjs/toolkit';
 import { createContext } from 'react';
 import { createDispatchHook, createSelectorHook } from 'react-redux';
-import { ResponseLocation } from '../parser/types';
+import { ResponseBlockLocation } from '../parser/types';
 
 const flags = createSlice({
   name: 'flags',
@@ -20,7 +20,7 @@ const flags = createSlice({
     resetResponseBlockValidation: (state) => {
       state.responseBlocksValid = { aboveStimulus: false, belowStimulus: false, sidebar: false};
     },
-    updateResponseBlockValidation: (state, payload: PayloadAction<{ location: ResponseLocation, status: boolean }>) => {
+    updateResponseBlockValidation: (state, payload: PayloadAction<{ location: ResponseBlockLocation, status: boolean }>) => {
       state.responseBlocksValid[payload.payload.location] = payload.payload.status;
     }
   },

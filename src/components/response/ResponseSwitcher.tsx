@@ -29,7 +29,7 @@ export default function ResponseSwitcher({ response, answer }: Props) {
   return (
     <>
       <Box sx={{margin:10, padding:5}}>
-        {type === 'short-text' && (
+        {type === 'shortText' && (
             <StringInput placeholder={desc} label={prompt} required={required} answer={answer}/>
         )}
         {type === 'dropdown' && (
@@ -53,7 +53,7 @@ export default function ResponseSwitcher({ response, answer }: Props) {
         {type === 'checkbox' && (
             <CheckBoxInput label={prompt} desc={desc} required={required} checkboxData={options} answer={answer}/>
         )}
-        {type === 'long-text' && (
+        {type === 'longText' && (
             <TextAreaInput placeholder={desc} label={prompt} required={required} answer={answer}/>
         )}
         {type === 'slider' && <SliderInput title={prompt} desc={desc} sliderData={options} answer={answer} required={required}/>}

@@ -1,6 +1,6 @@
 {
-    config-version: 1
-    study-metadata: {
+    configVersion: 1
+    studyMetadata: {
         title: "Cleveland McGill Example"
         version: "pilot"
         authors: [
@@ -13,12 +13,12 @@
             "WPI"
             "University of Toronto"
         ]
+    }
+    uiConfig: {
         contactEmail: "test@test.com"
         helpTextPath: "/markdowns/help.md"
         logoPath: "/assets/revisitLogoSquare.svg"
         withProgressBar: true
-    }
-    uiConfig: {
         // starts the automatic download of the data after study completion 
         autoDownloadStudy: false
         // start download after x milliseconds
