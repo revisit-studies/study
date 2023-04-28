@@ -34,15 +34,8 @@
         trials0: {
             type: "trials"
             order: ["task0"]
-            randomization-scheme: "latin-square"
             nextButtonLocation: sidebar
             subset-count: 2
-            attention-checks: {
-                check: "attention1"
-                pattern: random
-                // one check after 10 trials 
-                interval: 10
-            }
             response:[{
                 //to use iframe input, id must match trialID
                 id: "task0"
@@ -54,7 +47,7 @@
             }]
             trials: {
                 task0: {
-                    description: "What does the description do? "
+                    description: ""
                     instruction:  "**Question:** Find the North American with the most Tweets"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 
@@ -72,7 +65,6 @@
         trials1: {
             type: "trials"
             order: ["task1"]
-            randomization-scheme: "latin-square"
             nextButtonLocation: sidebar
             subset-count: 2
             attention-checks: {
@@ -91,7 +83,7 @@
             }]
             trials: {
                 task1: {
-                    description: "What does the description do? "
+                    description: ""
                     instruction:  "**Question:** Find the European person or institution with the least likes"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -109,15 +101,8 @@
         trials2: {
             type: "trials"
             order: ["task2"]
-            randomization-scheme: "latin-square"
             nextButtonLocation: sidebar
             subset-count: 2
-            attention-checks: {
-                check: "attention1"
-                pattern: random
-                // one check after 10 trials
-                interval: 10
-            }
             response:[{
                 id: "task2"
                 type: "iframe",
@@ -128,7 +113,7 @@
             }]
             trials: {
                 task2: {
-                    description: "What does the description do? "
+                    description: ""
                     instruction:  "**Question:** Which person has many interactions (edges) in this network, several followers, but few tweets and likes in general?"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -149,12 +134,6 @@
             randomization-scheme: "latin-square"
             nextButtonLocation: sidebar
             subset-count: 2
-            attention-checks: {
-                check: "attention1"
-                pattern: random
-                // one check after 10 trials
-                interval: 10
-            }
             response:[{
                 id: "task3"
                 type: "iframe",
@@ -165,7 +144,7 @@
             }]
             trials: {
                 task3: {
-                    description: "What does the description do? ",
+                    description:  ",
                     instruction:  "**Question:** Find all of Lane's European Neighbors",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -183,15 +162,8 @@
         trials4: {
             type: "trials"
             order: ["task4"]
-            randomization-scheme: "latin-square"
             nextButtonLocation: sidebar
             subset-count: 2
-            attention-checks: {
-                check: "attention1"
-                pattern: random
-                // one check after 10 trials
-                interval: 10
-            }
             response:[{
                 id: "task4",
                 type: "iframe",
@@ -202,7 +174,7 @@
             }]
             trials: {
                 task4: {
-                    description: "What does the description do? ",
+                    description: "",
                     instruction:  "**Question:** Find all of giCentre's North American Neighbors",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -220,15 +192,8 @@
         trials5: {
             type: "trials"
             order: ["task5"]
-            randomization-scheme: "latin-square"
             nextButtonLocation: sidebar
             subset-count: 2
-            attention-checks: {
-                check: "attention1"
-                pattern: random
-                // one check after 10 trials
-                interval: 10
-            }
             response:[{
                 id: "task5",
                 type: "iframe",
@@ -239,7 +204,7 @@
             }]
             trials: {
                 task5: {
-                    description: "What does the description do? ",
+                    description: "",
                     instruction:  "**Question:** Who had the most mention interactions with Jeffrey?",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -257,15 +222,8 @@
         trials6: {
             type: "trials"
             order: ["task6"]
-            randomization-scheme: "latin-square"
             nextButtonLocation: sidebar
             subset-count: 2
-            attention-checks: {
-                check: "attention1"
-                pattern: random
-                // one check after 10 trials
-                interval: 10
-            }
             response:[{
                 id: "task6"
                 type: "radio"
@@ -279,7 +237,7 @@
             }]
             trials: {
                 task6: {
-                    description: "What does the description do? ",
+                    description: "",
                     instruction:  "**Question:** Does Alex have more mention interactions with North American or European accounts? Who does he have the most mentions interactions with?",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -297,15 +255,8 @@
         trials7: {
             type: "trials"
             order: ["task7"]
-            randomization-scheme: "latin-square"
             nextButtonLocation: sidebar
             subset-count: 2
-            attention-checks: {
-                check: "attention1"
-                pattern: random
-                // one check after 10 trials
-                interval: 10
-            }
             response:[{
                 id: "task7"
                 type: "iframe",
@@ -316,7 +267,7 @@
             }]
             trials: {
                 task7: {
-                    description: "What does the description do? ",
+                    description: "",
                     instruction:  "Among all people who have interacted with both Jeffrey and Robert, who has the most followers?",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -334,15 +285,8 @@
         trials8: {
             type: "trials"
             order: ["task8"]
-            randomization-scheme: "latin-square"
             nextButtonLocation: sidebar
             subset-count: 2
-            attention-checks: {
-                check: "attention1"
-                pattern: random
-                // one check after 10 trials
-                interval: 10
-            }
             response:[
                 {
                     id: "task8-1"
@@ -365,7 +309,7 @@
             ],
             trials: {
                 task8: {
-                    description: "What does the description do? "
+                    description: ""
                     instruction:  "**Question:** What is the most common form of interaction between Evis19 and Jon? How often has this interaction happened?"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -383,26 +327,19 @@
         trials9: {
             type: "trials"
             order: ["task9"]
-            randomization-scheme: "latin-square"
             nextButtonLocation: sidebar
             subset-count: 2
-            attention-checks: {
-                check: "attention1"
-                pattern: random
-                // one check after 10 trials
-                interval: 10
-            }
             response:[{
                 id: "task9"
                 type: "iframe",
-                prompt: "Please enter names here.",
+                prompt: "Selected node(s) will show here ",
                 desc: ""
                 required: true
                 location: sidebar
             }]
             trials: {
                 task9: {
-                    description: "Selected node(s) will show here "
+                    description: ""
                     instruction:  "**Question:** Select all of Noeska’s neighbors that are people and have more friends than followers"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -420,15 +357,8 @@
         trials10: {
             type: "trials"
             order: ["task10"]
-            randomization-scheme: "latin-square"
             nextButtonLocation: sidebar
             subset-count: 2
-            attention-checks: {
-                check: "attention1"
-                pattern: random
-                // one check after 10 trials
-                interval: 10
-            }
             response:[{
                 id: "task10"
                 type: "iframe",
@@ -439,7 +369,7 @@
             }]
             trials: {
                 task10: {
-                    description: "What does the description do? "
+                    description: ""
                     instruction:  "**Question:** Select the people who have interacted with Thomas and have more friends than followers"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -457,15 +387,8 @@
         trials11: {
             type: "trials"
             order: ["task11"]
-            randomization-scheme: "latin-square"
             nextButtonLocation: sidebar
             subset-count: 2
-            attention-checks: {
-                check: "attention1"
-                pattern: random
-                // one check after 10 trials
-                interval: 10
-            }
             response:[
                 {
                     id: "task11"
@@ -486,7 +409,7 @@
             ],
             trials: {
                 task11: {
-                    description: "What does the description do? ",
+                    description: "",
                     instruction:  "**Question:** Select the people who have interacted with Thomas and have more friends than followers",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -504,15 +427,8 @@
         trials12: {
             type: "trials"
             order: ["task12"]
-            randomization-scheme: "latin-square"
             nextButtonLocation: sidebar
             subset-count: 2
-            attention-checks: {
-                check: "attention1"
-                pattern: random
-                // one check after 10 trials
-                interval: 10
-            }
             response:[{
                 id: "task12"
                 type: "iframe",
@@ -534,7 +450,7 @@
             ],
             trials: {
                 task12: {
-                    description: "What does the description do? "
+                    description: ""
                     instruction:  "**Question:** What is the institution on a shortest path between Lane and Rob. What is its continent of origin?"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -552,15 +468,8 @@
         trials13: {
             type: "trials"
             order: ["task13"]
-            randomization-scheme: "latin-square"
             nextButtonLocation: sidebar
             subset-count: 2
-            attention-checks: {
-                check: "attention1"
-                pattern: random
-                // one check after 10 trials
-                interval: 10
-            }
             response:[{
                 id: "task13"
                 type: "iframe",
@@ -581,7 +490,7 @@
                 }]
             trials: {
                 task13: {
-                    description: "What does the description do? "
+                    description: ""
                     instruction:  "**Question:** What is the institution on a shortest path between Jason and Jon. What is its continent of origin?"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -599,15 +508,8 @@
         trials14: {
             type: "trials"
             order: ["task14"]
-            randomization-scheme: "latin-square"
             nextButtonLocation: sidebar
             subset-count: 2
-            attention-checks: {
-                check: "attention1"
-                pattern: random
-                // one check after 10 trials
-                interval: 10
-            }
             response:[{
                 id: "task14"
                 type: "iframe",
@@ -618,7 +520,7 @@
             }]
             trials: {
                 task14: {
-                    description: "What does the description do? ",
+                    description: "",
                     instruction:  "**Question:** Of the North Americans who are two interactions away from Sereno, who has been on twitter the longest?",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -636,15 +538,8 @@
         trials15: {
             type: "trials"
             order: ["task15"]
-            randomization-scheme: "latin-square"
             nextButtonLocation: sidebar
             subset-count: 2
-            attention-checks: {
-                check: "attention1"
-                pattern: random
-                // one check after 10 trials
-                interval: 10
-            }
             response:[{
                 id: "task15"
                 type: "long-text",
@@ -655,7 +550,7 @@
             }]
             trials: {
                 task15: {
-                    description: "What does the description do? ",
+                    description: "",
                     instruction:  "**Question:** Please explore the network freely and report on your findings. Is there anything surprising or particularly interesting in the network?",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
