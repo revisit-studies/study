@@ -1,9 +1,9 @@
 {
-  configsList: ["NVMV","cleveland", "html-demo", "html-input", "image-demo"],
+  configsList: ["MVNV","cleveland", "html-demo", "html-input", "image-demo"],
   configs: {
-    "NVMV": {
-      title: "NVMV",
-      path: "config-html-NVMV.hjson",
+    "MVNV": {
+      title: "MVNV",
+      path: "config-html-MVNV.hjson",
       description: "Multivariate Network Visualization - Nodelink evaluation",
     },
     "cleveland": {
