@@ -37,8 +37,6 @@ export default function StimulusController({
     flagStoreDispatch(resetResponseBlockValidation());
   });
 
-  console.log('ww');
-
   return (
     <div>
       {instructionAbove && (

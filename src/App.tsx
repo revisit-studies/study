@@ -7,8 +7,10 @@ import { parseGlobalConfig } from './parser/parser';
 import { GlobalConfig } from './parser/types';
 import { Nullable } from './utils/nullable';
 
+export const PREFIX = import.meta.env.PROD ? '/revisit-study-frontend/' : '/';
+
 async function fetchGlobalConfigArray() {
-  const globalFile = await fetch('/configs/global.hjson');
+  const globalFile = await fetch(`${PREFIX}configs/global.hjson`);
   const configs = await globalFile.text();
 
   return parseGlobalConfig(configs);

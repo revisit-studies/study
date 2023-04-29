@@ -6,8 +6,6 @@ import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useTrialStatus } from '../../store/hooks/useTrialStatus';
 import ResponseBlock from '../stimuli/inputcomponents/ResponseBlock';
 
-export const RSP_SIDEBAR = 'RSP_SIDEBAR';
-
 export default function AppNavBar() {
   const trialHasSideBar = useStudyConfig()?.uiConfig.sidebar;
   const trialHasSideBarResponses = true;

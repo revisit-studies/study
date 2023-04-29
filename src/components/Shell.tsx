@@ -25,6 +25,7 @@ import { Nullable } from '../utils/nullable';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import Consent from './Consent';
 
+import { PREFIX } from '../App';
 import AppAside from './interface/AppAside';
 import AppHeader from './interface/AppHeader';
 import AppNavBar from './interface/AppNavBar';
@@ -37,7 +38,7 @@ const trrackContext: any = createContext<TrrackStoreType>(undefined!);
 export const useTrrackSelector = createSelectorHook(trrackContext);
 
 async function fetchStudyConfig(configLocation: string) {
-  const config = await (await fetch(configLocation)).text();
+  const config = await (await fetch(PREFIX + configLocation)).text();
   return parseStudyConfig(config);
 }
 
@@ -66,7 +67,7 @@ export function Shell({ globalConfig }: Props) {
   useEffect(() => {
     if (!configJSON) return;
 
-    fetchStudyConfig(`/configs/${configJSON.path}`).then((config) => {
+    fetchStudyConfig(`configs/${configJSON.path}`).then((config) => {
       setActiveConfig(config);
     });
   }, [configJSON]);

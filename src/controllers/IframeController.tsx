@@ -7,6 +7,7 @@ import { useNextStep } from '../store/hooks/useNextStep';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 import { useTrialsConfig } from './utils';
 
+
 const PREFIX = '@REVISIT_COMMS';
 
 const defaultStyle = {
@@ -29,7 +30,9 @@ const IframeController = ({
 
   const dispatch = useDispatch();
 
-  const iframeId = useMemo(() => crypto.randomUUID(), []);
+  // const iframeId = useMemo(() => crypto.randomUUID(), []);
+  const iframeId = useMemo(() =>  crypto.randomUUID? crypto.randomUUID() : `testID-${Date.now()}`, []);
+
   const { trialId = null } = useParams<{ trialId: string }>();
 
   // navigation
@@ -44,9 +47,6 @@ const IframeController = ({
       const data = e.data;
       if (
         typeof data === 'object' &&
-        'type' in data &&
-        data.type.substring(0, PREFIX.length) === PREFIX &&
-        data.iframeId === iframeId &&
         trialId
       ) {
         if (data.type === `${PREFIX}/ANSWERS`) {
@@ -54,12 +54,12 @@ const IframeController = ({
             saveTrialAnswer({
               trialName: currentStep,
               trialId,
-              answer: data.message as object,
+              answer: JSON.stringify({[trialId]: data.message}) ,
               type: trialConfig?.type,
             })
           );
 
-          navigate(`/${computedTo}`, { replace: false });
+          // navigate(`/${computedTo}`, { replace: false });
         }
       }
     };
@@ -80,7 +80,7 @@ const IframeController = ({
   return (
     <div>
       <iframe
-        src={`/html-stimuli/${path}?id=${iframeId}`}
+        src={`/html-stimuli/${path}?trialid=${trialId}`}
         style={iframeStyle}
       ></iframe>
     </div>

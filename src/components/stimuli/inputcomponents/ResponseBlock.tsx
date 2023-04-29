@@ -21,7 +21,7 @@ import { useStudySelector } from '../../../store/index';
 import { TrialResult } from '../../../store/types';
 import { deepCopy } from '../../../utils/deepCopy';
 import { NextButton } from '../../NextButton';
-import ResponseSwitcher from './ResponseSwitcher';
+import ResponseSwitcher from '../../response/ResponseSwitcher';
 import { useAnswerField } from './utils';
 
 type Props = {
@@ -33,7 +33,8 @@ type Props = {
 };
 
 function useSavedSurvey() {
-  return useStudySelector().survey;
+  const survey = useStudySelector().survey;
+  return Object.keys(survey || {}).length > 0 ? survey : null;
 }
 
 export default function ResponseBlock({
@@ -128,6 +129,7 @@ export default function ResponseBlock({
     trialId,
   ]);
 
+  console.log('Saved', savedSurvey);
   console.log(answerValidator.values);
   console.log(answerValidator.isValid());
 
@@ -136,10 +138,12 @@ export default function ResponseBlock({
       {responses.map((response) => (
         <ResponseSwitcher
           key={`${response.id}-${id}`}
-          status={isSurvey ? ({ complete: true } as any) : status}
+          status={isSurvey ? ({ complete: !!savedSurvey } as any) : status}
           storedAnswer={
             isSurvey
-              ? (savedSurvey as any)[`${id}/${response.id}`]
+              ? savedSurvey
+                ? (savedSurvey as any)[`${id}/${response.id}`]
+                : null
               : storedAnswer
               ? (storedAnswer as any)[`${id}/${response.id}`]
               : null
