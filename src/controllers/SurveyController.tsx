@@ -1,26 +1,6 @@
-
-import {SurveyComponent} from '../parser/types';
-import { useCurrentStep } from '../routes';
-import {  useAppSelector } from '../store';
-
 import ResponseBlock from '../components/response/ResponseBlock';
+import { useSurveyConfig } from './utils';
 
-
-export function useSurveyConfig() {
-  const currentStep = useCurrentStep();
-
-  return useAppSelector((state) => {
-    const { config } = state.study;
-    const component = currentStep ? config?.components[currentStep] : null;
-
-    if (!config || !currentStep || component?.type !== 'survey') return null;
-
-    return config.components[currentStep] as SurveyComponent;
-  });
-}
-
-
-// current active stimuli presented to the user
 
 export default function SurveyController() {
   const config = useSurveyConfig();

@@ -1,6 +1,6 @@
 {
-    config-version: 1
-    study-metadata: {
+    configVersion: 1
+    studyMetadata: {
         title: "A demo for embedding a stimulus in a separate html file. "
         version: "pilot"
         authors: [
@@ -15,6 +15,10 @@
         ]
     }
     uiConfig: {
+        contactEmail: "test@test.com"
+        helpTextPath: "/markdowns/help.md"
+        logoPath: "/assets/revisitLogoSquare.svg"
+        withProgressBar: true
         // starts the automatic download of the data after study completion 
         autoDownloadStudy: false
         // start download after x milliseconds

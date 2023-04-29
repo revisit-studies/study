@@ -34,8 +34,8 @@ export default function AppHeader() {
 
   const [menuOpened, setMenuOpened] = useState(false);
 
-  const logoPath = studyConfig?.['study-metadata'].logoPath;
-  const withProgressBar = studyConfig?.['study-metadata'].withProgressBar;
+  const logoPath = studyConfig?.uiConfig.logoPath;
+  const withProgressBar = studyConfig?.uiConfig.withProgressBar;
 
   return (
     <Header height="70" p="md">
@@ -44,7 +44,7 @@ export default function AppHeader() {
           <Flex align="center">
             <Image maw={40} src={logoPath} alt="Study Logo" />
             <Space w="md"></Space>
-            <Title order={4}>{studyConfig?.['study-metadata'].title}</Title>
+            <Title order={4}>{studyConfig?.studyMetadata.title}</Title>
           </Flex>
         </Grid.Col>
 
@@ -56,7 +56,7 @@ export default function AppHeader() {
 
         <Grid.Col span={4}>
           <Flex align="center" justify="flex-end">
-            {studyConfig?.['study-metadata'].helpTextPath !== undefined && (
+            {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"
                 onClick={() => flagsDispatch(toggleShowHelpText())}
@@ -91,7 +91,7 @@ export default function AppHeader() {
                   component="a"
                   href={
                     studyConfig !== null
-                      ? `mailto:${studyConfig['study-metadata'].contactEmail}`
+                      ? `mailto:${studyConfig.uiConfig.contactEmail}`
                       : undefined
                   }
                   icon={<IconMail size={14} />}

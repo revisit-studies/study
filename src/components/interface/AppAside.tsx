@@ -1,5 +1,5 @@
 import { ActionIcon, Aside, Flex, Paper, ScrollArea, Space, Text } from '@mantine/core';
-import { StepsPanel } from '../../admin/StepsPanel';
+import { StepsPanel } from './StepsPanel';
 import { useFlagsSelector } from '../../store/flags';
 import { IconArrowRight } from '@tabler/icons-react';
 import { useCurrentStep } from '../../routes';

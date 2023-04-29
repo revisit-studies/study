@@ -1,28 +1,19 @@
-interface StudyMetadata {
+export interface StudyMetadata {
   title: string;
   version: string;
-  author: string[];
-  date: Date;
+  authors: string[];
+  date: string;
   description?: string;
   organization?: string[];
-  contactEmail: string;
-  helpTextPath?: string;
-  logoPath: string;
-  withProgressBar: boolean;
 }
 
+export const studyComponentTypes = ['consent', 'training', 'practice', 'attentionTest', 'trials', 'survey', 'end'] as const;
+export type StudyComponentType = typeof studyComponentTypes[number];
 export interface StudyComponent {
-  type:
-  | 'consent'
-  | 'training'
-  | 'practice'
-  | 'attention-test'
-  | 'trials'
-  | 'survey'
-  | 'end';
+  type: StudyComponentType;
 }
 
-interface StudyComponents {
+export interface StudyComponents {
   [key: string]: StudyComponent;
 }
 
@@ -31,23 +22,26 @@ export interface ConsentComponent extends StudyComponent {
   signatureRequired: boolean;
 }
 
+// TODO: add more properties to training component
 export type TrainingComponent = StudyComponent;
 
-export interface PracticeComponent extends StudyComponent {
-  response: Response[];
+export const responseBlockLocations = ['sidebar', 'aboveStimulus', 'belowStimulus'] as const;
+export type ResponseBlockLocation = typeof responseBlockLocations[number];
+
+export interface SteppedComponent extends StudyComponent {
   order: string[];
+  response: Response[];
   trials: { [key: string]: Trial };
+  nextButtonLocation?: ResponseBlockLocation;
+  instructionLocation?: ResponseBlockLocation;
 }
 
+export type PracticeComponent = SteppedComponent
+
+// TODO: add more properties to attention component
 export type AttentionComponent = StudyComponent;
 
-export interface TrialsComponent extends StudyComponent {
-  response: Response[];
-  order: string[];
-  trials: { [key: string]: Trial };
-  nextButtonLocation?: string;
-  instructionLocation?: string;
-}
+export type TrialsComponent = SteppedComponent
 
 export interface SurveyComponent extends StudyComponent {
   response: Response[];
@@ -58,12 +52,14 @@ export interface Trial {
   description: string;
   instruction: string;
   stimulus: Stimulus;
-  responses: Response[];
-  answers?: Answer[];
+  response?: Response[];
+  correctAnswer?: Answer[];
 }
 
+export const stimulusTypes = ['react-component', 'image', 'javascript', 'website'] as const;
+export type StimulusType = typeof stimulusTypes[number];
 export interface Stimulus {
-  type: 'react-component' | 'image' | 'javascript' | 'website';
+  type: StimulusType;
   path?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   style?: { [key: string]: any };
@@ -73,61 +69,52 @@ export interface Stimulus {
   correctAnswer?: any;
 }
 
-// Add types for stimulus
-
 export interface Option {
   label: string;
   value: string | number;
 }
-export type ResponseLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus';
+
+export const responseTypes = ['numerical', 'shortText', 'longText', 'likert', 'dropdown', 'slider', 'radio', 'checkbox', 'iframe'] as const;
+export type ResponseType = typeof responseTypes[number];
 export interface Response {
   id: string;
   prompt: string;
-  type:
-  | 'numerical'
-  | 'short-text'
-  | 'long-text'
-  | 'likert'
-  | 'dropdown'
-  | 'slider'
-  | 'radio'
-  | 'checkbox'
-  | 'iframe';
+  type: ResponseType;
   desc: string;
   required: boolean;
   options?: Option[];
   preset?: string;
   max?: number;
   min?: number;
-  location?: ResponseLocation;
+  location?: ResponseBlockLocation;
 }
-
-// Add types for response
 
 export interface Answer {
   id: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   answer: any;
-  'acceptable-low'?: number;
-  'acceptable-high'?: number;
-  'answer-callback'?: string;
-  'answer-regex'?: string;
+  acceptableLow?: number;
+  acceptableHigh?: number;
+  answerCallback?: string;
+  answerRegex?: string;
 }
 
-// Add types for answers
-
-type UIConfig = {
+export type UIConfig = {
+  contactEmail: string;
+  helpTextPath?: string;
+  logoPath: string;
+  withProgressBar: boolean;
   autoDownloadStudy: boolean;
-  autoDownloadTime: number;
+  autoDownloadTime?: number;
   sidebar: boolean;
 };
 
 export interface StudyConfig {
-  'config-version': number;
-  'study-metadata': StudyMetadata;
+  configVersion: number;
+  studyMetadata: StudyMetadata;
   uiConfig: UIConfig;
   components: StudyComponents;
-  sequence: string[];
+  sequence: (keyof StudyComponents)[];
 }
 
 export interface GlobalConfig {
