@@ -1,6 +1,6 @@
 {
-    config-version: 1
-    study-metadata: {
+    configVersion: 1
+    studyMetadata: {
         title: "Cleveland McGill Example"
         version: "pilot"
         authors: [
@@ -29,6 +29,8 @@
         autoDownloadStudy: true
         // start download after x milliseconds
         autoDownloadTime: 3000
+        // show left sidebar
+        sidebar: true
     }
     // components of thes study; allowable types: consent, training, practice, attentionTest, trials
     components: {

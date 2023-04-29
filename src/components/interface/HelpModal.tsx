@@ -16,9 +16,9 @@ export default function HelpModal() {
 
   useEffect(() => {
     if (!config) return;
-    if (!config['study-metadata'].helpTextPath) return;
+    if (!config.uiConfig.helpTextPath) return;
 
-    fetch(config['study-metadata'].helpTextPath)
+    fetch(config.uiConfig.helpTextPath)
       .then((response) => response.text())
       .then((text) => setHelpText(text));
   }, [config]);

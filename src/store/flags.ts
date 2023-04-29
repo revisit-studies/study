@@ -6,7 +6,7 @@ import {
   ReactReduxContextValue,
   TypedUseSelectorHook,
 } from 'react-redux';
-import { ResponseLocation } from '../parser/types';
+import { ResponseBlockLocation } from '../parser/types';
 
 type TrialRecord = Record<
   string,
@@ -51,7 +51,7 @@ const flags = createSlice({
       {
         payload,
       }: PayloadAction<{
-        location: ResponseLocation;
+        location: ResponseBlockLocation;
         trialId: string;
         status: boolean;
         answers: Record<string, any>;

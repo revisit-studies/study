@@ -36,7 +36,7 @@ export default function ResponseSwitcher({
   return (
     <>
       <Box sx={{ margin: 10, padding: 5 }}>
-        {type === 'short-text' && (
+        {type === 'shortText' && (
           <StringInput
             disabled={disabled}
             placeholder={desc}
@@ -96,7 +96,7 @@ export default function ResponseSwitcher({
             answer={ans}
           />
         )}
-        {type === 'long-text' && (
+        {type === 'longText' && (
           <TextAreaInput
             disabled={disabled}
             placeholder={desc}

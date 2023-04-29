@@ -5,7 +5,6 @@ import { createSelectorHook, Provider } from 'react-redux';
 import { Outlet, RouteObject, useParams, useRoutes } from 'react-router-dom';
 import PracticeController from '../controllers/PracticeController';
 import SurveyController from '../controllers/SurveyController';
-import TrialController from '../controllers/TrialController';
 import { parseStudyConfig } from '../parser/parser';
 import {
   GlobalConfig,
@@ -26,6 +25,7 @@ import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import Consent from './Consent';
 
 import { PREFIX } from '../App';
+import TrialController from '../controllers/TrialPracticeController';
 import AppAside from './interface/AppAside';
 import AppHeader from './interface/AppHeader';
 import AppNavBar from './interface/AppNavBar';
@@ -125,7 +125,7 @@ const elements: Record<StudyComponent['type'], ReactNode> = {
     </>
   ),
   practice: <PracticeController />,
-  'attention-test': (
+  attentionTest: (
     <>
       <div>attention test component goes here</div>
       <NextButton />
@@ -159,7 +159,7 @@ function useStudyRoutes(
       element: <NavigateWithParams to={`${enhancedSequence[0]}`} replace />,
     });
 
-    enhancedSequence.forEach((step) => {
+    enhancedSequence.forEach((step: string) => {
       const component = components[step];
       const componentType = component?.type || 'end';
 

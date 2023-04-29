@@ -4,7 +4,7 @@ import { useCallback, useEffect } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { useNextTrialId } from '../../controllers/utils';
 import {
-  ResponseLocation,
+  ResponseBlockLocation,
   SurveyComponent,
   TrialsComponent,
 } from '../../parser/types';
@@ -26,9 +26,9 @@ import ResponseSwitcher from './ResponseSwitcher';
 type Props = {
   status: TrialResult | null;
   config: TrialsComponent | SurveyComponent;
-  location: ResponseLocation;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   correctAnswer?: any;
+  location: ResponseBlockLocation;
 };
 
 function useSavedSurvey() {
@@ -95,8 +95,6 @@ export default function ResponseBlock({
   const processNext = useCallback(() => {
     if (config.type === 'survey') {
       const answer = deepCopy(answerValidator.values);
-
-      console.log(answer);
 
       appDispatch(saveSurvey(answer));
     } else {

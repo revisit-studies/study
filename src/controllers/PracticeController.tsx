@@ -11,8 +11,6 @@ export default function PracticeController() {
 
   const trial = config.trials[trialId];
 
-  console.log('Practice', config);
-
   return (
     <StimulusController key={trialId} trialId={trialId} stimulus={trial} />
   );
