@@ -1,10 +1,7 @@
-
-import {SurveyComponent} from '../parser/types';
-import { useCurrentStep } from '../routes';
-import {  useAppSelector } from '../store';
-
 import ResponseBlock from '../components/stimuli/inputcomponents/ResponseBlock';
-
+import { SurveyComponent } from '../parser/types';
+import { useCurrentStep } from '../routes';
+import { useAppSelector } from '../store';
 
 export function useSurveyConfig() {
   const currentStep = useCurrentStep();
@@ -19,18 +16,19 @@ export function useSurveyConfig() {
   });
 }
 
-
 // current active stimuli presented to the user
+
+export const SURVEY_AB_STM_RSP = 'survey_aboveStimulus';
+export const SURVEY_BLW_STM_RSP = 'survey_belowStimulus';
 
 export default function SurveyController() {
   const config = useSurveyConfig();
 
-  if (!config || !config) return null;
+  if (!config) return null;
   return (
-
-    <div key={'survey'}>
-        <ResponseBlock location='aboveStimulus'/>
-        <ResponseBlock location='belowStimulus'/>
+    <div>
+      <ResponseBlock config={config} location="aboveStimulus" status={null} />
+      <ResponseBlock config={config} location="belowStimulus" status={null} />
     </div>
   );
 }

@@ -2,7 +2,6 @@ import { useParams } from 'react-router-dom';
 import StimulusController from './StimulusController';
 import { useTrialsConfig } from './utils';
 
-
 // current active stimuli presented to the user
 
 export default function TrialController() {
@@ -11,7 +10,9 @@ export default function TrialController() {
 
   if (!trialId || !config) return null;
 
-  const trial = config.trials[trialId]; 
+  const trial = config.trials[trialId];
 
-  return <StimulusController trialId={trialId} stimulus={trial}/>;
+  return (
+    <StimulusController key={trialId} trialId={trialId} stimulus={trial} />
+  );
 }

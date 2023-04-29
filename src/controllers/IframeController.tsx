@@ -1,10 +1,10 @@
 import { useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
-import { saveTrialAnswer } from '../store';
-import { useCurrentStep } from '../routes';
 import { useParams } from 'react-router-dom';
-import { useNavigateWithParams } from '../utils/useNavigateWithParams';
+import { useCurrentStep } from '../routes';
+import { useStoreActions } from '../store';
 import { useNextStep } from '../store/hooks/useNextStep';
+import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 import { useTrialsConfig } from './utils';
 
 const PREFIX = '@REVISIT_COMMS';
@@ -23,6 +23,8 @@ const IframeController = ({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   style?: { [key: string]: any };
 }) => {
+  const { saveTrialAnswer } = useStoreActions();
+
   const iframeStyle = { ...defaultStyle, ...style };
 
   const dispatch = useDispatch();
@@ -65,7 +67,15 @@ const IframeController = ({
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [computedTo, currentStep, dispatch, iframeId, navigate, trialConfig?.type, trialId]);
+  }, [
+    computedTo,
+    currentStep,
+    dispatch,
+    iframeId,
+    navigate,
+    trialConfig?.type,
+    trialId,
+  ]);
 
   return (
     <div>

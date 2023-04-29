@@ -6,15 +6,21 @@ type inputProps = {
   placeholder: string;
   label: string;
   required: boolean;
-  answer:object;
+  answer: object;
+  disabled: boolean;
 };
 
-export default function StringInput(
-  { placeholder = '', label = '', required ,answer}: inputProps
-) {
+export default function StringInput({
+  placeholder = '',
+  label = '',
+  disabled = false,
+  required,
+  answer,
+}: inputProps) {
   return (
     <>
       <TextInput
+        disabled={disabled}
         placeholder={placeholder}
         label={label}
         radius={'md'}

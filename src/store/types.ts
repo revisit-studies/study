@@ -1,7 +1,9 @@
 import { StudyComponent, StudyConfig } from '../parser/types';
-import { store } from './index';
+import { studyStoreCreator } from './index';
 
-export type RootState = ReturnType<typeof store.getState>;
+export type RootState = ReturnType<
+  ReturnType<typeof studyStoreCreator>['store']['getState']
+>;
 
 export interface TrialResult {
   complete: boolean;
@@ -27,13 +29,13 @@ export type StudyIdentifiers = {
 
 export interface State {
   // Three identifiers given by the study platform
-  studyIdentifiers: StudyIdentifiers | null;
-  config: StudyConfig | null;
-  consent?: { signature: unknown; timestamp: number };
+  studyIdentifiers: StudyIdentifiers;
+  config: StudyConfig;
+  consent?: { signature: string; timestamp: number };
   steps: Record<string, Step>;
   practice: Record<string, TrialRecord>;
   trials: Record<string, TrialRecord>;
-  survey: Record<string, string|number>;
+  survey?: Record<string, string | number>;
+  isStudyComplete: boolean;
+  isStudyEnded: boolean;
 }
-
-

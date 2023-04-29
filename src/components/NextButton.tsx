@@ -1,5 +1,6 @@
 import { Button } from '@mantine/core';
 import { To } from 'react-router-dom';
+import { useStudyId } from '../routes';
 import { useNextStep } from '../store/hooks/useNextStep';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 
@@ -19,15 +20,16 @@ export function NextButton({
   replace = false,
 }: Props) {
   const navigate = useNavigateWithParams();
-  const computedTo = useNextStep();
+  const computedTo = `/${useStudyId()}/${useNextStep()}`;
 
   return (
-    <Button type="submit"
+    <Button
+      type="submit"
       disabled={disabled || (to === 'auto' && !computedTo)}
       onClick={async () => {
         if (process) process();
         if (to === 'auto' && computedTo) {
-          navigate(`/${computedTo}`, { replace });
+          navigate(`${computedTo}`, { replace });
         }
         if (to !== 'auto') {
           navigate(to, { replace });

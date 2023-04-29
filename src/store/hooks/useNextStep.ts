@@ -10,5 +10,7 @@ export function useNextStep() {
 
   if (!config) return null;
 
-  return steps[currentStep].next || 'end';
+  return (
+    currentStep && steps[currentStep] && (steps[currentStep].next || 'end')
+  );
 }

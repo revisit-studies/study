@@ -1,61 +1,103 @@
 import { Suspense, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 
-import { Trial} from '../parser/types';
-import { useCurrentStep } from '../routes';
+import { Trial } from '../parser/types';
 
+import ResponseBlock from '../components/stimuli/inputcomponents/ResponseBlock';
+import { resetResponseBlockValidation, useFlagsDispatch } from '../store/flags';
+import { useTrialStatus } from '../store/hooks/useTrialStatus';
 import {
-  createTrialProvenance,
   TrialProvenanceContext,
+  createTrialProvenance,
 } from '../store/trialProvenance';
 import IframeController from './IframeController';
-import ReactComponentController from './ReactComponentController';
-import ResponseBlock from '../components/stimuli/inputcomponents/ResponseBlock';
 import ImageController from './ImageController';
-import { resetResponseBlockValidation, useFlagsDispatch } from '../store/flags';
+import ReactComponentController from './ReactComponentController';
 import { useTrialsConfig } from './utils';
 
-// current active stimuli presented to the user
+export const TRL_AB_STM = 'trials_aboveStimulus';
+export const TRL_BLW_STM = 'trials_belowStimulus';
 
-export default function StimulusController({trialId, stimulus}: {trialId: string, stimulus:Trial}) {
+// current active stimuli presented to the user
+export default function StimulusController({
+  trialId,
+  stimulus,
+}: {
+  trialId: string;
+  stimulus: Trial;
+}) {
   const trialProvenance = createTrialProvenance();
   const flagStoreDispatch = useFlagsDispatch();
+  const trialStatus = useTrialStatus(trialId);
 
   const config = useTrialsConfig();
   const instructionAbove = config?.instructionLocation === 'aboveStimulus';
 
   useEffect(() => {
     flagStoreDispatch(resetResponseBlockValidation());
-  }, [flagStoreDispatch, trialId]);
+  });
+
+  console.log('ww');
 
   return (
     <div>
-      {instructionAbove && <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>}
-      <TrialProvenanceContext.Provider value={trialProvenance}>
-        <Suspense fallback={<div>Loading...</div>}>
-          <ResponseBlock location="aboveStimulus" correctAnswer={useCurrentStep().includes('practice') ? stimulus.stimulus?.correctAnswer : undefined}/>
+      {instructionAbove && (
+        <ReactMarkdown>{stimulus.instruction}</ReactMarkdown>
+      )}
 
+      <TrialProvenanceContext.Provider value={trialProvenance}>
+        {config && (
+          <ResponseBlock
+            status={trialStatus}
+            config={config}
+            location="aboveStimulus"
+            correctAnswer={
+              config.type === 'practice'
+                ? stimulus.stimulus.correctAnswer
+                : null
+            }
+          />
+        )}
+
+        <Suspense key={trialId} fallback={<div>Loading...</div>}>
           {stimulus.stimulus.type === 'website' && (
-            <IframeController
-              path={stimulus.stimulus.path}
-              style={stimulus.stimulus.style}
-            />
+            <>
+              <IframeController
+                path={stimulus.stimulus.path}
+                style={stimulus.stimulus.style}
+              />
+            </>
           )}
           {stimulus.stimulus.type === 'image' && (
-            <ImageController
-              path={stimulus.stimulus.path}
-              style={stimulus.stimulus.style}
-            />
+            <>
+              <ImageController
+                path={stimulus.stimulus.path}
+                style={stimulus.stimulus.style}
+              />
+            </>
           )}
           {stimulus.stimulus.type === 'react-component' && (
-            <ReactComponentController
-              stimulusID={trialId}
-              stimulus={stimulus.stimulus}
-            />
+            <>
+              <ReactComponentController
+                stimulusID={trialId}
+                stimulus={stimulus.stimulus}
+              />
+            </>
           )}
-
-          <ResponseBlock location="belowStimulus" correctAnswer={useCurrentStep().includes('practice') ? stimulus.stimulus?.correctAnswer : undefined}/>
         </Suspense>
+
+        {config && (
+          <ResponseBlock
+            status={trialStatus}
+            config={config}
+            location="belowStimulus"
+            correctAnswer={
+              config.type === 'practice'
+                ? stimulus.stimulus.correctAnswer
+                : null
+            }
+          />
+        )}
       </TrialProvenanceContext.Provider>
     </div>
   );

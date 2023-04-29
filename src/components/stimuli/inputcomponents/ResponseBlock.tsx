@@ -1,92 +1,188 @@
-import { ResponseLocation } from '../../../parser/types';
-import {saveSurvey, saveTrialAnswer, useAppDispatch} from '../../../store';
+import { Button, Group, Text } from '@mantine/core';
+import { useInputState } from '@mantine/hooks';
+import { useCallback, useEffect } from 'react';
+import { useLocation, useParams } from 'react-router-dom';
+import { useNextTrialId } from '../../../controllers/utils';
+import {
+  ResponseLocation,
+  SurveyComponent,
+  TrialsComponent,
+} from '../../../parser/types';
+import { useCurrentStep } from '../../../routes/index';
+import { useAppDispatch, useStoreActions } from '../../../store';
+import {
+  updateResponseBlockValidation,
+  useAggregateResponses,
+  useAreResponsesValid,
+  useFlagsDispatch,
+} from '../../../store/flags';
+import { useNextStep } from '../../../store/hooks/useNextStep';
+import { useStudySelector } from '../../../store/index';
+import { TrialResult } from '../../../store/types';
+import { deepCopy } from '../../../utils/deepCopy';
+import { NextButton } from '../../NextButton';
 import ResponseSwitcher from './ResponseSwitcher';
-import {NextButton} from '../../NextButton';
-import {Group, Text, Button} from '@mantine/core';
-import {useCurrentStep} from '../../../routes';
-import {useParams} from 'react-router-dom';
-import {useNextTrialId, useSurveyConfig, useTrialsConfig} from '../../../controllers/utils';
-import {useForm} from '@mantine/form';
-import {useState, useMemo, useEffect} from 'react';
-import { updateResponseBlockValidation, useFlagsDispatch, useFlagsSelector } from '../../../store/flags';
-import {useNextStep} from '../../../store/hooks/useNextStep';
-import {useTrialStatus} from '../../../store/hooks/useTrialStatus';
-import {useSurvey} from '../../../store/hooks/useSurvey';
-import {createAnswerField} from './utils';
+import { useAnswerField } from './utils';
 
 type Props = {
-    location: ResponseLocation;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    correctAnswer?: string | number;
+  status: TrialResult | null;
+  config: TrialsComponent | SurveyComponent;
+  location: ResponseLocation;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  correctAnswer?: any;
 };
 
-export default function ResponseBlock({ location, correctAnswer  }: Props) {
+function useSavedSurvey() {
+  return useStudySelector().survey;
+}
 
-    const trialConfig = useTrialsConfig();
-    const surveyConfig = useSurveyConfig();
-    const currentConfig = surveyConfig === null ? trialConfig : surveyConfig;
-    const type = currentConfig?.type;
-    const responses = useMemo(() => currentConfig?.response.filter((response) => (response.location === location || (response.location === undefined && location === 'belowStimulus'))) || [], [currentConfig, location]);
-    const dispatch = useAppDispatch();
-    const currentStep = useCurrentStep();
-    const nextStep = useNextStep();
-    const { trialId = null } = useParams<{ trialId: string }>();
-    const nextTrailId = useNextTrialId(trialId, type);
-    const trialStatus = useTrialStatus(trialId, type);
-    const [disableNext, setDisableNext] = useState(true);
-    const showNextButton = useMemo(() => currentConfig?.nextButtonLocation === undefined ? location === 'belowStimulus' : currentConfig.nextButtonLocation === location, [location, currentConfig]);
-    const flagStoreDispatch = useFlagsDispatch();
-    const responseBlocksValid = useFlagsSelector((state: any) => state.responseBlocksValid);
-    const answerField = createAnswerField(responses);
+export default function ResponseBlock({
+  config,
+  location,
+  correctAnswer = null,
+  status = null,
+}: Props) {
+  const { trialId = null, studyId = null } = useParams<{
+    trialId: string;
+    studyId: string;
+  }>();
+  const id = useLocation().pathname;
 
-    useEffect(() => {
-        flagStoreDispatch(updateResponseBlockValidation({ location, status: answerField.isValid() }));
-    });
+  console.log('Status', status);
 
-    const handleResponseCheck = () => {
-        setDisableNext(!disableNext);
-    };
+  const isPractice = config.type === 'practice';
+  const storedAnswer = status?.answer;
 
-    return responses.length > 0 ? (
-        <>
-            <form onSubmit={answerField.onSubmit((values) => console.log(values))}>
-            {
-                responses.map((response, index) => {
-                    return (
-                        <ResponseSwitcher key={index} answer={answerField.getInputProps(response.id)} response={response} />
-                    );
-                })
+  const responses = config.response.filter(
+    (r) =>
+      (!r.location && location === 'belowStimulus') || r.location === location
+  );
+
+  const isSurvey = config.type === 'survey';
+  const savedSurvey = useSavedSurvey();
+
+  const { saveSurvey, saveTrialAnswer } = useStoreActions();
+  const appDispatch = useAppDispatch();
+  const flagDispatch = useFlagsDispatch();
+  const answerValidator = useAnswerField(responses, id);
+  const areResponsesValid = useAreResponsesValid(id);
+  const aggregateResponses = useAggregateResponses(id);
+  const [disableNext, setDisableNext] = useInputState(!storedAnswer);
+  const currentStep = useCurrentStep();
+  const nextTrialId = useNextTrialId(trialId, config.type);
+  const nextStep = useNextStep();
+
+  const showNextBtn =
+    location === (config.nextButtonLocation || 'belowStimulus');
+
+  useEffect(() => {
+    setDisableNext(!storedAnswer);
+  }, [storedAnswer]);
+
+  useEffect(() => {
+    console.log('Send', answerValidator.values, answerValidator.isValid());
+
+    flagDispatch(
+      updateResponseBlockValidation({
+        location,
+        trialId: id,
+        status: answerValidator.isValid(),
+        answers: deepCopy(answerValidator.values),
+      })
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answerValidator.values]);
+
+  const processNext = useCallback(() => {
+    if (config.type === 'survey') {
+      const answer = deepCopy(answerValidator.values);
+
+      console.log(answer);
+
+      appDispatch(saveSurvey(answer));
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      const answer = deepCopy(aggregateResponses!);
+
+      appDispatch(
+        saveTrialAnswer({
+          trialName: currentStep,
+          trialId: trialId || 'NoID',
+          answer,
+          type: config.type,
+        })
+      );
+    }
+
+    setDisableNext(!disableNext);
+  }, [
+    aggregateResponses,
+    answerValidator.values,
+    appDispatch,
+    config.type,
+    currentStep,
+    disableNext,
+    saveSurvey,
+    saveTrialAnswer,
+    setDisableNext,
+    trialId,
+  ]);
+
+  console.log(answerValidator.values);
+  console.log(answerValidator.isValid());
+
+  return (
+    <>
+      {responses.map((response) => (
+        <ResponseSwitcher
+          key={`${response.id}-${id}`}
+          status={isSurvey ? ({ complete: true } as any) : status}
+          storedAnswer={
+            isSurvey
+              ? (savedSurvey as any)[`${id}/${response.id}`]
+              : storedAnswer
+              ? (storedAnswer as any)[`${id}/${response.id}`]
+              : null
+          }
+          answer={{
+            ...answerValidator.getInputProps(`${id}/${response.id}`, {
+              type: response.type === 'checkbox' ? 'checkbox' : 'input',
+            }),
+          }}
+          response={response}
+        />
+      ))}
+      {showNextBtn && isPractice && !disableNext && (
+        <Text>The correct answer is: {correctAnswer}</Text>
+      )}
+
+      <Group position="right" spacing="xs" mt="xl">
+        {correctAnswer && isPractice && (
+          <Button
+            onClick={setDisableNext}
+            disabled={!answerValidator.isValid()}
+          >
+            Check Answer
+          </Button>
+        )}
+        {showNextBtn && (
+          <NextButton
+            disabled={
+              isSurvey
+                ? !savedSurvey && !answerValidator.isValid()
+                : isPractice
+                ? disableNext
+                : !status?.complete && !areResponsesValid
             }
-            {!disableNext && <Text>The correct answer is: {correctAnswer}</Text>}
-            <Group position="right" spacing="xs" mt="xl">
-                {(correctAnswer !== undefined && type === 'practice') ? <Button onClick={handleResponseCheck} disabled={!answerField.isValid()}>Check Answer</Button> : null}
-                {showNextButton && 
-                    <NextButton
-                        disabled={type === 'practice' ? disableNext : !Object.values(responseBlocksValid).every((x) => x)}
-                        to={nextTrailId? `/${currentStep}/${nextTrailId}` : `/${nextStep}`}
-                        process={() => {
-                            const answer = JSON.stringify(answerField.values);
-
-                            if(type === 'survey'){
-                                dispatch(
-                                    saveSurvey(answerField.values)
-                                );
-                            }else{
-                                dispatch(
-                                    saveTrialAnswer({
-                                        trialName: currentStep,
-                                        trialId: trialId || 'NoID',
-                                        answer: answer,
-                                        type
-                                    })
-                                );
-                                setDisableNext(!disableNext);
-                            }
-
-                        }}
-                    />}
-                </Group>
-            </form>
-        </>
-    ) : null;
+            to={
+              nextTrialId
+                ? `/${studyId}/${currentStep}/${nextTrialId}`
+                : `/${studyId}/${nextStep}`
+            }
+            process={processNext}
+          />
+        )}
+      </Group>
+    </>
+  );
 }

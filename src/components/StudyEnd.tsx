@@ -1,6 +1,6 @@
 import { Button, Text } from '@mantine/core';
 import { useEffect, useState } from 'react';
-import { trrack, useAppSelector } from '../store';
+import { useAppSelector, useCreatedStore } from '../store';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 
 function download(graph: unknown, filename: string) {
@@ -16,6 +16,7 @@ function download(graph: unknown, filename: string) {
 }
 
 export function StudyEnd() {
+  const { trrack } = useCreatedStore();
   const config = useStudyConfig();
   const ids = useAppSelector((s) => s.study.studyIdentifiers);
 
@@ -41,7 +42,9 @@ export function StudyEnd() {
   if (!config || !ids) return null;
 
   const graph = trrack.graph.backend;
-  const filename = `${config['study-metadata'].title} ${ids.pid} ${ids.session_id}.json`;
+  const filename = `${config['study-metadata'].title.replace(' ', '_')}_${
+    ids.pid
+  }_${ids.session_id}.json`;
 
   if (delayCounter === 0) {
     download(graph, filename);

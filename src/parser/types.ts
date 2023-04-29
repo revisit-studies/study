@@ -13,13 +13,13 @@ interface StudyMetadata {
 
 export interface StudyComponent {
   type:
-  | 'consent'
-  | 'training'
-  | 'practice'
-  | 'attention-test'
-  | 'trials'
-  | 'survey'
-  | 'end';
+    | 'consent'
+    | 'training'
+    | 'practice'
+    | 'attention-test'
+    | 'trials'
+    | 'survey'
+    | 'end';
 }
 
 interface StudyComponents {
@@ -51,14 +51,13 @@ export interface TrialsComponent extends StudyComponent {
 
 export interface SurveyComponent extends StudyComponent {
   response: Response[];
-  nextButtonLocation: undefined;
+  nextButtonLocation?: null;
 }
 
 export interface Trial {
   description: string;
   instruction: string;
   stimulus: Stimulus;
-  responses: Response[];
   answers?: Answer[];
 }
 
@@ -84,14 +83,14 @@ export interface Response {
   id: string;
   prompt: string;
   type:
-  | 'numerical'
-  | 'short-text'
-  | 'long-text'
-  | 'likert'
-  | 'dropdown'
-  | 'slider'
-  | 'radio'
-  | 'checkbox';
+    | 'numerical'
+    | 'short-text'
+    | 'long-text'
+    | 'likert'
+    | 'dropdown'
+    | 'slider'
+    | 'radio'
+    | 'checkbox';
   desc: string;
   required: boolean;
   options?: Option[];

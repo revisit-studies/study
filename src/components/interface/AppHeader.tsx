@@ -1,6 +1,8 @@
 import {
   ActionIcon,
   Button,
+  FileButton,
+  FileInput,
   Flex,
   Grid,
   Header,
@@ -9,8 +11,14 @@ import {
   Progress,
   Space,
   Title,
+  UnstyledButton,
 } from '@mantine/core';
-import { IconDotsVertical, IconMail, IconSchema } from '@tabler/icons-react';
+import {
+  IconDotsVertical,
+  IconMail,
+  IconSchema,
+  IconUpload,
+} from '@tabler/icons-react';
 import { useState } from 'react';
 import { useCurrentStep } from '../../routes';
 import { useAppSelector } from '../../store';
@@ -26,9 +34,12 @@ export default function AppHeader() {
 
   const currentStep = useCurrentStep();
 
-  const progressBarCurrent = studyConfig !== null 
-  ? currentStep === 'end' ? 100 : studyConfig.sequence.indexOf(currentStep) 
-  : 0;
+  const progressBarCurrent =
+    studyConfig !== null
+      ? currentStep === 'end'
+        ? 100
+        : studyConfig.sequence.indexOf(currentStep)
+      : 0;
   const progressBarMax = studyConfig?.sequence.length || 0;
   const progressPercent = (progressBarCurrent / progressBarMax) * 100;
 
@@ -87,6 +98,7 @@ export default function AppHeader() {
                 >
                   Admin Mode
                 </Menu.Item>
+
                 <Menu.Item
                   component="a"
                   href={
