@@ -5,10 +5,6 @@ interface StudyMetadata {
   date: Date;
   description?: string;
   organization?: string[];
-  contactEmail: string;
-  helpTextPath?: string;
-  logoPath: string;
-  withProgressBar: boolean;
 }
 
 export interface StudyComponent {
@@ -16,7 +12,7 @@ export interface StudyComponent {
   | 'consent'
   | 'training'
   | 'practice'
-  | 'attention-test'
+  | 'attentionTest'
   | 'trials'
   | 'survey'
   | 'end';
@@ -31,23 +27,25 @@ export interface ConsentComponent extends StudyComponent {
   signatureRequired: boolean;
 }
 
+// TODO: add more properties to training component
 export type TrainingComponent = StudyComponent;
 
-export interface PracticeComponent extends StudyComponent {
-  response: Response[];
+export type ResponseBlockLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus';
+
+export interface SteppedComponent extends StudyComponent {
   order: string[];
+  response: Response[];
   trials: { [key: string]: Trial };
+  nextButtonLocation?: ResponseBlockLocation;
+  instructionLocation?: ResponseBlockLocation;
 }
 
+export type PracticeComponent = SteppedComponent
+
+// TODO: add more properties to attention component
 export type AttentionComponent = StudyComponent;
 
-export interface TrialsComponent extends StudyComponent {
-  response: Response[];
-  order: string[];
-  trials: { [key: string]: Trial };
-  nextButtonLocation?: string;
-  instructionLocation?: string;
-}
+export type TrialsComponent = SteppedComponent
 
 export interface SurveyComponent extends StudyComponent {
   response: Response[];
@@ -58,8 +56,8 @@ export interface Trial {
   description: string;
   instruction: string;
   stimulus: Stimulus;
-  responses: Response[];
-  answers?: Answer[];
+  response?: Response[];
+  correctAnswer?: Answer[];
 }
 
 export interface Stimulus {
@@ -73,20 +71,18 @@ export interface Stimulus {
   correctAnswer?: any;
 }
 
-// Add types for stimulus
-
 export interface Option {
   label: string;
   value: string | number;
 }
-export type ResponseLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus';
+
 export interface Response {
   id: string;
   prompt: string;
   type:
   | 'numerical'
-  | 'short-text'
-  | 'long-text'
+  | 'shortText'
+  | 'longText'
   | 'likert'
   | 'dropdown'
   | 'slider'
@@ -99,35 +95,35 @@ export interface Response {
   preset?: string;
   max?: number;
   min?: number;
-  location?: ResponseLocation;
+  location?: ResponseBlockLocation;
 }
-
-// Add types for response
 
 export interface Answer {
   id: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   answer: any;
-  'acceptable-low'?: number;
-  'acceptable-high'?: number;
-  'answer-callback'?: string;
-  'answer-regex'?: string;
+  acceptableLow?: number;
+  acceptableHigh?: number;
+  answerCallback?: string;
+  answerRegex?: string;
 }
 
-// Add types for answers
-
 type UIConfig = {
+  contactEmail: string;
+  helpTextPath?: string;
+  logoPath: string;
+  withProgressBar: boolean;
   autoDownloadStudy: boolean;
   autoDownloadTime: number;
   sidebar: boolean;
 };
 
 export interface StudyConfig {
-  'config-version': number;
-  'study-metadata': StudyMetadata;
+  configVersion: number;
+  studyMetadata: StudyMetadata;
   uiConfig: UIConfig;
   components: StudyComponents;
-  sequence: string[];
+  sequence: (keyof StudyComponents)[];
 }
 
 export interface GlobalConfig {

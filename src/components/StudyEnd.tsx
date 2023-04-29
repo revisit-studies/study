@@ -41,7 +41,7 @@ export function StudyEnd() {
   if (!config || !ids) return null;
 
   const graph = trrack.graph.backend;
-  const filename = `${config['study-metadata'].title} ${ids.pid} ${ids.session_id}.json`;
+  const filename = `${config.studyMetadata.title} ${ids.pid} ${ids.session_id}.json`;
 
   if (delayCounter === 0) {
     download(graph, filename);
