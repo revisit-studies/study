@@ -1,24 +1,19 @@
-interface StudyMetadata {
+export interface StudyMetadata {
   title: string;
   version: string;
-  author: string[];
-  date: Date;
+  authors: string[];
+  date: string;
   description?: string;
   organization?: string[];
 }
 
+export const studyComponentTypes = ['consent', 'training', 'practice', 'attentionTest', 'trials', 'survey', 'end'] as const;
+export type StudyComponentType = typeof studyComponentTypes[number];
 export interface StudyComponent {
-  type:
-  | 'consent'
-  | 'training'
-  | 'practice'
-  | 'attentionTest'
-  | 'trials'
-  | 'survey'
-  | 'end';
+  type: StudyComponentType;
 }
 
-interface StudyComponents {
+export interface StudyComponents {
   [key: string]: StudyComponent;
 }
 
@@ -30,7 +25,8 @@ export interface ConsentComponent extends StudyComponent {
 // TODO: add more properties to training component
 export type TrainingComponent = StudyComponent;
 
-export type ResponseBlockLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus';
+export const responseBlockLocations = ['sidebar', 'aboveStimulus', 'belowStimulus'] as const;
+export type ResponseBlockLocation = typeof responseBlockLocations[number];
 
 export interface SteppedComponent extends StudyComponent {
   order: string[];
@@ -60,8 +56,10 @@ export interface Trial {
   correctAnswer?: Answer[];
 }
 
+export const stimulusTypes = ['react-component', 'image', 'javascript', 'website'] as const;
+export type StimulusType = typeof stimulusTypes[number];
 export interface Stimulus {
-  type: 'react-component' | 'image' | 'javascript' | 'website';
+  type: StimulusType;
   path?: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   style?: { [key: string]: any };
@@ -76,19 +74,12 @@ export interface Option {
   value: string | number;
 }
 
+export const responseTypes = ['numerical', 'shortText', 'longText', 'likert', 'dropdown', 'slider', 'radio', 'checkbox', 'iframe'] as const;
+export type ResponseType = typeof responseTypes[number];
 export interface Response {
   id: string;
   prompt: string;
-  type:
-  | 'numerical'
-  | 'shortText'
-  | 'longText'
-  | 'likert'
-  | 'dropdown'
-  | 'slider'
-  | 'radio'
-  | 'checkbox'
-  | 'iframe';
+  type: ResponseType;
   desc: string;
   required: boolean;
   options?: Option[];
@@ -108,13 +99,13 @@ export interface Answer {
   answerRegex?: string;
 }
 
-type UIConfig = {
+export type UIConfig = {
   contactEmail: string;
   helpTextPath?: string;
   logoPath: string;
   withProgressBar: boolean;
   autoDownloadStudy: boolean;
-  autoDownloadTime: number;
+  autoDownloadTime?: number;
   sidebar: boolean;
 };
 
