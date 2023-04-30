@@ -28,12 +28,16 @@
     components: {
         consent: {
             type: "consent"
-            path: "/markdowns/consent.md"
+            path: "/markdowns/consent-cm.md"
             signatureRequired: true
         }
         training1: {
-            type: "training"
-        }
+            type: "training",
+            stimulus: {
+                type: "image"
+                path: "training/cm-training.png"
+            }
+        },
         practice1: {
             type: "practice"
             order: ["bubbleChart1", "stackedBarChart1", "barChart1", "pieChart1"]

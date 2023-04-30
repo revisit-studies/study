@@ -15,6 +15,7 @@ import { createRouter } from './routes';
 import { flagsContext, flagsStore } from './store/flags';
 import SurveyController from './controllers/SurveyController';
 import ConfigSwitcher from './components/ConfigSwitcher';
+import TrainingController from './controllers/TrainingController';
 
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion
@@ -34,7 +35,7 @@ const elements: Record<StudyComponent['type'], ReactNode> = {
   ),
   training: (
     <>
-      <div>training component goes here</div>
+      <TrainingController />
       <NextButton />
     </>
   ),
