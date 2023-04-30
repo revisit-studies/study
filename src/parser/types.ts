@@ -31,7 +31,9 @@ export interface ConsentComponent extends StudyComponent {
 }
 
 // TODO: add more properties to training component
-export type TrainingComponent = StudyComponent;
+export interface TrainingComponent extends StudyComponent {
+  stimulus: Stimulus;
+}
 
 export const responseBlockLocations = [
   'sidebar',
