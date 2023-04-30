@@ -4,14 +4,11 @@ import ConfigSwitcher from './components/ConfigSwitcher';
 import { Shell } from './components/Shell';
 
 import { parseGlobalConfig } from './parser/parser';
-import { GlobalConfig } from './parser/types';
-import { Nullable } from './utils/nullable';
+import { GlobalConfig, Nullable } from './parser/types';
 
 export const PREFIX = import.meta.env.PROD
   ? import.meta.env.VITE_BASE_PATH
   : '/';
-
-console.log(PREFIX);
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}configs/global.hjson`);
@@ -19,13 +16,6 @@ async function fetchGlobalConfigArray() {
 
   return parseGlobalConfig(configs);
 }
-
-export type StudyConfigJSON = {
-  title: string;
-  path: string;
-  url: string;
-  description: string;
-};
 
 export default function AppShellDemo() {
   const [globalConfig, setGlobalConfig] =

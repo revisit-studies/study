@@ -1,14 +1,14 @@
-import { Suspense, useEffect } from 'react';
+import { Suspense } from 'react';
 import ReactMarkdown from 'react-markdown';
+import ResponseBlock from '../components/response/ResponseBlock';
 
 import { Trial } from '../parser/types';
 
-import ResponseBlock from '../components/stimuli/inputcomponents/ResponseBlock';
-import { resetResponseBlockValidation, useFlagsDispatch } from '../store/flags';
+import { useFlagsDispatch } from '../store/flags';
 import { useTrialStatus } from '../store/hooks/useTrialStatus';
 import {
-  TrialProvenanceContext,
   createTrialProvenance,
+  TrialProvenanceContext,
 } from '../store/trialProvenance';
 import IframeController from './IframeController';
 import ImageController from './ImageController';
@@ -32,10 +32,6 @@ export default function StimulusController({
 
   const config = useTrialsConfig();
   const instructionAbove = config?.instructionLocation === 'aboveStimulus';
-
-  useEffect(() => {
-    flagStoreDispatch(resetResponseBlockValidation());
-  });
 
   return (
     <div>

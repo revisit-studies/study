@@ -31,7 +31,7 @@ export interface State {
   // Three identifiers given by the study platform
   studyIdentifiers: StudyIdentifiers;
   config: StudyConfig;
-  consent?: { signature: string; timestamp: number };
+  consent?: { signature?: string; timestamp: number };
   steps: Record<string, Step>;
   practice: Record<string, TrialRecord>;
   trials: Record<string, TrialRecord>;

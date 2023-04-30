@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import { useTrialsConfig } from '../../controllers/utils';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useTrialStatus } from '../../store/hooks/useTrialStatus';
-import ResponseBlock from '../stimuli/inputcomponents/ResponseBlock';
+import ResponseBlock from '../response/ResponseBlock';
 
 export default function AppNavBar() {
   const trialHasSideBar = useStudyConfig()?.uiConfig.sidebar;

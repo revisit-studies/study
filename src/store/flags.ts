@@ -34,18 +34,6 @@ const flags = createSlice({
     toggleShowHelpText: (state) => {
       state.showHelpText = !state.showHelpText;
     },
-    resetResponseBlockValidation: () => {
-      // state.responseBlocksAnswers = {
-      //   aboveStimulus: null,
-      //   belowStimulus: null,
-      //   sidebar: null,
-      // };
-      // state.responseBlocksValid = {
-      //   aboveStimulus: false,
-      //   belowStimulus: false,
-      //   sidebar: false,
-      // };
-    },
     updateResponseBlockValidation: (
       state,
       {
@@ -85,7 +73,6 @@ const flags = createSlice({
 export const {
   toggleShowAdmin,
   toggleShowHelpText,
-  resetResponseBlockValidation,
   updateResponseBlockValidation,
 } = flags.actions;
 
@@ -114,7 +101,6 @@ export function useAreResponsesValid(id: string) {
     if (id.length === 0) return true;
 
     const valid = state.trialRecord[id]?.valid;
-    console.log(valid);
 
     if (!valid) return false;
 

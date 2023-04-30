@@ -12,11 +12,8 @@ import { StudyComponent, StudyConfig } from '../parser/types';
 import { getOrSetStudyIdentifiers } from '../utils/getOrSetStudyIdentifiers';
 import { RootState, State, Step, TrialRecord } from './types';
 
-export const STUDY_ID = 'STUDY_ID';
 export const PID = 'PARTICIPANT_ID';
 export const SESSION_ID = 'SESSION_ID';
-
-export const DEBUG = true;
 
 export const FIREBASE = initFirebase();
 
@@ -27,7 +24,7 @@ function getSteps({ sequence, components }: StudyConfig): Record<string, Step> {
     steps[id] = {
       ...component,
       complete: false,
-      next: arr[idx + 1] || null,
+      next: arr[idx + 1] || 'end',
     };
   });
 

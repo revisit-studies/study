@@ -16,9 +16,6 @@ const ReactComponentController = ({
 }) => {
   const path = `../components/stimuli/${stimulus.path}`;
 
-  console.log(path);
-  console.log(modules);
-
   const StimulusComponent = (modules[path] as ModuleNamespace).default;
 
   return (

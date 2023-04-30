@@ -141,7 +141,7 @@ export interface StudyConfig {
   studyMetadata: StudyMetadata;
   uiConfig: UIConfig;
   components: StudyComponents;
-  sequence: string[]; // keyof StudyComponents here does not make sense since StudyComponents' keys are defined as strings. This causes typescript to infer them as string | number since it can coerce them
+  sequence: string[];
 }
 
 export interface GlobalConfig {
@@ -149,6 +149,13 @@ export interface GlobalConfig {
   configs: {
     [key: string]: { title: string; path: string; description: string };
   };
+}
+
+export interface StudyConfigJSON {
+  title: string;
+  path: string;
+  url: string;
+  description: string;
 }
 
 // Typecasting functions
@@ -163,3 +170,8 @@ export function isPracticeComponent(
 ): component is PracticeComponent {
   return component.type === 'practice';
 }
+
+/**
+ * Helper type to avoid writing Type | undefined | null
+ */
+export type Nullable<T> = T | undefined | null;

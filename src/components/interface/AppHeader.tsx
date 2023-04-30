@@ -1,8 +1,6 @@
 import {
   ActionIcon,
   Button,
-  FileButton,
-  FileInput,
   Flex,
   Grid,
   Header,
@@ -11,14 +9,8 @@ import {
   Progress,
   Space,
   Title,
-  UnstyledButton,
 } from '@mantine/core';
-import {
-  IconDotsVertical,
-  IconMail,
-  IconSchema,
-  IconUpload,
-} from '@tabler/icons-react';
+import { IconDotsVertical, IconMail, IconSchema } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useCurrentStep } from '../../routes';
 import { useAppSelector } from '../../store';

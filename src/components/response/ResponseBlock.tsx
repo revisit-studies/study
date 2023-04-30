@@ -26,13 +26,14 @@ import ResponseSwitcher from './ResponseSwitcher';
 type Props = {
   status: TrialResult | null;
   config: TrialsComponent | SurveyComponent;
+  location: ResponseBlockLocation;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   correctAnswer?: any;
-  location: ResponseBlockLocation;
 };
 
 function useSavedSurvey() {
-  return useStudySelector().survey;
+  const survey = useStudySelector().survey;
+  return Object.keys(survey || {}).length > 0 ? survey : null;
 }
 
 export default function ResponseBlock({
@@ -46,8 +47,6 @@ export default function ResponseBlock({
     studyId: string;
   }>();
   const id = useLocation().pathname;
-
-  console.log('Status', status);
 
   const isPractice = config.type === 'practice';
   const storedAnswer = status?.answer;
@@ -79,8 +78,6 @@ export default function ResponseBlock({
   }, [storedAnswer]);
 
   useEffect(() => {
-    console.log('Send', answerValidator.values, answerValidator.isValid());
-
     flagDispatch(
       updateResponseBlockValidation({
         location,
@@ -125,18 +122,17 @@ export default function ResponseBlock({
     trialId,
   ]);
 
-  console.log(answerValidator.values);
-  console.log(answerValidator.isValid());
-
   return (
     <>
       {responses.map((response) => (
         <ResponseSwitcher
           key={`${response.id}-${id}`}
-          status={isSurvey ? ({ complete: true } as any) : status}
+          status={isSurvey ? ({ complete: !!savedSurvey } as any) : status}
           storedAnswer={
             isSurvey
-              ? (savedSurvey as any)[`${id}/${response.id}`]
+              ? savedSurvey
+                ? (savedSurvey as any)[`${id}/${response.id}`]
+                : null
               : storedAnswer
               ? (storedAnswer as any)[`${id}/${response.id}`]
               : null

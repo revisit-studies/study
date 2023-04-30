@@ -8,6 +8,7 @@ import SurveyController from '../controllers/SurveyController';
 import { parseStudyConfig } from '../parser/parser';
 import {
   GlobalConfig,
+  Nullable,
   StudyComponent,
   StudyConfig,
   TrialsComponent,
@@ -20,7 +21,6 @@ import {
 } from '../store';
 import { flagsContext, flagsStore } from '../store/flags';
 import { NavigateWithParams } from '../utils/NavigateWithParams';
-import { Nullable } from '../utils/nullable';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import Consent from './Consent';
 

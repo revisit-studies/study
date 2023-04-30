@@ -1,5 +1,5 @@
+import { Nullable } from '../parser/types';
 import { PID, SESSION_ID } from '../store';
-import { Nullable } from './nullable';
 
 export type StudySessionInfo = {
   provenance: Nullable<string>;
@@ -12,8 +12,8 @@ export type StudySessionInfo = {
 export function getOrSetStudyIdentifiers(studyId: string) {
   const searchParams = new URLSearchParams(window.location.search);
 
-  const pid: Nullable<string> = searchParams.get(PID) || 'DEBUG';
-  const sessionId: Nullable<string> = searchParams.get(SESSION_ID) || 'DEBUG';
+  const pid = searchParams.get(PID) || 'DEBUG';
+  const sessionId = searchParams.get(SESSION_ID) || 'DEBUG';
 
   const savedSession = localStorageSession(studyId, pid, sessionId);
 
@@ -46,18 +46,20 @@ function localStorageSession(studyId: string, pId: string, sessionId: string) {
 
   if (!sessionString) setter(info);
 
+  function sync(opts: { provenance?: string; lastStepOrTrial?: string }) {
+    const previous = getter()!;
+    setter({
+      ...previous,
+      provenance: opts.provenance || previous.provenance,
+      lastStepOrTrial: opts.lastStepOrTrial || previous.lastStepOrTrial,
+    });
+  }
+
   return {
     studyId,
     pId,
     sessionId,
     info,
-    sync(opts: { provenance?: string; lastStepOrTrial?: string }) {
-      const previous = getter()!;
-      setter({
-        ...previous,
-        provenance: opts.provenance || previous.provenance,
-        lastStepOrTrial: opts.lastStepOrTrial || previous.lastStepOrTrial,
-      });
-    },
+    sync,
   };
 }
