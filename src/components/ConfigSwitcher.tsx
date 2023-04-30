@@ -6,6 +6,7 @@ import {
   Container,
   UnstyledButton,
 } from '@mantine/core';
+import {useNavigate} from 'react-router-dom';
 
 async function fetchStudyConfig(configLocation: string) {
   const config = await (await fetch(configLocation)).text();
@@ -33,8 +34,11 @@ const ConfigSwitcher = ({ onChange }: { onChange: (path: string) => void }) => {
 
   return (
       <Container size="xs" px="xs" style={{marginTop: 100, marginBottom: 100}}>
-            <Text>Select an experiment to launch:</Text>
-            {configs.map((config) => {
+        <Text>Select an experiment to launch:</Text>
+        <Text fz="sm" c={'grey'}>If you encounter error when switching between different experiments, you can clear cache
+          <a href="/"> here</a></Text>
+
+        {configs.map((config) => {
               return (
                 <UnstyledButton key={config.title} my="sm" style={{ width: '100%' }}>
                   <Card
