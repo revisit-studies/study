@@ -1,25 +1,18 @@
-import { Suspense, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
-
-import { Trial} from '../parser/types';
-import { useCurrentStep } from '../routes';
+import { Suspense } from 'react';
 
 import {
   createTrialProvenance,
   TrialProvenanceContext,
 } from '../store/trialProvenance';
 import IframeController from './IframeController';
-import ReactComponentController from './ReactComponentController';
-import ResponseBlock from '../components/response/ResponseBlock';
+
 import ImageController from './ImageController';
-import { resetResponseBlockValidation, useFlagsDispatch } from '../store/flags';
 import {useTrainingConfig, useTrialsConfig} from './utils';
 
 // current active stimuli presented to the user
 
 export default function TrainingController() {
   const trialProvenance = createTrialProvenance();
-  const flagStoreDispatch = useFlagsDispatch();
   const trainingConfig = useTrainingConfig();
   const trainingStimulus = trainingConfig?.stimulus;
   console.log(trainingConfig,'trainingConfig');
