@@ -2,6 +2,10 @@ import { Card, Container, Text, UnstyledButton } from '@mantine/core';
 import { GlobalConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
+import { useEffect, useState } from 'react';
+import { parseGlobalConfig } from '../parser/parser';
+import {useNavigate} from 'react-router-dom';
+
 
 type Props = {
   globalConfig: GlobalConfig;
