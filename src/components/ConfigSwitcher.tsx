@@ -14,6 +14,20 @@ type Props = {
 const ConfigSwitcher = ({ globalConfig }: Props) => {
   const { configs, configsList } = globalConfig;
   const navigate = useNavigateWithParams();
+  
+  useEffect(() => {
+    const queryParameters = new URLSearchParams(window.location.search);
+    const studyConfig = queryParameters.get('studyConfig');
+
+    fetchStudyConfig(`${import.meta.env.PROD ? '/revisit-study-frontend/' : '/'}configs/global.hjson`).then((cfg) => {
+      setConfigs(
+        cfg.configsList.map((configId) => ({ ...cfg.configs[configId] }))
+      );
+      if (studyConfig && cfg.configsList.includes(studyConfig)) {
+        onChange(cfg.configs[studyConfig].path);
+      }
+    });
+  }, []);
 
   return (
     <Container size="xs" px="xs" style={{ marginTop: 100, marginBottom: 100 }}>
