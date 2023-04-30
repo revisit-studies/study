@@ -7,7 +7,11 @@ import { parseGlobalConfig } from './parser/parser';
 import { GlobalConfig } from './parser/types';
 import { Nullable } from './utils/nullable';
 
-export const PREFIX = import.meta.env.PROD ? '/revisit-study-frontend/' : '/';
+export const PREFIX = import.meta.env.PROD
+  ? import.meta.env.VITE_BASE_PATH
+  : '/';
+
+console.log(PREFIX);
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}configs/global.hjson`);
@@ -37,7 +41,7 @@ export default function AppShellDemo() {
 
   return (
     globalConfig && (
-      <BrowserRouter>
+      <BrowserRouter basename={PREFIX}>
         <Routes>
           <Route
             path="/"
