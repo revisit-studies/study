@@ -1,5 +1,5 @@
 {
-  configsList: ["MVNV","cleveland", "html-demo", "html-input", "image-demo"],
+  configsList: ["MVNV","cleveland", "html-demo", "html-input", "image-demo", "survey-demo"],
   configs: {
     "MVNV": {
       title: "MVNV",
@@ -26,6 +26,10 @@
       path: "config-image-demo.hjson",
       description: "A demo for embedding a stimulus in an image file.",
     },
-
+    "survey-demo": {
+      title: "Survey Demo",
+      path: "config-survey-demo.hjson",
+      description: "A demo for supported survey types, exclude input from iframe",
+    }
   }
 }
