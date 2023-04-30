@@ -9,7 +9,7 @@
     "postinstall": "husky install"
   },
   "lint-staged": {
-    "*.{tsx,jsx,ts,js}": "yarn lint"
+    "*.{tsx,jsx,ts,js}": "yarn lint --fix"
   },
   "dependencies": {
     "@emotion/react": "^11.10.5",
