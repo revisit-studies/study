@@ -428,10 +428,10 @@
             response:[{
                             id: "q1"
                             type: "dropdown"
-                            prompt: "Do you want to take this study everyday"
+                            prompt: "Which chart do you like the most?"
                             desc: "Enter your preference"
                             // options is required for radio, checkbox,dropdown and slider in the following format.
-                            options:[{label:"Yes", value:"Yes"},{label:"Sure", value:"Sure"},{label:"Of Course", value:"Of Course"}]
+                            options:[{label:"Bar", value:"Bar"},{label:"Bubble", value:"Bubble"},{label:"Pie", value:"Pie"},{label:"Stacked Bar", value:"Stacked Bar"}]
                             required: true
                             max: 100
                             min: 0
@@ -482,14 +482,7 @@
                                 options:[{label:"Bad", value:0},{label:"Mid", value:50},{label:"Good", value:100}]
                                 required: true
                             }
-                            {
-                                id: "q7"
-                                type: "radio"
-                                prompt: "Rate how is your experience"
-                                desc: "range from 0-100"
-                                options:[{label:"Bad", value:"bad"},{label:"Mid", value:"mid"},{label:"Good", value:"good"}]
-                                required: true
-                            }
+
                         ]
         }
     }

@@ -21,7 +21,7 @@ const ConfigSwitcher = ({ onChange }: { onChange: (path: string) => void }) => {
   useEffect(() => {
     const queryParameters = new URLSearchParams(window.location.search);
     const studyConfig = queryParameters.get('studyConfig');
-  
+
     fetchStudyConfig(`${import.meta.env.PROD ? '/revisit-study-frontend/' : '/'}configs/global.hjson`).then((cfg) => {
       setConfigs(
         cfg.configsList.map((configId) => ({ ...cfg.configs[configId] }))

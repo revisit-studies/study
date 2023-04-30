@@ -39,7 +39,7 @@
                 interval: 10
             }
             response:[{
-                id: "cm-response"
+                id: "html-response"
                 type: "numerical"
                 prompt: "Your answer:"
                 desc: "Enter your answer here, range from 0 - 100"
@@ -50,7 +50,7 @@
             }]
             trials: {
                 barChart: {
-                    description: "What does the description do? "
+                    description: "description of the trial"
                     instruction:  **Question:** How many bars have a value great than 1?"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 
