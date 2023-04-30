@@ -3,7 +3,6 @@ import { BrowserRouter, Route, Routes, useParams } from 'react-router-dom';
 import ConfigSwitcher from './components/ConfigSwitcher';
 import { Shell } from './components/Shell';
 import TrainingController from './controllers/TrainingController';
-
 import { parseGlobalConfig } from './parser/parser';
 import { GlobalConfig, Nullable } from './parser/types';
 
