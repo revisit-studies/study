@@ -48,7 +48,9 @@
                 type: "iframe"
                 prompt: "Your selection shows here"
                 desc: "small description"
-                required: true
+                required: true,
+                location: 'belowStimulus'
+
             }]
             trials: {
                 barChart: {
