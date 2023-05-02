@@ -30,7 +30,7 @@ export default function AppShellDemo() {
   }, [globalConfig]);
 
   return (
-    globalConfig && (
+    globalConfig ? (
       <BrowserRouter basename={PREFIX}>
         <Routes>
           <Route
@@ -43,7 +43,7 @@ export default function AppShellDemo() {
           />
         </Routes>
       </BrowserRouter>
-    )
+    ) : null
   );
 }
 

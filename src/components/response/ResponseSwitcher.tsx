@@ -1,5 +1,5 @@
 import { Box } from '@mantine/core';
-import { Response } from '../../parser/types';
+import { Nullable, Response } from '../../parser/types';
 import { TrialResult } from '../../store/types';
 import CheckBoxInput from './CheckBoxInput';
 import DropdownInput from './DropdownInput';
