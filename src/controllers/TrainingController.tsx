@@ -1,19 +1,11 @@
-import { Suspense, useEffect } from 'react';
-import ReactMarkdown from 'react-markdown';
-import { Trial} from '../parser/types';
-import { useCurrentStep } from '../routes';
-
-
+import { Suspense } from 'react';
 import {
   createTrialProvenance,
   TrialProvenanceContext,
 } from '../store/trialProvenance';
 import IframeController from './IframeController';
-
 import ImageController from './ImageController';
-import { resetResponseBlockValidation } from '../store/flags';
-
-import {useTrainingConfig, useTrialsConfig} from './utils';
+import {useTrainingConfig} from './utils';
 
 // current active stimuli presented to the user
 

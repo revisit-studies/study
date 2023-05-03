@@ -34,6 +34,7 @@ import AppNavBar from './interface/AppNavBar';
 import HelpModal from './interface/HelpModal';
 import { NextButton } from './NextButton';
 import { StudyEnd } from './StudyEnd';
+import TrainingController from '../controllers/TrainingController';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion
 const trrackContext: any = createContext<TrrackStoreType>(undefined!);
@@ -116,31 +117,32 @@ function StepRenderer() {
 
 const elements: Record<StudyComponent['type'], ReactNode> = {
   consent: (
-    <>
-      <Consent />
-    </>
+      <>
+        <Consent />
+      </>
   ),
   training: (
-    <>
-      <div>training component goes here</div>
-      <NextButton />
-    </>
+      <>
+        <TrainingController />
+        <NextButton />
+      </>
   ),
-  practice: <TrialPracticeController />,
-  attentionTest: (
-    <>
-      <div>attention test component goes here</div>
-      <NextButton />
-    </>
+  practice:  <TrialPracticeController />,
+  'attentionTest': (
+      <>
+        <div>attention test component goes here</div>
+        <NextButton />
+      </>
   ),
-  trials: <TrialController />,
+  trials: <TrialPracticeController />,
   survey: (
-    <>
-      <SurveyController />
-    </>
+      <>
+        <SurveyController />
+      </>
   ),
   end: <StudyEnd />,
 };
+
 
 function useStudyRoutes(
   studyId: Nullable<string>,
