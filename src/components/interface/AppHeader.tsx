@@ -19,6 +19,7 @@ import {
   toggleShowHelpText,
   useFlagsDispatch,
 } from '../../store/flags';
+import { PREFIX } from '../../App';
 
 export default function AppHeader() {
   const studyConfig = useAppSelector((state) => state.study.config);
@@ -45,7 +46,7 @@ export default function AppHeader() {
       <Grid mt={-7} align="center">
         <Grid.Col span={4}>
           <Flex align="center">
-            <Image maw={40} src={logoPath} alt="Study Logo" />
+            <Image maw={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" />
             <Space w="md"></Space>
             <Title order={4}>{studyConfig?.studyMetadata.title}</Title>
           </Flex>
