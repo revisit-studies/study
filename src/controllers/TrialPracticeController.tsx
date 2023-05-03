@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom';
 import StimulusController from './StimulusController';
 import { usePracticeConfig, useTrialsConfig } from './utils';
 
-export default function TrialController() {
+export default function TrialPracticeController() {
   const { trialId = null } = useParams<{ trialId: string }>();
   const trialConfig = useTrialsConfig();
   const practiceConfig = usePracticeConfig();

@@ -15,9 +15,6 @@ import ImageController from './ImageController';
 import ReactComponentController from './ReactComponentController';
 import { useTrialsConfig } from './utils';
 
-export const TRL_AB_STM = 'trials_aboveStimulus';
-export const TRL_BLW_STM = 'trials_belowStimulus';
-
 // current active stimuli presented to the user
 export default function StimulusController({
   trialId,
@@ -27,7 +24,6 @@ export default function StimulusController({
   stimulus: Trial;
 }) {
   const trialProvenance = createTrialProvenance();
-  const flagStoreDispatch = useFlagsDispatch();
   const trialStatus = useTrialStatus(trialId);
 
   const config = useTrialsConfig();

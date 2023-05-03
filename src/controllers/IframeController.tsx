@@ -7,7 +7,6 @@ import { useNextStep } from '../store/hooks/useNextStep';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 import { useTrialsConfig } from './utils';
 
-
 const PREFIX = '@REVISIT_COMMS';
 
 const defaultStyle = {
@@ -31,7 +30,10 @@ const IframeController = ({
   const dispatch = useDispatch();
 
   // const iframeId = useMemo(() => crypto.randomUUID(), []);
-  const iframeId = useMemo(() =>  crypto.randomUUID? crypto.randomUUID() : `testID-${Date.now()}`, []);
+  const iframeId = useMemo(
+    () => (crypto.randomUUID ? crypto.randomUUID() : `testID-${Date.now()}`),
+    []
+  );
 
   const { trialId = null } = useParams<{ trialId: string }>();
 
@@ -45,16 +47,13 @@ const IframeController = ({
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       const data = e.data;
-      if (
-        typeof data === 'object' &&
-        trialId
-      ) {
+      if (typeof data === 'object' && trialId) {
         if (data.type === `${PREFIX}/ANSWERS`) {
           dispatch(
             saveTrialAnswer({
               trialName: currentStep,
               trialId,
-              answer: JSON.stringify({[trialId]: data.message}) ,
+              answer: JSON.stringify({ [trialId]: data.message }),
               type: trialConfig?.type,
             })
           );
@@ -75,6 +74,7 @@ const IframeController = ({
     navigate,
     trialConfig?.type,
     trialId,
+    saveTrialAnswer,
   ]);
 
   return (

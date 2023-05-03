@@ -3,7 +3,6 @@ import { TrrackStoreType } from '@trrack/redux';
 import { createContext, ReactNode, useEffect, useMemo, useState } from 'react';
 import { createSelectorHook, Provider } from 'react-redux';
 import { Outlet, RouteObject, useParams, useRoutes } from 'react-router-dom';
-import PracticeController from '../controllers/PracticeController';
 import SurveyController from '../controllers/SurveyController';
 import { parseStudyConfig } from '../parser/parser';
 import {
@@ -25,7 +24,10 @@ import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import Consent from './Consent';
 
 import { PREFIX } from '../App';
-import TrialController from '../controllers/TrialPracticeController';
+import {
+  default as TrialController,
+  default as TrialPracticeController,
+} from '../controllers/TrialPracticeController';
 import AppAside from './interface/AppAside';
 import AppHeader from './interface/AppHeader';
 import AppNavBar from './interface/AppNavBar';
@@ -76,7 +78,7 @@ export function Shell({ globalConfig }: Props) {
     if (!activeConfig || !studyId) return null;
 
     return studyStoreCreator(studyId, activeConfig);
-  }, [activeConfig]);
+  }, [activeConfig, studyId]);
 
   const routing = useStudyRoutes(studyId, activeConfig, storeLike);
 
@@ -124,7 +126,7 @@ const elements: Record<StudyComponent['type'], ReactNode> = {
       <NextButton />
     </>
   ),
-  practice: <PracticeController />,
+  practice: <TrialPracticeController />,
   attentionTest: (
     <>
       <div>attention test component goes here</div>
@@ -179,7 +181,7 @@ function useStudyRoutes(
               componentType === 'trials' ? (
                 <TrialController />
               ) : (
-                <PracticeController />
+                <TrialPracticeController />
               ),
           };
           stepRoutes.push(baseRoute);

@@ -75,7 +75,7 @@ export default function ResponseBlock({
 
   useEffect(() => {
     setDisableNext(!storedAnswer);
-  }, [storedAnswer]);
+  }, [setDisableNext, storedAnswer]);
 
   useEffect(() => {
     flagDispatch(
