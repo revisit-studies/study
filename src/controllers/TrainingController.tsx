@@ -5,7 +5,7 @@ import {
 } from '../store/trialProvenance';
 import IframeController from './IframeController';
 import ImageController from './ImageController';
-import {useTrainingConfig} from './utils';
+import {useTrainingConfig, useTrialsConfig} from './utils';
 
 // current active stimuli presented to the user
 

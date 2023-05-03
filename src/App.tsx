@@ -14,8 +14,6 @@ async function fetchGlobalConfigArray() {
   const configs = await globalFile.text();
   return parseGlobalConfig(configs);
 }
-
-
 export default function AppShellDemo() {
   const [globalConfig, setGlobalConfig] =
     useState<Nullable<GlobalConfig>>(null);

@@ -3,6 +3,7 @@ import { GlobalConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 
+
 type Props = {
   globalConfig: GlobalConfig;
 };
