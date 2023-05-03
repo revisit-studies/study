@@ -1,16 +1,14 @@
 import ResponseBlock from '../components/response/ResponseBlock';
 import { useSurveyConfig } from './utils';
 
-
 export default function SurveyController() {
   const config = useSurveyConfig();
 
-  if (!config || !config) return null;
+  if (!config) return null;
   return (
-
-    <div key={'survey'}>
-        <ResponseBlock location='aboveStimulus'/>
-        <ResponseBlock location='belowStimulus'/>
+    <div>
+      <ResponseBlock config={config} location="aboveStimulus" status={null} />
+      <ResponseBlock config={config} location="belowStimulus" status={null} />
     </div>
   );
 }

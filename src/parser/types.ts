@@ -7,8 +7,16 @@ export interface StudyMetadata {
   organization?: string[];
 }
 
-export const studyComponentTypes = ['consent', 'training', 'practice', 'attentionTest', 'trials', 'survey', 'end'] as const;
-export type StudyComponentType = typeof studyComponentTypes[number];
+export const studyComponentTypes = [
+  'consent',
+  'training',
+  'practice',
+  'attentionTest',
+  'trials',
+  'survey',
+  'end',
+] as const;
+export type StudyComponentType = (typeof studyComponentTypes)[number];
 export interface StudyComponent {
   type: StudyComponentType;
 }
@@ -25,8 +33,12 @@ export interface ConsentComponent extends StudyComponent {
 // TODO: add more properties to training component
 export type TrainingComponent = StudyComponent;
 
-export const responseBlockLocations = ['sidebar', 'aboveStimulus', 'belowStimulus'] as const;
-export type ResponseBlockLocation = typeof responseBlockLocations[number];
+export const responseBlockLocations = [
+  'sidebar',
+  'aboveStimulus',
+  'belowStimulus',
+] as const;
+export type ResponseBlockLocation = (typeof responseBlockLocations)[number];
 
 export interface SteppedComponent extends StudyComponent {
   order: string[];
@@ -36,16 +48,16 @@ export interface SteppedComponent extends StudyComponent {
   instructionLocation?: ResponseBlockLocation;
 }
 
-export type PracticeComponent = SteppedComponent
+export type PracticeComponent = SteppedComponent;
 
 // TODO: add more properties to attention component
 export type AttentionComponent = StudyComponent;
 
-export type TrialsComponent = SteppedComponent
+export type TrialsComponent = SteppedComponent;
 
 export interface SurveyComponent extends StudyComponent {
   response: Response[];
-  nextButtonLocation: undefined;
+  nextButtonLocation?: null;
 }
 
 export interface Trial {
@@ -56,8 +68,13 @@ export interface Trial {
   correctAnswer?: Answer[];
 }
 
-export const stimulusTypes = ['react-component', 'image', 'javascript', 'website'] as const;
-export type StimulusType = typeof stimulusTypes[number];
+export const stimulusTypes = [
+  'react-component',
+  'image',
+  'javascript',
+  'website',
+] as const;
+export type StimulusType = (typeof stimulusTypes)[number];
 export interface Stimulus {
   type: StimulusType;
   path?: string;
@@ -74,8 +91,18 @@ export interface Option {
   value: string | number;
 }
 
-export const responseTypes = ['numerical', 'shortText', 'longText', 'likert', 'dropdown', 'slider', 'radio', 'checkbox', 'iframe'] as const;
-export type ResponseType = typeof responseTypes[number];
+export const responseTypes = [
+  'numerical',
+  'shortText',
+  'longText',
+  'likert',
+  'dropdown',
+  'slider',
+  'radio',
+  'checkbox',
+  'iframe',
+] as const;
+export type ResponseType = (typeof responseTypes)[number];
 export interface Response {
   id: string;
   prompt: string;
@@ -114,7 +141,7 @@ export interface StudyConfig {
   studyMetadata: StudyMetadata;
   uiConfig: UIConfig;
   components: StudyComponents;
-  sequence: (keyof StudyComponents)[];
+  sequence: string[];
 }
 
 export interface GlobalConfig {
@@ -122,6 +149,13 @@ export interface GlobalConfig {
   configs: {
     [key: string]: { title: string; path: string; description: string };
   };
+}
+
+export interface StudyConfigJSON {
+  title: string;
+  path: string;
+  url: string;
+  description: string;
 }
 
 // Typecasting functions
@@ -136,3 +170,8 @@ export function isPracticeComponent(
 ): component is PracticeComponent {
   return component.type === 'practice';
 }
+
+/**
+ * Helper type to avoid writing Type | undefined | null
+ */
+export type Nullable<T> = T | undefined | null;

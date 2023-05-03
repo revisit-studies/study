@@ -1,8 +1,11 @@
 import { Suspense } from 'react';
-import { Stimulus } from '../parser/types';
 import { ModuleNamespace } from 'vite/types/hot';
+import { Stimulus } from '../parser/types';
 
-const modules = import.meta.glob('../components/stimuli/**/*.{mjs,js,mts,ts,jsx,tsx}', {eager: true});
+const modules = import.meta.glob(
+  '../components/stimuli/**/*.{mjs,js,mts,ts,jsx,tsx}',
+  { eager: true }
+);
 
 const ReactComponentController = ({
   stimulusID,
@@ -12,7 +15,7 @@ const ReactComponentController = ({
   stimulus: Stimulus;
 }) => {
   const path = `../components/stimuli/${stimulus.path}`;
-  console.log(path);
+
   const StimulusComponent = (modules[path] as ModuleNamespace).default;
 
   return (

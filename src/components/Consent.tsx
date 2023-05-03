@@ -1,16 +1,20 @@
 import { Button, Group, TextInput } from '@mantine/core';
-import { useEffect, useRef, useState } from 'react';
+import { useInputState } from '@mantine/hooks';
+import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 
 import { ConsentComponent } from '../parser/types';
 import { useCurrentStep } from '../routes';
-import { completeStep, useAppDispatch, useAppSelector } from '../store';
+import {
+  useAppDispatch,
+  useAppSelector,
+  useStoreActions,
+  useStudySelector,
+} from '../store';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 import { NextButton } from './NextButton';
-
 export function useConsentConfig() {
   const currentStep = useCurrentStep();
-
   return useAppSelector((state) => {
     const { config } = state.study;
 
@@ -19,9 +23,17 @@ export function useConsentConfig() {
   });
 }
 
+function useConsentStore() {
+  return useStudySelector().consent;
+}
+
 export default function Consent() {
+  const { completeStep, saveConsent } = useStoreActions();
+
+  const storedConsent = useConsentStore();
+
   const navigate = useNavigateWithParams();
-  const txtInput = useRef<HTMLInputElement>(null);
+  const [txtInput, setTxtInput] = useInputState(storedConsent?.signature || '');
   const dispatch = useAppDispatch();
 
   const [consent, setConsent] = useState<string | null>(null);
@@ -37,10 +49,6 @@ export default function Consent() {
   }, [config]);
 
   const signatureRequired = config !== null ? config.signatureRequired : false;
-  const [disableContinue, setDisableContinue] = useState(signatureRequired);
-
-  const handleTextInput = () =>
-    setDisableContinue(txtInput.current?.value.length === 0);
 
   if (!consent) return <div>Loading...</div>;
 
@@ -50,21 +58,32 @@ export default function Consent() {
       {signatureRequired && (
         <Group position="left" spacing="xs">
           <TextInput
-            ref={txtInput}
+            disabled={Boolean(storedConsent)}
+            value={txtInput}
             placeholder={'Please sign your name'}
-            onChange={handleTextInput}
+            onChange={setTxtInput}
           />
         </Group>
       )}
       <Group position="left" spacing="xs" style={{ marginTop: 10 }}>
-        <Button variant="subtle" onClick={() => navigate('/end')}>
+        <Button
+          disabled={Boolean(storedConsent)}
+          variant="subtle"
+          onClick={() => navigate('/end')}
+        >
           Deny
         </Button>
         <NextButton
-          disabled={disableContinue}
+          disabled={signatureRequired && txtInput.length === 0}
           label="Accept"
           process={() => {
             dispatch(completeStep('consent'));
+            dispatch(
+              saveConsent({
+                signature: txtInput,
+                timestamp: Date.now(),
+              })
+            );
           }}
         />
       </Group>

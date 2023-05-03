@@ -7,6 +7,7 @@ import { useAppSelector } from '../../store';
 import { TrialsComponent } from '../../parser/types';
 import { useNavigateWithParams } from '../../utils/useNavigateWithParams';
 import React from 'react';
+import { useParams } from 'react-router-dom';
 
 export default function AppAside() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -18,6 +19,10 @@ export default function AppAside() {
   const trialConfig = config as TrialsComponent;
   const tasks = trialConfig?.type === 'practice' || trialConfig?.type === 'trials' ? trialConfig.order.map((trialId) => ({...trialConfig.trials[trialId], id: trialId})) : [];
 
+  const { studyId = null } = useParams<{
+    studyId: string;
+  }>();
+  
   return showAdmin ? (
     <Aside p="md" width={{ lg: 300 }} style={{ zIndex: 0 }}>
       <StepsPanel />
@@ -31,7 +36,7 @@ export default function AppAside() {
           <Paper bg={isCorrect ? 'blue.0' : 'red.0'} radius={0} p="xl">
             <Flex>
               <Text c="gray.9"><Text span c={isCorrect ? 'blue.8' : 'orange.8'} fw={700} inherit>Task {index + 1}:</Text> {task.instruction}</Text>
-              <ActionIcon bg="white" onClick={() => navigateWithParams(`/${step}/${task.id}`)}>
+              <ActionIcon bg="white" onClick={() => navigateWithParams(`/${studyId}/${step}/${task.id}`)}>
                 <IconArrowRight size="1.125rem" />
               </ActionIcon>
             </Flex>
