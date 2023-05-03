@@ -13,12 +13,12 @@
       "WPI",
       "University of Toronto"
     ],
-    "logoPath": "/assets/revisitLogoSquare.svg"
+    "logoPath": "assets/revisitLogoSquare.svg"
   },
   "uiConfig": {
     contactEmail: "test@test.com"
-        helpTextPath: "/markdowns/help.md"
-        logoPath: "/assets/revisitLogoSquare.svg"
+        helpTextPath: "markdowns/help.md"
+        logoPath: "assets/revisitLogoSquare.svg"
         withProgressBar: true
         // starts the automatic download of the data after study completion 
     "autoDownloadStudy": false,

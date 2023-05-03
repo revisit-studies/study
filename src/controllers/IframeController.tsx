@@ -6,6 +6,7 @@ import { useStoreActions } from '../store';
 import { useNextStep } from '../store/hooks/useNextStep';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 import { useTrialsConfig } from './utils';
+import { PREFIX as BASE_PREFIX } from '../App';
 
 const PREFIX = '@REVISIT_COMMS';
 
@@ -80,7 +81,7 @@ const IframeController = ({
   return (
     <div>
       <iframe
-        src={`/html-stimuli/${path}?trialid=${trialId}`}
+        src={`${BASE_PREFIX}html-stimuli/${path}?trialid=${trialId}`}
         style={iframeStyle}
       ></iframe>
     </div>

@@ -40,7 +40,7 @@ const trrackContext: any = createContext<TrrackStoreType>(undefined!);
 export const useTrrackSelector = createSelectorHook(trrackContext);
 
 async function fetchStudyConfig(configLocation: string) {
-  const config = await (await fetch(PREFIX + configLocation)).text();
+  const config = await (await fetch(`${PREFIX}${configLocation}`)).text();
   return parseStudyConfig(config);
 }
 
