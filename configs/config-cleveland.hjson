@@ -16,7 +16,7 @@
     }
     uiConfig: {
         contactEmail: "test@test.com"
-        helpTextPath: "/markdowns/help.md"
+        helpTextPath: "markdowns/help.md"
         logoPath: "/assets/revisitLogoSquare.svg"
         withProgressBar: true
         // starts the automatic download of the data after study completion 
@@ -28,7 +28,7 @@
     components: {
         consent: {
             type: "consent"
-            path: "/markdowns/consent.md"
+            path: "markdowns/consent.md"
             signatureRequired: true
         }
         training1: {

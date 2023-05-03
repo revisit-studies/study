@@ -37,7 +37,7 @@
         // consent configuration
         consent: {
             type: "consent"
-            path: "/markdowns/consent.md"
+            path: "markdowns/consent.md"
             // is a signature filed required or not 
             signatureRequired: true
         }
