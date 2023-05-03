@@ -1,6 +1,6 @@
 {
-    config-version: 1
-    study-metadata: {
+    configVersion: 1
+    studyMetadata: {
         title: "Cleveland McGill Example"
         version: "pilot"
         authors: [
@@ -13,12 +13,12 @@
             "WPI"
             "University of Toronto"
         ]
+    }
+    uiConfig: {
         contactEmail: "test@test.com"
         helpTextPath: "/markdowns/help.md"
         logoPath: "/assets/revisitLogoSquare.svg"
         withProgressBar: true
-    }
-    uiConfig: {
         // starts the automatic download of the data after study completion 
         autoDownloadStudy: false
         // start download after x milliseconds
@@ -29,6 +29,7 @@
         consent: {
             type: "consent"
             path: "markdowns/consent.md"
+            signatureRequired: false
         }
         trials1: {
             type: "trials"
@@ -46,12 +47,12 @@
                 id: "barChart"
                 type: "iframe"
                 prompt: "Your selection shows here"
-                desc: ""
+                desc: "small description"
                 required: true
             }]
             trials: {
                 barChart: {
-                    description: ""
+                    description: "A trial for the user to click the largest bar"
                     instruction: "Click on the largest bar"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 

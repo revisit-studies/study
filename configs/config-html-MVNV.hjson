@@ -1,6 +1,6 @@
 {
-    config-version: 1
-    study-metadata: {
+    configVersion: 1
+    studyMetadata: {
         title: "MVNV Study Replication"
         version: "pilot"
         authors: [
@@ -16,6 +16,10 @@
         logoPath: "/assets/revisitLogoSquare.svg"
     }
     uiConfig: {
+        contactEmail: "test@test.com"
+        helpTextPath: "/markdowns/help.md"
+        logoPath: "/assets/revisitLogoSquare.svg"
+        withProgressBar: true
         // starts the automatic download of the data after study completion 
         autoDownloadStudy: false
         // start download after x milliseconds
@@ -41,13 +45,13 @@
                 id: "task0"
                 type: "iframe",
                 prompt: "Selected name(s) will show here",
-                desc: ""
+                desc: "small description"
                 required: true
                 location: sidebar
             }]
             trials: {
                 task0: {
-                    description: ""
+                    description: "task description"
                     instruction:  "**Question:** Find the North American with the most Tweets"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 
@@ -71,13 +75,13 @@
                 id: "task1"
                 type: "iframe",
                 prompt: "Selected name(s) will show here",
-                desc: ""
+                desc: "small description"
                 required: true
                 location: sidebar
             }]
             trials: {
                 task1: {
-                    description: ""
+                    description: "task description"
                     instruction:  "**Question:** Find the European person or institution with the least likes"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -101,13 +105,13 @@
                 id: "task2"
                 type: "iframe",
                 prompt: "Selected name(s) will show here",
-                desc: ""
+                desc: "small description"
                 required: true
                 location: sidebar
             }]
             trials: {
                 task2: {
-                    description: ""
+                    description: "task description"
                     instruction:  "**Question:** Which person has many interactions (edges) in this network, several followers, but few tweets and likes in general?"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -131,13 +135,13 @@
                 id: "task3"
                 type: "iframe",
                 prompt: "Selected name(s) will show here",
-                desc: ""
+                desc: "small description"
                 required: true
                 location: sidebar
             }]
             trials: {
                 task3: {
-                    description: "",
+                    description: "task description",
                     instruction:  "**Question:** Find all of Lane's European Neighbors",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -161,13 +165,13 @@
                 id: "task4",
                 type: "iframe",
                 prompt: "Selected name(s) will show here",
-                desc: ""
+                desc: "small description"
                 required: true
                 location: sidebar
             }]
             trials: {
                 task4: {
-                    description: "",
+                    description: "task description",
                     instruction:  "**Question:** Find all of giCentre's North American Neighbors",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -191,13 +195,13 @@
                 id: "task5",
                 type: "iframe",
                 prompt: "Selected name(s) will show here",
-                desc: ""
+                desc: "small description"
                 required: true
                 location: sidebar
             }]
             trials: {
                 task5: {
-                    description: "",
+                    description: "task description",
                     instruction:  "**Question:** Who had the most mention interactions with Jeffrey?",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -230,7 +234,7 @@
             }]
             trials: {
                 task6: {
-                    description: "",
+                    description: "task description",
                     instruction:  "**Question:** Does Alex have more mention interactions with North American or European accounts? Who does he have the most mentions interactions with?",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -254,13 +258,13 @@
                 id: "task7"
                 type: "iframe",
                 prompt: "Selected name(s) will show here",
-                desc: ""
+                desc: "small description"
                 required: true
                 location: sidebar
             }]
             trials: {
                 task7: {
-                    description: "",
+                    description: "task description",
                     instruction:  "Among all people who have interacted with both Jeffrey and Robert, who has the most followers?",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -285,7 +289,7 @@
                     id: "task8-1"
                     type: "radio"
                     prompt: "Select Answer Below"
-                    desc: ""
+                    desc: "small description"
                     options:[{label:"Mentions", value:"Mentions"},{label:"Retweets", value:"Retweets"}]
                     required: true,
                     location: sidebar
@@ -293,7 +297,7 @@
                 },
                 {
                     id: "task8-2"
-                    type: "short-text",
+                    type: "shortText",
                     prompt: "Enter Answer Below",
                     desc: "answer text"
                     required: true
@@ -302,7 +306,7 @@
             ],
             trials: {
                 task8: {
-                    description: ""
+                    description: "task description"
                     instruction:  "**Question:** What is the most common form of interaction between Evis19 and Jon? How often has this interaction happened?"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -326,13 +330,13 @@
                 id: "task9"
                 type: "iframe",
                 prompt: "Selected name(s) will show here",
-                desc: ""
+                desc: "small description"
                 required: true
                 location: sidebar
             }]
             trials: {
                 task9: {
-                    description: ""
+                    description: "task description"
                     instruction:  "**Question:** Select all of Noeska’s neighbors that are people and have more friends than followers"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -356,13 +360,13 @@
                 id: "task10"
                 type: "iframe",
                 prompt: "Selected name(s) will show here",
-                desc: ""
+                desc: "small description"
                 required: true
                 location: sidebar
             }]
             trials: {
                 task10: {
-                    description: ""
+                    description: "task description"
                     instruction:  "**Question:** Select the people who have interacted with Thomas and have more friends than followers"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -387,13 +391,13 @@
                     id: "task11"
                     type: "iframe",
                     prompt: "Selected name(s) will show here",
-                    desc: ""
+                    desc: "small description"
                     required: true
                     location: sidebar
                 },
                 {
                     id: "task11-2"
-                    type: "short-text",
+                    type: "shortText",
                     prompt: "Enter Answer Below",
                     desc: "answer text"
                     required: true
@@ -402,7 +406,7 @@
             ],
             trials: {
                 task11: {
-                    description: "",
+                    description: "task description",
                     instruction:  "**Question:** Select the people who have interacted with Thomas and have more friends than followers",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -426,7 +430,7 @@
                 id: "task12"
                 type: "iframe",
                 prompt: "Selected name(s) will show here",
-                desc: ""
+                desc: "small description"
                 required: true
                 location: sidebar
             },
@@ -434,7 +438,7 @@
                     id: "task12-1"
                     type: "radio"
                     prompt: "Select Answer Below"
-                    desc: ""
+                    desc: "small description"
                     options:[{label:"NA", value:"NA"},{label:"SA", value:"SA"},{label:"EU", value:"EU"},{label:"AS", value:"AS"}]
                     required: true,
                     location: sidebar
@@ -443,7 +447,7 @@
             ],
             trials: {
                 task12: {
-                    description: ""
+                    description: "task description"
                     instruction:  "**Question:** What is the institution on a shortest path between Lane and Rob. What is its continent of origin?"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -467,7 +471,7 @@
                 id: "task13"
                 type: "iframe",
                 prompt: "Selected name(s) will show here",
-                desc: ""
+                desc: "small description"
                 required: true
                 location: sidebar
             },
@@ -475,7 +479,7 @@
                     id: "task13-1"
                     type: "radio"
                     prompt: "Select Answer Below"
-                    desc: ""
+                    desc: "small description"
                     options:[{label:"NA", value:"NA"},{label:"SA", value:"SA"},{label:"EU", value:"EU"},{label:"AS", value:"AS"}]
                     required: true,
                     location: sidebar
@@ -483,7 +487,7 @@
                 }]
             trials: {
                 task13: {
-                    description: ""
+                    description: "task description"
                     instruction:  "**Question:** What is the institution on a shortest path between Jason and Jon. What is its continent of origin?"
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -507,13 +511,13 @@
                 id: "task14"
                 type: "iframe",
                 prompt: "Selected name(s) will show here",
-                desc: ""
+                desc: "small description"
                 required: true
                 location: sidebar
             }]
             trials: {
                 task14: {
-                    description: "",
+                    description: "task description",
                     instruction:  "**Question:** Of the North Americans who are two interactions away from Sereno, who has been on twitter the longest?",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
@@ -535,15 +539,15 @@
             subset-count: 2
             response:[{
                 id: "task15"
-                type: "long-text",
+                type: "longText",
                 prompt: "Enter Findings Below",
-                desc: ""
+                desc: "small description"
                 required: true
                 location: sidebar
             }]
             trials: {
                 task15: {
-                    description: "",
+                    description: "task description",
                     instruction:  "**Question:** Please explore the network freely and report on your findings. Is there anything surprising or particularly interesting in the network?",
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component
