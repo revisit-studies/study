@@ -3,6 +3,7 @@ import { useInputState } from '@mantine/hooks';
 import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 
+import { PREFIX } from '../App';
 import { ConsentComponent } from '../parser/types';
 import { useCurrentStep } from '../routes';
 import {
@@ -43,7 +44,7 @@ export default function Consent() {
   useEffect(() => {
     if (!config) return;
 
-    fetch(config.path)
+    fetch(`${PREFIX}${config.path}`)
       .then((response) => response.text())
       .then((text) => setConsent(text));
   }, [config]);
