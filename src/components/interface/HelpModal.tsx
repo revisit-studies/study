@@ -3,6 +3,7 @@ import { toggleShowHelpText, useFlagsDispatch, useFlagsSelector } from '../../st
 import ReactMarkdown from 'react-markdown';
 import { useAppSelector } from '../../store';
 import { useEffect, useState } from 'react';
+import { PREFIX } from '../../App';
 
 
 export default function HelpModal() {
@@ -18,7 +19,7 @@ export default function HelpModal() {
     if (!config) return;
     if (!config.uiConfig.helpTextPath) return;
 
-    fetch(config.uiConfig.helpTextPath)
+    fetch(`${PREFIX}${config.uiConfig.helpTextPath}`)
       .then((response) => response.text())
       .then((text) => setHelpText(text));
   }, [config]);
