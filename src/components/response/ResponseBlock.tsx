@@ -74,9 +74,6 @@ export default function ResponseBlock({
   const showNextBtn =
     location === (config.nextButtonLocation || 'belowStimulus');
 
-  useEffect(() => {
-    setDisableNext(!storedAnswer);
-  }, [setDisableNext, storedAnswer]);
 
   useEffect(() => {
     flagDispatch(
