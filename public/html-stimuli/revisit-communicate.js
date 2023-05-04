@@ -18,6 +18,17 @@
     );
   };
 
+  let onDataReceiveCallback = null;
+
+  window.addEventListener('message', function (e) {
+    const data = e.data;
+    if (typeof data === 'object' && id === data.iframeId) {
+      if (data.type === `${PREFIX}/STUDY_DATA` && onDataReceiveCallback) {
+        onDataReceiveCallback(data.message);
+      }
+    }
+  });
+
   window.Revisit = {
     postAnswers: (answers) => {
       sendMessage("ANSWERS", answers);
@@ -32,5 +43,23 @@
         documentWidth: document.documentElement.scrollWidth,
       });
     },
+    // Inform Revisit that the stimuli is ready in the iframe.
+    postReady: () => {
+      sendMessage('READY', {
+        documentHeight: document.documentElement.scrollHeight,
+        documentWidth: document.documentElement.scrollWidth,
+      });
+    },
+    onDataReceive: (fn) => {
+      onDataReceiveCallback = fn;
+    },
   };
+
+  window.addEventListener(
+    'load',
+    function () {
+      sendMessage('WINDOW_READY');
+    },
+    false
+  );
 })();
