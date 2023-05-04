@@ -285,7 +285,8 @@
     bareBonesGraph.links.push({'source':newGraph.nodes.indexOf(source),'target':newGraph.nodes.indexOf(target),'id':i});
   });
     
-
+  // Inform revisit that the stimuli is loaded.
+  Revisit.postReady();
   // saveToFile(bareBonesGraph,'layoutGraph.json')
   
 })();
