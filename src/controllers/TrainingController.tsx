@@ -20,10 +20,7 @@ export default function TrainingController() {
       <TrialProvenanceContext.Provider value={trialProvenance}>
         <Suspense fallback={<div>Loading...</div>}>
           {trainingStimulus && trainingStimulus.type === 'website' && (
-            <IframeController
-              path={trainingStimulus.path}
-              style={trainingStimulus.style}
-            />
+            <IframeController stimulus={trainingStimulus} />
           )}
           {trainingStimulus && trainingStimulus.type === 'image' && (
             <ImageController

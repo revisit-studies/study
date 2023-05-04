@@ -52,10 +52,7 @@ export default function StimulusController({
         <Suspense key={trialId} fallback={<div>Loading...</div>}>
           {stimulus.stimulus.type === 'website' && (
             <>
-              <IframeController
-                path={stimulus.stimulus.path}
-                style={stimulus.stimulus.style}
-              />
+              <IframeController stimulus={stimulus.stimulus} />
             </>
           )}
           {stimulus.stimulus.type === 'image' && (
