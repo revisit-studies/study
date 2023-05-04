@@ -1191,7 +1191,6 @@ async function loadTasks(visType, tasksType, taskNum) {
       return task;
     });
 
-    console.log('setting new task order', taskOrder);
 
     if (!taskNum){
       setCookie('taskOrder',taskOrder);
@@ -1278,7 +1277,6 @@ async function loadTasks(visType, tasksType, taskNum) {
       adjMatrix: ['css/adjMatrix/adj-matrix.css']
     };
 
-    console.log(vis);
     // //   dynamically load only js/css relevant to the vis approach being used;
     const loadAllScripts = async () => {
       return await Promise.all(
@@ -1307,7 +1305,6 @@ async function loadTasks(visType, tasksType, taskNum) {
 
 //function that loads in a .js script tag and only resolves the promise once the script is fully loaded
 function loadScript(url, callback) {
-  console.log(provenance);
 
   return new Promise(function(resolve, reject) {
     var script = document.createElement('script');

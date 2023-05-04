@@ -81,11 +81,12 @@ const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
                   saveTrialAnswer({
                       trialName: currentStep,
                       trialId,
-                      answer: JSON.stringify({ [`/${studyId}/${currentStep}/${trialId}/${trialId}`]: data.message }),
+                      answer: { [`/${studyId}/${currentStep}/${trialId}/${trialId}`]: data.message },
                       type: trialConfig?.type,
                   })
               );
             break;
+
         }
       }
     };
