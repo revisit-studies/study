@@ -1,6 +1,6 @@
 import { Button, Group, Text } from '@mantine/core';
 import { useInputState } from '@mantine/hooks';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { useNextTrialId } from '../../controllers/utils';
 import {
@@ -66,6 +66,7 @@ export default function ResponseBlock({
   const areResponsesValid = useAreResponsesValid(id);
   const aggregateResponses = useAggregateResponses(id);
   const [disableNext, setDisableNext] = useInputState(!storedAnswer);
+  const [checkClicked, setCheckClicked] = useState(false);
   const currentStep = useCurrentStep();
   const nextTrialId = useNextTrialId(trialId, config.type);
   const nextStep = useNextStep();
@@ -145,14 +146,14 @@ export default function ResponseBlock({
           response={response}
         />
       ))}
-      {showNextBtn && isPractice && !disableNext && (
+      {showNextBtn && isPractice && checkClicked && (
         <Text>The correct answer is: {correctAnswer}</Text>
       )}
 
       <Group position="right" spacing="xs" mt="xl">
-        {correctAnswer && isPractice && (
+        {correctAnswer && isPractice && showNextBtn && (
           <Button
-            onClick={setDisableNext}
+            onClick={() => setCheckClicked(true)}
             disabled={!answerValidator.isValid()}
           >
             Check Answer
@@ -163,9 +164,9 @@ export default function ResponseBlock({
             disabled={
               isSurvey
                 ? !savedSurvey && !answerValidator.isValid()
-                : isPractice
-                ? disableNext
-                : !status?.complete && !areResponsesValid
+                : (isPractice
+                ? !checkClicked
+                : !status?.complete && !areResponsesValid)
             }
             to={
               nextTrialId
