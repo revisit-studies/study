@@ -74,6 +74,10 @@ export default function ResponseBlock({
   const showNextBtn =
     location === (config.nextButtonLocation || 'belowStimulus');
 
+  // useEffect(()=>{
+  //   console.log(storedAnswer, "stored answer in block")
+  //
+  // },[storedAnswer])
 
   useEffect(() => {
     flagDispatch(
@@ -105,6 +109,8 @@ export default function ResponseBlock({
             type: config.type,
           })
         );
+
+    
     }
 
     setDisableNext(!disableNext);
@@ -123,6 +129,19 @@ export default function ResponseBlock({
     trialId,
   ]);
 
+  const decodeIframeAnswer = () => {
+    if(!storedAnswer) return [];
+    try {
+      console.log(storedAnswer, 'answer');
+      const AnswerObj = storedAnswer ? JSON.parse(storedAnswer.toString()) : {};
+      const AnswerArr = Object.values(AnswerObj)[0];
+      return AnswerArr;
+    }
+    catch(e){
+      return [];
+    }
+  };
+
   return (
     <>
       {responses.map((response) => (
@@ -134,7 +153,9 @@ export default function ResponseBlock({
               ? savedSurvey
                 ? (savedSurvey as any)[`${id}/${response.id}`]
                 : null
-              : storedAnswer
+              : response.type === 'iframe' ? decodeIframeAnswer()
+                    :
+                storedAnswer
               ? (storedAnswer as any)[`${id}/${response.id}`]
               : null
           }

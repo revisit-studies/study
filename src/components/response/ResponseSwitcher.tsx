@@ -31,7 +31,6 @@ export default function ResponseSwitcher({
   if (!type) return null;
 
   const ans: any = storedAnswer ? { value: storedAnswer } : answer;
-
   return (
     <>
       <Box sx={{ margin: 10, padding: 5 }}>
@@ -118,7 +117,7 @@ export default function ResponseSwitcher({
           <IframeInput
             title={prompt}
             desc={desc}
-            answer={answer.value}
+            answer={storedAnswer}
             required={required}
           />
         )}

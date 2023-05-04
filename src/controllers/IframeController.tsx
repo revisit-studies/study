@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { useCurrentStep } from '../routes';
-import { useStoreActions } from '../store';
+import {useCurrentStep, useStudyId} from '../routes';
+import {useAppDispatch, useStoreActions} from '../store';
 import { useNextStep } from '../store/hooks/useNextStep';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 import { useTrialsConfig } from './utils';
@@ -35,6 +35,7 @@ const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
   );
 
   const { trialId = null } = useParams<{ trialId: string }>();
+  const appDispatch = useAppDispatch();
 
   // navigation
   const currentStep = useCurrentStep();
@@ -42,6 +43,8 @@ const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
   const computedTo = useNextStep();
 
   const trialConfig = useTrialsConfig();
+  const studyId = useStudyId();
+
 
   const sendMessage = useCallback(
     (tag: string, message: unknown) => {
@@ -74,14 +77,14 @@ const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
             }
             break;
           case `${PREFIX}/ANSWERS`:
-            dispatch(
-              saveTrialAnswer({
-                trialName: currentStep,
-                trialId,
-                answer: JSON.stringify({ [trialId]: data.message }),
-                type: trialConfig?.type,
-              })
-            );
+              appDispatch(
+                  saveTrialAnswer({
+                      trialName: currentStep,
+                      trialId,
+                      answer: JSON.stringify({ [`/${studyId}/${currentStep}/${trialId}/${trialId}`]: data.message }),
+                      type: trialConfig?.type,
+                  })
+              );
             break;
         }
       }
