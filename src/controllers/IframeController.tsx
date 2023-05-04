@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { useCurrentStep } from '../routes';
@@ -30,7 +30,8 @@ const IframeController = ({
 
   const dispatch = useDispatch();
 
-  // const iframeId = useMemo(() => crypto.randomUUID(), []);
+  const ref = useRef<HTMLIFrameElement>(null);
+
   const iframeId = useMemo(
     () => (crypto.randomUUID ? crypto.randomUUID() : `testID-${Date.now()}`),
     []
@@ -48,7 +49,7 @@ const IframeController = ({
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       const data = e.data;
-      if (typeof data === 'object' && trialId) {
+      if (typeof data === 'object' && trialId && iframeId === data.iframeId) {
         if (data.type === `${PREFIX}/ANSWERS`) {
           dispatch(
             saveTrialAnswer({
@@ -58,8 +59,10 @@ const IframeController = ({
               type: trialConfig?.type,
             })
           );
-
-          // navigate(`/${computedTo}`, { replace: false });
+        } else if (data.type === `${PREFIX}/READY`) {
+          if (ref.current) {
+            ref.current.style.height = `${data.message.documentHeight}px`;
+          }
         }
       }
     };
@@ -75,13 +78,15 @@ const IframeController = ({
     navigate,
     trialConfig?.type,
     trialId,
+    ref,
     saveTrialAnswer,
   ]);
 
   return (
     <div>
       <iframe
-        src={`${BASE_PREFIX}html-stimuli/${path}?trialid=${trialId}`}
+        ref={ref}
+        src={`${BASE_PREFIX}html-stimuli/${path}?trialid=${trialId}&id=${iframeId}`}
         style={iframeStyle}
       ></iframe>
     </div>
