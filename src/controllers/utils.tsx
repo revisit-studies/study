@@ -1,4 +1,4 @@
-import { PracticeComponent, SurveyComponent, TrialsComponent } from '../parser/types';
+import {PracticeComponent, SurveyComponent, TrainingComponent, TrialsComponent} from '../parser/types';
 import { useCurrentStep } from '../routes';
 import { useAppSelector } from '../store';
 import { StudyComponent } from '../parser/types';
@@ -39,6 +39,19 @@ export function useSurveyConfig() {
     if (!config || !currentStep || !['survey'].includes(component?.type || '')) return null;
 
     return config.components[currentStep] as SurveyComponent;
+  });
+}
+
+export function useTrainingConfig() {
+  const currentStep = useCurrentStep();
+
+  return useAppSelector((state) => {
+    const { config } = state.study;
+    const component = currentStep ? config?.components[currentStep] : null;
+
+    if (!config || !currentStep || !['training'].includes(component?.type || '')) return null;
+
+    return config.components[currentStep] as TrainingComponent;
   });
 }
 

@@ -2,7 +2,6 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes, useParams } from 'react-router-dom';
 import ConfigSwitcher from './components/ConfigSwitcher';
 import { Shell } from './components/Shell';
-
 import { parseGlobalConfig } from './parser/parser';
 import { GlobalConfig, Nullable } from './parser/types';
 
@@ -13,10 +12,8 @@ export const PREFIX = import.meta.env.PROD
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}configs/global.hjson`);
   const configs = await globalFile.text();
-
   return parseGlobalConfig(configs);
 }
-
 export default function AppShellDemo() {
   const [globalConfig, setGlobalConfig] =
     useState<Nullable<GlobalConfig>>(null);

@@ -2,7 +2,6 @@ import { Button, Group, TextInput } from '@mantine/core';
 import { useInputState } from '@mantine/hooks';
 import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-
 import { PREFIX } from '../App';
 import { ConsentComponent } from '../parser/types';
 import { useCurrentStep } from '../routes';
