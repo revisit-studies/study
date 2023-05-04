@@ -430,62 +430,40 @@
         post-study-survey1: {
             type: "survey"
             response:[{
-                            id: "q1"
-                            type: "dropdown"
-                            prompt: "Which chart do you like the most?"
-                            desc: "Enter your preference"
-                            // options is required for radio, checkbox,dropdown and slider in the following format.
-                            options:[{label:"Bar", value:"Bar"},{label:"Bubble", value:"Bubble"},{label:"Pie", value:"Pie"},{label:"Stacked Bar", value:"Stacked Bar"}]
-                            required: true
-                            max: 100
-                            min: 0
-                        }
-            //numerical example
-                            {
-                                id: "q2"
-                                type: "numerical"
-                                prompt: "Your age"
-                                desc: "Enter your age here, range from 0 - 100"
-                                required: true
-                                // add max and min for the allowed range
-                                max: 100
-                                min: 0
-                            }
-            //likert example
-                            {
-                                id: "q3"
-                                type: "likert"
-                                prompt: "From scale 1-5 how much do you like this study"
-                                desc: "Likert question"
-                                required: true
-                                //specify the number of likert options.
-                                preset: "5"
-                            }
-            //text example
-                            {
-                                id: "q4"
-                                type: "shortText"
-                                prompt: "Any comments?"
-                                desc: "Enter your comments here"
-                                required: true
-                            }
-             //text example
-                            {
-                                id: "q5"
-                                type: "longText"
-                                prompt: "Any long comments?"
-                                desc: "Enter your long comments here"
-                                required: true
-                            }
-              //slider example
-                            {
-                                id: "q6"
-                                type: "slider"
-                                prompt: "Rate how is your experience"
-                                desc: "range from 0-100"
-                                options:[{label:"Bad", value:0},{label:"Mid", value:50},{label:"Good", value:100}]
-                                required: true
-                            }
+                id: "q1"
+                type: "dropdown",
+                prompt: "which chart type you think is the most difficult",
+                desc: "Enter your preference"
+                // options is required for radio, checkbox,dropdown and slider in the following format.
+                options:[{label:"Bar", value:"Bar"},{label:"Stacked Bar", value:"Stacked Bar"},{label:"Bubble", value:"Bubble"},{label:"Pie", value:"Pike"}]
+                required: true
+                max: 100
+                min: 0
+            }
+                {
+                    id: "q2"
+                    type: "numerical"
+                    prompt: "Your age"
+                    desc: "Enter your age here, range from 0 - 100"
+                    required: true
+                    max: 100
+                    min: 0
+                }
+                {
+                    id: "q3"
+                    type: "likert"
+                    prompt: "From scale 1-5 how much do you like this study"
+                    desc: "Likert question"
+                    required: true
+                    preset: "5"
+                }
+                {
+                    id: "q5"
+                    type: "longText"
+                    prompt: "Any other comments?"
+                    desc: "Enter your comments here"
+                    required: true
+                }
 
                         ]
         }
