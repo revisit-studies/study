@@ -36,7 +36,7 @@
             type: "training",
             stimulus: {
                 type: "website",
-                path: "training/mvnv/mvnv-training.html"
+                path: "mvnv-study/training/mvnv-training.html"
             }
         },
         trials0: {
