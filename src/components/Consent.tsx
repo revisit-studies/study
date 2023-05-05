@@ -42,6 +42,12 @@ export default function Consent() {
   const config = useConsentConfig();
 
   useEffect(() => {
+    if (storedConsent?.signature !== txtInput) {
+      setTxtInput(storedConsent?.signature || '');
+    }
+  }, [storedConsent]);
+
+  useEffect(() => {
     if (!config) return;
 
     fetch(`${PREFIX}${config.path}`)
@@ -79,12 +85,13 @@ export default function Consent() {
           label="Accept"
           process={() => {
             dispatch(completeStep('consent'));
-            dispatch(
-              saveConsent({
-                signature: txtInput,
-                timestamp: Date.now(),
-              })
-            );
+            if (!storedConsent)
+              dispatch(
+                saveConsent({
+                  signature: txtInput,
+                  timestamp: Date.now(),
+                })
+              );
           }}
         />
       </Group>

@@ -4,6 +4,7 @@ import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { Firebase } from '../firebase/init';
 import { StudyComponent, StudyConfig } from '../parser/types';
+import { flagsStore, setTrrackExists } from './flags';
 import { RootState, State, Step, TrialRecord } from './types';
 
 export const PID = 'PARTICIPANT_ID';
@@ -80,12 +81,6 @@ export async function studyStoreCreator(
         response: PayloadAction<{ signature: string; timestamp: number }>
       ) => {
         state.consent = response.payload;
-        // addExpToUser(
-        //   FIREBASE.fStore,
-        //   state.studyIdentifiers?.study_id || 'test',
-        //   state.studyIdentifiers?.pid || 'test',
-        //   response.payload.signature as string
-        // );
       },
       saveTrialAnswer(
         state,
@@ -103,19 +98,6 @@ export async function studyStoreCreator(
             complete: true,
             answer: payload.answer,
           };
-          //add to firebase
-          const identifier = state.studyIdentifiers;
-          if (identifier) {
-            // saveTrialToFB(
-            //   FIREBASE.fStore,
-            //   identifier.pid,
-            //   identifier.study_id,
-            //   payload.trialId,
-            //   payload.trialName,
-            //   payload.answer,
-            //   payload.type
-            // );
-          }
         }
       },
       saveSurvey(
@@ -123,16 +105,6 @@ export async function studyStoreCreator(
         { payload }: PayloadAction<Record<string, string | number>>
       ) {
         state.survey = payload;
-        //add to firebase
-        const identifier = state.studyIdentifiers;
-        if (identifier) {
-          // saveSurveyToFB(
-          //   FIREBASE.fStore,
-          //   identifier.pid,
-          //   identifier.study_id,
-          //   payload
-          // );
-        }
       },
     },
   });
@@ -149,22 +121,24 @@ export async function studyStoreCreator(
   const savedSessionId =
     localStorage.getItem(__ACTIVE_SESSION) || trrack.root.id;
 
-  const saved = await initializeFirebaseSession(
+  const trrackExists = await initializeFirebaseSession(
     studyId,
     firebase,
     savedSessionId,
     trrack
   );
 
-  if (saved) {
+  if (!trrackExists) {
     localStorage.setItem(__ACTIVE_SESSION, trrack.root.id);
   }
+
+  flagsStore.dispatch(setTrrackExists(!!trrackExists));
+
+  (window as any).trrack = trrack;
 
   trrack.currentChange((trigger: any) => {
     if (trigger === 'new') {
       firebase.saveNewProvenanceNode(trrack);
-    } else {
-      throw new Error(`Got trrack trigger: ${trigger}`);
     }
   });
 
@@ -173,6 +147,24 @@ export async function studyStoreCreator(
     trrack,
     trrackStore,
     actions: studySlice.actions,
+    restoreSession() {
+      const savedSessionId = localStorage.getItem(__ACTIVE_SESSION);
+      console.log(savedSessionId);
+
+      if (!savedSessionId) return;
+
+      firebase.loadProvenance(trrack, savedSessionId);
+    },
+    startNewSession() {
+      if (!trrackExists) {
+        return;
+      }
+
+      trrackExists().then(() => {
+        console.log('saved new');
+        localStorage.setItem(__ACTIVE_SESSION, trrack.root.id);
+      });
+    },
     loadGraph(graph: string) {
       trrack.import(graph);
     },

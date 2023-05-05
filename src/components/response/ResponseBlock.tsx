@@ -93,19 +93,20 @@ export default function ResponseBlock({
     if (config.type === 'survey') {
       const answer = deepCopy(answerValidator.values);
 
-      appDispatch(saveSurvey(answer));
+      if (!savedSurvey) appDispatch(saveSurvey(answer));
     } else {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const answer = deepCopy(aggregateResponses!);
 
-      appDispatch(
-        saveTrialAnswer({
-          trialName: currentStep,
-          trialId: trialId || 'NoID',
-          answer,
-          type: config.type,
-        })
-      );
+      if (!status?.complete)
+        appDispatch(
+          saveTrialAnswer({
+            trialName: currentStep,
+            trialId: trialId || 'NoID',
+            answer,
+            type: config.type,
+          })
+        );
     }
 
     setDisableNext(!disableNext);
@@ -113,11 +114,13 @@ export default function ResponseBlock({
     aggregateResponses,
     answerValidator.values,
     appDispatch,
+    savedSurvey,
     config.type,
     currentStep,
     disableNext,
     saveSurvey,
     saveTrialAnswer,
+    status,
     setDisableNext,
     trialId,
   ]);

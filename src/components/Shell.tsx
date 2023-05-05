@@ -1,6 +1,12 @@
-import { AppShell } from '@mantine/core';
+import { AppShell, Button, Group, Modal } from '@mantine/core';
 import { TrrackStoreType } from '@trrack/redux';
-import { createContext, ReactNode, useEffect, useState } from 'react';
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import { createSelectorHook, Provider } from 'react-redux';
 import { Outlet, RouteObject, useParams, useRoutes } from 'react-router-dom';
 import SurveyController from '../controllers/SurveyController';
@@ -13,12 +19,24 @@ import {
   TrialsComponent,
 } from '../parser/types';
 import { StudyIdParam } from '../routes';
-import { MainStoreContext, StudyStore, studyStoreCreator } from '../store';
-import { flagsContext, flagsStore } from '../store/flags';
+import {
+  MainStoreContext,
+  StudyStore,
+  studyStoreCreator,
+  useCreatedStore,
+} from '../store';
+import {
+  flagsContext,
+  flagsStore,
+  setTrrackExists,
+  useFlagsDispatch,
+  useFlagsSelector,
+} from '../store/flags';
 import { NavigateWithParams } from '../utils/NavigateWithParams';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import Consent from './Consent';
 
+import { useDisclosure } from '@mantine/hooks';
 import { PREFIX } from '../App';
 import TrainingController from '../controllers/TrainingController';
 import {
@@ -119,10 +137,10 @@ export function Shell({ globalConfig }: Props) {
 
   if (!routing || !storeObj || !firebase) return null;
 
-  const { trrackStore, store } = storeObj;
+  const { trrackStore, store, trrack } = storeObj;
 
   return (
-    <FirebaseContext.Provider value={firebase}>
+    <FirebaseContext.Provider key={trrack.root.id} value={firebase}>
       <MainStoreContext.Provider value={storeObj}>
         <Provider store={trrackStore} context={trrackContext}>
           <Provider store={store}>
@@ -137,6 +155,24 @@ export function Shell({ globalConfig }: Props) {
 }
 
 function StepRenderer() {
+  const store = useCreatedStore();
+  const trrackExists = useFlagsSelector((f) => f.trrackExists);
+  const flagDispatch = useFlagsDispatch();
+  const [opened, handlers] = useDisclosure(trrackExists);
+
+  const close = useCallback(
+    (load: boolean) => {
+      if (load) {
+        store.restoreSession();
+      } else {
+        store.startNewSession();
+      }
+      flagDispatch(setTrrackExists(false));
+      handlers.close();
+    },
+    [store, flagDispatch]
+  );
+
   return (
     <AppShell
       navbarOffsetBreakpoint="sm"
@@ -145,6 +181,31 @@ function StepRenderer() {
       aside={<AppAside />}
       header={<AppHeader />}
     >
+      <Modal
+        opened={opened}
+        onClose={() => close(false)}
+        title="Load previous session"
+        centered
+      >
+        <Group mt="xl">
+          <Button
+            variant="outline"
+            onClick={() => {
+              close(true);
+            }}
+          >
+            Yes
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              close(false);
+            }}
+          >
+            Start New
+          </Button>
+        </Group>
+      </Modal>
       <HelpModal /> {/* <StudyController /> */}
       <Outlet />
     </AppShell>

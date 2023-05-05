@@ -1,7 +1,7 @@
 // Import the functions you need from the SDKs you need
 import { initializeAppCheck, ReCaptchaV3Provider } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
-import { Nodes } from '@trrack/core';
+import { isStateNode, Nodes, ProvenanceNode } from '@trrack/core';
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import { initializeApp } from 'firebase/app';
 import {
@@ -112,38 +112,47 @@ export async function initFirebase(connect = true) {
      * Returns true if provenance was saved else false
      */
     async initialize(sessionId: string, trrack: StudyProvenance) {
-      if (!this.isConnected || !studyId || !fStore) return false;
-
-      console.log(sessionId, trrack.root.id);
+      if (!this.isConnected || !studyId || !fStore) return null;
 
       const sessionsRef = getSessionRef(fStore, studyId, pid, sessionId);
       trrackRef = doc(sessionsRef, TRRACK);
       const trrackSnapshot = await getDoc(trrackRef);
 
-      if (!trrackSnapshot.exists()) {
-        console.log('saving');
+      const save = async () => {
+        if (fStore && trrackRef)
+          await saveTrrackProvenance(
+            fStore,
+            trrackRef,
+            JSON.parse(trrack.export())
+          );
+      };
 
-        await saveTrrackProvenance(
-          fStore,
-          trrackRef,
-          JSON.parse(trrack.export())
-        );
-
-        return true;
+      if (trrackSnapshot.exists()) {
+        return save;
       } else {
-        console.log('Load');
-        const saved_graph = await retrieveTrrackProvenance(fStore, trrackRef);
-        trrack.import(JSON.stringify(saved_graph));
+        await save();
+        return null;
       }
-      console.log(trrack.root.id, trrack.current.id);
+    },
+    async loadProvenance(trrack: StudyProvenance, sessionId: string) {
+      if (!this.isConnected || !studyId || !fStore) return false;
+      console.log('Loading provenance');
 
-      return false;
+      const sessionsRef = getSessionRef(fStore, studyId, pid, sessionId);
+      trrackRef = doc(sessionsRef, TRRACK);
+      const saved_graph = await retrieveTrrackProvenance(fStore, trrackRef);
+      trrack.import(JSON.stringify(saved_graph));
     },
     async saveNewProvenanceNode(trrack: StudyProvenance) {
       if (!trrackRef || !fStore)
         throw new Error('cannot find reference to trrack in firebase');
       const batch = writeBatch(fStore);
-      const current = JSON.parse(trrack.export()).nodes[trrack.current.id];
+      const current: ProvenanceNode<any, any, any> = JSON.parse(trrack.export())
+        .nodes[trrack.current.id];
+      const previousNodeId = isStateNode(current) ? current.parent : null;
+      const previous: ProvenanceNode<any, any, any> = previousNodeId
+        ? JSON.parse(trrack.export()).nodes[previousNodeId]
+        : null;
 
       batch.set(trrackRef, { current: current.id }, { merge: true });
       const nodesRef = doc(trrackRef, 'nodes', current.id);
@@ -153,6 +162,16 @@ export async function initFirebase(connect = true) {
       if (node.exists()) throw new Error('Node should not exist yet!');
 
       batch.set(nodesRef, current);
+
+      if (previous) {
+        const previousRef = doc(trrackRef, 'nodes', previous.id);
+
+        const _p = await getDoc(previousRef);
+
+        if (!_p.exists()) throw new Error('incorrect provenance history');
+
+        batch.update(previousRef, 'children', [current.id]);
+      }
 
       await batch.commit();
     },
