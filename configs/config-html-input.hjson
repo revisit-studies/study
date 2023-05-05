@@ -1,13 +1,13 @@
 {
     configVersion: 1
     studyMetadata: {
-        title: "Cleveland McGill Example"
+        title: "A demo for passing input from embedded html stimuli to reVISit"
         version: "pilot"
         authors: [
             "The reVISit Team"
         ]
         date: "2023-04-14"
-        description: "A simple experiment with ."
+        description: "A simple experiment with Html input."
         organizations: [
             "University of Utah"
             "WPI"
@@ -16,7 +16,7 @@
     }
     uiConfig: {
         contactEmail: "test@test.com"
-        helpTextPath: "markdowns/help.md"
+        helpTextPath: "html-input/help.md"
         logoPath: "assets/revisitLogoSquare.svg"
         withProgressBar: true
         // starts the automatic download of the data after study completion 
@@ -26,11 +26,6 @@
         sidebar: false
     }
     components: {
-        consent: {
-            type: "consent"
-            path: "markdowns/consent-cm.md"
-            signatureRequired: false
-        }
         trials1: {
             type: "trials"
             order: ["barChart"]
@@ -50,17 +45,14 @@
                 desc: "small description"
                 required: true,
                 location: 'belowStimulus'
-
             }]
             trials: {
                 barChart: {
                     description: "A trial for the user to click the largest bar"
                     instruction: "Click on the largest bar"
                     stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
                         type: "website"
-                        // can be a URL or a local path
-                        path: "stimuli-d3-interaction/bar-chart-interaction.html"
+                        path: "html-input/bar-chart-interaction.html"
                         // style that will be applied to iframe
                         style: {
                             height: "500px"
@@ -71,7 +63,6 @@
         }
     }
     sequence: [
-        "consent"
         "trials1"
     ]
 }

@@ -1,13 +1,13 @@
 {
   "configVersion": 1,
   "studyMetadata": {
-    "title": "A demo for embedding a stimulus in an image file.",
+    "title": "A Demo for Embedding a Stimulus as an Image.",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
     "date": "2023-04-14",
-    "description": "Demonstrating how to embed a stimulus via an image.",
+    "description": "Demonstrating how to embed a stimulus via an image, based on the study design by Padilla et al., Frontiers in Psychology, 2021.",
     "organizations": [
       "University of Utah",
       "WPI",
@@ -17,7 +17,7 @@
   },
   "uiConfig": {
     contactEmail: "test@test.com"
-        helpTextPath: "markdowns/help.md"
+        helpTextPath: "image-demo/help.md"
         logoPath: "assets/revisitLogoSquare.svg"
         withProgressBar: true
         // starts the automatic download of the data after study completion 
@@ -53,7 +53,7 @@
         "dotplot-low": {
           "description": "What does the description do? ",
           "instruction": '''
-            **Scenario**: Alpacas may need blankets Assume that
+            **Scenario**: Alpacas may need blankets. Assume that
             you work at the Red Cross, and your job is to manage
             resources for farms in Peru. In previous years, alpacas have
             died in Peru from cold temperatures. Alpacas can typically
@@ -82,7 +82,7 @@
           "stimulus": {
             "type": "image",
                         // can be a URL or a local path
-            "path": "uncertainty/uncertainty-1.png",
+            "path": "image-demo/uncertainty-1.png",
                         // style that will be applied to the image
             "style": {
               "width": "800px"
@@ -92,7 +92,7 @@
         "dotplot-medium": {
           "description": "What does the description do? ",
           "instruction": '''
-            **Scenario**: Alpacas may need blankets Assume that
+            **Scenario**: Alpacas may need blankets. Assume that
             you work at the Red Cross, and your job is to manage
             resources for farms in Peru. In previous years, alpacas have
             died in Peru from cold temperatures. Alpacas can typically
@@ -121,7 +121,7 @@
           "stimulus": {
             "type": "image",
                         // can be a URL or a local path
-            "path": "uncertainty/uncertainty-2.png",
+            "path": "image-demo/uncertainty-2.png",
                         // style that will be applied to the image
             "style": {
               "width": "800px"
@@ -131,7 +131,7 @@
         "dotplot-high": {
           "description": "What does the description do? ",
           "instruction": '''
-            **Scenario**: Alpacas may need blankets Assume that
+            **Scenario**: Alpacas may need blankets. Assume that
             you work at the Red Cross, and your job is to manage
             resources for farms in Peru. In previous years, alpacas have
             died in Peru from cold temperatures. Alpacas can typically
@@ -160,7 +160,7 @@
           "stimulus": {
             "type": "image",
                         // can be a URL or a local path
-            "path": "uncertainty/uncertainty-3.png",
+            "path": "image-demo/uncertainty-3.png",
                         // style that will be applied to the image
             "style": {
               "width": "800px"
