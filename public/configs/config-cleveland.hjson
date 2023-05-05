@@ -459,7 +459,9 @@
                     prompt: "From scale 1-5 how much do you like this study"
                     desc: "Likert question"
                     required: true
-                    preset: "5"
+                    preset: "5",
+                    leftLabel:"Dislike",
+                    rightLabel: "Like"
                 }
                 {
                     id: "q5"

@@ -1,4 +1,4 @@
-import { Group, Radio } from '@mantine/core';
+import { Group, Radio, Text } from '@mantine/core';
 import { Option } from '../../parser/types';
 
 type inputProps = {
@@ -8,6 +8,8 @@ type inputProps = {
   required: boolean;
   answer: object;
   disabled: boolean;
+  leftLabel: string;
+  rightLabel: string;
 };
 
 export default function RadioInput({
@@ -17,6 +19,8 @@ export default function RadioInput({
   radioData = [],
   answer,
   required,
+    leftLabel = '',
+    rightLabel = '',
 }: inputProps) {
   return (
     <>
@@ -28,6 +32,7 @@ export default function RadioInput({
         size={'md'}
         {...answer}
       >
+        <Text>{leftLabel}</Text>
         <Group mt="xs">
           {radioData.map((radio) => {
             return (
@@ -40,6 +45,8 @@ export default function RadioInput({
             );
           })}
         </Group>
+        <Text>{rightLabel}</Text>
+
       </Radio.Group>
     </>
   );

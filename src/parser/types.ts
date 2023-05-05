@@ -115,6 +115,8 @@ export interface Response {
   preset?: string;
   max?: number;
   min?: number;
+  leftLabel?: string;
+  rightLabel?: string;
   location?: ResponseBlockLocation;
 }
 

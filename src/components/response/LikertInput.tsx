@@ -7,6 +7,8 @@ type inputProps = {
   required: boolean;
   answer: object;
   disabled: boolean;
+  leftLabel: string;
+  rightLabel: string;
 };
 
 export default function LikertInput({
@@ -16,6 +18,8 @@ export default function LikertInput({
   likertPreset = '5',
   answer,
   required,
+    leftLabel = '',
+    rightLabel = '',
 }: inputProps) {
   const radioData = [];
   for (let i = 1; i <= +likertPreset; i++) {
@@ -31,6 +35,8 @@ export default function LikertInput({
         radioData={radioData}
         answer={answer}
         required={required}
+        leftLabel={leftLabel}
+        rightLabel={rightLabel}
       />
     </>
   );
