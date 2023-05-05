@@ -35,7 +35,10 @@
             type: "training",
             stimulus: {
                 type: "image"
-                path: "training/cm-training.png"
+                path: "training/cm-training.png",
+                style: {
+                    maxWidth: '1000px'
+                }
             }
         },
         practice1: {
