@@ -15,6 +15,7 @@ const defaultStyle = {
   minHeight: '300px',
   width: '100%',
   border: 0,
+  marginTop: '-50px'
 };
 
 const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
@@ -103,7 +104,7 @@ const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
   ]);
 
   return (
-    <div>
+    <div >
       <iframe
         ref={ref}
         src={`${BASE_PREFIX}${path}?trialid=${trialId}&id=${iframeId}`}
