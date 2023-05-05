@@ -475,3 +475,25 @@ box-shadow: rgba(0, 0, 0, 0.75) 1.5em 0 0 0, rgba(0, 0, 0, 0.75) 1.1em 1.1em 0 0
     float: left;
 
 }
+
+.horizon-card30{
+    display: inline-block;
+    width: 30%;
+    float: left;
+
+}
+
+.horizon-card70{
+    display: inline-block;
+    width: 70%;
+    float: left;
+
+}
+
+#legendDiv{
+    text-align: right;
+}
+
+#clear-selection{
+    margin-left: 30px;
+}
