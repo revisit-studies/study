@@ -28,6 +28,7 @@ export default function ResponseSwitcher({
 }: Props) {
   const { type, desc, prompt, options, required, preset, max, min, leftLabel,rightLabel } = response;
 
+  console.log(storedAnswer,'stored answer in switcher');
   if (!type) return null;
 
   const ans: any = storedAnswer ? { value: storedAnswer } : answer;

@@ -81,7 +81,7 @@ const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
                   saveTrialAnswer({
                       trialName: currentStep,
                       trialId,
-                      answer: { [`/${studyId}/${currentStep}/${trialId}/${trialId}`]: data.message },
+                      answer: { [`/${studyId}/${currentStep}/${trialId}/${data.message.taskID}`]: data.message.answer },
                       type: trialConfig?.type,
                   })
               );

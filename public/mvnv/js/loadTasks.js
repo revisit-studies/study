@@ -6,6 +6,7 @@ let onTrials = false;
 
 let participantCollection;
 
+const revisitTaskID = "iframe-task"
 // let vis;
 
 function  detectBrowser(){
@@ -247,7 +248,11 @@ d3.select('#freeFormAnswer').on('input', function() {
 //function that updates the answer in the side panel as well as in the results field in tasks
 //answer is either an array of node objects or a string from the answer box;
 function updateAnswer(answer,type) {
-  Revisit.postAnswers(answer.map((a)=>a.name));
+  const postAnswer = answer.map((a)=>a.name);
+  Revisit.postAnswers({
+    answer: postAnswer,
+    taskID: revisitTaskID
+  });
 
   //Update answer inside taskList;
   let taskObj = taskList[currentTask];

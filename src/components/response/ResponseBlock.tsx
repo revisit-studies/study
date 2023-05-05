@@ -76,6 +76,7 @@ export default function ResponseBlock({
 
   useEffect(()=>{
     console.log(storedAnswer, 'stored answer in block');
+    console.log(`${id}/iframe-task`,'path');
 
   },[storedAnswer]);
 
