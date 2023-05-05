@@ -37,7 +37,11 @@ export default function AppNavBar() {
       {trialHasSideBarResponses && (
         <Navbar.Section bg="gray.1" p="xl" grow>
           {config && (
-            <ResponseBlock status={status} config={config} location="sidebar" />
+            <ResponseBlock status={status} config={config} location="sidebar" correctAnswer={
+              config.type === 'practice' && stimulus
+                ? stimulus.stimulus.correctAnswer
+                : null
+            } />
           )}
         </Navbar.Section>
       )}

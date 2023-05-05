@@ -53,21 +53,21 @@
                 interval: 10
             }
             // nextButtonLocation: 'sidebar' | 'aboveStimulus' | 'belowStimulus'
-            nextButtonLocation: belowStimulus
-            instructionLocation: aboveStimulus
+            nextButtonLocation: sidebar
+            instructionLocation: sidebar
             response:[
                 //Can change response type
                 //text example
                 {
                     id: "cm-response2"
                     type: "numerical"
-                    prompt: "Your answer!!"
+                    prompt: "Your answer:"
                     desc: "Enter your answer here, range from 0 - 100"
                     required: true
                     // add max and min for the allowed range
                     max: 100
                     min: 0
-                    location: belowStimulus
+                    location: sidebar
                 }], 
             trials: {
                 bubbleChart1: {
