@@ -13,4 +13,5 @@ To run this demo experiment locally, you will need to install node on your compu
 * To run locally, run `yarn serve`.
 * Go to [http://localhost:8080](http://localhost:8080) to view it in your browser. The page will reload when you make changes. 
 
-
+## Example Training Image
+* Go to [https://www.figma.com/file/qjsM8tJcAJGc8QqgFrl2Gj/Stimuli?type=design&node-id=0%3A1&t=rVc6djH9MHKQOuA9-1](https://www.figma.com/file/qjsM8tJcAJGc8QqgFrl2Gj/Stimuli?type=design&node-id=0%3A1&t=rVc6djH9MHKQOuA9-1) for reference.
