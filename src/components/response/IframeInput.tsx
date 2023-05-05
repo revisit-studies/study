@@ -9,7 +9,7 @@ type inputProps = {
 export default function IframeInput({
   desc = '',
   title = '',
-  answer= [],
+  answer = [],
 }: inputProps) {
   return (
     <>
@@ -21,9 +21,9 @@ export default function IframeInput({
       </Text>
 
       <List>
-          {answer.map((item)=>{
-              return <List.Item>{item as any}</List.Item>;
-          })}
+        {answer.map((item) => {
+          return <List.Item key={item}>{item as any}</List.Item>;
+        })}
       </List>
     </>
   );

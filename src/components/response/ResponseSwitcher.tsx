@@ -26,9 +26,19 @@ export default function ResponseSwitcher({
   answer,
   storedAnswer,
 }: Props) {
-  const { type, desc, prompt, options, required, preset, max, min, leftLabel,rightLabel } = response;
+  const {
+    type,
+    desc,
+    prompt,
+    options,
+    required,
+    preset,
+    max,
+    min,
+    leftLabel,
+    rightLabel,
+  } = response;
 
-  console.log(storedAnswer,'stored answer in switcher');
   if (!type) return null;
 
   const ans: any = storedAnswer ? { value: storedAnswer } : answer;
@@ -123,7 +133,7 @@ export default function ResponseSwitcher({
           <IframeInput
             title={prompt}
             desc={desc}
-            answer={storedAnswer?storedAnswer:[]}
+            answer={storedAnswer ? storedAnswer : []}
             required={required}
           />
         )}
