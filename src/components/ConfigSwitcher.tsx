@@ -1,8 +1,11 @@
-import { Card, Container, Text, UnstyledButton } from '@mantine/core';
+import { Card, Container, Text, UnstyledButton, Image } from '@mantine/core';
 import { GlobalConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 
+export const PREFIX = import.meta.env.PROD
+  ? import.meta.env.VITE_BASE_PATH
+  : '/';
 
 type Props = {
   globalConfig: GlobalConfig;
@@ -14,6 +17,7 @@ const ConfigSwitcher = ({ globalConfig }: Props) => {
 
   return (
       <Container size="xs" px="xs" style={{ marginTop: 100, marginBottom: 100 }}>
+        <Image maw={150} mx="auto" mb="xl" radius="md" src={`${PREFIX}assets/revisitLogoSquare.svg`} alt="reVISit" />
         <Text>Select an experiment to launch:</Text>
         {configsList.map((configName) => {
           const config = configs[configName];
