@@ -476,22 +476,29 @@ box-shadow: rgba(0, 0, 0, 0.75) 1.5em 0 0 0, rgba(0, 0, 0, 0.75) 1.1em 1.1em 0 0
 
 }
 
-.horizon-card30{
+.horizon-card40{
     display: inline-block;
-    width: 30%;
+    width: 40%;
     float: left;
+    height:90px
 
 }
 
-.horizon-card70{
+.horizon-card60{
     display: inline-block;
-    width: 70%;
+    width: 60%;
     float: left;
+    height:90px
 
 }
 
 #legendDiv{
-    text-align: right;
+    text-align: center;
+}
+
+#legend-svg{
+    width:400px;
+    height:90px
 }
 
 #clear-selection{
@@ -500,4 +507,8 @@ box-shadow: rgba(0, 0, 0, 0.75) 1.5em 0 0 0, rgba(0, 0, 0, 0.75) 1.1em 1.1em 0 0
 
 .searchInput{
     max-width: 200px;
+}
+
+.search-content{
+    margin-top: 10px;
 }
