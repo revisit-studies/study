@@ -106,7 +106,7 @@ const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
     <div>
       <iframe
         ref={ref}
-        src={`${BASE_PREFIX}html-stimuli/${path}?trialid=${trialId}&id=${iframeId}`}
+        src={`${BASE_PREFIX}${path}?trialid=${trialId}&id=${iframeId}`}
         style={iframeStyle}
       ></iframe>
     </div>
