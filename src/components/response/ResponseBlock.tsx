@@ -53,7 +53,7 @@ export default function ResponseBlock({
 
   const responses = config.response.filter(
     (r) =>
-      (!r.location && location === 'belowStimulus') || r.location === location
+      r.location === location
   );
 
   const isSurvey = config.type === 'survey';
