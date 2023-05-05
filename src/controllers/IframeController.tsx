@@ -15,7 +15,7 @@ const defaultStyle = {
   minHeight: '500px',
   width: '100%',
   border: 0,
-
+  marginTop: '-50px'
 };
 
 const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
