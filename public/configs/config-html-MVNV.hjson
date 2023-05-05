@@ -7,7 +7,7 @@
             "The reVISit Team"
         ]
         date: "2023-04-26"
-        description: "A replication of adjacent matrix tasks in MVNV study "
+        description: "A replication of adjacent matrix tasks in the MVNV study "
         organizations: [
             "University of Utah"
             "WPI"
@@ -17,7 +17,7 @@
     }
     uiConfig: {
         contactEmail: "test@test.com"
-        helpTextPath: "markdowns/help.md"
+        helpTextPath: "mvnv/help.md"
         logoPath: "assets/revisitLogoSquare.svg"
         withProgressBar: true
         // starts the automatic download of the data after study completion 
@@ -27,16 +27,21 @@
         sidebar: true
     }
     components: {
+        intro: {
+            type: "consent"
+            path: "markdowns/mvnv-intro.md"
+            signatureRequired: false
+        },
         consent: {
             type: "consent"
-            path: "markdowns/consent-mvnv.md"
+            path: "mvnv/consent-mvnv.md"
             signatureRequired: true
         },
         training: {
             type: "training",
             stimulus: {
                 type: "website",
-                path: "mvnv-study/training/mvnv-training.html"
+                path: "mvnv/training/mvnv-training.html"
             }
         },
         trials0: {
@@ -61,7 +66,7 @@
                         // Allowable types: image, javascript, website, react-component 
                         type: "website"
                         // can be a URL or a local path
-                        path: "mvnv-study/index.html",
+                        path: "mvnv/index.html",
                         // style that will be applied to iframe
                         style: {
                             height: "500px"
@@ -91,7 +96,7 @@
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
                         // can be a URL or a local path
-                        path: "mvnv-study/index.html",
+                        path: "mvnv/index.html",
                         // style that will be applied to iframe
                         style: {
                             height: "500px"
@@ -121,7 +126,7 @@
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
                         // can be a URL or a local path
-                        path: "mvnv-study/index.html",
+                        path: "mvnv/index.html",
                         // style that will be applied to iframe
                         style: {
                             height: "500px"
@@ -151,7 +156,7 @@
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
                         // can be a URL or a local path
-                        path: "mvnv-study/index.html",
+                        path: "mvnv/index.html",
                         // style that will be applied to iframe
                         style: {
                             height: "500px"
@@ -181,7 +186,7 @@
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
                         // can be a URL or a local path
-                        path: "mvnv-study/index.html",
+                        path: "mvnv/index.html",
                         // style that will be applied to iframe
                         style: {
                             height: "500px"
@@ -211,7 +216,7 @@
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
                         // can be a URL or a local path
-                        path: "mvnv-study/index.html",
+                        path: "mvnv/index.html",
                         // style that will be applied to iframe
                         style: {
                             height: "500px"
@@ -244,7 +249,7 @@
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
                         // can be a URL or a local path
-                        path: "mvnv-study/index.html",
+                        path: "mvnv/index.html",
                         // style that will be applied to iframe
                         style: {
                             height: "500px"
@@ -274,7 +279,7 @@
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
                         // can be a URL or a local path
-                        path: "mvnv-study/index.html",
+                        path: "mvnv/index.html",
                         // style that will be applied to iframe
                         style: {
                             height: "500px"
@@ -316,7 +321,7 @@
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
                         // can be a URL or a local path
-                        path: "mvnv-study/index.html",
+                        path: "mvnv/index.html",
                         // style that will be applied to iframe
                         style: {
                             height: "500px"
@@ -346,7 +351,7 @@
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
                         // can be a URL or a local path
-                        path: "mvnv-study/index.html",
+                        path: "mvnv/index.html",
                         // style that will be applied to iframe
                         style: {
                             height: "500px"
@@ -376,7 +381,7 @@
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
                         // can be a URL or a local path
-                        path: "mvnv-study/index.html",
+                        path: "mvnv/index.html",
                         // style that will be applied to iframe
                         style: {
                             height: "500px"
@@ -416,7 +421,7 @@
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
                         // can be a URL or a local path
-                        path: "mvnv-study/index.html",
+                        path: "mvnv/index.html",
                         // style that will be applied to iframe
                         style: {
                             height: "500px"
@@ -457,7 +462,7 @@
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
                         // can be a URL or a local path
-                        path: "mvnv-study/index.html",
+                        path: "mvnv/index.html",
                         // style that will be applied to iframe
                         style: {
                             height: "500px"
@@ -497,7 +502,7 @@
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
                         // can be a URL or a local path
-                        path: "mvnv-study/index.html",
+                        path: "mvnv/index.html",
                         // style that will be applied to iframe
                         style: {
                             height: "500px"
@@ -527,7 +532,7 @@
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
                         // can be a URL or a local path
-                        path: "mvnv-study/index.html",
+                        path: "mvnv/index.html",
                         // style that will be applied to iframe
                         style: {
                             height: "500px"
@@ -557,7 +562,7 @@
                         // Allowable types: image, javascript, website, react-component
                         type: "website"
                         // can be a URL or a local path
-                        path: "mvnv-study/index.html",
+                        path: "mvnv/index.html",
                         // style that will be applied to iframe
                         style: {
                             height: "500px"

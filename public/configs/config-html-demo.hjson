@@ -16,7 +16,7 @@
     }
     uiConfig: {
         contactEmail: "test@test.com"
-        helpTextPath: "markdowns/help.md"
+        helpTextPath: "html-demo/help.md"
         logoPath: "assets/revisitLogoSquare.svg"
         withProgressBar: true
         // starts the automatic download of the data after study completion 
@@ -51,12 +51,10 @@
             trials: {
                 barChart: {
                     description: "description of the trial"
-                    instruction:  **Question:** How many bars have a value great than 1?"
+                    instruction:  **Question:** How many bars have a value great than 1?
                     stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
                         type: "website"
-                        // can be a URL or a local path
-                        path: "stimuli-d3/bar-chart.html"
+                        path: "html-demo/bar-chart.html"
                         // style that will be applied to iframe
                         style: {
                             height: "500px"

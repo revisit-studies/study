@@ -16,7 +16,7 @@ const ImageController = ({
   const imageStyle = { ...defaultStyle, ...style };
 
   return (
-    <Image mx="auto" src={`${PREFIX}image-stimuli/${path}`} style={imageStyle} />
+    <Image mx="auto" src={`${PREFIX}${path}`} style={imageStyle} />
   );
 };
 
