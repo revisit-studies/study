@@ -26,22 +26,20 @@ export default function AppShellDemo() {
     });
   }, [globalConfig]);
 
-  return (
-    globalConfig ? (
-      <BrowserRouter basename={PREFIX}>
-        <Routes>
-          <Route
-            path="/"
-            element={<ConfigSwitcher globalConfig={globalConfig} />}
-          />
-          <Route
-            path="/:studyId/*"
-            element={<ShellWrapper globalConfig={globalConfig} />}
-          />
-        </Routes>
-      </BrowserRouter>
-    ) : null
-  );
+  return globalConfig ? (
+    <BrowserRouter basename={PREFIX}>
+      <Routes>
+        <Route
+          path="/"
+          element={<ConfigSwitcher globalConfig={globalConfig} />}
+        />
+        <Route
+          path="/:studyId/*"
+          element={<ShellWrapper globalConfig={globalConfig} />}
+        />
+      </Routes>
+    </BrowserRouter>
+  ) : null;
 }
 
 function ShellWrapper(props: any) {

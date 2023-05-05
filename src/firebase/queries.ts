@@ -1,4 +1,44 @@
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import {
+  collection,
+  CollectionReference,
+  doc,
+  DocumentData,
+  DocumentReference,
+  Firestore,
+  getDoc,
+  setDoc,
+} from 'firebase/firestore';
+
+export const STUDY_COLLECTION_ID = import.meta.env.PROD ? 'deployed' : 'debug';
+
+export type FirebaseCollection = CollectionReference<DocumentData>;
+export type FirebaseDoc = DocumentReference<DocumentData>;
+
+export function getStudyCollectionRef(fs: Firestore) {
+  return collection(fs, STUDY_COLLECTION_ID);
+}
+
+/**
+
+<> - collections
+rest - docs
+
+/<mode>/studies/<study-id>/participants/<pid>/sessions/<sid>/
+
+
+*/
+
+export function getSessionRef(
+  fs: Firestore,
+  studyId: string,
+  pid: string,
+  sessionId: string
+) {
+  return collection(
+    fs,
+    `${STUDY_COLLECTION_ID}/studies/${studyId}/participants/${pid}/sessions/${sessionId}`
+  );
+}
 
 const saveToFB = async (fb: any, path: string, data: any, errMsg: string) => {
   try {

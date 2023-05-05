@@ -13,6 +13,7 @@ import {
 } from '../store';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 import { NextButton } from './NextButton';
+
 export function useConsentConfig() {
   const currentStep = useCurrentStep();
   return useAppSelector((state) => {

@@ -2,20 +2,14 @@ import { type PayloadAction } from '@reduxjs/toolkit';
 import { configureTrrackableStore, createTrrackableSlice } from '@trrack/redux';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
-import { initFirebase } from '../firebase/init';
-import {
-  addExpToUser,
-  saveSurveyToFB,
-  saveTrialToFB,
-} from '../firebase/queries';
+import { Firebase } from '../firebase/init';
 import { StudyComponent, StudyConfig } from '../parser/types';
-import { getOrSetStudyIdentifiers } from '../utils/getOrSetStudyIdentifiers';
 import { RootState, State, Step, TrialRecord } from './types';
 
 export const PID = 'PARTICIPANT_ID';
 export const SESSION_ID = 'SESSION_ID';
 
-export const FIREBASE = initFirebase();
+export const __ACTIVE_SESSION = '__active_session';
 
 function getSteps({ sequence, components }: StudyConfig): Record<string, Step> {
   const steps: Record<string, Step> = {};
@@ -46,15 +40,28 @@ function getTrialSteps(
   return steps;
 }
 
-export function studyStoreCreator(studyId: string, config: StudyConfig) {
-  const { pid, study_id, session_id, session } =
-    getOrSetStudyIdentifiers(studyId);
-  (window as any).sess = session;
+function initializeFirebaseSession(
+  studyId: string,
+  fb: Firebase,
+  sessionId: string,
+  trrack: StudyProvenance
+) {
+  return fb.setStudyId(studyId).initialize(sessionId, trrack);
+}
 
+export async function studyStoreCreator(
+  studyId: string,
+  config: StudyConfig,
+  firebase: any
+) {
   const studySlice = createTrrackableSlice({
     name: 'studySlice',
     initialState: {
-      studyIdentifiers: { pid, study_id, session_id },
+      studyIdentifiers: {
+        pid: firebase.pid,
+        study_id: studyId,
+        session_id: crypto.randomUUID(),
+      },
       config,
       consent: undefined,
       steps: getSteps(config),
@@ -73,12 +80,12 @@ export function studyStoreCreator(studyId: string, config: StudyConfig) {
         response: PayloadAction<{ signature: string; timestamp: number }>
       ) => {
         state.consent = response.payload;
-        addExpToUser(
-          FIREBASE.fStore,
-          state.studyIdentifiers?.study_id || 'test',
-          state.studyIdentifiers?.pid || 'test',
-          response.payload.signature as string
-        );
+        // addExpToUser(
+        //   FIREBASE.fStore,
+        //   state.studyIdentifiers?.study_id || 'test',
+        //   state.studyIdentifiers?.pid || 'test',
+        //   response.payload.signature as string
+        // );
       },
       saveTrialAnswer(
         state,
@@ -99,15 +106,15 @@ export function studyStoreCreator(studyId: string, config: StudyConfig) {
           //add to firebase
           const identifier = state.studyIdentifiers;
           if (identifier) {
-            saveTrialToFB(
-              FIREBASE.fStore,
-              identifier.pid,
-              identifier.study_id,
-              payload.trialId,
-              payload.trialName,
-              payload.answer,
-              payload.type
-            );
+            // saveTrialToFB(
+            //   FIREBASE.fStore,
+            //   identifier.pid,
+            //   identifier.study_id,
+            //   payload.trialId,
+            //   payload.trialName,
+            //   payload.answer,
+            //   payload.type
+            // );
           }
         }
       },
@@ -119,12 +126,12 @@ export function studyStoreCreator(studyId: string, config: StudyConfig) {
         //add to firebase
         const identifier = state.studyIdentifiers;
         if (identifier) {
-          saveSurveyToFB(
-            FIREBASE.fStore,
-            identifier.pid,
-            identifier.study_id,
-            payload
-          );
+          // saveSurveyToFB(
+          //   FIREBASE.fStore,
+          //   identifier.pid,
+          //   identifier.study_id,
+          //   payload
+          // );
         }
       },
     },
@@ -137,20 +144,34 @@ export function studyStoreCreator(studyId: string, config: StudyConfig) {
     slices: [studySlice],
   });
 
-  if (session.info.provenance) {
-    trrack.import(session.info.provenance);
-  }
-  session.sync({ provenance: trrack.export() });
+  // Check local/fb
+  // is trrack instance in local storage?
+  const savedSessionId =
+    localStorage.getItem(__ACTIVE_SESSION) || trrack.root.id;
 
-  trrack.currentChange(() => {
-    session.sync({ provenance: trrack.export() });
+  const saved = await initializeFirebaseSession(
+    studyId,
+    firebase,
+    savedSessionId,
+    trrack
+  );
+
+  if (saved) {
+    localStorage.setItem(__ACTIVE_SESSION, trrack.root.id);
+  }
+
+  trrack.currentChange((trigger: any) => {
+    if (trigger === 'new') {
+      firebase.saveNewProvenanceNode(trrack);
+    } else {
+      throw new Error(`Got trrack trigger: ${trigger}`);
+    }
   });
 
   return {
     store,
     trrack,
     trrackStore,
-    session,
     actions: studySlice.actions,
     loadGraph(graph: string) {
       trrack.import(graph);
@@ -158,9 +179,10 @@ export function studyStoreCreator(studyId: string, config: StudyConfig) {
   };
 }
 
-export type MainStoreContextValue = ReturnType<typeof studyStoreCreator>;
+export type StudyStore = Awaited<ReturnType<typeof studyStoreCreator>>;
+export type StudyProvenance = StudyStore['trrack'];
 
-export const MainStoreContext = createContext<MainStoreContextValue>(null!);
+export const MainStoreContext = createContext<StudyStore>(null!);
 
 export function useCreatedStore() {
   return useContext(MainStoreContext);
@@ -171,7 +193,7 @@ export function useStoreActions() {
 }
 
 // Hooks
-type AppDispatch = ReturnType<typeof studyStoreCreator>['store']['dispatch'];
+type AppDispatch = StudyStore['store']['dispatch'];
 
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
