@@ -497,3 +497,7 @@ box-shadow: rgba(0, 0, 0, 0.75) 1.5em 0 0 0, rgba(0, 0, 0, 0.75) 1.1em 1.1em 0 0
 #clear-selection{
     margin-left: 30px;
 }
+
+.searchInput{
+    max-width: 200px;
+}
