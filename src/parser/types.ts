@@ -133,8 +133,9 @@ export type UIConfig = {
   helpTextPath?: string;
   logoPath: string;
   withProgressBar: boolean;
-  autoDownloadStudy: boolean;
+  autoDownloadStudy?: boolean;
   autoDownloadTime?: number;
+  studyEndMsg?: string;
   sidebar: boolean;
 };
 

@@ -31,6 +31,8 @@
         autoDownloadTime: 3000
         // show left sidebar
         sidebar: true
+        // study end
+        studyEndMsg: "Thank you for completing the study. You may close this window now."
     }
     // components of thes study; allowable types: consent, training, practice, attentionTest, trials
     components: {

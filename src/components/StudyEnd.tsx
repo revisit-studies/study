@@ -1,4 +1,4 @@
-import { Button, Text } from '@mantine/core';
+import { Button, Center, Flex, Text } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { useAppSelector, useCreatedStore } from '../store';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
@@ -49,15 +49,31 @@ export function StudyEnd() {
   }
 
   return (
-    <>
-      <Text size="xl">Study completed.</Text>
-      <Button onClick={() => download(graph, filename)}>Download Study</Button>
-      {autoDownload && (
-        <Text size="lg">
-          Study results will be downloaded in {delayCounter} seconds. If the
-          download does not start automatically, click above to download.
-        </Text>
-      )}
-    </>
+    <Center style={{ height: '100%' }}>
+      <Flex direction="column">
+        <Center>
+          <Text size="xl" display="block">
+            {config.uiConfig.studyEndMsg
+              ? config.uiConfig.studyEndMsg
+              : 'Thank you for completing the study. You may close this window now.'}
+          </Text>
+        </Center>
+        <Center>
+          <div>
+            <Button onClick={() => download(graph, filename)} display="block">
+              Download Study
+            </Button>
+          </div>
+        </Center>
+        <Center>
+          {autoDownload && (
+            <Text size="lg">
+              Study results will be downloaded in {delayCounter} seconds. If the
+              download does not start automatically, click above to download.
+            </Text>
+          )}
+        </Center>
+      </Flex>
+    </Center>
   );
 }

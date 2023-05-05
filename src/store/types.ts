@@ -1,9 +1,7 @@
 import { StudyComponent, StudyConfig } from '../parser/types';
-import { studyStoreCreator } from './index';
+import { StudyStore } from './index';
 
-export type RootState = ReturnType<
-  ReturnType<typeof studyStoreCreator>['store']['getState']
->;
+export type RootState = ReturnType<StudyStore['store']['getState']>;
 
 export interface TrialResult {
   complete: boolean;
