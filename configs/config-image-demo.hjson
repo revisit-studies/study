@@ -34,6 +34,7 @@
         "dotplot-medium",
         "dotplot-high",
       ],
+      nextButtonLocation: sidebar
       response:[
         {
           id: "image-demo-response"
