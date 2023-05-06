@@ -1,15 +1,20 @@
 {
-  configsList: ["MVNV","cleveland", "html-demo", "html-input", "image-demo", "survey-demo"],
+  configsList: ["image-demo", "cleveland", "MVNV", "html-demo", "html-input",  "survey-demo"],
   configs: {
-    "MVNV": {
-      title: "MVNV",
-      path: "config-html-MVNV.hjson",
-      description: "Multivariate Network Visualization - Adjacency matrix evaluation",
+    "image-demo": {
+      title: "Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations",
+      path: "config-image-demo.hjson",
+      description: "A demo for embedding a stimulus in an image file to replicate the Padilla et al. study on decision making.",
     },
     "cleveland": {
-      title: "Cleveland Experiment",
+      title: "Dyanmic React Stimuli: A Graphical Perception Experiment",
       path: "config-cleveland.hjson",
-      description: "Cleveland McGill's graphical perception comparison task",
+      description: "Using dynamic React components as stiumli to replicate the Cleveland/McGill, and the Heer/Bostock extension of graphical perception studies with quiz feedback.",
+    },
+    "MVNV": {
+      title: "Complex HTML Stimuli: Evaluating adjancency matrices for multivariate network tasks",
+      path: "config-html-MVNV.hjson",
+      description: "Using a complex D3-based, self-contained web-based visualization to replicate the Nobre et al. study on complex network visualziations.",
     },
     "html-demo": {
       title: "HTML Demo",
@@ -21,11 +26,7 @@
       path: "config-html-input.hjson",
       description: "Demo of stimuli using html files. Answers are collected within the html file and sent to the ReVisit.",
     },
-    "image-demo": {
-      title: "Image Demo",
-      path: "config-image-demo.hjson",
-      description: "A demo for embedding a stimulus in an image file.",
-    },
+
     "survey-demo": {
       title: "Survey Demo",
       path: "config-survey-demo.hjson",
