@@ -4,80 +4,52 @@
     <meta charset="UTF-8">
     <title>D3 Nice Axes</title>
     <script src="https://d3js.org/d3.v7.js"></script>
-    <style>
-        .axis path,
-        .axis line {
-            stroke: gray;
-            stroke-width: 1px;
-        }
-        .axis text {
-            font-family: serif;
-            font-size: 14px;
-        }
-    </style>
 </head>
+
 <body>
-<svg>
-</svg>
+    <svg>
+    </svg>
 </body>
+
 <script>
-    // the height and width of the actual drawing area
     height = 400;
     width = 750;
-    // add padding on all sides
     padding = 25;
     svg = d3.select("svg");
     svg.attr("width", width + 2 * padding)
         .attr("height", height + 2 * padding);
 
-    // a rectangle in the background
-    svg.append("rect")
-        .attr("width", width)
-        .attr("height", height)
+    let data = [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3];
+    let spacing = height / data.length;
+
+    let min = d3.min(data);
+    let max = d3.max(data);
+
+    let xScale = d3.scaleLinear()
+        .domain([min, max])
+        .range([0, width])
+        .nice();
+
+    let color = d3.scaleLinear()
+        .domain([min, 0, max])
+        .range(["darkred", "lightgray", "steelblue"]);
+
+    let xAxis = d3.axisBottom();
+    xAxis.scale(xScale);
+
+    svg.selectAll(".bar")
+        .data(data)
+        .join("rect")
+        .classed("bar", true)
         .attr("transform", "translate(" + padding + "," + padding + ")")
-        .style("stroke", "none")
-        .style("fill", "white");
+        .attr("x", d => xScale(Math.min(0, d)))
+        .attr("y", (d, i) => i * spacing + 5)
+        .attr("width", d => Math.abs(xScale(d) - xScale(0)))
+        .attr("height", 20)
+        .style("fill", d => color(d));
 
-
-        let data = [0.3, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3];
-        let spacing = height / data.length;
-
-        let min = d3.min(data);
-        let max = d3.max(data);
-
-        let xScale = d3.scaleLinear()
-            .domain([min, max])
-            .range([0, width])
-            // nice gives us good intervals for axes!
-            .nice();
-
-        let color = d3.scaleLinear()
-            .domain([min, 0, max])
-            .range(["darkred", "lightgray", "steelblue"]);
-
-        let xAxis = d3.axisBottom();
-        // try manually setting the ticks
-        //.ticks(40);
-        xAxis.scale(xScale);
-
-        svg.selectAll(".bar")
-            .data(data)
-            .join("rect")
-            .classed("bar", true)
-            // new: we add the padding via a tranform/translate
-            .attr("transform", "translate(" + padding + "," + padding + ")")
-            .attr("x", d => xScale(Math.min(0, d)))
-            .attr("y", (d, i) => i * spacing + 5)
-            .attr("width", d => Math.abs(xScale(d) - xScale(0)))
-            .attr("height", 20)
-            .style("fill", d => color(d));
-
-        svg.append("g")
-            // css class for the axis
-            .classed("axis", true)
-            // moving the axis to the right place
-            .attr("transform", "translate(" + padding + "," + (height + padding) + ")")
-            .call(xAxis);
-    
+    svg.append("g")
+        .attr("transform", "translate(" + padding + "," + (height + padding) + ")")
+        .call(xAxis);
 </script>
 </html>

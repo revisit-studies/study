@@ -34,6 +34,7 @@
         "dotplot-medium",
         "dotplot-high",
       ],
+      nextButtonLocation: sidebar
       response:[
         {
           id: "image-demo-response"
@@ -49,12 +50,11 @@
           location: 'sidebar'
         }
       ],
-      nextButtonLocation: sidebar,
       "trials": {
         "dotplot-low": {
           "description": "What does the description do? ",
           "instruction": '''
-            **Scenario**: Alpacas may need blankets. Assume that
+            **Scenario**: AAlpacas may need blankets. Assume that
             you work at the Red Cross, and your job is to manage
             resources for farms in Peru. In previous years, alpacas have
             died in Peru from cold temperatures. Alpacas can typically
