@@ -51,7 +51,9 @@
         .style("fill", d => color(d))
         // Post answer from the html to reVISit platform
         .on("click", (e, d) => {
-            Revisit.postAnswers([d]);
+            Revisit.postAnswers(
+                {answer:[d], taskID:"barChart"}
+            );
         });
 
     svg.append("g")
