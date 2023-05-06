@@ -1,7 +1,7 @@
 {
   "configVersion": 1,
   "studyMetadata": {
-    "title": "A Demo for Embedding a Stimulus as an Image.",
+    "title": "Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
@@ -41,7 +41,7 @@
           type: "radio"
           prompt: "Will you issue blankets to the alpacas?"
           desc: "Enter your answer here"
-          // options is required for radio, checkbox,dropdown and slider in the following format.
+          // options is required for radio, checkbox, dropdown and slider in the following format.
           options:[{label:"Yes", value:"1"}, {label:"No", value:"2"}]
           required: true
           max: 2
@@ -60,7 +60,7 @@
             died in Peru from cold temperatures. Alpacas can typically
             withstand the cold unless the temperature drops below 32°F.
 
-            **Budget**: You are in charge of the Red Cross’s blanket
+            **Budget**: You are in charge of the Red Cross's blanket
             budget, and it is your job to issue blankets to the alpacas
             when temperatures fall below 32°F, which will help them
             withstand the cold.
