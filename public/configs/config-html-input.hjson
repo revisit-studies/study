@@ -1,13 +1,13 @@
 {
     configVersion: 1
     studyMetadata: {
-        title: "A demo for passing input from embedded html stimuli to reVISit"
+        title: "Passing Data into reVISit from HTML"
         version: "pilot"
         authors: [
             "The reVISit Team"
         ]
         date: "2023-04-14"
-        description: "A simple experiment with Html input."
+        description: "A demo of how to pass data from HTML into reVISit."
         organizations: [
             "University of Utah"
             "WPI"
