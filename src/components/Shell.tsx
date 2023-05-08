@@ -1,6 +1,12 @@
-import { AppShell } from '@mantine/core';
+import { AppShell, Button, Group, Modal } from '@mantine/core';
 import { TrrackStoreType } from '@trrack/redux';
-import { createContext, ReactNode, useEffect, useMemo, useState } from 'react';
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import { createSelectorHook, Provider } from 'react-redux';
 import { Outlet, RouteObject, useParams, useRoutes } from 'react-router-dom';
 import SurveyController from '../controllers/SurveyController';
@@ -15,26 +21,35 @@ import {
 import { StudyIdParam } from '../routes';
 import {
   MainStoreContext,
-  MainStoreContextValue,
+  StudyStore,
   studyStoreCreator,
+  useCreatedStore,
 } from '../store';
-import { flagsContext, flagsStore } from '../store/flags';
+import {
+  flagsContext,
+  flagsStore,
+  setTrrackExists,
+  useFlagsDispatch,
+  useFlagsSelector,
+} from '../store/flags';
 import { NavigateWithParams } from '../utils/NavigateWithParams';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import Consent from './Consent';
 
+import { useDisclosure } from '@mantine/hooks';
 import { PREFIX } from '../App';
+import TrainingController from '../controllers/TrainingController';
 import {
   default as TrialController,
   default as TrialPracticeController,
 } from '../controllers/TrialPracticeController';
+import { Firebase, FirebaseContext, initFirebase } from '../firebase/init';
 import AppAside from './interface/AppAside';
 import AppHeader from './interface/AppHeader';
 import AppNavBar from './interface/AppNavBar';
 import HelpModal from './interface/HelpModal';
 import { NextButton } from './NextButton';
 import { StudyEnd } from './StudyEnd';
-import TrainingController from '../controllers/TrainingController';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion
 const trrackContext: any = createContext<TrrackStoreType>(undefined!);
@@ -61,46 +76,103 @@ export function Shell({ globalConfig }: Props) {
     throw new Error('Study id invalid');
   }
 
-  const configJSON = globalConfig.configsList
-    .map((c) => globalConfig.configs[c])
-    .find((con) => sanitizeStringForUrl(con.title) === studyId);
-
   const [activeConfig, setActiveConfig] = useState<Nullable<StudyConfig>>(null);
+  const [firebase, setFirebase] = useState<Nullable<Firebase>>(null);
+  const [storeObj, setStoreObj] = useState<Nullable<StudyStore>>(null);
 
   useEffect(() => {
-    if (!configJSON) return;
+    const configJSON = globalConfig.configsList
+      .map((c) => globalConfig.configs[c])
+      .find((con) => sanitizeStringForUrl(con.title) === studyId);
 
-    fetchStudyConfig(`configs/${configJSON.path}`).then((config) => {
-      setActiveConfig(config);
-    });
-  }, [configJSON]);
+    if (configJSON)
+      fetchStudyConfig(`configs/${configJSON.path}`).then((config) => {
+        setActiveConfig(config);
+      });
+  }, [globalConfig]);
 
-  const storeLike: Nullable<MainStoreContextValue> = useMemo(() => {
-    if (!activeConfig || !studyId) return null;
+  useEffect(() => {
+    if (!activeConfig) return;
 
-    return studyStoreCreator(studyId, activeConfig);
-  }, [activeConfig, studyId]);
+    let active = true;
 
-  const routing = useStudyRoutes(studyId, activeConfig, storeLike);
+    async function init() {
+      setFirebase(null);
+      const fb = await initFirebase();
 
-  if (!routing || !storeLike) return null;
+      if (!active) return;
 
-  const { trrackStore, store } = storeLike;
+      setFirebase(fb);
+    }
+
+    init();
+
+    return () => {
+      active = false;
+    };
+  }, [activeConfig]);
+
+  useEffect(() => {
+    if (!activeConfig || !studyId || !firebase) return;
+
+    let active = true;
+
+    async function init(sid: string, config: StudyConfig, fb: Firebase) {
+      setStoreObj(null);
+      const st = await studyStoreCreator(sid, config, fb);
+
+      if (!active) return;
+
+      setStoreObj(st);
+    }
+
+    init(studyId, activeConfig, firebase);
+
+    return () => {
+      active = false;
+    };
+  }, [activeConfig, studyId, firebase]);
+
+  const routing = useStudyRoutes(studyId, activeConfig, storeObj);
+
+  if (!routing || !storeObj || !firebase) return null;
+
+  const { trrackStore, store, trrack } = storeObj;
 
   return (
-    <MainStoreContext.Provider value={storeLike}>
-      <Provider store={trrackStore} context={trrackContext}>
-        <Provider store={store}>
-          <Provider store={flagsStore} context={flagsContext as any}>
-            {routing}
+    <FirebaseContext.Provider key={trrack.root.id} value={firebase}>
+      <MainStoreContext.Provider value={storeObj}>
+        <Provider store={trrackStore} context={trrackContext}>
+          <Provider store={store}>
+            <Provider store={flagsStore} context={flagsContext as any}>
+              {routing}
+            </Provider>
           </Provider>
         </Provider>
-      </Provider>
-    </MainStoreContext.Provider>
+      </MainStoreContext.Provider>
+    </FirebaseContext.Provider>
   );
 }
 
 function StepRenderer() {
+  const store = useCreatedStore();
+  const trrackExists = useFlagsSelector((f) => f.trrackExists);
+  const flagDispatch = useFlagsDispatch();
+  const [opened, handlers] = useDisclosure(trrackExists);
+
+  const close = useCallback(
+    (load: boolean) => {
+      if (load) {
+        store.restoreSession();
+      } else {
+        store.startNewSession();
+      }
+      flagDispatch(setTrrackExists(false));
+      handlers.close();
+    },
+    [store, flagDispatch]
+  );
+
   return (
     <AppShell
       navbarOffsetBreakpoint="sm"
@@ -109,6 +181,31 @@ function StepRenderer() {
       aside={<AppAside />}
       header={<AppHeader />}
     >
+      <Modal
+        opened={opened}
+        onClose={() => close(false)}
+        title="Load previous session"
+        centered
+      >
+        <Group mt="xl">
+          <Button
+            variant="outline"
+            onClick={() => {
+              close(true);
+            }}
+          >
+            Yes
+          </Button>
+          <Button
+            variant="outline"
+            onClick={() => {
+              close(false);
+            }}
+          >
+            Start New
+          </Button>
+        </Group>
+      </Modal>
       <HelpModal /> {/* <StudyController /> */}
       <Outlet />
     </AppShell>
@@ -117,37 +214,36 @@ function StepRenderer() {
 
 const elements: Record<StudyComponent['type'], ReactNode> = {
   consent: (
-      <>
-        <Consent />
-      </>
+    <>
+      <Consent />
+    </>
   ),
   training: (
-      <>
-        <TrainingController />
-        <NextButton />
-      </>
+    <>
+      <TrainingController />
+      <NextButton />
+    </>
   ),
-  practice:  <TrialPracticeController />,
-  'attentionTest': (
-      <>
-        <div>attention test component goes here</div>
-        <NextButton />
-      </>
+  practice: <TrialPracticeController />,
+  attentionTest: (
+    <>
+      <div>attention test component goes here</div>
+      <NextButton />
+    </>
   ),
   trials: <TrialPracticeController />,
   survey: (
-      <>
-        <SurveyController />
-      </>
+    <>
+      <SurveyController />
+    </>
   ),
   end: <StudyEnd />,
 };
 
-
 function useStudyRoutes(
   studyId: Nullable<string>,
   config: Nullable<StudyConfig>,
-  store: Nullable<MainStoreContextValue> // used only to detect if store is ready
+  store: Nullable<StudyStore> // used only to detect if store is ready
 ) {
   const routes: RouteObject[] = [];
 

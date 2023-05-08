@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@emotion/react": "^11.10.5",
+    "@firebase/app-check": "^0.7.0",
+    "@firebase/auth": "^0.23.1",
     "@mantine/core": "^5.8.0",
     "@mantine/form": "^6.0.7",
     "@mantine/hooks": "^5.8.0",

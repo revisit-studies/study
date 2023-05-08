@@ -5,7 +5,7 @@ import {
 } from '../store/trialProvenance';
 import IframeController from './IframeController';
 import ImageController from './ImageController';
-import {useTrainingConfig, useTrialsConfig} from './utils';
+import { useTrainingConfig } from './utils';
 
 // current active stimuli presented to the user
 
@@ -13,7 +13,6 @@ export default function TrainingController() {
   const trialProvenance = createTrialProvenance();
   const trainingConfig = useTrainingConfig();
   const trainingStimulus = trainingConfig?.stimulus;
-  console.log(trainingConfig,'trainingConfig');
 
   return (
     <div>

@@ -13,6 +13,7 @@ import {
 } from '../store';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 import { NextButton } from './NextButton';
+
 export function useConsentConfig() {
   const currentStep = useCurrentStep();
   return useAppSelector((state) => {
@@ -39,6 +40,12 @@ export default function Consent() {
   const [consent, setConsent] = useState<string | null>(null);
 
   const config = useConsentConfig();
+
+  useEffect(() => {
+    if (storedConsent?.signature !== txtInput) {
+      setTxtInput(storedConsent?.signature || '');
+    }
+  }, [storedConsent]);
 
   useEffect(() => {
     if (!config) return;
@@ -78,12 +85,13 @@ export default function Consent() {
           label="Accept"
           process={() => {
             dispatch(completeStep('consent'));
-            dispatch(
-              saveConsent({
-                signature: txtInput,
-                timestamp: Date.now(),
-              })
-            );
+            if (!storedConsent)
+              dispatch(
+                saveConsent({
+                  signature: txtInput,
+                  timestamp: Date.now(),
+                })
+              );
           }}
         />
       </Group>

@@ -1,10 +1,15 @@
+import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import { Nullable } from '../parser/types';
 import { PID, SESSION_ID } from '../store';
 
 export type StudySessionInfo = {
-  provenance: Nullable<string>;
+  provenance: Nullable<ProvenanceGraph<unknown, string, any>>;
   lastStepOrTrial: Nullable<string>;
 };
+
+export type SessionRecords = Record<string, StudySessionInfo>;
+export type UserRecords = Record<string, SessionRecords>;
+export type StudyRecords = Record<string, UserRecords>;
 
 /**
  * Check if url has study params, if not set them and return
@@ -46,8 +51,12 @@ function localStorageSession(studyId: string, pId: string, sessionId: string) {
 
   if (!sessionString) setter(info);
 
-  function sync(opts: { provenance?: string; lastStepOrTrial?: string }) {
+  function sync(opts: {
+    provenance?: ProvenanceGraph<any, any, any>;
+    lastStepOrTrial?: string;
+  }) {
     const previous = getter()!;
+    console.log(opts);
     setter({
       ...previous,
       provenance: opts.provenance || previous.provenance,

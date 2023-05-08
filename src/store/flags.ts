@@ -26,8 +26,12 @@ const flags = createSlice({
     showAdmin: false,
     showHelpText: false,
     trialRecord: {} as TrialRecord,
+    trrackExists: false,
   },
   reducers: {
+    setTrrackExists: (state, action: PayloadAction<boolean>) => {
+      state.trrackExists = action.payload;
+    },
     toggleShowAdmin: (state) => {
       state.showAdmin = !state.showAdmin;
     },
@@ -73,6 +77,7 @@ const flags = createSlice({
 export const {
   toggleShowAdmin,
   toggleShowHelpText,
+  setTrrackExists,
   updateResponseBlockValidation,
 } = flags.actions;
 
