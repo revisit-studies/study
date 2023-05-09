@@ -63,6 +63,7 @@ export interface SurveyComponent extends StudyComponent {
 }
 
 export interface Trial {
+  meta?: object;
   description: string;
   instruction: string;
   stimulus: Stimulus;

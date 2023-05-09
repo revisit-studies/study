@@ -17,8 +17,11 @@ export default function AppAside() {
   const step = useCurrentStep();
   const config = useAppSelector((state) => state.study.config?.components[step]);
   const trialConfig = config as TrialsComponent;
-  const tasks = trialConfig?.type === 'practice' || trialConfig?.type === 'trials' ? trialConfig.order.map((trialId) => ({...trialConfig.trials[trialId], id: trialId})) : [];
+  const tasks = trialConfig?.type === 'practice' || trialConfig?.type === 'trials' ? trialConfig.order.map((trialId) => ({...trialConfig.trials[trialId], id: trialId
+  })) : [];
+    console.log(trialConfig,'trial config');
 
+    console.log(tasks,'tasks');
   const { studyId = null } = useParams<{
     studyId: string;
   }>();
@@ -42,9 +45,14 @@ export default function AppAside() {
             </Flex>
           </Paper>
 
-          <Paper radius={0} p="xl">
-            <Text>Test</Text>
-          </Paper>
+        <Paper radius={0} p="xl">
+            {task.meta && <Text fw={900}>Task Meta:</Text>}
+            {task.meta && Object.entries(task.meta).map((key,value)=>{
+                return <Text>{key}: {value}</Text>;
+
+            })}
+        </Paper>
+
         </Paper>
 
         <Space h="md" />
