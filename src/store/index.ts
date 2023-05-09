@@ -94,6 +94,7 @@ export async function studyStoreCreator(
         }>
       ) {
         if (payload.type === 'trials' || payload.type === 'practice') {
+          console.log(payload.answer,'payload.answer');
           state[payload.type][payload.trialName][payload.trialId] = {
             complete: true,
             answer: payload.answer,

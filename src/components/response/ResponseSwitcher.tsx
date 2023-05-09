@@ -26,7 +26,18 @@ export default function ResponseSwitcher({
   answer,
   storedAnswer,
 }: Props) {
-  const { type, desc, prompt, options, required, preset, max, min } = response;
+  const {
+    type,
+    desc,
+    prompt,
+    options,
+    required,
+    preset,
+    max,
+    min,
+    leftLabel,
+    rightLabel,
+  } = response;
 
   if (!type) return null;
 
@@ -62,6 +73,8 @@ export default function ResponseSwitcher({
             radioData={options}
             answer={ans}
             required={required}
+            leftLabel={leftLabel as string}
+            rightLabel={rightLabel as string}
           />
         )}
         {type === 'numerical' && (
@@ -83,6 +96,8 @@ export default function ResponseSwitcher({
             likertPreset={preset as string}
             answer={ans}
             required={required}
+            leftLabel={leftLabel as string}
+            rightLabel={rightLabel as string}
           />
         )}
         {type === 'checkbox' && (
@@ -118,7 +133,7 @@ export default function ResponseSwitcher({
           <IframeInput
             title={prompt}
             desc={desc}
-            answer={answer.value}
+            answer={storedAnswer ? storedAnswer : []}
             required={required}
           />
         )}

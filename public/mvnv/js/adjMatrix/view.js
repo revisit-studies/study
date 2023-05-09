@@ -696,7 +696,7 @@ var View = /** @class */ (function () {
     };
     View.prototype.generateScaleLegend = function (type, numberOfEdge) {
         var _this = this;
-        var yOffset = 10;
+        var yOffset = 30;
         var xOffset = 10;
         if (this.controller.configuration.adjMatrix.edgeBars && this.controller.configuration.isMultiEdge) {
             var legendFile = 'assets/adj-matrix/';
@@ -704,18 +704,18 @@ var View = /** @class */ (function () {
             legendFile += '.png';
             d3.select('#legend-svg').append('g').append('svg:image')
                 .attr('x', 0)
-                .attr('y', 0)
-                .attr('width', 90)
-                .attr('height', 120)
+                .attr('y', 10)
+                .attr('width', 50)
+                .attr('height', 70)
                 .attr('xlink:href', legendFile);
             //return;
             xOffset = 100;
         }
         var rectWidth = 18;
         var rectHeight = 10;
-        var legendWidth = 175;
+        var legendWidth = 130;
         var legendHeight = 60;
-        yOffset += legendHeight * numberOfEdge;
+        xOffset += legendWidth * numberOfEdge;
         var scale = this.edgeScales[type];
         var extent = scale.domain();
         var number = 5;
@@ -743,7 +743,7 @@ var View = /** @class */ (function () {
             .attr('stroke', 'gray')
             .attr('stroke-width', 1)
             .attr('width', boxWidth)
-            .attr('height', 55)
+            .attr('height', 50)
             .attr('fill-opacity', 0)
             .attr('x', 0)
             .attr('y', -9)
@@ -760,6 +760,7 @@ var View = /** @class */ (function () {
             .attr('x', boxWidth / 2)
             .attr('y', 8)
             .attr('text-anchor', 'middle')
+            .style("font-size", "12px")
             .text('# of ' + pluralType);
         var sideMargin = ((boxWidth) - (sampleNumbers.length * (rectWidth + 5))) / 2;
         var groups = svg.selectAll('g')
@@ -780,8 +781,9 @@ var View = /** @class */ (function () {
         groups
             .append('text')
             .attr('x', rectWidth / 2)
-            .attr('y', 25)
+            .attr('y', 22)
             .attr('text-anchor', 'middle')
+            .style("font-size", "12px")
             .text(function (d) {
             return Math.round(d);
         });

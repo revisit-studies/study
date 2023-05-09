@@ -49,6 +49,7 @@ export default function ResponseBlock({
   const id = useLocation().pathname;
 
   const isPractice = config.type === 'practice';
+
   const storedAnswer = status?.answer;
 
   const responses = config.response.filter(
@@ -75,10 +76,7 @@ export default function ResponseBlock({
     location === (config.nextButtonLocation || 'belowStimulus');
 
   useEffect(() => {
-    setDisableNext(!storedAnswer);
-  }, [setDisableNext, storedAnswer]);
-
-  useEffect(() => {
+    // ignore this for iframe task
     flagDispatch(
       updateResponseBlockValidation({
         location,
@@ -98,6 +96,7 @@ export default function ResponseBlock({
     } else {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const answer = deepCopy(aggregateResponses!);
+
 
       if (!status?.complete)
         appDispatch(
@@ -139,6 +138,8 @@ export default function ResponseBlock({
                 : null
               : storedAnswer
               ? (storedAnswer as any)[`${id}/${response.id}`]
+              : response.type === 'iframe'
+              ? (aggregateResponses || {})[`${id}/${response.id}`]
               : null
           }
           answer={{

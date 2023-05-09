@@ -814,6 +814,7 @@ class View {
   }
 
   generateScaleLegend(type, numberOfEdge) {
+
     let yOffset = 10;
     let xOffset = 10;
 

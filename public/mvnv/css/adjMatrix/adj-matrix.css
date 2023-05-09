@@ -475,3 +475,42 @@ box-shadow: rgba(0, 0, 0, 0.75) 1.5em 0 0 0, rgba(0, 0, 0, 0.75) 1.1em 1.1em 0 0
     float: left;
 
 }
+
+.horizon-card40{
+    display: inline-block;
+    width: 40%;
+    float: left;
+    height:90px
+
+}
+
+.horizon-card60{
+    display: inline-block;
+    width: 60%;
+    float: left;
+    height:90px
+
+}
+
+#legendDiv{
+    text-align: center;
+}
+
+#legend-svg{
+    width:400px;
+    height:90px;
+    margin-left: 20px;
+}
+
+#clear-selection{
+    margin-left: 30px;
+}
+
+.searchInput{
+    max-width: 200px;
+}
+
+.card-content{
+    display: flex;
+    align-items: center;
+}

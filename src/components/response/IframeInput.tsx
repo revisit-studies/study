@@ -4,12 +4,12 @@ type inputProps = {
   desc: string;
   title: string;
   required: boolean;
-  answer: Array<string> | string;
+  answer: Array<any>;
 };
 export default function IframeInput({
   desc = '',
   title = '',
-  answer,
+  answer = [],
 }: inputProps) {
   return (
     <>
@@ -21,8 +21,9 @@ export default function IframeInput({
       </Text>
 
       <List>
-        {Array.isArray(answer) &&
-          answer.map((item, idx) => <List.Item key={idx}> {item}</List.Item>)}
+        {answer.map((item) => {
+          return <List.Item key={item}>{item as any}</List.Item>;
+        })}
       </List>
     </>
   );
