@@ -70,7 +70,7 @@ export function Shell({ globalConfig }: Props) {
   if (
     !studyId ||
     !globalConfig.configsList
-      .map((c) => sanitizeStringForUrl(globalConfig.configs[c].title))
+      .map((c) => sanitizeStringForUrl(globalConfig.configs[c].urlKey))
       .includes(studyId)
   ) {
     throw new Error('Study id invalid');
@@ -83,7 +83,7 @@ export function Shell({ globalConfig }: Props) {
   useEffect(() => {
     const configJSON = globalConfig.configsList
       .map((c) => globalConfig.configs[c])
-      .find((con) => sanitizeStringForUrl(con.title) === studyId);
+      .find((cfg) => sanitizeStringForUrl(cfg.urlKey) === studyId);
 
     if (configJSON)
       fetchStudyConfig(`configs/${configJSON.path}`).then((config) => {
