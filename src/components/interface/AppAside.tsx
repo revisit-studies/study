@@ -44,6 +44,9 @@ export default function AppAside() {
           </Paper>
 
         <Paper radius={0} p="xl">
+            {task.id && <Text fw={900}>Task ID: <Text component="span" fw={400}>{task.id}</Text></Text>}
+
+            {task.description && <Text fw={900}>Description: <Text fw={400} component="span">{task.description}</Text></Text>}
             {task.meta && <Text fw={900}>Task Meta:</Text>}
             {task.meta && Object.keys(task.meta).map((key)=>{
                 return <Text>{key}: {(task.meta as any)[key]}</Text>;
