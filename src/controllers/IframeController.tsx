@@ -12,9 +12,10 @@ import { Stimulus } from '../parser/types';
 const PREFIX = '@REVISIT_COMMS';
 
 const defaultStyle = {
-  minHeight: '300px',
+  minHeight: '500px',
   width: '100%',
   border: 0,
+  marginTop: '-50px'
 };
 
 const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
@@ -103,7 +104,7 @@ const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
   ]);
 
   return (
-    <div>
+    <div >
       <iframe
         ref={ref}
         src={`${BASE_PREFIX}${path}?trialid=${trialId}&id=${iframeId}`}
