@@ -1,13 +1,18 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
-import { useParams } from 'react-router-dom';
-import { useCurrentStep } from '../routes';
-import { useStoreActions } from '../store';
+import { useLocation, useParams } from 'react-router-dom';
+import { PREFIX as BASE_PREFIX } from '../App';
+import { useCurrentStep, useStudyId } from '../routes';
+import {
+  updateResponseBlockValidation,
+  useFlagsDispatch,
+} from '../store/flags';
 import { useNextStep } from '../store/hooks/useNextStep';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 import { useTrialsConfig } from './utils';
-import { PREFIX as BASE_PREFIX } from '../App';
 import { Stimulus } from '../parser/types';
+import {useStoreActions} from '../store';
+
 
 const PREFIX = '@REVISIT_COMMS';
 
@@ -23,8 +28,10 @@ const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
 
   const { saveTrialAnswer } = useStoreActions();
 
+
   const iframeStyle = { ...defaultStyle, ...style };
 
+  const flagDispatch = useFlagsDispatch();
   const dispatch = useDispatch();
 
   const ref = useRef<HTMLIFrameElement>(null);
@@ -40,8 +47,9 @@ const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
   const currentStep = useCurrentStep();
   const navigate = useNavigateWithParams();
   const computedTo = useNextStep();
-
   const trialConfig = useTrialsConfig();
+  const id = useLocation().pathname;
+
 
   const sendMessage = useCallback(
     (tag: string, message: unknown) => {
@@ -74,15 +82,21 @@ const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
             }
             break;
           case `${PREFIX}/ANSWERS`:
-            dispatch(
-              saveTrialAnswer({
-                trialName: currentStep,
-                trialId,
-                answer: JSON.stringify({ [trialId]: data.message }),
-                type: trialConfig?.type,
-              })
-            );
+              flagDispatch(
+                  updateResponseBlockValidation({
+                      location: data.message.location,
+                      trialId: id,
+                      status: data.message.answer.length > 0,
+                      answers: {
+                          [`${id}/${data.message.taskID}`]: [
+                              ...new Set([...data.message.answer]),
+                          ],
+                      },
+                  })
+              );
             break;
+
+
         }
       }
     };
@@ -91,6 +105,8 @@ const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
 
     return () => window.removeEventListener('message', handler);
   }, [
+    flagDispatch,
+    updateResponseBlockValidation,
     computedTo,
     currentStep,
     dispatch,
@@ -102,6 +118,13 @@ const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
     sendMessage,
     saveTrialAnswer,
   ]);
+
+  //   saveTrialAnswer({
+  //     trialName: currentStep,
+  //     trialId,
+  //     answer: { [`${id}/${trialId}`]: data.message },
+  //     type: trialConfig?.type,
+  //   })
 
   return (
     <div >

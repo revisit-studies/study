@@ -6,10 +6,11 @@ let onTrials = false;
 
 let participantCollection;
 
+const taskLocation = 'sidebar';
+const revisitTaskID = 'iframe-task';
 // let vis;
 
-function  detectBrowser(){
-  var nVer = navigator.appVersion;
+function detectBrowser() {
   var nAgt = navigator.userAgent;
   var browserName = navigator.appName;
   var fullVersion = '' + parseFloat(navigator.appVersion);
@@ -18,60 +19,62 @@ function  detectBrowser(){
 
   // In Opera, the true version is after "Opera" or after "Version"
   if ((verOffset = nAgt.indexOf('Opera')) != -1) {
-      browserName = 'Opera';
-      fullVersion = nAgt.substring(verOffset + 6);
-      if ((verOffset = nAgt.indexOf('Version')) != -1)
-          fullVersion = nAgt.substring(verOffset + 8);
+    browserName = 'Opera';
+    fullVersion = nAgt.substring(verOffset + 6);
+    if ((verOffset = nAgt.indexOf('Version')) != -1)
+      fullVersion = nAgt.substring(verOffset + 8);
   }
   // In MSIE, the true version is after "MSIE" in userAgent
   else if ((verOffset = nAgt.indexOf('MSIE')) != -1) {
-      browserName = 'Microsoft Internet Explorer';
-      fullVersion = nAgt.substring(verOffset + 5);
+    browserName = 'Microsoft Internet Explorer';
+    fullVersion = nAgt.substring(verOffset + 5);
   }
   // In Chrome, the true version is after "Chrome"
   else if ((verOffset = nAgt.indexOf('Chrome')) != -1) {
-      browserName = 'Chrome';
-      fullVersion = nAgt.substring(verOffset + 7);
+    browserName = 'Chrome';
+    fullVersion = nAgt.substring(verOffset + 7);
   }
   // In Safari, the true version is after "Safari" or after "Version"
   else if ((verOffset = nAgt.indexOf('Safari')) != -1) {
-      browserName = 'Safari';
-      fullVersion = nAgt.substring(verOffset + 7);
-      if ((verOffset = nAgt.indexOf('Version')) != -1)
-          fullVersion = nAgt.substring(verOffset + 8);
+    browserName = 'Safari';
+    fullVersion = nAgt.substring(verOffset + 7);
+    if ((verOffset = nAgt.indexOf('Version')) != -1)
+      fullVersion = nAgt.substring(verOffset + 8);
   }
   // In Firefox, the true version is after "Firefox"
   else if ((verOffset = nAgt.indexOf('Firefox')) != -1) {
-      browserName = 'Firefox';
-      fullVersion = nAgt.substring(verOffset + 8);
+    browserName = 'Firefox';
+    fullVersion = nAgt.substring(verOffset + 8);
   }
   // In most other browsers, "name/version" is at the end of userAgent
-  else if ((nameOffset = nAgt.lastIndexOf(' ') + 1) <
-      (verOffset = nAgt.lastIndexOf('/'))) {
-      browserName = nAgt.substring(nameOffset, verOffset);
-      fullVersion = nAgt.substring(verOffset + 1);
-      if (browserName.toLowerCase() == browserName.toUpperCase()) {
-          browserName = navigator.appName;
-      }
+  else if (
+    (nameOffset = nAgt.lastIndexOf(' ') + 1) <
+    (verOffset = nAgt.lastIndexOf('/'))
+  ) {
+    browserName = nAgt.substring(nameOffset, verOffset);
+    fullVersion = nAgt.substring(verOffset + 1);
+    if (browserName.toLowerCase() == browserName.toUpperCase()) {
+      browserName = navigator.appName;
+    }
   }
   // trim the fullVersion string at semicolon/space if present
   if ((ix = fullVersion.indexOf(';')) != -1)
-      fullVersion = fullVersion.substring(0, ix);
+    fullVersion = fullVersion.substring(0, ix);
   if ((ix = fullVersion.indexOf(' ')) != -1)
-      fullVersion = fullVersion.substring(0, ix);
+    fullVersion = fullVersion.substring(0, ix);
 
   majorVersion = parseInt('' + fullVersion, 10);
   if (isNaN(majorVersion)) {
-      fullVersion = '' + parseFloat(navigator.appVersion);
-      majorVersion = parseInt(navigator.appVersion, 10);
+    fullVersion = '' + parseFloat(navigator.appVersion);
+    majorVersion = parseInt(navigator.appVersion, 10);
   }
 
   return {
     'Browser name': browserName,
-      'Full version':fullVersion,
-      'Major version':majorVersion,
-      'navigatorAppName':navigator.appName,
-      'navigatorUserAgent':navigator.userAgent
+    'Full version': fullVersion,
+    'Major version': majorVersion,
+    navigatorAppName: navigator.appName,
+    navigatorUserAgent: navigator.userAgent,
   };
 }
 
@@ -79,7 +82,7 @@ function  detectBrowser(){
 let studyTracking = {
   taskListObj: null,
   group: null,
-  numConditions: null
+  numConditions: null,
 };
 
 let provenance;
@@ -89,12 +92,10 @@ let app;
 let studyProvenance;
 let studyApp;
 
-
-
-function setCookie(cname, cvalue, exdays=1) {
+function setCookie(cname, cvalue, exdays = 1) {
   var d = new Date();
-  d.setTime(d.getTime() + (exdays*24*60*60*1000));
-  var expires = 'expires='+ d.toUTCString();
+  d.setTime(d.getTime() + exdays * 24 * 60 * 60 * 1000);
+  var expires = 'expires=' + d.toUTCString();
   document.cookie = cname + '=' + cvalue + ';' + expires + ';path=/';
 }
 
@@ -102,7 +103,7 @@ function getCookie(cname) {
   var name = cname + '=';
   var decodedCookie = decodeURIComponent(document.cookie);
   var ca = decodedCookie.split(';');
-  for(var i = 0; i <ca.length; i++) {
+  for (var i = 0; i < ca.length; i++) {
     var c = ca[i];
     while (c.charAt(0) == ' ') {
       c = c.substring(1);
@@ -119,12 +120,12 @@ async function setUpStudyProvenance(label) {
     workerID, //gets value from global workerID variable
     event: label, //string describing what event triggered this state update; same as the label in provenance.applyAction
     time: new Date().toString(), //timestamp for the current state of the graph;
-    startTime: new Date().toString() //timestamp for the current state of the graph;
+    startTime: new Date().toString(), //timestamp for the current state of the graph;
   };
 
   function study(provenance) {
     return {
-      currentState: () => provenance.graph().current.state
+      currentState: () => provenance.graph().current.state,
     };
   }
 
@@ -160,9 +161,7 @@ function KeyPress(e) {
   ) {
     evtobj.preventDefault();
     evtobj.stopPropagation();
-    d3.select('.searchInput')
-      .node()
-      .focus();
+    d3.select('.searchInput').node().focus();
 
     updateStudyProvenance('control F used');
   }
@@ -170,14 +169,14 @@ function KeyPress(e) {
 
 document.onkeydown = KeyPress;
 
-var tabFocus = (function() {
+var tabFocus = (function () {
   var stateKey,
     eventKey,
     keys = {
       hidden: 'visibilitychange',
       webkitHidden: 'webkitvisibilitychange',
       mozHidden: 'mozvisibilitychange',
-      msHidden: 'msvisibilitychange'
+      msHidden: 'msvisibilitychange',
     };
   for (stateKey in keys) {
     if (stateKey in document) {
@@ -185,20 +184,20 @@ var tabFocus = (function() {
       break;
     }
   }
-  return function(c) {
+  return function (c) {
     if (c) document.addEventListener(eventKey, c);
     return !document[stateKey];
   };
 })();
 
-tabFocus(function() {
+tabFocus(function () {
   //start counting 'unfocus time' and add to current taskObject;
   if (tabFocus()) {
     if (studyProvenance) {
       updateStudyProvenance('Focused Tab');
     }
   } else {
-    if (studyProvenance){
+    if (studyProvenance) {
       updateStudyProvenance('Unfocused Tab');
     }
   }
@@ -217,46 +216,53 @@ function screenTest(width, height) {
     width: window.screen.width,
     height: window.screen.height,
     colorDepth: window.screen.colorDepth,
-    pixelDepth: window.screen.pixelDepth
+    pixelDepth: window.screen.pixelDepth,
   };
 
   return widthTest && heightTest ? screenSpecs : false;
 }
 
 //If there is a value, check for validity
-d3.select('#answerBox').on('input', function() {
-  console.log("answer checked")
+d3.select('#answerBox').on('input', function () {
+  console.log('answer checked');
   updateAnswer(d3.select('#answerBox').property('value'));
 });
 
 //If there is a value, check for validity
-d3.select('#radioAnswer').selectAll('.control').on('change', function() {
-  let value = d3.selectAll('input[name=radio]')
-  .filter(function() {
-    return d3.select(this).property('checked');
-  }).attr('value');
-  updateAnswer(value,'radio');
-});
-
+d3.select('#radioAnswer')
+  .selectAll('.control')
+  .on('change', function () {
+    let value = d3
+      .selectAll('input[name=radio]')
+      .filter(function () {
+        return d3.select(this).property('checked');
+      })
+      .attr('value');
+    updateAnswer(value, 'radio');
+  });
 
 //If there is a value, check for validity
-d3.select('#freeFormAnswer').on('input', function() {
+d3.select('#freeFormAnswer').on('input', function () {
   updateAnswer(d3.select('#freeFormAnswer').property('value'));
 });
 
 //function that updates the answer in the side panel as well as in the results field in tasks
 //answer is either an array of node objects or a string from the answer box;
-function updateAnswer(answer,type) {
-  Revisit.postAnswers(answer.map((a)=>a.name));
+function updateAnswer(answer, type) {
+  const postAnswer = answer.map((a) => a.name);
+  Revisit.postAnswers({
+    answer: postAnswer,
+    taskID: revisitTaskID,
+    location: taskLocation,
+  });
 
   //Update answer inside taskList;
   let taskObj = taskList[currentTask];
   let answerType = typeof answer;
 
   if (answerType === 'string') {
-    if (type === 'radio'){
+    if (type === 'radio') {
       taskObj.answer.radio = answer;
-
     } else {
       taskObj.answer.value = answer;
     }
@@ -283,12 +289,18 @@ function updateAnswer(answer,type) {
 
   validateAnswer(
     taskObj.answer,
-    replyType == 'text' ? 'text' : (type == 'radio' ? 'radio' : answerType == 'string' ? 'value': 'nodes')
+    replyType == 'text'
+      ? 'text'
+      : type == 'radio'
+      ? 'radio'
+      : answerType == 'string'
+      ? 'value'
+      : 'nodes'
   );
 }
 
 //function that checks answers for the trials.
-function checkAnswer(answer) {
+function checkAnswer(_answer) {
   let task = taskList[currentTask];
 
   let replyTypes = task.replyType;
@@ -301,15 +313,17 @@ function checkAnswer(answer) {
     correct = correct && task.answer.value == task.answerKey.value;
     if (!correct) {
       errorMsg =
-        'Try again!  <span class=\'hint\'>Remember you can use tooltips to get an exact value</span>';
+        "Try again!  <span class='hint'>Remember you can use tooltips to get an exact value</span>";
     }
   }
 
   if (replyTypes.includes('multipleNodeSelection')) {
     task.answer.nodes.map(
-      (n) => (correct = correct && task.answerKey.nodes.find((an) => an == n.id))
+      (n) =>
+        (correct = correct && task.answerKey.nodes.find((an) => an == n.id))
     );
-    correct = correct && task.answer.nodes.length == task.answerKey.nodes.length;
+    correct =
+      correct && task.answer.nodes.length == task.answerKey.nodes.length;
 
     if (!correct) {
       let numAnswers = task.answerKey.nodes.length;
@@ -324,14 +338,14 @@ function checkAnswer(answer) {
       if (numSelections > numAnswers) {
         if (numCorrectAnswers == numAnswers) {
           errorMsg =
-            'Try again! <span class=\'hint\'>Here\'s a hint: You have all ' +
+            "Try again! <span class='hint'>Here's a hint: You have all " +
             numAnswers +
             ' of the answers, but ' +
             (numSelections - numAnswers) +
             '  extra node(s) in there as well</span>';
         } else {
           errorMsg =
-            'Try again!  <span class=\'hint\'>Here\'s a hint: You have ' +
+            "Try again!  <span class='hint'>Here's a hint: You have " +
             numCorrectAnswers +
             ' out of ' +
             numAnswers +
@@ -339,7 +353,7 @@ function checkAnswer(answer) {
         }
       } else {
         errorMsg =
-          'Try again! <span class=\'hint\'>Here\'s a hint: You have ' +
+          "Try again! <span class='hint'>Here's a hint: You have " +
           numCorrectAnswers +
           ' out of ' +
           numAnswers +
@@ -386,7 +400,7 @@ function updateStudyProvenance(label, additionalInfo) {
 
         return currentState;
       },
-      args: []
+      args: [],
     };
 
     studyProvenance.applyAction(action);
@@ -394,7 +408,7 @@ function updateStudyProvenance(label, additionalInfo) {
   }
 }
 // Set submit button callback.
-d3.select('#submitButton').on('click', async function() {
+d3.select('#submitButton').on('click', async function () {
   //Enforce 'disabled' behavior on this 'button'
   if (d3.select('#submitButton').attr('disabled')) {
     return;
@@ -414,11 +428,14 @@ d3.select('#submitButton').on('click', async function() {
     isValid = isValid2;
     errorMsg = errorMSg2;
     if (task.replyType.includes('value')) {
-      let [validateValue, a] = validateAnswer(task.answer, 'value', true);
+      let [validateValue] = validateAnswer(task.answer, 'value', true);
       isValid = isValid && validateValue;
     }
     if (!isValid) {
-      updateStudyProvenance('submitted invalid answer', {answer:task.answer,errorMsg});
+      updateStudyProvenance('submitted invalid answer', {
+        answer: task.answer,
+        errorMsg,
+      });
       return;
     }
   }
@@ -443,11 +460,12 @@ d3.select('#submitButton').on('click', async function() {
       // d3.select('#nextTrialTask').style('display','block');
     } else {
       d3.select('#feedbackCard').style('display', 'block');
-      d3.select('#feedbackCard')
-        .select('.errorMsg')
-        .html(errorMsg);
+      d3.select('#feedbackCard').select('.errorMsg').html(errorMsg);
 
-      updateStudyProvenance('submitted incorrect answer', {answer:task.answer,errorMsg});
+      updateStudyProvenance('submitted incorrect answer', {
+        answer: task.answer,
+        errorMsg,
+      });
 
       // d3.select('#trialFeedback').select('.correctMsg').style('display','none');
       // d3.select('#nextTrialTask').style('display','none');
@@ -466,7 +484,7 @@ d3.select('#submitButton').on('click', async function() {
           currentState.event = 'Finished Task';
           return currentState;
         },
-        args: []
+        args: [],
       };
 
       provenance.applyAction(action);
@@ -481,7 +499,7 @@ d3.select('#submitButton').on('click', async function() {
           currentState.event = 'Finished Task';
           return currentState;
         },
-        args: []
+        args: [],
       };
 
       window.controller.model.provenance.applyAction(action);
@@ -519,27 +537,23 @@ d3.select('#nextTask').on('click', async () => {
 
   let selectedDifficulty = d3
     .selectAll('input[name=difficulty]')
-    .filter(function() {
+    .filter(function () {
       return d3.select(this).property('checked');
     });
 
   let selectedConfidence = d3
     .selectAll('input[name=confidence]')
-    .filter(function() {
+    .filter(function () {
       return d3.select(this).property('checked');
     });
   //check to see if something has been selected before allowing the user to continue:
 
   if (selectedDifficulty.size() === 0 || selectedConfidence.size() === 0) {
     //display error msg;
-    d3.select('.modalFeedback')
-      .select('.errorMsg')
-      .style('display', 'inline');
+    d3.select('.modalFeedback').select('.errorMsg').style('display', 'inline');
     return;
   } else {
-    d3.select('.modalFeedback')
-      .select('.errorMsg')
-      .style('display', 'none');
+    d3.select('.modalFeedback').select('.errorMsg').style('display', 'none');
   }
 
   // grab any potential feedback from the user;
@@ -556,7 +570,7 @@ d3.select('#nextTask').on('click', async () => {
   taskObj.feedback = {
     difficulty,
     confidence,
-    explanation
+    explanation,
   };
 
   if (track) {
@@ -568,12 +582,11 @@ d3.select('#nextTask').on('click', async () => {
         [taskObj.taskID + '.feedback']: taskObj.feedback,
         [taskObj.taskID + '.startTime']: taskObj.startTime,
         [taskObj.taskID + '.endTime']: taskObj.endTime,
-        [taskObj.taskID + '.minutesToComplete']: taskObj.minutesToComplete
+        [taskObj.taskID + '.minutesToComplete']: taskObj.minutesToComplete,
       });
   }
 
-
-  updateStudyProvenance('ended task',{'taskID':taskList[currentTask].taskID});
+  updateStudyProvenance('ended task', { taskID: taskList[currentTask].taskID });
 
   //increment current task;
   if (currentTask < taskList.length - 1) {
@@ -603,7 +616,7 @@ d3.select('#nextTask').on('click', async () => {
             endTime,
             minutesToComplete: Math.round(
               (Date.parse(endTime) - Date.parse(startTime)) / 60000
-            ) //60000 milliseconds in a minute
+            ), //60000 milliseconds in a minute
           },
           { merge: true }
         );
@@ -614,9 +627,11 @@ d3.select('#nextTask').on('click', async () => {
 });
 
 async function resetPanel() {
-  updateStudyProvenance('started Task',{'taskID':taskList[currentTask].taskID});
+  updateStudyProvenance('started Task', {
+    taskID: taskList[currentTask].taskID,
+  });
 
-  setCookie('onTask',currentTask);
+  setCookie('onTask', currentTask);
   console.log('cTask is ', currentTask);
   let task = taskList[currentTask];
   task.startTime = new Date().toString();
@@ -627,7 +642,7 @@ async function resetPanel() {
     .attr('max', taskList.length)
     .attr('value', currentTask + 1);
 
-  d3.selectAll('.taskShortcut').classed('currentTask', function() {
+  d3.selectAll('.taskShortcut').classed('currentTask', function () {
     return d3.select(this).attr('id') === taskList[currentTask].taskID;
   });
 
@@ -638,9 +653,7 @@ async function resetPanel() {
     task.replyCount.type === 'at least';
 
   // clear any values in the feedback or search box;
-  d3.select('.modalFeedback')
-    .select('.textarea')
-    .property('value', '');
+  d3.select('.modalFeedback').select('.textarea').property('value', '');
 
   d3.select('.searchInput').property('value', '');
 
@@ -651,19 +664,13 @@ async function resetPanel() {
   d3.selectAll('.submit').attr('disabled', flexibleAnswer ? null : true);
 
   // //Clear Selected Node List
-  d3.select('#selectedNodeList')
-    .selectAll('li')
-    .remove();
+  d3.select('#selectedNodeList').selectAll('li').remove();
 
   //clear any selected Radio buttons in the feedback box;
-  d3.select('.modalFeedback')
-    .selectAll('input')
-    .property('checked', false);
+  d3.select('.modalFeedback').selectAll('input').property('checked', false);
 
-    //Clear all Radio buttons
-    d3.select('#radioAnswer')
-    .selectAll('input')
-    .property('checked', false);
+  //Clear all Radio buttons
+  d3.select('#radioAnswer').selectAll('input').property('checked', false);
 
   //check for different reply types
 
@@ -689,14 +696,15 @@ async function resetPanel() {
   }
 
   if (task.replyType.includes('radio')) {
+    let rButtons = d3
+      .select('#radioAnswer')
+      .select('.control')
+      .selectAll('label')
+      .data(task.radioButtons);
 
-    let rButtons = d3.select('#radioAnswer').select('.control').selectAll('label').data(task.radioButtons);
+    let rButtonsEnter = rButtons.enter().append('label').attr('class', 'radio');
 
-    let rButtonsEnter = rButtons.enter().append('label').attr('class','radio');
-
-    rButtonsEnter.append('input')
-    .attr('type','radio')
-    .attr('name','radio');
+    rButtonsEnter.append('input').attr('type', 'radio').attr('name', 'radio');
 
     rButtonsEnter.append('span').attr('class', 'radioLabel');
 
@@ -704,9 +712,8 @@ async function resetPanel() {
 
     rButtons = rButtonsEnter.merge(rButtons);
 
-    rButtons.select('input').attr('value',(d)=>d);
-    rButtons.select('.radioLabel').html((d)=>' ' + d);
-
+    rButtons.select('input').attr('value', (d) => d);
+    rButtons.select('.radioLabel').html((d) => ' ' + d);
 
     d3.select('#radioAnswer').style('display', 'block');
   } else {
@@ -730,28 +737,24 @@ async function resetPanel() {
 
   if (onTrials && currentTask === 0) {
     setTimeout(
-      function() {
+      function () {
         welcome(vis);
       },
       vis === 'nodeLink' ? 500 : 3000
     );
   }
 
-  if (onTrials && currentTask === 1 && vis=='nodeLink') {
-    setTimeout(
-      function() {
-        welcome(vis,'bubbles');
-      },500
-    );
+  if (onTrials && currentTask === 1 && vis == 'nodeLink') {
+    setTimeout(function () {
+      welcome(vis, 'bubbles');
+    }, 500);
   }
-
 }
 
 async function pushProvenance(provGraph, initialState = false, collectionName) {
-
   //make sure this is not just a reload, and not an initialState:
   //avoid clearing out provenance when the user reloads the page;
-  if (getCookie('onPage').length>0){
+  if (getCookie('onPage').length > 0) {
     initialState = false;
   }
 
@@ -772,10 +775,7 @@ async function pushProvenance(provGraph, initialState = false, collectionName) {
     ? workerID
     : workerID + '_' + taskList[currentTask].taskID;
   // Push the latest provenance graph to the firestore.
-  let provGraphDoc = await db
-    .collection(collectionName)
-    .doc(docID)
-    .get();
+  let provGraphDoc = await db.collection(collectionName).doc(docID).get();
 
   let doc = provGraphDoc.data();
   let docSize = calcFirestoreDocSize(collectionName, docID, doc) / 1000000;
@@ -787,7 +787,9 @@ async function pushProvenance(provGraph, initialState = false, collectionName) {
     console.log(
       'Provenance Graph for ',
       workerID,
-     ' user in  ', collectionName , 'is too large! Considering storing each state in its own document'
+      ' user in  ',
+      collectionName,
+      'is too large! Considering storing each state in its own document'
     );
   } else {
     let docRef = db.collection(collectionName).doc(docID);
@@ -796,14 +798,14 @@ async function pushProvenance(provGraph, initialState = false, collectionName) {
     if (doc && !initialState) {
       await docRef.update({
         update: new Date().toString(),
-        provGraphs: firebase.firestore.FieldValue.arrayUnion(provGraph)
+        provGraphs: firebase.firestore.FieldValue.arrayUnion(provGraph),
       });
     } else {
       await docRef.set({
         initialSetup: new Date().toString(),
-        id:workerID, //for collection filtering
+        id: workerID, //for collection filtering
         mode, //to isolate 'study mode'
-        provGraphs: firebase.firestore.FieldValue.arrayUnion(provGraph)
+        provGraphs: firebase.firestore.FieldValue.arrayUnion(provGraph),
       });
     }
   }
@@ -829,10 +831,7 @@ async function loadNewGraph(fileName) {
   d3.select('#search-input').attr('list', 'characters');
   let inputParent = d3.select('#search-input').node().parentNode;
 
-  let datalist = d3
-    .select(inputParent)
-    .selectAll('#characters')
-    .data([0]);
+  let datalist = d3.select(inputParent).selectAll('#characters').data([0]);
 
   let enterSelection = datalist
     .enter()
@@ -862,7 +861,6 @@ async function loadNewGraph(fileName) {
 //error checks the field specified to show any error msgs.
 //force argument is true when this is run from the submit button. Forces error message to show up that wouldn't otherwise.
 function validateAnswer(answer, errorCheckField, force = false) {
-
   let task = taskList[currentTask];
   let replyTypes = task.replyType;
 
@@ -918,20 +916,18 @@ function validateAnswer(answer, errorCheckField, force = false) {
 
   if (replyTypes.includes('value')) {
     let v = d3.select('#answerBox').property('value');
-    isValid = isValid && v.length > 0 && (/^\d+$/.test(v)) ;
+    isValid = isValid && v.length > 0 && /^\d+$/.test(v);
 
     if (errorCheckField === 'value') {
       // console.log('value is ', v, !(/^\d+$/.test(v)) )
-      if (v.length < 1 || !(/^\d+$/.test(v))) {
+      if (v.length < 1 || !/^\d+$/.test(v)) {
         errorMsg = 'Please enter a numeric value in the answer box.';
       }
     }
   }
 
   if (replyTypes.includes('radio')) {
-    let checkedRadio = d3
-    .selectAll('input[name=radio]')
-    .filter(function() {
+    let checkedRadio = d3.selectAll('input[name=radio]').filter(function () {
       return d3.select(this).property('checked');
     });
 
@@ -976,20 +972,19 @@ function validateAnswer(answer, errorCheckField, force = false) {
   //toggle visibility of error message;
   let errorMsgSelector;
 
-  switch (errorCheckField){
-    case ('value'):
+  switch (errorCheckField) {
+    case 'value':
       errorMsgSelector = d3.select('#valueAnswer').select('.errorMsg');
-    break;
-    case ('nodes'):
-        errorMsgSelector = d3.select('#nodeAnswer').select('.errorMsg');
       break;
-    case('text'):
-    errorMsgSelector = d3.select('#textAnswer').select('.errorMsg');
+    case 'nodes':
+      errorMsgSelector = d3.select('#nodeAnswer').select('.errorMsg');
       break;
-    case('radio'):
-    errorMsgSelector = d3.select('#radioAnswer').select('.errorMsg');
+    case 'text':
+      errorMsgSelector = d3.select('#textAnswer').select('.errorMsg');
       break;
-
+    case 'radio':
+      errorMsgSelector = d3.select('#radioAnswer').select('.errorMsg');
+      break;
   }
 
   errorMsgSelector
@@ -1014,13 +1009,12 @@ function makeid(length) {
 async function parseResults() {
   db.collection('results')
     .get()
-    .catch(function(error) {
+    .catch(function (error) {
       console.log('Error getting document:', error);
     })
-    .then(function(querySnapshot) {
+    .then(function (querySnapshot) {
       let allData = [];
-      querySnapshot.forEach(function(doc) {
-        let data = doc.data();
+      querySnapshot.forEach(function (_doc) {
         allData.push();
       });
       // let csv = convertToCSV(allData); //saveToFile(JSON.stringify(allData),collectionName + '.json');
@@ -1037,18 +1031,18 @@ async function getResults() {
     'trial_provenance',
     'trial_results',
     'participant_actions',
-    'study_participants'
+    'study_participants',
   ];
 
   collectionNames.map((collectionName) => {
     db.collection(collectionName)
       .get()
-      .catch(function(error) {
+      .catch(function (error) {
         console.log('Error getting document:', error);
       })
-      .then(function(querySnapshot) {
+      .then(function (querySnapshot) {
         let allData = [];
-        querySnapshot.forEach(function(doc) {
+        querySnapshot.forEach(function (doc) {
           allData.push({ id: doc.id, data: doc.data() });
         });
 
@@ -1058,7 +1052,6 @@ async function getResults() {
 }
 
 async function assignVisType() {
-
   return new Promise(async (resolve) => {
     //find out which group to delegate ;
     var conditionsRef = db.collection('studyTracking').doc('conditions');
@@ -1074,51 +1067,44 @@ async function assignVisType() {
       .doc('conditions')
       .set(
         {
-          currentGroup: (group + 1) % conditions.length
+          currentGroup: (group + 1) % conditions.length,
         },
         { merge: true }
       );
-      resolve();
+    resolve();
   });
 }
 
 async function loadTasks(visType, tasksType, taskNum) {
   //reset currentTask to 0
 
-   //check if taskNum was passed in through the URL
-   if (taskNum){
-    setCookie('onTask',taskNum);
+  //check if taskNum was passed in through the URL
+  if (taskNum) {
+    setCookie('onTask', taskNum);
   }
   let cachedTask = getCookie('onTask');
 
-  if (cachedTask.length>0){
+  if (cachedTask.length > 0) {
     currentTask = Number(cachedTask);
-  }else {
+  } else {
     currentTask = 0;
   }
 
   // getResults();
   // parseResults();
   //Helper function to shuffle the order of tasks given - based on https://en.wikipedia.org/wiki/Fisher%E2%80%93Yates_shuffle
-  function shuffle(array) {
-    for (let i = array.length - 1; i > 0; i--) {
-      let j = Math.floor(Math.random() * (i + 1)); // random index from 0 to i
-      [array[i], array[j]] = [array[j], array[i]]; // swap elements
-    }
-  }
 
   let taskListFiles;
-  if (track){
-      //find out which group to delegate and load appropriate taskList json file; ;
-  var conditionsRef = db.collection('studyTracking').doc('conditions');
+  if (track) {
+    //find out which group to delegate and load appropriate taskList json file; ;
+    var conditionsRef = db.collection('studyTracking').doc('conditions');
 
-  let conditionsObj = await conditionsRef.get();
+    let conditionsObj = await conditionsRef.get();
 
-  taskListFiles = conditionsObj.data().tasks;
-  let conditions = conditionsObj.data().conditionList;
-  studyTracking.numConditions = conditions.length;
+    taskListFiles = conditionsObj.data().tasks;
+    let conditions = conditionsObj.data().conditionList;
+    studyTracking.numConditions = conditions.length;
   }
-
 
   let group = visType === 'nodeLink' ? 0 : 1;
 
@@ -1142,7 +1128,11 @@ async function loadTasks(visType, tasksType, taskNum) {
 
   //do an async load of the designated task list;
 
-  let taskListFile =  track ? taskListFiles[tasksType] : tasksType == 'trials' ? 'taskLists/trials.json' : 'taskLists/study.json';
+  let taskListFile = track
+    ? taskListFiles[tasksType]
+    : tasksType == 'trials'
+    ? 'taskLists/trials.json'
+    : 'taskLists/study.json';
   let taskListObj = await d3.json(taskListFile);
   studyTracking.taskListObj = taskListObj;
 
@@ -1160,28 +1150,11 @@ async function loadTasks(visType, tasksType, taskNum) {
 
   let existingOrder = getCookie('taskOrder').split(',');
 
-  if (existingOrder.length >10 && getCookie('onPage')=== 'hit' && false){
-
-    console.log('using existing task order', getCookie('taskOrder').split(','));
-
-    let taskOrder = getCookie('taskOrder').split(',');
-    // reorder tasks according to the cached order;
-
-    taskList = taskOrder.map((id,i)=>{
-      let t = taskListEntries.find((t)=>t[0] === id);
-      let task = t[1];
-      task.order = i;
-      task.taskID = t[0];
-      task.workerID = workerID;
-
-      return task;
-    });
-    console.log(taskList,currentTask);
-
+  if (existingOrder.length > 10 && getCookie('onPage') === 'hit' && false) {
   } else {
     let taskOrder = [];
 
-   // insert order and taskID into each element in this list
+    // insert order and taskID into each element in this list
     taskList = taskListEntries.map((t, i) => {
       taskOrder.push(t[0]);
       let task = t[1];
@@ -1191,16 +1164,12 @@ async function loadTasks(visType, tasksType, taskNum) {
       return task;
     });
 
-    console.log('setting new task order', taskOrder);
-
-    if (!taskNum){
-      setCookie('taskOrder',taskOrder);
-    setCookie('onTask',0);
-    currentTask = 0;
+    if (!taskNum) {
+      setCookie('taskOrder', taskOrder);
+      setCookie('onTask', 0);
+      currentTask = 0;
     }
-
   }
-
 
   //remove divs that are irrelevant to the vis approach being used am/nl
   if (vis === 'nodeLink') {
@@ -1240,7 +1209,7 @@ async function loadTasks(visType, tasksType, taskNum) {
     .select('a')
     .attr('id', (d) => d.taskID)
     .text((d) => d.taskID)
-    .on('click', function() {
+    .on('click', function () {
       //set new currentTask then call resetPanel;
       currentTask = taskList.findIndex(
         (t) => t.taskID == d3.select(this).attr('id')
@@ -1256,7 +1225,7 @@ async function loadTasks(visType, tasksType, taskNum) {
     let scriptTags = {
       nodeLink: [
         'js/nodeLink/main_nodeLink.js',
-        'js/nodeLink/helperFunctions.js'
+        'js/nodeLink/helperFunctions.js',
       ],
       adjMatrix: [
         'js/adjMatrix/libs/reorder/science.v1.js',
@@ -1267,18 +1236,17 @@ async function loadTasks(visType, tasksType, taskNum) {
         'js/adjMatrix/view.js',
         'js/adjMatrix/controller.js',
         'js/adjMatrix/model.js',
-        'js/adjMatrix/helper_functions.js'
-      ]
+        'js/adjMatrix/helper_functions.js',
+      ],
     };
     let cssTags = {
       nodeLink: [
         'css/nodeLink/node-link.css',
-        'css/nodeLink/bulma-checkradio.min.css'
+        'css/nodeLink/bulma-checkradio.min.css',
       ],
-      adjMatrix: ['css/adjMatrix/adj-matrix.css']
+      adjMatrix: ['css/adjMatrix/adj-matrix.css'],
     };
 
-    console.log(vis);
     // //   dynamically load only js/css relevant to the vis approach being used;
     const loadAllScripts = async () => {
       return await Promise.all(
@@ -1290,31 +1258,23 @@ async function loadTasks(visType, tasksType, taskNum) {
 
     await loadAllScripts();
 
-
-
-
     cssTags[vis].map((href) => {
       var newStyleSheet = document.createElement('link');
       newStyleSheet.href = href;
       newStyleSheet.rel = 'stylesheet';
-      d3.select('head')
-        .node()
-        .appendChild(newStyleSheet);
+      d3.select('head').node().appendChild(newStyleSheet);
     });
   }
-
 }
 
 //function that loads in a .js script tag and only resolves the promise once the script is fully loaded
 function loadScript(url, callback) {
-  console.log(provenance);
-
-  return new Promise(function(resolve, reject) {
+  return new Promise(function (resolve) {
     var script = document.createElement('script');
     script.type = 'text/javascript';
     if (script.readyState) {
       // only required for IE <9
-      script.onreadystatechange = function() {
+      script.onreadystatechange = function () {
         if (
           script.readyState === 'loaded' ||
           script.readyState === 'complete'
@@ -1326,7 +1286,7 @@ function loadScript(url, callback) {
       };
     } else {
       //Others
-      script.onload = function() {
+      script.onload = function () {
         callback();
         resolve();
       };
@@ -1362,7 +1322,7 @@ d3.select('#clear-selection').on('click', () => {
         currentState.userSelectedNeighbors = {};
         return currentState;
       },
-      args: []
+      args: [],
     };
 
     provenance.applyAction(action);
@@ -1373,13 +1333,10 @@ d3.select('#clear-selection').on('click', () => {
 
   updateStudyProvenance('cleared all selections');
 });
-let val = d3.select('#search-input').on('change', function() {
+let val = d3.select('#search-input').on('change', function () {
   // let selectedOption = d3.select(this).property("value");
   //this = d3.select("#search-input"); // resets context
-  let selectedOption = d3
-    .select('#search-input')
-    .property('value')
-    .trim();
+  let selectedOption = d3.select('#search-input').property('value').trim();
 
   // (check if going through tour)
   if (shepherd && shepherd.isActive()) {
@@ -1423,15 +1380,12 @@ let val = d3.select('#search-input').on('change', function() {
 
   updateStudyProvenance('searched for node', {
     searchedNode: selectedOption,
-    success: searchSuccess
+    success: searchSuccess,
   });
 });
 
-d3.select('#searchButton').on('click', function() {
-  let selectedOption = d3
-    .select('.searchInput')
-    .property('value')
-    .trim();
+d3.select('#searchButton').on('click', function () {
+  let selectedOption = d3.select('.searchInput').property('value').trim();
 
   //empty search box;
   if (selectedOption.length === 0) {
@@ -1466,7 +1420,7 @@ d3.select('#searchButton').on('click', function() {
 
   updateStudyProvenance('searched for node', {
     searchedNode: selectedOption,
-    success: searchSuccess
+    success: searchSuccess,
   });
 });
 

@@ -61,7 +61,6 @@ const flags = createSlice({
           answers: {},
         };
       }
-
       state.trialRecord[payload.trialId].valid[payload.location] =
         payload.status;
       const prev = state.trialRecord[payload.trialId].answers;
