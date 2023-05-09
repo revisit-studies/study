@@ -43,6 +43,7 @@ const firebaseConfig = {
 export async function initFirebase(connect = true) {
   // Set debug token for recaptchav3
   if (!import.meta.env.PROD) {
+    console.log(import.meta.env);
     (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
   }
 
