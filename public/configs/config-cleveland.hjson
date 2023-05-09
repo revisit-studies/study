@@ -442,7 +442,8 @@
                 options:[{label:"Bar", value:"Bar"},{label:"Stacked Bar", value:"Stacked Bar"},{label:"Bubble", value:"Bubble"},{label:"Pie", value:"Pike"}]
                 required: true
                 max: 100
-                min: 0
+                min: 0,
+                location: "aboveStimulus"
             }
                 {
                     id: "q2"
@@ -451,7 +452,8 @@
                     desc: "Enter your age here, range from 0 - 100"
                     required: true
                     max: 100
-                    min: 0
+                    min: 0,
+                    location: "aboveStimulus"
                 }
                 {
                     id: "q3"
@@ -461,14 +463,16 @@
                     required: true
                     preset: "5",
                     leftLabel:"Dislike",
-                    rightLabel: "Like"
+                    rightLabel: "Like",
+                    location: "aboveStimulus"
                 }
                 {
                     id: "q5"
                     type: "longText"
                     prompt: "Any other comments?"
                     desc: "Enter your comments here"
-                    required: true
+                    required: true,
+                    location: "aboveStimulus"
                 }
 
                         ]
