@@ -43,6 +43,7 @@ const firebaseConfig = {
 export async function initFirebase(connect = true) {
   // Set debug token for recaptchav3
   if (!import.meta.env.PROD) {
+    console.log(import.meta.env);
     (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
   }
 
@@ -58,7 +59,7 @@ export async function initFirebase(connect = true) {
     // perform an app check to get authorized token
     initializeAppCheck(app, {
       provider: new ReCaptchaV3Provider(
-        '6LdjOd0lAAAAAASvFfDZFWgtbzFSS9Y3so8rHJthb'
+        '6LdjOd0lAAAAAASvFfDZFWgtbzFSS9Y3so8rHJth'
       ),
       isTokenAutoRefreshEnabled: true,
     });
