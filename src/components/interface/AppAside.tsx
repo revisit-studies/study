@@ -19,9 +19,7 @@ export default function AppAside() {
   const trialConfig = config as TrialsComponent;
   const tasks = trialConfig?.type === 'practice' || trialConfig?.type === 'trials' ? trialConfig.order.map((trialId) => ({...trialConfig.trials[trialId], id: trialId
   })) : [];
-    console.log(trialConfig,'trial config');
 
-    console.log(tasks,'tasks');
   const { studyId = null } = useParams<{
     studyId: string;
   }>();
@@ -47,9 +45,8 @@ export default function AppAside() {
 
         <Paper radius={0} p="xl">
             {task.meta && <Text fw={900}>Task Meta:</Text>}
-            {task.meta && Object.entries(task.meta).map((key,value)=>{
-                return <Text>{key}: {value}</Text>;
-
+            {task.meta && Object.keys(task.meta).map((key)=>{
+                return <Text>{key}: {(task.meta as any)[key]}</Text>;
             })}
         </Paper>
 

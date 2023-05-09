@@ -72,6 +72,10 @@
                 }], 
             trials: {
                 bubbleChart1: {
+                    "meta": {
+                        "difficulty": 5,
+                        "chart": "bubble",
+                    },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
                     stimulus: {
@@ -91,8 +95,12 @@
                         }
                         correctAnswer: 23
                     }
-                }
+                },
                 stackedBarChart1: {
+                    "meta": {
+                        "difficulty": 5,
+                        "chart": "stacked bar",
+                    },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
                     stimulus: {
@@ -114,6 +122,10 @@
                     }
                 }, 
                 barChart1: {
+                    "meta": {
+                        "difficulty": 5,
+                        "chart": "Bar",
+                    },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
                     stimulus: {
@@ -134,8 +146,12 @@
                         correctAnswer: 40
                     }
 
-                }
+                },
                 pieChart1: {
+                    "meta": {
+                        "difficulty": 5,
+                        "chart": "pie",
+                    },
                     description: "Pie chart"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
                     stimulus: {
@@ -226,6 +242,10 @@
             ]
             trials: {
                 bubbleChart1: {
+                    "meta": {
+                        "difficulty": 5,
+                        "chart": "bubble",
+                    },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
                     // instructionLocation: 'sidebar' | 'aboveStimulus' | 'belowStimulus'
@@ -246,8 +266,12 @@
                             selectedIndices: [1, 4]
                         }
                     }
-                }
+                },
                 stackedBarChart1: {
+                    "meta": {
+                        "difficulty": 5,
+                        "chart": "stacked bar",
+                    },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
                     stimulus: {
@@ -266,8 +290,12 @@
                             selectedIndices: [1, 4]
                         }
                     }
-                }
+                },
                 stackedBarChart2: {
+                    "meta": {
+                        "difficulty": 5,
+                        "chart": "stacked bar",
+                    },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
                     stimulus: {
@@ -286,8 +314,12 @@
                             selectedIndices: [1, 4]
                         }
                     }
-                }
+                },
                 barChart1: {
+                    "meta": {
+                        "difficulty": 5,
+                        "chart": "bar",
+                    },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
                     stimulus: {
@@ -307,8 +339,12 @@
                         }
                     }
 
-                }
+                },
                 pieChart1: {
+                    "meta": {
+                        "difficulty": 5,
+                        "chart": "pie",
+                    },
                     description: "Pie chart"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
                     stimulus: {
@@ -327,8 +363,12 @@
                             selectedIndices: [1, 4]
                         }
                     }
-                }
+                },
                 bubbleChart2: {
+                    "meta": {
+                        "difficulty": 5,
+                        "chart": "bubble",
+                    },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
                     stimulus: {
@@ -347,8 +387,12 @@
                             selectedIndices: [0, 3]
                         }
                     }
-                }
+                },
                 stackedBarChart3: {
+                    "meta": {
+                        "difficulty": 5,
+                        "chart": "stacked bar",
+                    },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
                     stimulus: {
@@ -367,8 +411,12 @@
                             selectedIndices: [0, 3]
                         }
                     }
-                }
+                },
                 stackedBarChart4: {
+                    "meta": {
+                        "difficulty": 5,
+                        "chart": "stacked bar",
+                    },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
                     stimulus: {
@@ -387,8 +435,12 @@
                             selectedIndices: [0, 3]
                         }
                     }
-                }
+                },
                 barChart2: {
+                    "meta": {
+                        "difficulty": 5,
+                        "chart": "bar",
+                    },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
                     stimulus: {
@@ -408,8 +460,12 @@
                         }
                     }
 
-                }
+                },
                 pieChart2: {
+                    "meta": {
+                        "difficulty": 5,
+                        "chart": "pie",
+                    },
                     description: "Pie chart"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
                     stimulus: {
