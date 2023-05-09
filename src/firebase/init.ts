@@ -30,7 +30,14 @@ import { getSessionRef } from './queries';
 
 export const TRRACK = 'trrack';
 
+const fsConfig = {
+  localCache: persistentLocalCache({
+    tabManager: persistentMultipleTabManager(),
+  }),
+};
+
 // Your web app's Firebase configuration
+// This is safe to commit
 const firebaseConfig = {
   apiKey: 'AIzaSyAm9QtUgx1lYPDeE0vKLN-lK17WfUGVkLo',
   authDomain: 'revisit-utah.firebaseapp.com',
@@ -40,16 +47,28 @@ const firebaseConfig = {
   appId: '1:811568460432:web:995f6b4f1fc8042b5dde15',
 };
 
+/**
+ * To develop locally:
+ * First time you run the local server you will have a console log with App Check Debug Token
+ * Copy this token and add it to app check settings in firebase. You can do it at the below link -
+ * https://console.firebase.google.com/u/0/project/revisit-utah/appcheck/apps
+ *
+ * The App check token is mechanism we use to authenticate that our web-app is the one making requests. Requests from anywhere
+ * else will result in authentication error. Debug token is required so that tokens don't need to be verified locally everytime.
+ * For deployed version this should happen automatically. If you do not have access to firebase to add the token ---
+ * contact Yiren, Kiran, Jack or Alex to get access
+ */
 export async function initFirebase(connect = true) {
   // Set debug token for recaptchav3
   if (!import.meta.env.PROD) {
-    console.log(import.meta.env);
     (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
   }
 
+  console.log('Hello');
+
   let pid = 'DEBUG'; // Default participant ID
   let connected = false; // default conn status
-  let fStore: Nullable<Firestore> = null; // default store instance
+  let fStore: Nullable<Firestore> = null;
 
   // If asked to connect
   if (connect) {
@@ -75,12 +94,9 @@ export async function initFirebase(connect = true) {
     // get pid for anon logged in user
     pid = auth.currentUser?.uid || 'DEBUG';
 
+    fStore = initializeFirestore(app, fsConfig);
+
     // create firestore instance with local persisted storage
-    fStore = initializeFirestore(app, {
-      localCache: persistentLocalCache({
-        tabManager: persistentMultipleTabManager(),
-      }),
-    });
 
     // if development update heartbeat check for debug
     if (!import.meta.env.PROD) {
