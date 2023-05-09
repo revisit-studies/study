@@ -11,7 +11,7 @@ import { useNextStep } from '../store/hooks/useNextStep';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 import { useTrialsConfig } from './utils';
 import { Stimulus } from '../parser/types';
-import {useStoreActions} from "../store";
+import {useStoreActions} from '../store';
 
 
 const PREFIX = '@REVISIT_COMMS';
