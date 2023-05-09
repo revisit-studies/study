@@ -59,7 +59,7 @@ export async function initFirebase(connect = true) {
     // perform an app check to get authorized token
     initializeAppCheck(app, {
       provider: new ReCaptchaV3Provider(
-        '6LdjOd0lAAAAAASvFfDZFWgtbzFSS9Y3so8rHJthb'
+        '6LdjOd0lAAAAAASvFfDZFWgtbzFSS9Y3so8rHJth'
       ),
       isTokenAutoRefreshEnabled: true,
     });
