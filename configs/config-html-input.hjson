@@ -48,6 +48,11 @@
             }]
             trials: {
                 barChart: {
+                    "meta": {
+                        "chart": "bar",
+                        "AttrNo": 7,
+                        "misleading": false,
+                    },
                     description: "A trial for the user to click the largest bar"
                     instruction: "Click on the largest bar"
                     stimulus: {
