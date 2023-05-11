@@ -14,6 +14,8 @@
 </body>
 
 <script>
+    const taskID = "barChart";
+    const loc = "belowStimulus"
     height = 400;
     width = 750;
     padding = 25;
@@ -52,7 +54,7 @@
         // Post answer from the html to reVISit platform
         .on("click", (e, d) => {
             Revisit.postAnswers(
-                {answer:[d], taskID:"barChart"}
+                {answer:[d], taskID,location:loc}
             );
         });
 
