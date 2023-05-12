@@ -5,19 +5,16 @@ import {
   Flex,
   Modal,
   MultiSelect,
-  NumberInput,
-  Select,
   Text,
 } from '@mantine/core';
 import { useInputState } from '@mantine/hooks';
 import { IconTable } from '@tabler/icons-react';
 import { useCallback, useMemo } from 'react';
 import { SteppedComponent } from '../parser/types';
+import { useStudyId } from '../routes';
 import {
   downloadTidy,
   OPTIONAL_COMMON_PROPS,
-  ParticipantLoadQuery,
-  PARTICIPANT_LOAD_OPTS,
   Property,
   REQUIRED_PROPS,
 } from '../storage/downloadTidy';
@@ -25,6 +22,7 @@ import { useFirebase } from '../storage/init';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 
 type Props = {
+  filename: string;
   opened: boolean;
   close: () => void;
 };
@@ -71,17 +69,16 @@ function useTrialMetaProps(trialGroups: string[]): Array<`meta-${string}`> {
   return metaProps;
 }
 
-export function DownloadTidy({ opened, close }: Props) {
+export function DownloadTidy({ opened, close, filename }: Props) {
   const fb = useFirebase();
+  const studyId = useStudyId();
+
   const trialGroups = useTrialGroups();
   const metaProps = useTrialMetaProps(trialGroups);
 
   const [selectedProperties, setSelectedProperties] = useInputState<
     Array<Property>
   >([...REQUIRED_PROPS, ...OPTIONAL_COMMON_PROPS, ...metaProps]);
-
-  const [participantLoadQuery, setParticipantLoadQuery] =
-    useInputState<ParticipantLoadQuery>(PARTICIPANT_LOAD_OPTS[0]);
 
   const [selectedTrialGroups, setSelectedTrialGroups] = useInputState<string[]>(
     trialGroups.slice(0, 3)
@@ -141,55 +138,6 @@ export function DownloadTidy({ opened, close }: Props) {
         />
       </Box>
 
-      <Box mt="1em">
-        <Text fw="bold" size="lg">
-          How many participants to include in tidy csv?
-        </Text>
-        <Flex
-          direction={{
-            base: 'column',
-            sm: 'row',
-          }}
-          gap={{
-            base: 'sm',
-            sm: 'lg',
-          }}
-          justify={{
-            sm: 'start',
-          }}
-        >
-          <Select
-            data={PARTICIPANT_LOAD_OPTS}
-            value={participantLoadQuery.value}
-            onChange={(value) => {
-              const newValue = PARTICIPANT_LOAD_OPTS.find(
-                (p) => p.value === value
-              );
-
-              const count =
-                value === 'all'
-                  ? undefined
-                  : participantLoadQuery.count || newValue?.count;
-
-              if (newValue)
-                setParticipantLoadQuery({
-                  ...newValue,
-                  count,
-                });
-            }}
-          />
-          <NumberInput
-            disabled={
-              participantLoadQuery.value === 'all' ||
-              !participantLoadQuery.count
-            }
-            value={participantLoadQuery.count || undefined}
-            onChange={(ev) => {
-              setParticipantLoadQuery({ ...participantLoadQuery, count: ev });
-            }}
-          />
-        </Flex>
-      </Box>
       <Flex
         mt="xl"
         direction={{
@@ -209,9 +157,10 @@ export function DownloadTidy({ opened, close }: Props) {
           onClick={() => {
             downloadTidy(
               fb,
+              studyId,
               selectedTrialGroups,
               selectedProperties,
-              participantLoadQuery
+              `${filename}.csv`
             );
           }}
         >

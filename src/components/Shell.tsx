@@ -183,7 +183,6 @@ function StepRenderer() {
    */
   useEffect(() => {
     let int: any = null;
-    if (!int) return;
 
     if (opened) {
       int = setTimeout(() => {

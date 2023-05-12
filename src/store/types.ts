@@ -6,6 +6,8 @@ export type RootState = ReturnType<StudyStore['store']['getState']>;
 export interface TrialResult {
   complete: boolean;
   answer: string | object | null;
+  startTime: number;
+  endTime: number;
 }
 
 export type PracticeResult = TrialResult;

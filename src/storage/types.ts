@@ -1,4 +1,5 @@
 import { NodeId } from '@trrack/core';
+import { Firestore } from 'firebase/firestore';
 import localforage from 'localforage';
 import { StudyProvenance } from '../store';
 
@@ -14,6 +15,7 @@ export type ProvenanceStorage = {
     createNew(): Promise<any>;
     restoreSession(): Promise<any>;
   }>;
+  store: Firestore;
   saveNewProvenanceNode(trrack: StudyProvenance): void;
   completeSession(sessionId: string): Promise<void>;
   abandonSession(sessionId: string): Promise<void>;

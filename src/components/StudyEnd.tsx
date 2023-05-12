@@ -7,10 +7,8 @@ import { useAppSelector, useCreatedStore } from '../store';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { DownloadTidy } from './DownloadTidy';
 
-function download(graph: unknown, filename: string) {
-  const dataStr =
-    'data:text/json;charset=utf-8,' +
-    encodeURIComponent(JSON.stringify(graph, null, 2));
+export function download(graph: string, filename: string) {
+  const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(graph);
   const downloadAnchorNode = document.createElement('a');
   downloadAnchorNode.setAttribute('href', dataStr);
   downloadAnchorNode.setAttribute('download', filename);
@@ -36,7 +34,11 @@ export function StudyEnd() {
   );
 
   useEffect(() => {
-    firebase.completeSession(trrack.root.id);
+    async function fn() {
+      await firebase.completeSession(trrack.root.id);
+    }
+
+    fn();
   }, [trrack, firebase]);
 
   useEffect(() => {
@@ -52,10 +54,13 @@ export function StudyEnd() {
   if (!config || !ids) return null;
 
   const graph = JSON.parse(trrack.export());
-  const filename = `${config.studyMetadata.title}_${ids.pid}_${ids.session_id}.json`;
+  const baseFilename = `${config.studyMetadata.title.replace(' ', '_')}_${
+    ids.session_id
+  }`;
+  const jsonFilename = `${baseFilename}.json`;
 
   if (delayCounter === 0) {
-    download(graph, filename);
+    download(JSON.stringify(graph, null, 2), jsonFilename);
   }
 
   return (
@@ -75,7 +80,7 @@ export function StudyEnd() {
                 leftIcon={<IconCodeDots />}
                 mt="1em"
                 mr="0.5em"
-                onClick={() => download(graph, filename)}
+                onClick={() => download(graph, jsonFilename)}
                 display="block"
               >
                 Download Study
@@ -104,7 +109,7 @@ export function StudyEnd() {
           </Center>
         </Flex>
       </Center>
-      <DownloadTidy opened={openTidy} close={close} />
+      <DownloadTidy opened={openTidy} close={close} filename={baseFilename} />
     </>
   );
 }

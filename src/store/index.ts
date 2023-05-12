@@ -1,5 +1,6 @@
 import { type PayloadAction } from '@reduxjs/toolkit';
 import { configureTrrackableStore, createTrrackableSlice } from '@trrack/redux';
+import localforage from 'localforage';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { StudyComponent, StudyConfig } from '../parser/types';
@@ -55,6 +56,10 @@ export async function studyStoreCreator(
   config: StudyConfig,
   firebase: ProvenanceStorage
 ) {
+  const lf = localforage.createInstance({
+    name: 'sessions',
+  });
+
   const studySlice = createTrrackableSlice({
     name: 'studySlice',
     initialState: {
@@ -90,6 +95,8 @@ export async function studyStoreCreator(
           trialName: string;
           trialId: string;
           answer: string | object;
+          startTime: number;
+          endTime: number;
           type?: StudyComponent['type'];
         }>
       ) {
@@ -97,6 +104,8 @@ export async function studyStoreCreator(
           state[payload.type][payload.trialName][payload.trialId] = {
             complete: true,
             answer: payload.answer,
+            startTime: payload.startTime,
+            endTime: payload.endTime,
           };
         }
       },
@@ -118,8 +127,7 @@ export async function studyStoreCreator(
 
   // Check local/fb
   // is trrack instance in local storage?
-  const savedSessionId =
-    localStorage.getItem(__ACTIVE_SESSION) || trrack.root.id;
+  const savedSessionId = (await getFromLS(lf, studyId)) || trrack.root.id;
 
   const trrackExists = await initializeFirebaseSession(
     studyId,
@@ -129,7 +137,7 @@ export async function studyStoreCreator(
   );
 
   if (!trrackExists) {
-    localStorage.setItem(__ACTIVE_SESSION, trrack.root.id);
+    await saveToLS(lf, studyId, trrack.root.id);
   }
 
   flagsStore.dispatch(setTrrackExists(!!trrackExists));
@@ -158,7 +166,7 @@ export async function studyStoreCreator(
       }
 
       trrackExists.createNew().then(() => {
-        localStorage.setItem(__ACTIVE_SESSION, trrack.root.id);
+        return saveToLS(lf, studyId, trrack.root.id);
       });
     },
     loadGraph(graph: string) {
@@ -167,8 +175,25 @@ export async function studyStoreCreator(
   };
 }
 
+async function saveToLS(lf: LocalForage, studyId: string, sessionId: string) {
+  const sessionsObject: Record<string, string> =
+    (await lf.getItem(__ACTIVE_SESSION)) || {};
+
+  sessionsObject[studyId] = sessionId;
+
+  lf.setItem(__ACTIVE_SESSION, sessionsObject);
+}
+
+async function getFromLS(lf: LocalForage, studyId: string) {
+  const sessionsObject: Record<string, string> =
+    (await lf.getItem(__ACTIVE_SESSION)) || {};
+
+  return sessionsObject && sessionsObject[studyId];
+}
+
 export type StudyStore = Awaited<ReturnType<typeof studyStoreCreator>>;
 export type StudyProvenance = StudyStore['trrack'];
+export type StudyState = ReturnType<StudyStore['store']['getState']>;
 
 export const MainStoreContext = createContext<StudyStore>(null!);
 

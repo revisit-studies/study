@@ -1,6 +1,6 @@
 import { Button, Group, Text } from '@mantine/core';
 import { useInputState } from '@mantine/hooks';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { useNextTrialId } from '../../controllers/utils';
 import {
@@ -52,9 +52,8 @@ export default function ResponseBlock({
 
   const storedAnswer = status?.answer;
 
-  const responses = config.response.filter(
-    (r) =>
-      r.location === location
+  const responses = config.response.filter((r) =>
+    r.location ? r.location === location : location === 'belowStimulus'
   );
 
   const isSurvey = config.type === 'survey';
@@ -71,6 +70,10 @@ export default function ResponseBlock({
   const currentStep = useCurrentStep();
   const nextTrialId = useNextTrialId(trialId, config.type);
   const nextStep = useNextStep();
+
+  const startTime = useMemo(() => {
+    return Date.now();
+  }, [trialId]);
 
   const showNextBtn =
     location === (config.nextButtonLocation || 'belowStimulus');
@@ -97,7 +100,6 @@ export default function ResponseBlock({
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const answer = deepCopy(aggregateResponses!);
 
-
       if (!status?.complete)
         appDispatch(
           saveTrialAnswer({
@@ -105,6 +107,8 @@ export default function ResponseBlock({
             trialId: trialId || 'NoID',
             answer,
             type: config.type,
+            startTime,
+            endTime: Date.now(),
           })
         );
     }
@@ -168,9 +172,9 @@ export default function ResponseBlock({
             disabled={
               isSurvey
                 ? !savedSurvey && !answerValidator.isValid()
-                : (isPractice
+                : isPractice
                 ? !checkClicked
-                : !status?.complete && !areResponsesValid)
+                : !status?.complete && !areResponsesValid
             }
             to={
               nextTrialId

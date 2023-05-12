@@ -170,6 +170,12 @@ export interface StudyConfigJSON {
 }
 
 // Typecasting functions
+export function isSteppedComponent(
+  component: StudyComponent
+): component is TrialsComponent {
+  return isTrialsComponent(component) || isPracticeComponent(component);
+}
+
 export function isTrialsComponent(
   component: StudyComponent
 ): component is TrialsComponent {

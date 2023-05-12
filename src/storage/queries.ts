@@ -1,65 +1,41 @@
+import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import {
   collection,
-  collectionGroup,
-  CollectionReference,
-  DocumentData,
-  DocumentReference,
   Firestore,
   getDocs,
   query,
   where,
 } from 'firebase/firestore';
-
-export const STUDY_COLLECTION_ID = import.meta.env.PROD ? 'deployed' : 'debug';
-
-export type FirebaseCollection = CollectionReference<DocumentData>;
-export type FirebaseDoc = DocumentReference<DocumentData>;
-
-export function getStudyCollectionRef(fs: Firestore) {
-  return collection(fs, STUDY_COLLECTION_ID);
-}
+import { SESSIONS } from './constants';
+import { loadProvenance } from './init';
+import { FsSession } from './types';
 
 /**
 
-<> - collections
-rest - docs
-
-/<mode>/studies/<study-id>/participants/<pid>/sessions/<sid>/
-
+participants - details about participants e.g. demographics,etc
+studies - details about studies, e.g. config
+sessions - individual session with provenance, etc.
 
 */
 
-export function getSessionRef(
-  fs: Firestore,
-  studyId: string,
-  pid: string,
-  sessionId: string
-) {
-  return collection(
-    fs,
-    `${STUDY_COLLECTION_ID}/studies/${studyId}/participants/${pid}/sessions/${sessionId}`
-  );
-}
+export async function getAllSessions(fs: Firestore, studyId: string) {
+  const sessionsRef = collection(fs, SESSIONS);
+  const studySessions = query(sessionsRef, where('studyId', '==', studyId));
 
-export async function getAllParticipants(fs: Firestore, studyId: string) {
-  console.group('Start');
-  console.log({ studyId, STUDY_COLLECTION_ID });
+  const sessionDocs = (await getDocs(studySessions)).docs;
 
-  const trrackCollection = collectionGroup(fs, 'trrack');
-  const filterByStudy = query(
-    trrackCollection,
-    where('__meta.studyId', '==', studyId)
-  );
+  const graphs: Array<{
+    graph: ProvenanceGraph<any, any, any>;
+    session: FsSession;
+  }> = [];
 
-  const t = await getDocs(filterByStudy);
+  for (const sessionDoc of sessionDocs) {
+    const g = await loadProvenance(fs, sessionDoc.id, false);
+    graphs.push({
+      graph: g,
+      session: sessionDoc.data() as FsSession,
+    });
+  }
 
-  console.log(t.docs);
-
-  t.forEach((d) => {
-    console.log(d.ref.parent.path);
-    console.log(d.data());
-  });
-
-  console.groupEnd();
-  return [];
+  return graphs;
 }
