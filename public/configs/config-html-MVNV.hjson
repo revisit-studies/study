@@ -60,6 +60,11 @@
             }]
             trials: {
                 task0: {
+                    meta: {
+                            "chart": "adj-matrix",
+                            "AttrNo": 75,
+                            "taskName": "Node Search on Attr",
+                        },
                     description: "task description"
                     instruction:  "**Question:** Find the North American with the most Tweets"
                     stimulus: {
@@ -90,6 +95,11 @@
             }]
             trials: {
                 task1: {
+                    meta: {
+                        "chart": "adj-matrix",
+                        "AttrNo": 75,
+                        "taskName": "Node Search on Attr. w/ Distractors",
+                    },
                     description: "task description"
                     instruction:  "**Question:** Find the European person or institution with the least likes"
                     stimulus: {
@@ -120,6 +130,11 @@
             }]
             trials: {
                 task2: {
+                    meta: {
+                        "chart": "adj-matrix",
+                        "AttrNo": 75,
+                        "taskName": "Node Search on Top. w/ Multiple Attrs",
+                    },
                     description: "task description"
                     instruction:  "**Question:** Which person has many interactions (edges) in this network, several followers, but few tweets and likes in general?"
                     stimulus: {
@@ -150,6 +165,11 @@
             }]
             trials: {
                 task3: {
+                    meta: {
+                        "chart": "adj-matrix",
+                        "AttrNo": 75,
+                        "taskName": "Neighbor Search on Attr",
+                    },
                     description: "task description",
                     instruction:  "**Question:** Find all of Lane's European Neighbors",
                     stimulus: {
@@ -180,6 +200,11 @@
             }]
             trials: {
                 task4: {
+                    meta: {
+                        "chart": "adj-matrix",
+                        "AttrNo": 75,
+                        "taskName": "Neighbor Search on Attr. w/ Distractors",
+                    },
                     description: "task description",
                     instruction:  "**Question:** Find all of giCentre's North American Neighbors",
                     stimulus: {
@@ -210,6 +235,11 @@
             }]
             trials: {
                 task5: {
+                    meta: {
+                        "chart": "adj-matrix",
+                        "AttrNo": 75,
+                        "taskName": "Neighbor Search on Edge Attr.",
+                    },
                     description: "task description",
                     instruction:  "**Question:** Who had the most mention interactions with Jeffrey?",
                     stimulus: {
@@ -243,6 +273,11 @@
             }]
             trials: {
                 task6: {
+                    meta: {
+                        "chart": "adj-matrix",
+                        "AttrNo": 75,
+                        "taskName": "Neighbor Overview on Edge Attr. ",
+                    },
                     description: "task description",
                     instruction:  "**Question:** Does Alex have more mention interactions with North American or European accounts? Who does he have the most mentions interactions with?",
                     stimulus: {
@@ -273,6 +308,11 @@
             }]
             trials: {
                 task7: {
+                    meta: {
+                        "chart": "adj-matrix",
+                        "AttrNo": 75,
+                        "taskName": "Attr. of Common Neighbors.",
+                    },
                     description: "task description",
                     instruction:  "Among all people who have interacted with both Jeffrey and Robert, who has the most followers?",
                     stimulus: {
@@ -315,6 +355,11 @@
             ],
             trials: {
                 task8: {
+                    meta: {
+                        "chart": "adj-matrix",
+                        "AttrNo": 75,
+                        "taskName": "Edge Attr",
+                    },
                     description: "task description"
                     instruction:  "**Question:** What is the most common form of interaction between Evis19 and Jon? How often has this interaction happened?"
                     stimulus: {
@@ -345,6 +390,11 @@
             }]
             trials: {
                 task9: {
+                    meta: {
+                        "chart": "adj-matrix",
+                        "AttrNo": 75,
+                        "taskName": "Node Attr. Comparison.",
+                    },
                     description: "task description"
                     instruction:  "**Question:** Select all of Noeska’s neighbors that are people and have more friends than followers"
                     stimulus: {
@@ -375,6 +425,11 @@
             }]
             trials: {
                 task10: {
+                    meta: {
+                        "chart": "adj-matrix",
+                        "AttrNo": 25,
+                        "taskName": "Node Attr. Comparison (Small).",
+                    },
                     description: "task description"
                     instruction:  "**Question:** Select the people who have interacted with Thomas and have more friends than followers"
                     stimulus: {
@@ -415,6 +470,11 @@
             ],
             trials: {
                 task11: {
+                    meta: {
+                        "chart": "adj-matrix",
+                        "AttrNo": 75,
+                        "taskName": " Cluster and Attr. Estimation.",
+                    },
                     description: "task description",
                     instruction:  "**Question:** Select the people who have interacted with Thomas and have more friends than followers",
                     stimulus: {
@@ -456,6 +516,11 @@
             ],
             trials: {
                 task12: {
+                    meta: {
+                        "chart": "adj-matrix",
+                        "AttrNo": 75,
+                        "taskName": "Attr. along Shortest Path.",
+                    },
                     description: "task description"
                     instruction:  "**Question:** What is the institution on a shortest path between Lane and Rob. What is its continent of origin?"
                     stimulus: {
@@ -496,6 +561,11 @@
                 }]
             trials: {
                 task13: {
+                    meta: {
+                        "chart": "adj-matrix",
+                        "AttrNo": 25,
+                        "taskName": "Attr. along Shortest Path (Small).",
+                    },
                     description: "task description"
                     instruction:  "**Question:** What is the institution on a shortest path between Jason and Jon. What is its continent of origin?"
                     stimulus: {
@@ -526,6 +596,11 @@
             }]
             trials: {
                 task14: {
+                    meta: {
+                        "chart": "adj-matrix",
+                        "AttrNo": 75,
+                        "taskName": "Attr. on Multiple Paths",
+                    },
                     description: "task description",
                     instruction:  "**Question:** Of the North Americans who are two interactions away from Sereno, who has been on twitter the longest?",
                     stimulus: {
@@ -556,6 +631,11 @@
             }]
             trials: {
                 task15: {
+                    meta: {
+                        "chart": "adj-matrix",
+                        "AttrNo": 75,
+                        "taskName": "Free Explore",
+                    },
                     description: "task description",
                     instruction:  "**Question:** Please explore the network freely and report on your findings. Is there anything surprising or particularly interesting in the network?",
                     stimulus: {

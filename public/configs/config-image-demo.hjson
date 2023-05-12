@@ -52,6 +52,12 @@
       ],
       "trials": {
         "dotplot-low": {
+          "meta": {
+            "difficulty": 1,
+            "nr-dots": 20,
+            "temp": "low",
+          },
+          "title": "T1-low-temp",
           "description": "What does the description do? ",
           "instruction": '''
             **Scenario**: Alpacas may need blankets. Assume that
@@ -91,6 +97,12 @@
           }
         },
         "dotplot-medium": {
+          "meta": {
+            "difficulty": 2,
+            "nr-dots": 20,
+            "temp": "mid",
+          },
+          "title": "T2-mid-temp",
           "description": "What does the description do? ",
           "instruction": '''
             **Scenario**: Alpacas may need blankets. Assume that
@@ -130,6 +142,12 @@
           }
         },
         "dotplot-high": {
+          "title": "T3-high-temp",
+          "meta": {
+            "difficulty": 1,
+            "nr-dots": 20,
+            "temp": "hi",
+          },
           "description": "What does the description do? ",
           "instruction": '''
             **Scenario**: Alpacas may need blankets. Assume that

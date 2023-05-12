@@ -42,6 +42,11 @@
             }]
             trials: {
                 barChart: {
+                    "meta": {
+                        "chart": "bar",
+                        "AttrNo": 7,
+                        "misleading": false,
+                    },
                     description: "description of the trial"
                     instruction:  **Question:** How many bars have a value great than 1?
                     meta: {

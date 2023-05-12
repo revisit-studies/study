@@ -38,7 +38,8 @@
         options:[{label:"Bar", value:"Bar"},{label:"Bubble", value:"Bubble"},{label:"Pie", value:"Pie"},{label:"Stacked Bar", value:"Stacked Bar"}]
         required: true
         max: 100
-        min: 0
+        min: 0,
+        location: "aboveStimulus"
       }
         //numerical example
         {
@@ -49,7 +50,8 @@
           required: true
           // add max and min for the allowed range
           max: 100
-          min: 0
+          min: 0,
+          location: "aboveStimulus"
         }
         //likert example
         {
@@ -59,7 +61,10 @@
           desc: "Likert question"
           required: true
           //specify the number of likert options.
-          preset: "9"
+          preset: "9",
+          leftLabel:"Dislike",
+          rightLabel: "Like",
+          location: "aboveStimulus"
         }
         //text example
         {
@@ -67,7 +72,8 @@
           type: "shortText"
           prompt: "short text example"
           desc: "Enter your answer here"
-          required: true
+          required: true,
+          location: "aboveStimulus"
         }
         //text example
         {
@@ -75,7 +81,8 @@
           type: "longText"
           prompt: "long text example"
           desc: "Enter your long comments here"
-          required: true
+          required: true,
+          location: "aboveStimulus"
         }
         //slider example
         {
@@ -84,7 +91,8 @@
           prompt: "Slider example, iframe input example please refer to MVNV example or HTML input demo"
           desc: "range from 0-100"
           options:[{label:"Bad", value:0},{label:"Mid", value:50},{label:"Good", value:100}]
-          required: true
+          required: true,
+          location: "aboveStimulus"
         }
 
       ]
