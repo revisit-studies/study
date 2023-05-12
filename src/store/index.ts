@@ -2,8 +2,8 @@ import { type PayloadAction } from '@reduxjs/toolkit';
 import { configureTrrackableStore, createTrrackableSlice } from '@trrack/redux';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
-import { Firebase } from '../firebase/init';
 import { StudyComponent, StudyConfig } from '../parser/types';
+import { ProvenanceStorage } from '../storage/types';
 import { flagsStore, setTrrackExists } from './flags';
 import { RootState, State, Step, TrialRecord } from './types';
 
@@ -41,19 +41,19 @@ function getTrialSteps(
   return steps;
 }
 
-function initializeFirebaseSession(
+async function initializeFirebaseSession(
   studyId: string,
-  fb: Firebase,
-  sessionId: string,
+  fb: ProvenanceStorage,
+  savedSessionId: string,
   trrack: StudyProvenance
 ) {
-  return fb.setStudyId(studyId).initialize(sessionId, trrack);
+  return fb.initialize(studyId, savedSessionId, trrack);
 }
 
 export async function studyStoreCreator(
   studyId: string,
   config: StudyConfig,
-  firebase: any
+  firebase: ProvenanceStorage
 ) {
   const studySlice = createTrrackableSlice({
     name: 'studySlice',
@@ -94,7 +94,6 @@ export async function studyStoreCreator(
         }>
       ) {
         if (payload.type === 'trials' || payload.type === 'practice') {
-          console.log(payload.answer,'payload.answer');
           state[payload.type][payload.trialName][payload.trialId] = {
             complete: true,
             answer: payload.answer,
@@ -135,8 +134,6 @@ export async function studyStoreCreator(
 
   flagsStore.dispatch(setTrrackExists(!!trrackExists));
 
-  (window as any).trrack = trrack;
-
   trrack.currentChange((trigger: any) => {
     if (trigger === 'new') {
       firebase.saveNewProvenanceNode(trrack);
@@ -149,20 +146,18 @@ export async function studyStoreCreator(
     trrackStore,
     actions: studySlice.actions,
     restoreSession() {
-      const savedSessionId = localStorage.getItem(__ACTIVE_SESSION);
-      console.log(savedSessionId);
+      if (!trrackExists) {
+        return;
+      }
 
-      if (!savedSessionId) return;
-
-      firebase.loadProvenance(trrack, savedSessionId);
+      trrackExists.restoreSession();
     },
     startNewSession() {
       if (!trrackExists) {
         return;
       }
 
-      trrackExists().then(() => {
-        console.log('saved new');
+      trrackExists.createNew().then(() => {
         localStorage.setItem(__ACTIVE_SESSION, trrack.root.id);
       });
     },

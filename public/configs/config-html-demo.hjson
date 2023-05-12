@@ -44,6 +44,9 @@
                 barChart: {
                     description: "description of the trial"
                     instruction:  **Question:** How many bars have a value great than 1?
+                    meta: {
+                      difficulty: "hard",
+                    }
                     stimulus: {
                         type: "website"
                         path: "html-demo/bar-chart.html"

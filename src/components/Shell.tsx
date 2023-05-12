@@ -43,7 +43,8 @@ import {
   default as TrialController,
   default as TrialPracticeController,
 } from '../controllers/TrialPracticeController';
-import { Firebase, FirebaseContext, initFirebase } from '../firebase/init';
+import { FirebaseContext, init } from '../storage/init';
+import { ProvenanceStorage } from '../storage/types';
 import AppAside from './interface/AppAside';
 import AppHeader from './interface/AppHeader';
 import AppNavBar from './interface/AppNavBar';
@@ -77,7 +78,7 @@ export function Shell({ globalConfig }: Props) {
   }
 
   const [activeConfig, setActiveConfig] = useState<Nullable<StudyConfig>>(null);
-  const [firebase, setFirebase] = useState<Nullable<Firebase>>(null);
+  const [firebase, setFirebase] = useState<Nullable<ProvenanceStorage>>(null);
   const [storeObj, setStoreObj] = useState<Nullable<StudyStore>>(null);
 
   useEffect(() => {
@@ -96,16 +97,16 @@ export function Shell({ globalConfig }: Props) {
 
     let active = true;
 
-    async function init() {
+    async function fn() {
       setFirebase(null);
-      const fb = await initFirebase();
+      const fb = await init();
 
       if (!active) return;
 
       setFirebase(fb);
     }
 
-    init();
+    fn();
 
     return () => {
       active = false;
@@ -117,7 +118,11 @@ export function Shell({ globalConfig }: Props) {
 
     let active = true;
 
-    async function init(sid: string, config: StudyConfig, fb: Firebase) {
+    async function init(
+      sid: string,
+      config: StudyConfig,
+      fb: ProvenanceStorage
+    ) {
       setStoreObj(null);
       const st = await studyStoreCreator(sid, config, fb);
 
@@ -172,6 +177,24 @@ function StepRenderer() {
     },
     [store, flagDispatch]
   );
+
+  /**
+   *  NOTE: Rem
+   */
+  useEffect(() => {
+    let int: any = null;
+    if (!int) return;
+
+    if (opened) {
+      int = setTimeout(() => {
+        close(true);
+      }, 1);
+    }
+
+    return () => {
+      if (int) clearInterval(int);
+    };
+  }, []);
 
   return (
     <AppShell

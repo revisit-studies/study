@@ -68,6 +68,7 @@ export interface Trial {
   stimulus: Stimulus;
   response?: Response[];
   correctAnswer?: Answer[];
+  meta?: Record<string, any>;
 }
 
 export const stimulusTypes = [
@@ -185,3 +186,12 @@ export function isPracticeComponent(
  * Helper type to avoid writing Type | undefined | null
  */
 export type Nullable<T> = T | undefined | null;
+
+/**
+ * Helper type to make reading derived union and intersection types easier.
+ * Purely asthetic
+ */
+export type Prettify<T> = {
+  [K in keyof T]: T[K];
+  /* eslint-disable */
+} & {};
