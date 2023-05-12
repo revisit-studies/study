@@ -26,7 +26,9 @@ function serverTimestamp() {
   return new Date();
 }
 
-export async function init(_connect = true): Promise<ProvenanceStorage> {
+export async function initFirebase(
+  _connect = true
+): Promise<ProvenanceStorage> {
   if (MODE === 'dev') {
     (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
   }

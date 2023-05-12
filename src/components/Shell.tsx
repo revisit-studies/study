@@ -43,7 +43,7 @@ import {
   default as TrialController,
   default as TrialPracticeController,
 } from '../controllers/TrialPracticeController';
-import { FirebaseContext, init } from '../storage/init';
+import { FirebaseContext, initFirebase } from '../storage/init';
 import { ProvenanceStorage } from '../storage/types';
 import AppAside from './interface/AppAside';
 import AppHeader from './interface/AppHeader';
@@ -99,7 +99,7 @@ export function Shell({ globalConfig }: Props) {
 
     async function fn() {
       setFirebase(null);
-      const fb = await init();
+      const fb = await initFirebase();
 
       if (!active) return;
 
@@ -177,23 +177,6 @@ function StepRenderer() {
     },
     [store, flagDispatch]
   );
-
-  /**
-   *  NOTE: Rem
-   */
-  useEffect(() => {
-    let int: any = null;
-
-    if (opened) {
-      int = setTimeout(() => {
-        close(true);
-      }, 1);
-    }
-
-    return () => {
-      if (int) clearInterval(int);
-    };
-  }, []);
 
   return (
     <AppShell
