@@ -1,6 +1,7 @@
 {
     configVersion: 1
     studyMetadata: {
+        urlKey: "html-demo"
         title: "HTML as a Stimulus"
         version: "pilot"
         authors: [
