@@ -4,6 +4,8 @@ import { useSurveyConfig } from './utils';
 export default function SurveyController() {
   const config = useSurveyConfig();
 
+  console.log(config);
+
   if (!config) return null;
   return (
     <div>

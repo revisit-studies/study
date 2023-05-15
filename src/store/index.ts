@@ -1,9 +1,10 @@
 import { type PayloadAction } from '@reduxjs/toolkit';
 import { configureTrrackableStore, createTrrackableSlice } from '@trrack/redux';
+import localforage from 'localforage';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
-import { Firebase } from '../firebase/init';
 import { StudyComponent, StudyConfig } from '../parser/types';
+import { ProvenanceStorage } from '../storage/types';
 import { flagsStore, setTrrackExists } from './flags';
 import { RootState, State, Step, TrialRecord } from './types';
 
@@ -41,20 +42,24 @@ function getTrialSteps(
   return steps;
 }
 
-function initializeFirebaseSession(
+async function initializeFirebaseSession(
   studyId: string,
-  fb: Firebase,
-  sessionId: string,
+  fb: ProvenanceStorage,
+  savedSessionId: string,
   trrack: StudyProvenance
 ) {
-  return fb.setStudyId(studyId).initialize(sessionId, trrack);
+  return fb.initialize(studyId, savedSessionId, trrack);
 }
 
 export async function studyStoreCreator(
   studyId: string,
   config: StudyConfig,
-  firebase: any
+  firebase: ProvenanceStorage
 ) {
+  const lf = localforage.createInstance({
+    name: 'sessions',
+  });
+
   const studySlice = createTrrackableSlice({
     name: 'studySlice',
     initialState: {
@@ -90,14 +95,17 @@ export async function studyStoreCreator(
           trialName: string;
           trialId: string;
           answer: string | object;
+          startTime: number;
+          endTime: number;
           type?: StudyComponent['type'];
         }>
       ) {
         if (payload.type === 'trials' || payload.type === 'practice') {
-          console.log(payload.answer,'payload.answer');
           state[payload.type][payload.trialName][payload.trialId] = {
             complete: true,
             answer: payload.answer,
+            startTime: payload.startTime,
+            endTime: payload.endTime,
           };
         }
       },
@@ -119,8 +127,7 @@ export async function studyStoreCreator(
 
   // Check local/fb
   // is trrack instance in local storage?
-  const savedSessionId =
-    localStorage.getItem(__ACTIVE_SESSION) || trrack.root.id;
+  const savedSessionId = (await getFromLS(lf, studyId)) || trrack.root.id;
 
   const trrackExists = await initializeFirebaseSession(
     studyId,
@@ -130,12 +137,10 @@ export async function studyStoreCreator(
   );
 
   if (!trrackExists) {
-    localStorage.setItem(__ACTIVE_SESSION, trrack.root.id);
+    await saveToLS(lf, studyId, trrack.root.id);
   }
 
   flagsStore.dispatch(setTrrackExists(!!trrackExists));
-
-  (window as any).trrack = trrack;
 
   trrack.currentChange((trigger: any) => {
     if (trigger === 'new') {
@@ -149,21 +154,19 @@ export async function studyStoreCreator(
     trrackStore,
     actions: studySlice.actions,
     restoreSession() {
-      const savedSessionId = localStorage.getItem(__ACTIVE_SESSION);
-      console.log(savedSessionId);
+      if (!trrackExists) {
+        return;
+      }
 
-      if (!savedSessionId) return;
-
-      firebase.loadProvenance(trrack, savedSessionId);
+      trrackExists.restoreSession();
     },
     startNewSession() {
       if (!trrackExists) {
         return;
       }
 
-      trrackExists().then(() => {
-        console.log('saved new');
-        localStorage.setItem(__ACTIVE_SESSION, trrack.root.id);
+      trrackExists.createNew().then(() => {
+        return saveToLS(lf, studyId, trrack.root.id);
       });
     },
     loadGraph(graph: string) {
@@ -172,8 +175,25 @@ export async function studyStoreCreator(
   };
 }
 
+async function saveToLS(lf: LocalForage, studyId: string, sessionId: string) {
+  const sessionsObject: Record<string, string> =
+    (await lf.getItem(__ACTIVE_SESSION)) || {};
+
+  sessionsObject[studyId] = sessionId;
+
+  lf.setItem(__ACTIVE_SESSION, sessionsObject);
+}
+
+async function getFromLS(lf: LocalForage, studyId: string) {
+  const sessionsObject: Record<string, string> =
+    (await lf.getItem(__ACTIVE_SESSION)) || {};
+
+  return sessionsObject && sessionsObject[studyId];
+}
+
 export type StudyStore = Awaited<ReturnType<typeof studyStoreCreator>>;
 export type StudyProvenance = StudyStore['trrack'];
+export type StudyState = ReturnType<StudyStore['store']['getState']>;
 
 export const MainStoreContext = createContext<StudyStore>(null!);
 

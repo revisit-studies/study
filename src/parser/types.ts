@@ -69,6 +69,7 @@ export interface Trial {
   stimulus: Stimulus;
   response?: Response[];
   correctAnswer?: Answer[];
+  meta?: Record<string, any>;
 }
 
 export const stimulusTypes = [
@@ -153,7 +154,12 @@ export interface StudyConfig {
 export interface GlobalConfig {
   configsList: string[];
   configs: {
-    [key: string]: { title: string; path: string; description: string };
+    [key: string]: {
+      title: string;
+      path: string;
+      description: string;
+      urlKey: string;
+    };
   };
 }
 
@@ -165,6 +171,12 @@ export interface StudyConfigJSON {
 }
 
 // Typecasting functions
+export function isSteppedComponent(
+  component: StudyComponent
+): component is TrialsComponent {
+  return isTrialsComponent(component) || isPracticeComponent(component);
+}
+
 export function isTrialsComponent(
   component: StudyComponent
 ): component is TrialsComponent {
@@ -181,3 +193,12 @@ export function isPracticeComponent(
  * Helper type to avoid writing Type | undefined | null
  */
 export type Nullable<T> = T | undefined | null;
+
+/**
+ * Helper type to make reading derived union and intersection types easier.
+ * Purely asthetic
+ */
+export type Prettify<T> = {
+  [K in keyof T]: T[K];
+  /* eslint-disable */
+} & {};

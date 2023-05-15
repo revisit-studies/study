@@ -43,7 +43,8 @@ import {
   default as TrialController,
   default as TrialPracticeController,
 } from '../controllers/TrialPracticeController';
-import { Firebase, FirebaseContext, initFirebase } from '../firebase/init';
+import { FirebaseContext, initFirebase } from '../storage/init';
+import { ProvenanceStorage } from '../storage/types';
 import AppAside from './interface/AppAside';
 import AppHeader from './interface/AppHeader';
 import AppNavBar from './interface/AppNavBar';
@@ -70,20 +71,20 @@ export function Shell({ globalConfig }: Props) {
   if (
     !studyId ||
     !globalConfig.configsList
-      .map((c) => sanitizeStringForUrl(globalConfig.configs[c].title))
+      .map((c) => sanitizeStringForUrl(globalConfig.configs[c].urlKey))
       .includes(studyId)
   ) {
     throw new Error('Study id invalid');
   }
 
   const [activeConfig, setActiveConfig] = useState<Nullable<StudyConfig>>(null);
-  const [firebase, setFirebase] = useState<Nullable<Firebase>>(null);
+  const [firebase, setFirebase] = useState<Nullable<ProvenanceStorage>>(null);
   const [storeObj, setStoreObj] = useState<Nullable<StudyStore>>(null);
 
   useEffect(() => {
     const configJSON = globalConfig.configsList
       .map((c) => globalConfig.configs[c])
-      .find((con) => sanitizeStringForUrl(con.title) === studyId);
+      .find((cfg) => sanitizeStringForUrl(cfg.urlKey) === studyId);
 
     if (configJSON)
       fetchStudyConfig(`configs/${configJSON.path}`).then((config) => {
@@ -96,7 +97,7 @@ export function Shell({ globalConfig }: Props) {
 
     let active = true;
 
-    async function init() {
+    async function fn() {
       setFirebase(null);
       const fb = await initFirebase();
 
@@ -105,7 +106,7 @@ export function Shell({ globalConfig }: Props) {
       setFirebase(fb);
     }
 
-    init();
+    fn();
 
     return () => {
       active = false;
@@ -117,7 +118,11 @@ export function Shell({ globalConfig }: Props) {
 
     let active = true;
 
-    async function init(sid: string, config: StudyConfig, fb: Firebase) {
+    async function init(
+      sid: string,
+      config: StudyConfig,
+      fb: ProvenanceStorage
+    ) {
       setStoreObj(null);
       const st = await studyStoreCreator(sid, config, fb);
 

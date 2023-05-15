@@ -29,7 +29,7 @@ function useConsentStore() {
 }
 
 export default function Consent() {
-  const { completeStep, saveConsent } = useStoreActions();
+  const { saveConsent } = useStoreActions();
 
   const storedConsent = useConsentStore();
 
@@ -84,7 +84,6 @@ export default function Consent() {
           disabled={signatureRequired && txtInput.length === 0}
           label="Accept"
           process={() => {
-            dispatch(completeStep('consent'));
             if (!storedConsent)
               dispatch(
                 saveConsent({
