@@ -17,6 +17,7 @@ import {
   IconTrash,
 } from '@tabler/icons-react';
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { PREFIX } from '../../App';
 import { useCurrentStep } from '../../routes';
 import { useAppSelector, useCreatedStore } from '../../store';
@@ -30,6 +31,7 @@ export default function AppHeader() {
   const studyConfig = useAppSelector((state) => state.study.config);
   const clearCache = useCreatedStore().clearCache;
   const flagsDispatch = useFlagsDispatch();
+  const navigate = useNavigate();
 
   const currentStep = useCurrentStep();
 
@@ -109,8 +111,14 @@ export default function AppHeader() {
                 >
                   Contact
                 </Menu.Item>
-                <Menu.Item onClick={clearCache} icon={<IconTrash size={14} />}>
-                  Clear Local Cache
+                <Menu.Item
+                  onClick={async () => {
+                    await clearCache();
+                    navigate(0);
+                  }}
+                  icon={<IconTrash size={14} />}
+                >
+                  Clear Cache & Refresh
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>
