@@ -10,19 +10,25 @@ import {
   Space,
   Title,
 } from '@mantine/core';
-import { IconDotsVertical, IconMail, IconSchema } from '@tabler/icons-react';
+import {
+  IconDotsVertical,
+  IconMail,
+  IconSchema,
+  IconTrash,
+} from '@tabler/icons-react';
 import { useState } from 'react';
+import { PREFIX } from '../../App';
 import { useCurrentStep } from '../../routes';
-import { useAppSelector } from '../../store';
+import { useAppSelector, useCreatedStore } from '../../store';
 import {
   toggleShowAdmin,
   toggleShowHelpText,
   useFlagsDispatch,
 } from '../../store/flags';
-import { PREFIX } from '../../App';
 
 export default function AppHeader() {
   const studyConfig = useAppSelector((state) => state.study.config);
+  const clearCache = useCreatedStore().clearCache;
   const flagsDispatch = useFlagsDispatch();
 
   const currentStep = useCurrentStep();
@@ -102,6 +108,9 @@ export default function AppHeader() {
                   icon={<IconMail size={14} />}
                 >
                   Contact
+                </Menu.Item>
+                <Menu.Item onClick={clearCache} icon={<IconTrash size={14} />}>
+                  Clear Local Cache
                 </Menu.Item>
               </Menu.Dropdown>
             </Menu>

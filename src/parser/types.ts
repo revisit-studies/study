@@ -63,13 +63,12 @@ export interface SurveyComponent extends StudyComponent {
 }
 
 export interface Trial {
-  meta?: Record<string,any>;
+  meta?: Record<string, any>;
   description: string;
   instruction: string;
   stimulus: Stimulus;
   response?: Response[];
   correctAnswer?: Answer[];
-  meta?: Record<string, any>;
 }
 
 export const stimulusTypes = [

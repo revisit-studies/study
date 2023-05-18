@@ -25,8 +25,11 @@ export function useTrialStatus(trialId: string | null): TrialResult | null {
 
   return (
     status || {
+      // this object is meant to return an invalid trial status to avoid unnecessary null checks
       complete: false,
       answer: null,
+      startTime: -1,
+      endTime: -1,
     }
   );
 }

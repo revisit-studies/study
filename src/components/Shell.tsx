@@ -101,7 +101,7 @@ export function Shell({ globalConfig }: Props) {
 
     async function fn() {
       setFirebase(null);
-      const fb = await initFirebase();
+      const fb = await initFirebase(true);
 
       if (!active) return;
 

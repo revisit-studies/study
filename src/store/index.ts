@@ -1,5 +1,6 @@
 import { type PayloadAction } from '@reduxjs/toolkit';
 import { configureTrrackableStore, createTrrackableSlice } from '@trrack/redux';
+import { clearIndexedDbPersistence, terminate } from 'firebase/firestore';
 import localforage from 'localforage';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
@@ -40,15 +41,6 @@ function getTrialSteps(
   });
 
   return steps;
-}
-
-async function initializeFirebaseSession(
-  studyId: string,
-  fb: ProvenanceStorage,
-  savedSessionId: string,
-  trrack: StudyProvenance
-) {
-  return fb.initialize(studyId, savedSessionId, trrack);
 }
 
 export async function studyStoreCreator(
@@ -129,9 +121,8 @@ export async function studyStoreCreator(
   // is trrack instance in local storage?
   const savedSessionId = (await getFromLS(lf, studyId)) || trrack.root.id;
 
-  const trrackExists = await initializeFirebaseSession(
+  const trrackExists = await firebase.initialize(
     studyId,
-    firebase,
     savedSessionId,
     trrack
   );
@@ -153,6 +144,12 @@ export async function studyStoreCreator(
     trrack,
     trrackStore,
     actions: studySlice.actions,
+    async clearCache() {
+      await terminate(firebase.firestore);
+      await clearIndexedDbPersistence(firebase.firestore);
+      firebase.startFirestore();
+      await lf.clear();
+    },
     restoreSession() {
       if (!trrackExists) {
         return;

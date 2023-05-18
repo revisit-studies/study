@@ -39,3 +39,8 @@ export async function getAllSessions(fs: Firestore, studyId: string) {
 
   return graphs;
 }
+
+export async function getAllSessionGraphs(fs: Firestore, studyId: string) {
+  const graphs = await getAllSessions(fs, studyId);
+  return graphs.map((g) => g.graph);
+}

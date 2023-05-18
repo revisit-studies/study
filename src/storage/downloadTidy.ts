@@ -1,5 +1,6 @@
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
-import { download } from '../components/StudyEnd';
+import { download } from '../components/DownloadPanel';
+
 import {
   isPracticeComponent,
   isSteppedComponent,
@@ -49,15 +50,13 @@ export async function downloadTidy(
   // To fill in null and replace later
   const NULL = `__NULL__${Math.random().toFixed(3)}`;
 
-  const sessionArr = await getAllSessions(fb.store, studyId);
+  const sessionArr = await getAllSessions(fb.firestore, studyId);
   const rows = sessionArr
     .map((sessionObject) => processToRow(sessionObject, trialGroups))
     .reduce((acc, trs) => {
       acc = [...acc, ...trs];
       return acc;
     }, []);
-
-  console.log(rows);
 
   const csvStrings = [properties.join(',')];
 
@@ -104,6 +103,7 @@ function processToRow(
       const answers = isPracticeComponent(group)
         ? study.practice[groupName]
         : study.trials[groupName];
+
       Object.entries(group.trials).forEach(([trialId, trial]) => {
         const answer = answers[trialId];
         const startTime = new Date(answer.startTime).toUTCString();
