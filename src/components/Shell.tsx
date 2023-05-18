@@ -1,4 +1,4 @@
-import { AppShell, Button, Group, Modal } from '@mantine/core';
+import { AppShell, Button, Group, Modal, Text } from '@mantine/core';
 import { TrrackStoreType } from '@trrack/redux';
 import {
   createContext,
@@ -191,9 +191,10 @@ function StepRenderer() {
       <Modal
         opened={opened}
         onClose={() => close(false)}
-        title="Load previous session"
+        title={<Text weight="bold">Detected ongoing session</Text>}
         centered
       >
+        <Text>Do you want to continue that session or start over?</Text>
         <Group mt="xl">
           <Button
             variant="outline"
@@ -201,7 +202,7 @@ function StepRenderer() {
               close(true);
             }}
           >
-            Yes
+            Continue
           </Button>
           <Button
             variant="outline"
@@ -209,7 +210,7 @@ function StepRenderer() {
               close(false);
             }}
           >
-            Start New
+            Start Over
           </Button>
         </Group>
       </Modal>
