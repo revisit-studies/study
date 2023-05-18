@@ -3,9 +3,7 @@ import { GlobalConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 
-export const PREFIX = import.meta.env.PROD
-  ? import.meta.env.VITE_BASE_PATH
-  : '/';
+import { PREFIX } from '../App';
 
 type Props = {
   globalConfig: GlobalConfig;
