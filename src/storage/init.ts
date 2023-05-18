@@ -8,7 +8,6 @@ import {
   getDoc,
   getDocs,
   query,
-  runTransaction,
   setDoc,
   updateDoc,
   writeBatch,
@@ -26,64 +25,89 @@ function serverTimestamp() {
   return new Date();
 }
 
+async function restoreExistingSession(
+  firestore: Firestore,
+  sessionId: string,
+  trrack: StudyProvenance
+) {
+  const graph = await loadProvenance(firestore, sessionId);
+
+  trrack.import(JSON.stringify(graph));
+}
+
+async function createNewSession(
+  firestore: Firestore,
+  studyId: string,
+  pid: string,
+  sessionId: string,
+  sessionExists: boolean,
+  trrack: StudyProvenance
+) {
+  if (sessionExists) {
+    await abandonSession(firestore, sessionId);
+  }
+
+  return await createSession(firestore, studyId, pid, trrack.root.id, trrack);
+}
+
 export async function initFirebase(
-  _connect = true
+  connect: boolean
 ): Promise<ProvenanceStorage> {
   if (MODE === 'dev') {
     (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
   }
 
-  const { pid, store } = await getFirestoreManager();
+  const { pid, firestore, connected } = await getFirestoreManager(connect);
 
   return {
     pid,
-    store,
+    connected,
+    firestore,
     async initialize(
       studyId: string,
       sessionId: string,
       trrack: StudyProvenance
     ) {
-      let session = await getSession(store, sessionId);
+      let session = await getSession(firestore, sessionId);
 
-      const sessionExists = session.exists();
-
-      async function createNew() {
-        if (sessionExists) {
-          await abandonSession(store, sessionId);
-        }
-
-        session = await createSession(
-          store,
-          studyId,
-          pid,
-          trrack.root.id,
-          trrack
-        );
-      }
-
-      async function restoreSession() {
-        const graph = await loadProvenance(store, sessionId);
-        trrack.import(JSON.stringify(graph));
-      }
+      const sessionExists = !!session && session.exists();
 
       if (!sessionExists) {
-        await createNew();
+        await createNewSession(
+          firestore,
+          studyId,
+          pid,
+          sessionId,
+          sessionExists,
+          trrack
+        );
         return null;
       }
 
       return {
-        createNew,
-        restoreSession,
+        createNew: async () => {
+          session = await createNewSession(
+            firestore,
+            studyId,
+            pid,
+            sessionId,
+            sessionExists,
+            trrack
+          );
+        },
+        restoreSession: async () => {
+          restoreExistingSession(firestore, sessionId, trrack);
+        },
       };
     },
     saveNewProvenanceNode(trrack: StudyProvenance) {
-      return saveProvenanceNode(store, trrack.root.id, trrack.current);
+      return saveProvenanceNode(firestore, trrack.root.id, trrack.current);
     },
     completeSession(sessionId: string) {
-      return completeSession(store, sessionId);
+      return completeSession(firestore, sessionId);
     },
     abandonSession(sessionId: string) {
-      return abandonSession(store, sessionId);
+      return abandonSession(firestore, sessionId);
     },
   };
 }
@@ -129,7 +153,7 @@ async function abandonSession(store: Firestore, sessionId: string) {
     status.history.push(sts as any);
     status.endStatus = sts as any;
 
-    await updateDoc(sessionRef, { status });
+    updateDoc(sessionRef, { status });
   }
 }
 
@@ -163,13 +187,13 @@ async function createSession(
   };
 
   // create document
-  await setDoc(sRef, sessh);
+  setDoc(sRef, sessh);
 
   // add node as collection
   const nodes = Object.values(trk.nodes);
 
   for (const node of nodes) {
-    await saveProvenanceNode(store, sessionId, node);
+    saveProvenanceNode(store, sessionId, node);
   }
 
   const session = await getDoc(sRef);
@@ -182,38 +206,36 @@ export async function loadProvenance(
   sessionId: string,
   restore = true
 ): Promise<ProvenanceGraph<any, any, any>> {
-  return await runTransaction(store, async (trx) => {
-    const sessionRef = doc(store, SESSIONS, sessionId);
-    const sessionDoc = await trx.get(sessionRef);
+  const sessionRef = doc(store, SESSIONS, sessionId);
+  const sessionDoc = await getDoc(sessionRef);
 
-    if (!sessionDoc.exists()) throw new Error('session not found');
+  if (!sessionDoc.exists()) throw new Error('session not found');
 
-    const { current, root, status } = sessionDoc.data() as FsSession;
+  const { current, root, status } = sessionDoc.data() as FsSession;
 
-    const nodes: Nodes<any, any, any> = {};
+  const nodes: Nodes<any, any, any> = {};
 
-    const nodesQuery = query(collection(sessionRef, NODES));
-    const nodesList = await getDocs(nodesQuery);
+  const nodesQuery = query(collection(sessionRef, NODES));
+  const nodesList = await getDocs(nodesQuery);
 
-    nodesList.forEach((nDoc) => {
-      const node = nDoc.data() as ProvenanceNode<any, any, any>;
+  nodesList.forEach((nDoc) => {
+    const node = nDoc.data() as ProvenanceNode<any, any, any>;
 
-      nodes[node.id] = node;
+    nodes[node.id] = node;
+  });
+
+  if (restore) {
+    status.history.push({
+      status: 'restored',
+      timestamp: serverTimestamp() as any,
     });
 
-    if (restore) {
-      status.history.push({
-        status: 'restored',
-        timestamp: serverTimestamp() as any,
-      });
+    updateDoc(sessionRef, {
+      status,
+    });
+  }
 
-      trx.update(sessionRef, {
-        status,
-      });
-    }
-
-    return { current, root, nodes };
-  });
+  return { current, root, nodes };
 }
 
 async function saveProvenanceNode(
@@ -222,6 +244,7 @@ async function saveProvenanceNode(
   _node: ProvenanceNode<any, any, any>
 ) {
   const node: ProvenanceNode<any, any, any> = JSON.parse(JSON.stringify(_node));
+
   const batch = writeBatch(store);
 
   const sessionRef = doc(store, SESSIONS, sessionId);
@@ -237,13 +260,19 @@ async function saveProvenanceNode(
 
   const addedNode = await getDoc(doc(nodes, node.id));
 
+  const graph = await loadProvenance(store, sessionId, false);
+  console.log(graph);
+
   return addedNode;
 }
 
 async function getSession(store: Firestore, sessionId: string) {
   const sessionRef = doc(store, SESSIONS, sessionId);
 
-  const session = await getDoc(sessionRef);
-
-  return session;
+  try {
+    const session = await getDoc(sessionRef);
+    return session;
+  } catch (err) {
+    return null;
+  }
 }

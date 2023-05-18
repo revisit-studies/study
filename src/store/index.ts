@@ -42,15 +42,6 @@ function getTrialSteps(
   return steps;
 }
 
-async function initializeFirebaseSession(
-  studyId: string,
-  fb: ProvenanceStorage,
-  savedSessionId: string,
-  trrack: StudyProvenance
-) {
-  return fb.initialize(studyId, savedSessionId, trrack);
-}
-
 export async function studyStoreCreator(
   studyId: string,
   config: StudyConfig,
@@ -129,9 +120,8 @@ export async function studyStoreCreator(
   // is trrack instance in local storage?
   const savedSessionId = (await getFromLS(lf, studyId)) || trrack.root.id;
 
-  const trrackExists = await initializeFirebaseSession(
+  const trrackExists = await firebase.initialize(
     studyId,
-    firebase,
     savedSessionId,
     trrack
   );
@@ -153,6 +143,9 @@ export async function studyStoreCreator(
     trrack,
     trrackStore,
     actions: studySlice.actions,
+    clearCache() {
+      return lf.clear();
+    },
     restoreSession() {
       if (!trrackExists) {
         return;

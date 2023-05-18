@@ -7,6 +7,7 @@ export type LocalForage = typeof localforage;
 
 export type ProvenanceStorage = {
   pid: string;
+  connected: boolean;
   initialize(
     studyId: string,
     sessionId: string,
@@ -15,7 +16,7 @@ export type ProvenanceStorage = {
     createNew(): Promise<any>;
     restoreSession(): Promise<any>;
   }>;
-  store: Firestore;
+  firestore: Firestore;
   saveNewProvenanceNode(trrack: StudyProvenance): void;
   completeSession(sessionId: string): Promise<void>;
   abandonSession(sessionId: string): Promise<void>;

@@ -49,15 +49,13 @@ export async function downloadTidy(
   // To fill in null and replace later
   const NULL = `__NULL__${Math.random().toFixed(3)}`;
 
-  const sessionArr = await getAllSessions(fb.store, studyId);
+  const sessionArr = await getAllSessions(fb.firestore, studyId);
   const rows = sessionArr
     .map((sessionObject) => processToRow(sessionObject, trialGroups))
     .reduce((acc, trs) => {
       acc = [...acc, ...trs];
       return acc;
     }, []);
-
-  console.log(rows);
 
   const csvStrings = [properties.join(',')];
 
