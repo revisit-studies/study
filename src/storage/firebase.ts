@@ -67,7 +67,10 @@ export async function getFirestoreManager(_connect = true) {
   const app = _app || initializeApp(defaultFirebaseConfig);
   if (!_app) _app = app;
 
-  if (!_fStore) _fStore = initializeFirestore(app, fsConfig);
+  function startFirestore() {
+    return initializeFirestore(app, fsConfig);
+  }
+  if (!_fStore) _fStore = startFirestore();
 
   let connected = false;
   disableNetwork(_fStore);
@@ -77,6 +80,7 @@ export async function getFirestoreManager(_connect = true) {
     return {
       pid: _pid,
       connected,
+      startFirestore,
       firestore: _fStore,
     };
   }
@@ -130,6 +134,7 @@ export async function getFirestoreManager(_connect = true) {
     connected,
     pid: _pid,
     firestore: _fStore,
+    startFirestore: () => (_fStore = startFirestore()),
   };
 }
 

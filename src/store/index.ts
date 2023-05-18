@@ -1,5 +1,6 @@
 import { type PayloadAction } from '@reduxjs/toolkit';
 import { configureTrrackableStore, createTrrackableSlice } from '@trrack/redux';
+import { clearIndexedDbPersistence, terminate } from 'firebase/firestore';
 import localforage from 'localforage';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
@@ -143,8 +144,11 @@ export async function studyStoreCreator(
     trrack,
     trrackStore,
     actions: studySlice.actions,
-    clearCache() {
-      return lf.clear();
+    async clearCache() {
+      await terminate(firebase.firestore);
+      await clearIndexedDbPersistence(firebase.firestore);
+      firebase.startFirestore();
+      await lf.clear();
     },
     restoreSession() {
       if (!trrackExists) {

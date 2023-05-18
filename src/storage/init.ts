@@ -57,10 +57,12 @@ export async function initFirebase(
     (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
   }
 
-  const { pid, firestore, connected } = await getFirestoreManager(connect);
+  const { pid, firestore, connected, startFirestore } =
+    await getFirestoreManager(connect);
 
   return {
     pid,
+    startFirestore,
     connected,
     firestore,
     async initialize(
@@ -133,7 +135,7 @@ async function completeSession(store: Firestore, sessionId: string) {
     status.history.push(sts as any);
     status.endStatus = sts as any;
 
-    await updateDoc(sessionRef, { status });
+    updateDoc(sessionRef, { status });
   }
 }
 

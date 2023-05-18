@@ -1,5 +1,5 @@
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
-import { download } from '../components/StudyEnd';
+import { download } from '../components/DownloadPanel';
 import {
   isPracticeComponent,
   isSteppedComponent,
@@ -102,6 +102,7 @@ function processToRow(
       const answers = isPracticeComponent(group)
         ? study.practice[groupName]
         : study.trials[groupName];
+
       Object.entries(group.trials).forEach(([trialId, trial]) => {
         const answer = answers[trialId];
         const startTime = new Date(answer.startTime).toUTCString();
