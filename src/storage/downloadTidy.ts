@@ -4,9 +4,10 @@ import { download } from '../components/DownloadPanel';
 import {
   isPracticeComponent,
   isSteppedComponent,
+  Nullable,
   Prettify,
 } from '../parser/types';
-import { State } from '../store/types';
+import { State, TrialResult } from '../store/types';
 import { getAllSessions } from './queries';
 import { FsSession, ProvenanceStorage } from './types';
 
@@ -48,7 +49,7 @@ export async function downloadTidy(
   filename: string
 ) {
   // To fill in null and replace later
-  const NULL = `__NULL__${Math.random().toFixed(3)}`;
+  const NULL = ' ';
 
   const sessionArr = await getAllSessions(fb.firestore, studyId);
   const rows = sessionArr
@@ -105,10 +106,15 @@ function processToRow(
         : study.trials[groupName];
 
       Object.entries(group.trials).forEach(([trialId, trial]) => {
-        const answer = answers[trialId];
-        const startTime = new Date(answer.startTime).toUTCString();
-        const endTime = new Date(answer.endTime).toUTCString();
-        const duration = answer.endTime - answer.startTime;
+        const answer: Nullable<TrialResult> =
+          trialId in answers ? answers[trialId] : null;
+        const startTime = answer?.startTime
+          ? new Date(answer.startTime).toUTCString()
+          : null;
+        const endTime = answer?.endTime
+          ? new Date(answer.endTime).toUTCString()
+          : null;
+        const duration = (answer?.endTime || 0) - 0;
 
         const tr: TidyRow = {
           pid: study.studyIdentifiers.pid,
@@ -117,7 +123,7 @@ function processToRow(
           type: group.type,
           trialId,
           trialGroup: groupName,
-          answer: JSON.stringify(answer.answer || {}),
+          answer: JSON.stringify(answer?.answer || {}),
           correctAnswer: trial.stimulus.correctAnswer,
           description: `"${trial.description}"`,
           instruction: `"${trial.instruction}"`,
