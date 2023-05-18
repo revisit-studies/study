@@ -154,10 +154,7 @@ export interface GlobalConfig {
   configsList: string[];
   configs: {
     [key: string]: {
-      title: string;
       path: string;
-      description: string;
-      urlKey: string;
     };
   };
 }

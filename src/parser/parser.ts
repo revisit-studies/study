@@ -58,7 +58,7 @@ function validateGlobalConfig(obj: unknown): obj is GlobalConfig {
         typeof key === 'string' &&
         Object.entries(value).every(
           ([innerKey, innerValue]) =>
-            ['title', 'path', 'description', 'urlKey'].includes(innerKey) &&
+            ['path'].includes(innerKey) &&
             typeof innerValue === 'string'
         )
     );

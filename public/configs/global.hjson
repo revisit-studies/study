@@ -1,43 +1,23 @@
 {
-  configsList: ["html-demo", "image-demo", "html-input", "cleveland",   "survey-demo", "MVNV"],
+  configsList: ["html-demo", "image-demo", "html-input", "cleveland", "MVNV", "survey-demo"],
   configs: {
     "html-demo": {
-      title: "HTML as a Stimulus",
-      urlKey: "html-demo",
-      path: "config-html-demo.hjson",
-      description: "A simple demo of using a stimuli in an html file that renders a D3 visualization. Data is collected via a field.",
+      path: "html-demo/config-html-demo.hjson"
     },
     "image-demo": {
-      title: "Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations",
-      urlKey: "image-demo",
-      path: "config-image-demo.hjson",
-      description: "A demo for embedding a stimulus in an image file to replicate the Padilla et al. study on decision making.",
+      path: "image-demo/config-image-demo.hjson"
     },
     "html-input": {
-      title: "Passing Data into reVISit from HTML",
-      urlKey: "html-input",
-      path: "config-html-input.hjson",
-      description: "A demo of how to pass data from HTML into reVISit.",
+      path: "html-input/config-html-input.hjson",
     },
     "cleveland": {
-      title: "Dyanmic React Stimuli: A Graphical Perception Experiment",
-      urlKey: "cleveland",
-      path: "config-cleveland.hjson",
-      description: "Using dynamic React components as stiumli to replicate the Cleveland/McGill, and the Heer/Bostock extension of graphical perception studies with quiz feedback.",
+      path: "cleveland/config-cleveland.hjson",
     },
-
     "MVNV": {
-      title: "Complex HTML Stimuli: Evaluating Adjancency Matrices for Multivariate Network Tasks",
-      urlKey: "mvnv",
-      path: "config-html-MVNV.hjson",
-      description: "Using a complex D3-based, self-contained web-based visualization to replicate the Nobre et al. study on complex network visualziations.",
+      path: "mvnv/config-html-MVNV.hjson",
     },
-
     "survey-demo": {
-      title: "Survey Demo",
-      urlKey: "survey",
-      path: "config-survey-demo.hjson",
-      description: "A demo for supported survey types, exclude input from iframe",
+      path: "survey-demo/config-survey-demo.hjson",
     }
   }
 }

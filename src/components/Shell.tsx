@@ -71,7 +71,7 @@ export function Shell({ globalConfig }: Props) {
   if (
     !studyId ||
     !globalConfig.configsList
-      .map((c) => sanitizeStringForUrl(globalConfig.configs[c].urlKey))
+      .map((c) => sanitizeStringForUrl(c))
       .includes(studyId)
   ) {
     throw new Error('Study id invalid');
@@ -82,15 +82,17 @@ export function Shell({ globalConfig }: Props) {
   const [storeObj, setStoreObj] = useState<Nullable<StudyStore>>(null);
 
   useEffect(() => {
-    const configJSON = globalConfig.configsList
-      .map((c) => globalConfig.configs[c])
-      .find((cfg) => sanitizeStringForUrl(cfg.urlKey) === studyId);
+    const configKey = globalConfig.configsList.find(
+      (c) => sanitizeStringForUrl(c) === studyId
+    );
 
-    if (configJSON)
-      fetchStudyConfig(`configs/${configJSON.path}`).then((config) => {
+    if (configKey) {
+      const configJSON = globalConfig.configs[configKey];
+      fetchStudyConfig(`${configJSON.path}`).then((config) => {
         setActiveConfig(config);
       });
-  }, [globalConfig]);
+    }
+  }, [globalConfig, studyId]);
 
   useEffect(() => {
     if (!activeConfig) return;

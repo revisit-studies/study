@@ -1,18 +1,17 @@
 import { Card, Container, Image, Text, UnstyledButton } from '@mantine/core';
-import { GlobalConfig } from '../parser/types';
+import { GlobalConfig, StudyConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 
-export const PREFIX = import.meta.env.PROD
-  ? import.meta.env.VITE_BASE_PATH
-  : '/';
+import { PREFIX } from '../App';
 
 type Props = {
   globalConfig: GlobalConfig;
+  studyConfigs: {[key: string]: StudyConfig};
 };
 
-const ConfigSwitcher = ({ globalConfig }: Props) => {
-  const { configs, configsList } = globalConfig;
+const ConfigSwitcher = ({ globalConfig, studyConfigs }: Props) => {
+  const { configsList } = globalConfig;
   const navigate = useNavigateWithParams();
 
   return (
@@ -27,12 +26,15 @@ const ConfigSwitcher = ({ globalConfig }: Props) => {
       />
       <Text>Select an experiment to launch:</Text>
       {configsList.map((configName) => {
-        const config = configs[configName];
-        const url = sanitizeStringForUrl(config.urlKey);
+        const config = studyConfigs[configName];
+        if (!config) {
+          return null;
+        }
+        const url = sanitizeStringForUrl(configName);
 
         return (
           <UnstyledButton
-            key={config.title}
+            key={configName}
             onClick={() => {
               navigate(`/${url}`);
             }}
@@ -40,8 +42,8 @@ const ConfigSwitcher = ({ globalConfig }: Props) => {
             style={{ width: '100%' }}
           >
             <Card shadow="sm" radius="md" withBorder>
-              <Text fw="bold">{config.title}</Text>
-              <Text c="dimmed">{config.description}</Text>
+              <Text fw="bold">{config.studyMetadata.title}</Text>
+              <Text c="dimmed">{config.studyMetadata.description}</Text>
             </Card>
           </UnstyledButton>
         );
