@@ -8,21 +8,23 @@ const modules = import.meta.glob(
 );
 
 const ReactComponentController = ({
-  stimulusID,
-  stimulus,
+  path,
+  parameters,
+  trialId,
 }: {
-  stimulusID: string;
-  stimulus: Stimulus;
+  path: string;
+  parameters: Stimulus['parameters'];
+  trialId: string | null;
 }) => {
-  const path = `../components/stimuli/${stimulus.path}`;
+  const reactPath = `../components/stimuli/${path}`;
 
-  const StimulusComponent = (modules[path] as ModuleNamespace).default;
+  const StimulusComponent = (modules[reactPath] as ModuleNamespace).default;
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <StimulusComponent
-        stimulusID={stimulusID}
-        parameters={stimulus.parameters}
+        parameters={parameters}
+        trialId={trialId}
       />
     </Suspense>
   );

@@ -4,17 +4,17 @@ export const StackedBars = ({
   data,
   barWidth,
   yScale,
-  stimulusID,
+  trialId,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any[];
   barWidth: number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   yScale: any;
-  stimulusID: string;
+  trialId: string;
 }) => {
   const { handleMouseEnter, handleMouseLeave } =
-    useHoverInteraction(stimulusID);
+    useHoverInteraction(trialId);
 
   return (
     <g>

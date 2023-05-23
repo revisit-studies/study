@@ -19,11 +19,11 @@ const radius = 150;
 
 const PieChart = ({
   parameters: data,
-  stimulusID,
+  trialId,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   parameters: any;
-  stimulusID: string;
+  trialId: string;
 }) => {
   const [ref, dms] = useChartDimensions(chartSettings);
 
@@ -57,7 +57,7 @@ const PieChart = ({
             dms.marginTop + radius,
           ].join(',')})`}
         >
-          <Slices arcs={arcsGen} data={data.data} stimulusID={stimulusID} />
+          <Slices arcs={arcsGen} data={data.data} trialId={trialId} />
           <SlicesDotMarks positions={labelArcs} />
         </g>
       </svg>

@@ -2,13 +2,13 @@ import { ScaleBand, ScaleLinear } from 'd3';
 import { useHoverInteraction } from '../hooks/useHoverInteraction';
 
 export const Bars = ({
-  stimulusID,
+  trialId,
   data,
   xScale,
   yScale,
   height,
 }: {
-  stimulusID: string;
+  trialId: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
   yScale: ScaleLinear<number, number>;
@@ -16,7 +16,7 @@ export const Bars = ({
   height: number;
 }) => {
   const { handleMouseEnter, handleMouseLeave } =
-    useHoverInteraction(stimulusID);
+    useHoverInteraction(trialId);
 
   return (
     <g>
