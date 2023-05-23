@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
-import { Stimulus } from '../parser/types';
+import { StudyComponent } from '../parser/types';
 
 const modules = import.meta.glob(
   '../components/stimuli/**/*.{mjs,js,mts,ts,jsx,tsx}',
@@ -13,7 +13,7 @@ const ReactComponentController = ({
   trialId,
 }: {
   path: string;
-  parameters: Stimulus['parameters'];
+  parameters: StudyComponent['parameters'];
   trialId: string | null;
 }) => {
   const reactPath = `../components/stimuli/${path}`;

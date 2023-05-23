@@ -2,21 +2,15 @@
 import { parse as hjsonParse } from 'hjson';
 import {
   Answer,
-  ConsentComponent,
   GlobalConfig,
   Option,
   Response,
   responseBlockLocations,
   responseTypes,
-  SteppedComponent,
-  Stimulus,
-  stimulusTypes,
   StudyComponent,
   StudyComponents,
-  studyComponentTypes,
   StudyConfig,
   StudyMetadata,
-  Trial,
   UIConfig,
 } from './types';
 
@@ -229,39 +223,7 @@ function validateComponents(obj: unknown): obj is StudyComponents {
 function validateComponent(obj: unknown): obj is StudyComponent {
   const basicVerified = typeof obj === 'object' && obj !== null;
 
-  // Check type for type
-  const typeVerified =
-    Object.hasOwn(obj as object, 'type') &&
-    typeof (obj as StudyComponent).type === 'string' &&
-    studyComponentTypes.includes((obj as StudyComponent).type);
-
-  // Check type for consent components
-  const consentVerified =
-    (obj as StudyComponent).type === 'consent'
-      ? Object.hasOwn(obj as object, 'path') &&
-        typeof (obj as ConsentComponent).path === 'string' &&
-        (obj as ConsentComponent).path.length > 0 &&
-        Object.hasOwn(obj as object, 'signatureRequired') &&
-        typeof (obj as ConsentComponent).signatureRequired === 'boolean'
-      : true;
-
-  // TODO: Check type for training components when we have more properties
-
-  // Check type for practice components
-  const practiceVerified =
-    (obj as StudyComponent).type === 'practice'
-      ? validateSteppedComponent(obj as StudyComponent)
-      : true;
-
-  // TODO: Check type for attentionTest components when we have more properties
-
-  // Check type for trials components
-  const trialsVerified =
-    (obj as StudyComponent).type === 'trials'
-      ? validateSteppedComponent(obj as StudyComponent)
-      : true;
-
-  // TODO: Check type for survey components
+  // TODO: add type check for component and container
 
   const steps = [
     'basicVerified',
@@ -272,10 +234,6 @@ function validateComponent(obj: unknown): obj is StudyComponent {
   ];
   return [
     basicVerified,
-    typeVerified,
-    consentVerified,
-    practiceVerified,
-    trialsVerified,
   ].every((item, index) => {
     if (!item) {
       console.error(`Failed to validate ${steps[index]}`);

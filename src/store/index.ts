@@ -7,7 +7,7 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { StudyComponent, StudyConfig } from '../parser/types';
 import { ProvenanceStorage } from '../storage/types';
 import { flagsStore, setTrrackExists } from './flags';
-import { RootState, State, Step, TrialRecord } from './types';
+import { RootState, State, Step, TrialRecord, TrialResult } from './types';
 
 export const PID = 'PARTICIPANT_ID';
 export const SESSION_ID = 'SESSION_ID';
@@ -49,8 +49,6 @@ export async function studyStoreCreator(
     },
     config,
     steps,
-    isStudyComplete: false,
-    isStudyEnded: false,
     ...stepsToAnswers,
   };
 
@@ -75,19 +73,19 @@ export async function studyStoreCreator(
         }>
       ) {
         if (payload.type === 'container') {
-          state[payload.trialName][payload.trialId] = {
+          (state[payload.trialName] as TrialRecord)[payload.trialId] = {
             complete: true,
             answer: payload.answer,
             startTime: payload.startTime,
             endTime: payload.endTime,
           };
         } else {
-          state[payload.trialName] = {
+          (state[payload.trialName] as TrialRecord) = ({
             complete: true,
             answer: payload.answer,
             startTime: payload.startTime,
             endTime: payload.endTime,
-          };
+          } as any);
         }
       },
     },

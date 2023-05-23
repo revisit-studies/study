@@ -10,7 +10,7 @@ import {
 import { useInputState } from '@mantine/hooks';
 import { IconTable } from '@tabler/icons-react';
 import { useCallback, useMemo } from 'react';
-import { SteppedComponent } from '../parser/types';
+import { ContainerComponent } from '../parser/types';
 import { useStudyId } from '../routes';
 import {
   downloadTidy,
@@ -35,7 +35,7 @@ function useTrialGroups() {
 
     const trialLike = sequence.filter(
       (seq) =>
-        components[seq].type === 'trials' || components[seq].type === 'practice'
+        components[seq].type === 'container'
     );
 
     return trialLike;
@@ -51,10 +51,10 @@ function useTrialMetaProps(trialGroups: string[]): Array<`meta-${string}`> {
     const mProps: string[] = [];
     const trialComponents = trialGroups.map(
       (t) => config.components[t]
-    ) as SteppedComponent[];
+    ) as ContainerComponent[];
 
     trialComponents.forEach((group) => {
-      const metadatas = Object.values(group.trials).map((tr) =>
+      const metadatas = Object.values(group.components).map((tr) =>
         Object.keys(tr.meta || {})
       );
 

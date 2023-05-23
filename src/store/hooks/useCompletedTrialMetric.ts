@@ -1,5 +1,5 @@
 import { useAppSelector } from '..';
-import { isTrialsComponent } from '../../parser/types';
+import { isContainerComponent } from '../../parser/types';
 
 /**
  * Get total number of trials and completed trials for given trial group.
@@ -8,12 +8,12 @@ import { isTrialsComponent } from '../../parser/types';
  */
 
 export function useCompletedTrialMetric(trialName: string) {
-  const { config, trials } = useAppSelector((state) => state.study);
+  const { config } = useAppSelector((state) => state.study);
   const trialConfig = config?.components[trialName];
 
-  if (trialConfig && isTrialsComponent(trialConfig)) {
+  if (trialConfig && isContainerComponent(trialConfig)) {
     const totalTrials = trialConfig.order.length;
-    const totalCompleted = Object.values(trials[trialName]).filter(
+    const totalCompleted = Object.values(trialConfig.components[trialName]).filter(
       (t) => t.complete
     ).length;
 

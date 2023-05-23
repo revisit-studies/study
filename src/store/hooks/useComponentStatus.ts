@@ -1,6 +1,6 @@
 import { useAppSelector } from '..';
 import { useCurrentStep } from '../../routes';
-import { TrialResult } from '../types';
+import { TrialRecord, TrialResult } from '../types';
 import { useCurrentTrial } from './useCurrentTrial';
 
 /**
@@ -20,9 +20,9 @@ export function useComponentStatus(): TrialResult | null {
   let status: TrialResult | null = null;
 
   if (type === 'container' && currentTrial !== null) {
-    status = study[currentStep][currentTrial];
+    status = (study[currentStep] as TrialRecord)[currentTrial];
   } else {
-    status = study[currentStep];
+    status = (study[currentStep] as any as TrialResult);
   }
 
   return status;

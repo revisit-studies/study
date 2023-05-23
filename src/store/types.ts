@@ -29,10 +29,8 @@ export type StudyIdentifiers = {
 
 export interface State {
   // Three identifiers given by the study platform
-  [name: string]: TrialRecord | StudyIdentifiers | StudyConfig | Record<string, Step> | boolean;
+  [name: string]: TrialRecord | StudyIdentifiers | StudyConfig | Record<string, Step>;
   studyIdentifiers: StudyIdentifiers;
   config: StudyConfig;
   steps: Record<string, Step>;
-  isStudyComplete: boolean;
-  isStudyEnded: boolean;
 }

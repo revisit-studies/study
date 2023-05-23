@@ -36,7 +36,6 @@ export interface StudyComponents {
   [key: string]: StudyComponent;
 }
 
-
 export const responseBlockLocations = [
   'sidebar',
   'aboveStimulus',
@@ -139,3 +138,8 @@ export type Prettify<T> = {
   [K in keyof T]: T[K];
   /* eslint-disable */
 } & {};
+
+// Typecase helper for ContainerComponent
+export function isContainerComponent(component: StudyComponent): component is ContainerComponent {
+  return component.type === 'container';
+}
