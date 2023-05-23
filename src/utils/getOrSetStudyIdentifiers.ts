@@ -56,7 +56,6 @@ function localStorageSession(studyId: string, pId: string, sessionId: string) {
     lastStepOrTrial?: string;
   }) {
     const previous = getter()!;
-    console.log(opts);
     setter({
       ...previous,
       provenance: opts.provenance || previous.provenance,

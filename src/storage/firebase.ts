@@ -76,7 +76,6 @@ export async function getFirestoreManager(_connect = true) {
   disableNetwork(_fStore);
 
   if (!_connect) {
-    console.log('Hi');
     return {
       pid: _pid,
       connected,

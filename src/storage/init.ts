@@ -263,7 +263,6 @@ async function saveProvenanceNode(
   const addedNode = await getDoc(doc(nodes, node.id));
 
   const graph = await loadProvenance(store, sessionId, false);
-  console.log(graph);
 
   return addedNode;
 }
