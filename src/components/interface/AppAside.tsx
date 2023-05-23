@@ -10,7 +10,7 @@ import {
 import { IconArrowRight } from '@tabler/icons-react';
 import React from 'react';
 import { useParams } from 'react-router-dom';
-import { TrialsComponent } from '../../parser/types';
+import { ContainerComponent } from '../../parser/types';
 import { useCurrentStep } from '../../routes';
 import { useAppSelector } from '../../store';
 import { useFlagsSelector } from '../../store/flags';
@@ -27,11 +27,11 @@ export default function AppAside() {
   const config = useAppSelector(
     (state) => state.study.config?.components[step]
   );
-  const trialConfig = config as TrialsComponent;
+  const trialConfig = config as ContainerComponent;
   const tasks =
-    trialConfig?.type === 'practice' || trialConfig?.type === 'trials'
+    trialConfig?.type === 'container'
       ? trialConfig.order.map((trialId) => ({
-          ...trialConfig.trials[trialId],
+          ...trialConfig.components[trialId],
           id: trialId,
         }))
       : [];

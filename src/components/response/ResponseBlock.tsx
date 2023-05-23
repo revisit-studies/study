@@ -5,8 +5,7 @@ import { useLocation, useParams } from 'react-router-dom';
 import { useNextTrialId } from '../../controllers/utils';
 import {
   ResponseBlockLocation,
-  SurveyComponent,
-  TrialsComponent,
+  StudyComponent,
 } from '../../parser/types';
 import { useCurrentStep } from '../../routes';
 import { useAppDispatch, useStoreActions, useStudySelector } from '../../store';
@@ -25,7 +24,7 @@ import ResponseSwitcher from './ResponseSwitcher';
 
 type Props = {
   status: TrialResult | null;
-  config: TrialsComponent | SurveyComponent;
+  config: StudyComponent;
   location: ResponseBlockLocation;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   correctAnswer?: any;
@@ -48,18 +47,16 @@ export default function ResponseBlock({
   }>();
   const id = useLocation().pathname;
 
-  const isPractice = config.type === 'practice';
-
   const storedAnswer = status?.answer;
 
-  const responses = config.response.filter((r) =>
-    r.location ? r.location === location : location === 'belowStimulus'
-  );
+  const isPractice = false;
 
-  const isSurvey = config.type === 'survey';
+  const responses = config?.response?.filter((r) =>
+    r.location ? r.location === location : location === 'belowStimulus'
+  ) || [];
   const savedSurvey = useSavedSurvey();
 
-  const { saveSurvey, saveTrialAnswer } = useStoreActions();
+  const { saveTrialAnswer } = useStoreActions();
   const appDispatch = useAppDispatch();
   const flagDispatch = useFlagsDispatch();
   const answerValidator = useAnswerField(responses, id);
@@ -68,7 +65,7 @@ export default function ResponseBlock({
   const [disableNext, setDisableNext] = useInputState(!storedAnswer);
   const [checkClicked, setCheckClicked] = useState(false);
   const currentStep = useCurrentStep();
-  const nextTrialId = useNextTrialId(trialId, config.type);
+  const nextTrialId = useNextTrialId(trialId);
   const nextStep = useNextStep();
 
   const startTime = useMemo(() => {
@@ -76,10 +73,9 @@ export default function ResponseBlock({
   }, [trialId]);
 
   const showNextBtn =
-    location === (config.nextButtonLocation || 'belowStimulus');
+    location === (config?.nextButtonLocation || 'belowStimulus');
 
   useEffect(() => {
-    // ignore this for iframe task
     flagDispatch(
       updateResponseBlockValidation({
         location,
@@ -89,28 +85,23 @@ export default function ResponseBlock({
       })
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answerValidator.values]);
+  }, [answerValidator.values, id]);
 
   const processNext = useCallback(() => {
-    if (config.type === 'survey') {
-      const answer = deepCopy(answerValidator.values);
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    const answer = deepCopy(aggregateResponses!);
 
-      if (!savedSurvey) appDispatch(saveSurvey(answer));
-    } else {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const answer = deepCopy(aggregateResponses!);
-
-      if (!status?.complete)
-        appDispatch(
-          saveTrialAnswer({
-            trialName: currentStep,
-            trialId: trialId || 'NoID',
-            answer,
-            type: config.type,
-            startTime,
-            endTime: Date.now(),
-          })
-        );
+    if (!status?.complete) {
+      appDispatch(
+        saveTrialAnswer({
+          trialName: currentStep,
+          trialId: trialId || 'NoID',
+          answer,
+          type: config?.type,
+          startTime,
+          endTime: Date.now(),
+        })
+      );
     }
 
     setDisableNext(!disableNext);
@@ -119,10 +110,9 @@ export default function ResponseBlock({
     answerValidator.values,
     appDispatch,
     savedSurvey,
-    config.type,
+    config?.type,
     currentStep,
     disableNext,
-    saveSurvey,
     saveTrialAnswer,
     status,
     setDisableNext,
@@ -130,21 +120,21 @@ export default function ResponseBlock({
   ]);
 
   return (
-    <>
+    <div>
       {responses.map((response) => (
         <ResponseSwitcher
           key={`${response.id}-${id}`}
-          status={isSurvey ? ({ complete: !!savedSurvey } as any) : status}
-          storedAnswer={
-            isSurvey
-              ? savedSurvey
-                ? (savedSurvey as any)[`${id}/${response.id}`]
-                : null
-              : storedAnswer
-              ? (storedAnswer as any)[`${id}/${response.id}`]
-              : response.type === 'iframe'
-              ? (aggregateResponses || {})[`${id}/${response.id}`]
-              : null
+          status={status}
+          storedAnswer={ null
+            // isSurvey
+            //   ? savedSurvey
+            //     ? (savedSurvey as any)[`${id}/${response.id}`]
+            //     : null
+            //   : storedAnswer
+            //   ? (storedAnswer as any)[`${id}/${response.id}`]
+            //   : response.type === 'iframe'
+            //   ? (aggregateResponses || {})[`${id}/${response.id}`]
+            //   : null
           }
           answer={{
             ...answerValidator.getInputProps(`${id}/${response.id}`, {
@@ -170,9 +160,7 @@ export default function ResponseBlock({
         {showNextBtn && (
           <NextButton
             disabled={
-              isSurvey
-                ? !savedSurvey && !answerValidator.isValid()
-                : isPractice
+              isPractice
                 ? !checkClicked
                 : !status?.complete && !areResponsesValid
             }
@@ -182,9 +170,10 @@ export default function ResponseBlock({
                 : `/${studyId}/${nextStep}`
             }
             process={processNext}
+            label={config?.nextButtonText || 'Next'}
           />
         )}
       </Group>
-    </>
+    </div>
   );
 }

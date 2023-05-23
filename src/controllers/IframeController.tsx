@@ -2,15 +2,13 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { useLocation, useParams } from 'react-router-dom';
 import { PREFIX as BASE_PREFIX } from '../App';
-import { useCurrentStep, useStudyId } from '../routes';
+import { useCurrentStep } from '../routes';
 import {
   updateResponseBlockValidation,
   useFlagsDispatch,
 } from '../store/flags';
 import { useNextStep } from '../store/hooks/useNextStep';
 import { useNavigateWithParams } from '../utils/useNavigateWithParams';
-import { useTrialsConfig } from './utils';
-import { Stimulus } from '../parser/types';
 import {useStoreActions} from '../store';
 
 
@@ -23,13 +21,13 @@ const defaultStyle = {
   marginTop: '-50px'
 };
 
-const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
-  const { path, style, parameters } = stimulus;
+type Props = {
+  path: string;
+  parameters?: Record<string, unknown>;
+};
 
+export default function IframeController({path, parameters}: Props) {
   const { saveTrialAnswer } = useStoreActions();
-
-
-  const iframeStyle = { ...defaultStyle, ...style };
 
   const flagDispatch = useFlagsDispatch();
   const dispatch = useDispatch();
@@ -47,7 +45,6 @@ const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
   const currentStep = useCurrentStep();
   const navigate = useNavigateWithParams();
   const computedTo = useNextStep();
-  const trialConfig = useTrialsConfig();
   const id = useLocation().pathname;
 
 
@@ -112,7 +109,6 @@ const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
     dispatch,
     iframeId,
     navigate,
-    trialConfig?.type,
     trialId,
     parameters,
     sendMessage,
@@ -123,18 +119,15 @@ const IframeController = ({ stimulus }: { stimulus: Stimulus }) => {
   //     trialName: currentStep,
   //     trialId,
   //     answer: { [`${id}/${trialId}`]: data.message },
-  //     type: trialConfig?.type,
   //   })
-
+  
   return (
     <div >
       <iframe
         ref={ref}
         src={`${BASE_PREFIX}${path}?trialid=${trialId}&id=${iframeId}`}
-        style={iframeStyle}
+        style={defaultStyle}
       ></iframe>
     </div>
   );
-};
-
-export default IframeController;
+}

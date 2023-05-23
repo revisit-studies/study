@@ -1,25 +1,30 @@
 import { Navbar, Text } from '@mantine/core';
 import ReactMarkdown from 'react-markdown';
-import { useParams } from 'react-router-dom';
-import { useTrialsConfig } from '../../controllers/utils';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
-import { useTrialStatus } from '../../store/hooks/useTrialStatus';
+import { useComponentStatus } from '../../store/hooks/useComponentStatus';
 import ResponseBlock from '../response/ResponseBlock';
+import { useCurrentStep } from '../../routes';
+import { useCurrentTrial } from '../../store/hooks/useCurrentTrial';
+import { ContainerComponent } from '../../parser/types';
 
 export default function AppNavBar() {
   const trialHasSideBar = useStudyConfig()?.uiConfig.sidebar;
   const trialHasSideBarResponses = true;
   const trialHasSideBarUI = true;
 
-  const { trialId } = useParams<{ trialId: string }>();
-  const status = useTrialStatus(trialId || null);
-  const config = useTrialsConfig();
-  const stimulus = config?.trials[trialId || ''];
+  // Get the config for the current step
+  const studyConfig = useStudyConfig();
+  const step = useCurrentStep();
+  const currentStepConfig = studyConfig.components[step];
+
+  const trialId = useCurrentTrial();
+  const status = useComponentStatus();
+  const stimulus = trialId !== null ? (currentStepConfig as ContainerComponent)?.components[trialId || ''] : currentStepConfig ;
   const instruction = stimulus?.instruction || '';
 
   const instructionInSideBar =
-    config?.instructionLocation === 'sidebar' ||
-    config?.instructionLocation === undefined;
+    currentStepConfig?.instructionLocation === 'sidebar' ||
+    currentStepConfig?.instructionLocation === undefined;
 
   return trialHasSideBar ? (
     <Navbar width={{ lg: 300 }} style={{ zIndex: 0 }}>
@@ -36,12 +41,8 @@ export default function AppNavBar() {
 
       {trialHasSideBarResponses && (
         <Navbar.Section bg="gray.1" p="xl" grow>
-          {config && (
-            <ResponseBlock key={trialId} status={status} config={config} location="sidebar" correctAnswer={
-              config.type === 'practice' && stimulus
-                ? stimulus.stimulus.correctAnswer
-                : null
-            } />
+          {(
+            <ResponseBlock status={status} config={currentStepConfig} location="sidebar" />
           )}
         </Navbar.Section>
       )}
