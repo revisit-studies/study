@@ -27,31 +27,42 @@
     }
     components: {
         consent: {
-            type: "consent"
+            type: 'markdown'
             path: "cleveland/consent-cm.md"
-            signatureRequired: true
+            nextButtonText: "Agree"
+            response: [
+                {
+                    id: "signature"
+                    type: "shortText"
+                    prompt: "Your signature"
+                    // keep this short
+                    desc: "Please provide your signature"
+                    required: true
+                    location: belowStimulus
+                },
+                {
+                    id: "accept"
+                    type: "radio"
+                    prompt: ""
+                    desc: ""
+                    required: true,
+                    options:[{label:"Decline", value:"no"}, {label:"Accept", value:"yes"}],
+                    location: belowStimulus
+                }
+            ]
         }
         training1: {
-            type: "training",
-            stimulus: {
-                type: "image"
-                path: "cleveland/cm-training.png",
-                style: {
-                    maxWidth: '1000px'
-                }
+            type: "image"
+            path: "cleveland/cm-training.png",
+            style: {
+                maxWidth: '1000px'
             }
         },
         practice1: {
-            type: "practice"
+            type: "container"
             order: ["bubbleChart1", "stackedBarChart1", "barChart1", "pieChart1"]
             randomization-scheme: "latin-square"
             subset-count: 2
-            attention-checks: {
-                check: "attention1"
-                pattern: random
-                // one check after 10 trials 
-                interval: 10
-            }
             // nextButtonLocation: 'sidebar' | 'aboveStimulus' | 'belowStimulus'
             nextButtonLocation: sidebar
             instructionLocation: sidebar
@@ -70,7 +81,7 @@
                     min: 0
                     location: sidebar
                 }], 
-            trials: {
+            components: {
                 bubbleChart1: {
                     "meta": {
                         "difficulty": 5,
@@ -78,23 +89,21 @@
                     },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
-                        // can be a URL or a local path
-                        path: "BubbleChart.tsx"
-                        parameters: {
-                            data: [
-                                { name: "A", value: "30" }
-                                { name: "B", value: "40" }
-                                { name: "C", value: "50" }
-                                { name: "D", value: "40" }
-                                { name: "E", value: "60" }
-                            ]
-                            selectedIndices: [1, 4]
-                        }
-                        correctAnswer: 23
+                    // Allowable types: image, javascript, website, react-component 
+                    type: "react-component"
+                    // can be a URL or a local path
+                    path: "BubbleChart.tsx"
+                    parameters: {
+                        data: [
+                            { name: "A", value: "30" }
+                            { name: "B", value: "40" }
+                            { name: "C", value: "50" }
+                            { name: "D", value: "40" }
+                            { name: "E", value: "60" }
+                        ]
+                        selectedIndices: [1, 4]
                     }
+                    correctAnswer: 23
                 },
                 stackedBarChart1: {
                     "meta": {
@@ -103,23 +112,21 @@
                     },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
-                        // can be a URL or a local path
-                        path: "StackedBarChart.tsx"
-                        parameters: {
-                            data: [
-                                { name: "A", value: "30" }
-                                { name: "B", value: "40" }
-                                { name: "C", value: "50" }
-                                { name: "D", value: "40" }
-                                { name: "E", value: "60" }
-                            ]
-                            selectedIndices: [1, 4]
-                        }
-                        correctAnswer: 30
+                    // Allowable types: image, javascript, website, react-component 
+                    type: "react-component"
+                    // can be a URL or a local path
+                    path: "StackedBarChart.tsx"
+                    parameters: {
+                        data: [
+                            { name: "A", value: "30" }
+                            { name: "B", value: "40" }
+                            { name: "C", value: "50" }
+                            { name: "D", value: "40" }
+                            { name: "E", value: "60" }
+                        ]
+                        selectedIndices: [1, 4]
                     }
+                    correctAnswer: 30
                 }, 
                 barChart1: {
                     "meta": {
@@ -128,23 +135,21 @@
                     },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
-                        // can be a URL or a local path
-                        path: "BarChart.tsx"
-                        parameters: {
-                            data: [
-                                { name: "A", value: "30" }
-                                { name: "B", value: "40" }
-                                { name: "C", value: "50" }
-                                { name: "D", value: "40" }
-                                { name: "E", value: "60" }
-                            ]
-                            selectedIndices: [1, 4]
-                        }
-                        correctAnswer: 40
+                    // Allowable types: image, javascript, website, react-component 
+                    type: "react-component"
+                    // can be a URL or a local path
+                    path: "BarChart.tsx"
+                    parameters: {
+                        data: [
+                            { name: "A", value: "30" }
+                            { name: "B", value: "40" }
+                            { name: "C", value: "50" }
+                            { name: "D", value: "40" }
+                            { name: "E", value: "60" }
+                        ]
+                        selectedIndices: [1, 4]
                     }
+                    correctAnswer: 40
 
                 },
                 pieChart1: {
@@ -154,40 +159,29 @@
                     },
                     description: "Pie chart"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
-                        // can be a URL or a local path
-                        path: "PieChart.tsx"
-                        parameters: {
-                            data: [
-                                { name: "A", value: "30" }
-                                { name: "B", value: "40" }
-                                { name: "C", value: "50" }
-                                { name: "D", value: "40" }
-                                { name: "E", value: "60" }
-                            ]
-                            selectedIndices: [1, 4]
-                        }
-                        correctAnswer: 50
+                    // Allowable types: image, javascript, website, react-component 
+                    type: "react-component"
+                    // can be a URL or a local path
+                    path: "PieChart.tsx"
+                    parameters: {
+                        data: [
+                            { name: "A", value: "30" }
+                            { name: "B", value: "40" }
+                            { name: "C", value: "50" }
+                            { name: "D", value: "40" }
+                            { name: "E", value: "60" }
+                        ]
+                        selectedIndices: [1, 4]
                     }
+                    correctAnswer: 50
                 }
             }
         }
-        attention1: {
-            type: "attentionTest"
-        }
         trials1: {
-            type: "trials"
+            type: "container"
             order: ["bubbleChart1", "stackedBarChart1", "barChart1", "pieChart1", "stackedBarChart2","bubbleChart2", "stackedBarChart3", "barChart2", "pieChart2", "stackedBarChart4"]
             randomization-scheme: "latin-square"
             subset-count: 2
-            attention-checks: {
-                check: "attention1"
-                pattern: random
-                // one check after 10 trials 
-                interval: 10
-            }
             nextButtonLocation: sidebar
             instructionLocation: sidebar
 // response example:
@@ -240,7 +234,7 @@
 //                }
 
             ]
-            trials: {
+            components: {
                 bubbleChart1: {
                     "meta": {
                         "difficulty": 5,
@@ -250,21 +244,19 @@
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
                     // instructionLocation: 'sidebar' | 'aboveStimulus' | 'belowStimulus'
                     instructionLocation: "sidebar"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
-                        // can be a URL or a local path
-                        path: "BubbleChart.tsx"
-                        parameters: {
-                            data: [
-                                { name: "A", value: "30" }
-                                { name: "B", value: "40" }
-                                { name: "C", value: "50" }
-                                { name: "D", value: "40" }
-                                { name: "E", value: "60" }
-                            ]
-                            selectedIndices: [1, 4]
-                        }
+                    // Allowable types: image, javascript, website, react-component 
+                    type: "react-component"
+                    // can be a URL or a local path
+                    path: "BubbleChart.tsx"
+                    parameters: {
+                        data: [
+                            { name: "A", value: "30" }
+                            { name: "B", value: "40" }
+                            { name: "C", value: "50" }
+                            { name: "D", value: "40" }
+                            { name: "E", value: "60" }
+                        ]
+                        selectedIndices: [1, 4]
                     }
                 },
                 stackedBarChart1: {
@@ -274,21 +266,19 @@
                     },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
-                        // can be a URL or a local path
-                        path: "StackedBarChart.tsx"
-                        parameters: {
-                            data: [
-                                { name: "A", value: "30" }
-                                { name: "B", value: "40" }
-                                { name: "C", value: "50" }
-                                { name: "D", value: "40" }
-                                { name: "E", value: "60" }
-                            ]
-                            selectedIndices: [1, 4]
-                        }
+                    // Allowable types: image, javascript, website, react-component 
+                    type: "react-component"
+                    // can be a URL or a local path
+                    path: "StackedBarChart.tsx"
+                    parameters: {
+                        data: [
+                            { name: "A", value: "30" }
+                            { name: "B", value: "40" }
+                            { name: "C", value: "50" }
+                            { name: "D", value: "40" }
+                            { name: "E", value: "60" }
+                        ]
+                        selectedIndices: [1, 4]
                     }
                 },
                 stackedBarChart2: {
@@ -298,21 +288,19 @@
                     },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
-                        // can be a URL or a local path
-                        path: "StackedBarChart.tsx"
-                        parameters: {
-                            data: [
-                                { name: "A", value: "10" }
-                                { name: "B", value: "20" }
-                                { name: "C", value: "40" }
-                                { name: "D", value: "50" }
-                                { name: "E", value: "100" }
-                            ]
-                            selectedIndices: [1, 4]
-                        }
+                    // Allowable types: image, javascript, website, react-component 
+                    type: "react-component"
+                    // can be a URL or a local path
+                    path: "StackedBarChart.tsx"
+                    parameters: {
+                        data: [
+                            { name: "A", value: "10" }
+                            { name: "B", value: "20" }
+                            { name: "C", value: "40" }
+                            { name: "D", value: "50" }
+                            { name: "E", value: "100" }
+                        ]
+                        selectedIndices: [1, 4]
                     }
                 },
                 barChart1: {
@@ -322,21 +310,19 @@
                     },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
-                        // can be a URL or a local path
-                        path: "BarChart.tsx"
-                        parameters: {
-                            data: [
-                                { name: "A", value: "30" }
-                                { name: "B", value: "40" }
-                                { name: "C", value: "50" }
-                                { name: "D", value: "40" }
-                                { name: "E", value: "60" }
-                            ]
-                            selectedIndices: [1, 4]
-                        }
+                    // Allowable types: image, javascript, website, react-component 
+                    type: "react-component"
+                    // can be a URL or a local path
+                    path: "BarChart.tsx"
+                    parameters: {
+                        data: [
+                            { name: "A", value: "30" }
+                            { name: "B", value: "40" }
+                            { name: "C", value: "50" }
+                            { name: "D", value: "40" }
+                            { name: "E", value: "60" }
+                        ]
+                        selectedIndices: [1, 4]
                     }
 
                 },
@@ -347,21 +333,19 @@
                     },
                     description: "Pie chart"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
-                        // can be a URL or a local path
-                        path: "PieChart.tsx"
-                        parameters: {
-                            data: [
-                                { name: "A", value: "30" }
-                                { name: "B", value: "40" }
-                                { name: "C", value: "50" }
-                                { name: "D", value: "40" }
-                                { name: "E", value: "60" }
-                            ]
-                            selectedIndices: [1, 4]
-                        }
+                    // Allowable types: image, javascript, website, react-component 
+                    type: "react-component"
+                    // can be a URL or a local path
+                    path: "PieChart.tsx"
+                    parameters: {
+                        data: [
+                            { name: "A", value: "30" }
+                            { name: "B", value: "40" }
+                            { name: "C", value: "50" }
+                            { name: "D", value: "40" }
+                            { name: "E", value: "60" }
+                        ]
+                        selectedIndices: [1, 4]
                     }
                 },
                 bubbleChart2: {
@@ -371,21 +355,19 @@
                     },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
-                        // can be a URL or a local path
-                        path: "BubbleChart.tsx"
-                        parameters: {
-                            data: [
-                                { name: "A", value: "30" }
-                                { name: "B", value: "40" }
-                                { name: "C", value: "50" }
-                                { name: "D", value: "40" }
-                                { name: "E", value: "60" }
-                            ]
-                            selectedIndices: [0, 3]
-                        }
+                    // Allowable types: image, javascript, website, react-component 
+                    type: "react-component"
+                    // can be a URL or a local path
+                    path: "BubbleChart.tsx"
+                    parameters: {
+                        data: [
+                            { name: "A", value: "30" }
+                            { name: "B", value: "40" }
+                            { name: "C", value: "50" }
+                            { name: "D", value: "40" }
+                            { name: "E", value: "60" }
+                        ]
+                        selectedIndices: [0, 3]
                     }
                 },
                 stackedBarChart3: {
@@ -395,21 +377,19 @@
                     },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
-                        // can be a URL or a local path
-                        path: "StackedBarChart.tsx"
-                        parameters: {
-                            data: [
-                                { name: "A", value: "30" }
-                                { name: "B", value: "40" }
-                                { name: "C", value: "50" }
-                                { name: "D", value: "40" }
-                                { name: "E", value: "60" }
-                            ]
-                            selectedIndices: [0, 3]
-                        }
+                    // Allowable types: image, javascript, website, react-component 
+                    type: "react-component"
+                    // can be a URL or a local path
+                    path: "StackedBarChart.tsx"
+                    parameters: {
+                        data: [
+                            { name: "A", value: "30" }
+                            { name: "B", value: "40" }
+                            { name: "C", value: "50" }
+                            { name: "D", value: "40" }
+                            { name: "E", value: "60" }
+                        ]
+                        selectedIndices: [0, 3]
                     }
                 },
                 stackedBarChart4: {
@@ -419,21 +399,19 @@
                     },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
-                        // can be a URL or a local path
-                        path: "StackedBarChart.tsx"
-                        parameters: {
-                            data: [
-                                { name: "A", value: "10" }
-                                { name: "B", value: "20" }
-                                { name: "C", value: "40" }
-                                { name: "D", value: "50" }
-                                { name: "E", value: "100" }
-                            ]
-                            selectedIndices: [0, 3]
-                        }
+                    // Allowable types: image, javascript, website, react-component 
+                    type: "react-component"
+                    // can be a URL or a local path
+                    path: "StackedBarChart.tsx"
+                    parameters: {
+                        data: [
+                            { name: "A", value: "10" }
+                            { name: "B", value: "20" }
+                            { name: "C", value: "40" }
+                            { name: "D", value: "50" }
+                            { name: "E", value: "100" }
+                        ]
+                        selectedIndices: [0, 3]
                     }
                 },
                 barChart2: {
@@ -443,21 +421,19 @@
                     },
                     description: "A chart with correct answer of 0.66"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
-                        // can be a URL or a local path
-                        path: "BarChart.tsx"
-                        parameters: {
-                            data: [
-                                { name: "A", value: "30" }
-                                { name: "B", value: "40" }
-                                { name: "C", value: "50" }
-                                { name: "D", value: "40" }
-                                { name: "E", value: "60" }
-                            ]
-                            selectedIndices: [0, 3]
-                        }
+                    // Allowable types: image, javascript, website, react-component 
+                    type: "react-component"
+                    // can be a URL or a local path
+                    path: "BarChart.tsx"
+                    parameters: {
+                        data: [
+                            { name: "A", value: "30" }
+                            { name: "B", value: "40" }
+                            { name: "C", value: "50" }
+                            { name: "D", value: "40" }
+                            { name: "E", value: "60" }
+                        ]
+                        selectedIndices: [0, 3]
                     }
 
                 },
@@ -468,27 +444,25 @@
                     },
                     description: "Pie chart"
                     instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
-                        // can be a URL or a local path
-                        path: "PieChart.tsx"
-                        parameters: {
-                            data: [
-                                { name: "A", value: "30" }
-                                { name: "B", value: "40" }
-                                { name: "C", value: "50" }
-                                { name: "D", value: "40" }
-                                { name: "E", value: "60" }
-                            ]
-                            selectedIndices: [0, 3]
-                        }
+                    // Allowable types: image, javascript, website, react-component 
+                    type: "react-component"
+                    // can be a URL or a local path
+                    path: "PieChart.tsx"
+                    parameters: {
+                        data: [
+                            { name: "A", value: "30" }
+                            { name: "B", value: "40" }
+                            { name: "C", value: "50" }
+                            { name: "D", value: "40" }
+                            { name: "E", value: "60" }
+                        ]
+                        selectedIndices: [0, 3]
                     }
                 }
             }
         }
         post-study-survey1: {
-            type: "survey"
+            type: "questionaire"
             response:[{
                 id: "q1"
                 type: "dropdown",
@@ -531,14 +505,13 @@
                     location: "aboveStimulus"
                 }
 
-                        ]
+                ]
         }
     }
     sequence: [
         "consent"
         "training1"
         "practice1"
-        "attention1"
         "trials1"
         "post-study-survey1"
     ]
