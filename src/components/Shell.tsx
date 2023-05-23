@@ -47,9 +47,9 @@ import { StudyEnd } from './StudyEnd';
 const trrackContext: any = createContext<TrrackStoreType>(undefined!);
 export const useTrrackSelector = createSelectorHook(trrackContext);
 
-async function fetchStudyConfig(configLocation: string) {
+async function fetchStudyConfig(configLocation: string, configKey: string) {
   const config = await (await fetch(`${PREFIX}${configLocation}`)).text();
-  return parseStudyConfig(config);
+  return parseStudyConfig(config, configKey);
 }
 
 type Props = {
@@ -79,7 +79,7 @@ export function Shell({ globalConfig }: Props) {
 
     if (configKey) {
       const configJSON = globalConfig.configs[configKey];
-      fetchStudyConfig(`${configJSON.path}`).then((config) => {
+      fetchStudyConfig(`${configJSON.path}`, configKey).then((config) => {
         setActiveConfig(config);
       });
     }

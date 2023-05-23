@@ -22,17 +22,17 @@ export function parseGlobalConfig(fileData: string) {
   if (validateGlobalConfig(data)) {
     return data;
   } else {
-    throw Error('There was an issue validating your file');
+    throw Error('There was an issue validating your file global.hjson');
   }
 }
 
-export function parseStudyConfig(fileData: string) {
+export function parseStudyConfig(fileData: string, fileName: string) {
   const data = hjsonParse(fileData);
 
   if (validateStudyConfig(data)) {
     return data;
   } else {
-    throw Error('There was an issue validating your file');
+    throw Error(`There was an issue validating your file ${fileName}`);
   }
 }
 

@@ -24,7 +24,7 @@ async function fetchStudyConfigs(globalConfig: GlobalConfig) {
   const res = await Promise.all(urls.map((u) => fetch(u)))
     .then((responses) => Promise.all(responses.map((res) => res.text())))
     .then((responses) =>
-      Promise.all(responses.map((res) => parseStudyConfig(res)))
+      Promise.all(responses.map((res, idx) => parseStudyConfig(res, globalConfig.configsList[idx])))
     );
   
   globalConfig.configsList.forEach((configId, idx) => {
