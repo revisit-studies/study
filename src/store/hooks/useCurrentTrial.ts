@@ -8,11 +8,7 @@ import { useCurrentStep } from '../../routes';
 
 export function useCurrentTrial() {
   const currentStep = useCurrentStep();
+  const trialId = useLocation().pathname.split('/').at(-1) || '';
 
-  const trialId = useLocation().pathname.split('/')[2] || null; // Assumes /<trialname>/:id
-
-  return {
-    trailName: currentStep,
-    trialId,
-  };
+  return trialId !== currentStep ? trialId : null;
 }
