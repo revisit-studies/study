@@ -473,7 +473,7 @@
             }
         }
         post-study-survey1: {
-            type: "questionaire"
+            type: "questionnaire"
             response:[{
                 id: "q1"
                 type: "dropdown",

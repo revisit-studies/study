@@ -28,7 +28,7 @@
   },
   "components": {
     survey: {
-      type: "questionaire"
+      type: "questionnaire"
       response:[{
           id: "q1"
           type: "dropdown"
