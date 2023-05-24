@@ -43,8 +43,8 @@
                 {
                     id: "accept"
                     type: "radio"
-                    prompt: ""
-                    desc: ""
+                    prompt: "test"
+                    desc: "test"
                     required: true,
                     options:[{label:"Decline", value:"no"}, {label:"Accept", value:"yes"}],
                     location: belowStimulus
@@ -103,7 +103,10 @@
                         ]
                         selectedIndices: [1, 4]
                     }
-                    correctAnswer: 23
+                    correctAnswer: [{
+                        id: "cm-response2"
+                        answer: 23
+                    }]
                 },
                 stackedBarChart1: {
                     "meta": {
@@ -126,7 +129,10 @@
                         ]
                         selectedIndices: [1, 4]
                     }
-                    correctAnswer: 30
+                    correctAnswer: [{
+                        id: "cm-response2"
+                        answer: 30
+                    }]
                 }, 
                 barChart1: {
                     "meta": {
@@ -149,8 +155,10 @@
                         ]
                         selectedIndices: [1, 4]
                     }
-                    correctAnswer: 40
-
+                    correctAnswer: [{
+                        id: "cm-response2"
+                        answer: 40
+                    }]
                 },
                 pieChart1: {
                     "meta": {
@@ -173,7 +181,10 @@
                         ]
                         selectedIndices: [1, 4]
                     }
-                    correctAnswer: 50
+                    correctAnswer: [{
+                        id: "cm-response2"
+                        answer: 50
+                    }]
                 }
             }
         }
