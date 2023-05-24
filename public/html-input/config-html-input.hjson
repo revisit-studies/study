@@ -27,7 +27,7 @@
     }
     components: {
         trials1: {
-            type: "trials"
+            type: "container"
             order: ["barChart"]
             randomization-scheme: "latin-square"
             subset-count: 2
@@ -46,7 +46,7 @@
                 required: true,
                 location: 'belowStimulus'
             }]
-            trials: {
+            components: {
                 barChart: {
                     "meta": {
                         "chart": "bar",
@@ -55,13 +55,11 @@
                     },
                     description: "A trial for the user to click the largest bar"
                     instruction: "Click on the largest bar"
-                    stimulus: {
-                        type: "website"
-                        path: "html-input/bar-chart-interaction.html"
-                        // style that will be applied to iframe
-                        style: {
-                            height: "500px"
-                        }
+                    type: "website"
+                    path: "html-input/bar-chart-interaction.html"
+                    // style that will be applied to iframe
+                    style: {
+                        height: "500px"
                     }
                 }
             }

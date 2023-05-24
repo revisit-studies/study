@@ -8,6 +8,7 @@ export interface StudyMetadata {
 }
 
 export const studyComponentTypes = [
+  'questionaire',
   'image',
   'markdown',
   'react-component',
