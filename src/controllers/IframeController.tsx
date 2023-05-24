@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { PREFIX as BASE_PREFIX } from '../App';
 import { useCurrentStep } from '../routes';
 import {
@@ -8,7 +8,6 @@ import {
   useFlagsDispatch,
 } from '../store/flags';
 import { useNextStep } from '../store/hooks/useNextStep';
-import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 import {useStoreActions} from '../store';
 
 
@@ -43,7 +42,7 @@ export default function IframeController({path, parameters}: Props) {
 
   // navigation
   const currentStep = useCurrentStep();
-  const navigate = useNavigateWithParams();
+  const navigate = useNavigate();
   const computedTo = useNextStep();
   const id = useLocation().pathname;
 

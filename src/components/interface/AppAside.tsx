@@ -9,19 +9,18 @@ import {
 } from '@mantine/core';
 import { IconArrowRight } from '@tabler/icons-react';
 import React from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ContainerComponent } from '../../parser/types';
 import { useCurrentStep } from '../../routes';
 import { useAppSelector } from '../../store';
 import { useFlagsSelector } from '../../store/flags';
-import { useNavigateWithParams } from '../../utils/useNavigateWithParams';
 import { DownloadPanel } from '../DownloadPanel';
 import { StepsPanel } from './StepsPanel';
 
 export default function AppAside() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const showAdmin = useFlagsSelector((state: any) => state.showAdmin);
-  const navigateWithParams = useNavigateWithParams();
+  const navigate = useNavigate();
 
   const step = useCurrentStep();
   const config = useAppSelector(
@@ -68,7 +67,7 @@ export default function AppAside() {
                   <ActionIcon
                     bg="white"
                     onClick={() =>
-                      navigateWithParams(`/${studyId}/${step}/${task.id}`)
+                      navigate(`/${studyId}/${step}/${task.id}`)
                     }
                   >
                     <IconArrowRight size="1.125rem" />
