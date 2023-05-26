@@ -43,8 +43,8 @@
                 {
                     id: "accept"
                     type: "radio"
-                    prompt: "test"
-                    desc: "test"
+                    prompt: "Do you accept the consent form?"
+                    desc: " "
                     required: true,
                     options:[{label:"Decline", value:"no"}, {label:"Accept", value:"yes"}],
                     location: belowStimulus

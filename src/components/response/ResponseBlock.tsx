@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
 import { useNextTrialId } from '../../controllers/utils';
 import {
+  ContainerComponent,
   ResponseBlockLocation,
   StudyComponent,
 } from '../../parser/types';
@@ -24,10 +25,9 @@ import ResponseSwitcher from './ResponseSwitcher';
 
 type Props = {
   status: TrialResult | null;
-  config: StudyComponent;
+  config: StudyComponent | ContainerComponent;
   location: ResponseBlockLocation;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  correctAnswer?: any;
 };
 
 function useSavedSurvey() {
@@ -38,7 +38,6 @@ function useSavedSurvey() {
 export default function ResponseBlock({
   config,
   location,
-  correctAnswer = null,
   status = null,
 }: Props) {
   const { trialId = null, studyId = null } = useParams<{
@@ -48,8 +47,6 @@ export default function ResponseBlock({
   const id = useLocation().pathname;
 
   const storedAnswer = status?.answer;
-
-  const isPractice = false;
 
   const responses = config?.response?.filter((r) =>
     r.location ? r.location === location : location === 'belowStimulus'
@@ -67,6 +64,8 @@ export default function ResponseBlock({
   const currentStep = useCurrentStep();
   const nextTrialId = useNextTrialId(trialId);
   const nextStep = useNextStep();
+
+  const hasCorrectAnswer = trialId !== null ? (config as ContainerComponent)?.components[trialId]?.correctAnswer?.length || 0 > 0 : false;
 
   const startTime = useMemo(() => {
     return Date.now();
@@ -122,34 +121,36 @@ export default function ResponseBlock({
   return (
     <div>
       {responses.map((response) => (
-        <ResponseSwitcher
-          key={`${response.id}-${id}`}
-          status={status}
-          storedAnswer={ null
-            // isSurvey
-            //   ? savedSurvey
-            //     ? (savedSurvey as any)[`${id}/${response.id}`]
-            //     : null
-            //   : storedAnswer
-            //   ? (storedAnswer as any)[`${id}/${response.id}`]
-            //   : response.type === 'iframe'
-            //   ? (aggregateResponses || {})[`${id}/${response.id}`]
-            //   : null
-          }
-          answer={{
-            ...answerValidator.getInputProps(`${id}/${response.id}`, {
-              type: response.type === 'checkbox' ? 'checkbox' : 'input',
-            }),
-          }}
-          response={response}
-        />
+        <>
+          <ResponseSwitcher
+            key={`${response.id}-${id}`}
+            status={status}
+            storedAnswer={ null
+              // isSurvey
+              //   ? savedSurvey
+              //     ? (savedSurvey as any)[`${id}/${response.id}`]
+              //     : null
+              //   : storedAnswer
+              //   ? (storedAnswer as any)[`${id}/${response.id}`]
+              //   : response.type === 'iframe'
+              //   ? (aggregateResponses || {})[`${id}/${response.id}`]
+              //   : null
+            }
+            answer={{
+              ...answerValidator.getInputProps(`${id}/${response.id}`, {
+                type: response.type === 'checkbox' ? 'checkbox' : 'input',
+              }),
+            }}
+            response={response}
+          />
+          {hasCorrectAnswer && checkClicked && (
+            <Text>The correct answer is: {(config as ContainerComponent)?.components[trialId]?.correctAnswer.find((answer) => answer.id === response.id).answer}</Text>
+          )}
+        </>
       ))}
-      {showNextBtn && isPractice && checkClicked && (
-        <Text>The correct answer is: {correctAnswer}</Text>
-      )}
 
       <Group position="right" spacing="xs" mt="xl">
-        {correctAnswer && isPractice && showNextBtn && (
+        {hasCorrectAnswer && showNextBtn && (
           <Button
             onClick={() => setCheckClicked(true)}
             disabled={!answerValidator.isValid()}
@@ -160,7 +161,7 @@ export default function ResponseBlock({
         {showNextBtn && (
           <NextButton
             disabled={
-              isPractice
+              hasCorrectAnswer
                 ? !checkClicked
                 : !status?.complete && !areResponsesValid
             }
@@ -169,7 +170,7 @@ export default function ResponseBlock({
                 ? `/${studyId}/${currentStep}/${nextTrialId}`
                 : `/${studyId}/${nextStep}`
             }
-            process={processNext}
+            process={() => {setCheckClicked(false); processNext();}}
             label={config?.nextButtonText || 'Next'}
           />
         )}
