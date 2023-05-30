@@ -1,15 +1,13 @@
 import { Button } from '@mantine/core';
-import { To } from 'react-router-dom';
+import { To, useNavigate } from 'react-router-dom';
 import { useStudyId } from '../routes';
 import { useNextStep } from '../store/hooks/useNextStep';
-import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 
 type Props = {
   label?: string;
   disabled?: boolean;
   process?: null | (() => void | Promise<void>);
   to?: To | 'auto';
-  replace?: boolean;
 };
 
 export function NextButton({
@@ -17,9 +15,8 @@ export function NextButton({
   process = null,
   to = 'auto',
   disabled = false,
-  replace = false,
 }: Props) {
-  const navigate = useNavigateWithParams();
+  const navigate = useNavigate();
   const computedTo = `/${useStudyId()}/${useNextStep()}`;
 
   return (
@@ -29,10 +26,10 @@ export function NextButton({
       onClick={async () => {
         if (process) process();
         if (to === 'auto' && computedTo) {
-          navigate(`${computedTo}`, { replace });
+          navigate(`${computedTo}`);
         }
         if (to !== 'auto') {
-          navigate(to, { replace });
+          navigate(to);
         }
       }}
     >

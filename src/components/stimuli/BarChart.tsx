@@ -14,7 +14,7 @@ const chartSettings = {
 };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const BarChart = ({ parameters, stimulusID }: { parameters: any, stimulusID: string }) => {
+const BarChart = ({ parameters, trialId }: { parameters: any, trialId: string }) => {
   const tickLength = 6;
   const [ref, dms] = useChartDimensions(chartSettings);
 
@@ -71,7 +71,7 @@ const BarChart = ({ parameters, stimulusID }: { parameters: any, stimulusID: str
           <g transform={`translate(${[0, 0].join(',')})`}>
             <Bars
               data={parameters.data}
-              stimulusID={stimulusID}
+              trialId={trialId}
               xScale={xScale}
               yScale={yScale}
               height={dms.boundedHeight}

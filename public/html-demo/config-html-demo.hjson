@@ -27,7 +27,7 @@
     }
     components: {
         trials1: {
-            type: "trials"
+            type: "container"
             order: ["barChart"]
             nextButtonLocation: sidebar
             response:[{
@@ -40,7 +40,7 @@
                 max: 7
                 location: sidebar
             }]
-            trials: {
+            components: {
                 barChart: {
                     "meta": {
                         "chart": "bar",
@@ -52,13 +52,11 @@
                     meta: {
                       difficulty: "hard",
                     }
-                    stimulus: {
-                        type: "website"
-                        path: "html-demo/bar-chart.html"
-                        // style that will be applied to iframe
-                        style: {
-                            height: "500px"
-                        }
+                    type: "website"
+                    path: "html-demo/bar-chart.html"
+                    // style that will be applied to iframe
+                    style: {
+                        height: "500px"
                     }
                 }
             }

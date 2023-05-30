@@ -1,6 +1,6 @@
 import { Suspense } from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
-import { Stimulus } from '../parser/types';
+import { StudyComponent } from '../parser/types';
 
 const modules = import.meta.glob(
   '../components/stimuli/**/*.{mjs,js,mts,ts,jsx,tsx}',
@@ -8,21 +8,23 @@ const modules = import.meta.glob(
 );
 
 const ReactComponentController = ({
-  stimulusID,
-  stimulus,
+  path,
+  parameters,
+  trialId,
 }: {
-  stimulusID: string;
-  stimulus: Stimulus;
+  path: string;
+  parameters: StudyComponent['parameters'];
+  trialId: string | null;
 }) => {
-  const path = `../components/stimuli/${stimulus.path}`;
+  const reactPath = `../components/stimuli/${path}`;
 
-  const StimulusComponent = (modules[path] as ModuleNamespace).default;
+  const StimulusComponent = (modules[reactPath] as ModuleNamespace).default;
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <StimulusComponent
-        stimulusID={stimulusID}
-        parameters={stimulus.parameters}
+        parameters={parameters}
+        trialId={trialId}
       />
     </Suspense>
   );

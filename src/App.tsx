@@ -18,13 +18,13 @@ async function fetchGlobalConfigArray() {
 async function fetchStudyConfigs(globalConfig: GlobalConfig) {
   const studyConfigs: { [key: string]: StudyConfig } = {};
   const urls = globalConfig.configsList.map(
-    (configId) => globalConfig.configs[configId].path
+    (configId) => `${PREFIX}${globalConfig.configs[configId].path}`
   );
 
   const res = await Promise.all(urls.map((u) => fetch(u)))
     .then((responses) => Promise.all(responses.map((res) => res.text())))
     .then((responses) =>
-      Promise.all(responses.map((res) => parseStudyConfig(res)))
+      Promise.all(responses.map((res, idx) => parseStudyConfig(res, globalConfig.configsList[idx])))
     );
   
   globalConfig.configsList.forEach((configId, idx) => {

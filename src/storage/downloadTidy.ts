@@ -2,12 +2,11 @@ import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import { download } from '../components/DownloadPanel';
 
 import {
-  isPracticeComponent,
-  isSteppedComponent,
   Nullable,
   Prettify,
+  isContainerComponent,
 } from '../parser/types';
-import { State, TrialResult } from '../store/types';
+import { State, TrialRecord, TrialResult } from '../store/types';
 import { getAllSessions } from './queries';
 import { FsSession, ProvenanceStorage } from './types';
 
@@ -84,6 +83,7 @@ function processToRow(
     graph,
     session,
   }: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     graph: ProvenanceGraph<any, any, any>;
     session: FsSession;
   },
@@ -100,14 +100,12 @@ function processToRow(
 
   trialGroups.forEach((groupName) => {
     const group = study.steps[groupName];
-    if (isSteppedComponent(group)) {
-      const answers = isPracticeComponent(group)
-        ? study.practice[groupName]
-        : study.trials[groupName];
+    if (isContainerComponent(group)) {
+      const answers = study[groupName];
 
-      Object.entries(group.trials).forEach(([trialId, trial]) => {
+      Object.entries(group.components).forEach(([trialId, trial]) => {
         const answer: Nullable<TrialResult> =
-          trialId in answers ? answers[trialId] : null;
+          trialId in answers ? (answers as TrialRecord)[trialId] : null;
         const startTime = answer?.startTime
           ? new Date(answer.startTime).toUTCString()
           : null;
@@ -124,7 +122,7 @@ function processToRow(
           trialId,
           trialGroup: groupName,
           answer: JSON.stringify(answer?.answer || {}),
-          correctAnswer: trial.stimulus.correctAnswer,
+          correctAnswer: trial.correctAnswer,
           description: `"${trial.description}"`,
           instruction: `"${trial.instruction}"`,
           startTime,

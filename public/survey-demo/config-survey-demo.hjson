@@ -28,19 +28,19 @@
   },
   "components": {
     survey: {
-      type: "survey"
+      type: "questionnaire"
       response:[{
-        id: "q1"
-        type: "dropdown"
-        prompt: "Dropdown example"
-        desc: "Enter your preference"
-        // options is required for radio, checkbox,dropdown and slider in the following format.
-        options:[{label:"Bar", value:"Bar"},{label:"Bubble", value:"Bubble"},{label:"Pie", value:"Pie"},{label:"Stacked Bar", value:"Stacked Bar"}]
-        required: true
-        max: 100
-        min: 0,
-        location: "aboveStimulus"
-      }
+          id: "q1"
+          type: "dropdown"
+          prompt: "Dropdown example"
+          desc: "Enter your preference"
+          // options is required for radio, checkbox,dropdown and slider in the following format.
+          options:[{label:"Bar", value:"Bar"},{label:"Bubble", value:"Bubble"},{label:"Pie", value:"Pie"},{label:"Stacked Bar", value:"Stacked Bar"}]
+          required: true
+          max: 100
+          min: 0,
+          location: "aboveStimulus"
+        }
         //numerical example
         {
           id: "q2"

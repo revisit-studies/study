@@ -1,9 +1,9 @@
 import { Card, Container, Image, Text, UnstyledButton } from '@mantine/core';
 import { GlobalConfig, StudyConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
-import { useNavigateWithParams } from '../utils/useNavigateWithParams';
 
 import { PREFIX } from '../App';
+import { useNavigate } from 'react-router-dom';
 
 type Props = {
   globalConfig: GlobalConfig;
@@ -12,7 +12,7 @@ type Props = {
 
 const ConfigSwitcher = ({ globalConfig, studyConfigs }: Props) => {
   const { configsList } = globalConfig;
-  const navigate = useNavigateWithParams();
+  const navigate = useNavigate();
 
   return (
     <Container size="xs" px="xs" style={{ marginTop: 100, marginBottom: 100 }}>

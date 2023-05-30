@@ -8,31 +8,33 @@ export interface StudyMetadata {
 }
 
 export const studyComponentTypes = [
-  'consent',
-  'training',
-  'practice',
-  'attentionTest',
-  'trials',
-  'survey',
-  'end',
+  'questionnaire',
+  'image',
+  'markdown',
+  'react-component',
+  'website',
+  'container',
 ] as const;
 export type StudyComponentType = (typeof studyComponentTypes)[number];
 export interface StudyComponent {
   type: StudyComponentType;
+  nextButtonText?: string;
+  response: Response[];
+  nextButtonLocation?: ResponseBlockLocation;
+  instructionLocation?: ResponseBlockLocation;
+  path?: string;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  style?: { [key: string]: any };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  parameters?: { [key: string]: any };
+  correctAnswer?: Answer[];
+  meta?: Record<string, any>;
+  description?: string;
+  instruction?: string;
 }
 
 export interface StudyComponents {
   [key: string]: StudyComponent;
-}
-
-export interface ConsentComponent extends StudyComponent {
-  path: string;
-  signatureRequired: boolean;
-}
-
-// TODO: add more properties to training component
-export interface TrainingComponent extends StudyComponent {
-  stimulus: Stimulus;
 }
 
 export const responseBlockLocations = [
@@ -42,51 +44,9 @@ export const responseBlockLocations = [
 ] as const;
 export type ResponseBlockLocation = (typeof responseBlockLocations)[number];
 
-export interface SteppedComponent extends StudyComponent {
+export interface ContainerComponent extends StudyComponent {
   order: string[];
-  response: Response[];
-  trials: { [key: string]: Trial };
-  nextButtonLocation?: ResponseBlockLocation;
-  instructionLocation?: ResponseBlockLocation;
-}
-
-export type PracticeComponent = SteppedComponent;
-
-// TODO: add more properties to attention component
-export type AttentionComponent = StudyComponent;
-
-export type TrialsComponent = SteppedComponent;
-
-export interface SurveyComponent extends StudyComponent {
-  response: Response[];
-  nextButtonLocation?: null;
-}
-
-export interface Trial {
-  meta?: Record<string, any>;
-  description: string;
-  instruction: string;
-  stimulus: Stimulus;
-  response?: Response[];
-  correctAnswer?: Answer[];
-}
-
-export const stimulusTypes = [
-  'react-component',
-  'image',
-  'javascript',
-  'website',
-] as const;
-export type StimulusType = (typeof stimulusTypes)[number];
-export interface Stimulus {
-  type: StimulusType;
-  path?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  style?: { [key: string]: any };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  parameters?: { [key: string]: any };
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  correctAnswer?: any;
+  components: { [key: string]: StudyComponent };
 }
 
 export interface Option {
@@ -166,25 +126,6 @@ export interface StudyConfigJSON {
   description: string;
 }
 
-// Typecasting functions
-export function isSteppedComponent(
-  component: StudyComponent
-): component is TrialsComponent {
-  return isTrialsComponent(component) || isPracticeComponent(component);
-}
-
-export function isTrialsComponent(
-  component: StudyComponent
-): component is TrialsComponent {
-  return component.type === 'trials';
-}
-
-export function isPracticeComponent(
-  component: StudyComponent
-): component is PracticeComponent {
-  return component.type === 'practice';
-}
-
 /**
  * Helper type to avoid writing Type | undefined | null
  */
@@ -198,3 +139,8 @@ export type Prettify<T> = {
   [K in keyof T]: T[K];
   /* eslint-disable */
 } & {};
+
+// Typecase helper for ContainerComponent
+export function isContainerComponent(component: StudyComponent): component is ContainerComponent {
+  return component.type === 'container';
+}

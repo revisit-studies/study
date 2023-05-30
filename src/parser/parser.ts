@@ -2,21 +2,17 @@
 import { parse as hjsonParse } from 'hjson';
 import {
   Answer,
-  ConsentComponent,
+  ContainerComponent,
   GlobalConfig,
   Option,
   Response,
   responseBlockLocations,
   responseTypes,
-  SteppedComponent,
-  Stimulus,
-  stimulusTypes,
   StudyComponent,
   StudyComponents,
   studyComponentTypes,
   StudyConfig,
   StudyMetadata,
-  Trial,
   UIConfig,
 } from './types';
 
@@ -26,17 +22,17 @@ export function parseGlobalConfig(fileData: string) {
   if (validateGlobalConfig(data)) {
     return data;
   } else {
-    throw Error('There was an issue validating your file');
+    throw Error('There was an issue validating your file global.hjson');
   }
 }
 
-export function parseStudyConfig(fileData: string) {
+export function parseStudyConfig(fileData: string, fileName: string) {
   const data = hjsonParse(fileData);
 
   if (validateStudyConfig(data)) {
     return data;
   } else {
-    throw Error('There was an issue validating your file');
+    throw Error(`There was an issue validating your file ${fileName}`);
   }
 }
 
@@ -221,7 +217,7 @@ function validateComponents(obj: unknown): obj is StudyComponents {
     typeof obj === 'object' &&
     obj !== null &&
     Object.entries(obj).every(
-      ([key, value]) => typeof key === 'string' && validateComponent(value)
+      ([key, value]) => typeof key === 'string' && (value.type === 'container' ? validateContainerComponent(value) : validateComponent(value))
     )
   );
 }
@@ -230,52 +226,79 @@ function validateComponent(obj: unknown): obj is StudyComponent {
   const basicVerified = typeof obj === 'object' && obj !== null;
 
   // Check type for type
-  const typeVerified =
-    Object.hasOwn(obj as object, 'type') &&
-    typeof (obj as StudyComponent).type === 'string' &&
-    studyComponentTypes.includes((obj as StudyComponent).type);
+  const typeVerified = Object.hasOwn(obj as object, 'type')
+    ? typeof (obj as StudyComponent).type === 'string' &&
+      (obj as StudyComponent).type.length > 0 &&
+      studyComponentTypes.includes((obj as StudyComponent).type)
+    : true;
 
-  // Check type for consent components
-  const consentVerified =
-    (obj as StudyComponent).type === 'consent'
-      ? Object.hasOwn(obj as object, 'path') &&
-        typeof (obj as ConsentComponent).path === 'string' &&
-        (obj as ConsentComponent).path.length > 0 &&
-        Object.hasOwn(obj as object, 'signatureRequired') &&
-        typeof (obj as ConsentComponent).signatureRequired === 'boolean'
-      : true;
+  // Check type for description
+  const descriptionVerified = Object.hasOwn(obj as object, 'description')
+    ? typeof (obj as StudyComponent).description === 'string' &&
+      (obj as StudyComponent).description!.length > 0
+    : true;
 
-  // TODO: Check type for training components when we have more properties
+  // Check type for instruction
+  const instructionVerified = Object.hasOwn(obj as object, 'instruction')
+    ? typeof (obj as StudyComponent).instruction === 'string' &&
+      (obj as StudyComponent).instruction!.length > 0
+    : true;
 
-  // Check type for practice components
-  const practiceVerified =
-    (obj as StudyComponent).type === 'practice'
-      ? validateSteppedComponent(obj as StudyComponent)
-      : true;
+  // Check type for response
+  const responseVerified = Object.hasOwn(obj as object, 'response')
+    ? validateResponses((obj as StudyComponent).response)
+    : true;
 
-  // TODO: Check type for attentionTest components when we have more properties
+  // Check type for correctAnswer
+  const correctAnswerVerified = Object.hasOwn(obj as object, 'correctAnswer')
+    ? validateAnswers((obj as StudyComponent).correctAnswer)
+    : true;
 
-  // Check type for trials components
-  const trialsVerified =
-    (obj as StudyComponent).type === 'trials'
-      ? validateSteppedComponent(obj as StudyComponent)
-      : true;
+  // Check type for path
+  const pathVerified = Object.hasOwn(obj as object, 'path')
+    ? typeof (obj as StudyComponent).path === 'string' &&
+      (obj as StudyComponent).path!.length > 0
+    : true;
 
-  // TODO: Check type for survey components
+  // Check type for style
+  const styleVerified = Object.hasOwn(obj as object, 'style')
+    ? typeof (obj as StudyComponent).style === 'object' &&
+      (obj as StudyComponent).style !== null &&
+      Object.keys((obj as StudyComponent).style!).every(
+        (key) => typeof key === 'string'
+      )
+    : true;
+
+  // Check type for parameters
+  const parametersVerified = Object.hasOwn(obj as object, 'parameters')
+    ? typeof (obj as StudyComponent).parameters === 'object' &&
+      (obj as StudyComponent).parameters !== null &&
+      Object.keys((obj as StudyComponent).parameters!).every(
+        (key) => typeof key === 'string'
+      )
+    : true;
 
   const steps = [
     'basicVerified',
     'typeVerified',
-    'consentVerified',
-    'practiceVerified',
-    'trialsVerified',
+    'descriptionVerified',
+    'instructionVerified',
+    'responseVerified',
+    'correctAnswerVerified',
+    'pathVerified',
+    'styleVerified',
+    'parametersVerified',
   ];
   return [
     basicVerified,
     typeVerified,
-    consentVerified,
-    practiceVerified,
-    trialsVerified,
+    descriptionVerified,
+    instructionVerified,
+    responseVerified,
+    correctAnswerVerified,
+    pathVerified,
+    styleVerified,
+    parametersVerified,
   ].every((item, index) => {
     if (!item) {
       console.error(`Failed to validate ${steps[index]}`);
@@ -284,58 +307,58 @@ function validateComponent(obj: unknown): obj is StudyComponent {
   });
 }
 
-function validateSteppedComponent(
+function validateContainerComponent(
   obj: StudyComponent
-): obj is SteppedComponent {
+): obj is ContainerComponent {
   // Check type for order
   const orderVerified =
     Object.hasOwn(obj, 'order') &&
-    typeof (obj as SteppedComponent).order === 'object' &&
-    (obj as SteppedComponent).order !== null &&
-    (obj as SteppedComponent).order instanceof Array &&
-    (obj as SteppedComponent).order.every((item) => typeof item === 'string');
+    typeof (obj as ContainerComponent).order === 'object' &&
+    (obj as ContainerComponent).order !== null &&
+    (obj as ContainerComponent).order instanceof Array &&
+    (obj as ContainerComponent).order.every((item) => typeof item === 'string');
 
   // Check type for response
   const responseVerified =
     Object.hasOwn(obj, 'response') &&
-    validateResponses((obj as SteppedComponent).response);
+    validateResponses((obj as ContainerComponent).response);
 
-  // Check type for trials
-  const trialsVerified =
-    Object.hasOwn(obj, 'trials') &&
-    typeof (obj as SteppedComponent).trials === 'object' &&
-    (obj as SteppedComponent).trials !== null &&
-    Object.entries((obj as SteppedComponent).trials).every(
-      ([key, value]) => typeof key === 'string' && validateTrial(value)
+  // Check type for components
+  const componentsVerified =
+    Object.hasOwn(obj, 'components') &&
+    typeof (obj as ContainerComponent).components === 'object' &&
+    (obj as ContainerComponent).components !== null &&
+    Object.entries((obj as ContainerComponent).components).every(
+      ([key, value]) => typeof key === 'string' && validateComponent(value)
     );
 
   // Check type for nextButtonLocation
   const nextButtonLocationVerified = Object.hasOwn(obj, 'nextButtonLocation')
-    ? typeof (obj as SteppedComponent).nextButtonLocation === 'string' &&
+    ? typeof (obj as ContainerComponent).nextButtonLocation === 'string' &&
       responseBlockLocations.includes(
-        (obj as SteppedComponent).nextButtonLocation!
+        (obj as ContainerComponent).nextButtonLocation!
       )
     : true;
 
   // Check type for instructionLocation
   const instructionLocationVerified = Object.hasOwn(obj, 'instructionLocation')
-    ? typeof (obj as SteppedComponent).instructionLocation === 'string' &&
+    ? typeof (obj as ContainerComponent).instructionLocation === 'string' &&
       responseBlockLocations.includes(
-        (obj as SteppedComponent).instructionLocation!
+        (obj as ContainerComponent).instructionLocation!
       )
     : true;
 
   const steps = [
     'orderVerified',
     'responseVerified',
-    'trialsVerified',
+    'componentsVerified',
     'nextButtonLocationVerified',
     'instructionLocationVerified',
   ];
   return [
     orderVerified,
     responseVerified,
-    trialsVerified,
+    componentsVerified,
     nextButtonLocationVerified,
     instructionLocationVerified,
   ].every((item, index) => {
@@ -474,113 +497,6 @@ function validateOption(obj: unknown): obj is Option {
 
   const steps = ['basicVerified', 'labelVerified', 'valueVerified'];
   return [basicVerified, labelVerified, valueVerified].every((item, index) => {
-    if (!item) {
-      console.error(`Failed to validate ${steps[index]}`);
-    }
-    return item;
-  });
-}
-
-function validateTrial(obj: unknown): obj is Trial {
-  const basicVerified = typeof obj === 'object' && obj !== null;
-
-  // Check type for description
-  const descriptionVerified =
-    Object.hasOwn(obj as object, 'description') &&
-    typeof (obj as Trial).description === 'string' &&
-    (obj as Trial).description.length > 0;
-
-  // Check type for instruction
-  const instructionVerified =
-    Object.hasOwn(obj as object, 'instruction') &&
-    typeof (obj as Trial).instruction === 'string' &&
-    (obj as Trial).instruction.length > 0;
-
-  // Check type for stimulus
-  const stimulusVerified =
-    Object.hasOwn(obj as object, 'stimulus') &&
-    validateStimulus((obj as Trial).stimulus);
-
-  // Check type for response
-  const responseVerified = Object.hasOwn(obj as object, 'response')
-    ? validateResponses((obj as Trial).response)
-    : true;
-
-  // Check type for correctAnswer
-  const correctAnswerVerified = Object.hasOwn(obj as object, 'correctAnswer')
-    ? validateAnswers((obj as Trial).correctAnswer)
-    : true;
-
-  const steps = [
-    'basicVerified',
-    'descriptionVerified',
-    'instructionVerified',
-    'stimulusVerified',
-    'responseVerified',
-    'correctAnswerVerified',
-  ];
-  return [
-    basicVerified,
-    descriptionVerified,
-    instructionVerified,
-    stimulusVerified,
-    responseVerified,
-    correctAnswerVerified,
-  ].every((item, index) => {
-    if (!item) {
-      console.error(`Failed to validate ${steps[index]}`);
-    }
-    return item;
-  });
-}
-
-function validateStimulus(obj: unknown): obj is Stimulus {
-  const basicVerified = typeof obj === 'object' && obj !== null;
-
-  // Check type for type
-  const typeVerified =
-    Object.hasOwn(obj as object, 'type') &&
-    typeof (obj as Stimulus).type === 'string' &&
-    stimulusTypes.includes((obj as Stimulus).type);
-
-  // Check type for path
-  const pathVerified = Object.hasOwn(obj as object, 'path')
-    ? typeof (obj as Stimulus).path === 'string' &&
-      (obj as Stimulus).path!.length > 0
-    : true;
-
-  // Check type for style
-  const styleVerified = Object.hasOwn(obj as object, 'style')
-    ? typeof (obj as Stimulus).style === 'object' &&
-      (obj as Stimulus).style !== null &&
-      Object.keys((obj as Stimulus).style!).every(
-        (key) => typeof key === 'string'
-      )
-    : true;
-
-  // Check type for parameters
-  const parametersVerified = Object.hasOwn(obj as object, 'parameters')
-    ? typeof (obj as Stimulus).parameters === 'object' &&
-      (obj as Stimulus).parameters !== null &&
-      Object.keys((obj as Stimulus).parameters!).every(
-        (key) => typeof key === 'string'
-      )
-    : true;
-
-  const steps = [
-    'basicVerified',
-    'typeVerified',
-    'pathVerified',
-    'styleVerified',
-    'parametersVerified',
-  ];
-  return [
-    basicVerified,
-    typeVerified,
-    pathVerified,
-    styleVerified,
-    parametersVerified,
-  ].every((item, index) => {
     if (!item) {
       console.error(`Failed to validate ${steps[index]}`);
     }

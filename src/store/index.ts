@@ -7,7 +7,7 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { StudyComponent, StudyConfig } from '../parser/types';
 import { ProvenanceStorage } from '../storage/types';
 import { flagsStore, setTrrackExists } from './flags';
-import { RootState, State, Step, TrialRecord } from './types';
+import { RootState, State, Step, TrialRecord, TrialResult } from './types';
 
 export const PID = 'PARTICIPANT_ID';
 export const SESSION_ID = 'SESSION_ID';
@@ -28,20 +28,7 @@ function getSteps({ sequence, components }: StudyConfig): Record<string, Step> {
   return steps;
 }
 
-function getTrialSteps(
-  { sequence, components }: StudyConfig,
-  _for: 'trials' | 'practice'
-): Record<string, TrialRecord> {
-  const steps: Record<string, TrialRecord> = {};
 
-  const trialSteps = sequence.filter((step) => components[step].type === _for);
-
-  trialSteps.forEach((trialName) => {
-    steps[trialName] = {};
-  });
-
-  return steps;
-}
 
 export async function studyStoreCreator(
   studyId: string,
@@ -52,32 +39,25 @@ export async function studyStoreCreator(
     name: 'sessions',
   });
 
+  const steps = getSteps(config);
+  const stepsToAnswers = Object.assign({}, ...Object.keys(steps).map((id) => ({[id]: {}})));
+  const initialState: State = {
+    studyIdentifiers: {
+      pid: firebase.pid,
+      study_id: studyId,
+      session_id: crypto.randomUUID(),
+    },
+    config,
+    steps,
+    ...stepsToAnswers,
+  };
+
   const studySlice = createTrrackableSlice({
     name: 'studySlice',
-    initialState: {
-      studyIdentifiers: {
-        pid: firebase.pid,
-        study_id: studyId,
-        session_id: crypto.randomUUID(),
-      },
-      config,
-      consent: undefined,
-      steps: getSteps(config),
-      practice: getTrialSteps(config, 'practice'),
-      trials: getTrialSteps(config, 'trials'),
-      survey: {},
-      isStudyComplete: false,
-      isStudyEnded: false,
-    } as State,
+    initialState,
     reducers: {
       completeStep(state, step) {
         state.steps[step.payload].complete = true;
-      },
-      saveConsent: (
-        state,
-        response: PayloadAction<{ signature: string; timestamp: number }>
-      ) => {
-        state.consent = response.payload;
       },
       saveTrialAnswer(
         state,
@@ -92,20 +72,21 @@ export async function studyStoreCreator(
           type?: StudyComponent['type'];
         }>
       ) {
-        if (payload.type === 'trials' || payload.type === 'practice') {
-          state[payload.type][payload.trialName][payload.trialId] = {
+        if (payload.type === 'container') {
+          (state[payload.trialName] as TrialRecord)[payload.trialId] = {
             complete: true,
             answer: payload.answer,
             startTime: payload.startTime,
             endTime: payload.endTime,
           };
+        } else {
+          (state[payload.trialName] as TrialRecord) = ({
+            complete: true,
+            answer: payload.answer,
+            startTime: payload.startTime,
+            endTime: payload.endTime,
+          } as any);
         }
-      },
-      saveSurvey(
-        state,
-        { payload }: PayloadAction<Record<string, string | number>>
-      ) {
-        state.survey = payload;
       },
     },
   });

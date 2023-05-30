@@ -2,14 +2,14 @@ import { useHoverInteraction } from '../hooks/useHoverInteraction';
 
 export const Bubbles = ({
   data,
-  stimulusID,
+  trialId,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any[];
-  stimulusID: string;
+  trialId: string;
 }) => {
   const { handleMouseEnter, handleMouseLeave } =
-    useHoverInteraction(stimulusID);
+    useHoverInteraction(trialId);
 
   return (
     <g>

@@ -2,21 +2,18 @@ import { AppShell, Button, Group, Modal, Text } from '@mantine/core';
 import { TrrackStoreType } from '@trrack/redux';
 import {
   createContext,
-  ReactNode,
   useCallback,
   useEffect,
   useState,
 } from 'react';
 import { createSelectorHook, Provider } from 'react-redux';
 import { Outlet, RouteObject, useParams, useRoutes } from 'react-router-dom';
-import SurveyController from '../controllers/SurveyController';
 import { parseStudyConfig } from '../parser/parser';
 import {
+  ContainerComponent,
   GlobalConfig,
   Nullable,
-  StudyComponent,
   StudyConfig,
-  TrialsComponent,
 } from '../parser/types';
 import { StudyIdParam } from '../routes';
 import {
@@ -34,31 +31,25 @@ import {
 } from '../store/flags';
 import { NavigateWithParams } from '../utils/NavigateWithParams';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
-import Consent from './Consent';
 
 import { useDisclosure } from '@mantine/hooks';
 import { PREFIX } from '../App';
-import TrainingController from '../controllers/TrainingController';
-import {
-  default as TrialController,
-  default as TrialPracticeController,
-} from '../controllers/TrialPracticeController';
+import ComponentController from '../controllers/ComponentController';
 import { FirebaseContext, initFirebase } from '../storage/init';
 import { ProvenanceStorage } from '../storage/types';
 import AppAside from './interface/AppAside';
 import AppHeader from './interface/AppHeader';
 import AppNavBar from './interface/AppNavBar';
 import HelpModal from './interface/HelpModal';
-import { NextButton } from './NextButton';
 import { StudyEnd } from './StudyEnd';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion
 const trrackContext: any = createContext<TrrackStoreType>(undefined!);
 export const useTrrackSelector = createSelectorHook(trrackContext);
 
-async function fetchStudyConfig(configLocation: string) {
+async function fetchStudyConfig(configLocation: string, configKey: string) {
   const config = await (await fetch(`${PREFIX}${configLocation}`)).text();
-  return parseStudyConfig(config);
+  return parseStudyConfig(config, configKey);
 }
 
 type Props = {
@@ -88,7 +79,7 @@ export function Shell({ globalConfig }: Props) {
 
     if (configKey) {
       const configJSON = globalConfig.configs[configKey];
-      fetchStudyConfig(`${configJSON.path}`).then((config) => {
+      fetchStudyConfig(`${configJSON.path}`, configKey).then((config) => {
         setActiveConfig(config);
       });
     }
@@ -220,34 +211,6 @@ function StepRenderer() {
   );
 }
 
-const elements: Record<StudyComponent['type'], ReactNode> = {
-  consent: (
-    <>
-      <Consent />
-    </>
-  ),
-  training: (
-    <>
-      <TrainingController />
-      <NextButton />
-    </>
-  ),
-  practice: <TrialPracticeController />,
-  attentionTest: (
-    <>
-      <div>attention test component goes here</div>
-      <NextButton />
-    </>
-  ),
-  trials: <TrialPracticeController />,
-  survey: (
-    <>
-      <SurveyController />
-    </>
-  ),
-  end: <StudyEnd />,
-};
-
 function useStudyRoutes(
   studyId: Nullable<string>,
   config: Nullable<StudyConfig>,
@@ -269,12 +232,14 @@ function useStudyRoutes(
 
     enhancedSequence.forEach((step: string) => {
       const component = components[step];
-      const componentType = component?.type || 'end';
 
-      const element = elements[componentType];
-
-      if (componentType === 'trials' || componentType === 'practice') {
-        const { order } = component as TrialsComponent;
+      if (step === 'end') {
+        stepRoutes.push({
+          path: '/end',
+          element: <StudyEnd />,
+        });
+      } else if (component.type === 'container') {
+        const { order } = component as ContainerComponent;
 
         if (order.length > 0) {
           const baseRoute: RouteObject = {
@@ -283,12 +248,7 @@ function useStudyRoutes(
           };
           const trialRoute: RouteObject = {
             path: `${step}/:trialId`,
-            element:
-              componentType === 'trials' ? (
-                <TrialController />
-              ) : (
-                <TrialPracticeController />
-              ),
+            element: <ComponentController />,
           };
           stepRoutes.push(baseRoute);
           stepRoutes.push(trialRoute);
@@ -296,7 +256,7 @@ function useStudyRoutes(
       } else {
         stepRoutes.push({
           path: `/${step}`,
-          element,
+          element: <ComponentController />,
         });
       }
     });
