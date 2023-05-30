@@ -118,6 +118,8 @@ export default function ResponseBlock({
     trialId,
   ]);
 
+  const answerTrialId = trialId || 'NoID';
+
   return (
     <div>
       {responses.map((response) => (
@@ -144,7 +146,7 @@ export default function ResponseBlock({
             response={response}
           />
           {hasCorrectAnswer && checkClicked && (
-            <Text>The correct answer is: {(config as ContainerComponent)?.components[trialId]?.correctAnswer.find((answer) => answer.id === response.id).answer}</Text>
+            <Text>The correct answer is: {(config as ContainerComponent)?.components[answerTrialId]?.correctAnswer?.find((answer) => answer.id === response.id)?.answer}</Text>
           )}
         </>
       ))}
