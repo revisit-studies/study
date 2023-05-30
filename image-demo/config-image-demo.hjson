@@ -28,7 +28,7 @@
   },
   "components": {
     "trials1": {
-      "type": "trials",
+      "type": "container",
       "order": [
         "dotplot-low",
         "dotplot-medium",
@@ -50,7 +50,7 @@
           location: 'sidebar'
         }
       ],
-      "trials": {
+      "components": {
         "dotplot-low": {
           "meta": {
             "difficulty": 1,
@@ -86,14 +86,12 @@
             You will receive an extra $0.15 cents for every $1,000 that
             you have in your budget at the end of 48 days.
           ''',
-          "stimulus": {
-            "type": "image",
-                        // can be a URL or a local path
-            "path": "image-demo/uncertainty-1.png",
-                        // style that will be applied to the image
-            "style": {
-              "width": "800px"
-            }
+          "type": "image",
+                      // can be a URL or a local path
+          "path": "image-demo/uncertainty-1.png",
+                      // style that will be applied to the image
+          "style": {
+            "width": "800px"
           }
         },
         "dotplot-medium": {
@@ -131,14 +129,12 @@
             You will receive an extra $0.15 cents for every $1,000 that
             you have in your budget at the end of 48 days.
             ''',
-          "stimulus": {
-            "type": "image",
-                        // can be a URL or a local path
-            "path": "image-demo/uncertainty-2.png",
-                        // style that will be applied to the image
-            "style": {
-              "width": "800px"
-            }
+          "type": "image",
+                      // can be a URL or a local path
+          "path": "image-demo/uncertainty-2.png",
+                      // style that will be applied to the image
+          "style": {
+            "width": "800px"
           }
         },
         "dotplot-high": {
@@ -176,14 +172,12 @@
             You will receive an extra $0.15 cents for every $1,000 that
             you have in your budget at the end of 48 days.
             ''',
-          "stimulus": {
-            "type": "image",
-                        // can be a URL or a local path
-            "path": "image-demo/uncertainty-3.png",
-                        // style that will be applied to the image
-            "style": {
-              "width": "800px"
-            }
+          "type": "image",
+                      // can be a URL or a local path
+          "path": "image-demo/uncertainty-3.png",
+                      // style that will be applied to the image
+          "style": {
+            "width": "800px"
           }
         },
       }

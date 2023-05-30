@@ -28,24 +28,22 @@
     }
     components: {
         intro: {
-            type: "consent"
+            type: "markdown"
             path: "markdowns/mvnv-intro.md"
             signatureRequired: false
         },
         consent: {
-            type: "consent"
+            type: "markdown"
             path: "mvnv/consent-mvnv.md"
             signatureRequired: true
         },
         training: {
-            type: "training",
-            stimulus: {
-                type: "website",
-                path: "mvnv/training/mvnv-training.html"
-            }
+            type: "website",
+            type: "website",
+            path: "mvnv/training/mvnv-training.html"
         },
         trials0: {
-            type: "trials"
+            type: "container"
             order: ["task0"]
             nextButtonLocation: sidebar
             subset-count: 2
@@ -58,7 +56,7 @@
                 required: true
                 location: sidebar
             }]
-            trials: {
+            components: {
                 task0: {
                     meta: {
                             "chart": "adj-matrix",
@@ -67,21 +65,19 @@
                         },
                     description: "task description"
                     instruction:  "**Question:** Find the North American with the most Tweets"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component 
-                        type: "website"
-                        // can be a URL or a local path
-                        path: "mvnv/index.html",
-                        // style that will be applied to iframe
-                        style: {
-                            height: "500px"
-                        }
+                    // Allowable types: image, javascript, website, react-component 
+                    type: "website"
+                    // can be a URL or a local path
+                    path: "mvnv/index.html",
+                    // style that will be applied to iframe
+                    style: {
+                        height: "500px"
                     }
                 }
             }
         },
         trials1: {
-            type: "trials"
+            type: "container"
             order: ["task1"]
             nextButtonLocation: sidebar
             subset-count: 2
@@ -93,7 +89,7 @@
                 required: true
                 location: sidebar
             }]
-            trials: {
+            components: {
                 task1: {
                     meta: {
                         "chart": "adj-matrix",
@@ -102,21 +98,19 @@
                     },
                     description: "task description"
                     instruction:  "**Question:** Find the European person or institution with the least likes"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component
-                        type: "website"
-                        // can be a URL or a local path
-                        path: "mvnv/index.html",
-                        // style that will be applied to iframe
-                        style: {
-                            height: "500px"
-                        }
+                    // Allowable types: image, javascript, website, react-component
+                    type: "website"
+                    // can be a URL or a local path
+                    path: "mvnv/index.html",
+                    // style that will be applied to iframe
+                    style: {
+                        height: "500px"
                     }
                 }
             }
         },
         trials2: {
-            type: "trials"
+            type: "container"
             order: ["task2"]
             nextButtonLocation: sidebar
             subset-count: 2
@@ -128,7 +122,7 @@
                 required: true
                 location: sidebar
             }]
-            trials: {
+            components: {
                 task2: {
                     meta: {
                         "chart": "adj-matrix",
@@ -137,21 +131,19 @@
                     },
                     description: "task description"
                     instruction:  "**Question:** Which person has many interactions (edges) in this network, several followers, but few tweets and likes in general?"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component
-                        type: "website"
-                        // can be a URL or a local path
-                        path: "mvnv/index.html",
-                        // style that will be applied to iframe
-                        style: {
-                            height: "500px"
-                        }
+                    // Allowable types: image, javascript, website, react-component
+                    type: "website"
+                    // can be a URL or a local path
+                    path: "mvnv/index.html",
+                    // style that will be applied to iframe
+                    style: {
+                        height: "500px"
                     }
                 }
             }
         },
         trials3: {
-            type: "trials"
+            type: "container"
             order: ["task3"]
             nextButtonLocation: sidebar
             subset-count: 2
@@ -163,7 +155,7 @@
                 required: true
                 location: sidebar
             }]
-            trials: {
+            components: {
                 task3: {
                     meta: {
                         "chart": "adj-matrix",
@@ -172,21 +164,19 @@
                     },
                     description: "task description",
                     instruction:  "**Question:** Find all of Lane's European Neighbors",
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component
-                        type: "website"
-                        // can be a URL or a local path
-                        path: "mvnv/index.html",
-                        // style that will be applied to iframe
-                        style: {
-                            height: "500px"
-                        }
+                    // Allowable types: image, javascript, website, react-component
+                    type: "website"
+                    // can be a URL or a local path
+                    path: "mvnv/index.html",
+                    // style that will be applied to iframe
+                    style: {
+                        height: "500px"
                     }
                 }
             }
         },
         trials4: {
-            type: "trials"
+            type: "container"
             order: ["task4"]
             nextButtonLocation: sidebar
             subset-count: 2
@@ -198,7 +188,7 @@
                 required: true
                 location: sidebar
             }]
-            trials: {
+            components: {
                 task4: {
                     meta: {
                         "chart": "adj-matrix",
@@ -207,21 +197,19 @@
                     },
                     description: "task description",
                     instruction:  "**Question:** Find all of giCentre's North American Neighbors",
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component
-                        type: "website"
-                        // can be a URL or a local path
-                        path: "mvnv/index.html",
-                        // style that will be applied to iframe
-                        style: {
-                            height: "500px"
-                        }
+                    // Allowable types: image, javascript, website, react-component
+                    type: "website"
+                    // can be a URL or a local path
+                    path: "mvnv/index.html",
+                    // style that will be applied to iframe
+                    style: {
+                        height: "500px"
                     }
                 }
             }
         },
         trials5: {
-            type: "trials"
+            type: "container"
             order: ["task5"]
             nextButtonLocation: sidebar
             subset-count: 2
@@ -233,7 +221,7 @@
                 required: true
                 location: sidebar
             }]
-            trials: {
+            components: {
                 task5: {
                     meta: {
                         "chart": "adj-matrix",
@@ -242,21 +230,19 @@
                     },
                     description: "task description",
                     instruction:  "**Question:** Who had the most mention interactions with Jeffrey?",
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component
-                        type: "website"
-                        // can be a URL or a local path
-                        path: "mvnv/index.html",
-                        // style that will be applied to iframe
-                        style: {
-                            height: "500px"
-                        }
+                    // Allowable types: image, javascript, website, react-component
+                    type: "website"
+                    // can be a URL or a local path
+                    path: "mvnv/index.html",
+                    // style that will be applied to iframe
+                    style: {
+                        height: "500px"
                     }
                 }
             }
         },
         trials6: {
-            type: "trials"
+            type: "container"
             order: ["task6"]
             nextButtonLocation: sidebar
             subset-count: 2
@@ -271,7 +257,7 @@
 
 
             }]
-            trials: {
+            components: {
                 task6: {
                     meta: {
                         "chart": "adj-matrix",
@@ -280,21 +266,19 @@
                     },
                     description: "task description",
                     instruction:  "**Question:** Does Alex have more mention interactions with North American or European accounts? Who does he have the most mentions interactions with?",
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component
-                        type: "website"
-                        // can be a URL or a local path
-                        path: "mvnv/index.html",
-                        // style that will be applied to iframe
-                        style: {
-                            height: "500px"
-                        }
+                    // Allowable types: image, javascript, website, react-component
+                    type: "website"
+                    // can be a URL or a local path
+                    path: "mvnv/index.html",
+                    // style that will be applied to iframe
+                    style: {
+                        height: "500px"
                     }
                 }
             }
         },
         trials7: {
-            type: "trials"
+            type: "container"
             order: ["task7"]
             nextButtonLocation: sidebar
             subset-count: 2
@@ -306,7 +290,7 @@
                 required: true
                 location: sidebar
             }]
-            trials: {
+            components: {
                 task7: {
                     meta: {
                         "chart": "adj-matrix",
@@ -315,21 +299,19 @@
                     },
                     description: "task description",
                     instruction:  "Among all people who have interacted with both Jeffrey and Robert, who has the most followers?",
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component
-                        type: "website"
-                        // can be a URL or a local path
-                        path: "mvnv/index.html",
-                        // style that will be applied to iframe
-                        style: {
-                            height: "500px"
-                        }
+                    // Allowable types: image, javascript, website, react-component
+                    type: "website"
+                    // can be a URL or a local path
+                    path: "mvnv/index.html",
+                    // style that will be applied to iframe
+                    style: {
+                        height: "500px"
                     }
                 }
             }
         },
         trials8: {
-            type: "trials"
+            type: "container"
             order: ["task8"]
             nextButtonLocation: sidebar
             subset-count: 2
@@ -342,7 +324,6 @@
                     options:[{label:"Mentions", value:"Mentions"},{label:"Retweets", value:"Retweets"}]
                     required: true,
                     location: sidebar
-
                 },
                 {
                     id: "task8-2"
@@ -353,7 +334,7 @@
                     location: sidebar
                 }
             ],
-            trials: {
+            components: {
                 task8: {
                     meta: {
                         "chart": "adj-matrix",
@@ -362,21 +343,19 @@
                     },
                     description: "task description"
                     instruction:  "**Question:** What is the most common form of interaction between Evis19 and Jon? How often has this interaction happened?"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component
-                        type: "website"
-                        // can be a URL or a local path
-                        path: "mvnv/index.html",
-                        // style that will be applied to iframe
-                        style: {
-                            height: "500px"
-                        }
+                    // Allowable types: image, javascript, website, react-component
+                    type: "website"
+                    // can be a URL or a local path
+                    path: "mvnv/index.html",
+                    // style that will be applied to iframe
+                    style: {
+                        height: "500px"
                     }
                 }
             }
         },
         trials9: {
-            type: "trials"
+            type: "container"
             order: ["task9"]
             nextButtonLocation: sidebar
             subset-count: 2
@@ -388,7 +367,7 @@
                 required: true
                 location: sidebar
             }]
-            trials: {
+            components: {
                 task9: {
                     meta: {
                         "chart": "adj-matrix",
@@ -397,21 +376,19 @@
                     },
                     description: "task description"
                     instruction:  "**Question:** Select all of Noeska’s neighbors that are people and have more friends than followers"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component
-                        type: "website"
-                        // can be a URL or a local path
-                        path: "mvnv/index.html",
-                        // style that will be applied to iframe
-                        style: {
-                            height: "500px"
-                        }
+                    // Allowable types: image, javascript, website, react-component
+                    type: "website"
+                    // can be a URL or a local path
+                    path: "mvnv/index.html",
+                    // style that will be applied to iframe
+                    style: {
+                        height: "500px"
                     }
                 }
             }
         },
         trials10: {
-            type: "trials"
+            type: "container"
             order: ["task10"]
             nextButtonLocation: sidebar
             subset-count: 2
@@ -423,7 +400,7 @@
                 required: true
                 location: sidebar
             }]
-            trials: {
+            components: {
                 task10: {
                     meta: {
                         "chart": "adj-matrix",
@@ -432,21 +409,19 @@
                     },
                     description: "task description"
                     instruction:  "**Question:** Select the people who have interacted with Thomas and have more friends than followers"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component
-                        type: "website"
-                        // can be a URL or a local path
-                        path: "mvnv/index.html",
-                        // style that will be applied to iframe
-                        style: {
-                            height: "500px"
-                        }
+                    // Allowable types: image, javascript, website, react-component
+                    type: "website"
+                    // can be a URL or a local path
+                    path: "mvnv/index.html",
+                    // style that will be applied to iframe
+                    style: {
+                        height: "500px"
                     }
                 }
             }
         },
         trials11: {
-            type: "trials"
+            type: "container"
             order: ["task11"]
             nextButtonLocation: sidebar
             subset-count: 2
@@ -468,7 +443,7 @@
                     location: sidebar
                 }
             ],
-            trials: {
+            components: {
                 task11: {
                     meta: {
                         "chart": "adj-matrix",
@@ -477,32 +452,30 @@
                     },
                     description: "task description",
                     instruction:  "**Question:** Select the people who have interacted with Thomas and have more friends than followers",
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component
-                        type: "website"
-                        // can be a URL or a local path
-                        path: "mvnv/index.html",
-                        // style that will be applied to iframe
-                        style: {
-                            height: "500px"
-                        }
+                    // Allowable types: image, javascript, website, react-component
+                    type: "website"
+                    // can be a URL or a local path
+                    path: "mvnv/index.html",
+                    // style that will be applied to iframe
+                    style: {
+                        height: "500px"
                     }
                 }
             }
         },
         trials12: {
-            type: "trials"
+            type: "container"
             order: ["task12"]
             nextButtonLocation: sidebar
             subset-count: 2
             response:[{
-                id: "iframe-task",
-                type: "iframe",
-                prompt: "Selected name(s) will show here",
-                desc: "small description"
-                required: true
-                location: sidebar
-            },
+                    id: "iframe-task",
+                    type: "iframe",
+                    prompt: "Selected name(s) will show here",
+                    desc: "small description"
+                    required: true
+                    location: sidebar
+                },
                 {
                     id: "task12-1"
                     type: "radio"
@@ -511,10 +484,9 @@
                     options:[{label:"NA", value:"NA"},{label:"SA", value:"SA"},{label:"EU", value:"EU"},{label:"AS", value:"AS"}]
                     required: true,
                     location: sidebar
-
                 }
             ],
-            trials: {
+            components: {
                 task12: {
                     meta: {
                         "chart": "adj-matrix",
@@ -523,21 +495,19 @@
                     },
                     description: "task description"
                     instruction:  "**Question:** What is the institution on a shortest path between Lane and Rob. What is its continent of origin?"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component
-                        type: "website"
-                        // can be a URL or a local path
-                        path: "mvnv/index.html",
-                        // style that will be applied to iframe
-                        style: {
-                            height: "500px"
-                        }
+                    // Allowable types: image, javascript, website, react-component
+                    type: "website"
+                    // can be a URL or a local path
+                    path: "mvnv/index.html",
+                    // style that will be applied to iframe
+                    style: {
+                        height: "500px"
                     }
                 }
             }
         },
         trials13: {
-            type: "trials"
+            type: "container"
             order: ["task13"]
             nextButtonLocation: sidebar
             subset-count: 2
@@ -559,7 +529,7 @@
                     location: sidebar
 
                 }]
-            trials: {
+            components: {
                 task13: {
                     meta: {
                         "chart": "adj-matrix",
@@ -568,21 +538,19 @@
                     },
                     description: "task description"
                     instruction:  "**Question:** What is the institution on a shortest path between Jason and Jon. What is its continent of origin?"
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component
-                        type: "website"
-                        // can be a URL or a local path
-                        path: "mvnv/index.html",
-                        // style that will be applied to iframe
-                        style: {
-                            height: "500px"
-                        }
+                    // Allowable types: image, javascript, website, react-component
+                    type: "website"
+                    // can be a URL or a local path
+                    path: "mvnv/index.html",
+                    // style that will be applied to iframe
+                    style: {
+                        height: "500px"
                     }
                 }
             }
         },
         trials14: {
-            type: "trials"
+            type: "container"
             order: ["task14"]
             nextButtonLocation: sidebar
             subset-count: 2
@@ -594,7 +562,7 @@
                 required: true
                 location: sidebar
             }]
-            trials: {
+            components: {
                 task14: {
                     meta: {
                         "chart": "adj-matrix",
@@ -603,21 +571,19 @@
                     },
                     description: "task description",
                     instruction:  "**Question:** Of the North Americans who are two interactions away from Sereno, who has been on twitter the longest?",
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component
-                        type: "website"
-                        // can be a URL or a local path
-                        path: "mvnv/index.html",
-                        // style that will be applied to iframe
-                        style: {
-                            height: "500px"
-                        }
+                    // Allowable types: image, javascript, website, react-component
+                    type: "website"
+                    // can be a URL or a local path
+                    path: "mvnv/index.html",
+                    // style that will be applied to iframe
+                    style: {
+                        height: "500px"
                     }
                 }
             }
         },
         trials15: {
-            type: "trials"
+            type: "container"
             order: ["task15"]
             nextButtonLocation: sidebar
             subset-count: 2
@@ -629,7 +595,7 @@
                 required: true
                 location: sidebar
             }]
-            trials: {
+            components: {
                 task15: {
                     meta: {
                         "chart": "adj-matrix",
@@ -638,15 +604,13 @@
                     },
                     description: "task description",
                     instruction:  "**Question:** Please explore the network freely and report on your findings. Is there anything surprising or particularly interesting in the network?",
-                    stimulus: {
-                        // Allowable types: image, javascript, website, react-component
-                        type: "website"
-                        // can be a URL or a local path
-                        path: "mvnv/index.html",
-                        // style that will be applied to iframe
-                        style: {
-                            height: "500px"
-                        }
+                    // Allowable types: image, javascript, website, react-component
+                    type: "website"
+                    // can be a URL or a local path
+                    path: "mvnv/index.html",
+                    // style that will be applied to iframe
+                    style: {
+                        height: "500px"
                     }
                 }
             }
