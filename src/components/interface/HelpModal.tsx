@@ -16,13 +16,11 @@ export default function HelpModal() {
   const [helpText, setHelpText] = useState('');
   useEffect(() => {
     if (!config) return;
-    if (!(config.uiConfig.helpTextPath)) return;
+    if (!config.uiConfig.helpTextPath) return;
 
-    if (config.uiConfig.helpTextPath){
-      fetch(`${PREFIX}${config.uiConfig.helpTextPath}`)
-          .then((response) => response.text())
-          .then((text) => setHelpText(text));
-    }
+    fetch(`${PREFIX}${config.uiConfig.helpTextPath}`)
+      .then((response) => response.text())
+      .then((text) => setHelpText(text));
   }, [config]);
 
   return (
