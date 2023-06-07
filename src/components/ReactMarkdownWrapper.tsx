@@ -1,5 +1,6 @@
 import ReactMarkdown from 'react-markdown';
 import { Image,  Text, Title, Anchor, List } from '@mantine/core';
+import { ReactNode } from 'react';
 
 export default function ReactMarkdownWrapper({ text }: { text: string; }) {
   const components = {
@@ -12,8 +13,8 @@ export default function ReactMarkdownWrapper({ text }: { text: string; }) {
     h5: ({ node, ...props }: { node: unknown; }) => <Title order={5} {...props} />,
     h6: ({ node, ...props }: { node: unknown; }) => <Title order={6} {...props} />,
     a: ({ node, ...props }: { node: unknown; }) => <Anchor {...props} />,
-    ul: ({ node, ...props }: { node: unknown; }) => <List withPadding {...props} />,
-    ol: ({ node, ...props }: { node: unknown; }) => <List type="ordered" withPadding {...props} />,
+    ul: ({ node, ...props }: { node: unknown; children: ReactNode; }) => <List withPadding {...props} />,
+    ol: ({ node, ...props }: { node: unknown; children: ReactNode; }) => <List type="ordered" withPadding {...props} />,
   };
 
   return <>
