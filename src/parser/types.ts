@@ -92,7 +92,6 @@ export interface Answer {
 }
 
 export type UIConfig = {
-  helpImgPath?: string;
   contactEmail: string;
   helpTextPath?: string;
   logoPath: string;
