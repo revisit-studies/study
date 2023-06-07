@@ -1,6 +1,6 @@
 import { PREFIX } from '../App';
 import { useEffect, useState } from 'react';
-import { ReactMarkdown } from 'react-markdown/lib/react-markdown';
+import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
 
 export default function MarkdownController({
   path
@@ -17,5 +17,7 @@ export default function MarkdownController({
 
   if (importedText === null) return null;
 
-  return <ReactMarkdown>{importedText}</ReactMarkdown>;
+  return <>
+    <ReactMarkdownWrapper text={importedText} />
+  </>;
 }
