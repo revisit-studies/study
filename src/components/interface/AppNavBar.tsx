@@ -1,5 +1,5 @@
 import { Navbar, Text } from '@mantine/core';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useComponentStatus } from '../../store/hooks/useComponentStatus';
 import ResponseBlock from '../response/ResponseBlock';
@@ -34,7 +34,7 @@ export default function AppNavBar() {
             <Text span c="orange.8" fw={700} inherit>
               Task:
             </Text>
-            <ReactMarkdown>{instruction}</ReactMarkdown>
+            <ReactMarkdownWrapper text={instruction} />
           </Text>
         </Navbar.Section>
       )}
