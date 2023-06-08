@@ -52,7 +52,7 @@ export default function AppAside() {
           <React.Fragment key={`admin_${task.id}`}>
             <Paper radius={0} p={0} withBorder>
               <Paper bg={isCorrect ? 'blue.0' : 'red.0'} radius={0} p="xl">
-                <Flex>
+                <Flex style={{ justifyContent: 'space-between'}}>
                   <Text c="gray.9">
                     <Text
                       span
@@ -62,8 +62,9 @@ export default function AppAside() {
                     >
                       Task {index + 1}:
                     </Text>{' '}
-                    {task.instruction}
+                    {task.id}
                   </Text>
+                  <Space></Space>
                   <ActionIcon
                     bg="white"
                     onClick={() =>
@@ -76,15 +77,6 @@ export default function AppAside() {
               </Paper>
 
               <Paper radius={0} p="xl">
-                {task.id && (
-                  <Text fw={900}>
-                    Task ID:{' '}
-                    <Text component="span" fw={400}>
-                      {task.id}
-                    </Text>
-                  </Text>
-                )}
-
                 {task.description && (
                   <Text fw={900}>
                     Description:{' '}
