@@ -1,1 +1,1 @@
-This is a test of the help text. This study is for testing purposes only. If you need more help, click the menu on the right in the header, and then click contact.
+This is a simple demo of using HTML stimuli, simply type your answer in input field and click **Next**.

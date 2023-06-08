@@ -17,7 +17,7 @@
     }
     uiConfig: {
         contactEmail: "test@test.com"
-        helpTextPath: "mvnv/help.md"
+        helpTextPath: "mvnv/help.md",
         logoPath: "assets/revisitLogoSquare.svg"
         withProgressBar: true
         // starts the automatic download of the data after study completion 

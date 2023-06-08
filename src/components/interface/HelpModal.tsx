@@ -1,6 +1,6 @@
 import { Modal } from '@mantine/core';
 import { toggleShowHelpText, useFlagsDispatch, useFlagsSelector } from '../../store/flags';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 import { useAppSelector } from '../../store';
 import { useEffect, useState } from 'react';
 import { PREFIX } from '../../App';
@@ -14,7 +14,6 @@ export default function HelpModal() {
   const flagsDispatch = useFlagsDispatch();
 
   const [helpText, setHelpText] = useState('');
-
   useEffect(() => {
     if (!config) return;
     if (!config.uiConfig.helpTextPath) return;
@@ -25,8 +24,8 @@ export default function HelpModal() {
   }, [config]);
 
   return (
-    <Modal opened={showHelpText} onClose={() => flagsDispatch(toggleShowHelpText())} title="Help">
-      <ReactMarkdown>{helpText}</ReactMarkdown>
+    <Modal size={'auto'} opened={showHelpText} onClose={() => flagsDispatch(toggleShowHelpText())} title="Help">
+      <ReactMarkdownWrapper text={helpText} />
     </Modal>
   );
 }

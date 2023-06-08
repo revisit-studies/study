@@ -127,7 +127,7 @@ export default function ResponseBlock({
           <ResponseSwitcher
             key={`${response.id}-${id}`}
             status={status}
-            storedAnswer={ null
+            storedAnswer={ response.type === 'iframe'? (aggregateResponses || {})[`${id}/${response.id}`]:null
               // isSurvey
               //   ? savedSurvey
               //     ? (savedSurvey as any)[`${id}/${response.id}`]
