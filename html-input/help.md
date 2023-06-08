@@ -1,1 +1,1 @@
-This is a test of the help text. This study is for testing purposes only. If you need more help, click the menu on the right in the header, and then click contact.
+This is a simple demo of using HTML stimuli, and receiving answers from it. You can click on any bar in bar chart to select answer and click **Next**. Note your selected answer will be displayed below.
