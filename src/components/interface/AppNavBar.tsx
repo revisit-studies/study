@@ -53,5 +53,6 @@ export default function AppNavBar() {
         </Navbar.Section>
       )}
     </Navbar>
-  ) : null;
+  ) : <ResponseBlock status={status} config={currentStepConfig} location="sidebar" style={{ display: 'hidden' }} />
+  ;
 }

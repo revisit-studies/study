@@ -27,7 +27,7 @@ type Props = {
   status: TrialResult | null;
   config: StudyComponent | ContainerComponent;
   location: ResponseBlockLocation;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  style: React.CSSProperties;
 };
 
 function useSavedSurvey() {
@@ -39,6 +39,7 @@ export default function ResponseBlock({
   config,
   location,
   status = null,
+  style,
 }: Props) {
   const { trialId = null, studyId = null } = useParams<{
     trialId: string;
@@ -121,7 +122,7 @@ export default function ResponseBlock({
   const answerTrialId = trialId || 'NoID';
 
   return (
-    <div>
+    <div style={style}>
       {responses.map((response) => (
         <>
           <ResponseSwitcher
