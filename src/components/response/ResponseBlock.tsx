@@ -27,7 +27,7 @@ type Props = {
   status: TrialResult | null;
   config: StudyComponent | ContainerComponent;
   location: ResponseBlockLocation;
-  style: React.CSSProperties;
+  style?: React.CSSProperties;
 };
 
 function useSavedSurvey() {
