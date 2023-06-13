@@ -1,68 +1,65 @@
 {
     configVersion: 1
     studyMetadata: {
-        title: "HTML as a Stimulus"
-        version: "pilot"
+        title: HTML as a Stimulus
+        version: pilot
         authors: [
-            "The reVISit Team"
+            The reVISit Team
         ]
-        date: "2023-04-14"
-        description: "A simple demo of using a stimuli in an html file that renders a D3 visualization. Data is collected via a field."
+        date: 2023-04-14
+        description: A simple demo of using a stimuli in an html file that renders a D3 visualization. Data is collected via a numeric response field.
         organizations: [
-            "University of Utah"
-            "WPI"
-            "University of Toronto"
+            University of Utah
+            WPI
+            University of Toronto
         ]
     }
     uiConfig: {
-        contactEmail: "test@test.com"
-        helpTextPath: "html-demo/help.md"
-        logoPath: "assets/revisitLogoSquare.svg"
+        contactEmail: test@test.com
+        helpTextPath: html-demo/help.md
+        logoPath: assets/revisitLogoSquare.svg
         withProgressBar: true
-        // starts the automatic download of the data after study completion 
         autoDownloadStudy: false
-        // start download after x milliseconds
-        autoDownloadTime: 5000
         sidebar: true
     }
     components: {
+        introduction: {
+            type: markdown
+            path: html-demo/introduction.md
+        }
         trials1: {
-            type: "container"
-            order: ["barChart"]
+            type: container
+            order: [
+                barChart
+            ]
             nextButtonLocation: sidebar
-            response:[{
-                id: "html-response"
-                type: "numerical"
-                prompt: "Your answer:"
-                desc: "1-7"
-                required: true
-                min: 0
-                max: 7
-                location: sidebar
-            }]
+            response: [
+                {
+                    id: html-response
+                    type: numerical
+                    prompt: "Answer:"
+                    desc: 0-7
+                    required: true
+                    min: 0
+                    max: 7
+                    location: sidebar
+                }
+            ]
             components: {
                 barChart: {
-                    "meta": {
-                        "chart": "bar",
-                        "AttrNo": 7,
-                        "misleading": false,
-                    },
-                    description: "description of the trial"
-                    instruction:  **Question:** How many bars have a value great than 1?
                     meta: {
-                      difficulty: "hard",
+                        difficulty: hard
                     }
-                    type: "website"
+                    description: Question that asks users to count the number of bars that have a value greater than 1.
+                    instruction: How many bars have a value great than 1?
+                    type: website
                     path: "html-demo/bar-chart.html"
-                    // style that will be applied to iframe
-                    style: {
-                        height: "500px"
-                    }
                 }
             }
         }
     }
     sequence: [
-        "trials1"
+        introduction
+        trials1
     ]
 }

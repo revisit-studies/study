@@ -1,639 +1,667 @@
 {
     configVersion: 1
     studyMetadata: {
-        title: "MVNV Study Replication"
-        version: "pilot"
+        title: MVNV Study Replication
+        version: pilot
         authors: [
-            "The reVISit Team"
+            The reVISit Team
         ]
-        date: "2023-04-26"
+        date: 2023-04-26
         description: "A replication of adjacent matrix tasks in the MVNV study "
         organizations: [
-            "University of Utah"
-            "WPI"
-            "University of Toronto"
+            University of Utah
+            WPI
+            University of Toronto
         ]
-        logoPath: "assets/revisitLogoSquare.svg"
+        logoPath: assets/revisitLogoSquare.svg
     }
     uiConfig: {
-        contactEmail: "test@test.com"
-        helpTextPath: "mvnv/help.md",
-        logoPath: "assets/revisitLogoSquare.svg"
+        contactEmail: test@test.com
+        helpTextPath: mvnv/help.md
+        logoPath: assets/revisitLogoSquare.svg
         withProgressBar: true
-        // starts the automatic download of the data after study completion 
         autoDownloadStudy: false
-        // start download after x milliseconds
-        autoDownloadTime: 5000
         sidebar: true
     }
     components: {
-        intro: {
-            type: "markdown"
-            path: "markdowns/mvnv-intro.md"
-            signatureRequired: false
-        },
+        introduction: {
+            type: markdown
+            path: mvnv/introduction.md
+        }
         consent: {
-            type: "markdown"
-            path: "mvnv/consent-mvnv.md"
-            signatureRequired: true
-        },
+            type: markdown
+            path: mvnv/consent-mvnv.md
+            nextButtonText: Agree
+            response: [
+                {
+                    id: signature
+                    type: shortText
+                    prompt: "Your signature"
+                    desc: Please provide your signature
+                    required: true
+                    location: belowStimulus
+                }
+                {
+                    id: accept
+                    type: radio
+                    prompt: Do you accept the consent form?
+                    desc: " "
+                    required: true
+                    options: [
+                        {
+                            label: Decline
+                            value: no
+                        }
+                        {
+                            label: Accept
+                            value: yes
+                        }
+                    ]
+                    location: belowStimulus
+                }
+            ]
+        }
         training: {
-            type: "website",
-            type: "website",
-            path: "mvnv/training/mvnv-training.html"
-        },
+            type: website
+            type: website
+            path: mvnv/training/mvnv-training.html
+        }
         trials0: {
-            type: "container"
-            order: ["task0"]
+            type: container
+            order: [
+                task0
+            ]
             nextButtonLocation: sidebar
-            subset-count: 2
-            response:[{
-                //to use iframe input, id must match trialID
-                id: "iframe-task"
-                type: "iframe",
-                prompt: "Selected name(s) will show here",
-                desc: "small description"
-                required: true
-                location: sidebar
-            }]
+            response: [
+                {
+                    id: iframe-task
+                    type: iframe
+                    prompt: Selected name(s) will show here
+                    desc: " "
+                    required: true
+                    location: sidebar
+                }
+            ]
             components: {
                 task0: {
                     meta: {
-                            "chart": "adj-matrix",
-                            "AttrNo": 75,
-                            "taskName": "Node Search on Attr",
-                        },
-                    description: "task description"
-                    instruction:  "**Question:** Find the North American with the most Tweets"
-                    // Allowable types: image, javascript, website, react-component 
-                    type: "website"
-                    // can be a URL or a local path
-                    path: "mvnv/index.html",
-                    // style that will be applied to iframe
-                    style: {
-                        height: "500px"
+                        chart: adj-matrix
+                        AttrNo: 75
+                        taskName: Node Search on Attr
                     }
-                }
-            }
-        },
-        trials1: {
-            type: "container"
-            order: ["task1"]
-            nextButtonLocation: sidebar
-            subset-count: 2
-            response:[{
-                id: "iframe-task",
-                type: "iframe",
-                prompt: "Selected name(s) will show here",
-                desc: "small description"
-                required: true
-                location: sidebar
-            }]
-            components: {
-                task1: {
-                    meta: {
-                        "chart": "adj-matrix",
-                        "AttrNo": 75,
-                        "taskName": "Node Search on Attr. w/ Distractors",
-                    },
-                    description: "task description"
-                    instruction:  "**Question:** Find the European person or institution with the least likes"
-                    // Allowable types: image, javascript, website, react-component
+                    description: NA most tweets
+                    instruction: "**Question:** Find the North American with the most Tweets" 
                     type: "website"
-                    // can be a URL or a local path
-                    path: "mvnv/index.html",
-                    // style that will be applied to iframe
-                    style: {
-                        height: "500px"
-                    }
-                }
-            }
-        },
-        trials2: {
-            type: "container"
-            order: ["task2"]
-            nextButtonLocation: sidebar
-            subset-count: 2
-            response:[{
-                id: "iframe-task",
-                type: "iframe",
-                prompt: "Selected name(s) will show here",
-                desc: "small description"
-                required: true
-                location: sidebar
-            }]
-            components: {
-                task2: {
-                    meta: {
-                        "chart": "adj-matrix",
-                        "AttrNo": 75,
-                        "taskName": "Node Search on Top. w/ Multiple Attrs",
-                    },
-                    description: "task description"
-                    instruction:  "**Question:** Which person has many interactions (edges) in this network, several followers, but few tweets and likes in general?"
-                    // Allowable types: image, javascript, website, react-component
-                    type: "website"
-                    // can be a URL or a local path
-                    path: "mvnv/index.html",
-                    // style that will be applied to iframe
-                    style: {
-                        height: "500px"
-                    }
-                }
-            }
-        },
-        trials3: {
-            type: "container"
-            order: ["task3"]
-            nextButtonLocation: sidebar
-            subset-count: 2
-            response:[{
-                id: "iframe-task",
-                type: "iframe",
-                prompt: "Selected name(s) will show here",
-                desc: "small description"
-                required: true
-                location: sidebar
-            }]
-            components: {
-                task3: {
-                    meta: {
-                        "chart": "adj-matrix",
-                        "AttrNo": 75,
-                        "taskName": "Neighbor Search on Attr",
-                    },
-                    description: "task description",
-                    instruction:  "**Question:** Find all of Lane's European Neighbors",
-                    // Allowable types: image, javascript, website, react-component
-                    type: "website"
-                    // can be a URL or a local path
-                    path: "mvnv/index.html",
-                    // style that will be applied to iframe
-                    style: {
-                        height: "500px"
-                    }
-                }
-            }
-        },
-        trials4: {
-            type: "container"
-            order: ["task4"]
-            nextButtonLocation: sidebar
-            subset-count: 2
-            response:[{
-                id: "iframe-task",
-                type: "iframe",
-                prompt: "Selected name(s) will show here",
-                desc: "small description"
-                required: true
-                location: sidebar
-            }]
-            components: {
-                task4: {
-                    meta: {
-                        "chart": "adj-matrix",
-                        "AttrNo": 75,
-                        "taskName": "Neighbor Search on Attr. w/ Distractors",
-                    },
-                    description: "task description",
-                    instruction:  "**Question:** Find all of giCentre's North American Neighbors",
-                    // Allowable types: image, javascript, website, react-component
-                    type: "website"
-                    // can be a URL or a local path
-                    path: "mvnv/index.html",
-                    // style that will be applied to iframe
-                    style: {
-                        height: "500px"
-                    }
-                }
-            }
-        },
-        trials5: {
-            type: "container"
-            order: ["task5"]
-            nextButtonLocation: sidebar
-            subset-count: 2
-            response:[{
-                id: "iframe-task",
-                type: "iframe",
-                prompt: "Selected name(s) will show here",
-                desc: "small description"
-                required: true
-                location: sidebar
-            }]
-            components: {
-                task5: {
-                    meta: {
-                        "chart": "adj-matrix",
-                        "AttrNo": 75,
-                        "taskName": "Neighbor Search on Edge Attr.",
-                    },
-                    description: "task description",
-                    instruction:  "**Question:** Who had the most mention interactions with Jeffrey?",
-                    // Allowable types: image, javascript, website, react-component
-                    type: "website"
-                    // can be a URL or a local path
-                    path: "mvnv/index.html",
-                    // style that will be applied to iframe
-                    style: {
-                        height: "500px"
-                    }
-                }
-            }
-        },
-        trials6: {
-            type: "container"
-            order: ["task6"]
-            nextButtonLocation: sidebar
-            subset-count: 2
-            response:[{
-                id: "task6"
-                type: "radio"
-                prompt: "Select Answer Below"
-                desc: "Likert question"
-                required: true,
-                options:[{label:"European", value:"EU"},{label:"North American", value:"NA"}],
-                location: sidebar
-
-
-            }]
-            components: {
-                task6: {
-                    meta: {
-                        "chart": "adj-matrix",
-                        "AttrNo": 75,
-                        "taskName": "Neighbor Overview on Edge Attr. ",
-                    },
-                    description: "task description",
-                    instruction:  "**Question:** Does Alex have more mention interactions with North American or European accounts? Who does he have the most mentions interactions with?",
-                    // Allowable types: image, javascript, website, react-component
-                    type: "website"
-                    // can be a URL or a local path
-                    path: "mvnv/index.html",
-                    // style that will be applied to iframe
-                    style: {
-                        height: "500px"
-                    }
-                }
-            }
-        },
-        trials7: {
-            type: "container"
-            order: ["task7"]
-            nextButtonLocation: sidebar
-            subset-count: 2
-            response:[{
-                id: "iframe-task",
-                type: "iframe",
-                prompt: "Selected name(s) will show here",
-                desc: "small description"
-                required: true
-                location: sidebar
-            }]
-            components: {
-                task7: {
-                    meta: {
-                        "chart": "adj-matrix",
-                        "AttrNo": 75,
-                        "taskName": "Attr. of Common Neighbors.",
-                    },
-                    description: "task description",
-                    instruction:  "Among all people who have interacted with both Jeffrey and Robert, who has the most followers?",
-                    // Allowable types: image, javascript, website, react-component
-                    type: "website"
-                    // can be a URL or a local path
-                    path: "mvnv/index.html",
-                    // style that will be applied to iframe
-                    style: {
-                        height: "500px"
-                    }
-                }
-            }
-        },
-        trials8: {
-            type: "container"
-            order: ["task8"]
-            nextButtonLocation: sidebar
-            subset-count: 2
-            response:[
-                {
-                    id: "task8-1"
-                    type: "radio"
-                    prompt: "Select Answer Below"
-                    desc: "small description"
-                    options:[{label:"Mentions", value:"Mentions"},{label:"Retweets", value:"Retweets"}]
-                    required: true,
-                    location: sidebar
-                },
-                {
-                    id: "task8-2"
-                    type: "shortText",
-                    prompt: "Enter Answer Below",
-                    desc: "answer text"
-                    required: true
-                    location: sidebar
-                }
-            ],
-            components: {
-                task8: {
-                    meta: {
-                        "chart": "adj-matrix",
-                        "AttrNo": 75,
-                        "taskName": "Edge Attr",
-                    },
-                    description: "task description"
-                    instruction:  "**Question:** What is the most common form of interaction between Evis19 and Jon? How often has this interaction happened?"
-                    // Allowable types: image, javascript, website, react-component
-                    type: "website"
-                    // can be a URL or a local path
-                    path: "mvnv/index.html",
-                    // style that will be applied to iframe
-                    style: {
-                        height: "500px"
-                    }
-                }
-            }
-        },
-        trials9: {
-            type: "container"
-            order: ["task9"]
-            nextButtonLocation: sidebar
-            subset-count: 2
-            response:[{
-                id: "iframe-task",
-                type: "iframe",
-                prompt: "Selected name(s) will show here",
-                desc: "small description"
-                required: true
-                location: sidebar
-            }]
-            components: {
-                task9: {
-                    meta: {
-                        "chart": "adj-matrix",
-                        "AttrNo": 75,
-                        "taskName": "Node Attr. Comparison.",
-                    },
-                    description: "task description"
-                    instruction:  "**Question:** Select all of Noeska’s neighbors that are people and have more friends than followers"
-                    // Allowable types: image, javascript, website, react-component
-                    type: "website"
-                    // can be a URL or a local path
-                    path: "mvnv/index.html",
-                    // style that will be applied to iframe
-                    style: {
-                        height: "500px"
-                    }
-                }
-            }
-        },
-        trials10: {
-            type: "container"
-            order: ["task10"]
-            nextButtonLocation: sidebar
-            subset-count: 2
-            response:[{
-                id: "iframe-task",
-                type: "iframe",
-                prompt: "Selected name(s) will show here",
-                desc: "small description"
-                required: true
-                location: sidebar
-            }]
-            components: {
-                task10: {
-                    meta: {
-                        "chart": "adj-matrix",
-                        "AttrNo": 25,
-                        "taskName": "Node Attr. Comparison (Small).",
-                    },
-                    description: "task description"
-                    instruction:  "**Question:** Select the people who have interacted with Thomas and have more friends than followers"
-                    // Allowable types: image, javascript, website, react-component
-                    type: "website"
-                    // can be a URL or a local path
-                    path: "mvnv/index.html",
-                    // style that will be applied to iframe
-                    style: {
-                        height: "500px"
-                    }
-                }
-            }
-        },
-        trials11: {
-            type: "container"
-            order: ["task11"]
-            nextButtonLocation: sidebar
-            subset-count: 2
-            response:[
-                {
-                    id: "iframe-task",
-                    type: "iframe",
-                    prompt: "Selected name(s) will show here",
-                    desc: "small description"
-                    required: true
-                    location: sidebar
-                },
-                {
-                    id: "task11-2"
-                    type: "shortText",
-                    prompt: "Enter Answer Below",
-                    desc: "answer text"
-                    required: true
-                    location: sidebar
-                }
-            ],
-            components: {
-                task11: {
-                    meta: {
-                        "chart": "adj-matrix",
-                        "AttrNo": 75,
-                        "taskName": " Cluster and Attr. Estimation.",
-                    },
-                    description: "task description",
-                    instruction:  "**Question:** Select the people who have interacted with Thomas and have more friends than followers",
-                    // Allowable types: image, javascript, website, react-component
-                    type: "website"
-                    // can be a URL or a local path
-                    path: "mvnv/index.html",
-                    // style that will be applied to iframe
-                    style: {
-                        height: "500px"
-                    }
-                }
-            }
-        },
-        trials12: {
-            type: "container"
-            order: ["task12"]
-            nextButtonLocation: sidebar
-            subset-count: 2
-            response:[{
-                    id: "iframe-task",
-                    type: "iframe",
-                    prompt: "Selected name(s) will show here",
-                    desc: "small description"
-                    required: true
-                    location: sidebar
-                },
-                {
-                    id: "task12-1"
-                    type: "radio"
-                    prompt: "Select Answer Below"
-                    desc: "small description"
-                    options:[{label:"NA", value:"NA"},{label:"SA", value:"SA"},{label:"EU", value:"EU"},{label:"AS", value:"AS"}]
-                    required: true,
-                    location: sidebar
-                }
-            ],
-            components: {
-                task12: {
-                    meta: {
-                        "chart": "adj-matrix",
-                        "AttrNo": 75,
-                        "taskName": "Attr. along Shortest Path.",
-                    },
-                    description: "task description"
-                    instruction:  "**Question:** What is the institution on a shortest path between Lane and Rob. What is its continent of origin?"
-                    // Allowable types: image, javascript, website, react-component
-                    type: "website"
-                    // can be a URL or a local path
-                    path: "mvnv/index.html",
-                    // style that will be applied to iframe
-                    style: {
-                        height: "500px"
-                    }
-                }
-            }
-        },
-        trials13: {
-            type: "container"
-            order: ["task13"]
-            nextButtonLocation: sidebar
-            subset-count: 2
-            response:[{
-                id: "iframe-task",
-                type: "iframe",
-                prompt: "Selected name(s) will show here",
-                desc: "small description"
-                required: true
-                location: sidebar
-            },
-                {
-                    id: "task13-1"
-                    type: "radio"
-                    prompt: "Select Answer Below"
-                    desc: "small description"
-                    options:[{label:"NA", value:"NA"},{label:"SA", value:"SA"},{label:"EU", value:"EU"},{label:"AS", value:"AS"}]
-                    required: true,
-                    location: sidebar
-
-                }]
-            components: {
-                task13: {
-                    meta: {
-                        "chart": "adj-matrix",
-                        "AttrNo": 25,
-                        "taskName": "Attr. along Shortest Path (Small).",
-                    },
-                    description: "task description"
-                    instruction:  "**Question:** What is the institution on a shortest path between Jason and Jon. What is its continent of origin?"
-                    // Allowable types: image, javascript, website, react-component
-                    type: "website"
-                    // can be a URL or a local path
-                    path: "mvnv/index.html",
-                    // style that will be applied to iframe
-                    style: {
-                        height: "500px"
-                    }
-                }
-            }
-        },
-        trials14: {
-            type: "container"
-            order: ["task14"]
-            nextButtonLocation: sidebar
-            subset-count: 2
-            response:[{
-                id: "iframe-task",
-                type: "iframe",
-                prompt: "Selected name(s) will show here",
-                desc: "small description"
-                required: true
-                location: sidebar
-            }]
-            components: {
-                task14: {
-                    meta: {
-                        "chart": "adj-matrix",
-                        "AttrNo": 75,
-                        "taskName": "Attr. on Multiple Paths",
-                    },
-                    description: "task description",
-                    instruction:  "**Question:** Of the North Americans who are two interactions away from Sereno, who has been on twitter the longest?",
-                    // Allowable types: image, javascript, website, react-component
-                    type: "website"
-                    // can be a URL or a local path
-                    path: "mvnv/index.html",
-                    // style that will be applied to iframe
-                    style: {
-                        height: "500px"
-                    }
-                }
-            }
-        },
-        trials15: {
-            type: "container"
-            order: ["task15"]
-            nextButtonLocation: sidebar
-            subset-count: 2
-            response:[{
-                id: "task15"
-                type: "longText",
-                prompt: "Enter Findings Below",
-                desc: "small description"
-                required: true
-                location: sidebar
-            }]
-            components: {
-                task15: {
-                    meta: {
-                        "chart": "adj-matrix",
-                        "AttrNo": 75,
-                        "taskName": "Free Explore",
-                    },
-                    description: "task description",
-                    instruction:  "**Question:** Please explore the network freely and report on your findings. Is there anything surprising or particularly interesting in the network?",
-                    // Allowable types: image, javascript, website, react-component
-                    type: "website"
-                    // can be a URL or a local path
-                    path: "mvnv/index.html",
-                    // style that will be applied to iframe
-                    style: {
-                        height: "500px"
-                    }
+                    path: "mvnv/index.html"
                 }
             }
         }
-    },
+        trials1: {
+            type: container
+            order: [
+                task1
+            ]
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: iframe-task
+                    type: iframe
+                    prompt: Selected name(s) will show here
+                    desc: " "
+                    required: true
+                    location: sidebar
+                }
+            ]
+            components: {
+                task1: {
+                    meta: {
+                        chart: adj-matrix
+                        AttrNo: 75
+                        taskName: Node Search on Attr. w/ Distractors
+                    }
+                    description: EU least likes
+                    instruction: "**Question:** Find the European person or institution with the least likes"
+                    type: "website"
+                    path: "mvnv/index.html"
+                }
+            }
+        }
+        trials2: {
+            type: container
+            order: [
+                task2
+            ]
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: iframe-task
+                    type: iframe
+                    prompt: Selected name(s) will show here
+                    desc: " "
+                    required: true
+                    location: sidebar
+                }
+            ]
+            components: {
+                task2: {
+                    meta: {
+                        chart: adj-matrix
+                        AttrNo: 75
+                        taskName: Node Search on Top. w/ Multiple Attrs
+                    }
+                    description: Most edges in network, few likes and tweets
+                    instruction: "**Question:** Which person has many interactions (edges) in this network, several followers, but few tweets and likes in general?"
+                    type: "website"
+                    path: "mvnv/index.html"
+                }
+            }
+        }
+        trials3: {
+            type: container
+            order: [
+                task3
+            ]
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: iframe-task
+                    type: iframe
+                    prompt: Selected name(s) will show here
+                    desc: " "
+                    required: true
+                    location: sidebar
+                }
+            ]
+            components: {
+                task3: {
+                    meta: {
+                        chart: adj-matrix
+                        AttrNo: 75
+                        taskName: Neighbor Search on Attr
+                    }
+                    description: Lane's EU neighbors
+                    instruction: "**Question:** Find all of Lane's European Neighbors"
+                    type: "website"
+                    path: "mvnv/index.html"
+                }
+            }
+        }
+        trials4: {
+            type: container
+            order: [
+                task4
+            ]
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: iframe-task
+                    type: iframe
+                    prompt: Selected name(s) will show here
+                    desc: " "
+                    required: true
+                    location: sidebar
+                }
+            ]
+            components: {
+                task4: {
+                    meta: {
+                        chart: adj-matrix
+                        AttrNo: 75
+                        taskName: Neighbor Search on Attr. w/ Distractors
+                    }
+                    description: giCentre's NA neighbors
+                    instruction: "**Question:** Find all of giCentre's North American Neighbors"
+                    type: "website"
+                    path: "mvnv/index.html"
+                }
+            }
+        }
+        trials5: {
+            type: container
+            order: [
+                task5
+            ]
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: iframe-task
+                    type: iframe
+                    prompt: Selected name(s) will show here
+                    desc: " "
+                    required: true
+                    location: sidebar
+                }
+            ]
+            components: {
+                task5: {
+                    meta: {
+                        chart: adj-matrix
+                        AttrNo: 75
+                        taskName: Neighbor Search on Edge Attr.
+                    }
+                    description: Jeffrey's most mentioned neighbors
+                    instruction: "**Question:** Who had the most mention interactions with Jeffrey?"
+                    type: "website"
+                    path: "mvnv/index.html"
+                }
+            }
+        }
+        trials6: {
+            type: container
+            order: [
+                task6
+            ]
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: task6
+                    type: radio
+                    prompt: Select Answer Below
+                    desc: Likert question
+                    required: true
+                    options: [
+                        {
+                            label: European
+                            value: EU
+                        }
+                        {
+                            label: North American
+                            value: NA
+                        }
+                    ]
+                    location: sidebar
+                }
+                {
+                    id: iframe-task
+                    type: iframe
+                    prompt: Selected name(s) will show here
+                    desc: " "
+                    required: true
+                    location: sidebar
+                }
+            ]
+            components: {
+                task6: {
+                    meta: {
+                        chart: adj-matrix
+                        AttrNo: 75
+                        taskName: "Neighbor Overview on Edge Attr. "
+                    }
+                    description: Alex's most mentioned neighbors
+                    instruction: "**Question:** Does Alex have more mention interactions with North American or European accounts? Who does he have the most mentions interactions with?"
+                    type: "website"
+                    path: "mvnv/index.html"
+                }
+            }
+        }
+        trials7: {
+            type: container
+            order: [
+                task7
+            ]
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: iframe-task
+                    type: iframe
+                    prompt: Selected name(s) will show here
+                    desc: " "
+                    required: true
+                    location: sidebar
+                }
+            ]
+            components: {
+                task7: {
+                    meta: {
+                        chart: adj-matrix
+                        AttrNo: 75
+                        taskName: Attr. of Common Neighbors.
+                    }
+                    description: Jeffrey and Robert's common neighbor with most followers
+                    instruction: "Among all people who have interacted with both Jeffrey and Robert, who has the most followers?"
+                    type: "website"
+                    path: "mvnv/index.html"
+                }
+            }
+        }
+        trials8: {
+            type: container
+            order: [
+                task8
+            ]
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: task8-1
+                    type: radio
+                    prompt: Select Answer Below
+                    desc: " "
+                    options: [
+                        {
+                            label: Mentions
+                            value: Mentions
+                        }
+                        {
+                            label: Retweets
+                            value: Retweets
+                        }
+                    ]
+                    required: true
+                    location: sidebar
+                }
+                {
+                    id: task8-2
+                    type: shortText
+                    prompt: Enter Answer Below
+                    desc: answer text
+                    required: true
+                    location: sidebar
+                }
+            ]
+            components: {
+                task8: {
+                    meta: {
+                        chart: adj-matrix
+                        AttrNo: 75
+                        taskName: Edge Attr
+                    }
+                    description: Evis19 and Jon's most common interaction
+                    instruction: "**Question:** What is the most common form of interaction between Evis19 and Jon? How often has this interaction happened?"
+                    type: "website"
+                    path: "mvnv/index.html"
+                }
+            }
+        }
+        trials9: {
+            type: container
+            order: [
+                task9
+            ]
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: iframe-task
+                    type: iframe
+                    prompt: Selected name(s) will show here
+                    desc: " "
+                    required: true
+                    location: sidebar
+                }
+            ]
+            components: {
+                task9: {
+                    meta: {
+                        chart: adj-matrix
+                        AttrNo: 75
+                        taskName: Node Attr. Comparison.
+                    }
+                    description: Noeska's neighbor more friends than followers
+                    instruction: "**Question:** Select all of Noeska’s neighbors that are people and have more friends than followers"
+                    type: "website"
+                    path: "mvnv/index.html"
+                }
+            }
+        }
+        trials10: {
+            type: container
+            order: [
+                task10
+            ]
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: iframe-task
+                    type: iframe
+                    prompt: Selected name(s) will show here
+                    desc: " "
+                    required: true
+                    location: sidebar
+                }
+            ]
+            components: {
+                task10: {
+                    meta: {
+                        chart: adj-matrix
+                        AttrNo: 25
+                        taskName: Node Attr. Comparison (Small).
+                    }
+                    description: Thomas's neighbor more friends than followers (small)
+                    instruction: "**Question:** Select the people who have interacted with Thomas and have more friends than followers"
+                    type: "website"
+                    path: "mvnv/index.html"
+                }
+            }
+        }
+        trials11: {
+            type: container
+            order: [
+                task11
+            ]
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: iframe-task
+                    type: iframe
+                    prompt: Selected name(s) will show here
+                    desc: " "
+                    required: true
+                    location: sidebar
+                }
+                {
+                    id: task11-2
+                    type: shortText
+                    prompt: Enter Answer Below
+                    desc: answer text
+                    required: true
+                    location: sidebar
+                }
+            ]
+            components: {
+                task11: {
+                    meta: {
+                        chart: adj-matrix
+                        AttrNo: 75
+                        taskName: " Cluster and Attr. Estimation."
+                    }
+                    description: Thomas's neighbor more friends than followers (large)
+                    instruction: "**Question:** Select the people who have interacted with Thomas and have more friends than followers"
+                    type: "website"
+                    path: "mvnv/index.html"
+                }
+            }
+        }
+        trials12: {
+            type: container
+            order: [
+                task12
+            ]
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: iframe-task
+                    type: iframe
+                    prompt: Selected name(s) will show here
+                    desc: " "
+                    required: true
+                    location: sidebar
+                }
+                {
+                    id: task12-1
+                    type: radio
+                    prompt: Select Answer Below
+                    desc: " "
+                    options: [
+                        {
+                            label: NA
+                            value: NA
+                        }
+                        {
+                            label: SA
+                            value: SA
+                        }
+                        {
+                            label: EU
+                            value: EU
+                        }
+                        {
+                            label: AS
+                            value: AS
+                        }
+                    ]
+                    required: true
+                    location: sidebar
+                }
+            ]
+            components: {
+                task12: {
+                    meta: {
+                        chart: adj-matrix
+                        AttrNo: 75
+                        taskName: Attr. along Shortest Path.
+                    }
+                    description: Lane and Rob's shortest path institution + continent
+                    instruction: "**Question:** What is the institution on a shortest path between Lane and Rob. What is its continent of origin?"
+                    type: "website"
+                    path: "mvnv/index.html"
+                }
+            }
+        }
+        trials13: {
+            type: container
+            order: [
+                task13
+            ]
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: iframe-task
+                    type: iframe
+                    prompt: Selected name(s) will show here
+                    desc: " "
+                    required: true
+                    location: sidebar
+                }
+                {
+                    id: task13-1
+                    type: radio
+                    prompt: Select Answer Below
+                    desc: " "
+                    options: [
+                        {
+                            label: NA
+                            value: NA
+                        }
+                        {
+                            label: SA
+                            value: SA
+                        }
+                        {
+                            label: EU
+                            value: EU
+                        }
+                        {
+                            label: AS
+                            value: AS
+                        }
+                    ]
+                    required: true
+                    location: sidebar
+                }
+            ]
+            components: {
+                task13: {
+                    meta: {
+                        chart: adj-matrix
+                        AttrNo: 25
+                        taskName: Attr. along Shortest Path (Small).
+                    }
+                    description: Jason and Jon's shortest path institution + continent
+                    instruction: "**Question:** What is the institution on a shortest path between Jason and Jon. What is its continent of origin?"
+                    type: "website"
+                    path: "mvnv/index.html"
+                }
+            }
+        }
+        trials14: {
+            type: container
+            order: [
+                task14
+            ]
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: iframe-task
+                    type: iframe
+                    prompt: Selected name(s) will show here
+                    desc: " "
+                    required: true
+                    location: sidebar
+                }
+            ]
+            components: {
+                task14: {
+                    meta: {
+                        chart: adj-matrix
+                        AttrNo: 75
+                        taskName: Attr. on Multiple Paths
+                    }
+                    description: North Americans two interactions away from Sereno
+                    instruction: "**Question:** Of the North Americans who are two interactions away from Sereno, who has been on twitter the longest?"
+                    type: "website"
+                    path: "mvnv/index.html"
+                }
+            }
+        }
+        trials15: {
+            type: container
+            order: [
+                task15
+            ]
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: task15
+                    type: longText
+                    prompt: Enter Findings Below
+                    desc: " "
+                    required: true
+                    location: sidebar
+                }
+            ]
+            components: {
+                task15: {
+                    meta: {
+                        chart: adj-matrix
+                        AttrNo: 75
+                        taskName: Free Explore
+                    }
+                    description: Free Explore
+                    instruction: "**Question:** Please explore the network freely and report on your findings. Is there anything surprising or particularly interesting in the network?"
+                    type: "website"
+                    path: "mvnv/index.html"
+                }
+            }
+        }
+    }
     sequence: [
-        "consent",
-        "training",
-        "trials0",
-        "trials1",
-        "trials2",
-        "trials3",
-        "trials4",
-        "trials5",
-        "trials6",
-        "trials7",
-        "trials8",
-        "trials9",
-        "trials10",
-        "trials11",
-        "trials12",
-        "trials13",
-        "trials14",
-        "trials15"
+        introduction
+        consent
+        training
+        trials0
+        trials1
+        trials2
+        trials3
+        trials4
+        trials5
+        trials6
+        trials7
+        trials8
+        trials9
+        trials10
+        trials11
+        trials12
+        trials13
+        trials14
+        trials15
     ]
 }

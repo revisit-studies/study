@@ -39,8 +39,8 @@ export default function AppAside() {
     studyId: string;
   }>();
 
-  return !showAdmin ? (
-    <Aside p="md" width={{ lg: 300 }} style={{ zIndex: 0 }}>
+  return showAdmin ? (
+    <Aside p="md" width={{ base: 300 }} style={{ zIndex: 0 }}>
       <StepsPanel />
 
       <Space h="md" />

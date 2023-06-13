@@ -1,23 +1,23 @@
 {
     configVersion: 1
     studyMetadata: {
-        title: "Cleveland McGill Example"
-        version: "pilot"
+        title: Cleveland McGill Example
+        version: pilot
         authors: [
-            "The reVISit Team"
+            The reVISit Team
         ]
-        date: "2022-11-18"
-        description: "A replication of the Cleveland McGill study with quiz feedback."
+        date: 2022-11-18
+        description: A replication of the Cleveland McGill study with quiz feedback.
         organizations: [
-            "University of Utah"
-            "WPI"
-            "University of Toronto"
+            University of Utah
+            WPI
+            University of Toronto
         ]
     }
     uiConfig: {
-        contactEmail: "test@test.com"
-        helpTextPath: "demo/help.md"
-        logoPath: "assets/revisitLogoSquare.svg"
+        contactEmail: test@test.com
+        helpTextPath: demo/help.md
+        logoPath: assets/revisitLogoSquare.svg
         withProgressBar: true
         // starts the automatic download of the data after study completion 
         autoDownloadStudy: false
@@ -27,53 +27,79 @@
     }
     components: {
         consent: {
-            type: "consent"
-            path: "demo/consent.md"
+            type: consent
+            path: demo/consent.md
             signature: false
         }
         training1: {
-            type: "training"
+            type: training
         }
         practice1: {
-            type: "practice"
-            order: ["bubbleChart1", "stackedBarChart1", "barChart1", "pieChart1"]
-            randomization-scheme: "latin-square"
+            type: practice
+            order: [
+                bubbleChart1
+                stackedBarChart1
+                barChart1
+                pieChart1
+            ]
+            randomization-scheme: latin-square
             subset-count: 2
             attention-checks: {
-                check: "attention1"
+                check: attention1
                 pattern: random
                 // one check after 10 trials 
                 interval: 10
-            },          
-            response:[
+            }
+            response: [
                 //Can change response type
                 //text example
                 {
-                    id: "cm-response2"
-                    type: "numerical"
-                    prompt: "Your answer!!"
-                    desc: "Enter your answer here, range from 0 - 100"
+                    id: cm-response2
+                    type: numerical
+                    prompt: Your answer!!
+                    desc: Enter your answer here, range from 0 - 100
                     required: true
                     // add max and min for the allowed range
                     max: 100
                     min: 0
-                }], 
+                }
+            ]
             trials: {
                 bubbleChart1: {
-                    description: "A chart with correct answer of 0.66"
-                    instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
+                    description: A chart with correct answer of 0.66
+                    instruction:
+                        '''
+                        Two values are marked with dots. 
+
+                         **Question:** What percentage do you believe the smaller value represents relative to the larger value?
+                        '''
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
+                        type: react-component
                         // can be a URL or a local path
-                        path: "./stimuli/BubbleChart.tsx"
+                        path: ./stimuli/BubbleChart.tsx
                         parameters: {
                             data: [
-                                { name: "A", value: "30" }
-                                { name: "B", value: "40" }
-                                { name: "C", value: "50" }
-                                { name: "D", value: "40" }
-                                { name: "E", value: "60" }
+                                {
+                                    name: A
+                                    value: "30"
+                                }
+                                {
+                                    name: B
+                                    value: "40"
+                                }
+                                {
+                                    name: C
+                                    value: "50"
+                                }
+                                {
+                                    name: D
+                                    value: "40"
+                                }
+                                {
+                                    name: E
+                                    value: "60"
+                                }
                             ]
                             selectedIndices: [1, 4]
                         }
@@ -81,63 +107,122 @@
                     }
                 }
                 stackedBarChart1: {
-                    description: "A chart with correct answer of 0.66"
-                    instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
+                    description: A chart with correct answer of 0.66
+                    instruction:
+                        '''
+                        Two values are marked with dots. 
+
+                         **Question:** What percentage do you believe the smaller value represents relative to the larger value?
+                        '''
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
+                        type: react-component
                         // can be a URL or a local path
-                        path: "./stimuli/StackedBarChart.tsx"
+                        path: ./stimuli/StackedBarChart.tsx
                         parameters: {
                             data: [
-                                { name: "A", value: "30" }
-                                { name: "B", value: "40" }
-                                { name: "C", value: "50" }
-                                { name: "D", value: "40" }
-                                { name: "E", value: "60" }
+                                {
+                                    name: A
+                                    value: "30"
+                                }
+                                {
+                                    name: B
+                                    value: "40"
+                                }
+                                {
+                                    name: C
+                                    value: "50"
+                                }
+                                {
+                                    name: D
+                                    value: "40"
+                                }
+                                {
+                                    name: E
+                                    value: "60"
+                                }
                             ]
                             selectedIndices: [1, 4]
                         }
                         correctAnswer: 30
                     }
-                }, 
+                }
                 barChart1: {
-                    description: "A chart with correct answer of 0.66"
-                    instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
+                    description: A chart with correct answer of 0.66
+                    instruction:
+                        '''
+                        Two values are marked with dots. 
+
+                         **Question:** What percentage do you believe the smaller value represents relative to the larger value?
+                        '''
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
+                        type: react-component
                         // can be a URL or a local path
-                        path: "./stimuli/BarChart.tsx"
+                        path: ./stimuli/BarChart.tsx
                         parameters: {
                             data: [
-                                { name: "A", value: "30" }
-                                { name: "B", value: "40" }
-                                { name: "C", value: "50" }
-                                { name: "D", value: "40" }
-                                { name: "E", value: "60" }
+                                {
+                                    name: A
+                                    value: "30"
+                                }
+                                {
+                                    name: B
+                                    value: "40"
+                                }
+                                {
+                                    name: C
+                                    value: "50"
+                                }
+                                {
+                                    name: D
+                                    value: "40"
+                                }
+                                {
+                                    name: E
+                                    value: "60"
+                                }
                             ]
                             selectedIndices: [1, 4]
                         }
                         correctAnswer: 40
                     }
-
                 }
                 pieChart1: {
-                    description: "Pie chart"
-                    instruction: "Two values are marked with dots. \n\n **Question:** What percentage do you believe the smaller value represents relative to the larger value?"
+                    description: Pie chart
+                    instruction:
+                        '''
+                        Two values are marked with dots. 
+
+                         **Question:** What percentage do you believe the smaller value represents relative to the larger value?
+                        '''
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
+                        type: react-component
                         // can be a URL or a local path
-                        path: "./stimuli/PieChart.tsx"
+                        path: ./stimuli/PieChart.tsx
                         parameters: {
                             data: [
-                                { name: "A", value: "30" }
-                                { name: "B", value: "40" }
-                                { name: "C", value: "50" }
-                                { name: "D", value: "40" }
-                                { name: "E", value: "60" }
+                                {
+                                    name: A
+                                    value: "30"
+                                }
+                                {
+                                    name: B
+                                    value: "40"
+                                }
+                                {
+                                    name: C
+                                    value: "50"
+                                }
+                                {
+                                    name: D
+                                    value: "40"
+                                }
+                                {
+                                    name: E
+                                    value: "60"
+                                }
                             ]
                             selectedIndices: [1, 4]
                         }
@@ -147,73 +232,75 @@
             }
         }
         attention1: {
-            type: "attentionTest"
+            type: attentionTest
         }
         trials1: {
-            type: "trials"
+            type: trials
             order: []
-            randomization-scheme: "latin-square"
+            randomization-scheme: latin-square
             subset-count: 2
             attention-checks: {
-                check: "attention1"
+                check: attention1
                 pattern: random
                 // one check after 10 trials 
-                interval: 10 
+                interval: 10
             }
             trials: {
                 // An example for a stimulus generated from a react component. 
                 barChartFive: {
-                    description: "A bar chart with the correct answer of 5"
+                    description: A bar chart with the correct answer of 5
                     // The instruction given to the participant. Use Markdown if desired. 
-                    instruction: "What is the percentage of the **smaller** bar compared to the larger bar, highlighted with a dot."
+                    instruction: What is the percentage of the **smaller** bar compared to the larger bar, highlighted with a dot.
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 
-                        type: "react-component"
+                        type: react-component
                         // can be a URL or a local path
-                        path: "local/path/to/component.ts"
+                        path: local/path/to/component.ts
                         parameters: {}
                     }
                     // A responce can be specified with a trial, or globally with all trials. If both are specified, the response specified with a particular trial is used. 
                     response: [
-                    {
-                        id: "number-answer"
-                        prompt: "The number:"
-                        type: "numerical"
-                        placeholder: "0-22"
-                        required: true
-                    }
+                        {
+                            id: number-answer
+                            prompt: The number:
+                            type: numerical
+                            placeholder: 0-22
+                            required: true
+                        }
                     ]
                     correctAnswer: [
                         {
-                            id: "number-answer"
+                            id: number-answer
                             answer: 5
                             acceptable: 3-6
                         }
                         {
-                            id: "number-answer"
+                            id: number-answer
                             // a callback that returns a validation of the answer for field number-answer in unit interval 0-1. 
-                            answerCallback: "checkAnswer()"
+                            answerCallback: checkAnswer()
                         }
                         {
-                            id: "text-answer"
-                            answer: ["Robert", "Lane"]
+                            id: text-answer
+                            answer: [
+                                Robert
+                                Lane
+                            ]
                             answerRegex: "[0-3]bert"
                         }
                         {
-                            id: "selection"
+                            id: selection
                             // a callback that returns a validation of the answer for field for the selection in unit interval 0-1. 
-                            answerCallback: "checkAnswer()"
+                            answerCallback: checkAnswer()
                         }
                     ]
-
                 }
                 // An example for a stimulus generated from javascript. Attaches to a div? 
                 barChartSix: {
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 
-                        type: "javascript"
-                        path: "github.com/revisit/sample.js"
-                        function: "createVis"
+                        type: javascript
+                        path: github.com/revisit/sample.js
+                        function: createVis
                         parameters: {
                             value1: 2
                             value2: 3
@@ -222,25 +309,25 @@
                 }
                 // An example for a stimulus generated from javascript. Attaches to a div? 
                 barChartSeven: {
-                    description: "A bar chart with the correct answer of 7"
+                    description: A bar chart with the correct answer of 7
                     stimulus: {
                         // Allowable types: image, javascript, website, react-component 
-                        type: "website"
-                        path: "http://yoururl.com/?#parameter=13"
+                        type: website
+                        path: http://yoururl.com/?#parameter=13
                     }
                 }
             }
         }
         post-study-survey: {
-            type: "survey"
+            type: survey
         }
     }
     sequence: [
-        "consent"
-        "training1"
-        "practice1"
-        "attention1"
-        "trials1"
-        "post-study-survey"
+        consent
+        training1
+        practice1
+        attention1
+        trials1
+        post-study-survey
     ]
 }

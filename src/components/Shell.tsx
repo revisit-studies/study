@@ -173,8 +173,6 @@ function StepRenderer() {
 
   return (
     <AppShell
-      navbarOffsetBreakpoint="sm"
-      asideOffsetBreakpoint="sm"
       navbar={<AppNavBar />}
       aside={<AppAside />}
       header={<AppHeader />}
@@ -205,7 +203,7 @@ function StepRenderer() {
           </Button>
         </Group>
       </Modal>
-      <HelpModal /> {/* <StudyController /> */}
+      <HelpModal />
       <Outlet />
     </AppShell>
   );

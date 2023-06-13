@@ -27,7 +27,7 @@ export default function AppNavBar() {
     currentStepConfig?.instructionLocation === undefined;
 
   return trialHasSideBar ? (
-    <Navbar width={{ lg: 300 }} style={{ zIndex: 0 }}>
+    <Navbar width={{ base: 300 }} style={{ zIndex: 0 }}>
       {instructionInSideBar && instruction !== '' && (
         <Navbar.Section bg="gray.3" p="xl" style={{flex: 1, overflowY: 'auto'}}>
           <Text c="gray.9">
@@ -53,5 +53,6 @@ export default function AppNavBar() {
         </Navbar.Section>
       )}
     </Navbar>
-  ) : null;
+  ) : <ResponseBlock status={status} config={currentStepConfig} location="sidebar" style={{ display: 'hidden' }} />
+  ;
 }
