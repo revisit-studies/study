@@ -40,7 +40,7 @@ export default function AppAside() {
   }>();
 
   return !showAdmin ? (
-    <Aside p="md" width={{ lg: 300 }} style={{ zIndex: 0 }}>
+    <Aside p="md" width={{ base: 300 }} style={{ zIndex: 0 }}>
       <StepsPanel />
 
       <Space h="md" />
