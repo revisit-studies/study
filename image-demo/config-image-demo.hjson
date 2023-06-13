@@ -1,189 +1,114 @@
 {
-  "configVersion": 1,
-  "studyMetadata": {
-    "title": "Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations",
-    "version": "pilot",
-    "authors": [
-      "The reVISit Team"
-    ],
-    "date": "2023-04-14",
-    "description": "Demonstrating how to embed a stimulus via an image, based on the study design by Padilla et al., Frontiers in Psychology, 2021.",
-    "organizations": [
-      "University of Utah",
-      "WPI",
-      "University of Toronto"
-    ],
-    "logoPath": "assets/revisitLogoSquare.svg"
-  },
-  "uiConfig": {
-    contactEmail: "test@test.com"
-        helpTextPath: "image-demo/help.md"
-        logoPath: "assets/revisitLogoSquare.svg"
-        withProgressBar: true
-        // starts the automatic download of the data after study completion 
-    "autoDownloadStudy": false,
-        // start download after x milliseconds
-    "autoDownloadTime": 5000,
-    "sidebar": true
-  },
-  "components": {
-    "trials1": {
-      "type": "container",
-      "order": [
-        "dotplot-low",
-        "dotplot-medium",
-        "dotplot-high",
-      ],
-      nextButtonLocation: sidebar
-      response:[
-        {
-          id: "image-demo-response"
-          type: "radio"
-          prompt: "Will you issue blankets to the alpacas?"
-          desc: "Enter your answer here"
-          // options is required for radio, checkbox, dropdown and slider in the following format.
-          options:[{label:"Yes", value:"1"}, {label:"No", value:"2"}]
-          required: true
-          max: 2
-          min: 0
-          // location: 'sidebar' | 'aboveStimulus' | 'belowStimulus'
-          location: 'sidebar'
-        }
-      ],
-      "components": {
-        "dotplot-low": {
-          "meta": {
-            "difficulty": 1,
-            "nr-dots": 20,
-            "temp": "low",
-          },
-          "title": "T1-low-temp",
-          "description": "What does the description do? ",
-          "instruction": '''
-            **Scenario**: Alpacas may need blankets. Assume that
-            you work at the Red Cross, and your job is to manage
-            resources for farms in Peru. In previous years, alpacas have
-            died in Peru from cold temperatures. Alpacas can typically
-            withstand the cold unless the temperature drops below 32°F.
-
-            **Budget**: You are in charge of the Red Cross's blanket
-            budget, and it is your job to issue blankets to the alpacas
-            when temperatures fall below 32°F, which will help them
-            withstand the cold.
-
-            **Budget Constraints**: You have a budget for 48 days of
-            $48,000. Purchasing and delivering blankets to farmers
-            costs $1,000 (per night). If you fail to issue blankets to the
-            farmers and the temperature drops below 32°F, it will cost
-            $6,000 from your budget.
-
-            **Task**: In the experiment, you will be shown a nighttime
-            temperature forecast like the one below. In the forecast, each
-            dot represents a 1 out of 20 chance the nighttime low will
-            be that temperature. You will be asked some questions about
-            this forecast, including if you will issue blankets to the alpacas.
-            Compensation: Please respond to the best of your ability.
-            You will receive an extra $0.15 cents for every $1,000 that
-            you have in your budget at the end of 48 days.
-          ''',
-          "type": "image",
-                      // can be a URL or a local path
-          "path": "image-demo/uncertainty-1.png",
-                      // style that will be applied to the image
-          "style": {
-            "width": "800px"
-          }
-        },
-        "dotplot-medium": {
-          "meta": {
-            "difficulty": 2,
-            "nr-dots": 20,
-            "temp": "mid",
-          },
-          "title": "T2-mid-temp",
-          "description": "What does the description do? ",
-          "instruction": '''
-            **Scenario**: Alpacas may need blankets. Assume that
-            you work at the Red Cross, and your job is to manage
-            resources for farms in Peru. In previous years, alpacas have
-            died in Peru from cold temperatures. Alpacas can typically
-            withstand the cold unless the temperature drops below 32°F.
-
-            **Budget**: You are in charge of the Red Cross’s blanket
-            budget, and it is your job to issue blankets to the alpacas
-            when temperatures fall below 32°F, which will help them
-            withstand the cold.
-
-            **Budget Constraints**: You have a budget for 48 days of
-            $48,000. Purchasing and delivering blankets to farmers
-            costs $1,000 (per night). If you fail to issue blankets to the
-            farmers and the temperature drops below 32°F, it will cost
-            $6,000 from your budget.
-
-            **Task**: In the experiment, you will be shown a nighttime
-            temperature forecast like the one below. In the forecast, each
-            dot represents a 1 out of 20 chance the nighttime low will
-            be that temperature. You will be asked some questions about
-            this forecast, including if you will issue blankets to the alpacas.
-            Compensation: Please respond to the best of your ability.
-            You will receive an extra $0.15 cents for every $1,000 that
-            you have in your budget at the end of 48 days.
-            ''',
-          "type": "image",
-                      // can be a URL or a local path
-          "path": "image-demo/uncertainty-2.png",
-                      // style that will be applied to the image
-          "style": {
-            "width": "800px"
-          }
-        },
-        "dotplot-high": {
-          "title": "T3-high-temp",
-          "meta": {
-            "difficulty": 1,
-            "nr-dots": 20,
-            "temp": "hi",
-          },
-          "description": "What does the description do? ",
-          "instruction": '''
-            **Scenario**: Alpacas may need blankets. Assume that
-            you work at the Red Cross, and your job is to manage
-            resources for farms in Peru. In previous years, alpacas have
-            died in Peru from cold temperatures. Alpacas can typically
-            withstand the cold unless the temperature drops below 32°F.
-
-            **Budget**: You are in charge of the Red Cross’s blanket
-            budget, and it is your job to issue blankets to the alpacas
-            when temperatures fall below 32°F, which will help them
-            withstand the cold.
-
-            **Budget Constraints**: You have a budget for 48 days of
-            $48,000. Purchasing and delivering blankets to farmers
-            costs $1,000 (per night). If you fail to issue blankets to the
-            farmers and the temperature drops below 32°F, it will cost
-            $6,000 from your budget.
-
-            **Task**: In the experiment, you will be shown a nighttime
-            temperature forecast like the one below. In the forecast, each
-            dot represents a 1 out of 20 chance the nighttime low will
-            be that temperature. You will be asked some questions about
-            this forecast, including if you will issue blankets to the alpacas.
-            Compensation: Please respond to the best of your ability.
-            You will receive an extra $0.15 cents for every $1,000 that
-            you have in your budget at the end of 48 days.
-            ''',
-          "type": "image",
-                      // can be a URL or a local path
-          "path": "image-demo/uncertainty-3.png",
-                      // style that will be applied to the image
-          "style": {
-            "width": "800px"
-          }
-        },
-      }
+    configVersion: 1
+    studyMetadata: {
+        title: Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations
+        version: pilot
+        authors: [
+            The reVISit Team
+        ]
+        date: 2023-04-14
+        description: A demo of image stimuli, based on the study design by Padilla et al., Frontiers in Psychology, 2021.
+        organizations: [
+            University of Utah
+            WPI
+            University of Toronto
+        ]
+        logoPath: assets/revisitLogoSquare.svg
     }
-  },
-  "sequence": [
-    "trials1"
-  ]
+    uiConfig: {
+        contactEmail: test@test.com
+        helpTextPath: image-demo/help.md
+        logoPath: assets/revisitLogoSquare.svg
+        withProgressBar: true
+        autoDownloadStudy: false
+        sidebar: true
+    }
+    components: {
+        introduction: {
+            type: markdown
+            path: image-demo/introduction.md
+        }
+        trials1: {
+            type: container
+            order: [
+                dotplot-low
+                dotplot-medium
+                dotplot-high
+            ]
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: image-demo-response
+                    type: radio
+                    prompt: "Answer:"
+                    desc: " "
+                    options: [
+                        {
+                            label: Yes
+                            value: "1"
+                        }
+                        {
+                            label: No
+                            value: "2"
+                        }
+                    ]
+                    required: true
+                    max: 2
+                    min: 1
+                    location: sidebar
+                }
+            ]
+            components: {
+                dotplot-low: {
+                    meta: {
+                        difficulty: 1
+                        nr-dots: 20
+                        temp: low
+                    }
+                    title: T1-low-temp
+                    description: Low temperature variant
+                    instruction: Will you issue blankets to the alpacas?
+                    type: image
+                    path: image-demo/uncertainty-1.png
+                    style: {
+                        width: 800px
+                    }
+                }
+                dotplot-medium: {
+                    meta: {
+                        difficulty: 2
+                        nr-dots: 20
+                        temp: mid
+                    }
+                    title: T2-mid-temp
+                    description: Medium temperature variant
+                    instruction: Will you issue blankets to the alpacas?
+                    type: image
+                    path: image-demo/uncertainty-2.png
+                    style: {
+                        width: 800px
+                    }
+                }
+                dotplot-high: {
+                    title: T3-high-temp
+                    meta: {
+                        difficulty: 1
+                        nr-dots: 20
+                        temp: hi
+                    }
+                    description: High temperature variant
+                    instruction: Will you issue blankets to the alpacas?
+                    type: image
+                    path: image-demo/uncertainty-3.png
+                    style: {
+                        width: 800px
+                    }
+                }
+            }
+        }
+    }
+    sequence: [
+        introduction
+        trials1
+    ]
 }

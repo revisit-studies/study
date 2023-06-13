@@ -1,104 +1,128 @@
 {
-  "configVersion": 1,
-  "studyMetadata": {
-    "title": "A demo for supported survey questions",
-    "version": "pilot",
-    "authors": [
-      "The reVISit Team"
-    ],
-    "date": "2023-04-30",
-    "description": "A demo for supported survey questions",
-    "organizations": [
-      "University of Utah",
-      "WPI",
-      "University of Toronto"
-    ],
-    "logoPath": "assets/revisitLogoSquare.svg"
-  },
-  "uiConfig": {
-    contactEmail: "test@test.com"
-        helpTextPath: "survey-demo/help.md"
-        logoPath: "assets/revisitLogoSquare.svg"
-        withProgressBar: true
-        // starts the automatic download of the data after study completion 
-    "autoDownloadStudy": false,
-        // start download after x milliseconds
-    "autoDownloadTime": 5000,
-    "sidebar": true
-  },
-  "components": {
-    survey: {
-      type: "questionnaire"
-      response:[{
-          id: "q1"
-          type: "dropdown"
-          prompt: "Dropdown example"
-          desc: "Enter your preference"
-          // options is required for radio, checkbox,dropdown and slider in the following format.
-          options:[{label:"Bar", value:"Bar"},{label:"Bubble", value:"Bubble"},{label:"Pie", value:"Pie"},{label:"Stacked Bar", value:"Stacked Bar"}]
-          required: true
-          max: 100
-          min: 0,
-          location: "aboveStimulus"
-        }
-        //numerical example
-        {
-          id: "q2"
-          type: "numerical"
-          prompt: "Numerical example"
-          desc: "Enter your age here, range from 0 - 100"
-          required: true
-          // add max and min for the allowed range
-          max: 100
-          min: 0,
-          location: "aboveStimulus"
-        }
-        //likert example
-        {
-          id: "q3"
-          type: "likert"
-          prompt: "Likert example"
-          desc: "Likert question"
-          required: true
-          //specify the number of likert options.
-          preset: "9",
-          leftLabel:"Dislike",
-          rightLabel: "Like",
-          location: "aboveStimulus"
-        }
-        //text example
-        {
-          id: "q4"
-          type: "shortText"
-          prompt: "short text example"
-          desc: "Enter your answer here"
-          required: true,
-          location: "aboveStimulus"
-        }
-        //text example
-        {
-          id: "q5"
-          type: "longText"
-          prompt: "long text example"
-          desc: "Enter your long comments here"
-          required: true,
-          location: "aboveStimulus"
-        }
-        //slider example
-        {
-          id: "q6"
-          type: "slider"
-          prompt: "Slider example, iframe input example please refer to MVNV example or HTML input demo"
-          desc: "range from 0-100"
-          options:[{label:"Bad", value:0},{label:"Mid", value:50},{label:"Good", value:100}]
-          required: true,
-          location: "aboveStimulus"
-        }
-
-      ]
+    configVersion: 1
+    studyMetadata: {
+        title: A demo for supported survey questions
+        version: pilot
+        authors: [
+            The reVISit Team
+        ]
+        date: 2023-04-30
+        description: A demo for supported survey questions
+        organizations: [
+            University of Utah
+            WPI
+            University of Toronto
+        ]
+        logoPath: assets/revisitLogoSquare.svg
     }
-  },
-  "sequence": [
-    "survey"
-  ]
+    uiConfig: {
+        contactEmail: test@test.com
+        helpTextPath: survey-demo/help.md
+        logoPath: assets/revisitLogoSquare.svg
+        withProgressBar: true
+        autoDownloadStudy: false
+        sidebar: true
+    }
+    components: {
+        introduction: {
+            type: markdown
+            path: survey-demo/introduction.md
+        }
+        survey: {
+            type: questionnaire
+            response: [
+                {
+                    id: q1
+                    type: dropdown
+                    prompt: Dropdown example
+                    desc: Enter your preference
+                    options: [
+                        {
+                            label: Bar
+                            value: Bar
+                        }
+                        {
+                            label: Bubble
+                            value: Bubble
+                        }
+                        {
+                            label: Pie
+                            value: Pie
+                        }
+                        {
+                            label: Stacked Bar
+                            value: Stacked Bar
+                        }
+                    ]
+                    required: true
+                    max: 100
+                    min: 0
+                    location: aboveStimulus
+                }
+                {
+                    id: q2
+                    type: numerical
+                    prompt: Numerical example
+                    desc: Enter your age here, range from 0 - 100
+                    required: true
+                    max: 100
+                    min: 0
+                    location: aboveStimulus
+                }
+                {
+                    id: q3
+                    type: likert
+                    prompt: Likert example
+                    desc: Likert question
+                    required: true
+                    preset: "9"
+                    leftLabel: Dislike
+                    rightLabel: Like
+                    location: aboveStimulus
+                }
+                {
+                    id: q4
+                    type: shortText
+                    prompt: short text example
+                    desc: Enter your answer here
+                    required: true
+                    location: aboveStimulus
+                }
+                {
+                    id: q5
+                    type: longText
+                    prompt: long text example
+                    desc: Enter your long comments here
+                    required: true
+                    location: aboveStimulus
+                }
+                {
+                    id: q6
+                    type: slider
+                    prompt: Slider example, iframe input example please refer to MVNV example or HTML input demo
+                    desc: range from 0-100
+                    options: [
+                        {
+                            label: Bad
+                            value: 0
+                        }
+                        {
+                            label: Mid
+                            value: 50
+                        }
+                        {
+                            label: Good
+                            value: 100
+                        }
+                    ]
+                    required: true
+                    location: aboveStimulus
+                }
+            ]
+        }
+    }
+    sequence: [
+        introduction
+        survey
+    ]
 }

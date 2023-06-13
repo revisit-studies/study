@@ -1,23 +1,23 @@
 {
     configVersion: 1
     studyMetadata: {
-        title: "Passing Data into reVISit from HTML"
-        version: "pilot"
+        title: Passing Data into reVISit from HTML
+        version: pilot
         authors: [
-            "The reVISit Team"
+            The reVISit Team
         ]
-        date: "2023-04-14"
-        description: "A demo of how to pass data from HTML into reVISit."
+        date: 2023-04-14
+        description: A demo of how to pass data from HTML into reVISit.
         organizations: [
-            "University of Utah"
-            "WPI"
-            "University of Toronto"
+            University of Utah
+            WPI
+            University of Toronto
         ]
     }
     uiConfig: {
-        contactEmail: "test@test.com"
-        helpTextPath: "html-input/help.md"
-        logoPath: "assets/revisitLogoSquare.svg"
+        contactEmail: test@test.com
+        helpTextPath: html-input/help.md
+        logoPath: assets/revisitLogoSquare.svg
         withProgressBar: true
         // starts the automatic download of the data after study completion 
         autoDownloadStudy: false
@@ -26,46 +26,55 @@
         sidebar: false
     }
     components: {
+        introduction: {
+            type: markdown
+            path: html-input/introduction.md
+        }
         trials1: {
-            type: "container"
-            order: ["barChart"]
-            randomization-scheme: "latin-square"
+            type: container
+            order: [
+                barChart
+            ]
+            randomization-scheme: latin-square
             subset-count: 2
             instructionLocation: aboveStimulus
             attention-checks: {
-                check: "attention1"
-                pattern: random
+                check: attention1
+                pattern: "random"
                 // one check after 10 trials 
                 interval: 10
             }
-            response:[{
-                id: "barChart"
-                type: "iframe"
-                prompt: "Your selection shows here"
-                desc: "small description"
-                required: true,
-                location: 'belowStimulus'
-            }]
+            response: [
+                {
+                    id: barChart
+                    type: iframe
+                    prompt: "Your selected answer:"
+                    desc: " "
+                    required: true
+                    location: belowStimulus
+                }
+            ]
             components: {
                 barChart: {
-                    "meta": {
-                        "chart": "bar",
-                        "AttrNo": 7,
-                        "misleading": false,
-                    },
-                    description: "A trial for the user to click the largest bar"
-                    instruction: "Click on the largest bar"
-                    type: "website"
+                    meta: {
+                        chart: bar
+                        AttrNo: 7
+                        misleading: false
+                    }
+                    description: A trial for the user to click the largest bar
+                    instruction: Click on the largest bar
+                    type: website
                     path: "html-input/bar-chart-interaction.html"
                     // style that will be applied to iframe
                     style: {
-                        height: "500px"
+                        height: 500px
                     }
                 }
             }
         }
     }
     sequence: [
-        "trials1"
+        introduction
+        trials1
     ]
 }
