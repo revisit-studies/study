@@ -1,5 +1,6 @@
 {
-    configVersion: 1
+    $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/schema.json
+
     studyMetadata: {
         title: Cleveland McGill Example
         version: pilot

@@ -1,5 +1,5 @@
 {
-    configVersion: 1
+    $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/schema.json
     studyMetadata: {
         title: Dyanmic React Stimuli: A Graphical Perception Experiment
         version: pilot
@@ -26,6 +26,7 @@
         introduction: {
             type: markdown
             path: cleveland/introduction.md
+            response: []
         }
         consent: {
             type: markdown
@@ -35,7 +36,7 @@
                 {
                     id: signature
                     type: shortText
-                    prompt: "Your signature"
+                    prompt: Your signature
                     desc: Please provide your signature
                     required: true
                     location: belowStimulus
@@ -63,6 +64,7 @@
         training1: {
             type: image
             path: cleveland/cm-training.png
+            response: []
         }
         practice1: {
             type: container
@@ -71,20 +73,6 @@
                 stackedBarChart1
                 barChart1
                 pieChart1
-            ]
-            nextButtonLocation: sidebar
-            instructionLocation: sidebar
-            response: [
-                {
-                    id: cm-response
-                    type: numerical
-                    prompt: "Answer:"
-                    desc: 0-100
-                    required: true
-                    max: 100
-                    min: 0
-                    location: sidebar
-                }
             ]
             components: {
                 bubbleChart1: {
@@ -99,7 +87,7 @@
 
                         What percentage do you believe the smaller value represents relative to the larger value?
                         '''
-                    type: "react-component"
+                    type: react-component
                     path: BubbleChart.tsx
                     parameters: {
                         data: [
@@ -132,6 +120,20 @@
                             answer: 66
                         }
                     ]
+                    response: [
+                        {
+                            id: cm-response
+                            type: numerical
+                            prompt: Answer:
+                            desc: 0-100
+                            required: true
+                            max: 100
+                            min: 0
+                            location: sidebar
+                        }
+                    ]
+                    nextButtonLocation: sidebar
+                    instructionLocation: sidebar
                 }
                 stackedBarChart1: {
                     meta: {
@@ -145,7 +147,7 @@
 
                         What percentage do you believe the smaller value represents relative to the larger value?
                         '''
-                    type: "react-component"
+                    type: react-component
                     path: StackedBarChart.tsx
                     parameters: {
                         data: [
@@ -178,6 +180,20 @@
                             answer: 66
                         }
                     ]
+                    response: [
+                        {
+                            id: cm-response
+                            type: numerical
+                            prompt: Answer:
+                            desc: 0-100
+                            required: true
+                            max: 100
+                            min: 0
+                            location: sidebar
+                        }
+                    ]
+                    nextButtonLocation: sidebar
+                    instructionLocation: sidebar
                 }
                 barChart1: {
                     meta: {
@@ -191,7 +207,7 @@
 
                         What percentage do you believe the smaller value represents relative to the larger value?
                         '''
-                    type: "react-component"
+                    type: react-component
                     path: BarChart.tsx
                     parameters: {
                         data: [
@@ -224,6 +240,20 @@
                             answer: 66
                         }
                     ]
+                    response: [
+                        {
+                            id: cm-response
+                            type: numerical
+                            prompt: Answer:
+                            desc: 0-100
+                            required: true
+                            max: 100
+                            min: 0
+                            location: sidebar
+                        }
+                    ]
+                    nextButtonLocation: sidebar
+                    instructionLocation: sidebar
                 }
                 pieChart1: {
                     meta: {
@@ -237,7 +267,7 @@
 
                         What percentage do you believe the smaller value represents relative to the larger value?
                         '''
-                    type: "react-component"
+                    type: react-component
                     path: PieChart.tsx
                     parameters: {
                         data: [
@@ -270,6 +300,20 @@
                             answer: 66
                         }
                     ]
+                    response: [
+                        {
+                            id: cm-response
+                            type: numerical
+                            prompt: Answer:
+                            desc: 0-100
+                            required: true
+                            max: 100
+                            min: 0
+                            location: sidebar
+                        }
+                    ]
+                    nextButtonLocation: sidebar
+                    instructionLocation: sidebar
                 }
             }
         }
@@ -287,36 +331,6 @@
                 pieChart2
                 stackedBarChart4
             ]
-            randomization-scheme: latin-square
-            subset-count: 2
-            nextButtonLocation: sidebar
-            instructionLocation: "sidebar"
-            response: [
-                {
-                    id: cm-response1
-                    type: numerical
-                    prompt: Your answer!!
-                    desc: "Enter your answer here, range from 0 - 100"
-                    options: [
-                        {
-                            label: "1"
-                            value: "1"
-                        }
-                        {
-                            label: "2"
-                            value: "2"
-                        }
-                        {
-                            label: "3"
-                            value: "3"
-                        }
-                    ]
-                    required: true
-                    max: 100
-                    min: 0
-                    location: sidebar
-                }
-            ]
             components: {
                 bubbleChart1: {
                     meta: {
@@ -330,8 +344,8 @@
 
                         What percentage do you believe the smaller value represents relative to the larger value?
                         '''
-                    instructionLocation: "sidebar"
-                    type: "react-component"
+                    instructionLocation: sidebar
+                    type: react-component
                     path: BubbleChart.tsx
                     parameters: {
                         data: [
@@ -358,6 +372,34 @@
                         ]
                         selectedIndices: [1, 4]
                     }
+                    response: [
+                        {
+                            id: cm-response1
+                            type: numerical
+                            prompt: Your answer!!
+                            desc: Enter your answer here, range from 0 - 100
+                            options: [
+                                {
+                                    label: "1"
+                                    value: "1"
+                                }
+                                {
+                                    label: "2"
+                                    value: "2"
+                                }
+                                {
+                                    label: "3"
+                                    value: "3"
+                                }
+                            ]
+                            required: true
+                            max: 100
+                            min: 0
+                            location: sidebar
+                        }
+                    ]
+                    nextButtonLocation: sidebar
+                    instructionLocation: sidebar
                 }
                 stackedBarChart1: {
                     meta: {
@@ -371,7 +413,7 @@
 
                         What percentage do you believe the smaller value represents relative to the larger value?
                         '''
-                    type: "react-component"
+                    type: react-component
                     path: StackedBarChart.tsx
                     parameters: {
                         data: [
@@ -398,6 +440,34 @@
                         ]
                         selectedIndices: [1, 4]
                     }
+                    response: [
+                        {
+                            id: cm-response1
+                            type: numerical
+                            prompt: Your answer!!
+                            desc: Enter your answer here, range from 0 - 100
+                            options: [
+                                {
+                                    label: "1"
+                                    value: "1"
+                                }
+                                {
+                                    label: "2"
+                                    value: "2"
+                                }
+                                {
+                                    label: "3"
+                                    value: "3"
+                                }
+                            ]
+                            required: true
+                            max: 100
+                            min: 0
+                            location: sidebar
+                        }
+                    ]
+                    nextButtonLocation: sidebar
+                    instructionLocation: sidebar
                 }
                 stackedBarChart2: {
                     meta: {
@@ -411,7 +481,7 @@
 
                         What percentage do you believe the smaller value represents relative to the larger value?
                         '''
-                    type: "react-component"
+                    type: react-component
                     path: StackedBarChart.tsx
                     parameters: {
                         data: [
@@ -438,6 +508,34 @@
                         ]
                         selectedIndices: [1, 4]
                     }
+                    response: [
+                        {
+                            id: cm-response1
+                            type: numerical
+                            prompt: Your answer!!
+                            desc: Enter your answer here, range from 0 - 100
+                            options: [
+                                {
+                                    label: "1"
+                                    value: "1"
+                                }
+                                {
+                                    label: "2"
+                                    value: "2"
+                                }
+                                {
+                                    label: "3"
+                                    value: "3"
+                                }
+                            ]
+                            required: true
+                            max: 100
+                            min: 0
+                            location: sidebar
+                        }
+                    ]
+                    nextButtonLocation: sidebar
+                    instructionLocation: sidebar
                 }
                 barChart1: {
                     meta: {
@@ -451,7 +549,7 @@
 
                         What percentage do you believe the smaller value represents relative to the larger value?
                         '''
-                    type: "react-component"
+                    type: react-component
                     path: BarChart.tsx
                     parameters: {
                         data: [
@@ -478,6 +576,34 @@
                         ]
                         selectedIndices: [1, 4]
                     }
+                    response: [
+                        {
+                            id: cm-response1
+                            type: numerical
+                            prompt: Your answer!!
+                            desc: Enter your answer here, range from 0 - 100
+                            options: [
+                                {
+                                    label: "1"
+                                    value: "1"
+                                }
+                                {
+                                    label: "2"
+                                    value: "2"
+                                }
+                                {
+                                    label: "3"
+                                    value: "3"
+                                }
+                            ]
+                            required: true
+                            max: 100
+                            min: 0
+                            location: sidebar
+                        }
+                    ]
+                    nextButtonLocation: sidebar
+                    instructionLocation: sidebar
                 }
                 pieChart1: {
                     meta: {
@@ -491,7 +617,7 @@
 
                         What percentage do you believe the smaller value represents relative to the larger value?
                         '''
-                    type: "react-component"
+                    type: react-component
                     path: PieChart.tsx
                     parameters: {
                         data: [
@@ -518,6 +644,34 @@
                         ]
                         selectedIndices: [1, 4]
                     }
+                    response: [
+                        {
+                            id: cm-response1
+                            type: numerical
+                            prompt: Your answer!!
+                            desc: Enter your answer here, range from 0 - 100
+                            options: [
+                                {
+                                    label: "1"
+                                    value: "1"
+                                }
+                                {
+                                    label: "2"
+                                    value: "2"
+                                }
+                                {
+                                    label: "3"
+                                    value: "3"
+                                }
+                            ]
+                            required: true
+                            max: 100
+                            min: 0
+                            location: sidebar
+                        }
+                    ]
+                    nextButtonLocation: sidebar
+                    instructionLocation: sidebar
                 }
                 bubbleChart2: {
                     meta: {
@@ -531,7 +685,7 @@
 
                         What percentage do you believe the smaller value represents relative to the larger value?
                         '''
-                    type: "react-component"
+                    type: react-component
                     path: BubbleChart.tsx
                     parameters: {
                         data: [
@@ -558,6 +712,34 @@
                         ]
                         selectedIndices: [0, 3]
                     }
+                    response: [
+                        {
+                            id: cm-response1
+                            type: numerical
+                            prompt: Your answer!!
+                            desc: Enter your answer here, range from 0 - 100
+                            options: [
+                                {
+                                    label: "1"
+                                    value: "1"
+                                }
+                                {
+                                    label: "2"
+                                    value: "2"
+                                }
+                                {
+                                    label: "3"
+                                    value: "3"
+                                }
+                            ]
+                            required: true
+                            max: 100
+                            min: 0
+                            location: sidebar
+                        }
+                    ]
+                    nextButtonLocation: sidebar
+                    instructionLocation: sidebar
                 }
                 stackedBarChart3: {
                     meta: {
@@ -571,7 +753,7 @@
 
                         What percentage do you believe the smaller value represents relative to the larger value?
                         '''
-                    type: "react-component"
+                    type: react-component
                     path: StackedBarChart.tsx
                     parameters: {
                         data: [
@@ -598,6 +780,34 @@
                         ]
                         selectedIndices: [0, 3]
                     }
+                    response: [
+                        {
+                            id: cm-response1
+                            type: numerical
+                            prompt: Your answer!!
+                            desc: Enter your answer here, range from 0 - 100
+                            options: [
+                                {
+                                    label: "1"
+                                    value: "1"
+                                }
+                                {
+                                    label: "2"
+                                    value: "2"
+                                }
+                                {
+                                    label: "3"
+                                    value: "3"
+                                }
+                            ]
+                            required: true
+                            max: 100
+                            min: 0
+                            location: sidebar
+                        }
+                    ]
+                    nextButtonLocation: sidebar
+                    instructionLocation: sidebar
                 }
                 stackedBarChart4: {
                     meta: {
@@ -611,7 +821,7 @@
 
                         What percentage do you believe the smaller value represents relative to the larger value?
                         '''
-                    type: "react-component"
+                    type: react-component
                     path: StackedBarChart.tsx
                     parameters: {
                         data: [
@@ -638,6 +848,34 @@
                         ]
                         selectedIndices: [0, 3]
                     }
+                    response: [
+                        {
+                            id: cm-response1
+                            type: numerical
+                            prompt: Your answer!!
+                            desc: Enter your answer here, range from 0 - 100
+                            options: [
+                                {
+                                    label: "1"
+                                    value: "1"
+                                }
+                                {
+                                    label: "2"
+                                    value: "2"
+                                }
+                                {
+                                    label: "3"
+                                    value: "3"
+                                }
+                            ]
+                            required: true
+                            max: 100
+                            min: 0
+                            location: sidebar
+                        }
+                    ]
+                    nextButtonLocation: sidebar
+                    instructionLocation: sidebar
                 }
                 barChart2: {
                     meta: {
@@ -651,7 +889,7 @@
 
                         What percentage do you believe the smaller value represents relative to the larger value?
                         '''
-                    type: "react-component"
+                    type: react-component
                     path: BarChart.tsx
                     parameters: {
                         data: [
@@ -678,6 +916,34 @@
                         ]
                         selectedIndices: [0, 3]
                     }
+                    response: [
+                        {
+                            id: cm-response1
+                            type: numerical
+                            prompt: Your answer!!
+                            desc: Enter your answer here, range from 0 - 100
+                            options: [
+                                {
+                                    label: "1"
+                                    value: "1"
+                                }
+                                {
+                                    label: "2"
+                                    value: "2"
+                                }
+                                {
+                                    label: "3"
+                                    value: "3"
+                                }
+                            ]
+                            required: true
+                            max: 100
+                            min: 0
+                            location: sidebar
+                        }
+                    ]
+                    nextButtonLocation: sidebar
+                    instructionLocation: sidebar
                 }
                 pieChart2: {
                     meta: {
@@ -690,8 +956,8 @@
                         Two values are marked with dots. 
 
                         What percentage do you believe the smaller value represents relative to the larger value?
-                        ''' 
-                    type: "react-component"
+                        '''
+                    type: react-component
                     path: PieChart.tsx
                     parameters: {
                         data: [
@@ -718,6 +984,34 @@
                         ]
                         selectedIndices: [0, 3]
                     }
+                    response: [
+                        {
+                            id: cm-response1
+                            type: numerical
+                            prompt: Your answer!!
+                            desc: Enter your answer here, range from 0 - 100
+                            options: [
+                                {
+                                    label: "1"
+                                    value: "1"
+                                }
+                                {
+                                    label: "2"
+                                    value: "2"
+                                }
+                                {
+                                    label: "3"
+                                    value: "3"
+                                }
+                            ]
+                            required: true
+                            max: 100
+                            min: 0
+                            location: sidebar
+                        }
+                    ]
+                    nextButtonLocation: sidebar
+                    instructionLocation: sidebar
                 }
             }
         }
@@ -728,7 +1022,7 @@
                     id: q1
                     type: dropdown
                     prompt: which chart type you think is the most difficult
-                    desc: "Enter your preference"
+                    desc: Enter your preference
                     options: [
                         {
                             label: Bar

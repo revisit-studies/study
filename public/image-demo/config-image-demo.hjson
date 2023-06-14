@@ -1,5 +1,5 @@
 {
-    configVersion: 1
+    $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/schema.json
     studyMetadata: {
         title: Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations
         version: pilot
@@ -13,7 +13,6 @@
             WPI
             University of Toronto
         ]
-        logoPath: assets/revisitLogoSquare.svg
     }
     uiConfig: {
         contactEmail: test@test.com
@@ -27,6 +26,7 @@
         introduction: {
             type: markdown
             path: image-demo/introduction.md
+            response: []
         }
         trials1: {
             type: container
@@ -34,29 +34,6 @@
                 dotplot-low
                 dotplot-medium
                 dotplot-high
-            ]
-            nextButtonLocation: sidebar
-            response: [
-                {
-                    id: image-demo-response
-                    type: radio
-                    prompt: "Answer:"
-                    desc: " "
-                    options: [
-                        {
-                            label: Yes
-                            value: "1"
-                        }
-                        {
-                            label: No
-                            value: "2"
-                        }
-                    ]
-                    required: true
-                    max: 2
-                    min: 1
-                    location: sidebar
-                }
             ]
             components: {
                 dotplot-low: {
@@ -73,6 +50,29 @@
                     style: {
                         width: 800px
                     }
+                    nextButtonLocation: sidebar
+                    response: [
+                        {
+                            id: image-demo-response
+                            type: radio
+                            prompt: Answer:
+                            desc: " "
+                            options: [
+                                {
+                                    label: Yes
+                                    value: "1"
+                                }
+                                {
+                                    label: No
+                                    value: "2"
+                                }
+                            ]
+                            required: true
+                            max: 2
+                            min: 1
+                            location: sidebar
+                        }
+                    ]
                 }
                 dotplot-medium: {
                     meta: {
@@ -88,6 +88,29 @@
                     style: {
                         width: 800px
                     }
+                    nextButtonLocation: sidebar
+                    response: [
+                        {
+                            id: image-demo-response
+                            type: radio
+                            prompt: Answer:
+                            desc: " "
+                            options: [
+                                {
+                                    label: Yes
+                                    value: "1"
+                                }
+                                {
+                                    label: No
+                                    value: "2"
+                                }
+                            ]
+                            required: true
+                            max: 2
+                            min: 1
+                            location: sidebar
+                        }
+                    ]
                 }
                 dotplot-high: {
                     title: T3-high-temp
@@ -103,6 +126,29 @@
                     style: {
                         width: 800px
                     }
+                    nextButtonLocation: sidebar
+                    response: [
+                        {
+                            id: image-demo-response
+                            type: radio
+                            prompt: Answer:
+                            desc: " "
+                            options: [
+                                {
+                                    label: Yes
+                                    value: "1"
+                                }
+                                {
+                                    label: No
+                                    value: "2"
+                                }
+                            ]
+                            required: true
+                            max: 2
+                            min: 1
+                            location: sidebar
+                        }
+                    ]
                 }
             }
         }
