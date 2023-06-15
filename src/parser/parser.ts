@@ -40,15 +40,21 @@ export function parseGlobalConfig(fileData: string) {
 // This function verifies the study config file satisfies conditions that are not covered by the schema
 function verifyStudyConfig(data: StudyConfig) {
   const errors: { message: string }[] = [];
-  const componentsVerified = Object.keys(data.components).every((componentName) => {
-    const component = data.components[componentName];
+  const componentsVerified = Object.entries(data.components).every(([componentName, component]) => {
     if (component.type === 'container') {
       if ((component as ContainerComponent).components === undefined) {
         errors.push({ message: `Container component ${componentName} does not have a components field` });
         return false;
-      } else {
-        return true;
       }
+      if (Object.values((component as ContainerComponent).components!).length === 0) {
+        errors.push({ message: `Container component ${componentName} has an empty components field` });
+        return false;
+      }
+      if (!(component as ContainerComponent).order.every((componentName) => (component as ContainerComponent).components![componentName] !== undefined)) {
+        errors.push({ message: `Container component ${componentName} has an order field that contains components not present in components field` });
+        return false;
+      }
+      return true;
     } else {
       return true;
     }
