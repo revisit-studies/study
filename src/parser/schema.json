@@ -27,6 +27,42 @@
       ],
       "type": "object"
     },
+    "CheckboxResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/definitions/Option"
+          },
+          "type": "array"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "checkbox",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "options",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
     "ContainerComponent": {
       "additionalProperties": false,
       "properties": {
@@ -48,6 +84,45 @@
         "type",
         "order",
         "components"
+      ],
+      "type": "object"
+    },
+    "DropdownResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/definitions/Option"
+          },
+          "type": "array"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "dropdown",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "options",
+        "prompt",
+        "required",
+        "type"
       ],
       "type": "object"
     },
@@ -79,6 +154,35 @@
       "required": [
         "configs",
         "configsList"
+      ],
+      "type": "object"
+    },
+    "IFrameResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "iframe",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "prompt",
+        "required",
+        "type"
       ],
       "type": "object"
     },
@@ -159,6 +263,80 @@
         }
       ]
     },
+    "LikertResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "desc": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "leftLabel": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "preset": {
+          "type": "number"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "rightLabel": {
+          "type": "string"
+        },
+        "type": {
+          "const": "likert",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "preset",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "LongTextResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "longText",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
     "MarkdownComponent": {
       "additionalProperties": false,
       "properties": {
@@ -220,6 +398,44 @@
       },
       "required": [
         "component"
+      ],
+      "type": "object"
+    },
+    "NumericalResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "max": {
+          "type": "number"
+        },
+        "min": {
+          "type": "number"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "numerical",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "prompt",
+        "required",
+        "type"
       ],
       "type": "object"
     },
@@ -290,6 +506,48 @@
       ],
       "type": "object"
     },
+    "RadioResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "leftLabel": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/definitions/Option"
+          },
+          "type": "array"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "rightLabel": {
+          "type": "string"
+        },
+        "type": {
+          "const": "radio",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "options",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
     "ReactComponent": {
       "additionalProperties": false,
       "properties": {
@@ -347,57 +605,35 @@
       "type": "object"
     },
     "Response": {
-      "additionalProperties": false,
-      "properties": {
-        "desc": {
-          "type": "string"
+      "anyOf": [
+        {
+          "$ref": "#/definitions/NumericalResponse"
         },
-        "id": {
-          "type": "string"
+        {
+          "$ref": "#/definitions/ShortTextResponse"
         },
-        "leftLabel": {
-          "type": "string"
+        {
+          "$ref": "#/definitions/LongTextResponse"
         },
-        "location": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+        {
+          "$ref": "#/definitions/LikertResponse"
         },
-        "max": {
-          "type": "number"
+        {
+          "$ref": "#/definitions/DropdownResponse"
         },
-        "min": {
-          "type": "number"
+        {
+          "$ref": "#/definitions/SliderResponse"
         },
-        "options": {
-          "items": {
-            "$ref": "#/definitions/Option"
-          },
-          "type": "array"
+        {
+          "$ref": "#/definitions/RadioResponse"
         },
-        "preset": {
-          "type": "string"
+        {
+          "$ref": "#/definitions/CheckboxResponse"
         },
-        "prompt": {
-          "type": "string"
-        },
-        "required": {
-          "type": "boolean"
-        },
-        "rightLabel": {
-          "type": "string"
-        },
-        "type": {
-          "$ref": "#/definitions/ResponseType"
+        {
+          "$ref": "#/definitions/IFrameResponse"
         }
-      },
-      "required": [
-        "id",
-        "prompt",
-        "type",
-        "desc",
-        "required",
-        "location"
-      ],
-      "type": "object"
+      ]
     },
     "ResponseBlockLocation": {
       "enum": [
@@ -407,19 +643,73 @@
       ],
       "type": "string"
     },
-    "ResponseType": {
-      "enum": [
-        "numerical",
-        "shortText",
-        "longText",
-        "likert",
-        "dropdown",
-        "slider",
-        "radio",
-        "checkbox",
-        "iframe"
+    "ShortTextResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "shortText",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "prompt",
+        "required",
+        "type"
       ],
-      "type": "string"
+      "type": "object"
+    },
+    "SliderResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/definitions/Option"
+          },
+          "type": "array"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "slider",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "options",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
     },
     "StudyComponent": {
       "anyOf": [

@@ -46,13 +46,13 @@
                     response: [
                         {
                             id: html-response
-                            type: numerical
-                            prompt: Answer:
-                            desc: 0-7
+                            prompt: "Answer:"
                             required: true
+                            location: sidebar
+                            type: numerical
+                            placeholder: 0-7
                             min: 0
                             max: 7
-                            location: sidebar
                         }
                     ]
                 }

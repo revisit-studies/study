@@ -42,11 +42,10 @@
                     response: [
                         {
                             id: barChart
-                            type: iframe
                             prompt: "Your selected answer:"
-                            desc: " "
                             required: true
                             location: belowStimulus
+                            type: iframe
                         }
                     ]
                     path: html-input/bar-chart-interaction.html

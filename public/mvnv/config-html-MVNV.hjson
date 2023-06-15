@@ -35,18 +35,18 @@
             response: [
                 {
                     id: signature
-                    type: shortText
                     prompt: Your signature
-                    desc: Please provide your signature
                     required: true
                     location: belowStimulus
+                    type: shortText
+                    placeholder: Please provide your signature
                 }
                 {
                     id: accept
-                    type: radio
                     prompt: Do you accept the consent form?
-                    desc: " "
                     required: true
+                    location: belowStimulus
+                    type: radio
                     options: [
                         {
                             label: Decline
@@ -57,7 +57,6 @@
                             value: yes
                         }
                     ]
-                    location: belowStimulus
                 }
             ]
         }
@@ -87,11 +86,10 @@
                     response: [
                         {
                             id: iframe-task
-                            type: iframe
                             prompt: Selected name(s) will show here
-                            desc: " "
                             required: true
                             location: sidebar
+                            type: iframe
                         }
                     ]
                 }
@@ -117,11 +115,10 @@
                     response: [
                         {
                             id: iframe-task
-                            type: iframe
                             prompt: Selected name(s) will show here
-                            desc: " "
                             required: true
                             location: sidebar
+                            type: iframe
                         }
                     ]
                 }
@@ -147,11 +144,10 @@
                     response: [
                         {
                             id: iframe-task
-                            type: iframe
                             prompt: Selected name(s) will show here
-                            desc: " "
                             required: true
                             location: sidebar
+                            type: iframe
                         }
                     ]
                 }
@@ -177,11 +173,10 @@
                     response: [
                         {
                             id: iframe-task
-                            type: iframe
                             prompt: Selected name(s) will show here
-                            desc: " "
                             required: true
                             location: sidebar
+                            type: iframe
                         }
                     ]
                 }
@@ -207,11 +202,10 @@
                     response: [
                         {
                             id: iframe-task
-                            type: iframe
                             prompt: Selected name(s) will show here
-                            desc: " "
                             required: true
                             location: sidebar
+                            type: iframe
                         }
                     ]
                 }
@@ -237,11 +231,10 @@
                     response: [
                         {
                             id: iframe-task
-                            type: iframe
                             prompt: Selected name(s) will show here
-                            desc: " "
                             required: true
                             location: sidebar
+                            type: iframe
                         }
                     ]
                 }
@@ -269,7 +262,6 @@
                             id: task6
                             type: radio
                             prompt: Select Answer Below
-                            desc: Likert question
                             required: true
                             options: [
                                 {
@@ -285,11 +277,10 @@
                         }
                         {
                             id: iframe-task
-                            type: iframe
                             prompt: Selected name(s) will show here
-                            desc: " "
                             required: true
                             location: sidebar
+                            type: iframe
                         }
                     ]
                 }
@@ -315,11 +306,10 @@
                     response: [
                         {
                             id: iframe-task
-                            type: iframe
                             prompt: Selected name(s) will show here
-                            desc: " "
                             required: true
                             location: sidebar
+                            type: iframe
                         }
                     ]
                 }
@@ -345,9 +335,10 @@
                     response: [
                         {
                             id: task8-1
-                            type: radio
                             prompt: Select Answer Below
-                            desc: " "
+                            required: true
+                            location: sidebar
+                            type: radio
                             options: [
                                 {
                                     label: Mentions
@@ -358,16 +349,14 @@
                                     value: Retweets
                                 }
                             ]
-                            required: true
-                            location: sidebar
                         }
                         {
                             id: task8-2
-                            type: shortText
                             prompt: Enter Answer Below
-                            desc: answer text
                             required: true
                             location: sidebar
+                            type: shortText
+                            placeholder: answer text
                         }
                     ]
                 }
@@ -393,11 +382,10 @@
                     response: [
                         {
                             id: iframe-task
-                            type: iframe
                             prompt: Selected name(s) will show here
-                            desc: " "
                             required: true
                             location: sidebar
+                            type: iframe
                         }
                     ]
                 }
@@ -423,11 +411,10 @@
                     response: [
                         {
                             id: iframe-task
-                            type: iframe
                             prompt: Selected name(s) will show here
-                            desc: " "
                             required: true
                             location: sidebar
+                            type: iframe
                         }
                     ]
                 }
@@ -453,19 +440,18 @@
                     response: [
                         {
                             id: iframe-task
-                            type: iframe
                             prompt: Selected name(s) will show here
-                            desc: " "
                             required: true
                             location: sidebar
+                            type: iframe
                         }
                         {
                             id: task11-2
-                            type: shortText
                             prompt: Enter Answer Below
-                            desc: answer text
-                            required: true
                             location: sidebar
+                            required: true
+                            type: shortText
+                            placeholder: answer text
                         }
                     ]
                 }
@@ -491,17 +477,17 @@
                     response: [
                         {
                             id: iframe-task
-                            type: iframe
                             prompt: Selected name(s) will show here
-                            desc: " "
                             required: true
                             location: sidebar
+                            type: iframe
                         }
                         {
                             id: task12-1
-                            type: radio
                             prompt: Select Answer Below
-                            desc: " "
+                            required: true
+                            location: sidebar
+                            type: radio
                             options: [
                                 {
                                     label: NA
@@ -520,8 +506,6 @@
                                     value: AS
                                 }
                             ]
-                            required: true
-                            location: sidebar
                         }
                     ]
                 }
@@ -547,17 +531,17 @@
                     response: [
                         {
                             id: iframe-task
-                            type: iframe
                             prompt: Selected name(s) will show here
-                            desc: " "
                             required: true
                             location: sidebar
+                            type: iframe
                         }
                         {
                             id: task13-1
-                            type: radio
                             prompt: Select Answer Below
-                            desc: " "
+                            required: true
+                            location: sidebar
+                            type: radio
                             options: [
                                 {
                                     label: NA
@@ -576,8 +560,6 @@
                                     value: AS
                                 }
                             ]
-                            required: true
-                            location: sidebar
                         }
                     ]
                 }
@@ -603,11 +585,10 @@
                     response: [
                         {
                             id: iframe-task
-                            type: iframe
                             prompt: Selected name(s) will show here
-                            desc: " "
                             required: true
                             location: sidebar
+                            type: iframe
                         }
                     ]
                 }
@@ -633,11 +614,10 @@
                     response: [
                         {
                             id: task15
-                            type: longText
                             prompt: Enter Findings Below
-                            desc: " "
                             required: true
                             location: sidebar
+                            type: longText
                         }
                     ]
                 }

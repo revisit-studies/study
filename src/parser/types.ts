@@ -34,32 +34,68 @@ export interface Option {
   value: string | number;
 }
 
-export const responseTypes = [
-  'numerical',
-  'shortText',
-  'longText',
-  'likert',
-  'dropdown',
-  'slider',
-  'radio',
-  'checkbox',
-  'iframe',
-] as const;
-export type ResponseType = (typeof responseTypes)[number];
-export interface Response {
+interface BaseResponse {
+  // Required fields for all responses
   id: string;
   prompt: string;
-  type: ResponseType;
-  desc: string;
   required: boolean;
-  options?: Option[];
-  preset?: string;
-  max?: number;
-  min?: number;
-  leftLabel?: string;
-  rightLabel?: string;
   location: ResponseBlockLocation;
 }
+
+export interface NumericalResponse extends BaseResponse {
+  type: 'numerical';
+  placeholder?: string;
+  min?: number;
+  max?: number;
+}
+
+export interface ShortTextResponse extends BaseResponse {
+  type: 'shortText';
+  placeholder?: string;
+}
+
+export interface LongTextResponse extends BaseResponse {
+  type: 'longText';
+  placeholder?: string;
+}
+
+export interface LikertResponse extends BaseResponse {
+  type: 'likert';
+  preset: number;
+  desc?: string;
+  rightLabel?: string;
+  leftLabel?: string;
+}
+
+export interface DropdownResponse extends BaseResponse {
+  type: 'dropdown';
+  placeholder?: string;
+  options: Option[];
+}
+
+export interface SliderResponse extends BaseResponse {
+  type: 'slider';
+  options: Option[];
+}
+
+export interface RadioResponse extends BaseResponse {
+  type: 'radio';
+  options: Option[];
+  rightLabel?: string;
+  leftLabel?: string;
+}
+
+export interface CheckboxResponse extends BaseResponse {
+  type: 'checkbox';
+  options: Option[];
+}
+
+export interface IFrameResponse extends BaseResponse {
+  type: 'iframe';
+}
+
+export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | IFrameResponse;
+
 
 export interface Answer {
   id: string;
@@ -120,7 +156,7 @@ export interface QuestionnaireComponent extends BaseIndividualComponent {
   type: 'questionnaire';
 }
 
-export type IndividualComponent = (MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent);
+export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent;
 
 export interface ContainerComponent {
   type: 'container';
