@@ -4,7 +4,7 @@ import { IFrameResponse } from '../../parser/types';
 type inputProps = {
   response: IFrameResponse;
   disabled: boolean;
-  answer: any;
+  answer: string[];
 };
 export default function IframeInput({
   response,
@@ -20,7 +20,7 @@ export default function IframeInput({
 
       <List>
         {answer.map((item) => {
-          return <List.Item key={item}>{item as any}</List.Item>;
+          return <List.Item key={item}>{item}</List.Item>;
         })}
       </List>
     </>

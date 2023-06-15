@@ -114,7 +114,7 @@ export const responseBlockLocations = [
 ] as const;
 export type ResponseBlockLocation = (typeof responseBlockLocations)[number];
 
-interface BaseIndividualComponent {
+export interface BaseIndividualComponent {
   // Required fields for all components
   response: Response[];
 
@@ -150,6 +150,7 @@ export interface WebsiteComponent extends BaseIndividualComponent {
   type: 'website';
   path: string;
   style?: Record<string, string>;
+  parameters?: Record<string, unknown>;
 }
 
 export interface QuestionnaireComponent extends BaseIndividualComponent {

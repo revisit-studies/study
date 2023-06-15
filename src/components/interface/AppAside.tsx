@@ -10,7 +10,7 @@ import {
 import { IconArrowRight } from '@tabler/icons-react';
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ContainerComponent } from '../../parser/types';
+import { ContainerComponent, IndividualComponent } from '../../parser/types';
 import { useCurrentStep } from '../../routes';
 import { useAppSelector } from '../../store';
 import { useFlagsSelector } from '../../store/flags';
@@ -30,7 +30,7 @@ export default function AppAside() {
   const tasks =
     trialConfig?.type === 'container'
       ? trialConfig.order.map((trialId) => ({
-          ...trialConfig.components[trialId],
+          ...trialConfig.components[trialId] as IndividualComponent,
           id: trialId,
         }))
       : [];

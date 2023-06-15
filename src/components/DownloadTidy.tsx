@@ -10,7 +10,7 @@ import {
 import { useInputState } from '@mantine/hooks';
 import { IconTable } from '@tabler/icons-react';
 import { useCallback, useMemo } from 'react';
-import { ContainerComponent } from '../parser/types';
+import { ContainerComponent, IndividualComponent } from '../parser/types';
 import { useStudyId } from '../routes';
 import {
   downloadTidy,
@@ -55,7 +55,7 @@ function useTrialMetaProps(trialGroups: string[]): Array<`meta-${string}`> {
 
     trialComponents.forEach((group) => {
       const metadatas = Object.values(group.components).map((tr) =>
-        Object.keys(tr.meta || {})
+        Object.keys((tr as IndividualComponent).meta || {})
       );
 
       metadatas.forEach((md) => mProps.push(...md));

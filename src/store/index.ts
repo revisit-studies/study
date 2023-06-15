@@ -7,7 +7,7 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { StudyComponent, StudyConfig } from '../parser/types';
 import { ProvenanceStorage } from '../storage/types';
 import { flagsStore, setTrrackExists } from './flags';
-import { RootState, State, Step, TrialRecord, TrialResult } from './types';
+import { RootState, State, Step, TrialRecord } from './types';
 
 export const PID = 'PARTICIPANT_ID';
 export const SESSION_ID = 'SESSION_ID';
@@ -22,7 +22,7 @@ function getSteps({ sequence, components }: StudyConfig): Record<string, Step> {
       ...component,
       complete: false,
       next: arr[idx + 1] || 'end',
-    };
+    } as Step;
   });
 
   return steps;

@@ -5,6 +5,7 @@ import { useLocation, useParams } from 'react-router-dom';
 import { useNextTrialId } from '../../controllers/utils';
 import {
   ContainerComponent,
+  IndividualComponent,
   ResponseBlockLocation,
   StudyComponent,
 } from '../../parser/types';
@@ -48,9 +49,9 @@ export default function ResponseBlock({
   const id = useLocation().pathname;
   const storedAnswer = status?.answer;
 
-  const trialConfig = config?.components ? config?.components[trialId] : undefined;
+  const trialConfig = (config as ContainerComponent)?.components !== undefined && trialId !== null ? (config as ContainerComponent).components[trialId] : undefined;
 
-  const configInUse = trialConfig || config;
+  const configInUse = (trialConfig || config) as IndividualComponent;
 
   const responses = configInUse?.response?.filter((r) =>
     r.location ? r.location === location : location === 'belowStimulus'
@@ -150,7 +151,7 @@ export default function ResponseBlock({
             response={response}
           />
           {hasCorrectAnswer && checkClicked && (
-            <Text>The correct answer is: {(config as ContainerComponent)?.components[answerTrialId]?.correctAnswer?.find((answer) => answer.id === response.id)?.answer}</Text>
+            <Text>The correct answer is: {configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer}</Text>
           )}
         </>
       ))}
@@ -177,7 +178,7 @@ export default function ResponseBlock({
                 : `/${studyId}/${nextStep}`
             }
             process={() => {setCheckClicked(false); processNext();}}
-            label={config?.nextButtonText || 'Next'}
+            label={configInUse.nextButtonText || 'Next'}
           />
         )}
       </Group>
