@@ -80,6 +80,7 @@
                     rightLabel: Like
                     location: aboveStimulus
                 }
+
                 {
                     id: q4
                     type: shortText
@@ -118,6 +119,7 @@
                     required: true
                     location: aboveStimulus
                 }
+
             ]
         }
     }

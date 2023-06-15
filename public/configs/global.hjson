@@ -5,8 +5,9 @@
         html-input
         cleveland
         MVNV
+        VLAT
         survey-demo
-    ]
+    ],
     configs: {
         html-demo: {
             path: html-demo/config-html-demo.hjson
@@ -22,7 +23,10 @@
         }
         MVNV: {
             path: mvnv/config-html-MVNV.hjson
-        }
+        },
+        VLAT: {
+            path: VLAT/config-VLAT.hjson
+        },
         survey-demo: {
             path: survey-demo/config-survey-demo.hjson
         }

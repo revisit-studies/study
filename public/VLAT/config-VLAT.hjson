@@ -1,0 +1,95 @@
+{
+  configVersion: 1
+  studyMetadata: {
+    title: Dyanmic React Stimuli: A Graphical Perception Experiment
+    version: pilot
+    authors: [
+      The reVISit Team
+    ]
+    date: 2023-04-28
+    description: A demo using dynamic React components as stiumli to replicate the Cleveland/McGill, and the Heer/Bostock extension of graphical perception studies with post study survey.
+    organizations: [
+      University of Utah
+      WPI
+      University of Toronto
+    ]
+  }
+  uiConfig: {
+    contactEmail: test@test.com
+    helpTextPath: cleveland/help.md
+    logoPath: assets/revisitLogoSquare.svg
+    withProgressBar: true
+    autoDownloadStudy: false
+    sidebar: true
+  }
+  components: {
+    introduction: {
+      type: markdown
+      path: cleveland/introduction.md
+    }
+
+    trials1: {
+      type: container
+      order: [
+        q1
+      ]
+      randomization-scheme: latin-square
+      subset-count: 2
+      nextButtonLocation: sidebar
+      instructionLocation: "sidebar"
+      response: [
+        {
+          id: cm-response1
+          type: numerical
+          prompt: Your answer!!
+          desc: "Enter your answer here, range from 0 - 100"
+          options: [
+            {
+              label: "1"
+              value: "1"
+            }
+            {
+              label: "2"
+              value: "2"
+            }
+            {
+              label: "3"
+              value: "3"
+            }
+          ]
+          required: true
+          max: 100
+          min: 0
+          location: sidebar
+        }
+      ]
+      components: {
+        q1: {
+          meta: {
+            difficulty: 5
+            chart: bubble
+          }
+          description: A chart with correct answer of 0.66
+          instruction:
+          '''
+          Two values are marked with dots.
+
+          What percentage do you believe the smaller value represents relative to the larger value?
+          '''
+          instructionLocation: "sidebar"
+          type: "react-component"
+          path: SingleImage.tsx
+          parameters: {
+            "imagePath": "/VLAT/VLAT1.png"
+          }
+        }
+
+      }
+    }
+  }
+  sequence: [
+    introduction
+    trials1
+
+  ]
+}
