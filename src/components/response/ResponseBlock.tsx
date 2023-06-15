@@ -46,10 +46,13 @@ export default function ResponseBlock({
     studyId: string;
   }>();
   const id = useLocation().pathname;
-
   const storedAnswer = status?.answer;
 
-  const responses = config?.response?.filter((r) =>
+  const trialConfig = config?.components ? config?.components[trialId] : undefined;
+
+  const configInUse = trialConfig || config;
+
+  const responses = configInUse?.response?.filter((r) =>
     r.location ? r.location === location : location === 'belowStimulus'
   ) || [];
   const savedSurvey = useSavedSurvey();
@@ -66,14 +69,14 @@ export default function ResponseBlock({
   const nextTrialId = useNextTrialId(trialId);
   const nextStep = useNextStep();
 
-  const hasCorrectAnswer = trialId !== null ? (config as ContainerComponent)?.components[trialId]?.correctAnswer?.length || 0 > 0 : false;
+  const hasCorrectAnswer = trialId !== null ? configInUse?.correctAnswer?.length || 0 > 0 : false;
 
   const startTime = useMemo(() => {
     return Date.now();
   }, [trialId]);
 
   const showNextBtn =
-    location === (config?.nextButtonLocation || 'belowStimulus');
+    location === (configInUse?.nextButtonLocation || 'belowStimulus');
 
   useEffect(() => {
     flagDispatch(
@@ -128,7 +131,7 @@ export default function ResponseBlock({
           <ResponseSwitcher
             key={`${response.id}-${id}`}
             status={status}
-            storedAnswer={ response.type === 'iframe'? (aggregateResponses || {})[`${id}/${response.id}`]:null
+            storedAnswer={ response.type === 'iframe' ? (aggregateResponses || {})[`${id}/${response.id}`] : null
               // isSurvey
               //   ? savedSurvey
               //     ? (savedSurvey as any)[`${id}/${response.id}`]

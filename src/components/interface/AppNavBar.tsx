@@ -23,8 +23,8 @@ export default function AppNavBar() {
   const instruction = stimulus?.instruction || '';
 
   const instructionInSideBar =
-    currentStepConfig?.instructionLocation === 'sidebar' ||
-    currentStepConfig?.instructionLocation === undefined;
+    stimulus?.instructionLocation === 'sidebar' ||
+    stimulus?.instructionLocation === undefined;
 
   return trialHasSideBar ? (
     <Navbar width={{ base: 300 }} style={{ zIndex: 0 }}>

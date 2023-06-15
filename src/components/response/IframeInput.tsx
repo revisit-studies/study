@@ -9,7 +9,7 @@ type inputProps = {
 export default function IframeInput({
   response,
   disabled,
-  answer,
+  answer = [],
 }: inputProps) {
   const { prompt } = response;
   return (
