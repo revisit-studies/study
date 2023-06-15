@@ -26,116 +26,38 @@ export default function ResponseSwitcher({
   answer,
   storedAnswer,
 }: Props) {
-  const {
-    type,
-    desc,
-    prompt,
-    options,
-    required,
-    preset,
-    max,
-    min,
-    leftLabel,
-    rightLabel,
-  } = response;
-
-  if (!type) return null;
 
   const ans: any = storedAnswer ? { value: storedAnswer } : answer;
 
   return (
     <>
       <Box sx={{ margin: 10, padding: 5 }}>
-        {type === 'shortText' && (
-          <StringInput
-            disabled={disabled}
-            placeholder={desc}
-            label={prompt}
-            required={required}
-            answer={answer}
-          />
+        {response.type === 'numerical' && (
+          <NumericInput response={response} disabled={disabled} answer={ans} />
         )}
-        {type === 'dropdown' && (
-          <DropdownInput
-            disabled={disabled}
-            title={prompt}
-            placeholder={desc}
-            dropdownData={options}
-            answer={ans}
-            required={required}
-          />
+        {response.type === 'shortText' && (
+          <StringInput response={response}  disabled={disabled} answer={ans} />
         )}
-        {type === 'radio' && (
-          <RadioInput
-            disabled={disabled}
-            title={prompt}
-            desc={desc}
-            radioData={options}
-            answer={ans}
-            required={required}
-            leftLabel={leftLabel as string}
-            rightLabel={rightLabel as string}
-          />
+        {response.type === 'longText' && (
+          <TextAreaInput response={response} disabled={disabled} answer={ans} />
         )}
-        {type === 'numerical' && (
-          <NumericInput
-            disabled={disabled}
-            label={prompt}
-            placeholder={desc}
-            required={required}
-            answer={ans}
-            max={max as number}
-            min={min as number}
-          />
+        {response.type === 'likert' && (
+          <LikertInput response={response} disabled={disabled} answer={ans} />
         )}
-        {type === 'likert' && (
-          <LikertInput
-            disabled={disabled}
-            title={prompt}
-            desc={desc}
-            likertPreset={preset as string}
-            answer={ans}
-            required={required}
-            leftLabel={leftLabel as string}
-            rightLabel={rightLabel as string}
-          />
+        {response.type === 'dropdown' && (
+          <DropdownInput response={response} disabled={disabled} answer={ans} />
         )}
-        {type === 'checkbox' && (
-          <CheckBoxInput
-            disabled={disabled}
-            label={prompt}
-            desc={desc}
-            required={required}
-            checkboxData={options}
-            answer={ans}
-          />
+        {response.type === 'slider' && (
+          <SliderInput response={response} disabled={disabled} answer={ans} />
         )}
-        {type === 'longText' && (
-          <TextAreaInput
-            disabled={disabled}
-            placeholder={desc}
-            label={prompt}
-            required={required}
-            answer={ans}
-          />
+        {response.type === 'radio' && (
+          <RadioInput response={response} disabled={disabled} answer={ans} />
         )}
-        {type === 'slider' && (
-          <SliderInput
-            disabled={disabled}
-            title={prompt}
-            desc={desc}
-            sliderData={options}
-            answer={ans}
-            required={required}
-          />
+        {response.type === 'checkbox' && (
+          <CheckBoxInput response={response} disabled={disabled} answer={ans} />
         )}
-        {type === 'iframe' && (
-          <IframeInput
-            title={prompt}
-            desc={desc}
-            answer={storedAnswer ? storedAnswer : []}
-            required={required}
-          />
+        {response.type === 'iframe' && (
+          <IframeInput response={response} disabled={disabled} answer={ans} />
         )}
       </Box>
     </>

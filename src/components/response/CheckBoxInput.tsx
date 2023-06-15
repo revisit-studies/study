@@ -1,33 +1,28 @@
 import { Checkbox, Group } from '@mantine/core';
-import { Option } from '../../parser/types';
+import { CheckboxResponse } from '../../parser/types';
 
 type inputProps = {
-  desc: string;
-  label: string;
-  required: boolean;
-  checkboxData?: Option[];
-  answer: object;
+  response: CheckboxResponse;
   disabled: boolean;
+  answer: any;
 };
 
 export default function CheckBoxInput({
-  disabled = false,
-  desc = '',
-  label = '',
-  required = false,
-  checkboxData = [],
+  response,
+  disabled,
   answer,
 }: inputProps) {
+  const { prompt, required, options } = response;
+
   return (
     <>
       <Checkbox.Group
-        label={label}
-        description={desc}
+        label={prompt}
         withAsterisk={required}
         {...answer}
       >
         <Group mt="md">
-          {checkboxData.map((option) => (
+          {options.map((option) => (
             <Checkbox
               disabled={disabled}
               value={option.value}
