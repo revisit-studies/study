@@ -1,13 +1,13 @@
 {
   configVersion: 1
   studyMetadata: {
-    title: VLAT(Visualization Literacy Aptitude Test)
+    title: VLAT(Visualization Literacy Assessment Test)
     version: pilot
     authors: [
       The reVISit Team
     ]
     date: 2023-06-14
-    description: A replicaiton of the VLAT study, using React components.
+    description: A replicaiton of the VLAT study, using image stimuli.
     organizations: [
       University of Utah
       WPI
