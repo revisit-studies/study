@@ -1,0 +1,13 @@
+# Introduction
+
+## What is VLAT?
+VLAT is developed to measure users' ability to read, understand, and
+use data visualizations to solve problems. This test is a web
+adaptation of the original test.
+
+The test contains 52 multiple-choice questions about 12 data
+visualizations. It will take approximately 25 minutes to finish this
+test. For each question, you will be given a static data
+visualization (left) and a problem to solve (right). Choose the BEST
+answer to the questions. If you don't know the answer, select
+'skip'. We suggest maximizing your browser window.
