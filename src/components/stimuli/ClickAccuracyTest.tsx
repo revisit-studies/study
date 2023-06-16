@@ -1,6 +1,4 @@
 import * as d3 from 'd3';
-import { Bubbles } from './chartcomponents/Bubbles';
-import { DotMarks } from './chartcomponents/DotMarks';
 import { useChartDimensions } from './hooks/useChartDimensions';
 import {useEffect, useState} from 'react';
 import {updateResponseBlockValidation, useFlagsDispatch} from '../../store/flags';
