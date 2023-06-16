@@ -1,6 +1,5 @@
 {
     $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/schema.json
-
     studyMetadata: {
         title: A demo for supported survey questions
         version: pilot

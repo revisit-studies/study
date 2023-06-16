@@ -27,6 +27,49 @@
       ],
       "type": "object"
     },
+    "BaseIndividualComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "correctAnswer": {
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "instruction": {
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "meta": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "nextButtonText": {
+          "type": "string"
+        },
+        "response": {
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "response"
+      ],
+      "type": "object"
+    },
     "CheckboxResponse": {
       "additionalProperties": false,
       "properties": {
@@ -859,6 +902,10 @@
         },
         "nextButtonText": {
           "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "type": "object"
         },
         "path": {
           "type": "string"

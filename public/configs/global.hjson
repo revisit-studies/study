@@ -6,7 +6,7 @@
         cleveland
         MVNV
         VLAT
-        React-input
+        click-accuracy-test
         survey-demo
     ],
     configs: {
@@ -28,7 +28,7 @@
         VLAT: {
             path: VLAT/config-VLAT.hjson
         },
-        React-input: {
+        click-accuracy-test: {
             path: click-accuracy-test/click-accuracy-test.hjson
         },
         survey-demo: {
