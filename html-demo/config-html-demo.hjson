@@ -1,5 +1,5 @@
 {
-    configVersion: 1
+    $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/schema.json
     studyMetadata: {
         title: HTML as a Stimulus
         version: pilot
@@ -26,34 +26,35 @@
         introduction: {
             type: markdown
             path: html-demo/introduction.md
+            response: []
         }
         trials1: {
             type: container
             order: [
                 barChart
             ]
-            nextButtonLocation: sidebar
-            response: [
-                {
-                    id: html-response
-                    type: numerical
-                    prompt: "Answer:"
-                    desc: 0-7
-                    required: true
-                    min: 0
-                    max: 7
-                    location: sidebar
-                }
-            ]
             components: {
                 barChart: {
+                    type: website
+                    nextButtonLocation: sidebar
                     meta: {
                         difficulty: hard
                     }
                     description: Question that asks users to count the number of bars that have a value greater than 1.
                     instruction: How many bars have a value great than 1?
-                    type: website
-                    path: "html-demo/bar-chart.html"
+                    path: html-demo/bar-chart.html
+                    response: [
+                        {
+                            id: html-response
+                            prompt: "Answer:"
+                            required: true
+                            location: sidebar
+                            type: numerical
+                            placeholder: 0-7
+                            min: 0
+                            max: 7
+                        }
+                    ]
                 }
             }
         }
