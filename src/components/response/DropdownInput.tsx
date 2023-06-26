@@ -1,35 +1,27 @@
 import { Select } from '@mantine/core';
-import { Option } from '../../parser/types';
+import { DropdownResponse } from '../../parser/types';
 
-type dropdownOpton = {
-  label: string;
-  value: string;
-};
 
 type inputProps = {
-  title: string;
-  placeholder: string;
-  dropdownData?: Option[];
-  answer: object;
-  required: boolean;
+  response: DropdownResponse;
   disabled: boolean;
+  answer: any;
 };
 
 export default function DropdownInput({
-  title = 'Your Question',
-  disabled = false,
-  placeholder = 'additional description',
-  dropdownData = [],
-  required,
+  response,
+  disabled,
   answer,
 }: inputProps) {
+  const { placeholder, prompt, required, options } = response;
+
   return (
     <>
       <Select
         disabled={disabled}
-        label={title}
+        label={prompt}
         placeholder={placeholder}
-        data={dropdownData as dropdownOpton[]}
+        data={options}
         withAsterisk={required}
         radius={'md'}
         size={'md'}

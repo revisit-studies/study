@@ -2,6 +2,7 @@ import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import { download } from '../components/DownloadPanel';
 
 import {
+  IndividualComponent,
   Nullable,
   Prettify,
   isContainerComponent,
@@ -122,9 +123,9 @@ function processToRow(
           trialId,
           trialGroup: groupName,
           answer: JSON.stringify(answer?.answer || {}),
-          correctAnswer: trial.correctAnswer,
-          description: `"${trial.description}"`,
-          instruction: `"${trial.instruction}"`,
+          correctAnswer: (trial as IndividualComponent).correctAnswer,
+          description: `"${(trial as IndividualComponent).description}"`,
+          instruction: `"${(trial as IndividualComponent).instruction}"`,
           startTime,
           endTime,
           duration,

@@ -1,5 +1,5 @@
 {
-    configVersion: 1
+    $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/schema.json
     studyMetadata: {
         title: Passing Data into reVISit from HTML
         version: pilot
@@ -29,33 +29,26 @@
         introduction: {
             type: markdown
             path: html-input/introduction.md
+            response: []
         }
         trials1: {
             type: container
             order: [
                 barChart
             ]
-            randomization-scheme: latin-square
-            subset-count: 2
-            instructionLocation: aboveStimulus
-            attention-checks: {
-                check: attention1
-                pattern: "random"
-                // one check after 10 trials 
-                interval: 10
-            }
-            response: [
-                {
-                    id: barChart
-                    type: iframe
-                    prompt: "Your selected answer:"
-                    desc: " "
-                    required: true
-                    location: belowStimulus
-                }
-            ]
             components: {
                 barChart: {
+                    type: website
+                    response: [
+                        {
+                            id: barChart
+                            prompt: "Your selected answer:"
+                            required: true
+                            location: belowStimulus
+                            type: iframe
+                        }
+                    ]
+                    path: html-input/bar-chart-interaction.html
                     meta: {
                         chart: bar
                         AttrNo: 7
@@ -63,12 +56,12 @@
                     }
                     description: A trial for the user to click the largest bar
                     instruction: Click on the largest bar
-                    type: website
-                    path: "html-input/bar-chart-interaction.html"
                     // style that will be applied to iframe
                     style: {
                         height: 500px
                     }
+                    instructionLocation: aboveStimulus
+                    
                 }
             }
         }

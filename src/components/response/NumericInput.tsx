@@ -1,29 +1,24 @@
 import { NumberInput } from '@mantine/core';
+import { NumericalResponse } from '../../parser/types';
 
 type inputProps = {
-  placeholder: string;
-  label: string;
-  required: boolean;
-  max: number;
-  min: number;
-  answer: object;
+  response: NumericalResponse;
   disabled: boolean;
+  answer: any;
 };
 export default function NumericInput({
-  disabled = false,
-  placeholder = '',
-  label = '',
-  required = false,
-  min = 0,
-  max = 10,
-  answer,
+  response,
+  disabled,
+  answer
 }: inputProps) {
+  const { prompt, required, min, max, placeholder } = response;
+
   return (
     <>
       <NumberInput
         disabled={disabled}
         placeholder={placeholder}
-        label={label}
+        label={prompt}
         withAsterisk={required}
         radius={'md'}
         size={'md'}

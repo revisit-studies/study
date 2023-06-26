@@ -1,28 +1,25 @@
 import { TextInput } from '@mantine/core';
-
-// ? @Jack - I am not sure of the purpose of this component? If it is just to use the inputRef, we don't need it.
+import { ShortTextResponse } from '../../parser/types';
 
 type inputProps = {
-  placeholder: string;
-  label: string;
-  required: boolean;
-  answer: object;
+  response: ShortTextResponse;
   disabled: boolean;
+  answer: any;
 };
 
 export default function StringInput({
-  placeholder = '',
-  label = '',
-  disabled = false,
-  required,
+  response,
+  disabled,
   answer,
 }: inputProps) {
+  const { placeholder, prompt, required } = response;
+
   return (
     <>
       <TextInput
         disabled={disabled}
         placeholder={placeholder}
-        label={label}
+        label={prompt}
         radius={'md'}
         size={'md'}
         withAsterisk={required}

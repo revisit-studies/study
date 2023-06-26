@@ -1,0 +1,941 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Answer": {
+      "additionalProperties": false,
+      "properties": {
+        "acceptableHigh": {
+          "type": "number"
+        },
+        "acceptableLow": {
+          "type": "number"
+        },
+        "answer": {},
+        "answerCallback": {
+          "type": "string"
+        },
+        "answerRegex": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "answer"
+      ],
+      "type": "object"
+    },
+    "BaseIndividualComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "correctAnswer": {
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "instruction": {
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "meta": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "nextButtonText": {
+          "type": "string"
+        },
+        "response": {
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "response"
+      ],
+      "type": "object"
+    },
+    "CheckboxResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/definitions/Option"
+          },
+          "type": "array"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "checkbox",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "options",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "ContainerComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "components": {
+          "$ref": "#/definitions/StudyComponents"
+        },
+        "order": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "container",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "order",
+        "components"
+      ],
+      "type": "object"
+    },
+    "DropdownResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/definitions/Option"
+          },
+          "type": "array"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "dropdown",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "options",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "GlobalConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "configs": {
+          "additionalProperties": {
+            "additionalProperties": false,
+            "properties": {
+              "path": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "path"
+            ],
+            "type": "object"
+          },
+          "type": "object"
+        },
+        "configsList": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "configs",
+        "configsList"
+      ],
+      "type": "object"
+    },
+    "IFrameResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "iframe",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "ImageComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "correctAnswer": {
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "instruction": {
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "meta": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "nextButtonText": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "response": {
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "style": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "const": "image",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "response",
+        "type"
+      ],
+      "type": "object"
+    },
+    "IndividualComponent": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/MarkdownComponent"
+        },
+        {
+          "$ref": "#/definitions/ReactComponent"
+        },
+        {
+          "$ref": "#/definitions/ImageComponent"
+        },
+        {
+          "$ref": "#/definitions/WebsiteComponent"
+        },
+        {
+          "$ref": "#/definitions/QuestionnaireComponent"
+        }
+      ]
+    },
+    "LikertResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "desc": {
+          "type": "string"
+        },
+        "id": {
+          "type": "string"
+        },
+        "leftLabel": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "preset": {
+          "type": "number"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "rightLabel": {
+          "type": "string"
+        },
+        "type": {
+          "const": "likert",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "preset",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "LongTextResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "longText",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "MarkdownComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "correctAnswer": {
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "instruction": {
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "meta": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "nextButtonText": {
+          "type": "string"
+        },
+        "path": {
+          "type": "string"
+        },
+        "response": {
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "const": "markdown",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "response",
+        "type"
+      ],
+      "type": "object"
+    },
+    "NamedParameters<typeof isContainerComponent>": {
+      "additionalProperties": false,
+      "properties": {
+        "component": {
+          "$ref": "#/definitions/StudyComponent"
+        }
+      },
+      "required": [
+        "component"
+      ],
+      "type": "object"
+    },
+    "NumericalResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "max": {
+          "type": "number"
+        },
+        "min": {
+          "type": "number"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "numerical",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "Option": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "type": [
+            "string",
+            "number"
+          ]
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "type": "object"
+    },
+    "QuestionnaireComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "correctAnswer": {
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "instruction": {
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "meta": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "nextButtonText": {
+          "type": "string"
+        },
+        "response": {
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "const": "questionnaire",
+          "type": "string"
+        }
+      },
+      "required": [
+        "response",
+        "type"
+      ],
+      "type": "object"
+    },
+    "RadioResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "leftLabel": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/definitions/Option"
+          },
+          "type": "array"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "rightLabel": {
+          "type": "string"
+        },
+        "type": {
+          "const": "radio",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "options",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "ReactComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "correctAnswer": {
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "instruction": {
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "meta": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "nextButtonText": {
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "path": {
+          "type": "string"
+        },
+        "response": {
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "const": "react-component",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "response",
+        "type"
+      ],
+      "type": "object"
+    },
+    "Response": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/NumericalResponse"
+        },
+        {
+          "$ref": "#/definitions/ShortTextResponse"
+        },
+        {
+          "$ref": "#/definitions/LongTextResponse"
+        },
+        {
+          "$ref": "#/definitions/LikertResponse"
+        },
+        {
+          "$ref": "#/definitions/DropdownResponse"
+        },
+        {
+          "$ref": "#/definitions/SliderResponse"
+        },
+        {
+          "$ref": "#/definitions/RadioResponse"
+        },
+        {
+          "$ref": "#/definitions/CheckboxResponse"
+        },
+        {
+          "$ref": "#/definitions/IFrameResponse"
+        }
+      ]
+    },
+    "ResponseBlockLocation": {
+      "enum": [
+        "sidebar",
+        "aboveStimulus",
+        "belowStimulus"
+      ],
+      "type": "string"
+    },
+    "ShortTextResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "placeholder": {
+          "type": "string"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "shortText",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "SliderResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "options": {
+          "items": {
+            "$ref": "#/definitions/Option"
+          },
+          "type": "array"
+        },
+        "prompt": {
+          "type": "string"
+        },
+        "required": {
+          "type": "boolean"
+        },
+        "type": {
+          "const": "slider",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "location",
+        "options",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "StudyComponent": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/IndividualComponent"
+        },
+        {
+          "$ref": "#/definitions/ContainerComponent"
+        }
+      ]
+    },
+    "StudyComponents": {
+      "additionalProperties": {
+        "$ref": "#/definitions/StudyComponent"
+      },
+      "type": "object"
+    },
+    "StudyConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "$schema": {
+          "type": "string"
+        },
+        "components": {
+          "$ref": "#/definitions/StudyComponents"
+        },
+        "sequence": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "studyMetadata": {
+          "$ref": "#/definitions/StudyMetadata"
+        },
+        "uiConfig": {
+          "$ref": "#/definitions/UIConfig"
+        }
+      },
+      "required": [
+        "$schema",
+        "studyMetadata",
+        "uiConfig",
+        "components",
+        "sequence"
+      ],
+      "type": "object"
+    },
+    "StudyMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "authors": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "date": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "organizations": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "title": {
+          "type": "string"
+        },
+        "version": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "version",
+        "authors",
+        "date",
+        "description",
+        "organizations"
+      ],
+      "type": "object"
+    },
+    "UIConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "autoDownloadStudy": {
+          "type": "boolean"
+        },
+        "autoDownloadTime": {
+          "type": "number"
+        },
+        "contactEmail": {
+          "type": "string"
+        },
+        "helpTextPath": {
+          "type": "string"
+        },
+        "logoPath": {
+          "type": "string"
+        },
+        "sidebar": {
+          "type": "boolean"
+        },
+        "studyEndMsg": {
+          "type": "string"
+        },
+        "withProgressBar": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "contactEmail",
+        "logoPath",
+        "withProgressBar",
+        "sidebar"
+      ],
+      "type": "object"
+    },
+    "WebsiteComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "correctAnswer": {
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "instruction": {
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "meta": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "nextButtonText": {
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "path": {
+          "type": "string"
+        },
+        "response": {
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "style": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "const": "website",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "response",
+        "type"
+      ],
+      "type": "object"
+    }
+  }
+}

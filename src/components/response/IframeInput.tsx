@@ -1,28 +1,26 @@
 import { List, Text } from '@mantine/core';
+import { IFrameResponse } from '../../parser/types';
 
 type inputProps = {
-  desc: string;
-  title: string;
-  required: boolean;
-  answer: Array<any>;
+  response: IFrameResponse;
+  disabled: boolean;
+  answer: string[];
 };
 export default function IframeInput({
-  desc = '',
-  title = '',
+  response,
+  disabled,
   answer = [],
 }: inputProps) {
+  const { prompt } = response;
   return (
     <>
       <Text fz={'md'} fw={500}>
-        {title}
-      </Text>
-      <Text fz={'sm'} fw={400} c={'#868e96'}>
-        {desc}
+        {prompt}
       </Text>
 
       <List>
         {answer.map((item) => {
-          return <List.Item key={item}>{item as any}</List.Item>;
+          return <List.Item key={item}>{item}</List.Item>;
         })}
       </List>
     </>

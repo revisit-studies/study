@@ -1,26 +1,25 @@
 import { Textarea } from '@mantine/core';
+import { LongTextResponse } from '../../parser/types';
 
 type inputProps = {
-  placeholder: string;
-  label: string;
-  required: boolean;
-  answer: object;
+  response: LongTextResponse;
   disabled: boolean;
+  answer: any;
 };
 
 export default function TextAreaInput({
-  disabled = false,
-  placeholder = '',
-  label = '',
-  required,
+  response,
+  disabled,
   answer,
 }: inputProps) {
+  const { placeholder, prompt, required } = response;
+
   return (
     <>
       <Textarea
         disabled={disabled}
         placeholder={placeholder}
-        label={label}
+        label={prompt}
         radius={'md'}
         size={'md'}
         withAsterisk={required}

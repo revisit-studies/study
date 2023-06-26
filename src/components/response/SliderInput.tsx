@@ -1,40 +1,29 @@
 import { Slider, Text } from '@mantine/core';
-import { Option } from '../../parser/types';
-
-export type sliderProps = {
-  label: string;
-  value: number;
-};
+import { SliderResponse } from '../../parser/types';
 
 type inputProps = {
-  title: string;
-  desc: string;
-  sliderData?: Option[];
-  answer: any;
-  required: boolean;
+  response: SliderResponse;
   disabled: boolean;
+  answer: any;
 };
 
 export default function SliderInput({
-  disabled = false,
-  title = 'Your Question',
-  desc = 'additional description',
-  sliderData = [],
+  response,
+  disabled,
   answer,
 }: inputProps) {
+  const { prompt, required, options } = response;
+
   return (
     <>
       <Text fz={'md'} fw={500}>
-        {title}
-      </Text>
-      <Text fz={'sm'} fw={400} c={'#868e96'}>
-        {desc}
+        {prompt}
       </Text>
       <Slider
         disabled={disabled}
         labelAlwaysOn
         sx={{ marginTop: '5px', marginBottom: '30px' }}
-        marks={sliderData as sliderProps[]}
+        marks={options}
         {...answer}
         styles={(theme) => ({
           mark: {

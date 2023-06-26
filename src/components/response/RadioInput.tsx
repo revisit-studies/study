@@ -1,40 +1,31 @@
 import { Group, Radio, Text } from '@mantine/core';
-import { Option } from '../../parser/types';
+import { RadioResponse } from '../../parser/types';
 
 type inputProps = {
-  title: string;
-  desc: string;
-  radioData?: Option[];
-  required: boolean;
-  answer: object;
+  response: RadioResponse;
   disabled: boolean;
-  leftLabel: string;
-  rightLabel: string;
+  answer: any;
 };
 
 export default function RadioInput({
-  title = 'Your Question',
-  disabled = false,
-  desc = 'additional description',
-  radioData = [],
+  response,
+  disabled,
   answer,
-  required,
-    leftLabel = '',
-    rightLabel = '',
 }: inputProps) {
+  const { prompt, required, options, leftLabel, rightLabel } = response;
+
   return (
     <>
       <Radio.Group
         name="radioInput"
-        label={title}
-        description={desc}
+        label={prompt}
         withAsterisk={required}
         size={'md'}
         {...answer}
       >
         <Text>{leftLabel}</Text>
         <Group mt="xs">
-          {radioData.map((radio) => {
+          {options.map((radio) => {
             return (
               <Radio
                 disabled={disabled}

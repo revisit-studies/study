@@ -5,7 +5,7 @@ import { useComponentStatus } from '../../store/hooks/useComponentStatus';
 import ResponseBlock from '../response/ResponseBlock';
 import { useCurrentStep } from '../../routes';
 import { useCurrentTrial } from '../../store/hooks/useCurrentTrial';
-import { ContainerComponent } from '../../parser/types';
+import { ContainerComponent, IndividualComponent } from '../../parser/types';
 
 export default function AppNavBar() {
   const trialHasSideBar = useStudyConfig()?.uiConfig.sidebar;
@@ -19,12 +19,12 @@ export default function AppNavBar() {
 
   const trialId = useCurrentTrial();
   const status = useComponentStatus();
-  const stimulus = trialId !== null ? (currentStepConfig as ContainerComponent)?.components[trialId || ''] : currentStepConfig ;
+  const stimulus = (trialId !== null ? (currentStepConfig as ContainerComponent)?.components[trialId || ''] : currentStepConfig) as IndividualComponent | undefined;
   const instruction = stimulus?.instruction || '';
 
   const instructionInSideBar =
-    currentStepConfig?.instructionLocation === 'sidebar' ||
-    currentStepConfig?.instructionLocation === undefined;
+    stimulus?.instructionLocation === 'sidebar' ||
+    stimulus?.instructionLocation === undefined;
 
   return trialHasSideBar ? (
     <Navbar width={{ base: 300 }} style={{ zIndex: 0 }}>
