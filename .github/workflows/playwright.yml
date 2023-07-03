@@ -1,0 +1,27 @@
+name: Playwright Tests
+
+on:
+  pull_request:
+    branches: 
+      - main
+
+jobs:
+  test:
+    timeout-minutes: 60
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - uses: actions/setup-node@v3
+      with:
+        node-version: lts/*
+        cache: 'yarn'
+
+    - name: Install dependencies
+      run: yarn install --immutable
+
+    - name: Install Playwright Browsers
+      run: yarn playwright install --with-deps
+
+    - name: Run Playwright tests
+      run: yarn test
