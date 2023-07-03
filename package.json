@@ -7,7 +7,8 @@
     "build": "tsc && vite build",
     "lint": "eslint src",
     "postinstall": "husky install",
-    "generate-schema": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/schema.json"
+    "generate-schema": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/schema.json",
+    "test": "playwright test"
   },
   "lint-staged": {
     "*.{tsx,jsx,ts,js}": "yarn lint"
@@ -40,6 +41,7 @@
     "ts-json-schema-generator": "^1.2.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.35.1",
     "@types/d3": "^7.4.0",
     "@types/react": "^18.0.24",
     "@types/react-dom": "^18.0.8",
