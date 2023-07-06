@@ -27,11 +27,17 @@ jobs:
             cache_dir: ~/Library/Caches/ms-playwright
     steps:
       - uses: actions/checkout@v3
-      
+
       - uses: actions/setup-node@v3
         with:
           node-version: lts/*
           cache: "yarn"
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Write out playwright version
+        run: yarn --silent playwright --version > .playwright-version
 
       - name: ⚡️ Cache playwright binaries
         uses: actions/cache@v3
@@ -39,9 +45,6 @@ jobs:
         with:
           path: ${{ matrix.cache_dir }}
           key: ${{ runner.os }}-${{ matrix.project }}-pw-${{ hashFiles('**/.playwright-version') }}
-
-      - name: Install dependencies
-        run: yarn install --immutable
 
       - name: Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
