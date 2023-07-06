@@ -7,27 +7,50 @@ on:
 
 jobs:
   test:
-    timeout-minutes: 60
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v3
+    name: 🧪 ${{ matrix.project }} E2E Tests
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: chromium
+            os: ubuntu-latest
+            cache_dir: ~/.cache/ms-playwright
 
+          - project: firefox
+            os: ubuntu-latest
+            cache_dir: ~/.cache/ms-playwright
+
+          - project: webkit
+            os: macos-12
+            cache_dir: ~/Library/Caches/ms-playwright
+
+  steps:
     - uses: actions/setup-node@v3
       with:
         node-version: lts/*
         cache: 'yarn'
 
+    - name: ⚡️ Cache playwright binaries
+      uses: actions/cache@v3
+      id: playwright-cache
+      with:
+        path: ${{ matrix.cache_dir }}
+        key: ${{ runner.os }}-${{ matrix.project }}-pw-${{ hashFiles('**/.playwright-version') }}
+
     - name: Install dependencies
       run: yarn install --immutable
 
     - name: Install Playwright Browsers
-      run: yarn playwright install --with-deps
+      if: steps.playwright-cache.outputs.cache-hit != 'true'
+      run: yarn playwright install --with-deps ${{ matrix.project }}
 
     - name: Run Playwright tests
-      run: yarn test
+      run: yarn test --project=${{ matrix.project }}
 
     - name: Upload test results
-      if: always()
+      if: failure()
       uses: actions/upload-artifact@v3
       with:
         name: playwright-report
