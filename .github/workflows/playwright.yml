@@ -2,7 +2,7 @@ name: Playwright Tests
 
 on:
   pull_request:
-    branches: 
+    branches:
       - main
 
 jobs:
@@ -25,33 +25,32 @@ jobs:
           - project: webkit
             os: macos-12
             cache_dir: ~/Library/Caches/ms-playwright
+    steps:
+      - uses: actions/setup-node@v3
+        with:
+          node-version: lts/*
+          cache: "yarn"
 
-  steps:
-    - uses: actions/setup-node@v3
-      with:
-        node-version: lts/*
-        cache: 'yarn'
+      - name: ⚡️ Cache playwright binaries
+        uses: actions/cache@v3
+        id: playwright-cache
+        with:
+          path: ${{ matrix.cache_dir }}
+          key: ${{ runner.os }}-${{ matrix.project }}-pw-${{ hashFiles('**/.playwright-version') }}
 
-    - name: ⚡️ Cache playwright binaries
-      uses: actions/cache@v3
-      id: playwright-cache
-      with:
-        path: ${{ matrix.cache_dir }}
-        key: ${{ runner.os }}-${{ matrix.project }}-pw-${{ hashFiles('**/.playwright-version') }}
+      - name: Install dependencies
+        run: yarn install --immutable
 
-    - name: Install dependencies
-      run: yarn install --immutable
+      - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: yarn playwright install --with-deps ${{ matrix.project }}
 
-    - name: Install Playwright Browsers
-      if: steps.playwright-cache.outputs.cache-hit != 'true'
-      run: yarn playwright install --with-deps ${{ matrix.project }}
+      - name: Run Playwright tests
+        run: yarn test --project=${{ matrix.project }}
 
-    - name: Run Playwright tests
-      run: yarn test --project=${{ matrix.project }}
-
-    - name: Upload test results
-      if: failure()
-      uses: actions/upload-artifact@v3
-      with:
-        name: playwright-report
-        path: playwright-report
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-report
+          path: playwright-report
