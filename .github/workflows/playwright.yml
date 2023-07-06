@@ -26,6 +26,8 @@ jobs:
             os: macos-12
             cache_dir: ~/Library/Caches/ms-playwright
     steps:
+      - uses: actions/checkout@v3
+      
       - uses: actions/setup-node@v3
         with:
           node-version: lts/*
