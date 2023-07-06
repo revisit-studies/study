@@ -57,7 +57,7 @@ export default function ResponseSwitcher({
           <CheckBoxInput response={response} disabled={disabled} answer={ans} />
         )}
         {response.type === 'iframe' && (
-          <IframeInput response={response} disabled={disabled} answer={storedAnswer ? storedAnswer : []} />
+          <IframeInput response={response} disabled={disabled} answer={ans} />
         )}
       </Box>
     </>

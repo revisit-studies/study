@@ -4,7 +4,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { PREFIX as BASE_PREFIX } from '../App';
 import { useCurrentStep } from '../routes';
 import {
-  updateResponseBlockValidation,
+  setIframeAnswers,
   useFlagsDispatch,
 } from '../store/flags';
 import { useNextStep } from '../store/hooks/useNextStep';
@@ -78,18 +78,7 @@ export default function IframeController({path, parameters}: Props) {
             }
             break;
           case `${PREFIX}/ANSWERS`:
-              flagDispatch(
-                  updateResponseBlockValidation({
-                      location: data.message.location,
-                      trialId: id,
-                      status: data.message.answer.length > 0,
-                      answers: {
-                          [`${id}/${data.message.taskID}`]: [
-                              ...new Set([...data.message.answer]),
-                          ],
-                      },
-                  })
-              );
+              flagDispatch(setIframeAnswers(data.message.answer));
             break;
 
 
@@ -102,7 +91,6 @@ export default function IframeController({path, parameters}: Props) {
     return () => window.removeEventListener('message', handler);
   }, [
     flagDispatch,
-    updateResponseBlockValidation,
     computedTo,
     currentStep,
     dispatch,

@@ -9,7 +9,7 @@ type inputProps = {
 export default function IframeInput({
   response,
   disabled,
-  answer = [],
+  answer,
 }: inputProps) {
   const { prompt } = response;
   return (
@@ -19,7 +19,7 @@ export default function IframeInput({
       </Text>
 
       <List>
-        {answer.map((item) => {
+        {(answer.value || []).map((item) => {
           return <List.Item key={item}>{item}</List.Item>;
         })}
       </List>

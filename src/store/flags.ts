@@ -27,6 +27,7 @@ const flags = createSlice({
     showHelpText: false,
     trialRecord: {} as TrialRecord,
     trrackExists: false,
+    iframeAnswers: [] as string[],
   },
   reducers: {
     setTrrackExists: (state, action: PayloadAction<boolean>) => {
@@ -37,6 +38,9 @@ const flags = createSlice({
     },
     toggleShowHelpText: (state) => {
       state.showHelpText = !state.showHelpText;
+    },
+    setIframeAnswers: (state, action: PayloadAction<string[]>) => {
+      state.iframeAnswers = action.payload;
     },
     updateResponseBlockValidation: (
       state,
@@ -78,6 +82,7 @@ export const {
   toggleShowHelpText,
   setTrrackExists,
   updateResponseBlockValidation,
+  setIframeAnswers,
 } = flags.actions;
 
 export const flagsStore = configureStore({
