@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
-  await page.goto('http://localhost:8080/');
+  await page.goto('/');
 
   // Click on cleveland
   await page.getByRole('button', { name: 'Dyanmic React Stimuli: A Graphical Perception Experiment A demo using dynamic React components as stiumli to replicate the Cleveland/McGill, and the Heer/Bostock extension of graphical perception studies with post study survey.' }).click();
