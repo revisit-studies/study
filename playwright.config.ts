@@ -11,9 +11,13 @@ export default defineConfig({
 
   testDir: './tests',
   fullyParallel: true,
-  retries: 0,
-  timeout: 120000,
+  // Retry on CI only.
+  retries: process.env.CI ? 2 : 0,
+  // Opt out of parallel tests on CI.
+  workers: process.env.CI ? 1 : undefined,
+  timeout: 90000,
   reporter: 'html',
+
   use: {
     baseURL: 'http://localhost:8080',
     trace: 'on-first-retry',
