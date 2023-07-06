@@ -12,6 +12,7 @@ export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
   retries: 0,
+  timeout: 60000,
   reporter: 'html',
   use: {
     baseURL: 'http://localhost:8080',
