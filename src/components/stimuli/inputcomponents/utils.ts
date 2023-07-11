@@ -5,7 +5,7 @@ import { Response } from '../../../parser/types';
 export const generateInitFields = (responses: Response[], id: string) => {
   let initObj = {};
   responses.forEach((response) => {
-    initObj = { ...initObj, [`${id}/${response.id}`]: '' };
+    initObj = { ...initObj, [`${id}/${response.id}`]: response.type === 'iframe' ? [] : '' };
   });
 
   return { ...initObj };
@@ -17,8 +17,12 @@ const generateValidation = (responses: Response[], id: string) => {
     if (response.required) {
       validateObj = {
         ...validateObj,
-        [`${id}/${response.id}`]: (value: string) =>
-          !value ? 'Empty input' : null,
+        [`${id}/${response.id}`]: (value: string | string[]) => {
+          if (Array.isArray(value)) {
+            return value.length === 0 ? 'Empty input' : null;
+          }
+          return !value ? 'Empty input' : null;
+        }
       };
     }
   });

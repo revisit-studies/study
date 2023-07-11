@@ -10,6 +10,7 @@ import { useComponentStatus } from '../store/hooks/useComponentStatus';
 import { useCurrentTrial } from '../store/hooks/useCurrentTrial';
 import { TrialProvenanceContext, createTrialProvenance } from '../store/trialProvenance';
 import { ContainerComponent } from '../parser/types';
+import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
 
 // current active stimuli presented to the user
 export default function ComponentController() {
@@ -28,9 +29,14 @@ export default function ComponentController() {
 
   const currentConfig = trialConfig !== null ? trialConfig : stepConfig;
 
+  const instruction = currentConfig.type === 'container' ? '' : (currentConfig.instruction || '');
+  const instructionLocation = currentConfig.type === 'container' ? undefined : currentConfig.instructionLocation;
+  const instructionInSideBar = studyConfig.uiConfig.sidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
+
   return (
     <>
       <TrialProvenanceContext.Provider value={trialProvenance}>
+        {instructionLocation === 'aboveStimulus' && <ReactMarkdownWrapper text={instruction} />}
         <ResponseBlock
           status={status}
           config={stepConfig}
@@ -50,6 +56,7 @@ export default function ComponentController() {
           }
         </Suspense>
 
+        {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
         <ResponseBlock
           status={status}
           config={stepConfig}

@@ -12,10 +12,12 @@ import {
 import { useCurrentStep } from '../../routes';
 import { useAppDispatch, useStoreActions, useStudySelector } from '../../store';
 import {
+  setIframeAnswers,
   updateResponseBlockValidation,
   useAggregateResponses,
   useAreResponsesValid,
   useFlagsDispatch,
+  useFlagsSelector,
 } from '../../store/flags';
 import { useNextStep } from '../../store/hooks/useNextStep';
 import { TrialResult } from '../../store/types';
@@ -69,6 +71,7 @@ export default function ResponseBlock({
   const currentStep = useCurrentStep();
   const nextTrialId = useNextTrialId(trialId);
   const nextStep = useNextStep();
+  const flagsSelector = useFlagsSelector((state) => state);
 
   const hasCorrectAnswer = trialId !== null ? configInUse?.correctAnswer?.length || 0 > 0 : false;
 
@@ -78,6 +81,14 @@ export default function ResponseBlock({
 
   const showNextBtn =
     location === (configInUse?.nextButtonLocation || 'belowStimulus');
+
+  useEffect(() => {
+    const iframeResponse = responses.find((r) => r.type === 'iframe');
+    if (iframeResponse) {
+      const answerId = `${id}/${iframeResponse.id}`;
+      answerValidator.setValues({...answerValidator.values, [answerId]: flagsSelector.iframeAnswers});
+    }
+  }, [flagsSelector.iframeAnswers]);
 
   useEffect(() => {
     flagDispatch(
@@ -106,6 +117,7 @@ export default function ResponseBlock({
           endTime: Date.now(),
         })
       );
+      flagDispatch(setIframeAnswers([]));
     }
 
     setDisableNext(!disableNext);
