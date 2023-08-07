@@ -23,9 +23,18 @@ jobs:
       - run: yarn install --immutable
       - run: yarn build
 
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
+      - uses: peaceiris/actions-gh-pages@v3
+        name: Deploy
+        id: deploy
         if: ${{ github.ref == 'refs/heads/main' }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+
+      - uses: peter-evans/repository-dispatch@v2
+        name: Build documentation in revisit.dev
+        if: ${{ steps.deploy.outcome == 'success' }}
+        with:
+          token: ${{ secrets.PAT }}
+          repository: revisit-studies/reVISit-studies.github.io
+          event-type: study_repo_publish
