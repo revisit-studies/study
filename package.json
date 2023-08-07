@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "buildDocs": "yarn typedoc --plugin typedoc-plugin-markdown src/parser/types.ts",
+    "buildDocs": "yarn typedoc",
     "serve": "vite --host=0.0.0.0 --port=8080",
     "build": "tsc && vite build",
     "lint": "eslint src",
@@ -41,6 +41,7 @@
     "react-router-dom": "^6.10.0",
     "ts-json-schema-generator": "^1.2.0",
     "typedoc": "^0.24.8",
+    "typedoc-plugin-frontmatter": "^0.0.2",
     "typedoc-plugin-markdown": "^3.15.4"
   },
   "devDependencies": {
