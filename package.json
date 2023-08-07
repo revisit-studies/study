@@ -3,6 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
+    "buildDocs": "yarn typedoc",
     "serve": "vite --host=0.0.0.0 --port=8080",
     "build": "tsc && vite build",
     "lint": "eslint src",
@@ -38,7 +39,10 @@
     "react-markdown": "^8.0.5",
     "react-redux": "^8.0.5",
     "react-router-dom": "^6.10.0",
-    "ts-json-schema-generator": "^1.2.0"
+    "ts-json-schema-generator": "^1.2.0",
+    "typedoc": "^0.24.8",
+    "typedoc-plugin-frontmatter": "^0.0.2",
+    "typedoc-plugin-markdown": "^3.15.4"
   },
   "devDependencies": {
     "@playwright/test": "^1.35.1",

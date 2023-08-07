@@ -1,0 +1,17 @@
+{
+    "entryPoints": [
+        "src/parser/types.ts"
+    ],
+    "plugin": [
+        "typedoc-plugin-markdown",
+        "typedoc-plugin-frontmatter"
+    ],
+    "name": "",
+    "githubPages": false,
+    "readme": "none",
+    "entryDocument": "index.md",
+    "hideBreadcrumbs": true,
+    "frontmatterGlobals": {
+      "layout": "docs",
+    }
+}
