@@ -17,20 +17,7 @@ import {
 } from 'firebase/firestore';
 import { Nullable } from '../parser/types';
 import { MODE, RECAPTCHAV3TOKEN } from './constants';
-
-// Your web app's Firebase configuration
-// This is safe to commit
-// We can keep this in as dummy firebase config.
-// This can only be accessed from localhost with known debug token OR from revisit.dev
-// Using this as dummy config allows us to use localStorage without ever connecting to firebase
-const defaultFirebaseConfig = {
-  apiKey: 'AIzaSyAm9QtUgx1lYPDeE0vKLN-lK17WfUGVkLo',
-  authDomain: 'revisit-utah.firebaseapp.com',
-  projectId: 'revisit-utah',
-  storageBucket: 'revisit-utah.appspot.com',
-  messagingSenderId: '811568460432',
-  appId: '1:811568460432:web:995f6b4f1fc8042b5dde15',
-};
+import { parse as hjsonParse } from 'hjson';
 
 const fsConfig: FirestoreSettings = {
   localCache: persistentLocalCache({
@@ -63,8 +50,11 @@ export async function getFirestoreManager(_connect = true) {
     (self as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
   }
 
+  const firebaseConfig = hjsonParse(import.meta.env.VITE_FIREBASE_CONFIG);
+  console.log('Firebase config', firebaseConfig);
+
   // Initialize Firebase. Get previous instance else create new.
-  const app = _app || initializeApp(defaultFirebaseConfig);
+  const app = _app || initializeApp(firebaseConfig);
   if (!_app) _app = app;
 
   function startFirestore() {
