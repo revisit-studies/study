@@ -30,7 +30,7 @@ export interface StudyMetadata {
  * This includes the logo, contact email, and whether to show a progress bar.
  * The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses.
  */
-export type UIConfig = {
+export interface UIConfig {
   contactEmail: string;
   helpTextPath?: string;
   logoPath: string;
@@ -39,7 +39,7 @@ export type UIConfig = {
   autoDownloadTime?: number;
   studyEndMsg?: string;
   sidebar: boolean;
-};
+}
 
 /**
  * The Option interface is used to define the options for a dropdown, slider, radio, or checkbox response.
