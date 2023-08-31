@@ -12,7 +12,7 @@ export default function RadioInput({
   disabled,
   answer,
 }: inputProps) {
-  const { prompt, required, options, leftLabel, rightLabel } = response;
+  const { prompt, required, requiredValue, requiredLabel, options, leftLabel, rightLabel } = response;
 
   return (
     <>
@@ -22,8 +22,10 @@ export default function RadioInput({
         withAsterisk={required}
         size={'md'}
         {...answer}
+        // This overrides the answers error. Which..is bad?
+        error={answer.value && requiredValue && requiredValue !== answer.value ? `Please select ${requiredLabel || requiredValue} to continue.` : null}
       >
-        <Text>{leftLabel}</Text>
+        {leftLabel ? <Text>{leftLabel}</Text> : null}
         <Group mt="xs">
           {options.map((radio) => {
             return (

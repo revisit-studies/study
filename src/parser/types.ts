@@ -133,6 +133,8 @@ export interface SliderResponse extends BaseResponse {
 export interface RadioResponse extends BaseResponse {
   type: 'radio';
   options: Option[];
+  requiredValue?: string;
+  requiredLabel?: string;
   leftLabel?: string;
   rightLabel?: string;
 }

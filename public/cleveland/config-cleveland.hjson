@@ -45,6 +45,8 @@
                     id: accept
                     prompt: Do you accept the consent form?
                     required: true
+                    requiredValue: yes
+                    requiredLabel: Accept
                     location: belowStimulus
                     type: radio
                     options: [
