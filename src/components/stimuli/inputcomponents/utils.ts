@@ -22,7 +22,13 @@ const generateValidation = (responses: Response[], id: string) => {
             if(response.requiredValue && !Array.isArray(response.requiredValue)) {
               return 'Incorrect required value';
             } else if (response.requiredValue && Array.isArray(response.requiredValue)) {
-              return response.requiredValue.length === value.length && response.requiredValue.every((val, index) => val === value[index]) ? null : 'Incorrect input';
+              if(response.requiredValue.length !== value.length) {
+                return 'Incorrect input';
+              }
+              const sortedReq = [...response.requiredValue].sort();
+              const sortedVal = [...value].sort();
+
+              return sortedReq.every((val, index) => val === sortedVal[index]) ? null : 'Incorrect input';
             }
             return value.length === 0 ? 'Empty input' : null;
           }
