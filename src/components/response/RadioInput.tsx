@@ -23,7 +23,7 @@ export default function RadioInput({
         size={'md'}
         {...answer}
         // This overrides the answers error. Which..is bad?
-        error={answer.value && requiredValue && requiredValue !== answer.value ? `Please select ${requiredLabel || requiredValue} to continue.` : null}
+        error={answer.value && requiredValue && requiredValue.toString() !== answer.value.toString() ?  `Please select ${requiredLabel ? requiredLabel : options.find((opt) => opt.value === requiredValue)?.label} to continue.` : null}
       >
         {leftLabel ? <Text>{leftLabel}</Text> : null}
         <Group mt="xs">

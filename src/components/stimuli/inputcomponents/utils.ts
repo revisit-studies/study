@@ -21,8 +21,8 @@ const generateValidation = (responses: Response[], id: string) => {
           if (Array.isArray(value)) {
             return value.length === 0 ? 'Empty input' : null;
           }
-          if(response.type === 'radio' && response.required && response.requiredValue && value) {
-            return value !== response.requiredValue ? 'Incorrect input' : null;
+          if(response.required && response.requiredValue && value) {
+            return value.toString() !== response.requiredValue.toString() ? 'Incorrect input' : null;
           }
           return !value ? 'Empty input' : null;
         }

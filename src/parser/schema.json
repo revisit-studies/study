@@ -94,6 +94,10 @@
         "required": {
           "type": "boolean"
         },
+        "requiredLabel": {
+          "type": "string"
+        },
+        "requiredValue": {},
         "type": {
           "const": "checkbox",
           "type": "string"
@@ -159,6 +163,10 @@
         "required": {
           "type": "boolean"
         },
+        "requiredLabel": {
+          "type": "string"
+        },
+        "requiredValue": {},
         "type": {
           "const": "dropdown",
           "type": "string"
@@ -222,6 +230,10 @@
         "required": {
           "type": "boolean"
         },
+        "requiredLabel": {
+          "type": "string"
+        },
+        "requiredValue": {},
         "type": {
           "const": "iframe",
           "type": "string"
@@ -339,6 +351,10 @@
         "required": {
           "type": "boolean"
         },
+        "requiredLabel": {
+          "type": "string"
+        },
+        "requiredValue": {},
         "rightLabel": {
           "type": "string"
         },
@@ -376,6 +392,10 @@
         "required": {
           "type": "boolean"
         },
+        "requiredLabel": {
+          "type": "string"
+        },
+        "requiredValue": {},
         "type": {
           "const": "longText",
           "type": "string"
@@ -480,6 +500,10 @@
         "required": {
           "type": "boolean"
         },
+        "requiredLabel": {
+          "type": "string"
+        },
+        "requiredValue": {},
         "type": {
           "const": "numerical",
           "type": "string"
@@ -591,9 +615,7 @@
         "requiredLabel": {
           "type": "string"
         },
-        "requiredValue": {
-          "type": "string"
-        },
+        "requiredValue": {},
         "rightLabel": {
           "type": "string"
         },
@@ -727,6 +749,10 @@
         "required": {
           "type": "boolean"
         },
+        "requiredLabel": {
+          "type": "string"
+        },
+        "requiredValue": {},
         "type": {
           "const": "shortText",
           "type": "string"
@@ -763,6 +789,10 @@
         "required": {
           "type": "boolean"
         },
+        "requiredLabel": {
+          "type": "string"
+        },
+        "requiredValue": {},
         "type": {
           "const": "slider",
           "type": "string"
