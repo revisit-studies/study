@@ -1,5 +1,6 @@
 import { Group, Radio, Text } from '@mantine/core';
 import { RadioResponse } from '../../parser/types';
+import { generateErrorMessage } from '../stimuli/inputcomponents/utils';
 
 type inputProps = {
   response: RadioResponse;
@@ -12,7 +13,7 @@ export default function RadioInput({
   disabled,
   answer,
 }: inputProps) {
-  const { prompt, required, requiredValue, requiredLabel, options, leftLabel, rightLabel } = response;
+  const { prompt, required, options, leftLabel, rightLabel } = response;
 
   return (
     <>
@@ -23,7 +24,7 @@ export default function RadioInput({
         size={'md'}
         {...answer}
         // This overrides the answers error. Which..is bad?
-        error={answer.value && requiredValue && requiredValue.toString() !== answer.value.toString() ?  `Please select ${requiredLabel ? requiredLabel : options.find((opt) => opt.value === requiredValue)?.label} to continue.` : null}
+        error={generateErrorMessage(response, answer, options)}
       >
         {leftLabel ? <Text>{leftLabel}</Text> : null}
         <Group mt="xs">
