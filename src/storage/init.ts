@@ -10,19 +10,36 @@ import {
   query,
   setDoc,
   updateDoc,
+  WriteBatch,
   writeBatch,
 } from 'firebase/firestore';
 import { createContext, useContext } from 'react';
 import { StudyProvenance } from '../store';
-import { MODE, NODES, SESSIONS } from './constants';
+import { MODE, NODES, SESSIONS, STUDIES } from './constants';
 import { getFirestoreManager } from './firebase';
 import { FsSession, ProvenanceStorage } from './types';
+import { StudyComponent, StudyComponents, StudyConfig } from '../parser/types';
+import latinSquare from '@quentinroy/latin-square';
+
 
 /**
  * added here as substitute to firestore method serverTimestamp
  */
 function serverTimestamp() {
   return new Date();
+}
+
+function createRandomOrders(components: StudyComponents, paths: string[], path: string) {
+  Object.keys(components).forEach((componentKey) => {
+    const component = components[componentKey];
+    if(component.type === 'container') {
+      if(component.order === 'random') {
+        paths.push(path.length > 0 ? path + '-' + componentKey : componentKey);
+      }
+
+      createRandomOrders(component.components, paths, path + '-' + componentKey);
+    }
+  });
 }
 
 async function restoreExistingSession(
@@ -101,6 +118,9 @@ export async function initFirebase(
           restoreExistingSession(firestore, sessionId, trrack);
         },
       };
+    },
+    saveStudyConfig(config, studyId) {
+      return saveStudyConfig(firestore, config, studyId);
     },
     saveNewProvenanceNode(trrack: StudyProvenance) {
       return saveProvenanceNode(firestore, trrack.root.id, trrack.current);
@@ -240,6 +260,37 @@ export async function loadProvenance(
   return { current, root, nodes };
 }
 
+async function getRandomOrders(store: Firestore, paths: string[], batch: WriteBatch, studyId: string, config: StudyConfig) {
+  const returnRefs : {path: string, order: string[]}[] = [];
+
+  const pathPromises = paths.map((path) => {
+    const randomRef = doc(store, ...[STUDIES, studyId, 'versions', config.studyMetadata.version, 'random', path]);
+    const randomGet = getDoc(randomRef);
+
+    return randomGet.then((promVal) => {
+      const data = promVal.data();
+
+      if(data) {
+        const currArr = data['perms'].pop();
+        if(!currArr) {
+          const newSquare: string[][] = latinSquare<string>(data['options'].sort(() => 0.5 - Math.random()), true);
+
+          returnRefs.push({path,  order: newSquare[0] });
+          batch.set(randomRef, { perms: newSquare.slice(1).map((perm: string[]) => Object.assign({}, perm)), options: data.options });
+        }
+        else {
+          returnRefs.push({path, order: Object.values(currArr) });
+          batch.set(randomRef, { perms: data.perms, options: data.options });
+        }
+      }
+    });
+  });
+
+  await Promise.all(pathPromises);
+
+  return returnRefs;
+}
+
 async function saveProvenanceNode(
   store: Firestore,
   sessionId: string,
@@ -262,9 +313,84 @@ async function saveProvenanceNode(
 
   const addedNode = await getDoc(doc(nodes, node.id));
 
-  const graph = await loadProvenance(store, sessionId, false);
+  await loadProvenance(store, sessionId, false);
 
   return addedNode;
+}
+
+async function saveStudyConfig(
+  store: Firestore,
+  config: StudyConfig,
+  studyId: string,
+) : Promise<{path: string, order: string[]}[]> {
+  const batch = writeBatch(store);
+
+  const studiesRef = doc(store, ...[STUDIES, studyId, 'versions', config.studyMetadata.version]);
+
+  const paths: string[] = [];
+
+  createRandomOrders(config.components, paths, '');
+
+  const docSnap = await getDoc(studiesRef);
+
+  const sequenceRandoms: string[][] = config.sequence.filter((seq) => Array.isArray(seq)) as string[][];
+
+  if (docSnap.exists()) {
+    const returnRefs = await getRandomOrders(store, paths, batch, studyId, config);
+    const sequenceReturnRefs = await getRandomOrders(store, sequenceRandoms.map((s, i) => `_sequence-${i}`) , batch, studyId, config);
+
+    batch.commit();
+
+    return Promise.resolve([...returnRefs, ...sequenceReturnRefs]);
+  }
+
+  paths.forEach((path) => {
+    const randObj: { perms?: any[], options?: string[] } = {};
+
+    const arr = path.split('-');
+
+    let obj = config.components;
+
+    arr.forEach((s) => {
+      const newObj = obj[s];
+      if(newObj.type === 'container') {
+        obj = newObj.components;
+      }
+    });
+
+    const randArr = Object.keys(obj);
+
+    const permutations: string[][] = latinSquare<string>(randArr.sort(() => 0.5 - Math.random()), true);
+
+    randObj['perms'] = permutations.map((perm) => Object.assign({}, perm));
+    randObj['options'] = randArr;
+    const randRef = doc(store, ...[STUDIES, studyId, 'versions', config.studyMetadata.version, 'random', path]);
+
+    batch.set(randRef, randObj);
+  });
+
+  if(sequenceRandoms.length > 0) {
+    sequenceRandoms.forEach((seq: string[], i: number) => {
+      const permutations: string[][] = latinSquare<string>(seq.sort(() => 0.5 - Math.random()), true);
+
+      const randObj: { perms?: any[], options?: string[] } = {};
+
+      randObj['perms'] = permutations.map((perm) => Object.assign({}, perm));
+      randObj['options'] = seq;
+      const randRef = doc(store, ...[STUDIES, studyId, 'versions', config.studyMetadata.version, 'random', `_sequence-${i}`]);
+
+      batch.set(randRef, randObj);
+    });
+  }
+
+  await batch
+    .set(studiesRef, {...config, sequence: config.sequence.map((seq) => Array.isArray(seq) ? Object.assign({}, seq) : seq)});
+
+  const returnRefs = await getRandomOrders(store, paths, batch, studyId, config);
+  const sequenceReturnRefs = await getRandomOrders(store, sequenceRandoms.map((s, i) => `_sequence-${i}`) , batch, studyId, config);
+
+  batch.commit();
+  return Promise.resolve([...returnRefs, ...sequenceReturnRefs]);
 }
 
 async function getSession(store: Firestore, sessionId: string) {

@@ -10,12 +10,13 @@ import { useCurrentTrial } from './useCurrentTrial';
  */
 
 export function useComponentStatus(): TrialResult | null {
-  const study = useAppSelector((state) => state.study);
+  const config = useAppSelector((state) => state.unTrrackedSlice.config);
+  const study = useAppSelector((state) => state.trrackedSlice);
 
   const currentStep = useCurrentStep();
   const currentTrial = useCurrentTrial();
 
-  const type = study.config.components[currentStep]?.type;
+  const type = config.components[currentStep]?.type;
 
   let status: TrialResult | null = null;
 

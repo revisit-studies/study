@@ -9,7 +9,7 @@ import { PREFIX } from '../../App';
 export default function HelpModal() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const showHelpText = useFlagsSelector((state: any) => state.showHelpText);
-  const config = useAppSelector((state) => state.study.config);
+  const config = useAppSelector((state) => state.unTrrackedSlice.config);
 
   const flagsDispatch = useFlagsDispatch();
 

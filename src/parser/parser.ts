@@ -26,6 +26,7 @@ function verifyGlobalConfig(data: GlobalConfig) {
 
 export function parseGlobalConfig(fileData: string) {
   const data = hjsonParse(fileData);
+  
   const validatedData = globalValidate(data) as boolean;
   const extraValidation = verifyGlobalConfig(data);
 
@@ -50,7 +51,7 @@ function verifyStudyConfig(data: StudyConfig) {
         errors.push({ message: `Container component ${componentName} has an empty components field` });
         return false;
       }
-      if (!(component as ContainerComponent).order.every((componentName) => (component as ContainerComponent).components![componentName] !== undefined)) {
+      if ((component as ContainerComponent).order !== 'random' && !(component as ContainerComponent).order.every((componentName) => (component as ContainerComponent).components![componentName] !== undefined)) {
         errors.push({ message: `Container component ${componentName} has an order field that contains components not present in components field` });
         return false;
       }

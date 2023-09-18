@@ -628,21 +628,26 @@
         introduction
         consent
         training
-        trials0
-        trials1
-        trials2
-        trials3
-        trials4
-        trials5
-        trials6
-        trials7
-        trials8
-        trials9
-        trials10
-        trials11
-        trials12
-        trials13
-        trials14
-        trials15
-    ]
+        [   trials0
+            trials1
+            trials2
+            trials3
+            trials4
+            trials5
+        ]
+        [   trials6
+            trials7
+            trials8
+            trials9
+            trials10
+        ]
+        [   trials11
+            trials12
+            trials13
+            trials14
+            trials15
+        ]
+        
+    ], 
+    randomizationStrategy: latinSquares
 }

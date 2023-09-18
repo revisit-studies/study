@@ -11,7 +11,7 @@ export function useNextTrialId(currentTrial: string | null) {
 
   const { order } = (stepConfig as ContainerComponent);
 
-  if (!order) return null;
+  if (!order || order === 'random') return null;
 
   const idx = order.findIndex((t) => t === currentTrial);
 

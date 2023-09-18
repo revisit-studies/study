@@ -1,9 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes, useParams } from 'react-router-dom';
 import ConfigSwitcher from './components/ConfigSwitcher';
 import { Shell } from './components/Shell';
 import { parseGlobalConfig, parseStudyConfig } from './parser/parser';
-import { GlobalConfig, Nullable, StudyConfig } from './parser/types';
+import { GlobalConfig, Nullable, StudyComponents, StudyConfig } from './parser/types';
+import { Component } from 'typedoc/dist/lib/utils';
+import { useAppDispatch, useStoreActions } from './store';
 
 export const PREFIX = import.meta.env.PROD
   ? import.meta.env.VITE_BASE_PATH
@@ -32,6 +34,8 @@ async function fetchStudyConfigs(globalConfig: GlobalConfig) {
   });
   return studyConfigs;
 }
+
+
 
 export default function AppShellDemo() {
   const [globalConfig, setGlobalConfig] =

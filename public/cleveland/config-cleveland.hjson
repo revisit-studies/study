@@ -1,5 +1,6 @@
 {
     $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/schema.json
+    randomizationStrategy: latinSquares
     studyMetadata: {
         title: Dyanmic React Stimuli: A Graphical Perception Experiment
         version: pilot
@@ -68,12 +69,7 @@
         }
         practice1: {
             type: container
-            order: [
-                bubbleChart1
-                stackedBarChart1
-                barChart1
-                pieChart1
-            ]
+            order: random
             components: {
                 bubbleChart1: {
                     meta: {
@@ -319,18 +315,7 @@
         }
         trials1: {
             type: container
-            order: [
-                bubbleChart1
-                stackedBarChart1
-                barChart1
-                pieChart1
-                stackedBarChart2
-                bubbleChart2
-                stackedBarChart3
-                barChart2
-                pieChart2
-                stackedBarChart4
-            ]
+            order: random
             components: {
                 bubbleChart1: {
                     meta: {
@@ -938,9 +923,10 @@
     sequence: [
         introduction
         consent
-        training1
-        practice1
-        trials1
+        [   training1
+            practice1
+            trials1
+        ]
         post-study-survey1
     ]
 }

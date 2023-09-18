@@ -4,7 +4,8 @@ import { useCurrentStep } from '../../routes';
 export function useNextStep() {
   const currentStep = useCurrentStep();
 
-  const { config, steps } = useAppSelector((state) => state.study);
+  const config = useAppSelector((state) => state.unTrrackedSlice.config);
+  const { steps } = useAppSelector((state) => state.unTrrackedSlice);
 
   if (currentStep === 'end' || currentStep === '') return null;
 

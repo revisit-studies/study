@@ -1191,6 +1191,11 @@
   resolved "https://registry.yarnpkg.com/@protobufjs/utf8/-/utf8-1.1.0.tgz#a777360b5b39a1a2e5106f8e858f2fd2d060c570"
   integrity sha512-Vvn3zZrhQZkkBE8LSuW3em98c0FwgO4nxzv6OdSxPKJIEKY2bGbHn+mhGIPerzI4twdxaP8/0+06HBpwf345Lw==
 
+"@quentinroy/latin-square@^1.1.1":
+  version "1.1.1"
+  resolved "https://registry.yarnpkg.com/@quentinroy/latin-square/-/latin-square-1.1.1.tgz#d7d85af080f698f8caa2f32571b03553e064816f"
+  integrity sha512-oqoIesMQz2FIc2iOxGA472iD/drvevRJOo84e3uNlC7YzUvWFVPrnfcT4JlFq5IC060+DR2kyaeQzJEzMueZwg==
+
 "@radix-ui/number@1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@radix-ui/number/-/number-1.0.0.tgz#4c536161d0de750b3f5d55860fc3de46264f897b"

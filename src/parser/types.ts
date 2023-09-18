@@ -257,7 +257,7 @@ export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComp
  */
 export interface ContainerComponent {
   type: 'container';
-  order: string[];
+  order: string[] | 'random';
   components: StudyComponents;
 }
 
@@ -275,7 +275,8 @@ export interface StudyConfig {
   studyMetadata: StudyMetadata;
   uiConfig: UIConfig;
   components: StudyComponents;
-  sequence: string[];
+  sequence: (string | string[])[];
+  randomizationStrategy?: 'random' | 'latinSquares';
 }
 
 /**

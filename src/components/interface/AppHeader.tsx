@@ -28,7 +28,7 @@ import {
 } from '../../store/flags';
 
 export default function AppHeader() {
-  const studyConfig = useAppSelector((state) => state.study.config);
+  const studyConfig = useAppSelector((state) => state.unTrrackedSlice.config);
   const clearCache = useCreatedStore().clearCache;
   const flagsDispatch = useFlagsDispatch();
   const navigate = useNavigate();

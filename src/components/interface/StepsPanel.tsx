@@ -10,7 +10,7 @@ export function StepsPanel() {
   const currentStep = useCurrentStep();
   const navigate = useNavigate();
 
-  const { config = null } = useAppSelector((state) => state.study);
+  const { config = null } = useAppSelector((state) => state.unTrrackedSlice);
 
   const sequence = config?.sequence || [];
 

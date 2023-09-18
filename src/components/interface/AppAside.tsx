@@ -24,7 +24,7 @@ export default function AppAside() {
 
   const step = useCurrentStep();
   const config = useAppSelector(
-    (state) => state.study.config?.components[step]
+    (state) => state.unTrrackedSlice.config?.components[step]
   );
   const trialConfig = config as ContainerComponent;
   const tasks =
