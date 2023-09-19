@@ -7,7 +7,7 @@
             The reVISit Team
         ]
         date: 2023-04-26
-        description: "A replication of adjacent matrix tasks in the MVNV study "
+        description: "A replication of adjacency matrix tasks in a multi-variate network visualization (MVNV) study "
         organizations: [
             University of Utah
             WPI
@@ -43,7 +43,7 @@
                 }
                 {
                     id: accept
-                    prompt: Do you accept the consent form?
+                    prompt: Do you consent to the study and wish to continue?
                     required: true
                     location: belowStimulus
                     type: radio
