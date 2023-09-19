@@ -923,10 +923,9 @@
     sequence: [
         introduction
         consent
-        [   training1
-            practice1
-            trials1
-        ]
+        training1
+        practice1
+        trials1
         post-study-survey1
     ]
 }
