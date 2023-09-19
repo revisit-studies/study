@@ -35,7 +35,7 @@ function useTrialGroups() {
 
     const trialLike = sequence.filter(
       (seq) =>
-        components[seq].type === 'container'
+        components[seq as string].type === 'container'
     );
 
     return trialLike;
@@ -73,7 +73,7 @@ export function DownloadTidy({ opened, close, filename }: Props) {
   const fb = useFirebase();
   const studyId = useStudyId();
 
-  const trialGroups = useTrialGroups();
+  const trialGroups = useTrialGroups() as string[];
   const metaProps = useTrialMetaProps(trialGroups);
 
   const [selectedProperties, setSelectedProperties] = useInputState<

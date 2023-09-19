@@ -22,7 +22,7 @@ export function download(graph: string, filename: string) {
 export function DownloadPanel() {
   const { trrack } = useCreatedStore();
   const config = useStudyConfig();
-  const ids = useAppSelector((s) => s.study.studyIdentifiers);
+  const ids = useAppSelector((s) => s.trrackedSlice.studyIdentifiers);
   const studyId = useStudyId();
   const firebase = useFirebase();
   const [openDownload, { open, close }] = useDisclosure(false);

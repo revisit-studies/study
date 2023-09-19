@@ -18,7 +18,7 @@ import { StudyProvenance } from '../store';
 import { MODE, NODES, SESSIONS, STUDIES } from './constants';
 import { getFirestoreManager } from './firebase';
 import { FsSession, ProvenanceStorage } from './types';
-import { StudyComponent, StudyComponents, StudyConfig } from '../parser/types';
+import { StudyComponents, StudyConfig } from '../parser/types';
 import latinSquare from '@quentinroy/latin-square';
 
 
@@ -345,7 +345,7 @@ async function saveStudyConfig(
   }
 
   paths.forEach((path) => {
-    const randObj: { perms?: any[], options?: string[] } = {};
+    const randObj: { perms?: Record<number, string>[], options?: string[] } = {};
 
     const arr = path.split('-');
 

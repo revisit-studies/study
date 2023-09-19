@@ -8,7 +8,7 @@ import { isContainerComponent } from '../../parser/types';
  */
 
 export function useCompletedTrialMetric(trialName: string) {
-  const { config } = useAppSelector((state) => state.study);
+  const { config } = useAppSelector((state) => state.unTrrackedSlice);
   const trialConfig = config?.components[trialName];
 
   if (trialConfig && isContainerComponent(trialConfig)) {

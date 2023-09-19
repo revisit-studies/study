@@ -7,7 +7,7 @@ import {
   Prettify,
   isContainerComponent,
 } from '../parser/types';
-import { State, TrialRecord, TrialResult } from '../store/types';
+import { TrialRecord, TrialResult, TrrackedState, UnTrrackedState } from '../store/types';
 import { getAllSessions } from './queries';
 import { FsSession, ProvenanceStorage } from './types';
 
@@ -97,7 +97,9 @@ function processToRow(
 
   const lastNode = nodes[nodes.length - 1];
 
-  const study: State = lastNode.state.val.study;
+  const untrrackedStudy: UnTrrackedState = lastNode.state.unTrrackedSlice;
+  const trrackedStudy: TrrackedState = lastNode.state.trrackedSlice;
+
 
   trialGroups.forEach((groupName) => {
     const group = study.steps[groupName];

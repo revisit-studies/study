@@ -12,7 +12,7 @@ export function StepsPanel() {
 
   const { config = null } = useAppSelector((state) => state.unTrrackedSlice);
 
-  const sequence = config?.sequence || [];
+  const sequence = config?.sequence as string[] || [];
 
   return (
     <Group spacing="xs">

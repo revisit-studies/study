@@ -16,7 +16,7 @@ export const __ACTIVE_SESSION = '__active_session';
 
 function getSteps({ sequence, components }: StudyConfig): Record<string, Step> {
   const steps: Record<string, Step> = {};
-  sequence.forEach((id, idx, arr) => {
+  (sequence as string[]).forEach((id, idx, arr) => {
     const component = components[id];
     steps[id] = {
       ...component,
@@ -51,7 +51,6 @@ export async function studyStoreCreator(
 
   const initialUntrrackedState: UnTrrackedState = {
     steps,
-
     config,
   };
 

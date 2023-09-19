@@ -29,7 +29,7 @@ export default function AppAside() {
   const trialConfig = config as ContainerComponent;
   const tasks =
     trialConfig?.type === 'container'
-      ? trialConfig.order.map((trialId) => ({
+      ? (trialConfig.order as string[]).map((trialId) => ({
           ...trialConfig.components[trialId] as IndividualComponent,
           id: trialId,
         }))
