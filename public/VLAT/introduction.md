@@ -4,7 +4,7 @@ This is a reVISit adaptation of the original VLAT questionnaire from Kwon et al.
 
 From their study: 
 
-"## What is VLAT?
+## What is VLAT?
 
 VLAT is developed to measure users' ability to read, understand, and
 use data visualizations to solve problems. This test is a web

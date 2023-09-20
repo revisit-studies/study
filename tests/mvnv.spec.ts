@@ -4,10 +4,10 @@ test('test', async ({ page }) => {
   await page.goto('/');
 
   // Click on mvnv study
-  await page.getByRole('button', { name: 'MVNV Study Replication A replication of adjacent matrix tasks in the MVNV study' }).click();
+  await page.getByRole('button', { name: 'MVNV Study Replication A replication of adjacency matrix tasks in a multi-variate network visualization (MVNV) study' }).click();
 
   // Check for introduction page
-  const introText = await page.getByText('Welcome to our study. This is a complex example study to show how to embed html');
+  const introText = await page.getByText('Welcome to our study. This is a more complex example to show how to embed HTML');
   await expect(introText).toBeVisible();
 
   // Click on next button
