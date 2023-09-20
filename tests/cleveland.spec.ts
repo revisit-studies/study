@@ -4,10 +4,10 @@ test('test', async ({ page }) => {
   await page.goto('/');
 
   // Click on cleveland
-  await page.getByRole('button', { name: 'Dyanmic React Stimuli: A Graphical Perception Experiment A demo using dynamic React components as stiumli to replicate the Cleveland/McGill, and the Heer/Bostock extension of graphical perception studies with post study survey.' }).click();
+  await page.getByRole('button', { name: 'Dynamic React.js Stimuli: A Graphical Perception Experiment A demo using dynamic React components as stimuli to replicate a Cleveland & McGill graphical perception task, with a post study survey.' }).click();
 
   // Check that the page contains the introduction text
-  const introText = await page.getByText('Welcome to our study. This is a complex example study to show how to embed react');
+  const introText = await page.getByText('Welcome to our study. This is a more complex example to show how to embed React.js');
   await expect(introText).toBeVisible();
 
   // Click on the next button
