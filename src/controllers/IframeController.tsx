@@ -3,18 +3,15 @@ import { useDispatch } from 'react-redux';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { PREFIX as BASE_PREFIX } from '../App';
 import { useCurrentStep } from '../routes';
-import {
-  setIframeAnswers,
-  useFlagsDispatch,
-} from '../store/flags';
+import { setIframeAnswers, useFlagsDispatch } from '../store/flags';
 import { useNextStep } from '../store/hooks/useNextStep';
-import {useStoreActions} from '../store';
-
+import { useStoreActions } from '../store';
 
 const PREFIX = '@REVISIT_COMMS';
 
 const defaultStyle = {
   minHeight: '500px',
+  height: 'calc(100vh - var(--mantine-header-height, 0px) - 20px)',
   width: '100%',
   border: 0,
   marginTop: '-50px'
@@ -25,7 +22,7 @@ type Props = {
   parameters?: Record<string, unknown>;
 };
 
-export default function IframeController({path, parameters}: Props) {
+export default function IframeController({ path, parameters }: Props) {
   const { saveTrialAnswer } = useStoreActions();
 
   const flagDispatch = useFlagsDispatch();
@@ -45,7 +42,6 @@ export default function IframeController({path, parameters}: Props) {
   const navigate = useNavigate();
   const computedTo = useNextStep();
   const id = useLocation().pathname;
-
 
   const sendMessage = useCallback(
     (tag: string, message: unknown) => {
@@ -73,15 +69,10 @@ export default function IframeController({path, parameters}: Props) {
             }
             break;
           case `${PREFIX}/READY`:
-            if (ref.current) {
-              ref.current.style.height = `${data.message.documentHeight}px`;
-            }
             break;
           case `${PREFIX}/ANSWERS`:
-              flagDispatch(setIframeAnswers(data.message.answer));
+            flagDispatch(setIframeAnswers(data.message.answer));
             break;
-
-
         }
       }
     };
@@ -107,9 +98,9 @@ export default function IframeController({path, parameters}: Props) {
   //     trialId,
   //     answer: { [`${id}/${trialId}`]: data.message },
   //   })
-  
+
   return (
-    <div >
+    <div>
       <iframe
         ref={ref}
         src={`${BASE_PREFIX}${path}?trialid=${trialId}&id=${iframeId}`}
