@@ -19,9 +19,9 @@ const generateValidation = (responses: Response[], id: string) => {
         ...validateObj,
         [`${id}/${response.id}`]: (value: string | string[]) => {
           if (Array.isArray(value)) {
-            if(response.requiredValue && !Array.isArray(response.requiredValue)) {
+            if(response.requiredValue != null && !Array.isArray(response.requiredValue)) {
               return 'Incorrect required value';
-            } else if (response.requiredValue && Array.isArray(response.requiredValue)) {
+            } else if (response.requiredValue != null && Array.isArray(response.requiredValue)) {
               if(response.requiredValue.length !== value.length) {
                 return 'Incorrect input';
               }
@@ -32,10 +32,10 @@ const generateValidation = (responses: Response[], id: string) => {
             }
             return value.length === 0 ? 'Empty input' : null;
           }
-          if(response.required && response.requiredValue && value) {
+          if(response.required && response.requiredValue != null && value != null) {
             return value.toString() !== response.requiredValue.toString() ? 'Incorrect input' : null;
           }
-          return !value ? 'Empty input' : null;
+          return value == null ? 'Empty input' : null;
         }
       };
     }
