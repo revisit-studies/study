@@ -17,6 +17,7 @@ test('test', async ({ page }) => {
   await page.getByPlaceholder('Enter your answer here').fill('ads');
   await page.getByPlaceholder('Enter your long comments here').fill('asdf');
   await page.getByText('0BadMidGood').click();
+  await page.getByRole('checkbox', { name: 'Mid' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
   // Check that the thank you message is displayed
