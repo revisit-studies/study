@@ -69,20 +69,3 @@
         trials1
     ]
 }
-
-
-
-Cardinality12Test: {
-	order: latinSquare
-	components: [
-		{
-			order: fixed
-			components: [radial-12-1, radial-12-2, radial-12-3, radial-12-4, radial-12-5, radial-12-6]	
-		}
-		{
-			order: fixed
-			components: [linear-12-1, linear-12-2, linear-12-3, linear-12-4, linear-12-5, linear-12-6]	
-		}
-	]
-}
-

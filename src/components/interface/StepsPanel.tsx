@@ -1,6 +1,6 @@
 import { Badge, Group } from '@mantine/core';
 import { useCurrentStep } from '../../routes';
-import { useAppSelector } from '../../store';
+import { useAppSelector } from '../../store/store';
 import { useNavigate, useParams } from 'react-router-dom';
 
 export function StepsPanel() {
@@ -10,9 +10,9 @@ export function StepsPanel() {
   const currentStep = useCurrentStep();
   const navigate = useNavigate();
 
-  const { config = null } = useAppSelector((state) => state.unTrrackedSlice);
-
-  const sequence = config?.sequence as string[] || [];
+  const state = useAppSelector((state) => state.trrackedSlice);
+  console.log(state);
+  const { sequence } = useAppSelector((state) => state.trrackedSlice.orderConfig);
 
   return (
     <Group spacing="xs">

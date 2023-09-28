@@ -10,9 +10,9 @@ import {
 import { IconArrowRight } from '@tabler/icons-react';
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { IndividualComponent, ProcessedContainerComponent } from '../../parser/types';
+import { ContainerComponent, IndividualComponent, OrderContainerComponent } from '../../parser/types';
 import { useCurrentStep } from '../../routes';
-import { useAppSelector } from '../../store';
+import { useAppSelector } from '../../store/store';
 import { useFlagsSelector } from '../../store/flags';
 import { DownloadPanel } from '../DownloadPanel';
 import { StepsPanel } from './StepsPanel';
@@ -24,13 +24,13 @@ export default function AppAside() {
 
   const step = useCurrentStep();
   const config = useAppSelector(
-    (state) => state.unTrrackedSlice.config?.components[step]
+    (state) => state.trrackedSlice.orderConfig?.components[step]
   );
-  const trialConfig = config as ProcessedContainerComponent;
+  
   const tasks =
-    trialConfig?.type === 'container'
-      ? (trialConfig.order).map((trialId) => ({
-          ...trialConfig.components[trialId] as IndividualComponent,
+    config?.type === 'container'
+      ? (config.order).map((trialId) => ({
+          ...config.components[trialId] as IndividualComponent,
           id: trialId,
         }))
       : [];

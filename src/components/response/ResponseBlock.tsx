@@ -6,13 +6,13 @@ import { useNextTrialId } from '../../controllers/utils';
 import {
   ContainerComponent,
   IndividualComponent,
-  ProcessedContainerComponent,
-  ProcessedStudyComponent,
+  OrderContainerComponent,
+  OrderComponent,
   ResponseBlockLocation,
   StudyComponent,
 } from '../../parser/types';
 import { useCurrentStep } from '../../routes';
-import { useAppDispatch, useStoreActions, useStudySelector } from '../../store';
+import { useAppDispatch, useStoreActions, useStudySelector } from '../../store/store';
 import {
   setIframeAnswers,
   updateResponseBlockValidation,
@@ -31,7 +31,7 @@ import React from 'react';
 
 type Props = {
   status: TrialResult | null;
-  config: ProcessedStudyComponent | ProcessedContainerComponent;
+  config: StudyComponent | ContainerComponent;
   location: ResponseBlockLocation;
   style?: React.CSSProperties;
 };
@@ -54,7 +54,7 @@ export default function ResponseBlock({
   const id = useLocation().pathname;
   const storedAnswer = status?.answer;
 
-  const trialConfig = (config as ProcessedContainerComponent)?.components !== undefined && trialId !== null ? (config as ProcessedContainerComponent).components[trialId] : undefined;
+  const trialConfig = (config as ContainerComponent)?.components !== undefined && trialId !== null ? (config as ContainerComponent).components[trialId] : undefined;
 
   const configInUse = (trialConfig || config) as IndividualComponent;
 

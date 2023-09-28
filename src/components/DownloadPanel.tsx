@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useStudyId } from '../routes';
 import { useFirebase } from '../storage/init';
 import { getAllSessionGraphs } from '../storage/queries';
-import { useAppSelector, useCreatedStore } from '../store';
+import { useAppSelector, useCreatedStore } from '../store/store';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { DownloadTidy } from './DownloadTidy';
 

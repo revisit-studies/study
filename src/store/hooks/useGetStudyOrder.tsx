@@ -3,13 +3,7 @@ import { useCurrentStep } from '../../routes';
 import { TrialRecord, TrialResult } from '../types';
 import { useCurrentTrial } from './useCurrentTrial';
 
-/**
- *
- * @param trialId Trial id for which to get status
- * @returns TrialResult object with complete status and any answer if present. Returns null if not in trial step
- */
-
-export function useComponentStatus(): TrialResult | null {
+export function useGetStudyOrder(): TrialResult | null {
   const config = useAppSelector((state) => state.unTrrackedSlice.config);
   const study = useAppSelector((state) => state.trrackedSlice);
 

@@ -1,15 +1,15 @@
 import { useCurrentStep } from '../routes';
-import { useStudyConfig } from '../store/hooks/useStudyConfig';
-import { ContainerComponent, ProcessedContainerComponent } from '../parser/types';
+import { OrderContainerComponent } from '../parser/types';
+import { useAppSelector } from '../store/store';
 
 export function useNextTrialId(currentTrial: string | null) {
-  const studyConfig = useStudyConfig();
+  const studyConfig = useAppSelector((state) => state.trrackedSlice.orderConfig);
   const step = useCurrentStep();
   const stepConfig = studyConfig.components[step];
 
   if (!stepConfig || stepConfig.type !== 'container') return null;
 
-  const { order } = (stepConfig as ProcessedContainerComponent);
+  const { order } = (stepConfig as OrderContainerComponent);
 
   if (!order) return null;
 

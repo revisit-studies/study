@@ -4,7 +4,7 @@ import { clearIndexedDbPersistence, terminate } from 'firebase/firestore';
 import localforage from 'localforage';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
-import { ProcessedStudyConfig, StudyComponent, StudyConfig } from '../parser/types';
+import { OrderConfig, StudyComponent, StudyConfig } from '../parser/types';
 import { ProvenanceStorage } from '../storage/types';
 import { flagsStore, setTrrackExists } from './flags';
 import { RootState, Step, TrialRecord, TrrackedState, UnTrrackedState } from './types';
@@ -14,7 +14,7 @@ export const SESSION_ID = 'SESSION_ID';
 
 export const __ACTIVE_SESSION = '__active_session';
 
-function getSteps({ sequence, components }: ProcessedStudyConfig): Record<string, Step> {
+function getSteps({ sequence, components }: OrderConfig): Record<string, Step> {
   const steps: Record<string, Step> = {};
   (sequence as string[]).forEach((id, idx, arr) => {
     const component = components[id];
@@ -30,14 +30,17 @@ function getSteps({ sequence, components }: ProcessedStudyConfig): Record<string
 
 export async function studyStoreCreator(
   studyId: string,
-  config: ProcessedStudyConfig,
+  config: StudyConfig,
+  order: OrderConfig,
   firebase: ProvenanceStorage
 ) {
+
+  console.log(order, config);
   const lf = localforage.createInstance({
     name: 'sessions',
   });
 
-  const steps = getSteps(config);
+  const steps = getSteps(order);
   const stepsToAnswers = Object.assign({}, ...Object.keys(steps).map((id) => ({[id]: {}})));
 
   const initialTrrackedState: TrrackedState = {
@@ -47,6 +50,7 @@ export async function studyStoreCreator(
       session_id: crypto.randomUUID(),
     },
     ...stepsToAnswers,
+    orderConfig: order,
   };
 
   const initialUntrrackedState: UnTrrackedState = {
@@ -94,7 +98,7 @@ export async function studyStoreCreator(
     name: 'studySlice',
     initialState: initialUntrrackedState,
     reducers: {
-      setConfig (state, payload: PayloadAction<ProcessedStudyConfig>) {
+      setConfig (state, payload: PayloadAction<StudyConfig>) {
         state.config = payload.payload;
       },
       completeStep(state, step) {

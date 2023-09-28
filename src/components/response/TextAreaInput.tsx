@@ -20,11 +20,13 @@ export default function TextAreaInput({
       <Textarea
         disabled={disabled}
         placeholder={placeholder}
-        label={prompt}
+        label={prompt} 
         radius={'md'}
         size={'md'}
         withAsterisk={required}
         {...answer}
+        // This is necessary so the component doesnt switch from uncontrolled to controlled, which can cause issues.
+        value={answer.value || ''}
         error={generateErrorMessage(response, answer)}
       />
     </>

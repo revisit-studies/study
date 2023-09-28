@@ -97,14 +97,14 @@ function processToRow(
 
   const lastNode = nodes[nodes.length - 1];
 
-  const untrrackedStudy: UnTrrackedState = lastNode.state.unTrrackedSlice;
-  const trrackedStudy: TrrackedState = lastNode.state.trrackedSlice;
+  const untrrackedStudy: UnTrrackedState = lastNode.state.val.unTrrackedSlice;
+  const trrackedStudy: TrrackedState = lastNode.state.val.trrackedSlice;
 
 
   trialGroups.forEach((groupName) => {
-    const group = study.steps[groupName];
+    const group = untrrackedStudy.steps[groupName];
     if (isContainerComponent(group)) {
-      const answers = study[groupName];
+      const answers = trrackedStudy[groupName];
 
       Object.entries(group.components).forEach(([trialId, trial]) => {
         const answer: Nullable<TrialResult> =
@@ -118,8 +118,8 @@ function processToRow(
         const duration = (answer?.endTime || 0) - 0;
 
         const tr: TidyRow = {
-          pid: study.studyIdentifiers.pid,
-          sessionId: study.studyIdentifiers.session_id,
+          pid: trrackedStudy.studyIdentifiers.pid,
+          sessionId: trrackedStudy.studyIdentifiers.session_id,
           status: session.status.endStatus?.status || 'incomplete',
           type: group.type,
           trialId,

@@ -8,7 +8,7 @@ import {
   useFlagsDispatch,
 } from '../store/flags';
 import { useNextStep } from '../store/hooks/useNextStep';
-import {useStoreActions} from '../store';
+import {useStoreActions} from '../store/store';
 
 
 const PREFIX = '@REVISIT_COMMS';

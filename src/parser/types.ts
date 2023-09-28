@@ -261,10 +261,10 @@ export interface ContainerComponent {
   components: StudyComponents;
 }
 
-export interface ProcessedContainerComponent {
+export interface OrderContainerComponent {
   type: 'container';
   order: string[];
-  components: StudyComponents;
+  components: OrderComponents;
 }
 
 export interface OrderObject {
@@ -275,13 +275,13 @@ export interface OrderObject {
 
 export type StudyComponent = IndividualComponent | ContainerComponent;
 
-export type ProcessedStudyComponent = IndividualComponent | ProcessedContainerComponent;
+export type OrderComponent = IndividualComponent | OrderContainerComponent;
 
 export interface StudyComponents {
   [key: string]: StudyComponent;
 }
-export interface ProcessedStudyComponents {
-  [key: string]: ProcessedStudyComponent;
+export interface OrderComponents {
+  [key: string]: OrderComponent;
 }
 
 /**
@@ -295,11 +295,8 @@ export interface StudyConfig {
   sequence: (string | OrderObject)[];
 }
 
-export interface ProcessedStudyConfig {
-  $schema: string;
-  studyMetadata: StudyMetadata;
-  uiConfig: UIConfig;
-  components: ProcessedStudyComponents;
+export interface OrderConfig {
+  components: OrderComponents;
   sequence: string[];
 }
 
@@ -331,6 +328,6 @@ export function isContainerComponent(component: StudyComponent): component is Co
  * @ignore
  * Typecase helper for ContainerComponent
  */
-export function isProcessedContainerComponent(component: ProcessedStudyComponent): component is ProcessedContainerComponent {
+export function isProcessedContainerComponent(component: OrderComponent): component is OrderContainerComponent {
   return component.type === 'container';
 }

@@ -1,4 +1,4 @@
-import { useAppSelector } from '..';
+import { useAppSelector } from '../store';
 import { isContainerComponent, isProcessedContainerComponent } from '../../parser/types';
 
 /**
@@ -11,7 +11,7 @@ export function useCompletedTrialMetric(trialName: string) {
   const { config } = useAppSelector((state) => state.unTrrackedSlice);
   const trialConfig = config?.components[trialName];
 
-  if (trialConfig && isProcessedContainerComponent(trialConfig)) {
+  if (trialConfig && isContainerComponent(trialConfig)) {
     const totalTrials = trialConfig.order.length;
     const totalCompleted = Object.values(trialConfig.components[trialName]).filter(
       (t) => t.complete

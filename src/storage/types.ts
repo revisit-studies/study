@@ -1,7 +1,7 @@
 import { NodeId } from '@trrack/core';
 import { Firestore } from 'firebase/firestore';
 import localforage from 'localforage';
-import { StudyProvenance } from '../store';
+import { StudyProvenance } from '../store/store';
 import { StudyConfig } from '../parser/types';
 
 export type LocalForage = typeof localforage;

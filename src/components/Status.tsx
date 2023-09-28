@@ -1,5 +1,5 @@
 import { useCurrentStep } from '../routes';
-import { useAppSelector } from '../store';
+import { useAppSelector } from '../store/store';
 
 export function Status() {
   const currentStep = useCurrentStep();

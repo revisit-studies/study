@@ -5,7 +5,7 @@ import { Shell } from './components/Shell';
 import { parseGlobalConfig, parseStudyConfig } from './parser/parser';
 import { GlobalConfig, Nullable, StudyComponents, StudyConfig } from './parser/types';
 import { Component } from 'typedoc/dist/lib/utils';
-import { useAppDispatch, useStoreActions } from './store';
+import { useAppDispatch, useStoreActions } from './store/store';
 
 export const PREFIX = import.meta.env.PROD
   ? import.meta.env.VITE_BASE_PATH

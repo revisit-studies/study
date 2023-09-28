@@ -4,22 +4,20 @@ import {
   createContext,
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
 import { createSelectorHook, Provider } from 'react-redux';
 import { Outlet, RouteObject, useParams, useRoutes } from 'react-router-dom';
 import { parseStudyConfig } from '../parser/parser';
 import {
-  ContainerComponent,
   GlobalConfig,
   Nullable,
   OrderObject,
-  ProcessedContainerComponent,
-  ProcessedStudyConfig,
-  StudyComponent,
+  OrderContainerComponent,
+  OrderConfig,
   StudyComponents,
   StudyConfig,
-  isContainerComponent,
 } from '../parser/types';
 import { StudyIdParam } from '../routes';
 import {
@@ -27,7 +25,7 @@ import {
   StudyStore,
   studyStoreCreator,
   useCreatedStore,
-} from '../store';
+} from '../store/store';
 import {
   flagsContext,
   flagsStore,
@@ -48,6 +46,7 @@ import AppHeader from './interface/AppHeader';
 import AppNavBar from './interface/AppNavBar';
 import HelpModal from './interface/HelpModal';
 import { StudyEnd } from './StudyEnd';
+import { deepCopy } from '../utils/deepCopy';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion
 const trrackContext: any = createContext<TrrackStoreType>(undefined!);
@@ -74,6 +73,16 @@ function orderObjectToList(order: OrderObject) {
   }
 }
 
+//TODO:: remove anything that isnt order from this object
+function createOrderConfig(study: StudyConfig): OrderConfig {
+  const newConfig = deepCopy(study);
+  createRandomOrders(newConfig.components);
+
+  newConfig.sequence = randomizeSequence(newConfig.sequence);
+
+  return newConfig as unknown as OrderConfig;
+}
+
 function createRandomOrders(components: StudyComponents) {
   Object.keys(components).forEach((componentKey) => {
     const component = components[componentKey];
@@ -91,27 +100,6 @@ function createRandomOrders(components: StudyComponents) {
   });
 }
 
-// function assignRandomOrders(config: StudyConfig, randoms: {path: string, order: string[]}[] | undefined) {
-//   if(!randoms) {
-//     return;
-//   }
-   
-//   randoms.forEach((rand) => {
-//     const pathArr = rand.path.split('/');
-
-//     let obj: StudyConfig | ContainerComponent = config;
-
-//     pathArr.forEach((s) => {
-//       const newObj = (obj.components[s] as ContainerComponent) ;
-//       obj = newObj;
-//     });
-
-//     if(pathArr.length > 0) {
-//      (obj as unknown as ContainerComponent).order = rand.order;
-//     }
-//   });
-// }
-
 function randomizeSequence(sequence: (string | OrderObject)[]) {
 
   for(let i = 0; i < sequence.length; i++) {
@@ -120,28 +108,11 @@ function randomizeSequence(sequence: (string | OrderObject)[]) {
       orderObjectToList(curr);
       sequence[i] = curr.components as any;
 
-    }
+    } 
   }
 
-  console.log(sequence);
   return sequence.flat();
 }
-
-// function assignSequence(sequence: (string | string[])[], randoms: {path: string, order: string[]}[] | undefined) {
-//   if(!randoms) {
-//     return [];
-//   }
-  
-//   let counter = 0;
-//   sequence.forEach((s: string | string[], i) => {
-//     if(Array.isArray(s)) {
-//       sequence[i] = randoms.find((rand) => rand.path === `_sequence-${counter}`)?.order || [];
-//       counter += 1;
-//     }
-//   });
-
-//   return sequence.flat();
-// }
 
 type Props = {
   globalConfig: GlobalConfig;
@@ -197,8 +168,15 @@ export function Shell({ globalConfig }: Props) {
     };
   }, [activeConfig]);
 
+  const orderConfig = useMemo(() => {
+    if (!activeConfig || !studyId || !firebase) return null;
+
+    return createOrderConfig(activeConfig);
+
+  }, [activeConfig, firebase, studyId]);
+
   useEffect(() => {
-    if (!activeConfig || !studyId || !firebase) return;
+    if (!activeConfig || !studyId || !firebase || !orderConfig) return;
 
     let active = true;
 
@@ -215,10 +193,7 @@ export function Shell({ globalConfig }: Props) {
       const sequenceRandoms = randoms?.filter((rand) => rand.path.startsWith('_sequence-'));
 
 
-      createRandomOrders(config.components);
-      config.sequence = randomizeSequence(config.sequence);
-
-      const st = await studyStoreCreator(sid, config as ProcessedStudyConfig, fb);
+      const st = await studyStoreCreator(sid, config, orderConfig!, fb);
 
       if (!active) return;
 
@@ -230,11 +205,9 @@ export function Shell({ globalConfig }: Props) {
     return () => {
       active = false;
     };
-  }, [activeConfig, studyId, firebase]);
+  }, [activeConfig, studyId, firebase, orderConfig]);
 
-  console.log(activeConfig);
-
-  const routing = useStudyRoutes(studyId, activeConfig, storeObj);
+  const routing = useStudyRoutes(studyId, orderConfig, storeObj);
 
   if (!routing || !storeObj || !firebase) return null;
 
@@ -314,7 +287,7 @@ function StepRenderer() {
 
 function useStudyRoutes(
   studyId: Nullable<string>,
-  config: Nullable<ProcessedStudyConfig>,
+  config: Nullable<OrderConfig>,
   store: Nullable<StudyStore> // used only to detect if store is ready
 ) {
   const routes: RouteObject[] = [];
@@ -340,7 +313,7 @@ function useStudyRoutes(
           element: <StudyEnd />,
         });
       } else if (component.type === 'container') {
-        const { order } = component as ProcessedContainerComponent;
+        const { order } = component as OrderContainerComponent;
 
         if (order.length > 0) {
           const baseRoute: RouteObject = {

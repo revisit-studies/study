@@ -14,7 +14,7 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { createContext, useContext } from 'react';
-import { StudyProvenance } from '../store';
+import { StudyProvenance } from '../store/store';
 import { MODE, NODES, SESSIONS, STUDIES } from './constants';
 import { getFirestoreManager } from './firebase';
 import { FsSession, ProvenanceStorage } from './types';

@@ -1,4 +1,4 @@
-import { useAppSelector } from '..';
+import { useAppSelector } from '../store';
 import { useCurrentStep } from '../../routes';
 
 export function useNextStep() {

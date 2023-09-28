@@ -1,6 +1,6 @@
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import { Nullable } from '../parser/types';
-import { PID, SESSION_ID } from '../store';
+import { PID, SESSION_ID } from '../store/store';
 
 export type StudySessionInfo = {
   provenance: Nullable<ProvenanceGraph<unknown, string, any>>;

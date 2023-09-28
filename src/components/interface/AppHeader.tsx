@@ -20,7 +20,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PREFIX } from '../../App';
 import { useCurrentStep } from '../../routes';
-import { useAppSelector, useCreatedStore } from '../../store';
+import { useAppSelector, useCreatedStore } from '../../store/store';
 import {
   toggleShowAdmin,
   toggleShowHelpText,

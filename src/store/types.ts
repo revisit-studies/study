@@ -1,5 +1,5 @@
-import { BaseIndividualComponent, ProcessedContainerComponent, ProcessedStudyConfig } from '../parser/types';
-import { StudyStore } from './index';
+import { BaseIndividualComponent, OrderContainerComponent, OrderConfig, StudyConfig } from '../parser/types';
+import { StudyStore } from './store';
 
 export type RootState = ReturnType<StudyStore['store']['getState']>;
 
@@ -16,7 +16,7 @@ export type TrialRecord = Record<string, TrialResult>;
 
 export type PracticeRecord = Record<string, PracticeResult>;
 
-export interface Step extends BaseIndividualComponent, ProcessedContainerComponent {
+export interface Step extends BaseIndividualComponent, OrderContainerComponent {
   complete: boolean;
   next: string | null;
 }
@@ -30,12 +30,13 @@ export type StudyIdentifiers = {
 export interface TrrackedState {
   // Three identifiers given by the study platform
   studyIdentifiers: StudyIdentifiers;
-  [name: string]: TrialRecord | StudyIdentifiers | ProcessedStudyConfig | Record<string, Step>;
+  [name: string]: TrialRecord | StudyIdentifiers | StudyConfig | Record<string, Step> | OrderConfig;
+  orderConfig: OrderConfig
 }
 
 export interface UnTrrackedState {
   // Three identifiers given by the study platform
   steps: Record<string, Step>;
 
-  config: ProcessedStudyConfig;
+  config: StudyConfig;
 }
