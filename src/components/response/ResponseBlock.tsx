@@ -6,6 +6,8 @@ import { useNextTrialId } from '../../controllers/utils';
 import {
   ContainerComponent,
   IndividualComponent,
+  ProcessedContainerComponent,
+  ProcessedStudyComponent,
   ResponseBlockLocation,
   StudyComponent,
 } from '../../parser/types';
@@ -29,7 +31,7 @@ import React from 'react';
 
 type Props = {
   status: TrialResult | null;
-  config: StudyComponent | ContainerComponent;
+  config: ProcessedStudyComponent | ProcessedContainerComponent;
   location: ResponseBlockLocation;
   style?: React.CSSProperties;
 };
@@ -52,7 +54,7 @@ export default function ResponseBlock({
   const id = useLocation().pathname;
   const storedAnswer = status?.answer;
 
-  const trialConfig = (config as ContainerComponent)?.components !== undefined && trialId !== null ? (config as ContainerComponent).components[trialId] : undefined;
+  const trialConfig = (config as ProcessedContainerComponent)?.components !== undefined && trialId !== null ? (config as ProcessedContainerComponent).components[trialId] : undefined;
 
   const configInUse = (trialConfig || config) as IndividualComponent;
 

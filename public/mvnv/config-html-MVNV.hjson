@@ -68,9 +68,12 @@
         }
         trials0: {
             type: container
-            order: [
-                task0
-            ]
+            order: {
+                order: fixed
+                components: [
+                    task0
+                ]
+            }
             components: {
                 task0: {
                     meta: {
@@ -97,9 +100,12 @@
         }
         trials1: {
             type: container
-            order: [
-                task1
-            ]
+            order: {
+                order: fixed
+                components: [
+                    task1
+                ]
+            }
             components: {
                 task1: {
                     meta: {
@@ -126,9 +132,12 @@
         }
         trials2: {
             type: container
-            order: [
-                task2
-            ]
+            order: {
+                order: fixed
+                components: [
+                    task2
+                ]
+            }
             components: {
                 task2: {
                     meta: {
@@ -155,9 +164,12 @@
         }
         trials3: {
             type: container
-            order: [
-                task3
-            ]
+            order: {
+                order: fixed
+                components: [
+                    task3
+                ]
+            }
             components: {
                 task3: {
                     meta: {
@@ -184,9 +196,12 @@
         }
         trials4: {
             type: container
-            order: [
-                task4
-            ]
+            order: {
+                order: fixed
+                components: [
+                    task4
+                ]
+            }
             components: {
                 task4: {
                     meta: {
@@ -213,9 +228,12 @@
         }
         trials5: {
             type: container
-            order: [
-                task5
-            ]
+            order: {
+                order: fixed
+                components: [
+                    task5
+                ]
+            }
             components: {
                 task5: {
                     meta: {
@@ -242,9 +260,12 @@
         }
         trials6: {
             type: container
-            order: [
-                task6
-            ]
+            order: {
+                order: fixed
+                components: [
+                    task6
+                ]
+            }
             components: {
                 task6: {
                     meta: {
@@ -288,9 +309,12 @@
         }
         trials7: {
             type: container
-            order: [
-                task7
-            ]
+            order: {
+                order: fixed
+                components: [
+                    task7
+                ]
+            }
             components: {
                 task7: {
                     meta: {
@@ -317,9 +341,12 @@
         }
         trials8: {
             type: container
-            order: [
-                task8
-            ]
+            order: {
+                order: fixed
+                components: [
+                    task8
+                ]
+            }
             components: {
                 task8: {
                     meta: {
@@ -364,9 +391,12 @@
         }
         trials9: {
             type: container
-            order: [
-                task9
-            ]
+            order: {
+                order: fixed
+                components: [
+                    task9
+                ]
+            }
             components: {
                 task9: {
                     meta: {
@@ -393,9 +423,12 @@
         }
         trials10: {
             type: container
-            order: [
-                task10
-            ]
+            order: {
+                order: fixed
+                components: [
+                    task10
+                ]
+            }
             components: {
                 task10: {
                     meta: {
@@ -422,9 +455,12 @@
         }
         trials11: {
             type: container
-            order: [
-                task11
-            ]
+            order: {
+                order: fixed
+                components: [
+                    task11
+                ]
+            }
             components: {
                 task11: {
                     meta: {
@@ -459,9 +495,12 @@
         }
         trials12: {
             type: container
-            order: [
-                task12
-            ]
+            order: {
+                order: fixed
+                components: [
+                    task12
+                ]
+            }
             components: {
                 task12: {
                     meta: {
@@ -513,9 +552,12 @@
         }
         trials13: {
             type: container
-            order: [
-                task13
-            ]
+            order: {
+                order: fixed
+                components: [
+                    task13
+                ]
+            }
             components: {
                 task13: {
                     meta: {
@@ -567,9 +609,12 @@
         }
         trials14: {
             type: container
-            order: [
-                task14
-            ]
+            order: {
+                order: fixed
+                components: [
+                    task14
+                ]
+            }
             components: {
                 task14: {
                     meta: {
@@ -596,9 +641,12 @@
         }
         trials15: {
             type: container
-            order: [
-                task15
-            ]
+            order: {
+                order: fixed
+                components: [
+                    task15
+                ]
+            }
             components: {
                 task15: {
                     meta: {
@@ -628,26 +676,36 @@
         introduction
         consent
         training
-        [   trials0
-            trials1
-            trials2
-            trials3
-            trials4
-            trials5
-        ]
-        [   trials6
-            trials7
-            trials8
-            trials9
-            trials10
-        ]
-        [   trials11
-            trials12
-            trials13
-            trials14
-            trials15
-        ]
-        
+        {
+            order: random
+            components:[  
+                trials0
+                trials1
+                trials2
+                trials3
+                trials4
+                trials5
+            ]
+        }
+        {
+            order: fixed
+            components:[  
+                trials6
+                trials7
+                trials8
+                trials9
+                trials10
+            ]
+        }
+        {
+            order: random
+            components:[  
+                trials11
+                trials12
+                trials13
+                trials14
+                trials15
+            ]
+        }      
     ], 
-    randomizationStrategy: latinSquares
 }

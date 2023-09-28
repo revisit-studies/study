@@ -30,11 +30,14 @@
         }
         trials1: {
             type: container
-            order: [
-                dotplot-low
-                dotplot-medium
-                dotplot-high
-            ]
+            order: {
+                order: fixed
+                components: [
+                    dotplot-low
+                    dotplot-medium
+                    dotplot-high
+                ]
+            }
             components: {
                 dotplot-low: {
                     meta: {

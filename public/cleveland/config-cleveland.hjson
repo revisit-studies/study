@@ -1,6 +1,5 @@
 {
     $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/schema.json
-    randomizationStrategy: latinSquares
     studyMetadata: {
         title: Dyanmic React Stimuli: A Graphical Perception Experiment
         version: pilot
@@ -69,7 +68,15 @@
         }
         practice1: {
             type: container
-            order: random
+            order: {
+                order: random
+                components: [
+                    bubbleChart1
+                    stackedBarChart1
+                    barChart1
+                    pieChart1
+                ]
+            }
             components: {
                 bubbleChart1: {
                     meta: {
@@ -315,7 +322,21 @@
         }
         trials1: {
             type: container
-            order: random
+            order: {
+                order: random
+                components: [
+                    bubbleChart1
+                    stackedBarChart1
+                    stackedBarChart2
+                    barChart1
+                    pieChart1
+                    bubbleChart2
+                    stackedBarChart3
+                    stackedBarChart4
+                    barChart2
+                    pieChart2
+                ]
+            }
             components: {
                 bubbleChart1: {
                     meta: {
@@ -865,7 +886,7 @@
             response: [
                 {
                     id: q1
-                    prompt: which chart type you think is the most difficult
+                    prompt: Which chart type you think is the most difficult
                     required: true
                     location: aboveStimulus
                     type: dropdown

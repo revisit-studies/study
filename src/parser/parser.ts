@@ -2,7 +2,7 @@
 import { parse as hjsonParse } from 'hjson';
 import Ajv from 'ajv';
 import schema from './schema.json';
-import { ContainerComponent, GlobalConfig, StudyConfig } from './types';
+import { ContainerComponent, GlobalConfig, OrderObject, StudyConfig } from './types';
 
 const ajv = new Ajv();
 ajv.addSchema(schema);
@@ -22,6 +22,21 @@ function verifyGlobalConfig(data: GlobalConfig) {
   });
 
   return [configsListVerified, errors] as const;
+}
+
+function getAllComponentNames(order: OrderObject, list: string[]) {
+  if(!order) {
+    return;
+  }
+
+  order.components.forEach((comp) => {
+    if(typeof comp === 'string'){
+      list.push(comp);
+    }
+    else {
+      getAllComponentNames(comp, list);
+    }
+  });
 }
 
 export function parseGlobalConfig(fileData: string) {
@@ -51,7 +66,11 @@ function verifyStudyConfig(data: StudyConfig) {
         errors.push({ message: `Container component ${componentName} has an empty components field` });
         return false;
       }
-      if ((component as ContainerComponent).order !== 'random' && !((component as ContainerComponent).order as string[]).every((componentName) => (component as ContainerComponent).components![componentName] !== undefined)) {
+
+      const componentNames: string[] = [];
+
+      getAllComponentNames(component.order, componentNames);
+      if (!componentNames.every((componentName) => (component as ContainerComponent).components[componentName] !== undefined)) {
         errors.push({ message: `Container component ${componentName} has an order field that contains components not present in components field` });
         return false;
       }

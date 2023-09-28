@@ -4,7 +4,7 @@ import { clearIndexedDbPersistence, terminate } from 'firebase/firestore';
 import localforage from 'localforage';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
-import { StudyComponent, StudyConfig } from '../parser/types';
+import { ProcessedStudyConfig, StudyComponent, StudyConfig } from '../parser/types';
 import { ProvenanceStorage } from '../storage/types';
 import { flagsStore, setTrrackExists } from './flags';
 import { RootState, Step, TrialRecord, TrrackedState, UnTrrackedState } from './types';
@@ -14,7 +14,7 @@ export const SESSION_ID = 'SESSION_ID';
 
 export const __ACTIVE_SESSION = '__active_session';
 
-function getSteps({ sequence, components }: StudyConfig): Record<string, Step> {
+function getSteps({ sequence, components }: ProcessedStudyConfig): Record<string, Step> {
   const steps: Record<string, Step> = {};
   (sequence as string[]).forEach((id, idx, arr) => {
     const component = components[id];
@@ -30,7 +30,7 @@ function getSteps({ sequence, components }: StudyConfig): Record<string, Step> {
 
 export async function studyStoreCreator(
   studyId: string,
-  config: StudyConfig,
+  config: ProcessedStudyConfig,
   firebase: ProvenanceStorage
 ) {
   const lf = localforage.createInstance({
@@ -94,7 +94,7 @@ export async function studyStoreCreator(
     name: 'studySlice',
     initialState: initialUntrrackedState,
     reducers: {
-      setConfig (state, payload: PayloadAction<StudyConfig>) {
+      setConfig (state, payload: PayloadAction<ProcessedStudyConfig>) {
         state.config = payload.payload;
       },
       completeStep(state, step) {

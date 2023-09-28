@@ -30,9 +30,12 @@
         }
         trials1: {
             type: container
-            order: [
-                barChart
-            ]
+            order: {
+                order: fixed
+                components: [
+                    barChart
+                ]
+            }
             components: {
                 barChart: {
                     type: website

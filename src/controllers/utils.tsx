@@ -1,6 +1,6 @@
 import { useCurrentStep } from '../routes';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
-import { ContainerComponent } from '../parser/types';
+import { ContainerComponent, ProcessedContainerComponent } from '../parser/types';
 
 export function useNextTrialId(currentTrial: string | null) {
   const studyConfig = useStudyConfig();
@@ -9,9 +9,9 @@ export function useNextTrialId(currentTrial: string | null) {
 
   if (!stepConfig || stepConfig.type !== 'container') return null;
 
-  const { order } = (stepConfig as ContainerComponent);
+  const { order } = (stepConfig as ProcessedContainerComponent);
 
-  if (!order || order === 'random') return null;
+  if (!order) return null;
 
   const idx = order.findIndex((t) => t === currentTrial);
 

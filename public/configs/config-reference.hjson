@@ -59,7 +59,9 @@
         trials1: {
             type: trials
             // the order in which the trials are displayed 
-            order: [
+            order: {
+                order: fixed
+                components: [
                 bubbleChart1
                 stackedBarChart1
                 barChart1
@@ -70,7 +72,7 @@
                 barChart2
                 pieChart2
                 stackedBarChart4
-            ]
+            ]}
             // TODO NOT IMPLEMENTED
             randomization: {
                 randomization-scheme: latin-square

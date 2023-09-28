@@ -13,6 +13,9 @@ import {
   ContainerComponent,
   GlobalConfig,
   Nullable,
+  OrderObject,
+  ProcessedContainerComponent,
+  ProcessedStudyConfig,
   StudyComponent,
   StudyComponents,
   StudyConfig,
@@ -55,14 +58,32 @@ async function fetchStudyConfig(configLocation: string, configKey: string) {
   return parseStudyConfig(config, configKey);
 }
 
+function orderObjectToList(order: OrderObject) {
+
+  if(order.order === 'random') {
+    const randomArr = order.components.sort((a, b) => 0.5 - Math.random());
+
+    order.components = randomArr;
+  }
+
+  for(let i = 0; i < order.order.length; i ++) {
+    const curr = order.order[i];
+    if(typeof curr !== 'string') {
+      orderObjectToList(curr);
+    }
+  }
+}
+
 function createRandomOrders(components: StudyComponents) {
   Object.keys(components).forEach((componentKey) => {
     const component = components[componentKey];
     if(component.type === 'container') {
-      if(component.order === 'random') {
-        const allComps = Object.keys(component.components);
-        const randomArr = allComps.sort((a, b) => 0.5 - Math.random());
-        component.order = randomArr;
+      if(component.order.order === 'random') {
+        orderObjectToList(component.order);
+        component.order = component.order.components as any;
+      }
+      if(component.order.order === 'fixed') {
+        component.order = component.order.components as any;
       }
 
       createRandomOrders(component.components);
@@ -70,52 +91,57 @@ function createRandomOrders(components: StudyComponents) {
   });
 }
 
-function assignRandomOrders(config: StudyConfig, randoms: {path: string, order: string[]}[] | undefined) {
-  if(!randoms) {
-    return;
-  }
+// function assignRandomOrders(config: StudyConfig, randoms: {path: string, order: string[]}[] | undefined) {
+//   if(!randoms) {
+//     return;
+//   }
    
-  randoms.forEach((rand) => {
-    const pathArr = rand.path.split('/');
+//   randoms.forEach((rand) => {
+//     const pathArr = rand.path.split('/');
 
-    let obj: StudyConfig | ContainerComponent = config;
+//     let obj: StudyConfig | ContainerComponent = config;
 
-    pathArr.forEach((s) => {
-      const newObj = (obj.components[s] as ContainerComponent) ;
-      obj = newObj;
-    });
+//     pathArr.forEach((s) => {
+//       const newObj = (obj.components[s] as ContainerComponent) ;
+//       obj = newObj;
+//     });
 
-    if(pathArr.length > 0) {
-     (obj as unknown as ContainerComponent).order = rand.order;
+//     if(pathArr.length > 0) {
+//      (obj as unknown as ContainerComponent).order = rand.order;
+//     }
+//   });
+// }
+
+function randomizeSequence(sequence: (string | OrderObject)[]) {
+
+  for(let i = 0; i < sequence.length; i++) {
+    const curr = sequence[i];
+    if(typeof curr !== 'string') {
+      orderObjectToList(curr);
+      sequence[i] = curr.components as any;
+
     }
-  });
-}
-
-function randomizeSequence(sequence: (string | string[])[]) {
-  sequence.forEach((s: string | string[], i) => {
-    if(Array.isArray(s)) {
-      s = s.sort((a, b) => 0.5 - Math.random());
-    }
-  });
-
-  return sequence.flat();
-}
-
-function assignSequence(sequence: (string | string[])[], randoms: {path: string, order: string[]}[] | undefined) {
-  if(!randoms) {
-    return [];
   }
-  
-  let counter = 0;
-  sequence.forEach((s: string | string[], i) => {
-    if(Array.isArray(s)) {
-      sequence[i] = randoms.find((rand) => rand.path === `_sequence-${counter}`)?.order || [];
-      counter += 1;
-    }
-  });
 
+  console.log(sequence);
   return sequence.flat();
 }
+
+// function assignSequence(sequence: (string | string[])[], randoms: {path: string, order: string[]}[] | undefined) {
+//   if(!randoms) {
+//     return [];
+//   }
+  
+//   let counter = 0;
+//   sequence.forEach((s: string | string[], i) => {
+//     if(Array.isArray(s)) {
+//       sequence[i] = randoms.find((rand) => rand.path === `_sequence-${counter}`)?.order || [];
+//       counter += 1;
+//     }
+//   });
+
+//   return sequence.flat();
+// }
 
 type Props = {
   globalConfig: GlobalConfig;
@@ -188,16 +214,11 @@ export function Shell({ globalConfig }: Props) {
       const containerRandoms = randoms?.filter((rand) => !rand.path.startsWith('_sequence-'));
       const sequenceRandoms = randoms?.filter((rand) => rand.path.startsWith('_sequence-'));
 
-      if(config.randomizationStrategy && config.randomizationStrategy === 'latinSquares') {
-        assignRandomOrders(config, containerRandoms);
-        config.sequence = assignSequence(config.sequence, sequenceRandoms);
-      }
-      else {
-        createRandomOrders(config.components);
-        config.sequence = randomizeSequence(config.sequence);
-      }
 
-      const st = await studyStoreCreator(sid, config, fb);
+      createRandomOrders(config.components);
+      config.sequence = randomizeSequence(config.sequence);
+
+      const st = await studyStoreCreator(sid, config as ProcessedStudyConfig, fb);
 
       if (!active) return;
 
@@ -210,6 +231,8 @@ export function Shell({ globalConfig }: Props) {
       active = false;
     };
   }, [activeConfig, studyId, firebase]);
+
+  console.log(activeConfig);
 
   const routing = useStudyRoutes(studyId, activeConfig, storeObj);
 
@@ -291,7 +314,7 @@ function StepRenderer() {
 
 function useStudyRoutes(
   studyId: Nullable<string>,
-  config: Nullable<StudyConfig>,
+  config: Nullable<ProcessedStudyConfig>,
   store: Nullable<StudyStore> // used only to detect if store is ready
 ) {
   const routes: RouteObject[] = [];
@@ -317,7 +340,7 @@ function useStudyRoutes(
           element: <StudyEnd />,
         });
       } else if (component.type === 'container') {
-        const { order } = component as ContainerComponent;
+        const { order } = component as ProcessedContainerComponent;
 
         if (order.length > 0) {
           const baseRoute: RouteObject = {

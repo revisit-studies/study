@@ -9,7 +9,7 @@ import { useCurrentStep } from '../routes';
 import { useComponentStatus } from '../store/hooks/useComponentStatus';
 import { useCurrentTrial } from '../store/hooks/useCurrentTrial';
 import { TrialProvenanceContext, createTrialProvenance } from '../store/trialProvenance';
-import { ContainerComponent } from '../parser/types';
+import { ContainerComponent, ProcessedContainerComponent } from '../parser/types';
 import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
 
 // current active stimuli presented to the user
@@ -21,7 +21,7 @@ export default function ComponentController() {
 
   // Get the id for the current trial (if there is one)
   const trialId = useCurrentTrial();
-  const trialConfig = trialId !== null ? (stepConfig as ContainerComponent).components[trialId] : null;
+  const trialConfig = trialId !== null ? (stepConfig as ProcessedContainerComponent).components[trialId] : null;
   const trialProvenance = createTrialProvenance();
   
   // If we have a trial, use that config to render the right component else use the step

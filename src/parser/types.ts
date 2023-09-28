@@ -257,14 +257,31 @@ export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComp
  */
 export interface ContainerComponent {
   type: 'container';
-  order: string[] | 'random';
+  order: OrderObject;
   components: StudyComponents;
+}
+
+export interface ProcessedContainerComponent {
+  type: 'container';
+  order: string[];
+  components: StudyComponents;
+}
+
+export interface OrderObject {
+  order: 'random' | 'latinSquare' | 'fixed'
+  components: (string | OrderObject)[]
+  randomCount?: number
 }
 
 export type StudyComponent = IndividualComponent | ContainerComponent;
 
+export type ProcessedStudyComponent = IndividualComponent | ProcessedContainerComponent;
+
 export interface StudyComponents {
   [key: string]: StudyComponent;
+}
+export interface ProcessedStudyComponents {
+  [key: string]: ProcessedStudyComponent;
 }
 
 /**
@@ -275,8 +292,15 @@ export interface StudyConfig {
   studyMetadata: StudyMetadata;
   uiConfig: UIConfig;
   components: StudyComponents;
-  sequence: (string | string[])[];
-  randomizationStrategy?: 'random' | 'latinSquares';
+  sequence: (string | OrderObject)[];
+}
+
+export interface ProcessedStudyConfig {
+  $schema: string;
+  studyMetadata: StudyMetadata;
+  uiConfig: UIConfig;
+  components: ProcessedStudyComponents;
+  sequence: string[];
 }
 
 /**
@@ -300,5 +324,13 @@ export type Prettify<T> = {
  * Typecase helper for ContainerComponent
  */
 export function isContainerComponent(component: StudyComponent): component is ContainerComponent {
+  return component.type === 'container';
+}
+
+/**
+ * @ignore
+ * Typecase helper for ContainerComponent
+ */
+export function isProcessedContainerComponent(component: ProcessedStudyComponent): component is ProcessedContainerComponent {
   return component.type === 'container';
 }

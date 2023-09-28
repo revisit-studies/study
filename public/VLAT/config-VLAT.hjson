@@ -30,7 +30,9 @@
         }
         trials: {
             type: container
-            order: [
+            order: {
+                order: fixed
+                components: [
                 q1
                 q2
                 q3
@@ -83,7 +85,7 @@
                 q50
                 q51
                 q52
-            ]
+            ]}
             components: {
                 q0: {
                     meta: {

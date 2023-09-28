@@ -33,7 +33,7 @@ function createRandomOrders(components: StudyComponents, paths: string[], path: 
   Object.keys(components).forEach((componentKey) => {
     const component = components[componentKey];
     if(component.type === 'container') {
-      if(component.order === 'random') {
+      if(component.order.order === 'latinSquare') {
         paths.push(path.length > 0 ? path + '-' + componentKey : componentKey);
       }
 

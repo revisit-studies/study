@@ -150,18 +150,7 @@
           "$ref": "#/definitions/StudyComponents"
         },
         "order": {
-          "anyOf": [
-            {
-              "items": {
-                "type": "string"
-              },
-              "type": "array"
-            },
-            {
-              "const": "random",
-              "type": "string"
-            }
-          ]
+          "$ref": "#/definitions/OrderObject"
         },
         "type": {
           "const": "container",
@@ -512,6 +501,18 @@
       ],
       "type": "object"
     },
+    "NamedParameters<typeof isProcessedContainerComponent>": {
+      "additionalProperties": false,
+      "properties": {
+        "component": {
+          "$ref": "#/definitions/ProcessedStudyComponent"
+        }
+      },
+      "required": [
+        "component"
+      ],
+      "type": "object"
+    },
     "NumericalResponse": {
       "additionalProperties": false,
       "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.",
@@ -572,6 +573,111 @@
       "required": [
         "label",
         "value"
+      ],
+      "type": "object"
+    },
+    "OrderObject": {
+      "additionalProperties": false,
+      "properties": {
+        "components": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/definitions/OrderObject"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "order": {
+          "enum": [
+            "random",
+            "latinSquare",
+            "fixed"
+          ],
+          "type": "string"
+        },
+        "randomCount": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "order",
+        "components"
+      ],
+      "type": "object"
+    },
+    "ProcessedContainerComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "components": {
+          "$ref": "#/definitions/StudyComponents"
+        },
+        "order": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "type": {
+          "const": "container",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "order",
+        "components"
+      ],
+      "type": "object"
+    },
+    "ProcessedStudyComponent": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/IndividualComponent"
+        },
+        {
+          "$ref": "#/definitions/ProcessedContainerComponent"
+        }
+      ]
+    },
+    "ProcessedStudyComponents": {
+      "additionalProperties": {
+        "$ref": "#/definitions/ProcessedStudyComponent"
+      },
+      "type": "object"
+    },
+    "ProcessedStudyConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "$schema": {
+          "type": "string"
+        },
+        "components": {
+          "$ref": "#/definitions/ProcessedStudyComponents"
+        },
+        "sequence": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "studyMetadata": {
+          "$ref": "#/definitions/StudyMetadata"
+        },
+        "uiConfig": {
+          "$ref": "#/definitions/UIConfig"
+        }
+      },
+      "required": [
+        "$schema",
+        "studyMetadata",
+        "uiConfig",
+        "components",
+        "sequence"
       ],
       "type": "object"
     },
@@ -871,13 +977,6 @@
         "components": {
           "$ref": "#/definitions/StudyComponents"
         },
-        "randomizationStrategy": {
-          "enum": [
-            "random",
-            "latinSquares"
-          ],
-          "type": "string"
-        },
         "sequence": {
           "items": {
             "anyOf": [
@@ -885,10 +984,7 @@
                 "type": "string"
               },
               {
-                "items": {
-                  "type": "string"
-                },
-                "type": "array"
+                "$ref": "#/definitions/OrderObject"
               }
             ]
           },

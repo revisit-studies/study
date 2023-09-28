@@ -10,7 +10,7 @@ import {
 import { IconArrowRight } from '@tabler/icons-react';
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ContainerComponent, IndividualComponent } from '../../parser/types';
+import { IndividualComponent, ProcessedContainerComponent } from '../../parser/types';
 import { useCurrentStep } from '../../routes';
 import { useAppSelector } from '../../store';
 import { useFlagsSelector } from '../../store/flags';
@@ -26,10 +26,10 @@ export default function AppAside() {
   const config = useAppSelector(
     (state) => state.unTrrackedSlice.config?.components[step]
   );
-  const trialConfig = config as ContainerComponent;
+  const trialConfig = config as ProcessedContainerComponent;
   const tasks =
     trialConfig?.type === 'container'
-      ? (trialConfig.order as string[]).map((trialId) => ({
+      ? (trialConfig.order).map((trialId) => ({
           ...trialConfig.components[trialId] as IndividualComponent,
           id: trialId,
         }))
