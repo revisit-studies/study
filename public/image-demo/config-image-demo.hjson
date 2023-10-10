@@ -28,127 +28,119 @@
             path: image-demo/introduction.md
             response: []
         }
-        trials1: {
-            type: container
-            order: {
-                order: fixed
-                components: [
-                    dotplot-low
-                    dotplot-medium
-                    dotplot-high
-                ]
+        dotplot-low: {
+            meta: {
+                difficulty: 1
+                nr-dots: 20
+                temp: low
             }
-            components: {
-                dotplot-low: {
-                    meta: {
-                        difficulty: 1
-                        nr-dots: 20
-                        temp: low
-                    }
-                    title: T1-low-temp
-                    description: Low temperature variant
-                    instruction: Will you issue blankets to the alpacas?
-                    type: image
-                    path: image-demo/uncertainty-1.png
-                    style: {
-                        width: 800px
-                    }
-                    nextButtonLocation: sidebar
-                    response: [
-                        {
-                            id: image-demo-response
-                            prompt: "Answer:"
-                            required: true
-                            location: sidebar
-                            type: radio
-                            options: [
-                                {
-                                    label: Yes
-                                    value: "1"
-                                }
-                                {
-                                    label: No
-                                    value: "2"
-                                }
-                            ]
-                        }
-                    ]
-                }
-                dotplot-medium: {
-                    meta: {
-                        difficulty: 2
-                        nr-dots: 20
-                        temp: mid
-                    }
-                    title: T2-mid-temp
-                    description: Medium temperature variant
-                    instruction: Will you issue blankets to the alpacas?
-                    type: image
-                    path: image-demo/uncertainty-2.png
-                    style: {
-                        width: 800px
-                    }
-                    nextButtonLocation: sidebar
-                    response: [
-                        {
-                            id: image-demo-response
-                            prompt: "Answer:"
-                            required: true
-                            location: sidebar
-                            type: radio
-                            options: [
-                                {
-                                    label: Yes
-                                    value: "1"
-                                }
-                                {
-                                    label: No
-                                    value: "2"
-                                }
-                            ]
-                        }
-                    ]
-                }
-                dotplot-high: {
-                    title: T3-high-temp
-                    meta: {
-                        difficulty: 1
-                        nr-dots: 20
-                        temp: hi
-                    }
-                    description: High temperature variant
-                    instruction: Will you issue blankets to the alpacas?
-                    type: image
-                    path: image-demo/uncertainty-3.png
-                    style: {
-                        width: 800px
-                    }
-                    nextButtonLocation: sidebar
-                    response: [
-                        {
-                            id: image-demo-response
-                            prompt: "Answer:"
-                            required: true
-                            location: sidebar
-                            type: radio
-                            options: [
-                                {
-                                    label: Yes
-                                    value: "1"
-                                }
-                                {
-                                    label: No
-                                    value: "2"
-                                }
-                            ]
-                        }
-                    ]
-                }
+            title: T1-low-temp
+            description: Low temperature variant
+            instruction: Will you issue blankets to the alpacas?
+            type: image
+            path: image-demo/uncertainty-1.png
+            style: {
+                width: 800px
             }
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: image-demo-response
+                    prompt: "Answer:"
+                    required: true
+                    location: sidebar
+                    type: radio
+                    options: [
+                        {
+                            label: Yes
+                            value: "1"
+                        }
+                        {
+                            label: No
+                            value: "2"
+                        }
+                    ]
+                }
+            ]
+        }
+        dotplot-medium: {
+            meta: {
+                difficulty: 2
+                nr-dots: 20
+                temp: mid
+            }
+            title: T2-mid-temp
+            description: Medium temperature variant
+            instruction: Will you issue blankets to the alpacas?
+            type: image
+            path: image-demo/uncertainty-2.png
+            style: {
+                width: 800px
+            }
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: image-demo-response
+                    prompt: "Answer:"
+                    required: true
+                    location: sidebar
+                    type: radio
+                    options: [
+                        {
+                            label: Yes
+                            value: "1"
+                        }
+                        {
+                            label: No
+                            value: "2"
+                        }
+                    ]
+                }
+            ]
+        }
+        dotplot-high: {
+            title: T3-high-temp
+            meta: {
+                difficulty: 1
+                nr-dots: 20
+                temp: hi
+            }
+            description: High temperature variant
+            instruction: Will you issue blankets to the alpacas?
+            type: image
+            path: image-demo/uncertainty-3.png
+            style: {
+                width: 800px
+            }
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: image-demo-response
+                    prompt: "Answer:"
+                    required: true
+                    location: sidebar
+                    type: radio
+                    options: [
+                        {
+                            label: Yes
+                            value: "1"
+                        }
+                        {
+                            label: No
+                            value: "2"
+                        }
+                    ]
+                }
+            ]
         }
     }
-    sequence: [
-        introduction
-        trials1
-    ]
+    sequence: { 
+        order: fixed
+        components:  [
+            introduction
+            dotplot-low
+            dotplot-medium
+            dotplot-high
+        ]
+    }
 }

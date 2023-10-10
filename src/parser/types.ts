@@ -249,39 +249,16 @@ export interface QuestionnaireComponent extends BaseIndividualComponent {
   type: 'questionnaire';
 }
 
-
 export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent;
-
-/**
- * ContainerComponents are used to group components together. They are used to define the order of sub components and can be used to group related tasks, task blocks, or other components together. Ultimately, the plan is to support nesting of ContainerComponents, but this is not currently supported. Additionally, we plan to support randomization of sub components, but this is also not currently supported, either.
- */
-export interface ContainerComponent {
-  type: 'container';
-  order: OrderObject;
-  components: StudyComponents;
-}
-
-export interface OrderContainerComponent {
-  type: 'container';
-  order: string[];
-  components: OrderComponents;
-}
 
 export interface OrderObject {
   order: 'random' | 'latinSquare' | 'fixed'
   components: (string | OrderObject)[]
-  randomCount?: number
+  numSamples?: number
 }
-
-export type StudyComponent = IndividualComponent | ContainerComponent;
-
-export type OrderComponent = IndividualComponent | OrderContainerComponent;
 
 export interface StudyComponents {
-  [key: string]: StudyComponent;
-}
-export interface OrderComponents {
-  [key: string]: OrderComponent;
+  [key: string]: IndividualComponent;
 }
 
 /**
@@ -292,11 +269,10 @@ export interface StudyConfig {
   studyMetadata: StudyMetadata;
   uiConfig: UIConfig;
   components: StudyComponents;
-  sequence: (string | OrderObject)[];
+  sequence: OrderObject;
 }
 
 export interface OrderConfig {
-  components: OrderComponents;
   sequence: string[];
 }
 
@@ -315,19 +291,3 @@ export type Prettify<T> = {
   [K in keyof T]: T[K];
   /* eslint-disable */
 } & {};
-
-/**
- * @ignore
- * Typecase helper for ContainerComponent
- */
-export function isContainerComponent(component: StudyComponent): component is ContainerComponent {
-  return component.type === 'container';
-}
-
-/**
- * @ignore
- * Typecase helper for ContainerComponent
- */
-export function isProcessedContainerComponent(component: OrderComponent): component is OrderContainerComponent {
-  return component.type === 'container';
-}

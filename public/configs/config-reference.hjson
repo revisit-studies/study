@@ -59,9 +59,7 @@
         trials1: {
             type: trials
             // the order in which the trials are displayed 
-            order: {
-                order: fixed
-                components: [
+            order: [
                 bubbleChart1
                 stackedBarChart1
                 barChart1
@@ -72,7 +70,7 @@
                 barChart2
                 pieChart2
                 stackedBarChart4
-            ]}
+            ]
             // TODO NOT IMPLEMENTED
             randomization: {
                 randomization-scheme: latin-square
@@ -502,12 +500,15 @@
             type: survey
         }
     }
-    sequence: [
-        consent
-        training1
-        practice1
-        attention1
-        trials1
-        post-study-survey
-    ]
+    sequence: { 
+        order: fixed
+        components: [
+            consent
+            training1
+            practice1
+            attention1
+            trials1
+            post-study-survey
+        ]
+    }
 }

@@ -28,44 +28,38 @@
             path: click-accuracy-test/introduction.md
             response: []
         }
-        trials1: {
-            type: container
-            order: {
-                order: fixed
-                components: [
-                    trial
-                ]
+       
+        trial: {
+            meta: {
+                nr-dots: 1
             }
-            components: {
-                trial: {
-                    meta: {
-                        nr-dots: 1
-                    }
-                    title: Click Accuracy Test
-                    description: try to click on the center of the moving dot
-                    instruction: Click on the moving dot
-                    type: react-component
-                    path: ClickAccuracyTest.tsx
-                    parameters: {
-                        speed: 100
-                        taskid: accuracy
-                    }
-                    nextButtonLocation: sidebar
-                    response: [
-                        {
-                            id: accuracy
-                            prompt: Your click distance to circle center
-                            required: true
-                            location: sidebar
-                            type: iframe
-                        }
-                    ]
+            title: Click Accuracy Test
+            description: try to click on the center of the moving dot
+            instruction: Click on the moving dot
+            type: react-component
+            path: ClickAccuracyTest.tsx
+            parameters: {
+                speed: 100
+                taskid: accuracy
+            }
+            nextButtonLocation: sidebar
+            response: [
+                {
+                    id: accuracy
+                    prompt: Your click distance to circle center
+                    required: true
+                    location: sidebar
+                    type: iframe
                 }
-            }
+            ]
         }
+
     }
-    sequence: [
-        introduction
-        trials1
-    ]
+    sequence: { 
+        order: fixed
+        components:  [
+            introduction
+            trial
+        ]
+    }
 }

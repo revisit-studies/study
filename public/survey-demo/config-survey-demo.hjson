@@ -149,8 +149,11 @@
             ]
         }
     }
-    sequence: [
-        introduction
-        survey
-    ]
+    sequence: { 
+        order: fixed
+        components:  [
+            introduction
+            survey
+        ]
+    }
 }

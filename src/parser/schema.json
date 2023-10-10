@@ -142,28 +142,6 @@
       ],
       "type": "object"
     },
-    "ContainerComponent": {
-      "additionalProperties": false,
-      "description": "ContainerComponents are used to group components together. They are used to define the order of sub components and can be used to group related tasks, task blocks, or other components together. Ultimately, the plan is to support nesting of ContainerComponents, but this is not currently supported. Additionally, we plan to support randomization of sub components, but this is also not currently supported, either.",
-      "properties": {
-        "components": {
-          "$ref": "#/definitions/StudyComponents"
-        },
-        "order": {
-          "$ref": "#/definitions/OrderObject"
-        },
-        "type": {
-          "const": "container",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type",
-        "order",
-        "components"
-      ],
-      "type": "object"
-    },
     "DropdownResponse": {
       "additionalProperties": false,
       "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options.",
@@ -489,30 +467,6 @@
       ],
       "type": "object"
     },
-    "NamedParameters<typeof isContainerComponent>": {
-      "additionalProperties": false,
-      "properties": {
-        "component": {
-          "$ref": "#/definitions/StudyComponent"
-        }
-      },
-      "required": [
-        "component"
-      ],
-      "type": "object"
-    },
-    "NamedParameters<typeof isProcessedContainerComponent>": {
-      "additionalProperties": false,
-      "properties": {
-        "component": {
-          "$ref": "#/definitions/ProcessedStudyComponent"
-        }
-      },
-      "required": [
-        "component"
-      ],
-      "type": "object"
-    },
     "NumericalResponse": {
       "additionalProperties": false,
       "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.",
@@ -576,6 +530,21 @@
       ],
       "type": "object"
     },
+    "OrderConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "sequence": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "sequence"
+      ],
+      "type": "object"
+    },
     "OrderObject": {
       "additionalProperties": false,
       "properties": {
@@ -592,6 +561,9 @@
           },
           "type": "array"
         },
+        "numSamples": {
+          "type": "number"
+        },
         "order": {
           "enum": [
             "random",
@@ -599,85 +571,11 @@
             "fixed"
           ],
           "type": "string"
-        },
-        "randomCount": {
-          "type": "number"
         }
       },
       "required": [
         "order",
         "components"
-      ],
-      "type": "object"
-    },
-    "ProcessedContainerComponent": {
-      "additionalProperties": false,
-      "properties": {
-        "components": {
-          "$ref": "#/definitions/StudyComponents"
-        },
-        "order": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "type": {
-          "const": "container",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type",
-        "order",
-        "components"
-      ],
-      "type": "object"
-    },
-    "ProcessedStudyComponent": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/IndividualComponent"
-        },
-        {
-          "$ref": "#/definitions/ProcessedContainerComponent"
-        }
-      ]
-    },
-    "ProcessedStudyComponents": {
-      "additionalProperties": {
-        "$ref": "#/definitions/ProcessedStudyComponent"
-      },
-      "type": "object"
-    },
-    "ProcessedStudyConfig": {
-      "additionalProperties": false,
-      "properties": {
-        "$schema": {
-          "type": "string"
-        },
-        "components": {
-          "$ref": "#/definitions/ProcessedStudyComponents"
-        },
-        "sequence": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        },
-        "studyMetadata": {
-          "$ref": "#/definitions/StudyMetadata"
-        },
-        "uiConfig": {
-          "$ref": "#/definitions/UIConfig"
-        }
-      },
-      "required": [
-        "$schema",
-        "studyMetadata",
-        "uiConfig",
-        "components",
-        "sequence"
       ],
       "type": "object"
     },
@@ -951,19 +849,9 @@
       ],
       "type": "object"
     },
-    "StudyComponent": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/IndividualComponent"
-        },
-        {
-          "$ref": "#/definitions/ContainerComponent"
-        }
-      ]
-    },
     "StudyComponents": {
       "additionalProperties": {
-        "$ref": "#/definitions/StudyComponent"
+        "$ref": "#/definitions/IndividualComponent"
       },
       "type": "object"
     },
@@ -978,17 +866,7 @@
           "$ref": "#/definitions/StudyComponents"
         },
         "sequence": {
-          "items": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "$ref": "#/definitions/OrderObject"
-              }
-            ]
-          },
-          "type": "array"
+          "$ref": "#/definitions/OrderObject"
         },
         "studyMetadata": {
           "$ref": "#/definitions/StudyMetadata"

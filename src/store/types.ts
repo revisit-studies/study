@@ -1,4 +1,4 @@
-import { BaseIndividualComponent, OrderContainerComponent, OrderConfig, StudyConfig } from '../parser/types';
+import { BaseIndividualComponent, OrderConfig, StudyConfig } from '../parser/types';
 import { StudyStore } from './store';
 
 export type RootState = ReturnType<StudyStore['store']['getState']>;
@@ -16,7 +16,7 @@ export type TrialRecord = Record<string, TrialResult>;
 
 export type PracticeRecord = Record<string, PracticeResult>;
 
-export interface Step extends BaseIndividualComponent, OrderContainerComponent {
+export interface Step extends BaseIndividualComponent {
   complete: boolean;
   next: string | null;
 }

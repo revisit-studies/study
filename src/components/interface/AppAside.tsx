@@ -16,6 +16,7 @@ import { useAppSelector } from '../../store/store';
 import { useFlagsSelector } from '../../store/flags';
 import { DownloadPanel } from '../DownloadPanel';
 import { StepsPanel } from './StepsPanel';
+import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 
 export default function AppAside() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -26,7 +27,9 @@ export default function AppAside() {
   const config = useAppSelector(
     (state) => state.trrackedSlice.orderConfig?.components[step]
   );
-  
+
+  const studyConfig = useStudyConfig();
+
   const tasks =
     config?.type === 'container'
       ? (config.order).map((trialId) => ({
@@ -41,7 +44,7 @@ export default function AppAside() {
 
   return showAdmin ? (
     <Aside p="md" width={{ base: 300 }} style={{ zIndex: 0 }}>
-      <StepsPanel />
+      <StepsPanel order={studyConfig.sequence} />
 
       <Space h="md" />
 

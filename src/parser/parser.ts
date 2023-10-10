@@ -2,7 +2,7 @@
 import { parse as hjsonParse } from 'hjson';
 import Ajv from 'ajv';
 import schema from './schema.json';
-import { ContainerComponent, GlobalConfig, OrderObject, StudyConfig } from './types';
+import { GlobalConfig, OrderObject, StudyConfig } from './types';
 
 const ajv = new Ajv();
 ajv.addSchema(schema);
@@ -24,21 +24,6 @@ function verifyGlobalConfig(data: GlobalConfig) {
   return [configsListVerified, errors] as const;
 }
 
-function getAllComponentNames(order: OrderObject, list: string[]) {
-  if(!order) {
-    return;
-  }
-
-  order.components.forEach((comp) => {
-    if(typeof comp === 'string'){
-      list.push(comp);
-    }
-    else {
-      getAllComponentNames(comp, list);
-    }
-  });
-}
-
 export function parseGlobalConfig(fileData: string) {
   const data = hjsonParse(fileData);
   
@@ -57,27 +42,7 @@ export function parseGlobalConfig(fileData: string) {
 function verifyStudyConfig(data: StudyConfig) {
   const errors: { message: string }[] = [];
   const componentsVerified = Object.entries(data.components).every(([componentName, component]) => {
-    if (component.type === 'container') {
-      if ((component as ContainerComponent).components === undefined) {
-        errors.push({ message: `Container component ${componentName} does not have a components field` });
-        return false;
-      }
-      if (Object.values((component as ContainerComponent).components!).length === 0) {
-        errors.push({ message: `Container component ${componentName} has an empty components field` });
-        return false;
-      }
-
-      const componentNames: string[] = [];
-
-      getAllComponentNames(component.order, componentNames);
-      if (!componentNames.every((componentName) => (component as ContainerComponent).components[componentName] !== undefined)) {
-        errors.push({ message: `Container component ${componentName} has an order field that contains components not present in components field` });
-        return false;
-      }
-      return true;
-    } else {
-      return true;
-    }
+    return true;
   });
 
   return [componentsVerified, errors] as const;

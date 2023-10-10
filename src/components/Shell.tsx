@@ -13,8 +13,7 @@ import { parseStudyConfig } from '../parser/parser';
 import {
   GlobalConfig,
   Nullable,
-  OrderObject,
-  OrderContainerComponent,
+  OrderObject, 
   OrderConfig,
   StudyComponents,
   StudyConfig,
@@ -65,53 +64,23 @@ function orderObjectToList(order: OrderObject) {
     order.components = randomArr;
   }
 
-  for(let i = 0; i < order.order.length; i ++) {
-    const curr = order.order[i];
+  for(let i = 0; i < order.components.length; i ++) {
+    const curr = order.components[i];
     if(typeof curr !== 'string') {
-      orderObjectToList(curr);
+      order.components[i] = orderObjectToList(curr) as any;
     }
   }
+
+  return order.components.flat() as any;
 }
 
 //TODO:: remove anything that isnt order from this object
 function createOrderConfig(study: StudyConfig): OrderConfig {
   const newConfig = deepCopy(study);
-  createRandomOrders(newConfig.components);
 
-  newConfig.sequence = randomizeSequence(newConfig.sequence);
+  newConfig.sequence = orderObjectToList(newConfig.sequence);
 
   return newConfig as unknown as OrderConfig;
-}
-
-function createRandomOrders(components: StudyComponents) {
-  Object.keys(components).forEach((componentKey) => {
-    const component = components[componentKey];
-    if(component.type === 'container') {
-      if(component.order.order === 'random') {
-        orderObjectToList(component.order);
-        component.order = component.order.components as any;
-      }
-      if(component.order.order === 'fixed') {
-        component.order = component.order.components as any;
-      }
-
-      createRandomOrders(component.components);
-    }
-  });
-}
-
-function randomizeSequence(sequence: (string | OrderObject)[]) {
-
-  for(let i = 0; i < sequence.length; i++) {
-    const curr = sequence[i];
-    if(typeof curr !== 'string') {
-      orderObjectToList(curr);
-      sequence[i] = curr.components as any;
-
-    } 
-  }
-
-  return sequence.flat();
 }
 
 type Props = {
@@ -207,7 +176,7 @@ export function Shell({ globalConfig }: Props) {
     };
   }, [activeConfig, studyId, firebase, orderConfig]);
 
-  const routing = useStudyRoutes(studyId, orderConfig, storeObj);
+  const routing = useStudyRoutes(studyId, activeConfig, orderConfig?.sequence, storeObj);
 
   if (!routing || !storeObj || !firebase) return null;
 
@@ -287,14 +256,13 @@ function StepRenderer() {
 
 function useStudyRoutes(
   studyId: Nullable<string>,
-  config: Nullable<OrderConfig>,
+  config: Nullable<StudyConfig>,
+  sequence: Nullable<string[]>,
   store: Nullable<StudyStore> // used only to detect if store is ready
 ) {
   const routes: RouteObject[] = [];
-
+ 
   if (studyId && config && store) {
-    const { sequence, components } = config;
-
     const enhancedSequence = [...sequence as string[], 'end'];
 
     const stepRoutes: RouteObject[] = [];
@@ -305,28 +273,11 @@ function useStudyRoutes(
     });
 
     enhancedSequence.forEach((step: string) => {
-      const component = components[step];
-
       if (step === 'end') {
         stepRoutes.push({
           path: '/end',
           element: <StudyEnd />,
         });
-      } else if (component.type === 'container') {
-        const { order } = component as OrderContainerComponent;
-
-        if (order.length > 0) {
-          const baseRoute: RouteObject = {
-            path: step,
-            element: <NavigateWithParams to={`${order[0]}`} replace />,
-          };
-          const trialRoute: RouteObject = {
-            path: `${step}/:trialId`,
-            element: <ComponentController />,
-          };
-          stepRoutes.push(baseRoute);
-          stepRoutes.push(trialRoute);
-        }
       } else {
         stepRoutes.push({
           path: `/${step}`,

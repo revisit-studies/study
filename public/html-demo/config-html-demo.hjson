@@ -28,42 +28,35 @@
             path: html-demo/introduction.md
             response: []
         }
-        trials1: {
-            type: container
-            order: {
-                order: fixed
-                components: [
-                    barChart
-                ]
+
+        barChart: {
+            type: website
+            nextButtonLocation: sidebar
+            meta: {
+                difficulty: hard
             }
-            components: {
-                barChart: {
-                    type: website
-                    nextButtonLocation: sidebar
-                    meta: {
-                        difficulty: hard
-                    }
-                    description: Question that asks users to count the number of bars that have a value greater than 1.
-                    instruction: How many bars have a value great than 1?
-                    path: html-demo/bar-chart.html
-                    response: [
-                        {
-                            id: html-response
-                            prompt: "Answer:"
-                            required: true
-                            location: sidebar
-                            type: numerical
-                            placeholder: 0-7
-                            min: 0
-                            max: 7
-                        }
-                    ]
+            description: Question that asks users to count the number of bars that have a value greater than 1.
+            instruction: How many bars have a value great than 1?
+            path: html-demo/bar-chart.html
+            response: [
+                {
+                    id: html-response
+                    prompt: "Answer:"
+                    required: true
+                    location: sidebar
+                    type: numerical
+                    placeholder: 0-7
+                    min: 0
+                    max: 7
                 }
-            }
+            ]
         }
     }
-    sequence: [
-        introduction
-        trials1
-    ]
+    sequence: { 
+        order: fixed
+        components:  [
+            introduction
+            barChart
+        ]
+    }
 }

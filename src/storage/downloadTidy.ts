@@ -5,7 +5,6 @@ import {
   IndividualComponent,
   Nullable,
   Prettify,
-  isContainerComponent,
 } from '../parser/types';
 import { TrialRecord, TrialResult, TrrackedState, UnTrrackedState } from '../store/types';
 import { getAllSessions } from './queries';
@@ -53,7 +52,7 @@ export async function downloadTidy(
 
   const sessionArr = await getAllSessions(fb.firestore, studyId);
   const rows = sessionArr
-    .map((sessionObject) => processToRow(sessionObject, trialGroups))
+    .map((sessionObject) => processToRow(sessionObject))
     .reduce((acc, trs) => {
       acc = [...acc, ...trs];
       return acc;
@@ -82,61 +81,15 @@ export async function downloadTidy(
 function processToRow(
   {
     graph,
-    session,
   }: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     graph: ProvenanceGraph<any, any, any>;
-    session: FsSession;
   },
-  trialGroups: string[]
 ): Array<TidyRow> {
   const trs: Array<TidyRow> = [];
 
   const nodes = Object.values(graph.nodes);
   nodes.sort((a, b) => a.meta.createdOn - b.meta.createdOn);
-
-  const lastNode = nodes[nodes.length - 1];
-
-  const untrrackedStudy: UnTrrackedState = lastNode.state.val.unTrrackedSlice;
-  const trrackedStudy: TrrackedState = lastNode.state.val.trrackedSlice;
-
-
-  trialGroups.forEach((groupName) => {
-    const group = untrrackedStudy.steps[groupName];
-    if (isContainerComponent(group)) {
-      const answers = trrackedStudy[groupName];
-
-      Object.entries(group.components).forEach(([trialId, trial]) => {
-        const answer: Nullable<TrialResult> =
-          trialId in answers ? (answers as TrialRecord)[trialId] : null;
-        const startTime = answer?.startTime
-          ? new Date(answer.startTime).toUTCString()
-          : null;
-        const endTime = answer?.endTime
-          ? new Date(answer.endTime).toUTCString()
-          : null;
-        const duration = (answer?.endTime || 0) - 0;
-
-        const tr: TidyRow = {
-          pid: trrackedStudy.studyIdentifiers.pid,
-          sessionId: trrackedStudy.studyIdentifiers.session_id,
-          status: session.status.endStatus?.status || 'incomplete',
-          type: group.type,
-          trialId,
-          trialGroup: groupName,
-          answer: JSON.stringify(answer?.answer || {}),
-          correctAnswer: (trial as IndividualComponent).correctAnswer,
-          description: `"${(trial as IndividualComponent).description}"`,
-          instruction: `"${(trial as IndividualComponent).instruction}"`,
-          startTime,
-          endTime,
-          duration,
-        };
-
-        trs.push(tr);
-      });
-    }
-  });
 
   return trs;
 }

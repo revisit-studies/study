@@ -333,7 +333,7 @@ async function saveStudyConfig(
 
   const docSnap = await getDoc(studiesRef);
 
-  const sequenceRandoms: string[][] = config.sequence.filter((seq) => Array.isArray(seq)) as string[][];
+  const sequenceRandoms: string[][] = config.sequence.components.filter((seq) => Array.isArray(seq)) as string[][];
 
   if (docSnap.exists()) {
     const returnRefs = await getRandomOrders(store, paths, batch, studyId, config);

@@ -1,10 +1,10 @@
-import { configureStore, createSlice, type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { configureTrrackableStore, createTrrackableSlice } from '@trrack/redux';
 import { clearIndexedDbPersistence, terminate } from 'firebase/firestore';
 import localforage from 'localforage';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
-import { OrderConfig, StudyComponent, StudyConfig } from '../parser/types';
+import { OrderConfig, StudyConfig } from '../parser/types';
 import { ProvenanceStorage } from '../storage/types';
 import { flagsStore, setTrrackExists } from './flags';
 import { RootState, Step, TrialRecord, TrrackedState, UnTrrackedState } from './types';
@@ -14,12 +14,10 @@ export const SESSION_ID = 'SESSION_ID';
 
 export const __ACTIVE_SESSION = '__active_session';
 
-function getSteps({ sequence, components }: OrderConfig): Record<string, Step> {
+function getSteps({ sequence }: OrderConfig): Record<string, Step> {
   const steps: Record<string, Step> = {};
   (sequence as string[]).forEach((id, idx, arr) => {
-    const component = components[id];
     steps[id] = {
-      ...component,
       complete: false,
       next: arr[idx + 1] || 'end',
     } as Step;
@@ -72,24 +70,15 @@ export async function studyStoreCreator(
           answer: string | object;
           startTime: number;
           endTime: number;
-          type?: StudyComponent['type'];
         }>
       ) {
-        if (payload.type === 'container') {
-          (state[payload.trialName] as TrialRecord)[payload.trialId] = {
-            complete: true,
-            answer: payload.answer,
-            startTime: payload.startTime,
-            endTime: payload.endTime,
-          };
-        } else {
-          (state[payload.trialName] as TrialRecord) = ({
-            complete: true,
-            answer: payload.answer,
-            startTime: payload.startTime,
-            endTime: payload.endTime,
-          } as any);
-        }
+       
+        (state[payload.trialName] as TrialRecord) = ({
+          complete: true,
+          answer: payload.answer,
+          startTime: payload.startTime,
+          endTime: payload.endTime,
+        } as any);
       },
     },
   });

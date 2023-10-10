@@ -9,9 +9,7 @@ import { useCurrentStep } from '../routes';
 import { useComponentStatus } from '../store/hooks/useComponentStatus';
 import { useCurrentTrial } from '../store/hooks/useCurrentTrial';
 import { TrialProvenanceContext, createTrialProvenance } from '../store/trialProvenance';
-import { ContainerComponent, OrderContainerComponent } from '../parser/types';
 import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
-import { Container } from 'react-dom';
 
 // current active stimuli presented to the user
 export default function ComponentController() {
