@@ -4,7 +4,7 @@ import { clearIndexedDbPersistence, terminate } from 'firebase/firestore';
 import localforage from 'localforage';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
-import { OrderConfig, StudyConfig } from '../parser/types';
+import { OrderConfig, OrderObject, StudyConfig } from '../parser/types';
 import { ProvenanceStorage } from '../storage/types';
 import { flagsStore, setTrrackExists } from './flags';
 import { RootState, Step, TrialRecord, TrrackedState, UnTrrackedState } from './types';
@@ -14,9 +14,9 @@ export const SESSION_ID = 'SESSION_ID';
 
 export const __ACTIVE_SESSION = '__active_session';
 
-function getSteps({ sequence }: OrderConfig): Record<string, Step> {
+function getSteps(sequence: string[]): Record<string, Step> {
   const steps: Record<string, Step> = {};
-  (sequence as string[]).forEach((id, idx, arr) => {
+  (sequence).forEach((id, idx, arr) => {
     steps[id] = {
       complete: false,
       next: arr[idx + 1] || 'end',
@@ -29,11 +29,10 @@ function getSteps({ sequence }: OrderConfig): Record<string, Step> {
 export async function studyStoreCreator(
   studyId: string,
   config: StudyConfig,
-  order: OrderConfig,
+  order: string[],
   firebase: ProvenanceStorage
 ) {
 
-  console.log(order, config);
   const lf = localforage.createInstance({
     name: 'sessions',
   });
@@ -48,7 +47,7 @@ export async function studyStoreCreator(
       session_id: crypto.randomUUID(),
     },
     ...stepsToAnswers,
-    orderConfig: order,
+    order,
   };
 
   const initialUntrrackedState: UnTrrackedState = {

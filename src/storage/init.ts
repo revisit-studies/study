@@ -18,7 +18,7 @@ import { StudyProvenance } from '../store/store';
 import { MODE, NODES, SESSIONS, STUDIES } from './constants';
 import { getFirestoreManager } from './firebase';
 import { FsSession, ProvenanceStorage } from './types';
-import { StudyComponents, StudyConfig } from '../parser/types';
+import { OrderObject, StudyComponents, StudyConfig } from '../parser/types';
 import latinSquare from '@quentinroy/latin-square';
 
 
@@ -29,17 +29,17 @@ function serverTimestamp() {
   return new Date();
 }
 
-function createRandomOrders(components: StudyComponents, paths: string[], path: string) {
-  Object.keys(components).forEach((componentKey) => {
-    const component = components[componentKey];
-    if(component.type === 'container') {
-      if(component.order.order === 'latinSquare') {
-        paths.push(path.length > 0 ? path + '-' + componentKey : componentKey);
-      }
-
-      createRandomOrders(component.components, paths, path + '-' + componentKey);
+function createRandomOrders(order: OrderObject, paths: string[], path: string, index = 0) {
+    const newPath = path.length > 0 ? path + '-' + index : 'root';
+    if(order.order === 'latinSquare') {
+      paths.push(newPath);
     }
-  });
+
+    order.components.forEach((comp, i) => {
+      if(typeof comp !== 'string') {
+        createRandomOrders(comp, paths, newPath, i);
+      }
+    });
 }
 
 async function restoreExistingSession(
@@ -329,19 +329,16 @@ async function saveStudyConfig(
 
   const paths: string[] = [];
 
-  createRandomOrders(config.components, paths, '');
+  createRandomOrders(config.sequence, paths, '');
 
   const docSnap = await getDoc(studiesRef);
 
-  const sequenceRandoms: string[][] = config.sequence.components.filter((seq) => Array.isArray(seq)) as string[][];
-
   if (docSnap.exists()) {
     const returnRefs = await getRandomOrders(store, paths, batch, studyId, config);
-    const sequenceReturnRefs = await getRandomOrders(store, sequenceRandoms.map((s, i) => `_sequence-${i}`) , batch, studyId, config);
 
     batch.commit();
 
-    return Promise.resolve([...returnRefs, ...sequenceReturnRefs]);
+    return Promise.resolve(returnRefs);
   }
 
   paths.forEach((path) => {
@@ -349,16 +346,27 @@ async function saveStudyConfig(
 
     const arr = path.split('-');
 
-    let obj = config.components;
+    let obj = config.sequence;
 
     arr.forEach((s) => {
-      const newObj = obj[s];
-      if(newObj.type === 'container') {
-        obj = newObj.components;
+      if(s === 'root') {
+        return;
+      }
+
+      const newObj = obj.components[+s];
+      if(typeof newObj !== 'string') {
+        obj = newObj;
       }
     });
 
-    const randArr = Object.keys(obj);
+    const randArr = obj.components.map((comp, i) => {
+      if(typeof comp === 'string') {
+        return comp;
+      }
+      else {
+        return`_orderObj${i}`;
+      }
+    });
 
     const permutations: string[][] = latinSquare<string>(randArr.sort(() => 0.5 - Math.random()), true);
 
@@ -369,28 +377,13 @@ async function saveStudyConfig(
     batch.set(randRef, randObj);
   });
 
-  if(sequenceRandoms.length > 0) {
-    sequenceRandoms.forEach((seq: string[], i: number) => {
-      const permutations: string[][] = latinSquare<string>(seq.sort(() => 0.5 - Math.random()), true);
-
-      const randObj: { perms?: any[], options?: string[] } = {};
-
-      randObj['perms'] = permutations.map((perm) => Object.assign({}, perm));
-      randObj['options'] = seq;
-      const randRef = doc(store, ...[STUDIES, studyId, 'versions', config.studyMetadata.version, 'random', `_sequence-${i}`]);
-
-      batch.set(randRef, randObj);
-    });
-  }
-
   await batch
-    .set(studiesRef, {...config, sequence: config.sequence.map((seq) => Array.isArray(seq) ? Object.assign({}, seq) : seq)});
+    .set(studiesRef, {...config});
 
   const returnRefs = await getRandomOrders(store, paths, batch, studyId, config);
-  const sequenceReturnRefs = await getRandomOrders(store, sequenceRandoms.map((s, i) => `_sequence-${i}`) , batch, studyId, config);
 
   batch.commit();
-  return Promise.resolve([...returnRefs, ...sequenceReturnRefs]);
+  return Promise.resolve(returnRefs);
 }
 
 async function getSession(store: Firestore, sessionId: string) {

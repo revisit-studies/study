@@ -519,24 +519,24 @@
             consent
             training
             {
-                order: random
+                order: latinSquare
                 components:[  
                     {
-                        order: random
+                        order: latinSquare
                         components:[  
                             task0
                             task1
                         ]
                     }
                     {
-                        order: random
+                        order: latinSquare
                         components:[  
                             task2
                             task3
                         ]
                     }
                     {
-                        order: random
+                        order: latinSquare
                         components:[  
                             task4
                             task5
@@ -549,7 +549,7 @@
                 components:[  
                     task6
                     {
-                        order: random
+                        order: latinSquare
                         components: [
                             task7
                             task8
@@ -560,7 +560,7 @@
                 ]
             }
             {
-                order: random
+                order: latinSquare
                 components:[  
                     task11
                     task12

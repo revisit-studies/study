@@ -56,7 +56,24 @@ async function fetchStudyConfig(configLocation: string, configKey: string) {
   return parseStudyConfig(config, configKey);
 }
 
-function orderObjectToList(order: OrderObject) {
+function orderObjectToList(
+  order: OrderObject, 
+  pathsFromFirebase: {
+    path: string;
+    order: string[];
+  }[] | undefined,
+ path: string
+ ) : string[] {
+  if(!pathsFromFirebase) {
+    return [];
+  }
+  
+  for(let i = 0; i < order.components.length; i ++) {
+    const curr = order.components[i];
+    if(typeof curr !== 'string') {
+      order.components[i] = orderObjectToList(curr, pathsFromFirebase, path + '-' + i) as any;
+    }
+  }
 
   if(order.order === 'random') {
     const randomArr = order.components.sort((a, b) => 0.5 - Math.random());
@@ -64,31 +81,25 @@ function orderObjectToList(order: OrderObject) {
     order.components = randomArr;
   }
 
-  for(let i = 0; i < order.components.length; i ++) {
-    const curr = order.components[i];
-    if(typeof curr !== 'string') {
-      order.components[i] = orderObjectToList(curr) as any;
-    }
+  else if(order.order === 'latinSquare') {
+    order.components = pathsFromFirebase.find((p) => p.path === path)!.order.map((o) => {
+      if(o.startsWith('_orderObj')) {
+        return order.components[+o.slice(9)];
+      }
+      
+      return o;
+    });
   }
 
-  return order.components.flat() as any;
+  return order.components.flat().slice(0, order.numSamples ? order.numSamples : undefined) as any;
 }
 
-//TODO:: remove anything that isnt order from this object
-function createOrderConfig(study: StudyConfig): OrderConfig {
-  const newConfig = deepCopy(study);
-
-  newConfig.sequence = orderObjectToList(newConfig.sequence);
-
-  return newConfig as unknown as OrderConfig;
-}
-
-type Props = {
+export function Shell({ globalConfig }: {
   globalConfig: GlobalConfig;
-};
-
-export function Shell({ globalConfig }: Props) {
+}) {
   const { studyId } = useParams<StudyIdParam>(); // get and set study identifiers from url
+
+  const [orderSequence, setOrderSequence] = useState<string[] | null>(null);
 
   if (
     !studyId ||
@@ -137,15 +148,8 @@ export function Shell({ globalConfig }: Props) {
     };
   }, [activeConfig]);
 
-  const orderConfig = useMemo(() => {
-    if (!activeConfig || !studyId || !firebase) return null;
-
-    return createOrderConfig(activeConfig);
-
-  }, [activeConfig, firebase, studyId]);
-
   useEffect(() => {
-    if (!activeConfig || !studyId || !firebase || !orderConfig) return;
+    if (!activeConfig || !studyId || !firebase ) return;
 
     let active = true;
 
@@ -158,11 +162,11 @@ export function Shell({ globalConfig }: Props) {
 
       const randoms = await firebase?.saveStudyConfig(config, sid);
 
-      const containerRandoms = randoms?.filter((rand) => !rand.path.startsWith('_sequence-'));
-      const sequenceRandoms = randoms?.filter((rand) => rand.path.startsWith('_sequence-'));
+      const orderConfig = orderObjectToList(deepCopy(activeConfig!.sequence), randoms, 'root');
 
+      const st = await studyStoreCreator(sid, config, orderConfig, fb);
 
-      const st = await studyStoreCreator(sid, config, orderConfig!, fb);
+      setOrderSequence(orderConfig);
 
       if (!active) return;
 
@@ -174,9 +178,9 @@ export function Shell({ globalConfig }: Props) {
     return () => {
       active = false;
     };
-  }, [activeConfig, studyId, firebase, orderConfig]);
+  }, [activeConfig, studyId, firebase]);
 
-  const routing = useStudyRoutes(studyId, activeConfig, orderConfig?.sequence, storeObj);
+  const routing = useStudyRoutes(studyId, activeConfig, orderSequence, storeObj);
 
   if (!routing || !storeObj || !firebase) return null;
 
@@ -262,7 +266,7 @@ function useStudyRoutes(
 ) {
   const routes: RouteObject[] = [];
  
-  if (studyId && config && store) {
+  if (studyId && config && store && sequence) {
     const enhancedSequence = [...sequence as string[], 'end'];
 
     const stepRoutes: RouteObject[] = [];

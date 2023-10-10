@@ -29,7 +29,7 @@ import {
 
 export default function AppHeader() {
   const studyConfig = useAppSelector((state) => state.unTrrackedSlice.config);
-  const orderConfig = useAppSelector((state) => state.trrackedSlice.orderConfig);
+  const order = useAppSelector((state) => state.trrackedSlice.order);
 
   const clearCache = useCreatedStore().clearCache;
   const flagsDispatch = useFlagsDispatch();
@@ -41,9 +41,9 @@ export default function AppHeader() {
     studyConfig !== null
       ? currentStep === 'end'
         ? 100
-        : orderConfig.sequence.indexOf(currentStep)
+        : order.indexOf(currentStep)
       : 0;
-  const progressBarMax = orderConfig?.sequence.length || 0;
+  const progressBarMax = order.length || 0;
   const progressPercent = (progressBarCurrent / progressBarMax) * 100;
 
   const [menuOpened, setMenuOpened] = useState(false);

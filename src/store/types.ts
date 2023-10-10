@@ -1,4 +1,4 @@
-import { BaseIndividualComponent, OrderConfig, StudyConfig } from '../parser/types';
+import { BaseIndividualComponent, OrderConfig, OrderObject, StudyConfig } from '../parser/types';
 import { StudyStore } from './store';
 
 export type RootState = ReturnType<StudyStore['store']['getState']>;
@@ -30,8 +30,8 @@ export type StudyIdentifiers = {
 export interface TrrackedState {
   // Three identifiers given by the study platform
   studyIdentifiers: StudyIdentifiers;
-  [name: string]: TrialRecord | StudyIdentifiers | StudyConfig | Record<string, Step> | OrderConfig;
-  orderConfig: OrderConfig
+  [name: string]: TrialRecord | StudyIdentifiers | StudyConfig | Record<string, Step> | string[];
+  order: string[]
 }
 
 export interface UnTrrackedState {
