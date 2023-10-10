@@ -120,6 +120,7 @@
                     id: q6
                     prompt: Slider example, iframe input example please refer to MVNV example or HTML input demo
                     location: aboveStimulus
+                    required: true
                     type: slider
                     options: [
                         {
