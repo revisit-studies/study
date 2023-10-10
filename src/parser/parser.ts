@@ -2,7 +2,7 @@
 import { parse as hjsonParse } from 'hjson';
 import Ajv from 'ajv';
 import schema from './schema.json';
-import { GlobalConfig, OrderObject, StudyConfig } from './types';
+import { GlobalConfig, IndividualComponent, OrderObject, PartialComponent, StudyConfig } from './types';
 
 const ajv = new Ajv();
 ajv.addSchema(schema);
@@ -24,6 +24,10 @@ function verifyGlobalConfig(data: GlobalConfig) {
   return [configsListVerified, errors] as const;
 }
 
+export function isPartialComponent(comp: IndividualComponent | PartialComponent) : comp is PartialComponent {
+  return (<PartialComponent>comp).baseComponent !== undefined;
+}
+
 export function parseGlobalConfig(fileData: string) {
   const data = hjsonParse(fileData);
   
@@ -42,7 +46,8 @@ export function parseGlobalConfig(fileData: string) {
 function verifyStudyConfig(data: StudyConfig) {
   const errors: { message: string }[] = [];
   const componentsVerified = Object.entries(data.components).every(([componentName, component]) => {
-    return true;
+
+    return isPartialComponent(component) ? !!data.baseComponents?.[component.baseComponent] : true;
   });
 
   return [componentsVerified, errors] as const;

@@ -330,6 +330,88 @@
         }
       ]
     },
+    "InheritedComponent": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/IndividualComponent"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "baseComponent": {
+              "type": "string"
+            },
+            "correctAnswer": {
+              "items": {
+                "$ref": "#/definitions/Answer"
+              },
+              "type": "array"
+            },
+            "description": {
+              "type": "string"
+            },
+            "instruction": {
+              "type": "string"
+            },
+            "instructionLocation": {
+              "$ref": "#/definitions/ResponseBlockLocation"
+            },
+            "meta": {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            "nextButtonLocation": {
+              "$ref": "#/definitions/ResponseBlockLocation"
+            },
+            "nextButtonText": {
+              "type": "string"
+            },
+            "parameters": {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            "path": {
+              "type": "string"
+            },
+            "response": {
+              "items": {
+                "$ref": "#/definitions/Response"
+              },
+              "type": "array"
+            },
+            "style": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": {
+              "type": "string"
+            },
+            "type": {
+              "enum": [
+                "markdown",
+                "react-component",
+                "image",
+                "website",
+                "questionnaire"
+              ],
+              "type": "string"
+            }
+          },
+          "required": [
+            "baseComponent"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "InheritedStudyComponents": {
+      "additionalProperties": {
+        "$ref": "#/definitions/InheritedComponent"
+      },
+      "type": "object"
+    },
     "LikertResponse": {
       "additionalProperties": false,
       "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the preset. For example, preset: 5 will render 5 radio buttons, and preset: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.",
@@ -862,8 +944,11 @@
         "$schema": {
           "type": "string"
         },
-        "components": {
+        "baseComponents": {
           "$ref": "#/definitions/StudyComponents"
+        },
+        "components": {
+          "$ref": "#/definitions/InheritedStudyComponents"
         },
         "sequence": {
           "$ref": "#/definitions/OrderObject"

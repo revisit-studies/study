@@ -261,6 +261,14 @@ export interface StudyComponents {
   [key: string]: IndividualComponent;
 }
 
+export interface InheritedStudyComponents {
+  [key: string]: InheritedComponent;
+}
+
+
+export type PartialComponent = (Partial<IndividualComponent> & { baseComponent: string })
+export type InheritedComponent  = IndividualComponent | PartialComponent
+
 /**
  * The StudyConfig interface is used to define the properties of a study configuration. These are the hjson files that live in the public folder. In our repo, one example of this would be public/cleveland/config-cleveland.hjson. 
  */
@@ -268,7 +276,8 @@ export interface StudyConfig {
   $schema: string;
   studyMetadata: StudyMetadata;
   uiConfig: UIConfig;
-  components: StudyComponents;
+  baseComponents?: StudyComponents;
+  components: InheritedStudyComponents
   sequence: OrderObject;
 }
 
