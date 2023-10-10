@@ -2,13 +2,10 @@ import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import { download } from '../components/DownloadPanel';
 
 import {
-  IndividualComponent,
-  Nullable,
   Prettify,
 } from '../parser/types';
-import { TrialRecord, TrialResult, TrrackedState, UnTrrackedState } from '../store/types';
 import { getAllSessions } from './queries';
-import { FsSession, ProvenanceStorage } from './types';
+import { ProvenanceStorage } from './types';
 
 export const OPTIONAL_COMMON_PROPS = [
   'description',
@@ -43,7 +40,6 @@ export type TidyRow = Prettify<
 export async function downloadTidy(
   fb: ProvenanceStorage,
   studyId: string,
-  trialGroups: string[],
   properties: Property[] = [...REQUIRED_PROPS, ...OPTIONAL_COMMON_PROPS],
   filename: string
 ) {

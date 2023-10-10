@@ -38,7 +38,6 @@
                     location: aboveStimulus
                     type: dropdown
                     placeholder: Enter your preference
-                    requiredValue: 'Bar'
                     options: [
                         {
                             label: Bar
@@ -64,7 +63,6 @@
                     required: true
                     location: aboveStimulus
                     type: numerical
-                    requiredValue: 55
                     placeholder: Enter your age here, range from 0 - 100
                     max: 100
                     min: 0
@@ -75,8 +73,6 @@
                     required: true
                     location: aboveStimulus
                     type: likert
-                    requiredValue: 5
-                    requiredLabel: '5'
                     preset: 9
                     rightLabel: Like
                     leftLabel: Dislike
@@ -86,7 +82,6 @@
                     prompt: short text example
                     required: true
                     location: aboveStimulus
-                    requiredValue: Hello World
                     type: shortText
                     placeholder: Enter your answer here
                 }
@@ -95,7 +90,6 @@
                     prompt: long text example
                     required: true
                     location: aboveStimulus
-                    requiredValue: Hello World
                     type: longText
                     placeholder: Enter your long comments here
                 }
@@ -105,8 +99,6 @@
                     required: true
                     location: aboveStimulus
                     type: checkbox
-                    requiredValue: ['hello', 'world']
-                    requiredLabel : Bad, Mid
                     options: 
                         [
                         {
@@ -127,10 +119,8 @@
                 {
                     id: q6
                     prompt: Slider example, iframe input example please refer to MVNV example or HTML input demo
-                    required: true
                     location: aboveStimulus
                     type: slider
-                    requiredValue: 45
                     options: [
                         {
                             label: Bad
