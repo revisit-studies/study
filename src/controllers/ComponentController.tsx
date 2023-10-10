@@ -25,7 +25,7 @@ export default function ComponentController() {
   // If we have a trial, use that config to render the right component else use the step
   const status = useComponentStatus();
 
-  const currentConfig = isPartialComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig;
+  const currentConfig = isPartialComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
 
   const instruction = (currentConfig.instruction || '');
   const instructionLocation = currentConfig.instructionLocation;
@@ -37,7 +37,7 @@ export default function ComponentController() {
         {instructionLocation === 'aboveStimulus' && <ReactMarkdownWrapper text={instruction} />}
         <ResponseBlock
           status={status}
-          config={stepConfig}
+          config={currentConfig}
           location="aboveStimulus"
         />
 
@@ -57,7 +57,7 @@ export default function ComponentController() {
         {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
         <ResponseBlock
           status={status}
-          config={stepConfig}
+          config={currentConfig}
           location="belowStimulus"
         />
       </TrialProvenanceContext.Provider>

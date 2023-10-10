@@ -4,7 +4,7 @@ import { clearIndexedDbPersistence, terminate } from 'firebase/firestore';
 import localforage from 'localforage';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
-import { OrderConfig, OrderObject, StudyConfig } from '../parser/types';
+import { StudyConfig } from '../parser/types';
 import { ProvenanceStorage } from '../storage/types';
 import { flagsStore, setTrrackExists } from './flags';
 import { RootState, Step, TrialRecord, TrrackedState, UnTrrackedState } from './types';

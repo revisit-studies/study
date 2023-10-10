@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { PREFIX as BASE_PREFIX } from '../App';
 import { useCurrentStep } from '../routes';
 import {
@@ -97,12 +97,6 @@ export default function IframeController({path, parameters}: Props) {
     sendMessage,
     saveTrialAnswer,
   ]);
-
-  //   saveTrialAnswer({
-  //     trialName: currentStep,
-  //     trialId,
-  //     answer: { [`${id}/${trialId}`]: data.message },
-  //   })
   
   return (
     <div >

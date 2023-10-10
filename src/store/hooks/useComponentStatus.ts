@@ -1,7 +1,6 @@
 import { useAppSelector } from '../store';
 import { useCurrentStep } from '../../routes';
-import { TrialRecord, TrialResult } from '../types';
-import { useCurrentTrial } from './useCurrentTrial';
+import { TrialResult } from '../types';
 
 /**
  *

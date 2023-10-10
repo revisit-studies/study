@@ -2,7 +2,7 @@
 import { parse as hjsonParse } from 'hjson';
 import Ajv from 'ajv';
 import schema from './schema.json';
-import { GlobalConfig, IndividualComponent, OrderObject, PartialComponent, StudyConfig } from './types';
+import { GlobalConfig, IndividualComponent, PartialComponent, StudyConfig } from './types';
 
 const ajv = new Ajv();
 ajv.addSchema(schema);

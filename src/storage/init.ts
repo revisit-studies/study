@@ -18,7 +18,7 @@ import { StudyProvenance } from '../store/store';
 import { MODE, NODES, SESSIONS, STUDIES } from './constants';
 import { getFirestoreManager } from './firebase';
 import { FsSession, ProvenanceStorage } from './types';
-import { OrderObject, StudyComponents, StudyConfig } from '../parser/types';
+import { OrderObject, StudyConfig } from '../parser/types';
 import latinSquare from '@quentinroy/latin-square';
 
 

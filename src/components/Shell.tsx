@@ -4,7 +4,6 @@ import {
   createContext,
   useCallback,
   useEffect,
-  useMemo,
   useState,
 } from 'react';
 import { createSelectorHook, Provider } from 'react-redux';
@@ -14,8 +13,7 @@ import {
   GlobalConfig,
   Nullable,
   OrderObject, 
-  OrderConfig,
-  StudyComponents,
+
   StudyConfig,
 } from '../parser/types';
 import { StudyIdParam } from '../routes';
@@ -191,7 +189,7 @@ export function Shell({ globalConfig }: {
       <MainStoreContext.Provider value={storeObj}>
         <Provider store={trrackStore} context={trrackContext}>
           <Provider store={store}>
-            <Provider store={flagsStore} context={flagsContext as any}>
+            <Provider store={flagsStore} context={flagsContext}>
               {routing}
             </Provider>
           </Provider>
