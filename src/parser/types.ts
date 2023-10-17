@@ -56,12 +56,14 @@ export interface Option {
  * Other Response interfaces inherit properties from the BaseResponse interface.
  * Therefore, all responses must include these properties.
  */
-interface BaseResponse {
+export interface BaseResponse {
   // Required fields for all responses
   id: string;
   prompt: string;
   required: boolean;
   location: ResponseBlockLocation;
+  requiredValue?: unknown;
+  requiredLabel?: string;
 }
 
 /**

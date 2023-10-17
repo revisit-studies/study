@@ -1,5 +1,6 @@
 import { Group, Radio, Text } from '@mantine/core';
 import { RadioResponse } from '../../parser/types';
+import { generateErrorMessage } from '../stimuli/inputcomponents/utils';
 
 type inputProps = {
   response: RadioResponse;
@@ -22,8 +23,10 @@ export default function RadioInput({
         withAsterisk={required}
         size={'md'}
         {...answer}
+        // This overrides the answers error. Which..is bad?
+        error={generateErrorMessage(response, answer, options)}
       >
-        <Text>{leftLabel}</Text>
+        {leftLabel ? <Text>{leftLabel}</Text> : null}
         <Group mt="xs">
           {options.map((radio) => {
             return (

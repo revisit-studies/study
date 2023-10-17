@@ -1,5 +1,6 @@
-import { Slider, Text } from '@mantine/core';
+import { Slider, Stack, Text } from '@mantine/core';
 import { SliderResponse } from '../../parser/types';
+import { generateErrorMessage } from '../stimuli/inputcomponents/utils';
 
 type inputProps = {
   response: SliderResponse;
@@ -12,10 +13,12 @@ export default function SliderInput({
   disabled,
   answer,
 }: inputProps) {
-  const { prompt, required, options } = response;
+  const { prompt, options } = response;
 
+
+  const errorMessage = generateErrorMessage(response, answer);
   return (
-    <>
+    <Stack spacing={2}>
       <Text fz={'md'} fw={500}>
         {prompt}
       </Text>
@@ -25,6 +28,7 @@ export default function SliderInput({
         sx={{ marginTop: '5px', marginBottom: '30px' }}
         marks={options}
         {...answer}
+        error={generateErrorMessage(response, answer)}
         styles={(theme) => ({
           mark: {
             width: 12,
@@ -62,6 +66,7 @@ export default function SliderInput({
           },
         })}
       />
-    </>
+      {errorMessage ? <Text size={12} c={'#fa5252'}>{errorMessage}</Text> : null}
+    </Stack>
   );
 }

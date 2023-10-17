@@ -1,5 +1,6 @@
 import { Select } from '@mantine/core';
 import { DropdownResponse } from '../../parser/types';
+import { generateErrorMessage } from '../stimuli/inputcomponents/utils';
 
 
 type inputProps = {
@@ -26,6 +27,7 @@ export default function DropdownInput({
         radius={'md'}
         size={'md'}
         {...answer}
+        error={generateErrorMessage(response, answer, options)}
       />
     </>
   );

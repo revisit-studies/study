@@ -1,5 +1,6 @@
 import { NumberInput } from '@mantine/core';
 import { NumericalResponse } from '../../parser/types';
+import { generateErrorMessage } from '../stimuli/inputcomponents/utils';
 
 type inputProps = {
   response: NumericalResponse;
@@ -25,6 +26,7 @@ export default function NumericInput({
         min={min}
         max={max}
         {...answer}
+        error={generateErrorMessage(response, answer)}
       />
     </>
   );

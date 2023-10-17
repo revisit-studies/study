@@ -1,5 +1,6 @@
 import { Textarea } from '@mantine/core';
 import { LongTextResponse } from '../../parser/types';
+import { generateErrorMessage } from '../stimuli/inputcomponents/utils';
 
 type inputProps = {
   response: LongTextResponse;
@@ -24,6 +25,7 @@ export default function TextAreaInput({
         size={'md'}
         withAsterisk={required}
         {...answer}
+        error={generateErrorMessage(response, answer)}
       />
     </>
   );

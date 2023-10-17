@@ -25,6 +25,7 @@ import { deepCopy } from '../../utils/deepCopy';
 import { NextButton } from '../NextButton';
 import { useAnswerField } from '../stimuli/inputcomponents/utils';
 import ResponseSwitcher from './ResponseSwitcher';
+import React from 'react';
 
 type Props = {
   status: TrialResult | null;
@@ -140,9 +141,8 @@ export default function ResponseBlock({
   return (
     <div style={style}>
       {responses.map((response) => (
-        <>
+        <React.Fragment key={`${response.id}-${id}`}>
           <ResponseSwitcher
-            key={`${response.id}-${id}`}
             status={status}
             storedAnswer={ response.type === 'iframe' ? (aggregateResponses || {})[`${id}/${response.id}`] : null
               // isSurvey
@@ -165,7 +165,7 @@ export default function ResponseBlock({
           {hasCorrectAnswer && checkClicked && (
             <Text>The correct answer is: {configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer}</Text>
           )}
-        </>
+        </React.Fragment>
       ))}
 
       <Group position="right" spacing="xs" mt="xl">

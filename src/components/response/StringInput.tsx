@@ -1,5 +1,6 @@
 import { TextInput } from '@mantine/core';
 import { ShortTextResponse } from '../../parser/types';
+import { generateErrorMessage } from '../stimuli/inputcomponents/utils';
 
 type inputProps = {
   response: ShortTextResponse;
@@ -24,6 +25,7 @@ export default function StringInput({
         size={'md'}
         withAsterisk={required}
         {...answer}
+        error={generateErrorMessage(response, answer)}
       />
     </>
   );
