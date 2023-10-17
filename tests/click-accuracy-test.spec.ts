@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Click Accuracy Test A demo of using React dynamic stimuli, and receive input from it.' }).click();
+  await page.getByRole('button', { name: 'Click Accuracy Test A demo of using React dynamic stimuli, and receiving input from it.' }).click();
 
   // Check for introduction page
   const introText = await page.getByRole('heading', { name: 'Introduction' });
