@@ -94,6 +94,29 @@
                     placeholder: Enter your long comments here
                 }
                 {
+                    id: q7
+                    prompt: Checkbox example
+                    required: true
+                    location: aboveStimulus
+                    type: checkbox
+                    options: 
+                        [
+                        {
+                            label: Bad
+                            value: hello
+                        }
+                        {
+                            label: Mid
+                            value: world
+                        }
+                        {
+                            label: Good
+                            value: idk
+                        }
+                        ]
+                    
+                }
+                {
                     id: q6
                     prompt: Slider example, iframe input example please refer to MVNV example or HTML input demo
                     required: true
