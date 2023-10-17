@@ -1,13 +1,13 @@
 {
     $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/schema.json
     studyMetadata: {
-        title: Dyanmic React Stimuli: A Graphical Perception Experiment
+        title: Dynamic React.js Stimuli: A Graphical Perception Experiment
         version: pilot
         authors: [
             The reVISit Team
         ]
         date: 2023-04-28
-        description: A demo using dynamic React components as stiumli to replicate the Cleveland/McGill, and the Heer/Bostock extension of graphical perception studies with post study survey.
+        description: A demo using dynamic React components as stimuli to replicate a Cleveland & McGill graphical perception task, with a post study survey.
         organizations: [
             University of Utah
             WPI
@@ -43,7 +43,7 @@
                 }
                 {
                     id: accept
-                    prompt: Do you accept the consent form?
+                    prompt: Do you consent to the study and wish to continue?
                     required: true
                     requiredValue: yes
                     location: belowStimulus

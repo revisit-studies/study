@@ -1,13 +1,13 @@
 {
     $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/schema.json
     studyMetadata: {
-        title: A demo for supported survey questions
+        title: Question Types Demo
         version: pilot
         authors: [
             The reVISit Team
         ]
         date: 2023-04-30
-        description: A demo for supported survey questions
+        description: A demo of supported survey question types
         organizations: [
             University of Utah
             WPI

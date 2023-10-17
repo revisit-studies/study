@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'A demo for supported survey questions A demo for supported survey questions' }).click();
+  await page.getByRole('button', { name: 'Question Types Demo A demo of supported survey question types' }).click();
 
   // Check for introduction page
   const introText = await page.getByText('Welcome to our study. This is an example survey study. It asks basic questions o');
