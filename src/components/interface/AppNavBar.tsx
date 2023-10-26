@@ -5,7 +5,7 @@ import { useComponentStatus } from '../../store/hooks/useComponentStatus';
 import ResponseBlock from '../response/ResponseBlock';
 import { useCurrentStep } from '../../routes';
 import { useCurrentTrial } from '../../store/hooks/useCurrentTrial';
-import { ContainerComponent, IndividualComponent, OrderContainerComponent } from '../../parser/types';
+import { IndividualComponent } from '../../parser/types';
 
 export default function AppNavBar() {
   const trialHasSideBar = useStudyConfig()?.uiConfig.sidebar;
@@ -17,9 +17,8 @@ export default function AppNavBar() {
   const step = useCurrentStep();
   const currentStepConfig = studyConfig.components[step];
 
-  const trialId = useCurrentTrial();
   const status = useComponentStatus();
-  const stimulus = (trialId !== null ? (currentStepConfig as ContainerComponent)?.components[trialId || ''] : currentStepConfig) as IndividualComponent | undefined;
+  const stimulus = currentStepConfig as IndividualComponent | undefined;
   const instruction = stimulus?.instruction || '';
 
   const instructionInSideBar =

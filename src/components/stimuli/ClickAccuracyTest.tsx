@@ -1,9 +1,10 @@
 import * as d3 from 'd3';
 import { useChartDimensions } from './hooks/useChartDimensions';
-import {useEffect, useState} from 'react';
+import {useEffect, useMemo, useState} from 'react';
 import {updateResponseBlockValidation, useFlagsDispatch} from '../../store/flags';
 import {useLocation} from 'react-router-dom';
 import {Box, Slider} from '@mantine/core';
+import {initializeProvenanceGraph, createAction, initializeTrrack, Registry} from '@trrack/core';
 
 const chartSettings = {
   marginBottom: 40,
@@ -14,15 +15,45 @@ const chartSettings = {
   width: 850,
 };
 
+interface ClickAccuracyTest {
+  distance: number;
+  speed: number;
+  clickX: number;
+  clickY: number;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const ClickAccuracyTest = ({ parameters, trialId }: { parameters: any, trialId: string }) => {
   const [ref, dms] = useChartDimensions(chartSettings);
   const [x, setX] = useState(100);
   const [y, setY] = useState(100);
-    const [speed, setSpeed] = useState(300);
+  const [speed, setSpeed] = useState(300);
   const flagDispatch = useFlagsDispatch();
-    const id = useLocation().pathname;
-    const taskid = parameters.taskid;
+  const id = useLocation().pathname;
+  const taskid = parameters.taskid;
+
+  const { registry, actions } = useMemo(() => {
+    const reg = Registry.create();
+
+    const click = reg.register('click', (state, click: {clickX: number, clickY: number, distance: number}) => {
+        state.clickX = click.clickX;
+        state.clickY = click.clickY;
+        state.distance = click.distance;
+        return state;
+    });
+
+    return {
+        registry: reg,
+        actions: {
+          click
+        },
+    };
+}, []);
+
+  const trrack = useMemo(() => {
+    return initializeTrrack({registry: registry, initialState: {distance: 0, speed: 10, clickX: 0, clickY: 0} });
+  }, [registry]);
+
 
   useEffect(()=>{
     const svgElement = d3.select(ref.current);
@@ -31,11 +62,13 @@ const ClickAccuracyTest = ({ parameters, trialId }: { parameters: any, trialId: 
       const circle = svgElement.select('circle');
       const circelPos = [+circle.attr('cx'), +circle.attr('cy')];
       const distance = Math.round(Math.sqrt((clickPos[0] - circelPos[0]) ** 2 + (clickPos[1] - circelPos[1]) ** 2)) + 'px';
+      trrack.apply('Clicked', actions.click({distance: +distance, clickX: clickPos[0], clickY: clickPos[1]}));
       flagDispatch(
           updateResponseBlockValidation({
             location: 'sidebar',
             trialId: id,
             status: true,
+            provenanceGraph: trrack.graph.backend,
             answers: {
                 [`${id}/${taskid}`]: [
                 ...new Set([distance]),

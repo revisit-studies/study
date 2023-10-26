@@ -7,6 +7,8 @@ import {
   TypedUseSelectorHook,
 } from 'react-redux';
 import { ResponseBlockLocation } from '../parser/types';
+import { ProvenanceNode } from '@trrack/core';
+import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 
 type TrialRecord = Record<
   string,
@@ -17,6 +19,7 @@ type TrialRecord = Record<
       sidebar: boolean;
     };
     answers: Record<string, any>;
+    provenanceGraph: ProvenanceGraph<any, any, any> | null,
   }
 >;
 
@@ -50,6 +53,7 @@ const flags = createSlice({
         location: ResponseBlockLocation;
         trialId: string;
         status: boolean;
+        provenanceGraph?: ProvenanceGraph<any, any, any>
         answers: Record<string, any>;
       }>
     ) => {
@@ -63,11 +67,16 @@ const flags = createSlice({
             sidebar: false,
           },
           answers: {},
+          provenanceGraph: null,
         };
       }
       state.trialRecord[payload.trialId].valid[payload.location] =
         payload.status;
       const prev = state.trialRecord[payload.trialId].answers;
+
+      if(payload.provenanceGraph) {
+        state.trialRecord[payload.trialId].provenanceGraph = payload.provenanceGraph;
+      }
 
       state.trialRecord[payload.trialId].answers = {
         ...prev,
