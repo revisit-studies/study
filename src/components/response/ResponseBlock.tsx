@@ -26,7 +26,7 @@ import React from 'react';
 
 type Props = {
   status: TrialResult | null;
-  config: IndividualComponent;
+  config: IndividualComponent | null;
   location: ResponseBlockLocation;
   style?: React.CSSProperties;
 };

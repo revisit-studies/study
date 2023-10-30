@@ -19,15 +19,15 @@ export default function AppNavBar() {
   const step = useCurrentStep();
   const stepConfig = studyConfig.components[step];
 
-  const currentConfig = isPartialComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
+  const currentConfig = stepConfig ? isPartialComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent : null;
   const status = useComponentStatus();
-  const instruction = currentConfig.instruction || '';
+  const instruction = currentConfig?.instruction || '';
 
   const instructionInSideBar =
-    currentConfig.instructionLocation === 'sidebar' ||
-    currentConfig.instructionLocation === undefined;
+    currentConfig?.instructionLocation === 'sidebar' ||
+    currentConfig?.instructionLocation === undefined;
 
-  return trialHasSideBar ? (
+  return trialHasSideBar && currentConfig ? (
     <Navbar width={{ base: 300 }} style={{ zIndex: 0 }}>
       {instructionInSideBar && instruction !== '' && (
         <Navbar.Section bg="gray.3" p="xl" style={{flex: 1, overflowY: 'auto'}}>
