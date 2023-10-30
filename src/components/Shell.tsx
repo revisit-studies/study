@@ -54,7 +54,7 @@ async function fetchStudyConfig(configLocation: string, configKey: string) {
   return parseStudyConfig(config, configKey);
 }
 
-function orderObjectToList(
+function _orderObjectToList(
   order: OrderObject, 
   pathsFromFirebase: {
     path: string;
@@ -69,7 +69,7 @@ function orderObjectToList(
   for(let i = 0; i < order.components.length; i ++) {
     const curr = order.components[i];
     if(typeof curr !== 'string') {
-      order.components[i] = orderObjectToList(curr, pathsFromFirebase, path + '-' + i) as any;
+      order.components[i] = _orderObjectToList(curr, pathsFromFirebase, path + '-' + i) as any;
     }
   }
 
@@ -90,6 +90,21 @@ function orderObjectToList(
   }
 
   return order.components.flat().slice(0, order.numSamples ? order.numSamples : undefined) as any;
+}
+
+function orderObjectToList(
+  order: OrderObject, 
+  pathsFromFirebase: {
+    path: string;
+    order: string[];
+  }[] | undefined
+ ) : string[] {
+  const orderCopy = deepCopy(order);
+
+  console.log(orderCopy);
+
+  _orderObjectToList(orderCopy, pathsFromFirebase, 'root');
+  return orderCopy.components.flat().slice(0, orderCopy.numSamples ? orderCopy.numSamples : undefined) as any as any;
 }
 
 export function Shell({ globalConfig }: {
@@ -160,7 +175,9 @@ export function Shell({ globalConfig }: {
 
       const randoms = await firebase?.saveStudyConfig(config, sid);
 
-      const orderConfig = orderObjectToList(deepCopy(activeConfig!.sequence), randoms, 'root');
+      const orderConfig = orderObjectToList(activeConfig!.sequence, randoms);
+
+      console.log(orderConfig);
 
       const st = await studyStoreCreator(sid, config, orderConfig, fb);
 
