@@ -5,7 +5,9 @@ import { useComponentStatus } from '../../store/hooks/useComponentStatus';
 import ResponseBlock from '../response/ResponseBlock';
 import { useCurrentStep } from '../../routes';
 import { useCurrentTrial } from '../../store/hooks/useCurrentTrial';
-import { ContainerComponent, IndividualComponent, OrderContainerComponent } from '../../parser/types';
+import { IndividualComponent } from '../../parser/types';
+import { isPartialComponent } from '../../parser/parser';
+import merge from 'lodash/merge';
 
 export default function AppNavBar() {
   const trialHasSideBar = useStudyConfig()?.uiConfig.sidebar;
@@ -15,16 +17,15 @@ export default function AppNavBar() {
   // Get the config for the current step
   const studyConfig = useStudyConfig();
   const step = useCurrentStep();
-  const currentStepConfig = studyConfig.components[step];
+  const stepConfig = studyConfig.components[step];
 
-  const trialId = useCurrentTrial();
+  const currentConfig = isPartialComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
   const status = useComponentStatus();
-  const stimulus = (trialId !== null ? (currentStepConfig as ContainerComponent)?.components[trialId || ''] : currentStepConfig) as IndividualComponent | undefined;
-  const instruction = stimulus?.instruction || '';
+  const instruction = currentConfig.instruction || '';
 
   const instructionInSideBar =
-    stimulus?.instructionLocation === 'sidebar' ||
-    stimulus?.instructionLocation === undefined;
+    currentConfig.instructionLocation === 'sidebar' ||
+    currentConfig.instructionLocation === undefined;
 
   return trialHasSideBar ? (
     <Navbar width={{ base: 300 }} style={{ zIndex: 0 }}>
@@ -42,7 +43,7 @@ export default function AppNavBar() {
       {trialHasSideBarResponses && (
         <Navbar.Section bg="gray.1" p="xl" grow>
           {(
-            <ResponseBlock status={status} config={currentStepConfig} location="sidebar" />
+            <ResponseBlock status={status} config={currentConfig} location="sidebar" />
           )}
         </Navbar.Section>
       )}
@@ -53,6 +54,6 @@ export default function AppNavBar() {
         </Navbar.Section>
       )}
     </Navbar>
-  ) : <ResponseBlock status={status} config={currentStepConfig} location="sidebar" style={{ display: 'hidden' }} />
+  ) : <ResponseBlock status={status} config={currentConfig} location="sidebar" style={{ display: 'hidden' }} />
   ;
 }
