@@ -43,7 +43,7 @@ function simpleHash(str: string) {
 }
 
 function _createRandomOrders(order: OrderObject, paths: string[], path: string, index = 0) {
-    const newPath = path.length > 0 ? `${path}'-'${index}` : 'root';
+    const newPath = path.length > 0 ? `${path}-${index}` : 'root';
     if(order.order === 'latinSquare') {
       paths.push(newPath);
     }
@@ -58,6 +58,8 @@ function _createRandomOrders(order: OrderObject, paths: string[], path: string, 
 function createRandomOrders(order: OrderObject) {
   const paths: string[] = [];
   _createRandomOrders(order, paths, '', 0);
+
+  console.log(paths);
 
   return paths;
 }
@@ -363,7 +365,6 @@ async function saveStudyConfig(
   }
 
   if (docSnap.exists()) {
-    console.log('exists');
     const returnRefs = await getRandomOrders(store, paths, batch, studyId, config, versionHash);
 
     batch.commit();
@@ -377,6 +378,8 @@ async function saveStudyConfig(
     const arr = path.split('-');
 
     let obj = config.sequence;
+
+    console.log(obj);
 
     arr.forEach((s) => {
       if(s === 'root') {
