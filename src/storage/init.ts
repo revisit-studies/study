@@ -44,7 +44,7 @@ function simpleHash(str: string) {
 }
 
 function _createRandomOrders(order: OrderObject, paths: string[], path: string, index = 0) {
-    const newPath = path.length > 0 ? `${path}'-'${index}` : 'root';
+    const newPath = path.length > 0 ? `${path}-${index}` : 'root';
     if(order.order === 'latinSquare') {
       paths.push(newPath);
     }
