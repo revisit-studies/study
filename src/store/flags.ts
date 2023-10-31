@@ -7,7 +7,6 @@ import {
   TypedUseSelectorHook,
 } from 'react-redux';
 import { ResponseBlockLocation } from '../parser/types';
-import { ProvenanceNode } from '@trrack/core';
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 
 type TrialRecord = Record<
@@ -113,6 +112,16 @@ export const useFlagsSelector: TypedUseSelectorHook<FlagStore> =
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const useFlagsDispatch: () => FlagDispatch =
   createDispatchHook<FlagStore>(flagsContext);
+
+export function setAnswer({trialId, status, provenanceGraph, answers} : {trialId: string, status: boolean, provenanceGraph?: ProvenanceGraph<any, any, any>, answers: Record<string, any>}) {
+    flagsStore.dispatch(updateResponseBlockValidation({
+      location: 'sidebar',
+      trialId,
+      status,
+      provenanceGraph,
+      answers,
+    }));
+}
 
 export function useAreResponsesValid(id: string) {
   return useFlagsSelector((state) => {

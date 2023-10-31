@@ -5,6 +5,7 @@ import {updateResponseBlockValidation, useFlagsDispatch} from '../../store/flags
 import {useLocation} from 'react-router-dom';
 import {Box, Slider} from '@mantine/core';
 import {initializeProvenanceGraph, createAction, initializeTrrack, Registry} from '@trrack/core';
+import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 
 const chartSettings = {
   marginBottom: 40,
@@ -23,7 +24,7 @@ interface ClickAccuracyTest {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ClickAccuracyTest = ({ parameters, trialId }: { parameters: any, trialId: string }) => {
+const ClickAccuracyTest = ({ parameters, trialId, setAnswer }: { parameters: any, trialId: string, setAnswer: ({trialId, status, provenanceGraph, answers} : {trialId: string, status: boolean, provenanceGraph?: ProvenanceGraph<any, any, any>, answers: Record<string, any>}) => void }) => {
   const [ref, dms] = useChartDimensions(chartSettings);
   const [x, setX] = useState(100);
   const [y, setY] = useState(100);
@@ -63,21 +64,16 @@ const ClickAccuracyTest = ({ parameters, trialId }: { parameters: any, trialId: 
       const circelPos = [+circle.attr('cx'), +circle.attr('cy')];
       const distance = Math.round(Math.sqrt((clickPos[0] - circelPos[0]) ** 2 + (clickPos[1] - circelPos[1]) ** 2)) + 'px';
       trrack.apply('Clicked', actions.click({distance: +distance, clickX: clickPos[0], clickY: clickPos[1]}));
-      flagDispatch(
-          updateResponseBlockValidation({
-            location: 'sidebar',
-            trialId: id,
-            status: true,
-            provenanceGraph: trrack.graph.backend,
-            answers: {
-                [`${id}/${taskid}`]: [
-                ...new Set([distance]),
-              ],
-            },
-          })
-      );
-
-
+      setAnswer({
+        trialId: id,
+        status: true,
+        provenanceGraph: trrack.graph.backend,
+        answers: {
+            [`${id}/${taskid}`]: [
+            ...new Set([distance]),
+          ],
+        },
+      });
     });
   },[ref]);
 

@@ -210,6 +210,8 @@ async function createSession(
 
   const sRef = doc(store, SESSIONS, sessionId);
 
+  console.log(sessionId);
+
   const sessh: FsSession = {
     studyId,
     pid,
