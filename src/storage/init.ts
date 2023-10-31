@@ -59,8 +59,6 @@ function createRandomOrders(order: OrderObject) {
   const paths: string[] = [];
   _createRandomOrders(order, paths, '', 0);
 
-  console.log(paths);
-
   return paths;
 }
 
@@ -211,8 +209,6 @@ async function createSession(
   const trk: ProvenanceGraph<any, any, any> = JSON.parse(trrack.export());
 
   const sRef = doc(store, SESSIONS, sessionId);
-
-  console.log(sessionId);
 
   const sessh: FsSession = {
     studyId,
@@ -378,8 +374,6 @@ async function saveStudyConfig(
     const arr = path.split('-');
 
     let obj = config.sequence;
-
-    console.log(obj);
 
     arr.forEach((s) => {
       if(s === 'root') {
