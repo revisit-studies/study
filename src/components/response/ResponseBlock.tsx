@@ -26,7 +26,7 @@ import React from 'react';
 
 type Props = {
   status: TrialResult | null;
-  config: IndividualComponent;
+  config: IndividualComponent | null;
   location: ResponseBlockLocation;
   style?: React.CSSProperties;
 };
@@ -68,7 +68,7 @@ export default function ResponseBlock({
   const nextStep = useNextStep();
   const flagsSelector = useFlagsSelector((state) => state);
 
-  const hasCorrectAnswer = trialId !== null ? configInUse?.correctAnswer?.length || 0 > 0 : false;
+  const hasCorrectAnswer = ((configInUse?.correctAnswer?.length || 0) > 0);
 
   const startTime = useMemo(() => {
     return Date.now();

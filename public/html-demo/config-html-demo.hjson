@@ -7,7 +7,7 @@
             The reVISit Team
         ]
         date: 2023-04-14
-        description: A simple demo of using a stimuli in an html file that renders a D3 visualization. Data is collected via a numeric response field.
+        description: A simple demo of using stimuli in an HTML file that renders a D3 visualization. Data is collected via a numeric response field.
         organizations: [
             University of Utah
             WPI
@@ -28,7 +28,6 @@
             path: html-demo/introduction.md
             response: []
         }
-
         barChart: {
             type: website
             nextButtonLocation: sidebar
@@ -36,7 +35,7 @@
                 difficulty: hard
             }
             description: Question that asks users to count the number of bars that have a value greater than 1.
-            instruction: How many bars have a value great than 1?
+            instruction: How many bars have a value greater than 1?
             path: html-demo/bar-chart.html
             response: [
                 {

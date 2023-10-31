@@ -20,7 +20,7 @@ export default function TextAreaInput({
       <Textarea
         disabled={disabled}
         placeholder={placeholder}
-        label={prompt} 
+        label={prompt}
         radius={'md'}
         size={'md'}
         withAsterisk={required}

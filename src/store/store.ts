@@ -16,6 +16,7 @@ export const SESSION_ID = 'SESSION_ID';
 export const __ACTIVE_SESSION = '__active_session';
 
 function getSteps(sequence: string[]): Record<string, Step> {
+  console.log(sequence);
   const steps: Record<string, Step> = {};
   (sequence).forEach((id, idx, arr) => {
     steps[id] = {
@@ -37,6 +38,8 @@ export async function studyStoreCreator(
   const lf = localforage.createInstance({
     name: 'sessions',
   });
+
+  console.log(order);
 
   const steps = getSteps(order);
   const stepsToAnswers = Object.assign({}, ...Object.keys(steps).map((id) => ({[id]: {}})));

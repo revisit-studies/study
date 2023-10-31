@@ -257,15 +257,6 @@ export interface OrderObject {
   numSamples?: number
 }
 
-export interface StudyComponents {
-  [key: string]: IndividualComponent;
-}
-
-export interface InheritedStudyComponents {
-  [key: string]: InheritedComponent;
-}
-
-
 export type PartialComponent = (Partial<IndividualComponent> & { baseComponent: string })
 export type InheritedComponent  = IndividualComponent | PartialComponent
 
@@ -276,8 +267,8 @@ export interface StudyConfig {
   $schema: string;
   studyMetadata: StudyMetadata;
   uiConfig: UIConfig;
-  baseComponents?: StudyComponents;
-  components: InheritedStudyComponents
+  baseComponents?: Record<string, IndividualComponent>;
+  components: Record<string, InheritedComponent>
   sequence: OrderObject;
 }
 

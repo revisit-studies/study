@@ -2,10 +2,12 @@ import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import { download } from '../components/DownloadPanel';
 
 import {
+  Nullable,
   Prettify,
 } from '../parser/types';
 import { getAllSessions } from './queries';
-import { ProvenanceStorage } from './types';
+import { FsSession, ProvenanceStorage } from './types';
+import { TrialRecord, TrialResult } from '../store/types';
 
 export const OPTIONAL_COMMON_PROPS = [
   'description',
@@ -21,9 +23,7 @@ export const REQUIRED_PROPS = [
   'pid',
   'sessionId',
   'status',
-  'trialGroup',
   'trialId',
-  'type',
 ] as const;
 
 type OptionalProperty = (typeof OPTIONAL_COMMON_PROPS)[number];
@@ -40,6 +40,7 @@ export type TidyRow = Prettify<
 export async function downloadTidy(
   fb: ProvenanceStorage,
   studyId: string,
+  trialIds: string[],
   properties: Property[] = [...REQUIRED_PROPS, ...OPTIONAL_COMMON_PROPS],
   filename: string
 ) {
@@ -47,18 +48,17 @@ export async function downloadTidy(
   const NULL = ' ';
 
   const sessionArr = await getAllSessions(fb.firestore, studyId);
+  console.log(sessionArr.length, sessionArr[0]);
   const rows = sessionArr
-    .map((sessionObject) => processToRow(sessionObject))
-    .reduce((acc, trs) => {
-      acc = [...acc, ...trs];
-      return acc;
-    }, []);
+    .map((sessionObject) => processToRow(sessionObject, trialIds)).flat();
 
   const csvStrings = [properties.join(',')];
 
-  rows.forEach((row) => {
+  console.log(rows);
+
+  rows.filter((row) => row !== null).forEach((row) => {
     const arr: string[] = properties.map((prop) => {
-      const val = row[prop];
+      const val = row?.[prop];
 
       const valStr: string =
         typeof val === 'string' ? val : val ? val.toString() : NULL;
@@ -77,15 +77,58 @@ export async function downloadTidy(
 function processToRow(
   {
     graph,
+    session
   }: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     graph: ProvenanceGraph<any, any, any>;
+    session: FsSession
   },
-): Array<TidyRow> {
+  trialIds: string[],
+): Array<TidyRow> | null {
   const trs: Array<TidyRow> = [];
 
   const nodes = Object.values(graph.nodes);
   nodes.sort((a, b) => a.meta.createdOn - b.meta.createdOn);
+
+  console.log(nodes);
+
+  if(nodes.length === 0) {
+    return null;
+  }
+
+  const lastNode = nodes[nodes.length - 1];
+
+  const study = lastNode.state.val.trrackedSlice;
+
+  trialIds.forEach((trialId) => {
+    const trial = study[trialId];
+    console.log(trial);
+    const answer: Nullable<TrialResult> =
+      'answer' in trial ? trial : null;
+    const startTime = answer?.startTime
+      ? new Date(answer.startTime).toUTCString()
+      : null;
+    const endTime = answer?.endTime
+      ? new Date(answer.endTime).toUTCString()
+      : null;
+    const duration = (answer?.endTime || 0) - 0;
+
+    const tr: TidyRow = {
+      pid: study.studyIdentifiers.pid,
+      sessionId: study.studyIdentifiers.session_id,
+      status: session.status.endStatus?.status || 'incomplete',
+      trialId,
+      answer: JSON.stringify(answer?.answer || {}),
+      correctAnswer: (trial).correctAnswer,
+      description: `"${(trial).description}"`,
+      instruction: `"${(trial).instruction}"`,
+      startTime,
+      endTime,
+      duration,
+    };
+
+    trs.push(tr);
+  });
 
   return trs;
 }

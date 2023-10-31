@@ -18,9 +18,9 @@ export type ProvenanceStorage = {
     restoreSession(): Promise<any>;
   }>;
   firestore: Firestore;
-  startFirestore: () => void;
+startFirestore: () => void;
   saveNewProvenanceNode(trrack: StudyProvenance): void;
-  saveStudyConfig(config: StudyConfig, studyId: string): Promise<{path: string, order: string[]}[]>;
+  saveStudyConfig(config: StudyConfig, studyId: string): Promise<{path: string, order: string[]}[] | null>;
   completeSession(sessionId: string): Promise<void>;
   abandonSession(sessionId: string): Promise<void>;
 };

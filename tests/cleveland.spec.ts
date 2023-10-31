@@ -4,10 +4,10 @@ test('test', async ({ page }) => {
   await page.goto('/');
 
   // Click on cleveland
-  await page.getByRole('button', { name: 'Dyanmic React Stimuli: A Graphical Perception Experiment A demo using dynamic React components as stiumli to replicate the Cleveland/McGill, and the Heer/Bostock extension of graphical perception studies with post study survey.' }).click();
+  await page.getByRole('button', { name: 'Dynamic React.js Stimuli: A Graphical Perception Experiment A demo using dynamic React components as stimuli to replicate a Cleveland & McGill graphical perception task, with a post study survey.' }).click();
 
   // Check that the page contains the introduction text
-  const introText = await page.getByText('Welcome to our study. This is a complex example study to show how to embed react');
+  const introText = await page.getByText('Welcome to our study. This is a more complex example to show how to embed React.js');
   await expect(introText).toBeVisible();
 
   // Click on the next button
@@ -65,7 +65,7 @@ test('test', async ({ page }) => {
 
   // Check for each question
   const questionArray2 = new Array(10).fill(null).map((val, idx) => idx);
-  const visSearchArray2 = ['circle', 'rect', 'rect', 'path', 'rect', 'circle', 'rect', 'circle', 'path', 'rect'];
+  const visSearchArray2 = ['circle', 'rect', 'rect', 'path', 'rect', 'circle', 'rect', 'rect', 'path', 'rect'];
   for (const idx of questionArray2) {
     // Check the page contains the question
     const questionText = await page.getByText('Task:Two values are marked with dots. What percentage do you believe the smaller');
@@ -78,7 +78,7 @@ test('test', async ({ page }) => {
     await expect(await visChildren.count()).toBeGreaterThan(0);
 
     // Fill in answer
-    await page.getByPlaceholder('Enter your answer here, range from 0 - 100').fill('66');
+    await page.getByPlaceholder('0-100').fill('66');
 
     // Click on the next button
     await page.getByRole('button', { name: 'Next' }).click();
