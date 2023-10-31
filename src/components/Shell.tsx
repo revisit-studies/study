@@ -36,7 +36,7 @@ import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { useDisclosure } from '@mantine/hooks';
 import { PREFIX } from '../App';
 import ComponentController from '../controllers/ComponentController';
-import { FirebaseContext, initFirebase } from '../storage/init';
+import { FirebaseContext, getSession, initFirebase } from '../storage/init';
 import { ProvenanceStorage } from '../storage/types';
 import AppAside from './interface/AppAside';
 import AppHeader from './interface/AppHeader';
@@ -59,12 +59,9 @@ function _orderObjectToList(
   pathsFromFirebase: {
     path: string;
     order: string[];
-  }[] | undefined,
+  }[] | null,
  path: string
  ) : string[] {
-  if(!pathsFromFirebase) {
-    return [];
-  }
   
   for(let i = 0; i < order.components.length; i ++) {
     const curr = order.components[i];
@@ -73,13 +70,13 @@ function _orderObjectToList(
     }
   }
 
-  if(order.order === 'random') {
+  if(order.order === 'random' && pathsFromFirebase) {
     const randomArr = order.components.sort((a, b) => 0.5 - Math.random());
 
     order.components = randomArr;
   }
 
-  else if(order.order === 'latinSquare') {
+  else if(order.order === 'latinSquare' && pathsFromFirebase) {
     order.components = pathsFromFirebase.find((p) => p.path === path)!.order.map((o) => {
       if(o.startsWith('_orderObj')) {
         return order.components[+o.slice(9)];
@@ -97,7 +94,7 @@ function orderObjectToList(
   pathsFromFirebase: {
     path: string;
     order: string[];
-  }[] | undefined
+  }[] | null
  ) : string[] {
   const orderCopy = deepCopy(order);
 
@@ -173,13 +170,18 @@ export function Shell({ globalConfig }: {
     ) {
       setStoreObj(null);
 
+      if(!firebase) {
+        return;
+      }
+
       const randoms = await firebase?.saveStudyConfig(config, sid);
-
+      console.log(randoms);
+    
       const orderConfig = orderObjectToList(activeConfig!.sequence, randoms);
-
       console.log(orderConfig);
 
       const st = await studyStoreCreator(sid, config, orderConfig, fb);
+      console.log(st);
 
       setOrderSequence(orderConfig);
 

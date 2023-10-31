@@ -4,6 +4,8 @@ import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import {
   collection,
   doc,
+  DocumentData,
+  DocumentSnapshot,
   Firestore,
   getDoc,
   getDocs,
@@ -340,7 +342,8 @@ async function saveStudyConfig(
   store: Firestore,
   config: StudyConfig,
   studyId: string,
-) : Promise<{path: string, order: string[]}[]> {
+) : Promise<{path: string, order: string[]}[] | null> {
+
   const batch = writeBatch(store);
 
   const versionHash = simpleHash(JSON.stringify(config));
@@ -348,9 +351,17 @@ async function saveStudyConfig(
 
   const paths = createRandomOrders(config.sequence);
 
-  const docSnap = await getDoc(studiesRef);
+  let docSnap: DocumentSnapshot<DocumentData> | null = null;
+
+  try {
+    docSnap = await getDoc(studiesRef);
+  } catch (err) {
+    console.log('problem');
+    return Promise.resolve(null);
+  }
 
   if (docSnap.exists()) {
+    console.log('exists');
     const returnRefs = await getRandomOrders(store, paths, batch, studyId, config, versionHash);
 
     batch.commit();
@@ -403,7 +414,7 @@ async function saveStudyConfig(
   return Promise.resolve(returnRefs);
 }
 
-async function getSession(store: Firestore, sessionId: string) {
+export async function getSession(store: Firestore, sessionId: string) {
   const sessionRef = doc(store, SESSIONS, sessionId);
 
   try {

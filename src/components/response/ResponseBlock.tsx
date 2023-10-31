@@ -68,7 +68,7 @@ export default function ResponseBlock({
   const nextStep = useNextStep();
   const flagsSelector = useFlagsSelector((state) => state);
 
-  const hasCorrectAnswer = trialId !== null ? configInUse?.correctAnswer?.length || 0 > 0 : false;
+  const hasCorrectAnswer = ((configInUse?.correctAnswer?.length || 0) > 0);
 
   const startTime = useMemo(() => {
     return Date.now();
