@@ -5,6 +5,7 @@ import {
   collection,
   doc,
   DocumentData,
+  DocumentReference,
   DocumentSnapshot,
   Firestore,
   getDoc,
@@ -284,7 +285,7 @@ async function getRandomOrders(store: Firestore, paths: string[], batch: WriteBa
   const returnRefs : {path: string, order: string[]}[] = [];
 
   const pathPromises = paths.map((path) => {
-    const randomRef = doc(store, ...[STUDIES, studyId, 'versions', versionHash, 'random', path]);
+    const randomRef = (doc as (...args: any) => DocumentReference<DocumentData>)(store, ...[STUDIES, studyId, 'versions', versionHash, 'random', path]);
     const randomGet = getDoc(randomRef);
 
     return randomGet.then((promVal) => {
@@ -347,7 +348,7 @@ async function saveStudyConfig(
   const batch = writeBatch(store);
 
   const versionHash = simpleHash(JSON.stringify(config));
-  const studiesRef = doc(store, ...[STUDIES, studyId, 'versions', versionHash]);
+  const studiesRef = (doc as (...args: any) => DocumentReference<DocumentData>)(store, ...[STUDIES, studyId, 'versions', versionHash]);
 
   const paths = createRandomOrders(config.sequence);
 
@@ -399,7 +400,7 @@ async function saveStudyConfig(
 
     randObj['perms'] = permutations.map((perm) => Object.assign({}, perm));
     randObj['options'] = randArr;
-    const randRef = doc(store, ...[STUDIES, studyId, 'versions', versionHash, 'random', path]);
+    const randRef = (doc as (...args: any) => DocumentReference<DocumentData>)(store, ...[STUDIES, studyId, 'versions', versionHash, 'random', path]);
 
     batch.set(randRef, randObj);
   });

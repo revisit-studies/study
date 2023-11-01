@@ -48,13 +48,10 @@ export async function downloadTidy(
   const NULL = ' ';
 
   const sessionArr = await getAllSessions(fb.firestore, studyId);
-  console.log(sessionArr.length, sessionArr[0]);
   const rows = sessionArr
     .map((sessionObject) => processToRow(sessionObject, trialIds)).flat();
 
   const csvStrings = [properties.join(',')];
-
-  console.log(rows);
 
   rows.filter((row) => row !== null).forEach((row) => {
     const arr: string[] = properties.map((prop) => {
@@ -90,8 +87,6 @@ function processToRow(
   const nodes = Object.values(graph.nodes);
   nodes.sort((a, b) => a.meta.createdOn - b.meta.createdOn);
 
-  console.log(nodes);
-
   if(nodes.length === 0) {
     return null;
   }
@@ -102,7 +97,6 @@ function processToRow(
 
   trialIds.forEach((trialId) => {
     const trial = study[trialId];
-    console.log(trial);
     const answer: Nullable<TrialResult> =
       'answer' in trial ? trial : null;
     const startTime = answer?.startTime
