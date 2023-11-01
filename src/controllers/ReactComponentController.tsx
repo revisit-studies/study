@@ -1,6 +1,7 @@
 import { Suspense } from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
 import { ReactComponent } from '../parser/types';
+import { setAnswer } from '../store/flags';
 
 const modules = import.meta.glob(
   '../components/stimuli/**/*.{mjs,js,mts,ts,jsx,tsx}',
@@ -25,6 +26,7 @@ const ReactComponentController = ({
       <StimulusComponent
         parameters={parameters}
         trialId={trialId}
+        setAnswer={setAnswer}
       />
     </Suspense>
   );

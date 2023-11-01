@@ -101,12 +101,15 @@ export default function ResponseBlock({
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const answer = deepCopy(aggregateResponses!);
 
+    const graph = flagsSelector.trialRecord[id].provenanceGraph;
+
     if (!status?.complete) {
       appDispatch(
         saveTrialAnswer({
           trialName: currentStep,
           trialId: trialId || 'NoID',
           answer,
+          provenanceGraph: graph || undefined,
           startTime,
           endTime: Date.now(),
         })

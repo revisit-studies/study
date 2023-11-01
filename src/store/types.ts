@@ -1,3 +1,4 @@
+import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import { BaseIndividualComponent, OrderConfig, OrderObject, StudyConfig } from '../parser/types';
 import { StudyStore } from './store';
 
@@ -39,4 +40,10 @@ export interface UnTrrackedState {
   steps: Record<string, Step>;
 
   config: StudyConfig;
+}
+
+export interface StimulusParams {
+  parameters: any;
+  trialId: string;
+  setAnswer: ({trialId, status, provenanceGraph, answers} : {trialId: string, status: boolean, provenanceGraph?: ProvenanceGraph<any, any, any>, answers: Record<string, any>}) => void
 }
