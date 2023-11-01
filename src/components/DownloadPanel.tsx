@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useStudyId } from '../routes';
 import { useFirebase } from '../storage/init';
 import { getAllSessionGraphs } from '../storage/queries';
-import { useAppSelector, useCreatedStore } from '../store';
+import { useAppSelector, useCreatedStore } from '../store/store';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { DownloadTidy } from './DownloadTidy';
 
@@ -22,7 +22,7 @@ export function download(graph: string, filename: string) {
 export function DownloadPanel() {
   const { trrack } = useCreatedStore();
   const config = useStudyConfig();
-  const ids = useAppSelector((s) => s.study.studyIdentifiers);
+  const ids = useAppSelector((s) => s.trrackedSlice.studyIdentifiers);
   const studyId = useStudyId();
   const firebase = useFirebase();
   const [openDownload, { open, close }] = useDisclosure(false);

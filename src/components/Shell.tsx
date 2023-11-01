@@ -10,9 +10,10 @@ import { createSelectorHook, Provider } from 'react-redux';
 import { Outlet, RouteObject, useParams, useRoutes } from 'react-router-dom';
 import { parseStudyConfig } from '../parser/parser';
 import {
-  ContainerComponent,
   GlobalConfig,
   Nullable,
+  OrderObject, 
+
   StudyConfig,
 } from '../parser/types';
 import { StudyIdParam } from '../routes';
@@ -21,7 +22,7 @@ import {
   StudyStore,
   studyStoreCreator,
   useCreatedStore,
-} from '../store';
+} from '../store/store';
 import {
   flagsContext,
   flagsStore,
@@ -35,13 +36,14 @@ import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { useDisclosure } from '@mantine/hooks';
 import { PREFIX } from '../App';
 import ComponentController from '../controllers/ComponentController';
-import { FirebaseContext, initFirebase } from '../storage/init';
+import { FirebaseContext, getSession, initFirebase } from '../storage/init';
 import { ProvenanceStorage } from '../storage/types';
 import AppAside from './interface/AppAside';
 import AppHeader from './interface/AppHeader';
 import AppNavBar from './interface/AppNavBar';
 import HelpModal from './interface/HelpModal';
 import { StudyEnd } from './StudyEnd';
+import { deepCopy } from '../utils/deepCopy';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/no-non-null-assertion
 const trrackContext: any = createContext<TrrackStoreType>(undefined!);
@@ -52,12 +54,60 @@ async function fetchStudyConfig(configLocation: string, configKey: string) {
   return parseStudyConfig(config, configKey);
 }
 
-type Props = {
-  globalConfig: GlobalConfig;
-};
+function _orderObjectToList(
+  order: OrderObject, 
+  pathsFromFirebase: {
+    path: string;
+    order: string[];
+  }[] | null,
+ path: string
+ ) : string[] {
+  
+  for(let i = 0; i < order.components.length; i ++) {
+    const curr = order.components[i];
+    if(typeof curr !== 'string') {
+      order.components[i] = _orderObjectToList(curr, pathsFromFirebase, path + '-' + i) as any;
+    }
+  }
 
-export function Shell({ globalConfig }: Props) {
+  if(order.order === 'random' && pathsFromFirebase) {
+    const randomArr = order.components.sort((a, b) => 0.5 - Math.random());
+
+    order.components = randomArr;
+  }
+
+  else if(order.order === 'latinSquare' && pathsFromFirebase) {
+    order.components = pathsFromFirebase.find((p) => p.path === path)!.order.map((o) => {
+      if(o.startsWith('_orderObj')) {
+        return order.components[+o.slice(9)];
+      }
+      
+      return o;
+    });
+  }
+
+  return order.components.flat().slice(0, order.numSamples ? order.numSamples : undefined) as any;
+}
+
+function orderObjectToList(
+  order: OrderObject, 
+  pathsFromFirebase: {
+    path: string;
+    order: string[];
+  }[] | null
+ ) : string[] {
+  const orderCopy = deepCopy(order);
+
+  _orderObjectToList(orderCopy, pathsFromFirebase, 'root');
+  return orderCopy.components.flat().slice(0, orderCopy.numSamples ? orderCopy.numSamples : undefined) as any as any;
+}
+
+export function Shell({ globalConfig }: {
+  globalConfig: GlobalConfig;
+}) {
   const { studyId } = useParams<StudyIdParam>(); // get and set study identifiers from url
+
+  const [orderSequence, setOrderSequence] = useState<string[] | null>(null);
 
   if (
     !studyId ||
@@ -107,7 +157,7 @@ export function Shell({ globalConfig }: Props) {
   }, [activeConfig]);
 
   useEffect(() => {
-    if (!activeConfig || !studyId || !firebase) return;
+    if (!activeConfig || !studyId || !firebase ) return;
 
     let active = true;
 
@@ -117,7 +167,18 @@ export function Shell({ globalConfig }: Props) {
       fb: ProvenanceStorage
     ) {
       setStoreObj(null);
-      const st = await studyStoreCreator(sid, config, fb);
+
+      if(!firebase) {
+        return;
+      }
+
+      const randoms = await firebase?.saveStudyConfig(config, sid);
+    
+      const orderConfig = orderObjectToList(activeConfig!.sequence, randoms);
+
+      const st = await studyStoreCreator(sid, config, orderConfig, fb);
+
+      setOrderSequence(orderConfig);
 
       if (!active) return;
 
@@ -131,7 +192,7 @@ export function Shell({ globalConfig }: Props) {
     };
   }, [activeConfig, studyId, firebase]);
 
-  const routing = useStudyRoutes(studyId, activeConfig, storeObj);
+  const routing = useStudyRoutes(studyId, activeConfig, orderSequence, storeObj);
 
   if (!routing || !storeObj || !firebase) return null;
 
@@ -142,7 +203,7 @@ export function Shell({ globalConfig }: Props) {
       <MainStoreContext.Provider value={storeObj}>
         <Provider store={trrackStore} context={trrackContext}>
           <Provider store={store}>
-            <Provider store={flagsStore} context={flagsContext as any}>
+            <Provider store={flagsStore} context={flagsContext}>
               {routing}
             </Provider>
           </Provider>
@@ -168,7 +229,7 @@ function StepRenderer() {
       flagDispatch(setTrrackExists(false));
       handlers.close();
     },
-    [store, flagDispatch]
+    [flagDispatch, handlers, store]
   );
 
   return (
@@ -212,14 +273,13 @@ function StepRenderer() {
 function useStudyRoutes(
   studyId: Nullable<string>,
   config: Nullable<StudyConfig>,
+  sequence: Nullable<string[]>,
   store: Nullable<StudyStore> // used only to detect if store is ready
 ) {
   const routes: RouteObject[] = [];
-
-  if (studyId && config && store) {
-    const { sequence, components } = config;
-
-    const enhancedSequence = [...sequence, 'end'];
+ 
+  if (studyId && config && store && sequence) {
+    const enhancedSequence = [...sequence as string[], 'end'];
 
     const stepRoutes: RouteObject[] = [];
 
@@ -229,28 +289,11 @@ function useStudyRoutes(
     });
 
     enhancedSequence.forEach((step: string) => {
-      const component = components[step];
-
       if (step === 'end') {
         stepRoutes.push({
           path: '/end',
           element: <StudyEnd />,
         });
-      } else if (component.type === 'container') {
-        const { order } = component as ContainerComponent;
-
-        if (order.length > 0) {
-          const baseRoute: RouteObject = {
-            path: step,
-            element: <NavigateWithParams to={`${order[0]}`} replace />,
-          };
-          const trialRoute: RouteObject = {
-            path: `${step}/:trialId`,
-            element: <ComponentController />,
-          };
-          stepRoutes.push(baseRoute);
-          stepRoutes.push(trialRoute);
-        }
       } else {
         stepRoutes.push({
           path: `/${step}`,

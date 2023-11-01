@@ -500,12 +500,15 @@
             type: survey
         }
     }
-    sequence: [
-        consent
-        training1
-        practice1
-        attention1
-        trials1
-        post-study-survey
-    ]
+    sequence: { 
+        order: fixed
+        components: [
+            consent
+            training1
+            practice1
+            attention1
+            trials1
+            post-study-survey
+        ]
+    }
 }

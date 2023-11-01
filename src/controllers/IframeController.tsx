@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useDispatch } from 'react-redux';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { PREFIX as BASE_PREFIX } from '../App';
 import { useCurrentStep } from '../routes';
 import {
@@ -8,7 +8,7 @@ import {
   useFlagsDispatch,
 } from '../store/flags';
 import { useNextStep } from '../store/hooks/useNextStep';
-import {useStoreActions} from '../store';
+import {useStoreActions} from '../store/store';
 
 
 const PREFIX = '@REVISIT_COMMS';
@@ -38,14 +38,11 @@ export default function IframeController({path, parameters}: Props) {
     []
   );
 
-  const { trialId = null } = useParams<{ trialId: string }>();
 
   // navigation
   const currentStep = useCurrentStep();
   const navigate = useNavigate();
   const computedTo = useNextStep();
-  const id = useLocation().pathname;
-
 
   const sendMessage = useCallback(
     (tag: string, message: unknown) => {
@@ -65,7 +62,7 @@ export default function IframeController({path, parameters}: Props) {
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       const data = e.data;
-      if (typeof data === 'object' && trialId && iframeId === data.iframeId) {
+      if (typeof data === 'object' && iframeId === data.iframeId) {
         switch (data.type) {
           case `${PREFIX}/WINDOW_READY`:
             if (parameters) {
@@ -96,23 +93,16 @@ export default function IframeController({path, parameters}: Props) {
     dispatch,
     iframeId,
     navigate,
-    trialId,
     parameters,
     sendMessage,
     saveTrialAnswer,
   ]);
-
-  //   saveTrialAnswer({
-  //     trialName: currentStep,
-  //     trialId,
-  //     answer: { [`${id}/${trialId}`]: data.message },
-  //   })
   
   return (
     <div >
       <iframe
         ref={ref}
-        src={`${BASE_PREFIX}${path}?trialid=${trialId}&id=${iframeId}`}
+        src={`${BASE_PREFIX}${path}?trialid=${currentStep}&id=${iframeId}`}
         style={defaultStyle}
       ></iframe>
     </div>

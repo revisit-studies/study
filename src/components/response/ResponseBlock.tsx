@@ -2,15 +2,12 @@ import { Button, Group, Text } from '@mantine/core';
 import { useInputState } from '@mantine/hooks';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { useNextTrialId } from '../../controllers/utils';
 import {
-  ContainerComponent,
   IndividualComponent,
   ResponseBlockLocation,
-  StudyComponent,
 } from '../../parser/types';
 import { useCurrentStep } from '../../routes';
-import { useAppDispatch, useStoreActions, useStudySelector } from '../../store';
+import { useAppDispatch, useStoreActions, useStudySelector } from '../../store/store';
 import {
   setIframeAnswers,
   updateResponseBlockValidation,
@@ -29,7 +26,7 @@ import React from 'react';
 
 type Props = {
   status: TrialResult | null;
-  config: StudyComponent | ContainerComponent;
+  config: IndividualComponent | null;
   location: ResponseBlockLocation;
   style?: React.CSSProperties;
 };
@@ -52,9 +49,7 @@ export default function ResponseBlock({
   const id = useLocation().pathname;
   const storedAnswer = status?.answer;
 
-  const trialConfig = (config as ContainerComponent)?.components !== undefined && trialId !== null ? (config as ContainerComponent).components[trialId] : undefined;
-
-  const configInUse = (trialConfig || config) as IndividualComponent;
+  const configInUse = (config) as IndividualComponent;
 
   const responses = configInUse?.response?.filter((r) =>
     r.location ? r.location === location : location === 'belowStimulus'
@@ -70,15 +65,14 @@ export default function ResponseBlock({
   const [disableNext, setDisableNext] = useInputState(!storedAnswer);
   const [checkClicked, setCheckClicked] = useState(false);
   const currentStep = useCurrentStep();
-  const nextTrialId = useNextTrialId(trialId);
   const nextStep = useNextStep();
   const flagsSelector = useFlagsSelector((state) => state);
 
-  const hasCorrectAnswer = trialId !== null ? configInUse?.correctAnswer?.length || 0 > 0 : false;
+  const hasCorrectAnswer = ((configInUse?.correctAnswer?.length || 0) > 0);
 
   const startTime = useMemo(() => {
     return Date.now();
-  }, [trialId]);
+  }, []);
 
   const showNextBtn =
     location === (configInUse?.nextButtonLocation || 'belowStimulus');
@@ -113,7 +107,6 @@ export default function ResponseBlock({
           trialName: currentStep,
           trialId: trialId || 'NoID',
           answer,
-          type: config?.type,
           startTime,
           endTime: Date.now(),
         })
@@ -136,7 +129,6 @@ export default function ResponseBlock({
     trialId,
   ]);
 
-  const answerTrialId = trialId || 'NoID';
 
   return (
     <div style={style}>
@@ -185,9 +177,8 @@ export default function ResponseBlock({
                 : !status?.complete && !areResponsesValid
             }
             to={
-              nextTrialId
-                ? `/${studyId}/${currentStep}/${nextTrialId}`
-                : `/${studyId}/${nextStep}`
+
+                `/${studyId}/${nextStep}`
             }
             process={() => {setCheckClicked(false); processNext();}}
             label={configInUse.nextButtonText || 'Next'}

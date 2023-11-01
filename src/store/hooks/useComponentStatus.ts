@@ -1,7 +1,6 @@
-import { useAppSelector } from '..';
+import { useAppSelector } from '../store';
 import { useCurrentStep } from '../../routes';
-import { TrialRecord, TrialResult } from '../types';
-import { useCurrentTrial } from './useCurrentTrial';
+import { TrialResult } from '../types';
 
 /**
  *
@@ -10,20 +9,11 @@ import { useCurrentTrial } from './useCurrentTrial';
  */
 
 export function useComponentStatus(): TrialResult | null {
-  const study = useAppSelector((state) => state.study);
+  const study = useAppSelector((state) => state.trrackedSlice);
 
   const currentStep = useCurrentStep();
-  const currentTrial = useCurrentTrial();
 
-  const type = study.config.components[currentStep]?.type;
-
-  let status: TrialResult | null = null;
-
-  if (type === 'container' && currentTrial !== null) {
-    status = (study[currentStep] as TrialRecord)[currentTrial];
-  } else {
-    status = (study[currentStep] as any as TrialResult);
-  }
+  const status = (study[currentStep] as any as TrialResult);
 
   return status;
 }

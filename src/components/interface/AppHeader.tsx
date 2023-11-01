@@ -20,7 +20,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PREFIX } from '../../App';
 import { useCurrentStep } from '../../routes';
-import { useAppSelector, useCreatedStore } from '../../store';
+import { useAppSelector, useCreatedStore } from '../../store/store';
 import {
   toggleShowAdmin,
   toggleShowHelpText,
@@ -28,7 +28,9 @@ import {
 } from '../../store/flags';
 
 export default function AppHeader() {
-  const studyConfig = useAppSelector((state) => state.study.config);
+  const studyConfig = useAppSelector((state) => state.unTrrackedSlice.config);
+  const order = useAppSelector((state) => state.trrackedSlice.order);
+
   const clearCache = useCreatedStore().clearCache;
   const flagsDispatch = useFlagsDispatch();
   const navigate = useNavigate();
@@ -39,9 +41,9 @@ export default function AppHeader() {
     studyConfig !== null
       ? currentStep === 'end'
         ? 100
-        : studyConfig.sequence.indexOf(currentStep)
+        : order.indexOf(currentStep)
       : 0;
-  const progressBarMax = studyConfig?.sequence.length || 0;
+  const progressBarMax = order.length || 0;
   const progressPercent = (progressBarCurrent / progressBarMax) * 100;
 
   const [menuOpened, setMenuOpened] = useState(false);

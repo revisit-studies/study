@@ -1,25 +1,23 @@
-import { type PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { configureTrrackableStore, createTrrackableSlice } from '@trrack/redux';
 import { clearIndexedDbPersistence, terminate } from 'firebase/firestore';
 import localforage from 'localforage';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
-import { StudyComponent, StudyConfig } from '../parser/types';
+import { StudyConfig } from '../parser/types';
 import { ProvenanceStorage } from '../storage/types';
 import { flagsStore, setTrrackExists } from './flags';
-import { RootState, State, Step, TrialRecord } from './types';
+import { RootState, Step, TrialRecord, TrrackedState, UnTrrackedState } from './types';
 
 export const PID = 'PARTICIPANT_ID';
 export const SESSION_ID = 'SESSION_ID';
 
 export const __ACTIVE_SESSION = '__active_session';
 
-function getSteps({ sequence, components }: StudyConfig): Record<string, Step> {
+function getSteps(sequence: string[]): Record<string, Step> {
   const steps: Record<string, Step> = {};
-  sequence.forEach((id, idx, arr) => {
-    const component = components[id];
+  (sequence).forEach((id, idx, arr) => {
     steps[id] = {
-      ...component,
       complete: false,
       next: arr[idx + 1] || 'end',
     } as Step;
@@ -28,37 +26,40 @@ function getSteps({ sequence, components }: StudyConfig): Record<string, Step> {
   return steps;
 }
 
-
-
 export async function studyStoreCreator(
   studyId: string,
   config: StudyConfig,
+  order: string[],
   firebase: ProvenanceStorage
 ) {
+
   const lf = localforage.createInstance({
     name: 'sessions',
   });
 
-  const steps = getSteps(config);
+
+  const steps = getSteps(order);
   const stepsToAnswers = Object.assign({}, ...Object.keys(steps).map((id) => ({[id]: {}})));
-  const initialState: State = {
+
+  const initialTrrackedState: TrrackedState = {
     studyIdentifiers: {
       pid: firebase.pid,
       study_id: studyId,
       session_id: crypto.randomUUID(),
     },
-    config,
-    steps,
     ...stepsToAnswers,
+    order,
+  };
+
+  const initialUntrrackedState: UnTrrackedState = {
+    steps,
+    config,
   };
 
   const studySlice = createTrrackableSlice({
-    name: 'studySlice',
-    initialState,
+    name: 'trrackedStudySlice',
+    initialState: initialTrrackedState,
     reducers: {
-      completeStep(state, step) {
-        state.steps[step.payload].complete = true;
-      },
       saveTrialAnswer(
         state,
         {
@@ -69,33 +70,38 @@ export async function studyStoreCreator(
           answer: string | object;
           startTime: number;
           endTime: number;
-          type?: StudyComponent['type'];
         }>
       ) {
-        if (payload.type === 'container') {
-          (state[payload.trialName] as TrialRecord)[payload.trialId] = {
-            complete: true,
-            answer: payload.answer,
-            startTime: payload.startTime,
-            endTime: payload.endTime,
-          };
-        } else {
-          (state[payload.trialName] as TrialRecord) = ({
-            complete: true,
-            answer: payload.answer,
-            startTime: payload.startTime,
-            endTime: payload.endTime,
-          } as any);
-        }
+       
+        (state[payload.trialName] as TrialRecord) = ({
+          complete: true,
+          answer: payload.answer,
+          startTime: payload.startTime,
+          endTime: payload.endTime,
+        } as any);
+      },
+    },
+  });
+
+  const configSlice = createSlice({
+    name: 'studySlice',
+    initialState: initialUntrrackedState,
+    reducers: {
+      setConfig (state, payload: PayloadAction<StudyConfig>) {
+        state.config = payload.payload;
+      },
+      completeStep(state, step) {
+        state.steps[step.payload].complete = true;
       },
     },
   });
 
   const { store, trrack, trrackStore } = configureTrrackableStore({
     reducer: {
-      study: studySlice.reducer,
+      trrackedSlice: studySlice.reducer,
+      unTrrackedSlice: configSlice.reducer
     },
-    slices: [studySlice],
+    slices: [studySlice, configSlice],
   });
 
   // Check local/fb
@@ -189,5 +195,5 @@ type AppDispatch = StudyStore['store']['dispatch'];
 export const useAppDispatch: () => AppDispatch = useDispatch;
 export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
 export function useStudySelector() {
-  return useAppSelector((s) => s.study);
+  return useAppSelector((s) => s.trrackedSlice);
 }

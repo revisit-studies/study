@@ -249,23 +249,16 @@ export interface QuestionnaireComponent extends BaseIndividualComponent {
   type: 'questionnaire';
 }
 
-
 export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent;
 
-/**
- * ContainerComponents are used to group components together. They are used to define the order of sub components and can be used to group related tasks, task blocks, or other components together. Ultimately, the plan is to support nesting of ContainerComponents, but this is not currently supported. Additionally, we plan to support randomization of sub components, but this is also not currently supported, either.
- */
-export interface ContainerComponent {
-  type: 'container';
-  order: string[];
-  components: StudyComponents;
+export interface OrderObject {
+  order: 'random' | 'latinSquare' | 'fixed'
+  components: (string | OrderObject)[]
+  numSamples?: number
 }
 
-export type StudyComponent = IndividualComponent | ContainerComponent;
-
-export interface StudyComponents {
-  [key: string]: StudyComponent;
-}
+export type PartialComponent = (Partial<IndividualComponent> & { baseComponent: string })
+export type InheritedComponent  = IndividualComponent | PartialComponent
 
 /**
  * The StudyConfig interface is used to define the properties of a study configuration. These are the hjson files that live in the public folder. In our repo, one example of this would be public/cleveland/config-cleveland.hjson. 
@@ -274,7 +267,12 @@ export interface StudyConfig {
   $schema: string;
   studyMetadata: StudyMetadata;
   uiConfig: UIConfig;
-  components: StudyComponents;
+  baseComponents?: Record<string, IndividualComponent>;
+  components: Record<string, InheritedComponent>
+  sequence: OrderObject;
+}
+
+export interface OrderConfig {
   sequence: string[];
 }
 
@@ -293,11 +291,3 @@ export type Prettify<T> = {
   [K in keyof T]: T[K];
   /* eslint-disable */
 } & {};
-
-/**
- * @ignore
- * Typecase helper for ContainerComponent
- */
-export function isContainerComponent(component: StudyComponent): component is ContainerComponent {
-  return component.type === 'container';
-}

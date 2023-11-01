@@ -5,17 +5,17 @@ import {
   Paper,
   ScrollArea,
   Space,
-  Text,
+  Text
 } from '@mantine/core';
-import { IconArrowRight } from '@tabler/icons-react';
-import React from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ContainerComponent, IndividualComponent } from '../../parser/types';
 import { useCurrentStep } from '../../routes';
-import { useAppSelector } from '../../store';
 import { useFlagsSelector } from '../../store/flags';
 import { DownloadPanel } from '../DownloadPanel';
 import { StepsPanel } from './StepsPanel';
+import { useStudyConfig } from '../../store/hooks/useStudyConfig';
+import { useAppDispatch, useAppSelector } from '../../store/store';
+import React from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { IconArrowRight } from '@tabler/icons-react';
 
 export default function AppAside() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -23,40 +23,34 @@ export default function AppAside() {
   const navigate = useNavigate();
 
   const step = useCurrentStep();
-  const config = useAppSelector(
-    (state) => state.study.config?.components[step]
-  );
-  const trialConfig = config as ContainerComponent;
-  const tasks =
-    trialConfig?.type === 'container'
-      ? trialConfig.order.map((trialId) => ({
-          ...trialConfig.components[trialId] as IndividualComponent,
-          id: trialId,
-        }))
-      : [];
 
   const { studyId = null } = useParams<{
     studyId: string;
   }>();
 
+  const studyConfig = useStudyConfig();
+
+  const taskList = useAppSelector((state) => state.trrackedSlice.order);
+
+  const tasks = taskList.map((task) => ({...studyConfig.components[task], id: task}));
+
   return showAdmin ? (
     <Aside p="md" width={{ base: 300 }} style={{ zIndex: 0 }}>
-      <StepsPanel />
+      <StepsPanel order={studyConfig.sequence} />
 
       <Space h="md" />
 
       {step === 'end' && <DownloadPanel />}
-
-      <Aside.Section grow component={ScrollArea} mx="-xs" px="xs">
-        {tasks.map((task, index, isCorrect) => (
+      
+      <Aside.Section grow component={ScrollArea} mx="-xs" px="xs" my="lg">
+        {tasks.map((task, index) => (
           <React.Fragment key={`admin_${task.id}`}>
             <Paper radius={0} p={0} withBorder>
-              <Paper bg={isCorrect ? 'blue.0' : 'red.0'} radius={0} p="xl">
+              <Paper radius={0} p="xl">
                 <Flex style={{ justifyContent: 'space-between'}}>
                   <Text c="gray.9">
                     <Text
                       span
-                      c={isCorrect ? 'blue.8' : 'orange.8'}
                       fw={700}
                       inherit
                     >
@@ -68,7 +62,7 @@ export default function AppAside() {
                   <ActionIcon
                     bg="white"
                     onClick={() =>
-                      navigate(`/${studyId}/${step}/${task.id}`)
+                      navigate(`/${studyId}/${task.id}`)
                     }
                   >
                     <IconArrowRight size="1.125rem" />

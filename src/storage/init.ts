@@ -4,25 +4,63 @@ import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import {
   collection,
   doc,
+  DocumentData,
+  DocumentReference,
+  DocumentSnapshot,
   Firestore,
   getDoc,
   getDocs,
   query,
   setDoc,
   updateDoc,
+  WriteBatch,
   writeBatch,
 } from 'firebase/firestore';
-import { createContext, useContext } from 'react';
-import { StudyProvenance } from '../store';
-import { MODE, NODES, SESSIONS } from './constants';
+
+import { createContext, useContext, version } from 'react';
+import { StudyProvenance } from '../store/store';
+import { MODE, NODES, SESSIONS, STUDIES } from './constants';
 import { getFirestoreManager } from './firebase';
 import { FsSession, ProvenanceStorage } from './types';
+import { OrderObject, StudyConfig } from '../parser/types';
+import latinSquare from '@quentinroy/latin-square';
+
 
 /**
  * added here as substitute to firestore method serverTimestamp
  */
 function serverTimestamp() {
   return new Date();
+}
+
+function simpleHash(str: string) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    const char = str.charCodeAt(i);
+    hash = (hash << 5) - hash + char;
+    hash &= hash; // Convert to 32bit integer
+  }
+  return new Uint32Array([hash])[0].toString(36);
+}
+
+function _createRandomOrders(order: OrderObject, paths: string[], path: string, index = 0) {
+    const newPath = path.length > 0 ? `${path}-${index}` : 'root';
+    if(order.order === 'latinSquare') {
+      paths.push(newPath);
+    }
+
+    order.components.forEach((comp, i) => {
+      if(typeof comp !== 'string') {
+        _createRandomOrders(comp, paths, newPath, i);
+      }
+    });
+}
+
+function createRandomOrders(order: OrderObject) {
+  const paths: string[] = [];
+  _createRandomOrders(order, paths, '', 0);
+
+  return paths;
 }
 
 async function restoreExistingSession(
@@ -101,6 +139,9 @@ export async function initFirebase(
           restoreExistingSession(firestore, sessionId, trrack);
         },
       };
+    },
+    saveStudyConfig(config, studyId) {
+      return saveStudyConfig(firestore, config, studyId);
     },
     saveNewProvenanceNode(trrack: StudyProvenance) {
       return saveProvenanceNode(firestore, trrack.root.id, trrack.current);
@@ -240,6 +281,37 @@ export async function loadProvenance(
   return { current, root, nodes };
 }
 
+async function getRandomOrders(store: Firestore, paths: string[], batch: WriteBatch, studyId: string, config: StudyConfig, versionHash: string) {
+  const returnRefs : {path: string, order: string[]}[] = [];
+
+  const pathPromises = paths.map((path) => {
+    const randomRef = (doc as (...args: any) => DocumentReference<DocumentData>)(store, ...[STUDIES, studyId, 'versions', versionHash, 'random', path]);
+    const randomGet = getDoc(randomRef);
+
+    return randomGet.then((promVal) => {
+      const data = promVal.data();
+
+      if(data) {
+        const currArr = data['perms'].pop();
+        if(!currArr) {
+          const newSquare: string[][] = latinSquare<string>(data['options'].sort(() => 0.5 - Math.random()), true);
+
+          returnRefs.push({path,  order: newSquare[0] });
+          batch.set(randomRef, { perms: newSquare.slice(1).map((perm: string[]) => Object.assign({}, perm)), options: data.options });
+        }
+        else {
+          returnRefs.push({path, order: Object.values(currArr) });
+          batch.set(randomRef, { perms: data.perms, options: data.options });
+        }
+      }
+    });
+  });
+
+  await Promise.all(pathPromises);
+
+  return returnRefs;
+}
+
 async function saveProvenanceNode(
   store: Firestore,
   sessionId: string,
@@ -262,12 +334,87 @@ async function saveProvenanceNode(
 
   const addedNode = await getDoc(doc(nodes, node.id));
 
-  const graph = await loadProvenance(store, sessionId, false);
+  await loadProvenance(store, sessionId, false);
 
   return addedNode;
 }
 
-async function getSession(store: Firestore, sessionId: string) {
+async function saveStudyConfig(
+  store: Firestore,
+  config: StudyConfig,
+  studyId: string,
+) : Promise<{path: string, order: string[]}[] | null> {
+
+  const batch = writeBatch(store);
+
+  const versionHash = simpleHash(JSON.stringify(config));
+  const studiesRef = (doc as (...args: any) => DocumentReference<DocumentData>)(store, ...[STUDIES, studyId, 'versions', versionHash]);
+
+  const paths = createRandomOrders(config.sequence);
+
+  let docSnap: DocumentSnapshot<DocumentData> | null = null;
+
+  try {
+    docSnap = await getDoc(studiesRef);
+  } catch (err) {
+    console.log('problem');
+    return Promise.resolve(null);
+  }
+
+  if (docSnap.exists()) {
+    const returnRefs = await getRandomOrders(store, paths, batch, studyId, config, versionHash);
+
+    batch.commit();
+
+    return Promise.resolve(returnRefs);
+  }
+
+  paths.forEach((path) => {
+    const randObj: { perms?: Record<number, string>[], options?: string[] } = {};
+
+    const arr = path.split('-');
+
+    let obj = config.sequence;
+
+    arr.forEach((s) => {
+      if(s === 'root') {
+        return;
+      }
+
+      const newObj = obj.components[+s];
+      if(typeof newObj !== 'string') {
+        obj = newObj;
+      }
+    });
+
+    const randArr = obj.components.map((comp, i) => {
+      if(typeof comp === 'string') {
+        return comp;
+      }
+      else {
+        return`_orderObj${i}`;
+      }
+    });
+
+    const permutations: string[][] = latinSquare<string>(randArr.sort(() => 0.5 - Math.random()), true);
+
+    randObj['perms'] = permutations.map((perm) => Object.assign({}, perm));
+    randObj['options'] = randArr;
+    const randRef = (doc as (...args: any) => DocumentReference<DocumentData>)(store, ...[STUDIES, studyId, 'versions', versionHash, 'random', path]);
+
+    batch.set(randRef, randObj);
+  });
+
+  await batch
+    .set(studiesRef, {...config});
+
+  const returnRefs = await getRandomOrders(store, paths, batch, studyId, config, versionHash);
+
+  batch.commit();
+  return Promise.resolve(returnRefs);
+}
+
+export async function getSession(store: Firestore, sessionId: string) {
   const sessionRef = doc(store, SESSIONS, sessionId);
 
   try {

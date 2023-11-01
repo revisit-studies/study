@@ -22,6 +22,221 @@
         autoDownloadStudy: false
         sidebar: true
     }
+    baseComponents: {
+        bubbleChart: {
+            description: A bubble chart with correct answer of 0.66
+            instruction:
+                '''
+                Two values are marked with dots. 
+
+                What percentage do you believe the smaller value represents relative to the larger value?
+                '''
+            type: react-component
+            path: BubbleChart.tsx
+            parameters: {
+                data: [
+                    {
+                        name: A
+                        value: "30"
+                    }
+                    {
+                        name: B
+                        value: "40"
+                    }
+                    {
+                        name: C
+                        value: "50"
+                    }
+                    {
+                        name: D
+                        value: "40"
+                    }
+                    {
+                        name: E
+                        value: "60"
+                    }
+                ]
+                selectedIndices: [1, 4]
+            }
+            response: [
+                {
+                    id: cm-response
+                    prompt: "Answer:"
+                    required: true
+                    location: sidebar
+                    type: numerical
+                    placeholder: 0-100
+                    max: 100
+                    min: 0
+                }
+            ]
+            nextButtonLocation: sidebar
+            instructionLocation: sidebar
+        }
+        stackedBarChart: {
+            meta: {
+                difficulty: 5
+                chart: stacked bar
+            }
+            description: A chart with correct answer of 0.66
+            instruction:
+                '''
+                Two values are marked with dots. 
+
+                What percentage do you believe the smaller value represents relative to the larger value?
+                '''
+            type: react-component
+            path: StackedBarChart.tsx
+            parameters: {
+                data: [
+                    {
+                        name: A
+                        value: "30"
+                    }
+                    {
+                        name: B
+                        value: "40"
+                    }
+                    {
+                        name: C
+                        value: "50"
+                    }
+                    {
+                        name: D
+                        value: "40"
+                    }
+                    {
+                        name: E
+                        value: "60"
+                    }
+                ]
+                selectedIndices: [1, 4]
+            }
+            response: [
+                {
+                    id: cm-response
+                    prompt: "Answer:"
+                    required: true
+                    location: sidebar
+                    type: numerical
+                    placeholder: 0-100
+                    max: 100
+                    min: 0
+                }
+            ]
+            nextButtonLocation: sidebar
+            instructionLocation: sidebar
+        }
+        barChart: {
+            meta: {
+                difficulty: 5
+                chart: Bar
+            }
+            description: A chart with correct answer of 0.66
+            instruction:
+                '''
+                Two values are marked with dots. 
+
+                What percentage do you believe the smaller value represents relative to the larger value?
+                '''
+            type: react-component
+            path: BarChart.tsx
+            parameters: {
+                data: [
+                    {
+                        name: A
+                        value: "30"
+                    }
+                    {
+                        name: B
+                        value: "40"
+                    }
+                    {
+                        name: C
+                        value: "50"
+                    }
+                    {
+                        name: D
+                        value: "40"
+                    }
+                    {
+                        name: E
+                        value: "60"
+                    }
+                ]
+                selectedIndices: [1, 4]
+            }
+            response: [
+                {
+                    id: cm-response
+                    prompt: "Answer:"
+                    required: true
+                    location: sidebar
+                    type: numerical
+                    placeholder: 0-100
+                    max: 100
+                    min: 0
+                }
+            ]
+            nextButtonLocation: sidebar
+            instructionLocation: sidebar
+        }
+        pieChart: {
+            meta: {
+                difficulty: 5
+                chart: pie
+            }
+            description: Pie chart
+            instruction:
+                '''
+                Two values are marked with dots. 
+
+                What percentage do you believe the smaller value represents relative to the larger value?
+                '''
+            type: react-component
+            path: PieChart.tsx
+            parameters: {
+                data: [
+                    {
+                        name: A
+                        value: "30"
+                    }
+                    {
+                        name: B
+                        value: "40"
+                    }
+                    {
+                        name: C
+                        value: "50"
+                    }
+                    {
+                        name: D
+                        value: "40"
+                    }
+                    {
+                        name: E
+                        value: "60"
+                    }
+                ]
+                selectedIndices: [1, 4]
+            }
+            response: [
+                {
+                    id: cm-response
+                    prompt: "Answer:"
+                    required: true
+                    location: sidebar
+                    type: numerical
+                    placeholder: 0-100
+                    max: 100
+                    min: 0
+                }
+            ]
+            nextButtonLocation: sidebar
+            instructionLocation: sidebar
+
+        }
+    }
     components: {
         introduction: {
             type: markdown
@@ -66,813 +281,135 @@
             path: cleveland/cm-training.png
             response: []
         }
-        practice1: {
-            type: container
-            order: [
-                bubbleChart1
-                stackedBarChart1
-                barChart1
-                pieChart1
+        trainingBubbleChart1: {
+            baseComponent: bubbleChart
+            description: A bubble chart with correct answer of 0.66
+            parameters: {
+                selectedIndices: [1, 4]
+            }
+            correctAnswer: [
+                {
+                    id: cm-response
+                    answer: 66
+                }
             ]
-            components: {
-                bubbleChart1: {
-                    meta: {
-                        difficulty: 5
-                        chart: bubble
-                    }
-                    description: A bubble chart with correct answer of 0.66
-                    instruction:
-                        '''
-                        Two values are marked with dots. 
-
-                        What percentage do you believe the smaller value represents relative to the larger value?
-                        '''
-                    type: react-component
-                    path: BubbleChart.tsx
-                    parameters: {
-                        data: [
-                            {
-                                name: A
-                                value: "30"
-                            }
-                            {
-                                name: B
-                                value: "40"
-                            }
-                            {
-                                name: C
-                                value: "50"
-                            }
-                            {
-                                name: D
-                                value: "40"
-                            }
-                            {
-                                name: E
-                                value: "60"
-                            }
-                        ]
-                        selectedIndices: [1, 4]
-                    }
-                    correctAnswer: [
-                        {
-                            id: cm-response
-                            answer: 66
-                        }
-                    ]
-                    response: [
-                        {
-                            id: cm-response
-                            prompt: "Answer:"
-                            required: true
-                            location: sidebar
-                            type: numerical
-                            placeholder: 0-100
-                            max: 100
-                            min: 0
-                        }
-                    ]
-                    nextButtonLocation: sidebar
-                    instructionLocation: sidebar
+        }
+        trainingStackedBarChart1: {
+            baseComponent: stackedBarChart
+            parameters: {
+                selectedIndices: [1, 4]
+            }
+            correctAnswer: [
+                {
+                    id: cm-response
+                    answer: 66
                 }
-                stackedBarChart1: {
-                    meta: {
-                        difficulty: 5
-                        chart: stacked bar
-                    }
-                    description: A chart with correct answer of 0.66
-                    instruction:
-                        '''
-                        Two values are marked with dots. 
-
-                        What percentage do you believe the smaller value represents relative to the larger value?
-                        '''
-                    type: react-component
-                    path: StackedBarChart.tsx
-                    parameters: {
-                        data: [
-                            {
-                                name: A
-                                value: "30"
-                            }
-                            {
-                                name: B
-                                value: "40"
-                            }
-                            {
-                                name: C
-                                value: "50"
-                            }
-                            {
-                                name: D
-                                value: "40"
-                            }
-                            {
-                                name: E
-                                value: "60"
-                            }
-                        ]
-                        selectedIndices: [1, 4]
-                    }
-                    correctAnswer: [
-                        {
-                            id: cm-response
-                            answer: 66
-                        }
-                    ]
-                    response: [
-                        {
-                            id: cm-response
-                            prompt: "Answer:"
-                            required: true
-                            location: sidebar
-                            type: numerical
-                            placeholder: 0-100
-                            max: 100
-                            min: 0
-                        }
-                    ]
-                    nextButtonLocation: sidebar
-                    instructionLocation: sidebar
+            ]
+        }
+        trainingBarChart1: {
+            baseComponent: barChart
+            parameters: {
+                selectedIndices: [1, 4]
+            }
+            correctAnswer: [
+                {
+                    id: cm-response
+                    answer: 66
                 }
-                barChart1: {
-                    meta: {
-                        difficulty: 5
-                        chart: Bar
-                    }
-                    description: A chart with correct answer of 0.66
-                    instruction:
-                        '''
-                        Two values are marked with dots. 
-
-                        What percentage do you believe the smaller value represents relative to the larger value?
-                        '''
-                    type: react-component
-                    path: BarChart.tsx
-                    parameters: {
-                        data: [
-                            {
-                                name: A
-                                value: "30"
-                            }
-                            {
-                                name: B
-                                value: "40"
-                            }
-                            {
-                                name: C
-                                value: "50"
-                            }
-                            {
-                                name: D
-                                value: "40"
-                            }
-                            {
-                                name: E
-                                value: "60"
-                            }
-                        ]
-                        selectedIndices: [1, 4]
-                    }
-                    correctAnswer: [
-                        {
-                            id: cm-response
-                            answer: 66
-                        }
-                    ]
-                    response: [
-                        {
-                            id: cm-response
-                            prompt: "Answer:"
-                            required: true
-                            location: sidebar
-                            type: numerical
-                            placeholder: 0-100
-                            max: 100
-                            min: 0
-                        }
-                    ]
-                    nextButtonLocation: sidebar
-                    instructionLocation: sidebar
+            ]
+        }
+        trainingPieChart1: {
+            baseComponent: pieChart
+            parameters: {
+                selectedIndices: [1, 4]
+            }
+            correctAnswer: [
+                {
+                    id: cm-response
+                    answer: 66
                 }
-                pieChart1: {
-                    meta: {
-                        difficulty: 5
-                        chart: pie
-                    }
-                    description: Pie chart
-                    instruction:
-                        '''
-                        Two values are marked with dots. 
-
-                        What percentage do you believe the smaller value represents relative to the larger value?
-                        '''
-                    type: react-component
-                    path: PieChart.tsx
-                    parameters: {
-                        data: [
-                            {
-                                name: A
-                                value: "30"
-                            }
-                            {
-                                name: B
-                                value: "40"
-                            }
-                            {
-                                name: C
-                                value: "50"
-                            }
-                            {
-                                name: D
-                                value: "40"
-                            }
-                            {
-                                name: E
-                                value: "60"
-                            }
-                        ]
-                        selectedIndices: [1, 4]
-                    }
-                    correctAnswer: [
-                        {
-                            id: cm-response
-                            answer: 66
-                        }
-                    ]
-                    response: [
-                        {
-                            id: cm-response
-                            prompt: "Answer:"
-                            required: true
-                            location: sidebar
-                            type: numerical
-                            placeholder: 0-100
-                            max: 100
-                            min: 0
-                        }
-                    ]
-                    nextButtonLocation: sidebar
-                    instructionLocation: sidebar
-                }
+            ]
+        }
+        bubbleChart1: {
+            baseComponent: bubbleChart
+            parameters: {
+                selectedIndices: [1, 4]
             }
         }
-        trials1: {
-            type: container
-            order: [
-                bubbleChart1
-                stackedBarChart1
-                barChart1
-                pieChart1
-                stackedBarChart2
-                bubbleChart2
-                stackedBarChart3
-                barChart2
-                pieChart2
-                stackedBarChart4
-            ]
-            components: {
-                bubbleChart1: {
-                    meta: {
-                        difficulty: 5
-                        chart: bubble
+        stackedBarChart1: {
+            baseComponent: stackedBarChart
+            parameters: {
+                selectedIndices: [1, 4]
+            }
+        }
+        stackedBarChart2: {
+            baseComponent: stackedBarChart
+            parameters: {
+                data: [
+                    {
+                        name: A
+                        value: "10"
                     }
-                    description: A chart with correct answer of 0.66
-                    instruction:
-                        '''
-                        Two values are marked with dots. 
-
-                        What percentage do you believe the smaller value represents relative to the larger value?
-                        '''
-                    instructionLocation: sidebar
-                    type: react-component
-                    path: BubbleChart.tsx
-                    parameters: {
-                        data: [
-                            {
-                                name: A
-                                value: "30"
-                            }
-                            {
-                                name: B
-                                value: "40"
-                            }
-                            {
-                                name: C
-                                value: "50"
-                            }
-                            {
-                                name: D
-                                value: "40"
-                            }
-                            {
-                                name: E
-                                value: "60"
-                            }
-                        ]
-                        selectedIndices: [1, 4]
+                    {
+                        name: B
+                        value: "20"
                     }
-                    response: [
-                        {
-                            id: cm-response1
-                            prompt: Your answer
-                            required: true
-                            location: sidebar
-                            type: numerical
-                            placeholder: Enter your answer here, range from 0 - 100
-                            max: 100
-                            min: 0
-                        }
-                    ]
-                    nextButtonLocation: sidebar
-                    instructionLocation: sidebar
-                }
-                stackedBarChart1: {
-                    meta: {
-                        difficulty: 5
-                        chart: stacked bar
+                    {
+                        name: C
+                        value: "40"
                     }
-                    description: A chart with correct answer of 0.66
-                    instruction:
-                        '''
-                        Two values are marked with dots. 
-
-                        What percentage do you believe the smaller value represents relative to the larger value?
-                        '''
-                    type: react-component
-                    path: StackedBarChart.tsx
-                    parameters: {
-                        data: [
-                            {
-                                name: A
-                                value: "30"
-                            }
-                            {
-                                name: B
-                                value: "40"
-                            }
-                            {
-                                name: C
-                                value: "50"
-                            }
-                            {
-                                name: D
-                                value: "40"
-                            }
-                            {
-                                name: E
-                                value: "60"
-                            }
-                        ]
-                        selectedIndices: [1, 4]
+                    {
+                        name: D
+                        value: "50"
                     }
-                    response: [
-                        {
-                            id: cm-response1
-                            prompt: Your answer
-                            required: true
-                            location: sidebar
-                            type: numerical
-                            placeholder: Enter your answer here, range from 0 - 100
-                            max: 100
-                            min: 0
-                        }
-                    ]
-                    nextButtonLocation: sidebar
-                    instructionLocation: sidebar
-                }
-                stackedBarChart2: {
-                    meta: {
-                        difficulty: 5
-                        chart: stacked bar
+                    {
+                        name: E
+                        value: "100"
                     }
-                    description: A chart with correct answer of 0.66
-                    instruction:
-                        '''
-                        Two values are marked with dots. 
-
-                        What percentage do you believe the smaller value represents relative to the larger value?
-                        '''
-                    type: react-component
-                    path: StackedBarChart.tsx
-                    parameters: {
-                        data: [
-                            {
-                                name: A
-                                value: "10"
-                            }
-                            {
-                                name: B
-                                value: "20"
-                            }
-                            {
-                                name: C
-                                value: "40"
-                            }
-                            {
-                                name: D
-                                value: "50"
-                            }
-                            {
-                                name: E
-                                value: "100"
-                            }
-                        ]
-                        selectedIndices: [1, 4]
-                    }
-                    response: [
-                        {
-                            id: cm-response1
-                            prompt: Your answer
-                            required: true
-                            location: sidebar
-                            type: numerical
-                            placeholder: Enter your answer here, range from 0 - 100
-                            max: 100
-                            min: 0
-                        }
-                    ]
-                    nextButtonLocation: sidebar
-                    instructionLocation: sidebar
-                }
-                barChart1: {
-                    meta: {
-                        difficulty: 5
-                        chart: bar
-                    }
-                    description: A chart with correct answer of 0.66
-                    instruction:
-                        '''
-                        Two values are marked with dots. 
-
-                        What percentage do you believe the smaller value represents relative to the larger value?
-                        '''
-                    type: react-component
-                    path: BarChart.tsx
-                    parameters: {
-                        data: [
-                            {
-                                name: A
-                                value: "30"
-                            }
-                            {
-                                name: B
-                                value: "40"
-                            }
-                            {
-                                name: C
-                                value: "50"
-                            }
-                            {
-                                name: D
-                                value: "40"
-                            }
-                            {
-                                name: E
-                                value: "60"
-                            }
-                        ]
-                        selectedIndices: [1, 4]
-                    }
-                    response: [
-                        {
-                            id: cm-response1
-                            prompt: Your answer
-                            required: true
-                            location: sidebar
-                            type: numerical
-                            placeholder: Enter your answer here, range from 0 - 100
-                            max: 100
-                            min: 0
-                        }
-                    ]
-                    nextButtonLocation: sidebar
-                    instructionLocation: sidebar
-                }
-                pieChart1: {
-                    meta: {
-                        difficulty: 5
-                        chart: pie
-                    }
-                    description: Pie chart
-                    instruction:
-                        '''
-                        Two values are marked with dots. 
-
-                        What percentage do you believe the smaller value represents relative to the larger value?
-                        '''
-                    type: react-component
-                    path: PieChart.tsx
-                    parameters: {
-                        data: [
-                            {
-                                name: A
-                                value: "30"
-                            }
-                            {
-                                name: B
-                                value: "40"
-                            }
-                            {
-                                name: C
-                                value: "50"
-                            }
-                            {
-                                name: D
-                                value: "40"
-                            }
-                            {
-                                name: E
-                                value: "60"
-                            }
-                        ]
-                        selectedIndices: [1, 4]
-                    }
-                    response: [
-                        {
-                            id: cm-response1
-                            prompt: Your answer
-                            required: true
-                            location: sidebar
-                            type: numerical
-                            placeholder: Enter your answer here, range from 0 - 100
-                            max: 100
-                            min: 0
-                        }
-                    ]
-                    nextButtonLocation: sidebar
-                    instructionLocation: sidebar
-                }
-                bubbleChart2: {
-                    meta: {
-                        difficulty: 5
-                        chart: bubble
-                    }
-                    description: A chart with correct answer of 0.66
-                    instruction:
-                        '''
-                        Two values are marked with dots. 
-
-                        What percentage do you believe the smaller value represents relative to the larger value?
-                        '''
-                    type: react-component
-                    path: BubbleChart.tsx
-                    parameters: {
-                        data: [
-                            {
-                                name: A
-                                value: "30"
-                            }
-                            {
-                                name: B
-                                value: "40"
-                            }
-                            {
-                                name: C
-                                value: "50"
-                            }
-                            {
-                                name: D
-                                value: "40"
-                            }
-                            {
-                                name: E
-                                value: "60"
-                            }
-                        ]
-                        selectedIndices: [0, 3]
-                    }
-                    response: [
-                        {
-                            id: cm-response1
-                            prompt: Your answer
-                            required: true
-                            location: sidebar
-                            type: numerical
-                            placeholder: Enter your answer here, range from 0 - 100
-                            max: 100
-                            min: 0
-                        }
-                    ]
-                    nextButtonLocation: sidebar
-                    instructionLocation: sidebar
-                }
-                stackedBarChart3: {
-                    meta: {
-                        difficulty: 5
-                        chart: stacked bar
-                    }
-                    description: A chart with correct answer of 0.66
-                    instruction:
-                        '''
-                        Two values are marked with dots. 
-
-                        What percentage do you believe the smaller value represents relative to the larger value?
-                        '''
-                    type: react-component
-                    path: StackedBarChart.tsx
-                    parameters: {
-                        data: [
-                            {
-                                name: A
-                                value: "30"
-                            }
-                            {
-                                name: B
-                                value: "40"
-                            }
-                            {
-                                name: C
-                                value: "50"
-                            }
-                            {
-                                name: D
-                                value: "40"
-                            }
-                            {
-                                name: E
-                                value: "60"
-                            }
-                        ]
-                        selectedIndices: [0, 3]
-                    }
-                    response: [
-                        {
-                            id: cm-response1
-                            prompt: Your answer
-                            required: true
-                            location: sidebar
-                            type: numerical
-                            placeholder: Enter your answer here, range from 0 - 100
-                            max: 100
-                            min: 0
-                        }
-                    ]
-                    nextButtonLocation: sidebar
-                    instructionLocation: sidebar
-                }
-                stackedBarChart4: {
-                    meta: {
-                        difficulty: 5
-                        chart: stacked bar
-                    }
-                    description: A chart with correct answer of 0.66
-                    instruction:
-                        '''
-                        Two values are marked with dots. 
-
-                        What percentage do you believe the smaller value represents relative to the larger value?
-                        '''
-                    type: react-component
-                    path: StackedBarChart.tsx
-                    parameters: {
-                        data: [
-                            {
-                                name: A
-                                value: "10"
-                            }
-                            {
-                                name: B
-                                value: "20"
-                            }
-                            {
-                                name: C
-                                value: "40"
-                            }
-                            {
-                                name: D
-                                value: "50"
-                            }
-                            {
-                                name: E
-                                value: "100"
-                            }
-                        ]
-                        selectedIndices: [0, 3]
-                    }
-                    response: [
-                        {
-                            id: cm-response1
-                            prompt: Your answer
-                            required: true
-                            location: sidebar
-                            type: numerical
-                            placeholder: Enter your answer here, range from 0 - 100
-                            max: 100
-                            min: 0
-                        }
-                    ]
-                    nextButtonLocation: sidebar
-                    instructionLocation: sidebar
-                }
-                barChart2: {
-                    meta: {
-                        difficulty: 5
-                        chart: bar
-                    }
-                    description: A chart with correct answer of 0.66
-                    instruction:
-                        '''
-                        Two values are marked with dots. 
-
-                        What percentage do you believe the smaller value represents relative to the larger value?
-                        '''
-                    type: react-component
-                    path: BarChart.tsx
-                    parameters: {
-                        data: [
-                            {
-                                name: A
-                                value: "30"
-                            }
-                            {
-                                name: B
-                                value: "40"
-                            }
-                            {
-                                name: C
-                                value: "50"
-                            }
-                            {
-                                name: D
-                                value: "40"
-                            }
-                            {
-                                name: E
-                                value: "60"
-                            }
-                        ]
-                        selectedIndices: [0, 3]
-                    }
-                    response: [
-                        {
-                            id: cm-response1
-                            prompt: Your answer
-                            required: true
-                            location: sidebar
-                            type: numerical
-                            placeholder: Enter your answer here, range from 0 - 100
-                            max: 100
-                            min: 0
-                        }
-                    ]
-                    nextButtonLocation: sidebar
-                    instructionLocation: sidebar
-                }
-                pieChart2: {
-                    meta: {
-                        difficulty: 5
-                        chart: pie
-                    }
-                    description: Pie chart
-                    instruction:
-                        '''
-                        Two values are marked with dots. 
-
-                        What percentage do you believe the smaller value represents relative to the larger value?
-                        '''
-                    type: react-component
-                    path: PieChart.tsx
-                    parameters: {
-                        data: [
-                            {
-                                name: A
-                                value: "30"
-                            }
-                            {
-                                name: B
-                                value: "40"
-                            }
-                            {
-                                name: C
-                                value: "50"
-                            }
-                            {
-                                name: D
-                                value: "40"
-                            }
-                            {
-                                name: E
-                                value: "60"
-                            }
-                        ]
-                        selectedIndices: [0, 3]
-                    }
-                    response: [
-                        {
-                            id: cm-response1
-                            prompt: Your answer
-                            required: true
-                            location: sidebar
-                            type: numerical
-                            placeholder: Enter your answer here, range from 0 - 100
-                            max: 100
-                            min: 0
-                        }
-                    ]
-                    nextButtonLocation: sidebar
-                    instructionLocation: sidebar
-                }
+                ]
+                selectedIndices: [1, 4]
+            }
+        }
+        barChart1: {
+            baseComponent: barChart
+            parameters: {
+                selectedIndices: [1, 4]
+            }
+        }
+        pieChart1: {
+            baseComponent: pieChart
+            parameters: {
+                selectedIndices: [1, 4]
+            }
+        }
+        bubbleChart2: {
+            baseComponent: bubbleChart
+            parameters: {
+                selectedIndices: [0, 3]
+            }
+        }
+        stackedBarChart3: {
+            baseComponent: stackedBarChart
+            parameters: {
+                selectedIndices: [0, 3]
+            }
+        }
+        stackedBarChart4: {
+            baseComponent: stackedBarChart
+            parameters: {
+                selectedIndices: [0, 3]
+            }
+        }
+        barChart2: {
+            baseComponent: barChart
+            parameters: {
+                selectedIndices: [0, 3]
+            }
+        }
+        pieChart2: {
+            baseComponent: pieChart
+            parameters: {
+                selectedIndices: [0, 3]
             }
         }
         post-study-survey1: {
@@ -880,7 +417,7 @@
             response: [
                 {
                     id: q1
-                    prompt: which chart type you think is the most difficult
+                    prompt: Which chart type you think is the most difficult
                     required: true
                     location: aboveStimulus
                     type: dropdown
@@ -935,12 +472,27 @@
             ]
         }
     }
-    sequence: [
-        introduction
-        consent
-        training1
-        practice1
-        trials1
-        post-study-survey1
-    ]
+    sequence: { 
+        order: fixed
+        components:  [
+            introduction
+            consent
+            training1
+            trainingBubbleChart1
+            trainingStackedBarChart1
+            trainingBarChart1
+            trainingPieChart1
+            bubbleChart1
+            stackedBarChart1
+            stackedBarChart2
+            pieChart1
+            barChart1
+            bubbleChart2
+            stackedBarChart3
+            stackedBarChart4
+            pieChart2
+            barChart2
+            post-study-survey1
+        ]
+    }
 }
