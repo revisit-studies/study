@@ -119,8 +119,8 @@
                 {
                     id: q6
                     prompt: Slider example, iframe input example please refer to MVNV example or HTML input demo
-                    required: true
                     location: aboveStimulus
+                    required: true
                     type: slider
                     options: [
                         {
@@ -140,8 +140,11 @@
             ]
         }
     }
-    sequence: [
-        introduction
-        survey
-    ]
+    sequence: { 
+        order: fixed
+        components:  [
+            introduction
+            survey
+        ]
+    }
 }

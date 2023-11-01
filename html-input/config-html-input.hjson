@@ -31,43 +31,38 @@
             path: html-input/introduction.md
             response: []
         }
-        trials1: {
-            type: container
-            order: [
-                barChart
-            ]
-            components: {
-                barChart: {
-                    type: website
-                    response: [
-                        {
-                            id: barChart
-                            prompt: "Your selected answer:"
-                            required: true
-                            location: belowStimulus
-                            type: iframe
-                        }
-                    ]
-                    path: html-input/bar-chart-interaction.html
-                    meta: {
-                        chart: bar
-                        AttrNo: 7
-                        misleading: false
-                    }
-                    description: A trial for the user to click the largest bar
-                    instruction: Click on the largest bar
-                    // style that will be applied to iframe
-                    style: {
-                        height: 500px
-                    }
-                    instructionLocation: aboveStimulus
-                    
+        barChart: {
+            type: website
+            response: [
+                {
+                    id: barChart
+                    prompt: "Your selected answer:"
+                    required: true
+                    location: belowStimulus
+                    type: iframe
                 }
+            ]
+            path: html-input/bar-chart-interaction.html
+            meta: {
+                chart: bar
+                AttrNo: 7
+                misleading: false
             }
+            description: A trial for the user to click the largest bar
+            instruction: Click on the largest bar
+            // style that will be applied to iframe
+            style: {
+                height: 500px
+            }
+            instructionLocation: aboveStimulus
+            
         }
     }
-    sequence: [
-        introduction
-        trials1
-    ]
+    sequence: { 
+        order: fixed
+        components:  [
+            introduction
+            barChart
+        ]
+    }
 }
