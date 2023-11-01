@@ -1,11 +1,9 @@
 import * as d3 from 'd3';
 import { useChartDimensions } from './hooks/useChartDimensions';
 import {useEffect, useMemo, useState} from 'react';
-import {updateResponseBlockValidation, useFlagsDispatch} from '../../store/flags';
-import {useLocation} from 'react-router-dom';
 import {Box, Slider} from '@mantine/core';
-import {initializeProvenanceGraph, createAction, initializeTrrack, Registry} from '@trrack/core';
-import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
+import {initializeTrrack, Registry} from '@trrack/core';
+import { StimulusParams } from '../../store/types';
 
 const chartSettings = {
   marginBottom: 40,
@@ -24,16 +22,14 @@ interface ClickAccuracyTest {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ClickAccuracyTest = ({ parameters, trialId, setAnswer }: { parameters: any, trialId: string, setAnswer: ({trialId, status, provenanceGraph, answers} : {trialId: string, status: boolean, provenanceGraph?: ProvenanceGraph<any, any, any>, answers: Record<string, any>}) => void }) => {
+const ClickAccuracyTest = ({ parameters, trialId, setAnswer }: StimulusParams) => {
   const [ref, dms] = useChartDimensions(chartSettings);
   const [x, setX] = useState(100);
   const [y, setY] = useState(100);
   const [speed, setSpeed] = useState(300);
-  const flagDispatch = useFlagsDispatch();
-  const id = useLocation().pathname;
   const taskid = parameters.taskid;
 
-  const { registry, actions } = useMemo(() => {
+  const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
 
     const click = reg.register('click', (state, click: {clickX: number, clickY: number, distance: number}) => {
@@ -43,17 +39,15 @@ const ClickAccuracyTest = ({ parameters, trialId, setAnswer }: { parameters: any
         return state;
     });
 
+    const trrackInst = initializeTrrack({registry: reg, initialState: {distance: 0, speed: 10, clickX: 0, clickY: 0} });
+
     return {
-        registry: reg,
         actions: {
           click
         },
+        trrack: trrackInst
     };
-}, []);
-
-  const trrack = useMemo(() => {
-    return initializeTrrack({registry: registry, initialState: {distance: 0, speed: 10, clickX: 0, clickY: 0} });
-  }, [registry]);
+  }, []);
 
 
   useEffect(()=>{
@@ -65,11 +59,11 @@ const ClickAccuracyTest = ({ parameters, trialId, setAnswer }: { parameters: any
       const distance = Math.round(Math.sqrt((clickPos[0] - circelPos[0]) ** 2 + (clickPos[1] - circelPos[1]) ** 2)) + 'px';
       trrack.apply('Clicked', actions.click({distance: +distance, clickX: clickPos[0], clickY: clickPos[1]}));
       setAnswer({
-        trialId: id,
+        trialId,
         status: true,
         provenanceGraph: trrack.graph.backend,
         answers: {
-            [`${id}/${taskid}`]: [
+            [`${trialId}/${taskid}`]: [
             ...new Set([distance]),
           ],
         },
