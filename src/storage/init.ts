@@ -362,7 +362,6 @@ async function saveStudyConfig(
   }
 
   if (docSnap.exists()) {
-    console.log('exists');
     const returnRefs = await getRandomOrders(store, paths, batch, studyId, config, versionHash);
 
     batch.commit();

@@ -98,8 +98,6 @@ function orderObjectToList(
  ) : string[] {
   const orderCopy = deepCopy(order);
 
-  console.log(orderCopy);
-
   _orderObjectToList(orderCopy, pathsFromFirebase, 'root');
   return orderCopy.components.flat().slice(0, orderCopy.numSamples ? orderCopy.numSamples : undefined) as any as any;
 }
@@ -175,13 +173,10 @@ export function Shell({ globalConfig }: {
       }
 
       const randoms = await firebase?.saveStudyConfig(config, sid);
-      console.log(randoms);
     
       const orderConfig = orderObjectToList(activeConfig!.sequence, randoms);
-      console.log(orderConfig);
 
       const st = await studyStoreCreator(sid, config, orderConfig, fb);
-      console.log(st);
 
       setOrderSequence(orderConfig);
 
