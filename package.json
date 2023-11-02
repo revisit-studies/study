@@ -8,7 +8,8 @@
     "build": "tsc && vite build",
     "lint": "eslint src",
     "postinstall": "husky install",
-    "generate-schema": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/schema.json",
+    "generate-schema:StudyConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/StudyConfigSchema.json --type StudyConfig",
+    "generate-schema:GlobalConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/GlobalConfigSchema.json --type GlobalConfig",
     "test": "playwright test"
   },
   "lint-staged": {
