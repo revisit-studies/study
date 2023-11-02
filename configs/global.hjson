@@ -1,4 +1,5 @@
 {
+    $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/GlobalConfigSchema.json
     configsList: [
         html-demo
         image-demo
