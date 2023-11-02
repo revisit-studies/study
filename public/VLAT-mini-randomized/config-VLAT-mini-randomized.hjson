@@ -52,7 +52,7 @@
             type: image
             path: VLAT-mini-randomized/TreeMap.png
             style: {
-                width: 800px
+                width: 500px
             }
             nextButtonLocation: sidebar
             instructionLocation: sidebar
@@ -90,7 +90,7 @@
             type: image
             path: VLAT-mini-randomized/Stacked100.png
             style: {
-                width: 800px
+                width: 500px
             }
             nextButtonLocation: sidebar
             instructionLocation: sidebar
@@ -136,7 +136,7 @@
             type: image
             path: VLAT-mini-randomized/Histogram.png
             style: {
-                width: 800px
+                width: 500px
             }
             nextButtonLocation: sidebar
             instructionLocation: sidebar
@@ -183,7 +183,7 @@
             type: image
             path: VLAT-mini-randomized/Choropleth.png
             style: {
-                width: 800px
+                width: 500px
             }
             nextButtonLocation: sidebar
             instructionLocation: sidebar
@@ -222,7 +222,7 @@
             type: image
             path: VLAT-mini-randomized/PieChart.png
             style: {
-                width: 800px
+                width: 500px
             }
             nextButtonLocation: sidebar
             instructionLocation: sidebar
@@ -269,7 +269,7 @@
             type: image
             path: VLAT-mini-randomized/BubbleChart.png
             style: {
-                width: 800px
+                width: 500px
             }
             nextButtonLocation: sidebar
             instructionLocation: sidebar
@@ -316,7 +316,7 @@
             type: image
             path: VLAT-mini-randomized/StackedBar.png
             style: {
-                width: 800px
+                width: 500px
             }
             nextButtonLocation: sidebar
             instructionLocation: sidebar
@@ -363,7 +363,7 @@
             type: image
             path: VLAT-mini-randomized/LineChart.png
             style: {
-                width: 800px
+                width: 500px
             }
             nextButtonLocation: sidebar
             instructionLocation: sidebar
@@ -410,7 +410,7 @@
             type: image
             path: VLAT-mini-randomized/BarChart.png
             style: {
-                width: 800px
+                width: 500px
             }
             nextButtonLocation: sidebar
             instructionLocation: sidebar
@@ -457,7 +457,7 @@
             type: image
             path: VLAT-mini-randomized/AreaChart.png
             style: {
-                width: 800px
+                width: 500px
             }
             nextButtonLocation: sidebar
             instructionLocation: sidebar
@@ -504,7 +504,7 @@
             type: image
             path: VLAT-mini-randomized/StackedArea.png
             style: {
-                width: 800px
+                width: 500px
             }
             nextButtonLocation: sidebar
             instructionLocation: sidebar
@@ -551,7 +551,7 @@
             type: image
             path: VLAT-mini-randomized/Scatterplot.png
             style: {
-                width: 800px
+                width: 500px
             }
             nextButtonLocation: sidebar
             instructionLocation: sidebar
