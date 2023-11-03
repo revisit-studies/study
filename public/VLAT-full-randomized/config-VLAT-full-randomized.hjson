@@ -21,6 +21,8 @@
         withProgressBar: true
         autoDownloadStudy: false
         sidebar: true
+        studyEndMsg: Thank you for completing the study. The completion code is: CE96X7ST. You may close this window now.
+
     }
     components: {
         introduction: {
@@ -36,11 +38,6 @@
                     placeholder: id
                 }
             ]
-        }
-        prolificCode: {
-            type: markdown
-            path: VLAT-full-randomized/prolific-code.md
-            response: []
         }
         survey: {
             type: markdown
@@ -2760,7 +2757,6 @@
                 ]
             }
             survey
-            prolificCode
         ]
     }
 }
