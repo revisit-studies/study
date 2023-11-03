@@ -43,12 +43,12 @@
             path: VLAT-mini-randomized/consent.md
             response: [
                 {
-                    id: userInitial
-                    prompt: Please Initial your name below
+                    id: userInitials
+                    prompt: Please type your initials below. These are not used in our analyses, but required for the consent process.
                     required: true
                     location: belowStimulus
                     type: shortText
-                    placeholder: Initial
+                    placeholder: Your Initials
                 }
             ]
         },

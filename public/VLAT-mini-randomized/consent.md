@@ -20,16 +20,19 @@ common in everyday life. The purpose of this study is to learn
 more about how people read and understand visualizations.
 
 ## Tasks
-The test contains 52 multiple-choice questions about 12 data
-visualizations. It will take approximately 30 minutes to finish this
-test. For each question, you will be given a static data
-visualization (right) and a problem to solve (left). If you don't know the answer, select
-'skip'. We suggest maximizing your browser window.
+The test contains 12 multiple-choice questions about 12 data
+visualizations. 
+It will take approximately 10-15 minutes to finish this
+test. 
+For each question, you will be given a static data
+visualization (right) and a problem to solve (left). 
+If you don't know the answer, select
+'skip'. We suggest maximizing your browser window as some charts can be on the larger side.
 
 ## Risks to study participants
-Each participant in this study is assigned a random ID. As such,
+Each participant in this study is assigned a random ID for analyses. As such,
 your participation will remain anonymous and your responses will
-not be able to be used to identify you.
+not be used to identify you.
 
 ## Benefits to research participants and others:
 The possible benefits include exposure to interesting data
@@ -46,18 +49,18 @@ this data. Any publication or presentation of the data will not
 identify you.
 
 ## Cost/Payment
-Please check prolific description
+Please check the Prolific description.
 
 ## Contact
 For more information about this research or about the rights of
 research participants, or in case of research-related injury,
 contact:  Lane Harrison (contact info at the top of this page). In addition,
 include the contact information for the IRB Manager (Ruth McKeogh,
-Tel. 508 831- 6699, Email: irb@wpi.edu ) and the Human Protection
+Tel. 508-831-6699, Email: irb@wpi.edu ) and the Human Protection
 Administrator (Gabriel Johnson, Tel. 508-831-4989, Email:
 gjohnson@wpi.edu).
 
-our participation in this research is voluntary
+Your participation in this research is voluntary
 Your refusal to participate will not result in any penalty to you
 or any loss of benefits to which you may otherwise be entitled.
 You may decide to stop participating in the research at any time
@@ -66,7 +69,7 @@ investigators retain the right to cancel or postpone the
 experimental procedures at any time they see fit.
 
 ### By signing below,
-you acknowledge that you have been informed about and consent to
+You acknowledge that you have been informed about and consent to
 be a participant in the study described above. Make sure that your
 questions are answered to your satisfaction before signing. You
 are entitled to retain a copy of this consent agreement.

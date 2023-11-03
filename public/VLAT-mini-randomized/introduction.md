@@ -4,7 +4,7 @@ This is a short visualization understanding questionnaire.
 The test contains 12 multiple-choice questions about 12 data
 visualizations. 
 
-It will take approximately 5 minutes to finish this
+It will take approximately 10-15 minutes to finish this
 test. 
 
 For each question, you will be given a static data
