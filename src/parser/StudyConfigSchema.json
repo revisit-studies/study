@@ -45,6 +45,9 @@
           },
           "type": "array"
         },
+        "paramCapture": {
+          "type": "string"
+        },
         "prompt": {
           "type": "string"
         },
@@ -86,6 +89,9 @@
           },
           "type": "array"
         },
+        "paramCapture": {
+          "type": "string"
+        },
         "placeholder": {
           "type": "string"
         },
@@ -123,6 +129,9 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "paramCapture": {
+          "type": "string"
         },
         "prompt": {
           "type": "string"
@@ -252,6 +261,9 @@
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation"
         },
+        "paramCapture": {
+          "type": "string"
+        },
         "preset": {
           "type": "number"
         },
@@ -292,6 +304,9 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "paramCapture": {
+          "type": "string"
         },
         "placeholder": {
           "type": "string"
@@ -388,6 +403,9 @@
         },
         "min": {
           "type": "number"
+        },
+        "paramCapture": {
+          "type": "string"
         },
         "placeholder": {
           "type": "string"
@@ -607,6 +625,9 @@
           },
           "type": "array"
         },
+        "paramCapture": {
+          "type": "string"
+        },
         "prompt": {
           "type": "string"
         },
@@ -741,6 +762,9 @@
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation"
         },
+        "paramCapture": {
+          "type": "string"
+        },
         "placeholder": {
           "type": "string"
         },
@@ -783,6 +807,9 @@
             "$ref": "#/definitions/Option"
           },
           "type": "array"
+        },
+        "paramCapture": {
+          "type": "string"
         },
         "prompt": {
           "type": "string"
