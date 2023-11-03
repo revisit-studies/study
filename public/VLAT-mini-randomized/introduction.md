@@ -1,8 +1,6 @@
 # Introduction
 
-This is a reVISit adaptation of the original VLAT questionnaire from Kwon et al.
-
-From their study: 
+This is a reVISit adaptation of the mini-VLAT questionnaire from Pandey and Ottley.
 
 ## What is mini-VLAT?
 

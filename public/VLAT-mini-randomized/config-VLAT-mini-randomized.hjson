@@ -1,7 +1,7 @@
 {
     $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/schema.json
     studyMetadata: {
-        title: Randomized Mini VLAT (Visualization Literacy Assessment Test)
+        title: Visualization understanding questionnaire
         version: pilot
         authors: [
             The reVISit Team
@@ -29,11 +29,11 @@
             response: [
                 {
                     id: prolificId
-                    prompt: Please enter your prolificId
+                    prompt: Please enter your Prolific ID
                     required: true
                     location: belowStimulus
                     type: shortText
-                    placeholder: id
+                    placeholder: Prolific ID
                 }
             ]
         },
@@ -131,7 +131,7 @@
                 trueAnswer: 1
                 chartType: histogram
             }
-            instruction: What distance have customers traveled in the taxy the most?
+            instruction: What distance have customers traveled in the taxi the most?
             instructionLocation: sidebar
             type: image
             path: VLAT-mini-randomized/Histogram.png
@@ -178,7 +178,7 @@
                 trueAnswer: 0
                 chartType: choropleth
             }
-            instruction: In 2020, the unemployment rate for Washington (WA) was higher than that of Wisconsis (WI)?
+            instruction: In 2020, the unemployment rate for Washington (WA) was higher than that of Wisconsin (WI)?
             instructionLocation: sidebar
             type: image
             path: VLAT-mini-randomized/Choropleth.png
