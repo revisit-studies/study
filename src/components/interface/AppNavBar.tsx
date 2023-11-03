@@ -34,12 +34,11 @@ export default function AppNavBar() {
     currentConfig?.instructionLocation === undefined;
 
   return trialHasSideBar && currentConfig ? (
-    <Navbar width={{ base: 300 }} style={{ zIndex: 0, overflowY: 'scroll' }}>
+    <Navbar bg="gray.1" display="block" width={{ base: 300 }} style={{ zIndex: 0, overflowY: 'scroll' }}>
       {instructionInSideBar && instruction !== '' && (
         <Navbar.Section
           bg="gray.3"
           p="xl"
-          style={{ flex: 1, overflowY: 'auto', minHeight: 200 }}
         >
           <Text c="gray.9">
             <Text span c="orange.8" fw={700} inherit>
@@ -51,7 +50,7 @@ export default function AppNavBar() {
       )}
 
       {trialHasSideBarResponses && (
-        <Navbar.Section bg="gray.1" p="xl" grow>
+        <Navbar.Section p="xl">
           {
             <ResponseBlock
               status={status}
