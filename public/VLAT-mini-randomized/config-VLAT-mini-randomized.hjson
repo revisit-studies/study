@@ -38,6 +38,20 @@
                 }
             ]
         },
+        consent: {
+            type: markdown
+            path: VLAT-mini-randomized/consent.md
+            response: [
+                {
+                    id: userInitial
+                    prompt: Please Initial your name below
+                    required: true
+                    location: belowStimulus
+                    type: shortText
+                    placeholder: Initial
+                }
+            ]
+        },
         prolificCode: {
             type: markdown
             path: VLAT-mini-randomized/prolific-code.md
@@ -618,6 +632,7 @@
         order: fixed
         components: [
             introduction
+            consent
             {
                 order: random
                 components: [
