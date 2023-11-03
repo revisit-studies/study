@@ -21,7 +21,7 @@
         withProgressBar: true
         autoDownloadStudy: false
         sidebar: true
-        studyEndMsg: Thank you for completing the study. The completion code is: CE96X7ST. You may close this window now.
+        studyEndMsg: Thank you for completing the study. You may click this link and return to Prolific: https://app.prolific.com/submissions/complete?cc=CE96X7ST
 
     }
     components: {
