@@ -42,6 +42,37 @@
             path: VLAT-full-randomized/prolific-code.md
             response: []
         }
+        survey: {
+            type: markdown
+            path: VLAT-mini-randomized/survey.md
+            response: [
+                {
+                    id: q1
+                    prompt: Did you experience any problems with our tool?
+                    required: true
+                    location: belowStimulus
+                    type: longText
+                    placeholder: Enter your answer here.
+                }
+                {
+                    id: q2
+                    prompt: Did anything not render or display properly?
+                    required: true
+                    location: belowStimulus
+                    type: longText
+                    placeholder: Enter your answer here
+                }
+                {
+                    id: q3
+                    prompt: Any other issues or anything you would like to tell us?
+                    required: true
+                    location: belowStimulus
+                    type: longText
+                    placeholder: Enter your answer here
+
+                }
+            ]
+        }
         q0: {
             meta: {
                 trueAnswer: 2
@@ -2728,6 +2759,7 @@
                     }
                 ]
             }
+            survey
             prolificCode
         ]
     }
