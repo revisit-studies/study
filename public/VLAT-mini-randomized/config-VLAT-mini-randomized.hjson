@@ -316,7 +316,7 @@
             type: image
             path: VLAT-mini-randomized/StackedBar.png
             style: {
-                width: 500px
+                width: 600px
             }
             nextButtonLocation: sidebar
             instructionLocation: sidebar
@@ -363,7 +363,7 @@
             type: image
             path: VLAT-mini-randomized/LineChart.png
             style: {
-                width: 500px
+                width: 600px
             }
             nextButtonLocation: sidebar
             instructionLocation: sidebar
