@@ -3,6 +3,7 @@
  * This list is displayed on the landing page when running the app.
 */ 
 export interface GlobalConfig {
+  $schema: string;
   configs: {
     [key: string]: {
       path: string;

@@ -1,4 +1,5 @@
 {
+  "$ref": "#/definitions/StudyConfig",
   "$schema": "http://json-schema.org/draft-07/schema#",
   "definitions": {
     "Answer": {
@@ -25,79 +26,6 @@
       "required": [
         "id",
         "answer"
-      ],
-      "type": "object"
-    },
-    "BaseIndividualComponent": {
-      "additionalProperties": false,
-      "description": "The BaseIndividualComponent interface is used to define the required fields for all components. The only exception is the ContainerComponent, which is used to group components together.\n\nAll components must include the response field, which is an array of Response interfaces. There are additional optional fields that can be included in a component that help layout the task. These include the nextButtonText, nextButtonLocation, instructionLocation, correctAnswer. There are other fields that can be included in a component that are used to identify the task in the admin panel. These include the meta, description, instruction, and title fields.",
-      "properties": {
-        "correctAnswer": {
-          "items": {
-            "$ref": "#/definitions/Answer"
-          },
-          "type": "array"
-        },
-        "description": {
-          "type": "string"
-        },
-        "instruction": {
-          "type": "string"
-        },
-        "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation"
-        },
-        "meta": {
-          "additionalProperties": {},
-          "type": "object"
-        },
-        "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation"
-        },
-        "nextButtonText": {
-          "type": "string"
-        },
-        "response": {
-          "items": {
-            "$ref": "#/definitions/Response"
-          },
-          "type": "array"
-        },
-        "title": {
-          "type": "string"
-        }
-      },
-      "required": [
-        "response"
-      ],
-      "type": "object"
-    },
-    "BaseResponse": {
-      "additionalProperties": false,
-      "description": "The BaseResponse interface is used to define the required fields for all responses. Other Response interfaces inherit properties from the BaseResponse interface. Therefore, all responses must include these properties.",
-      "properties": {
-        "id": {
-          "type": "string"
-        },
-        "location": {
-          "$ref": "#/definitions/ResponseBlockLocation"
-        },
-        "prompt": {
-          "type": "string"
-        },
-        "required": {
-          "type": "boolean"
-        },
-        "requiredLabel": {
-          "type": "string"
-        },
-        "requiredValue": {}
-      },
-      "required": [
-        "id",
-        "prompt",
-        "required",
-        "location"
       ],
       "type": "object"
     },
@@ -183,38 +111,6 @@
         "prompt",
         "required",
         "type"
-      ],
-      "type": "object"
-    },
-    "GlobalConfig": {
-      "additionalProperties": false,
-      "description": "The GlobalConfig is used to generate the list of available studies in the UI. This list is displayed on the landing page when running the app.",
-      "properties": {
-        "configs": {
-          "additionalProperties": {
-            "additionalProperties": false,
-            "properties": {
-              "path": {
-                "type": "string"
-              }
-            },
-            "required": [
-              "path"
-            ],
-            "type": "object"
-          },
-          "type": "object"
-        },
-        "configsList": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        }
-      },
-      "required": [
-        "configs",
-        "configsList"
       ],
       "type": "object"
     },
@@ -336,81 +232,9 @@
           "$ref": "#/definitions/IndividualComponent"
         },
         {
-          "additionalProperties": false,
-          "properties": {
-            "baseComponent": {
-              "type": "string"
-            },
-            "correctAnswer": {
-              "items": {
-                "$ref": "#/definitions/Answer"
-              },
-              "type": "array"
-            },
-            "description": {
-              "type": "string"
-            },
-            "instruction": {
-              "type": "string"
-            },
-            "instructionLocation": {
-              "$ref": "#/definitions/ResponseBlockLocation"
-            },
-            "meta": {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            "nextButtonLocation": {
-              "$ref": "#/definitions/ResponseBlockLocation"
-            },
-            "nextButtonText": {
-              "type": "string"
-            },
-            "parameters": {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            "path": {
-              "type": "string"
-            },
-            "response": {
-              "items": {
-                "$ref": "#/definitions/Response"
-              },
-              "type": "array"
-            },
-            "style": {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "type": "object"
-            },
-            "title": {
-              "type": "string"
-            },
-            "type": {
-              "enum": [
-                "markdown",
-                "react-component",
-                "image",
-                "website",
-                "questionnaire"
-              ],
-              "type": "string"
-            }
-          },
-          "required": [
-            "baseComponent"
-          ],
-          "type": "object"
+          "$ref": "#/definitions/PartialComponent"
         }
       ]
-    },
-    "InheritedStudyComponents": {
-      "additionalProperties": {
-        "$ref": "#/definitions/InheritedComponent"
-      },
-      "type": "object"
     },
     "LikertResponse": {
       "additionalProperties": false,
@@ -612,21 +436,6 @@
       ],
       "type": "object"
     },
-    "OrderConfig": {
-      "additionalProperties": false,
-      "properties": {
-        "sequence": {
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        }
-      },
-      "required": [
-        "sequence"
-      ],
-      "type": "object"
-    },
     "OrderObject": {
       "additionalProperties": false,
       "properties": {
@@ -658,6 +467,75 @@
       "required": [
         "order",
         "components"
+      ],
+      "type": "object"
+    },
+    "PartialComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "baseComponent": {
+          "type": "string"
+        },
+        "correctAnswer": {
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "type": "string"
+        },
+        "instruction": {
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "meta": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation"
+        },
+        "nextButtonText": {
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        "path": {
+          "type": "string"
+        },
+        "response": {
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "style": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "title": {
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "markdown",
+            "react-component",
+            "image",
+            "website",
+            "questionnaire"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "baseComponent"
       ],
       "type": "object"
     },
@@ -931,12 +809,6 @@
       ],
       "type": "object"
     },
-    "StudyComponents": {
-      "additionalProperties": {
-        "$ref": "#/definitions/IndividualComponent"
-      },
-      "type": "object"
-    },
     "StudyConfig": {
       "additionalProperties": false,
       "description": "The StudyConfig interface is used to define the properties of a study configuration. These are the hjson files that live in the public folder. In our repo, one example of this would be public/cleveland/config-cleveland.hjson.",
@@ -945,10 +817,16 @@
           "type": "string"
         },
         "baseComponents": {
-          "$ref": "#/definitions/StudyComponents"
+          "additionalProperties": {
+            "$ref": "#/definitions/IndividualComponent"
+          },
+          "type": "object"
         },
         "components": {
-          "$ref": "#/definitions/InheritedStudyComponents"
+          "additionalProperties": {
+            "$ref": "#/definitions/InheritedComponent"
+          },
+          "type": "object"
         },
         "sequence": {
           "$ref": "#/definitions/OrderObject"

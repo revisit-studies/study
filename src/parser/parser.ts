@@ -1,13 +1,17 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { parse as hjsonParse } from 'hjson';
 import Ajv from 'ajv';
-import schema from './schema.json';
+import configSchema from './StudyConfigSchema.json';
+import globalSchema from './GlobalConfigSchema.json';
 import { GlobalConfig, IndividualComponent, PartialComponent, StudyConfig } from './types';
 
-const ajv = new Ajv();
-ajv.addSchema(schema);
-const globalValidate = ajv.getSchema<GlobalConfig>('#/definitions/GlobalConfig')!;
-const studyValidate = ajv.getSchema<StudyConfig>('#/definitions/StudyConfig')!;
+const ajv1 = new Ajv();
+ajv1.addSchema(globalSchema);
+const globalValidate = ajv1.getSchema<GlobalConfig>('#/definitions/GlobalConfig')!;
+
+const ajv2 = new Ajv();
+ajv2.addSchema(configSchema);
+const studyValidate = ajv2.getSchema<StudyConfig>('#/definitions/StudyConfig')!;
 
 // This function verifies the global config file satisfies conditions that are not covered by the schema
 function verifyGlobalConfig(data: GlobalConfig) {
