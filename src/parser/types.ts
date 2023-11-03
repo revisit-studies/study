@@ -65,6 +65,7 @@ export interface BaseResponse {
   location: ResponseBlockLocation;
   requiredValue?: unknown;
   requiredLabel?: string;
+  paramCapture?: string;
 }
 
 /**
