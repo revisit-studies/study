@@ -26,7 +26,17 @@
         introduction: {
             type: markdown
             path: VLAT/introduction.md
-            response: []
+            response: [
+                {
+                    id: prolificId
+                    prompt: Please enter your Prolific ID
+                    required: true
+                    location: belowStimulus
+                    type: shortText
+                    placeholder: Prolific ID
+                    paramCapture: PROLIFIC_ID
+                }
+            ]
         }
         q0: {
             meta: {
