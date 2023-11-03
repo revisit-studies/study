@@ -90,7 +90,7 @@
             type: image
             path: VLAT-mini-randomized/Stacked100.png
             style: {
-                width: 500px
+                width: 600px
             }
             nextButtonLocation: sidebar
             instructionLocation: sidebar
