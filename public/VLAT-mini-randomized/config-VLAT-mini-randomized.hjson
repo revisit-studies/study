@@ -411,7 +411,7 @@
             type: image
             path: VLAT-mini-randomized/LineChart.png
             style: {
-                width: 600px
+                width: 550px
             }
             nextButtonLocation: sidebar
             instructionLocation: sidebar

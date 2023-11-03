@@ -2638,6 +2638,7 @@
         order: fixed
         components: [
             introduction
+            consent
             {
                 order: random
                 components: [
