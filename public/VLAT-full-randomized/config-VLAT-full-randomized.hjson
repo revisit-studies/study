@@ -36,6 +36,7 @@
                     location: belowStimulus
                     type: shortText
                     placeholder: id
+                    paramCapture: PROLIFIC_ID
                 }
             ]
         }
