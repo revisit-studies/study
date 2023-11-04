@@ -17,6 +17,8 @@ export const OPTIONAL_COMMON_PROPS = [
   'startTime',
   'endTime',
   'duration',
+    'studyId',
+    'measure',
 ] as const;
 
 export const REQUIRED_PROPS = [
@@ -50,6 +52,7 @@ export async function downloadTidy(
   const sessionArr = await getAllSessions(fb.firestore, studyId);
   console.log(sessionArr,'sessionArr');
   const rows = sessionArr
+      .filter((sessionObject)=>sessionObject.session.status.endStatus?.status === 'completed')
     .map((sessionObject) => processToRow(sessionObject, trialIds)).flat();
 
   console.log(rows,'rows');
@@ -100,7 +103,6 @@ function processToRow(
 
   trialIds.forEach((trialId) => {
     const trial = study[trialId];
-    console.log(trial,trialId,'trialllll');
     if(trial) {
       const answer: Nullable<TrialResult> =
           'answer' in trial ? trial : null;
@@ -110,22 +112,34 @@ function processToRow(
       const endTime = answer?.endTime
           ? new Date(answer.endTime).toUTCString()
           : null;
-      const duration = (answer?.endTime || 0) - 0;
+      const duration = (answer?.endTime || 0) - (answer?.startTime || 0);
 
-      const tr: TidyRow = {
-        pid: study.studyIdentifiers.pid,
-        sessionId: study.studyIdentifiers.session_id,
-        status: session.status.endStatus?.status || 'incomplete',
-        trialId,
-        answer: JSON.stringify(answer?.answer || {}),
-        correctAnswer: (trial).correctAnswer,
-        description: `"${(trial).description}"`,
-        instruction: `"${(trial).instruction}"`,
-        startTime,
-        endTime,
-        duration,
-      };
-      trs.push(tr);
+      const answers: { [key: string]: string } = answer?.answer as { [key: string]: string };
+      for (const key in answers) {
+        if (Object.prototype.hasOwnProperty.call(answers, key)) {
+          const answerField = key.split('/').filter((f)=>f.length>0);
+
+          const tr: TidyRow = {
+            pid: study.studyIdentifiers.pid,
+            sessionId: study.studyIdentifiers.session_id,
+            status: session.status.endStatus?.status || 'incomplete',
+            trialId,
+            answer: answers[key],
+            studyId:answerField[0],
+            measure:answerField[2],
+            correctAnswer: (trial).correctAnswer,
+            description: `"${(trial).description}"`,
+            instruction: `"${(trial).instruction}"`,
+            startTime,
+            endTime,
+            duration,
+          };
+          trs.push(tr);
+        }
+      }
+
+
+
     }
 
   });
