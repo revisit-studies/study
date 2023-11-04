@@ -3,6 +3,8 @@ import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import {useEffect} from 'react';
 import {useFirebase} from '../storage/init';
 import {useCreatedStore} from '../store/store';
+import ReactMarkdownWrapper from './ReactMarkdownWrapper';
+
 
 export function StudyEnd() {
   const config = useStudyConfig();
@@ -18,18 +20,18 @@ export function StudyEnd() {
   }, []);
 
   return (
-    <>
-      <Center style={{ height: '100%' }}>
-        <Flex direction="column">
-          <Center>
-            <Text size="xl" display="block">
-              {config.uiConfig.studyEndMsg
-                ? config.uiConfig.studyEndMsg
-                : 'Thank you for completing the study. You may close this window now.'}
-            </Text>
-          </Center>
-        </Flex>
-      </Center>
-    </>
+      <>
+        <Center style={{ height: '100%' }}>
+          <Flex direction="column">
+            <Center>
+              <Text size="xl" display="block">
+                {config.uiConfig.studyEndMsg
+                    ? <ReactMarkdownWrapper text={config.uiConfig.studyEndMsg} />
+                    : 'Thank you for completing the study. You may close this window now.'}
+              </Text>
+            </Center>
+          </Flex>
+        </Center>
+      </>
   );
 }
