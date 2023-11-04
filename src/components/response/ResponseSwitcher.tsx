@@ -1,5 +1,4 @@
 import { Box } from '@mantine/core';
-import { useSearchParams } from 'react-router-dom';
 import { Nullable, Response } from '../../parser/types';
 import { TrialResult } from '../../store/types';
 import CheckBoxInput from './CheckBoxInput';
@@ -27,21 +26,11 @@ export default function ResponseSwitcher({
   answer,
   storedAnswer,
 }: Props) {
-  const [params] = useSearchParams();
-
-  let paramCapture;
-  if (response.paramCapture) {
-    const value = params.get(response.paramCapture);
-    if (value) {
-      paramCapture = { value };
-    }
-  }
-
-  const isDisabled = disabled || !!paramCapture;
+  const isDisabled = disabled || !!response.paramCapture;
 
   const ans: any = storedAnswer
     ? { value: storedAnswer }
-    : paramCapture || answer;
+    : answer;
 
   return (
     <>
