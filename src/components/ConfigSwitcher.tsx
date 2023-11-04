@@ -49,7 +49,7 @@ const ConfigSwitcher = ({ globalConfig, studyConfigs }: Props) => {
               <Text c="dimmed">{config.studyMetadata.description}</Text>
               <Text c="dimmed" ta="right" style={{paddingRight: 5}}>
                 <Anchor target="_blank" onClick={(e) => e.stopPropagation()} 
-                href={`${REVISIT_GITHUB_PUBLIC}${url}`}>View Study Sources</Anchor></Text>
+                href={`${REVISIT_GITHUB_PUBLIC}${url}`}>View source: {url}</Anchor></Text>
              </Card>      
           </UnstyledButton>
         );

@@ -4,32 +4,30 @@
         html-demo
         image-demo
         html-input
+        survey-demo
         cleveland
-        MVNV
-        VLAT
+        click-accuracy-test
         VLAT-full-randomized
         VLAT-mini-randomized
-        click-accuracy-test
-        survey-demo
+        MVNV
+        
+    
     ],
     configs: {
         html-demo: {
             path: html-demo/config-html-demo.hjson
-        }
+        },
         image-demo: {
             path: image-demo/config-image-demo.hjson
-        }
+        },
         html-input: {
             path: html-input/config-html-input.hjson
-        }
+        },
         cleveland: {
             path: cleveland/config-cleveland.hjson
-        }
+        },
         MVNV: {
             path: mvnv/config-html-MVNV.hjson
-        },
-        VLAT: {
-            path: VLAT/config-VLAT.hjson
         },
         VLAT-full-randomized: {
             path: VLAT-full-randomized/config-VLAT-full-randomized.hjson

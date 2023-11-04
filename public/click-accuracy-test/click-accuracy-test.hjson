@@ -1,13 +1,13 @@
 {
     $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json
     studyMetadata: {
-        title: Click Accuracy Test
+        title: Dynamic React Stimuli and Provenace Tracking
         version: pilot
         authors: [
             The reVISit Team
         ]
         date: 2023-06-15
-        description: A demo of using React dynamic stimuli, and receiving input from it.
+        description: A demo of using dynamic React stimuli and using provenance tracking with the trrack library for data collection.
         organizations: [
             University of Utah
             WPI
