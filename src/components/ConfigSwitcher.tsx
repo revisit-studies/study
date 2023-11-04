@@ -1,9 +1,11 @@
-import { Card, Container, Image, Text, UnstyledButton } from '@mantine/core';
+import { Anchor, Card, Container, Image, NavLink, Text, UnstyledButton } from '@mantine/core';
 import { GlobalConfig, StudyConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 
 import { PREFIX } from '../App';
 import { useNavigate } from 'react-router-dom';
+
+const REVISIT_GITHUB_PUBLIC = 'https://github.com/revisit-studies/study/tree/main/public/';
 
 type Props = {
   globalConfig: GlobalConfig;
@@ -43,11 +45,16 @@ const ConfigSwitcher = ({ globalConfig, studyConfigs }: Props) => {
           >
             <Card shadow="sm" radius="md" withBorder>
               <Text fw="bold">{config.studyMetadata.title}</Text>
+              <Text c="dimmed">Authors: {config.studyMetadata.authors}</Text>
               <Text c="dimmed">{config.studyMetadata.description}</Text>
-            </Card>
+              <Text c="dimmed" ta="right" style={{paddingRight: 5}}>
+                <Anchor target="_blank" onClick={(e) => e.stopPropagation()} 
+                href={`${REVISIT_GITHUB_PUBLIC}${url}`}>View Study Sources</Anchor></Text>
+             </Card>      
           </UnstyledButton>
         );
       })}
+       
     </Container>
   );
 };
