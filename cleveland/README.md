@@ -1,3 +1,7 @@
-# Example Training Image Source
+# Cleveland & McGill Graphical Perception Study
 
-* Go to [https://www.figma.com/file/qjsM8tJcAJGc8QqgFrl2Gj/Stimuli?type=design&node-id=0%3A1&t=rVc6djH9MHKQOuA9-1](https://www.figma.com/file/qjsM8tJcAJGc8QqgFrl2Gj/Stimuli?type=design&node-id=0%3A1&t=rVc6djH9MHKQOuA9-1) for reference.
+This is a reVISit replication of Cleveland & McGill's graphical comparison experiment [1].
+
+Potentially helpful parts for reVISit users include the trial-based structure, randomization, and use of chart renderer components.
+
+[1] Cleveland, W. S., & McGill, R. (1984). Graphical perception: Theory, experimentation, and application to the development of graphical methods. Journal of the American statistical association, 79(387), 531-554.
