@@ -1,8 +1,10 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Button, Grid } from '@mantine/core';
+import { IconCircleCheck } from '@tabler/icons-react';
+import { getHotkeyHandler } from '@mantine/hooks';
 import { useLocation } from 'react-router-dom';
 import { StimulusParams } from '../../../store/types';
 import RankingCombinations from './ranking-combinations.json';
-import { useMemo } from 'react';
-import { Button, Grid } from '@mantine/core';
 
 const CombinationsByArp: { [arp: string]: number[][] } = (
   RankingCombinations as { arp: number; rankings: number[] }[]
@@ -32,8 +34,9 @@ const Ranking = ({ rankings }: { rankings: number[] }) => {
   );
 };
 
-const FairnessJND = ({ parameters, trialId, setAnswer }: StimulusParams) => {
+const FairnessJND = ({ parameters, setAnswer }: StimulusParams) => {
   const id = useLocation().pathname;
+  const [selectedArp, setSelectedArp] = useState(-1);
 
   const [r1, r2] = useMemo(() => {
     if (Math.floor(Math.random() * 2) === 0) {
@@ -81,37 +84,71 @@ const FairnessJND = ({ parameters, trialId, setAnswer }: StimulusParams) => {
     }
   }, [parameters]);
 
-  const updateAnswer = (arp: number) => {
-    setAnswer({
-      trialId: id,
-      status: true,
-      answers: {
-        [`${id}/${parameters.taskid}`]: [arp],
-      },
-    });
-  };
+  const updateAnswer = useCallback(
+    (arp: number) => {
+      setSelectedArp(arp);
+      setAnswer({
+        trialId: id,
+        status: true,
+        answers: {
+          [`${id}/${parameters.taskid}/r1/arp`]: r1.arp,
+          [`${id}/${parameters.taskid}/r2/arp`]: r1.arp,
+          [`${id}/${parameters.taskid}/r1/ranking`]: r2.ranking,
+          [`${id}/${parameters.taskid}/r2/ranking`]: r2.ranking,
+          [`${id}/${parameters.taskid}/answer`]: arp,
+        },
+      });
+    },
+    [parameters, r1, r2, id, setAnswer]
+  );
+
+  useEffect(() => {
+    const ev = getHotkeyHandler([
+      ['ArrowLeft', () => updateAnswer(r1.arp)],
+      ['ArrowRight', () => updateAnswer(r2.arp)],
+    ]);
+
+    document.body.addEventListener('keydown', ev);
+
+    return () => {
+      document.body.removeEventListener('keydown', ev);
+    };
+  }, [r1, r2, updateAnswer]);
 
   return (
     <div>
       <Grid>
         <Grid.Col span={2}>
           <Ranking rankings={r1.ranking} />
+
           <Button
+            fullWidth
+            disabled={r1.arp === selectedArp}
             onClick={() => {
               updateAnswer(r1.arp);
             }}
           >
-            Select
+            {r1.arp === selectedArp ? (
+              <IconCircleCheck />
+            ) : (
+              'Select this ranking'
+            )}
           </Button>
         </Grid.Col>
         <Grid.Col span={2}>
           <Ranking rankings={r2.ranking} />
           <Button
+            fullWidth
+            disabled={r2.arp === selectedArp}
             onClick={() => {
               updateAnswer(r2.arp);
             }}
           >
-            Select
+            {r2.arp === selectedArp ? (
+              <IconCircleCheck />
+            ) : (
+              'Select this ranking'
+            )}
           </Button>
         </Grid.Col>
       </Grid>
