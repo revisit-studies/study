@@ -85,6 +85,7 @@ export default function ResponseBlock({
     }
   }, [flagsSelector.iframeAnswers]);
 
+
   useEffect(() => {
     flagDispatch(
       updateResponseBlockValidation({
@@ -107,7 +108,7 @@ export default function ResponseBlock({
       appDispatch(
         saveTrialAnswer({
           trialName: currentStep,
-          trialId: trialId || 'NoID',
+          trialId: id || 'NoID',
           answer,
           provenanceGraph: graph || undefined,
           startTime,
