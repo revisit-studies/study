@@ -20,10 +20,10 @@ common in everyday life. The purpose of this study is to learn
 more about how people read and understand visualizations.
 
 ## Tasks
-The test contains 12 multiple-choice questions about 12 data
+The test contains 53 multiple-choice questions about 12 data
 visualizations. 
-It will take approximately 10-15 minutes to finish this
-test. 
+It will take approximately 40 minutes to finish this
+test.
 For each question, you will be given a static data
 visualization (right) and a problem to solve (left). 
 If you don't know the answer, select
