@@ -7,7 +7,7 @@ import {
 } from '../parser/types';
 import { getAllSessions } from './queries';
 import { FsSession, ProvenanceStorage } from './types';
-import { TrialRecord, TrialResult } from '../store/types';
+import { TrialResult } from '../store/types';
 
 export const OPTIONAL_COMMON_PROPS = [
   'description',
@@ -17,6 +17,8 @@ export const OPTIONAL_COMMON_PROPS = [
   'startTime',
   'endTime',
   'duration',
+    'studyId',
+    'measure',
 ] as const;
 
 export const REQUIRED_PROPS = [
@@ -48,7 +50,9 @@ export async function downloadTidy(
   const NULL = ' ';
 
   const sessionArr = await getAllSessions(fb.firestore, studyId);
+
   const rows = sessionArr
+      .filter((sessionObject)=>sessionObject.session.status.endStatus?.status === 'completed')
     .map((sessionObject) => processToRow(sessionObject, trialIds)).flat();
 
   const csvStrings = [properties.join(',')];
@@ -60,7 +64,9 @@ export async function downloadTidy(
       const valStr: string =
         typeof val === 'string' ? val : val ? val.toString() : NULL;
 
-      return valStr.includes(',') ? `"${valStr}"` : valStr;
+      return valStr.includes(',') || valStr.includes('\n')
+        ? `"${valStr}"`
+        : valStr;
     });
 
     csvStrings.push(arr.join(',').replace(NULL, ''));
@@ -87,7 +93,7 @@ function processToRow(
   const nodes = Object.values(graph.nodes);
   nodes.sort((a, b) => a.meta.createdOn - b.meta.createdOn);
 
-  if(nodes.length === 0) {
+  if(nodes.length < 3) {
     return null;
   }
 
@@ -97,31 +103,41 @@ function processToRow(
 
   trialIds.forEach((trialId) => {
     const trial = study[trialId];
-    const answer: Nullable<TrialResult> =
-      'answer' in trial ? trial : null;
-    const startTime = answer?.startTime
-      ? new Date(answer.startTime).toUTCString()
-      : null;
-    const endTime = answer?.endTime
-      ? new Date(answer.endTime).toUTCString()
-      : null;
-    const duration = (answer?.endTime || 0) - 0;
+    if(trial) {
+      const answer: Nullable<TrialResult> =
+          'answer' in trial ? trial : null;
+      const startTime = answer?.startTime
+          ? new Date(answer.startTime).toUTCString()
+          : null;
+      const endTime = answer?.endTime
+          ? new Date(answer.endTime).toUTCString()
+          : null;
+      const duration = (answer?.endTime || 0) - (answer?.startTime || 0);
 
-    const tr: TidyRow = {
-      pid: study.studyIdentifiers.pid,
-      sessionId: study.studyIdentifiers.session_id,
-      status: session.status.endStatus?.status || 'incomplete',
-      trialId,
-      answer: JSON.stringify(answer?.answer || {}),
-      correctAnswer: (trial).correctAnswer,
-      description: `"${(trial).description}"`,
-      instruction: `"${(trial).instruction}"`,
-      startTime,
-      endTime,
-      duration,
-    };
+      const answers: { [key: string]: string } = answer?.answer as { [key: string]: string };
+      for (const key in answers) {
+        if (Object.prototype.hasOwnProperty.call(answers, key)) {
+          const answerField = key.split('/').filter((f)=>f.length>0);
 
-    trs.push(tr);
+          const tr: TidyRow = {
+            pid: study.studyIdentifiers.pid,
+            sessionId: study.studyIdentifiers.session_id,
+            status: session.status.endStatus?.status || 'incomplete',
+            trialId,
+            answer: answers[key],
+            studyId:answerField[0],
+            measure:answerField[2],
+            correctAnswer: (trial).correctAnswer,
+            description: `"${(trial).description}"`,
+            instruction: `"${(trial).instruction}"`,
+            startTime,
+            endTime,
+            duration,
+          };
+          trs.push(tr);
+        }
+      }
+    }
   });
 
   return trs;

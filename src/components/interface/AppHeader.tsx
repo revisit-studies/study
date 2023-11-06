@@ -17,7 +17,7 @@ import {
   IconTrash,
 } from '@tabler/icons-react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import {useNavigate} from 'react-router-dom';
 import { PREFIX } from '../../App';
 import { useCurrentStep } from '../../routes';
 import { useAppSelector, useCreatedStore } from '../../store/store';
@@ -52,6 +52,9 @@ export default function AppHeader() {
   const logoPath = studyConfig?.uiConfig.logoPath;
   const withProgressBar = studyConfig?.uiConfig.withProgressBar;
 
+  const [searchParams, setSearchParams] = useState(new URLSearchParams(window.location.search));
+  const admin = searchParams.get('admin') || 'f';
+
   return (
     <Header height="70" p="md">
       <Grid mt={-7} align="center">
@@ -82,7 +85,7 @@ export default function AppHeader() {
 
             <Space w="md"></Space>
 
-            {MODE === 'dev' && (
+            {(MODE === 'dev' || admin === 't') && (
               <Menu
                 shadow="md"
                 width={200}
