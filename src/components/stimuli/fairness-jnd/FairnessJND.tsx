@@ -92,8 +92,8 @@ const FairnessJND = ({ parameters, setAnswer }: StimulusParams) => {
         status: true,
         answers: {
           [`${id}/${parameters.taskid}/r1/arp`]: r1.arp,
-          [`${id}/${parameters.taskid}/r2/arp`]: r1.arp,
-          [`${id}/${parameters.taskid}/r1/ranking`]: r2.ranking,
+          [`${id}/${parameters.taskid}/r2/arp`]: r2.arp,
+          [`${id}/${parameters.taskid}/r1/ranking`]: r1.ranking,
           [`${id}/${parameters.taskid}/r2/ranking`]: r2.ranking,
           [`${id}/${parameters.taskid}/answer`]: arp,
         },
