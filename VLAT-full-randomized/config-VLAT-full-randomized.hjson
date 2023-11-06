@@ -40,6 +40,20 @@
                 }
             ]
         }
+        consent: {
+            type: markdown
+            path: VLAT-full-randomized/consent.md
+            response: [
+                {
+                    id: userInitials
+                    prompt: Please type your initials below. These are not used in our analyses, but required for the consent process.
+                    required: true
+                    location: belowStimulus
+                    type: shortText
+                    placeholder: Your Initials
+                }
+            ]
+        },
         survey: {
             type: markdown
             path: VLAT-mini-randomized/survey.md
