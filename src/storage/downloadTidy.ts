@@ -64,7 +64,9 @@ export async function downloadTidy(
       const valStr: string =
         typeof val === 'string' ? val : val ? val.toString() : NULL;
 
-      return valStr.includes(',') ? `"${valStr}"` : valStr;
+      return valStr.includes(',') || valStr.includes('\n')
+        ? `"${valStr}"`
+        : valStr;
     });
 
     csvStrings.push(arr.join(',').replace(NULL, ''));
