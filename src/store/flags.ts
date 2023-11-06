@@ -72,8 +72,7 @@ const flags = createSlice({
       }
       state.trialRecord[payload.trialId].valid[payload.location] =
         payload.status;
-      console.log(payload.trialId,'trialId');
-      const prev = state.trialRecord[payload.trialId].answers;
+        const prev = state.trialRecord[payload.trialId].answers;
 
       if(payload.provenanceGraph !== undefined) {
         state.trialRecord[payload.trialId].provenanceGraph = payload.provenanceGraph;
@@ -84,8 +83,6 @@ const flags = createSlice({
       filter((key) => key.includes(payload.trialId)).
       reduce((cur, key) => { return Object.assign(cur, { [key]: answers[key] });}, {});
 
-
-      console.log(validAnswers,'validAnswers');
       state.trialRecord[payload.trialId].answers = validAnswers;
     },
   },

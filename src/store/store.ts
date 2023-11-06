@@ -125,8 +125,6 @@ export async function studyStoreCreator(
   flagsStore.dispatch(setTrrackExists(!!trrackExists));
 
   trrack.currentChange((trigger: any) => {
-    console.log(trrack,'new node');
-
     if (trigger === 'new') {
       firebase.saveNewProvenanceNode(trrack);
     }

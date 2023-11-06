@@ -7,7 +7,7 @@ import {
 } from '../parser/types';
 import { getAllSessions } from './queries';
 import { FsSession, ProvenanceStorage } from './types';
-import { TrialRecord, TrialResult } from '../store/types';
+import { TrialResult } from '../store/types';
 
 export const OPTIONAL_COMMON_PROPS = [
   'description',
@@ -50,12 +50,10 @@ export async function downloadTidy(
   const NULL = ' ';
 
   const sessionArr = await getAllSessions(fb.firestore, studyId);
-  console.log(sessionArr,'sessionArr');
+
   const rows = sessionArr
       .filter((sessionObject)=>sessionObject.session.status.endStatus?.status === 'completed')
     .map((sessionObject) => processToRow(sessionObject, trialIds)).flat();
-
-  console.log(rows,'rows');
 
   const csvStrings = [properties.join(',')];
 
@@ -137,11 +135,7 @@ function processToRow(
           trs.push(tr);
         }
       }
-
-
-
     }
-
   });
 
   return trs;
