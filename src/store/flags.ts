@@ -72,16 +72,18 @@ const flags = createSlice({
       }
       state.trialRecord[payload.trialId].valid[payload.location] =
         payload.status;
-      const prev = state.trialRecord[payload.trialId].answers;
+        const prev = state.trialRecord[payload.trialId].answers;
 
       if(payload.provenanceGraph !== undefined) {
         state.trialRecord[payload.trialId].provenanceGraph = payload.provenanceGraph;
       }
 
-      state.trialRecord[payload.trialId].answers = {
-        ...prev,
-        ...payload.answers,
-      };
+      const answers = {...prev,...payload.answers};
+      const validAnswers = Object.keys(answers).
+      filter((key) => key.includes(payload.trialId)).
+      reduce((cur, key) => { return Object.assign(cur, { [key]: answers[key] });}, {});
+
+      state.trialRecord[payload.trialId].answers = validAnswers;
     },
   },
 });
