@@ -10,7 +10,7 @@
   },
   "uiConfig": {
     "contactEmail": "test@test.com",
-    "helpTextPath": "cleveland/help.md",
+    "helpTextPath": "fairness-jnd/help.md",
     "logoPath": "assets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,

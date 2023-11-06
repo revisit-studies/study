@@ -12,7 +12,7 @@ const CombinationsByArp: { [arp: string]: number[][] } = (
 
 const Ranking = ({ rankings }: { rankings: number[] }) => {
   return (
-    <div>
+    <div style={{ fontFamily: 'sans-serif' }}>
       <div>
         {rankings.map((item, idx) => {
           return (
@@ -20,12 +20,12 @@ const Ranking = ({ rankings }: { rankings: number[] }) => {
               key={idx}
               style={{
                 textAlign: 'center',
-                marginBottom: 2,
+                marginBottom: 1,
                 padding: 2,
                 background: `${item === 0 ? '#AEC7E8' : '#FF9896'}`,
               }}
             >
-              {item}
+              {item === 0 ? 'Group A' : 'Group B'}
             </div>
           );
         })}
@@ -91,11 +91,14 @@ const FairnessJND = ({ parameters, setAnswer }: StimulusParams) => {
         trialId: id,
         status: true,
         answers: {
-          [`${id}/${parameters.taskid}/r1/arp`]: r1.arp,
-          [`${id}/${parameters.taskid}/r2/arp`]: r2.arp,
-          [`${id}/${parameters.taskid}/r1/ranking`]: r1.ranking,
-          [`${id}/${parameters.taskid}/r2/ranking`]: r2.ranking,
-          [`${id}/${parameters.taskid}/answer`]: arp,
+          [`${id}/${parameters.taskid}/left/arp`]: r1.arp,
+          [`${id}/${parameters.taskid}/right/arp`]: r2.arp,
+          [`${id}/${parameters.taskid}/left/ranking`]: r1.ranking,
+          [`${id}/${parameters.taskid}/right/ranking`]: r2.ranking,
+          [`${id}/${parameters.taskid}/choice`]:
+            r1.arp === arp ? 'left' : 'right',
+          [`${id}/${parameters.taskid}/correctChoice`]:
+            r1.arp < r2.arp ? 'left' : 'right',
         },
       });
     },
