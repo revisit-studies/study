@@ -58,7 +58,6 @@
             path: VLAT-mini-randomized/prolific-code.md
             response: []
         }
-
         survey: {
             type: markdown
             path: VLAT-mini-randomized/survey.md
@@ -86,7 +85,6 @@
                     location: belowStimulus
                     type: longText
                     placeholder: Enter your answer here
-
                 }
             ]
         }
@@ -112,6 +110,7 @@
                     required: true
                     location: sidebar
                     type: radio
+                    correctAnswer: False
                     options: [
                         {
                             label: True
@@ -150,6 +149,7 @@
                     required: true
                     location: sidebar
                     type: radio
+                    correctAnswer: Great Britain
                     options: [
                         {
                             label: Great Britain
@@ -196,6 +196,7 @@
                     required: true
                     location: sidebar
                     type: radio
+                    correctAnswer: 30 - 40km
                     options: [
                         {
                             label: 50 - 70km
@@ -243,6 +244,7 @@
                     required: true
                     location: sidebar
                     type: radio
+                    correctAnswer: True
                     options: [
                         {
                             label: True
@@ -282,6 +284,7 @@
                     required: true
                     location: sidebar
                     type: radio
+                    correctAnswer: 17.6%
                     options: [
                         {
                             label: 17.6%
@@ -329,6 +332,7 @@
                     required: true
                     location: sidebar
                     type: radio
+                    correctAnswer: Shanghai
                     options: [
                         {
                             label: Beijing
@@ -376,6 +380,7 @@
                     required: true
                     location: sidebar
                     type: radio
+                    correctAnswer: $6.1
                     options: [
                         {
                             label: $5.2
@@ -401,7 +406,6 @@
                 }
             ]
         }
-
         q8: {
             meta: {
                 trueAnswer: 0
@@ -423,6 +427,7 @@
                     required: true
                     location: sidebar
                     type: radio
+                    correctAnswer: $50.54
                     options: [
                         {
                             label: $50.54
@@ -470,6 +475,7 @@
                     required: true
                     location: sidebar
                     type: radio
+                    correctAnswer: 40.51 Mbps
                     options: [
                         {
                             label: 42.30 Mbps
@@ -517,6 +523,7 @@
                     required: true
                     location: sidebar
                     type: radio
+                    correctAnswer: $0.71
                     options: [
                         {
                             label: $0.71
@@ -564,6 +571,7 @@
                     required: true
                     location: sidebar
                     type: radio
+                    correctAnswer: 1 to 2
                     options: [
                         {
                             label: 1 to 1
@@ -611,6 +619,7 @@
                     required: true
                     location: sidebar
                     type: radio
+                    correctAnswer: False
                     options: [
                         {
                             label: True
