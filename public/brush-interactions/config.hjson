@@ -374,59 +374,83 @@
         "post-study-survey": {
             "type": "questionnaire",
             "response": [
-                { 
+                {
                     "id": "q1",
-                    "prompt": "Which brush type did you find easiest to use?",
-                    "required": true,
-                    "location": "aboveStimulus",
-                    "type": "dropdown",
-                    "placeholder": "Enter your preference",
-                    "options": [
-                        {
-                            "label": "Rectangle Brush",
-                            "value": "Rectangle Brush"
-                        },
-                        {
-                            "label": "Axis Brush",
-                            "value": "Axis Brush "
-                        },
-                        {
-                            "label": "Paint Brush",
-                            "value": "Paint Brush"
-                        },
-                        {
-                            "label": "Slider Brush",
-                            "value": "Slider Brush"
-                        }
-                    ]
-                },
-                {
-                    "id": "q2",
-                    "prompt": "Your age",
-                    "required": true,
-                    "location": "aboveStimulus",
-                    "type": "numerical",
-                    "placeholder": "Enter your age here, range from 0 - 100",
-                    "max": 100,
-                    "min": 0
-                },
-                {
-                    "id": "q3",
-                    "prompt": "From scale 1-5 how much do you like this study",
+                    "prompt": "How useful did you find the rectangular selection method? ",
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "likert",
-                    "preset": 5,
+                    "preset": 7,
+                    "rightLabel": "Like",
+                    "leftLabel": "Dislike"
+                },
+                                {
+                    "id": "q2",
+                    "prompt": "How useful did you find the axis-aligned selection? ",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "likert",
+                    "preset": 7,
+                    "rightLabel": "Like",
+                    "leftLabel": "Dislike"
+                },
+                                {
+                    "id": "q3",
+                    "prompt": "How useful did you find the paint-brush selection?",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "likert",
+                    "preset": 7,
+                    "rightLabel": "Like",
+                    "leftLabel": "Dislike"
+                },
+                                {
+                    "id": "q4",
+                    "prompt": "How useful did you find the slider selection?",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "likert",
+                    "preset": 7,
                     "rightLabel": "Like",
                     "leftLabel": "Dislike"
                 },
                 {
                     "id": "q5",
-                    "prompt": "Any other comments?",
+                    "prompt": "Please provide any comments about the different methods (optional)",
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "longText",
                     "placeholder": "Enter your comments here"
+                }
+            ]
+        },
+        survey: {
+            type: markdown
+            path: VLAT-mini-randomized/survey.md
+            response: [
+                {
+                    id: surveyExperience
+                    prompt: Did you experience any problems with our tool?
+                    required: true
+                    location: belowStimulus
+                    type: longText
+                    placeholder: Enter your answer here.
+                }
+                {
+                    id: surveyRenderIssues
+                    prompt: Did anything not render or display properly?
+                    required: true
+                    location: belowStimulus
+                    type: longText
+                    placeholder: Enter your answer here
+                }
+                {
+                    id: surveyOtherIssues
+                    prompt: Any other issues or anything you would like to tell us?
+                    required: true
+                    location: belowStimulus
+                    type: longText
+                    placeholder: Enter your answer here
                 }
             ]
         }
@@ -448,7 +472,8 @@
                     "sliderBrush_q1",
                     "sliderBrush_q2"]}
             ,
-            "post-study-survey" 
+            "post-study-survey",
+            "survey"
         ]
     }
 }

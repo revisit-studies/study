@@ -1,3 +1,3 @@
-# Introduction
+# Selection Method Study
 
-Welcome to our study. This is an example survey study. It asks basic questions of a participant, but doesn't require that they interact with stimuli.
+In this study, we evaluate **methods to select data items in visualizations**. You will see four different ways to select points in a scatterplot, and you will then be asked to read values from a linked bar chart. 
