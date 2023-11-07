@@ -116,7 +116,7 @@ export const useFlagsSelector: TypedUseSelectorHook<FlagStore> =
 export const useFlagsDispatch: () => FlagDispatch =
   createDispatchHook<FlagStore>(flagsContext);
 
-export function setAnswer({trialId, status, provenanceGraph, answers}: Parameters<StimulusParams['setAnswer']>[0]) {
+export function setAnswer({trialId, status, provenanceGraph, answers}: Parameters<StimulusParams<any>['setAnswer']>[0]) {
     flagsStore.dispatch(updateResponseBlockValidation({
       location: 'sidebar',
       trialId,
