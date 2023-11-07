@@ -133,7 +133,7 @@ function processToRow(
             correctAnswer:
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               trialConfig.response.find((a: any) => a.id === answerField[2])
-                .correctAnswer || '',
+                ?.correctAnswer || '',
             description: trial.description,
             instruction: trialConfig.instruction,
             startTime,
