@@ -11,6 +11,7 @@
         VLAT-mini-randomized
         click-accuracy-test
         survey-demo
+        brush-interactions
     ],
     configs: {
         html-demo: {
@@ -42,6 +43,9 @@
         },
         survey-demo: {
             path: survey-demo/config-survey-demo.hjson
+        },
+        brush-interactions: {
+            path: brush-interactions/config.hjson
         }
     }
 }
