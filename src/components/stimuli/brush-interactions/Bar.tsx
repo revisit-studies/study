@@ -72,7 +72,7 @@ export function Bar({ fullTable, barsTable, parameters, data } : {fullTable: Col
     return yScale && xScale ? (
         <svg ref={ref} style={{height: '200px', width: '500px'}}>
             <XAxisBar xScale={xScale} yRange={yScale.range() as [number, number]} vertPosition={height + margin.top} showLines={false} label={'Count'} ticks={xScale.ticks(5).map((value) => ({
-                value,
+                value: value.toString(),
                 offset: xScale(value),
             }))}/>
             

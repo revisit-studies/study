@@ -4,39 +4,34 @@ import * as d3 from 'd3';
 import ColumnTable from 'arquero/dist/types/table/column-table';
 
 import {escape} from 'arquero';
-import { BrushParams } from './BrushPlot';
+import { BrushParams, BrushState } from './BrushPlot';
 
 const BRUSH_SIZE = 15;
 
 export function Paintbrush(
     {   xScale, 
         yScale, 
-        setFilteredTable, 
+        setBrushedSpace,
         table, 
         filteredTable,
         params,
         data,
+        brushState,
         isSelect = true
     } : 
     {   
         data: any[]
+        brushState: BrushState,
         xScale: d3.ScaleLinear<number, number>, 
         yScale: d3.ScaleLinear<number, number>, 
-        setFilteredTable: (c: ColumnTable | null) => void, 
+        setBrushedSpace: (brush: [[number | null, number | null], [number | null, number | null]], xScale: any, yScale: any, selType: 'drag' | 'handle' | 'clear' | null, ids?: string[]) => void, 
         filteredTable: ColumnTable | null, 
         table: ColumnTable | null,
         params: BrushParams,
         isSelect?: boolean
 }) {
     const [brushPosition, setBrushPosition] = useState<number[]>([0, 0]);
-    const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isBrushing, setIsBrushing] = useState<boolean>(false);
-
-    useEffect(() => {
-        if(filteredTable === null && selectedIds.length !== 0) {
-            setSelectedIds([]);
-        } 
-    }, [filteredTable, selectedIds.length]);
 
     useEffect(() => {
         const svg = d3.select<SVGGElement, any>('#scatterSvgBrushStudy');
@@ -52,18 +47,21 @@ export function Paintbrush(
                     const selected = data.filter((car) => Math.abs(xScale(car[params.x]) - pos[0]) < BRUSH_SIZE && Math.abs(yScale(car[params.y]) - pos[1]) < BRUSH_SIZE);
 
                     if(e.ctrlKey || e.metaKey || !isSelect) {
-                        const set = new Set(selectedIds);
+                        const set = new Set(brushState.ids);
                         selected.forEach((sel) => {
                             if(set.has(sel[params.ids])) {
                                 set.delete(sel[params.ids]);
                             }
                         });
-                        console.log(Array.from(set));
-                        setSelectedIds(Array.from(set));
+                        const newIds = Array.from(set);
+                        setBrushedSpace([[brushPosition[0], brushPosition[1]], [brushPosition[0], brushPosition[1]]], xScale, yScale, newIds.length === 0 ? 'clear' : 'drag', newIds);
                     }
                     else {
-                        console.log(selected);
-                        setSelectedIds(Array.from(new Set([...selectedIds, ...selected.map((car) => car[params.ids])])));
+                        const newIds = Array.from(new Set([...brushState.ids, ...selected.map((car) => car[params.ids])]));
+
+                        if(newIds.length > 0) {
+                            setBrushedSpace([[brushPosition[0], brushPosition[1]], [brushPosition[0], brushPosition[1]]], xScale, yScale, 'drag', newIds);
+                        }
                     }
                 }
             });
@@ -79,22 +77,7 @@ export function Paintbrush(
             });
         }
 
-    }, [data, isBrushing, isSelect, params.ids, params.x, params.y, selectedIds, xScale, yScale]);
-
-    useEffect(() => {
-        if(selectedIds.length === 0 || !table) {
-            setFilteredTable(null);
-            return;
-        }
-
-        const idSet = new Set(selectedIds);
-
-        const newTable = table.filter(escape((d: any) => {
-            return idSet.has(d[params.ids]);
-        }));
-
-        setFilteredTable(newTable);
-    }, [params.ids, selectedIds, setFilteredTable, table]);
+    }, [brushState.ids, data, isBrushing, isSelect, params, xScale, yScale]);
     
     return (
         <circle style={{cursor: isBrushing ? 'pointer' : 'default'}} r={BRUSH_SIZE} fill={'darkgray'} opacity={.5} cx={brushPosition[0]} cy={brushPosition[1]}></circle>

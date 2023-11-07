@@ -50,7 +50,7 @@
         },
         "consent": {
             "type": "markdown",
-            "path": "brush-interactions/consent-cm.md",
+            "path": "brush-interactions/consent.md",
             "nextButtonText": "Agree",
             "response": [
                 {
@@ -111,20 +111,20 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
-                    options: [
+                    "options": [
                         {
-                            label: Europe
-                            value: Europe
-                        }
+                            "label": "Europe",
+                            "value": "Europe"
+                        },
                         {
-                            label: Japan
-                            value: Japan
-                        }
+                            "label": "Japan",
+                            "value": "Japan"
+                        },
                         {
-                            label: USA
-                            value: USA
+                            "label": "USA",
+                            "value": "USA"
                         }
-                    ]
+                    ]    
                 },
                 {
                     "id": "min-response",
@@ -132,18 +132,18 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
-                    options: [
+                    "options": [
                         {
-                            label: Europe
-                            value: Europe
-                        }
+                            "label": "Europe",
+                            "value": "Europe"
+                        },
                         {
-                            label: Japan
-                            value: Japan
-                        }
+                            "label": "Japan",
+                            "value": "Japan"
+                        },
                         {
-                            label: USA
-                            value: USA
+                            "label": "USA",
+                            "value": "USA"
                         }
                     ]             
                 }
@@ -153,7 +153,7 @@
             "baseComponent": "scatterPlot",
             "instruction": "How many days from September to the end of the year, is it sunny?",
             "parameters": {
-                dataType: "date",
+                "dataType": "date",
                 "dataset": "weather",
                 "x": "Date",
                 "y": "Maximum Temperature",
@@ -166,7 +166,7 @@
             "baseComponent": "scatterPlot",
             "instruction": "Consider only days between June and October with temperatures above 20 degrees. What is the most and least common weather types during those days?" ,
             "parameters": {
-                dataType: "date",
+                "dataType": "date",
                 "dataset": "weather",
                 "x": "Date",
                 "y": "Maximum Temperature",
@@ -181,22 +181,22 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
-                    options: [
+                    "options": [
                         {
-                            label: drizzle
-                            value: drizzle
-                        }
+                            "label": "drizzle",
+                            "value": "drizzle"
+                        },
                         {
-                            label: fog
-                            value: fog
-                        }
+                            "label": "fog",
+                            "value": "fog"
+                        },
                         {
-                            label: rain
-                            value: rain
-                        }
+                            "label": "rain",
+                            "value": "rain"
+                        },
                         {
-                            label: sun
-                            value: sun
+                            "label": "sun",
+                            "value": "sun"
                         }
                     ]
                 },
@@ -206,22 +206,22 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
-                    options: [
+                    "options": [
                         {
-                            label: drizzle
-                            value: drizzle
-                        }
+                            "label": "drizzle",
+                            "value": "drizzle"
+                        },
                         {
-                            label: fog
-                            value: fog
-                        }
+                            "label": "fog",
+                            "value": "fog"
+                        },
                         {
-                            label: rain
-                            value: rain
-                        }
+                            "label": "rain",
+                            "value": "rain"
+                        },
                         {
-                            label: sun
-                            value: sun
+                            "label": "sun",
+                            "value": "sun"
                         }
                     ]
                 }
@@ -257,18 +257,18 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
-                    options: [
+                    "options": [
                         {
-                            label: Adelie
-                            value: Adelie
-                        }
+                            "label": "Adelie",
+                            "value": "Adelie"
+                        },
                         {
-                            label: Chinstrap
-                            value: Chinstrap
-                        }
+                            "label": "Chinstrap",
+                            "value": "Chinstrap"
+                        },
                         {
-                            label: Gentoo
-                            value: Gentoo
+                            "label": "Gentoo",
+                            "value": "Gentoo"
                         }
                     ]  
                 },
@@ -278,18 +278,18 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
-                    options: [
+                    "options": [
                         {
-                            label: Adelie
-                            value: Adelie
-                        }
+                            "label": "Adelie",
+                            "value": "Adelie"
+                        },
                         {
-                            label: Chinstrap
-                            value: Chinstrap
-                        }
+                            "label": "Chinstrap",
+                            "value": "Chinstrap"
+                        },
                         {
-                            label: Gentoo
-                            value: Gentoo
+                            "label": "Gentoo",
+                            "value": "Gentoo"
                         }
                     ]  
                 }
@@ -325,22 +325,22 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
-                    options: [
+                    "options": [
                         {
-                            label: Action
-                            value: Action
-                        }
+                            "label": "Action",
+                            "value": "Action"
+                        },
                         {
-                            label: Adventure
-                            value: Adventure
-                        }
+                            "label": "Adventure",
+                            "value": "Adventure"
+                        },
                         {
-                            label: Comedy
-                            value: Comedy
-                        }
+                            "label": "Comedy",
+                            "value": "Comedy"
+                        },
                         {
-                            label: Drama
-                            value: Drama
+                            "label": "Drama",
+                            "value": "Drama"
                         }
                     ]
                 },
@@ -350,22 +350,22 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
-                    options: [
+                    "options": [
                         {
-                            label: Action
-                            value: Action
-                        }
+                            "label": "Action",
+                            "value": "Action"
+                        },
                         {
-                            label: Adventure
-                            value: Adventure
-                        }
+                            "label": "Adventure",
+                            "value": "Adventure"
+                        },
                         {
-                            label: Comedy
-                            value: Comedy
-                        }
+                            "label": "Comedy",
+                            "value": "Comedy"
+                        },
                         {
-                            label: Drama
-                            value: Drama
+                            "label": "Drama",
+                            "value": "Drama"
                         }
                     ]
                 }
@@ -436,9 +436,19 @@
         "components": [
             "introduction",
             "consent",
-            {"order": "random",
-        "components": ["paintBrush_q1","paintBrush_q2","rectangleBrush_q1",
-        "rectangleBrush_q2","axisBrush_q1","axisBrush_q2","sliderBrush_q1","sliderBrush_q2"]}
-        ,"post-study-survey" ]
+            {
+                "order": "random",
+                "components": 
+                    ["paintBrush_q1",
+                    "paintBrush_q2",
+                    "rectangleBrush_q1",
+                    "rectangleBrush_q2",
+                    "axisBrush_q1",
+                    "axisBrush_q2",
+                    "sliderBrush_q1",
+                    "sliderBrush_q2"]}
+            ,
+            "post-study-survey" 
+        ]
     }
 }

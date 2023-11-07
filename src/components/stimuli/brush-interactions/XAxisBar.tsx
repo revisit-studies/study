@@ -17,7 +17,7 @@ export function XAxisBar({
 }: {
   showLines?: boolean;
   isDate?: boolean;
-  xScale: d3.ScaleBand<string> | d3.ScaleLinear<number, number>;
+  xScale: d3.ScaleTime<any, any> | d3.ScaleLinear<number, number>;
   yRange: [number, number];
   vertPosition: number;
   label: string;

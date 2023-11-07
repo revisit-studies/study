@@ -4,12 +4,13 @@ import { StimulusParams } from '../../../store/types';
 import Bar from './Bar';
 import Scatter from './Scatter';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {from} from 'arquero';
+import {from, escape} from 'arquero';
 import ColumnTable from 'arquero/dist/types/table/column-table';
 import { Registry, initializeTrrack } from '@trrack/core';
 import { useLocation } from 'react-router-dom';
 
 import * as d3 from 'd3';
+import { debounce } from 'lodash';
 
 export interface BrushState {
     hasBrush: boolean;
@@ -17,7 +18,11 @@ export interface BrushState {
     x2: number;
     y1: number;
     y2: number;
+
+    ids: string[];
   }
+
+export type SelectionType = 'drag' | 'handle' | 'clear' | null
 
 export interface BrushParams {brushType: BrushNames, dataset: string, x: string, y: string, category: string, ids: string, dataType?: 'date'}
 
@@ -25,43 +30,29 @@ export type BrushNames = 'Rectangular Selection' | 'Axis Selection' | 'Slider Se
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function BrushPlot({ parameters, trialId, setAnswer }: StimulusParams<BrushParams>) {
     const [filteredTable, setFilteredTable] = useState<ColumnTable | null>(null);
-    const [brushedSpace, setBrushedSpace] = useState<[[number, number], [number, number]] | null>(null);
-
-    const [isEraser, setIsEraser] = useState<boolean>(false);
+    const [brushState, setBrushState] = useState<BrushState>({hasBrush: false, x1: 0, y1: 0, x2: 0, y2: 0, ids: []});
 
     const [data, setData] = useState<any[] | null>(null);
 
+    // load data
     useEffect(() => {
         d3.csv(`./data/${parameters.dataset}.csv`).then((data) => {
             setData(data);
         });
     }, [parameters]);
 
-    const id = useLocation().pathname;
-    
-    const brushedSpaceCallback = useCallback((sel: [[number | null, number | null], [number | null, number | null]]) => {
-        if(!brushedSpace) {
-            setBrushedSpace(sel as any);
-            return;
+    const fullTable = useMemo(() => {
+        if(data) {
+            return from(data);
         }
         
-        setBrushedSpace([[sel[0][0] || brushedSpace[0][0], sel[0][1] || brushedSpace[0][1]], [sel[1][0] || brushedSpace[1][0], sel[1][1] || brushedSpace[1][1]]]);
-    }, [brushedSpace]);
+        return null;
+    }, [data]);
 
-    const selectedIds = useMemo(() => {
-        return filteredTable?.array('id') || [];
-    }, [filteredTable]);
+    //get trial id
+    const id = useLocation().pathname;
 
-    const brushState = useMemo(() => {
-        return {
-            hasBrush: brushedSpace ? true : false,
-            x1: brushedSpace ? brushedSpace[0][0] : 0,
-            x2: brushedSpace ? brushedSpace[1][0] : 0,
-            y1: brushedSpace ? brushedSpace[0][1] : 0,
-            y2: brushedSpace ? brushedSpace[1][1] : 0,
-        };
-    }, [brushedSpace]);
-
+    // creating provenance tracking
     const { actions, trrack } = useMemo(() => {
         const reg = Registry.create();
     
@@ -98,16 +89,68 @@ export function BrushPlot({ parameters, trialId, setAnswer }: StimulusParams<Bru
         };
     }, []);
 
-    const brushCallback = useCallback((sel: [[number, number], [number, number]], type: string) => {
-        // if(sel === null) {
-        //     trrack.apply('Clear Brush', actions.brushMove({hasBrush: false, x1: 0, x2: 0, y1: 0, y2: 0}));
-        // }
-        // else if(type === 'drag') {
-        //     trrack.apply('Move Brush', actions.brushMove({hasBrush: true, x1: sel[0][0], x2: sel[1][0], y1: sel [0][1], y2: sel[1][1]}));
-        // }
-        // else if(type === 'handle') {
-        //     trrack.apply('Brush', actions.brush({hasBrush: true, x1: sel[0][0], x2: sel[1][0], y1: sel [0][1], y2: sel[1][1]}));
-        // }
+    const moveBrushCallback = useCallback((selType: SelectionType, state: BrushState) => {
+        if(selType === 'drag') {
+            trrack.apply('Move Brush', actions.brushMove(state));
+        }
+        else if(selType === 'handle') {
+            trrack.apply('Brush', actions.brush(state));
+        }
+    }, [actions, trrack]);
+
+    //debouncing the trrack callback
+    const debouncedCallback = useMemo(() => {
+        return debounce(moveBrushCallback, 100, {maxWait: 100});
+    }, [moveBrushCallback]);
+
+    // brush callback, updating state, finding the selected points, and pushing to trrack
+    const brushedSpaceCallback = useCallback((sel: [[number | null, number | null], [number | null, number | null]], xScale: any, yScale: any, selType: SelectionType, ids?: string[]) => {
+        if(!xScale || !yScale) {
+            return;
+        }
+
+        const xMin = xScale.invert(sel[0][0] || brushState.x1);
+        const xMax = xScale.invert(sel[1][0] || brushState.x2);
+
+        const yMin = yScale.invert(sel[1][1] || brushState.y2);
+        const yMax = yScale.invert(sel[0][1] || brushState.y1);
+
+
+        let filteredTable = null;
+        if(selType === 'clear') {
+            filteredTable = fullTable;
+        }
+        else if(ids) {
+            const idSet = new Set(ids);
+            filteredTable = fullTable!.filter(escape((d: any) => {
+                return idSet.has(d[parameters.ids]);
+            }));
+        }
+        else if(parameters.brushType === 'Axis Selection') {
+            filteredTable = fullTable!.filter(escape((d: any) => {
+                return new Date(d[parameters.x]) >= new Date(xMin) && new Date(d[parameters.x]) <= new Date(xMax) && d[parameters.y] >= yMin && d[parameters.y] <= yMax;
+            }));
+        }
+        else {
+            filteredTable = fullTable!.filter(escape((d: any) => {
+                return d[parameters.x] >= xMin && d[parameters.x] <= xMax && d[parameters.y] >= yMin && d[parameters.y] <= yMax;
+            }));
+        }
+        
+        const newState = {x1: sel[0][0] || brushState?.x1 || 0, x2: sel[1][0] || brushState?.x2 || 0, y1: sel[0][1] || brushState?.y1 || 0, y2: sel[1][1] || brushState?.y2 || 0, hasBrush: selType !== 'clear', ids: selType !== 'clear' ? filteredTable?.array('id') : []};
+
+        setBrushState(newState);
+
+        if(selType === 'drag' || selType === 'handle') {
+            debouncedCallback(selType, newState);
+
+            console.log(Object.keys(trrack.graph.backend.nodes).length);
+        }
+        else if(selType === 'clear') {
+            trrack.apply('Clear Brush', actions.clearBrush(newState));
+        }
+
+        setFilteredTable(filteredTable);
 
         setAnswer({
             trialId: id,
@@ -115,16 +158,9 @@ export function BrushPlot({ parameters, trialId, setAnswer }: StimulusParams<Bru
             provenanceGraph: trrack.graph.backend,
             answers: {}
           });
-    }, [actions, id, setAnswer, trrack]);
-    
-    const fullTable = useMemo(() => {
-        if(data) {
-            return from(data);
-        }
-        
-        return null;
-    }, [data]);
+    }, [brushState, fullTable, parameters, trrack, id, setAnswer, debouncedCallback, actions]);
 
+    // Which table the bar chart uses, either the base or the filtered table if any selections
     const barsTable = useMemo(() => {
         return filteredTable ? filteredTable.groupby(parameters.category).count() : fullTable ? fullTable.groupby(parameters.category).count() : null;
     }, [filteredTable, fullTable, parameters.category]);
@@ -135,7 +171,7 @@ export function BrushPlot({ parameters, trialId, setAnswer }: StimulusParams<Bru
 
     return data ? (
         <Stack spacing="xs">
-            <Scatter brushedPoints={selectedIds} data={data} params={parameters} filteredTable={filteredTable} onBrush={brushCallback} brushType={parameters.brushType}  setBrushedSpace={brushedSpaceCallback} brushState={brushState} fullTable={fullTable} setFilteredTable={filteredCallback}/>
+            <Scatter brushedPoints={brushState?.ids} data={data} params={parameters} filteredTable={filteredTable} brushType={parameters.brushType}  setBrushedSpace={brushedSpaceCallback} brushState={brushState} fullTable={fullTable} setFilteredTable={filteredCallback}/>
             <Bar data={data} parameters={parameters} fullTable={filteredTable ? filteredTable : fullTable} barsTable={barsTable}/>
         </Stack>
   ) : <Loader/>;

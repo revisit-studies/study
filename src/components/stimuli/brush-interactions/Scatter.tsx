@@ -26,7 +26,6 @@ export function Scatter({
         setFilteredTable, 
         brushState, 
         setBrushedSpace, 
-        onBrush,
         brushType,
         params,
         data,
@@ -39,8 +38,8 @@ export function Scatter({
         params: BrushParams,
         filteredTable: ColumnTable | null,
         setFilteredTable: (c: ColumnTable | null) => void, 
-        brushState: BrushState, setBrushedSpace: (brush: [[number | null, number | null], [number | null, number | null]]) => void, 
-        onBrush : (sel: [[number, number], [number, number]], type: string, selected: string[]) => void,
+        brushState: BrushState, 
+        setBrushedSpace: (brush: [[number | null, number | null], [number | null, number | null]], xScale: any, yScale: any, selType: 'drag' | 'handle' | 'clear' | null, ids?: string[]) => void, 
         brushType: BrushNames
     }) {
     const [ ref, { height: originalHeight, width: originalWidth } ] = useResizeObserver();
@@ -77,7 +76,7 @@ export function Scatter({
             yMax
         };
 
-    }, []);
+    }, [data, params.x, params.y]);
 
     const xScale = useMemo(() => {
         const range = xMax - xMin;
@@ -86,7 +85,6 @@ export function Scatter({
         }
 
         if(params.dataType === 'date') {
-            console.log('in here');
             return d3.scaleTime([margin.left, width + margin.left]).domain([new Date('2014-12-20'), new Date('2016-01-10')]);
         }
 
@@ -111,15 +109,15 @@ export function Scatter({
         }
 
         if(brushType === 'Axis Selection') {
-            const brushX = d3.brushX().extent([[margin.left, margin.top + height - 5], [margin.left + width, margin.top + height + 5]]).on('brush', (data) => {
+            const brushX = d3.brushX().extent([[margin.left, margin.top + height - 5], [margin.left + width, margin.top + height + 5]]).on('brush end', (data) => {
                 if(data.sourceEvent !== undefined) {
-                    setBrushedSpace([[data.selection[0], null], [data.selection[1], null]]);
+                    setBrushedSpace([[data.selection[0], null], [data.selection[1], null]], xScale, yScale, data.mode);
                 }
             });
      
-            const brushY = d3.brushY().extent([[margin.left - 5, margin.top], [margin.left + 5, margin.top + height]]).on('brush', (data) => {
+            const brushY = d3.brushY().extent([[margin.left - 5, margin.top], [margin.left + 5, margin.top + height]]).on('brush end', (data) => {
                 if(data.sourceEvent !== undefined) {
-                    setBrushedSpace([[null, data.selection[0]], [null, data.selection[1]]]);
+                    setBrushedSpace([[null, data.selection[0]], [null, data.selection[1]]], xScale, yScale, data.mode);
                 }
             });
     
@@ -128,24 +126,22 @@ export function Scatter({
                 d3.select(brushXRef.current).call(brushX);
     
                 if(!brushState.hasBrush) {
-                    console.log(xScale);
                     d3.select(brushYRef.current).call(brushY.move, [yScale(yMax), yScale(yMin)]);
                     d3.select(brushXRef.current).call(brushX.move, [xScale(new Date('2015-01-02')), xScale(new Date('2015-12-31'))]);
-                    setBrushedSpace([[xScale(new Date('2015-01-02')), yScale(yMax)], [xScale(new Date('2015-12-31')), yScale(yMin)]]);
+                    setBrushedSpace([[xScale(new Date('2015-01-02')), yScale(yMax)], [xScale(new Date('2015-12-31')), yScale(yMin)]], xScale, yScale, 'drag');
                 }
             }
 
             return () => {
                 d3.select(brushYRef.current).call(brushY.move, [yScale(yMax), yScale(yMin)]);
                 d3.select(brushXRef.current).call(brushX.move, [xScale(new Date('2015-01-02')), xScale(new Date('2015-12-31'))]);
-                setBrushedSpace([[xScale(new Date('2015-01-02')), yScale(yMax)], [xScale(new Date('2015-12-31')), yScale(yMin)]]);
+                setBrushedSpace([[xScale(new Date('2015-01-02')), yScale(yMax)], [xScale(new Date('2015-12-31')), yScale(yMin)]], xScale, yScale, 'clear');
             };
         }
         else if(brushType === 'Rectangular Selection') {
             const brush = d3.brush().extent([[margin.left, margin.top], [margin.left + width, margin.top + height]]).on('brush', (data) => {
-                    console.log(data);
                     if(data.sourceEvent !== undefined) {
-                        setBrushedSpace([[data.selection[0][0], data.selection[0][1]], [data.selection[1][0], data.selection[1][1]]]);
+                        setBrushedSpace([[data.selection[0][0], data.selection[0][1]], [data.selection[1][0], data.selection[1][1]]], xScale, yScale, data.mode);
                     }
                 }
             ).on('end', (data) => {
@@ -159,51 +155,21 @@ export function Scatter({
 
             return () => {
                 d3.select(ref.current).call(brush.move, null);
+                setBrushedSpace([[null, null], [null, null]], xScale, yScale, 'clear');
             };
         }
         else if(brushType === 'Slider Selection') {
-            return () => setBrushedSpace([[xScale(xMin), yScale(yMax)], [xScale(xMax), yScale(yMin)]]);
-
+            return () => setBrushedSpace([[xScale(xMin), yScale(yMax)], [xScale(xMax), yScale(yMin)]], xScale, yScale, 'clear');
+        }
+        else if(brushType === 'Paintbrush Selection') {
+            return () => setBrushedSpace([[xScale(xMin), yScale(yMax)], [xScale(xMax), yScale(yMin)]], xScale, yScale, 'clear', []);
         }
 
     }, [brushState, brushType, brushXRef, brushYRef, height, ref, setBrushedSpace, width, xMax, xMin, xScale, yMax, yMin, yScale]);
 
-    // figure out which points were brushed
     useEffect(() => {
-        if(!brushState.hasBrush || !xScale || !yScale) {
-            return;
-        }
-
-        const xMin = xScale.invert(brushState.x1);
-        const xMax = xScale.invert(brushState.x2);
-
-        const yMin = yScale.invert(brushState.y2);
-        const yMax = yScale.invert(brushState.y1);
-
-        console.log(xMin, xMax);
-        let filteredTable = null;
-        if(brushType === 'Axis Selection') {
-            filteredTable = fullTable!.filter(escape((d: any) => {
-                return new Date(d[params.x]) >= new Date(xMin) && new Date(d[params.x]) <= new Date(xMax) && d[params.y] >= yMin && d[params.y] <= yMax;
-            }));
-        }
-        else {
-            filteredTable = fullTable!.filter(escape((d: any) => {
-                return d[params.x] >= xMin && d[params.x] <= xMax && d[params.y] >= yMin && d[params.y] <= yMax;
-            }));
-        }
-
-        setFilteredTable(filteredTable);
-
-    }, [brushState.hasBrush, brushState.x1, brushState.x2, brushState.y1, brushState.y2, fullTable, params.x, params.y, setFilteredTable, xScale, yScale]);
-
-    useEffect(() => {
-        console.log(xMin, yMin, xMax, yMax, xScale, yScale);
-
         if(brushType === 'Slider Selection' && xScale && yScale) {
-            console.log(xMin, yMin, xMax, yMax, xScale, yScale);
-
-            setBrushedSpace([[xScale(xMin), yScale(yMax)], [xScale(xMax), yScale(yMin)]]);
+            setBrushedSpace([[xScale(xMin), yScale(yMax)], [xScale(xMax), yScale(yMin)]], xScale, yScale, null);
         }
     }, [brushType, xMax, xMin, xScale, yMax, yMin, yScale]);
 
@@ -232,6 +198,7 @@ export function Scatter({
             d3.selectAll('.handle').style('fill', 'darkgrey');
         }
     }, [brushState, brushType]);
+
 
     return (
         <Stack>
@@ -270,27 +237,27 @@ export function Scatter({
                 {circles}
                 <g id="brushXRef" ref={brushXRef}></g>
                 <g id="brushYRef" ref={brushYRef}></g>
-                {xScale && yScale && brushType === 'Paintbrush Selection' ? <Paintbrush params={params} data={data} filteredTable={filteredTable} isSelect={isPaintbrushSelect} xScale={xScale} yScale={yScale} setFilteredTable={setFilteredTable} table={fullTable}/> : null}
+                {xScale && yScale && brushType === 'Paintbrush Selection' ? <Paintbrush brushState={brushState} setBrushedSpace={setBrushedSpace} params={params} data={data} filteredTable={filteredTable} isSelect={isPaintbrushSelect} xScale={xScale as any} yScale={yScale} table={fullTable}/> : null}
             </svg>
             {brushType === 'Slider Selection' && xScale && yScale ? 
                 <Stack style={{flexGrow: 1}} spacing={50}>
                     <Stack spacing={0}>
                         <Text>{params.x}</Text>
-                        <RangeSlider label={null} min={xScale.domain()[0]} max={xScale.domain()[1]} labelAlwaysOn={false} onChange={(value) => {
-                            setBrushedSpace([[xScale(value[0]), brushState.y1], [xScale(value[1]),brushState.y2]]);
+                        <RangeSlider label={null} min={xScale.domain()[0] as any} max={xScale.domain()[1] as any} labelAlwaysOn={false} onChange={(value) => {
+                            setBrushedSpace([[xScale(value[0]), brushState.y1], [xScale(value[1]),brushState.y2]], xScale, yScale, 'drag');
                         }} style={{width: '300px'}} 
                             marks={
                                 xScale.ticks(5).map((t) => ({
                                     value: t,
                                     label: t
-                                })) 
+                                })) as any
                             } 
-                            value={[xScale.invert(brushState.x1), xScale.invert(brushState.x2)]}/>
+                            value={[xScale.invert(brushState.x1), xScale.invert(brushState.x2)] as any}/>
                     </Stack>
                     <Stack spacing={0}>
                         <Text>{params.y}</Text>
                         <RangeSlider label={null} min={yScale.domain()[0]} max={yScale.domain()[1]}  onChange={(value) => {
-                            setBrushedSpace([[brushState.x1, yScale(value[1])], [brushState.x2, yScale(value[0])]]);
+                            setBrushedSpace([[brushState.x1, yScale(value[1])], [brushState.x2, yScale(value[0])]], xScale, yScale, 'drag');
                         }} style={{width: '300px'}} marks={
                                 yScale.ticks(5).map((t) => ({
                                     value: t,
