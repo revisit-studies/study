@@ -22,8 +22,6 @@ export default function AppAside() {
   const showAdmin = useFlagsSelector((state: any) => state.showAdmin);
   const navigate = useNavigate();
 
-  const step = useCurrentStep();
-
   const { studyId = null } = useParams<{
     studyId: string;
   }>();
@@ -44,11 +42,9 @@ export default function AppAside() {
           <StepsPanel order={studyConfig.sequence} />
         </Aside.Section>
 
-        {step === 'end' && (
-          <Aside.Section grow component={ScrollArea} px="xs" my="lg">
-            <DownloadPanel />
-          </Aside.Section>
-        )}
+        <Aside.Section grow component={ScrollArea} px="xs" my="lg">
+          <DownloadPanel />
+        </Aside.Section>
 
         <Aside.Section grow component={ScrollArea} px="xs" my="lg">
           {tasks.map((task, index) => (
