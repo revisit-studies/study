@@ -64,7 +64,7 @@
             path: VLAT-mini-randomized/survey.md
             response: [
                 {
-                    id: q1
+                    id: surveyExperience
                     prompt: Did you experience any problems with our tool?
                     required: true
                     location: belowStimulus
@@ -72,7 +72,7 @@
                     placeholder: Enter your answer here.
                 }
                 {
-                    id: q2
+                    id: surveyRenderIssues
                     prompt: Did anything not render or display properly?
                     required: true
                     location: belowStimulus
@@ -80,7 +80,7 @@
                     placeholder: Enter your answer here
                 }
                 {
-                    id: q3
+                    id: surveyOtherIssues
                     prompt: Any other issues or anything you would like to tell us?
                     required: true
                     location: belowStimulus
