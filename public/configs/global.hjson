@@ -8,7 +8,7 @@
         VLAT
         click-accuracy-test
         survey-demo
-        vega-recreation-demo
+        brush-interactions
     ],
     configs: {
         html-demo: {
@@ -35,8 +35,8 @@
         survey-demo: {
             path: survey-demo/config-survey-demo.hjson
         },
-        vega-recreation-demo: {
-            path: vega-recreation/config-vega-recreation.hjson
+        brush-interactions: {
+            path: brush-interactions/config.hjson
         }
     }
 }
