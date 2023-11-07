@@ -66,7 +66,7 @@ export function XAxisBar({
             <Center>
               <Tooltip withinPortal label={value}>
                 <Text px={2} size={10} style={{ textAlign: 'center', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                  {format(isDate ? new Date(value) : value)}
+                  {+value === 0 ? 0 : format(isDate ? new Date(value) : value)}
                 </Text>
               </Tooltip>
             </Center>
