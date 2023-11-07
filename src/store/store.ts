@@ -41,6 +41,7 @@ export async function studyStoreCreator(
   const steps = getSteps(order);
   const stepsToAnswers = Object.assign({}, ...Object.keys(steps).map((id) => ({[id]: {}})));
 
+
   const initialTrrackedState: TrrackedState = {
     studyIdentifiers: {
       pid: firebase.pid,
@@ -73,7 +74,7 @@ export async function studyStoreCreator(
           endTime: number;
         }>
       ) {
-       
+
         (state[payload.trialName] as TrialRecord) = ({
           complete: true,
           answer: payload.answer,
@@ -84,6 +85,7 @@ export async function studyStoreCreator(
       },
     },
   });
+
 
   const configSlice = createSlice({
     name: 'studySlice',

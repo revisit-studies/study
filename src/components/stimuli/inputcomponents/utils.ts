@@ -3,9 +3,20 @@ import { useEffect, useState } from 'react';
 import { BaseResponse, Option, Response } from '../../../parser/types';
 
 export const generateInitFields = (responses: Response[], id: string) => {
+  const queryParameters = new URLSearchParams(window.location.search);
+  
   let initObj = {};
+
   responses.forEach((response) => {
-    initObj = { ...initObj, [`${id}/${response.id}`]: response.type === 'iframe' ? [] : '' };
+    initObj = {
+      ...initObj,
+      [`${id}/${response.id}`]:
+        response.type === 'iframe'
+          ? []
+          : (response.paramCapture &&
+              queryParameters.get(response.paramCapture)) ||
+            '',
+    };
   });
 
   return { ...initObj };

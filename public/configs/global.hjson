@@ -1,4 +1,5 @@
 {
+    $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/GlobalConfigSchema.json
     configsList: [
         html-demo
         image-demo
@@ -6,6 +7,8 @@
         cleveland
         MVNV
         VLAT
+        VLAT-full-randomized
+        VLAT-mini-randomized
         click-accuracy-test
         survey-demo
         brush-interactions
@@ -28,6 +31,12 @@
         },
         VLAT: {
             path: VLAT/config-VLAT.hjson
+        },
+        VLAT-full-randomized: {
+            path: VLAT-full-randomized/config-VLAT-full-randomized.hjson
+        },
+        VLAT-mini-randomized: {
+            path: VLAT-mini-randomized/config-VLAT-mini-randomized.hjson
         },
         click-accuracy-test: {
             path: click-accuracy-test/click-accuracy-test.hjson

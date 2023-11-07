@@ -1,5 +1,5 @@
 {
-    $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/schema.json
+    $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json
 
     studyMetadata: {
         title: Cleveland McGill Example

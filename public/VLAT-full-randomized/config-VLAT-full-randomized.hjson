@@ -1,13 +1,13 @@
 {
-    $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json
+    $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/schema.json
     studyMetadata: {
-        title: VLAT (Visualization Literacy Assessment Test)
+        title: Randomized Full VLAT (Visualization Literacy Assessment Test)
         version: pilot
         authors: [
             The reVISit Team
         ]
         date: 2023-06-14
-        description: A replication of the VLAT questionnaire, using image stimuli.
+        description: A replication of the VLAT questionnaire randomized between visualizations, using image stimuli.
         organizations: [
             University of Utah
             WPI
@@ -16,25 +16,72 @@
     }
     uiConfig: {
         contactEmail: test@test.com
-        helpTextPath: VLAT/help.md
+        helpTextPath: VLAT-full-randomized/help.md
         logoPath: assets/revisitLogoSquare.svg
         withProgressBar: true
         autoDownloadStudy: false
         sidebar: true
+        studyEndMsg: Thank you for completing the study. You may click this link and return to Prolific: https://app.prolific.com/submissions/complete?cc=CE96X7ST
+
     }
     components: {
         introduction: {
             type: markdown
-            path: VLAT/introduction.md
+            path: VLAT-full-randomized/introduction.md
             response: [
                 {
                     id: prolificId
-                    prompt: Please enter your Prolific ID
+                    prompt: Please enter your prolificId
                     required: true
                     location: belowStimulus
                     type: shortText
-                    placeholder: Prolific ID
+                    placeholder: id
                     paramCapture: PROLIFIC_ID
+                }
+            ]
+        }
+        consent: {
+            type: markdown
+            path: VLAT-full-randomized/consent.md
+            response: [
+                {
+                    id: userInitials
+                    prompt: Please type your initials below. These are not used in our analyses, but required for the consent process.
+                    required: true
+                    location: belowStimulus
+                    type: shortText
+                    placeholder: Your Initials
+                }
+            ]
+        },
+        survey: {
+            type: markdown
+            path: VLAT-mini-randomized/survey.md
+            response: [
+                {
+                    id: q1
+                    prompt: Did you experience any problems with our tool?
+                    required: true
+                    location: belowStimulus
+                    type: longText
+                    placeholder: Enter your answer here.
+                }
+                {
+                    id: q2
+                    prompt: Did anything not render or display properly?
+                    required: true
+                    location: belowStimulus
+                    type: longText
+                    placeholder: Enter your answer here
+                }
+                {
+                    id: q3
+                    prompt: Any other issues or anything you would like to tell us?
+                    required: true
+                    location: belowStimulus
+                    type: longText
+                    placeholder: Enter your answer here
+
                 }
             ]
         }
@@ -51,7 +98,7 @@
             instruction: What was the price of a barrel of oil in February 2015?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT1.png
+            path: VLAT-full-randomized/VLAT1.png
             style: {
                 width: 800px
             }
@@ -102,7 +149,7 @@
             instruction: In which month was the price of a barrel of oil the lowest in 2015?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT1.png
+            path: VLAT-full-randomized/VLAT1.png
             style: {
                 width: 800px
             }
@@ -153,7 +200,7 @@
             instruction: What was the price range of a barrel of oil in 2015?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT1.png
+            path: VLAT-full-randomized/VLAT1.png
             style: {
                 width: 800px
             }
@@ -204,7 +251,7 @@
             instruction: Over the course of the second half of 2015, the price of a barrel of oil was
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT1.png
+            path: VLAT-full-randomized/VLAT1.png
             style: {
                 width: 800px
             }
@@ -251,7 +298,7 @@
             instruction: About how much did the price of a barrel of oil fall from April to September in 2015?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT1.png
+            path: VLAT-full-randomized/VLAT1.png
             style: {
                 width: 800px
             }
@@ -302,7 +349,7 @@
             instruction: What is the average internet speed in Japan?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT2.png
+            path: VLAT-full-randomized/VLAT2.png
             style: {
                 width: 800px
             }
@@ -353,7 +400,7 @@
             instruction: In which country is the average internet speed the fastest in Asia?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT2.png
+            path: VLAT-full-randomized/VLAT2.png
             style: {
                 width: 800px
             }
@@ -404,7 +451,7 @@
             instruction: What is the range of the average internet speed in Asia?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT2.png
+            path: VLAT-full-randomized/VLAT2.png
             style: {
                 width: 800px
             }
@@ -455,7 +502,7 @@
             instruction: How many countries in Asia have an average internet speed that is slower than that of Thailand?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT2.png
+            path: VLAT-full-randomized/VLAT2.png
             style: {
                 width: 800px
             }
@@ -506,7 +553,7 @@
             instruction: What is the cost of peanuts in Las Vegas?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT3.png
+            path: VLAT-full-randomized/VLAT3.png
             style: {
                 width: 800px
             }
@@ -557,7 +604,7 @@
             instruction: About what is the ratio of the cost of a sandwich to the total cost of room service in Seattle?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT3.png
+            path: VLAT-full-randomized/VLAT3.png
             style: {
                 width: 800px
             }
@@ -608,7 +655,7 @@
             instruction: In which city is the cost of soda the highest?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT3.png
+            path: VLAT-full-randomized/VLAT3.png
             style: {
                 width: 800px
             }
@@ -659,7 +706,7 @@
             instruction: The cost of vodka in Atlanta is higher than that of Honolulu.
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT3.png
+            path: VLAT-full-randomized/VLAT3.png
             style: {
                 width: 800px
             }
@@ -702,7 +749,7 @@
             instruction: The ratio of the cost of Soda to the cost of Water in Orlando is higher than in that of Washington D.C.
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT3.png
+            path: VLAT-full-randomized/VLAT3.png
             style: {
                 width: 800px
             }
@@ -745,7 +792,7 @@
             instruction: What is the approval rating of Republicans among the people who have the education level of Postgraduate Study?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT4.png
+            path: VLAT-full-randomized/VLAT4.png
             style: {
                 width: 800px
             }
@@ -796,7 +843,7 @@
             instruction: What is the education level of people in which the Democrats have the lowest approval rating?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT4.png
+            path: VLAT-full-randomized/VLAT4.png
             style: {
                 width: 800px
             }
@@ -847,7 +894,7 @@
             instruction: The approval rating of Republicans for the people who have the education level of Some College Degree is lower than that for the people who have the education level of Postgraduate Study.
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT4.png
+            path: VLAT-full-randomized/VLAT4.png
             style: {
                 width: 800px
             }
@@ -890,7 +937,7 @@
             instruction: About what is the global smartphone market share of Samsung?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT5.png
+            path: VLAT-full-randomized/VLAT5.png
             style: {
                 width: 800px
             }
@@ -941,7 +988,7 @@
             instruction: In which company is the global smartphone market share the smallest?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT5.png
+            path: VLAT-full-randomized/VLAT5.png
             style: {
                 width: 800px
             }
@@ -992,7 +1039,7 @@
             instruction: The global smartphone market share of Apple is larger than that of Huawei.
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT5.png
+            path: VLAT-full-randomized/VLAT5.png
             style: {
                 width: 800px
             }
@@ -1035,7 +1082,7 @@
             instruction: How many people have rated the taxi between 4.0 and 4.2?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT6.png
+            path: VLAT-full-randomized/VLAT6.png
             style: {
                 width: 800px
             }
@@ -1086,7 +1133,7 @@
             instruction: What is the rating that the people have rated the taxi the most?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT6.png
+            path: VLAT-full-randomized/VLAT6.png
             style: {
                 width: 800px
             }
@@ -1137,7 +1184,7 @@
             instruction: More people have rated the taxi between 4.6 and 4.8 than between 4.2 and 4.4.
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT6.png
+            path: VLAT-full-randomized/VLAT6.png
             style: {
                 width: 800px
             }
@@ -1180,7 +1227,7 @@
             instruction: What is the weight for the person who is 165.1 cm tall?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT7.png
+            path: VLAT-full-randomized/VLAT7.png
             style: {
                 width: 800px
             }
@@ -1231,7 +1278,7 @@
             instruction: What is the height for the tallest person among the 85 males?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT7.png
+            path: VLAT-full-randomized/VLAT7.png
             style: {
                 width: 800px
             }
@@ -1282,7 +1329,7 @@
             instruction: What is the range in weight for the 85 males?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT7.png
+            path: VLAT-full-randomized/VLAT7.png
             style: {
                 width: 800px
             }
@@ -1333,7 +1380,7 @@
             instruction: What is the height for a person who lies outside the others the most?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT7.png
+            path: VLAT-full-randomized/VLAT7.png
             style: {
                 width: 800px
             }
@@ -1384,7 +1431,7 @@
             instruction: A group of males are gathered around the height of 176 cm and the weight of 70 kg.
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT7.png
+            path: VLAT-full-randomized/VLAT7.png
             style: {
                 width: 800px
             }
@@ -1427,7 +1474,7 @@
             instruction: There is a negative linear relationship between the height and the weight of the 85 males.
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT7.png
+            path: VLAT-full-randomized/VLAT7.png
             style: {
                 width: 800px
             }
@@ -1470,7 +1517,7 @@
             instruction: The weights for males with the height of 188 cm are all the same.
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT7.png
+            path: VLAT-full-randomized/VLAT7.png
             style: {
                 width: 800px
             }
@@ -1513,7 +1560,7 @@
             instruction: What was the average price of a pound of coffee beans in September 2013?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT8.png
+            path: VLAT-full-randomized/VLAT8.png
             style: {
                 width: 800px
             }
@@ -1564,7 +1611,7 @@
             instruction: When was the average price of a pound of coffee beans at minimum?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT8.png
+            path: VLAT-full-randomized/VLAT8.png
             style: {
                 width: 800px
             }
@@ -1615,7 +1662,7 @@
             instruction: What was the range of the average price of a pound of coffee beans between January 2013 and December 2014?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT8.png
+            path: VLAT-full-randomized/VLAT8.png
             style: {
                 width: 800px
             }
@@ -1666,7 +1713,7 @@
             instruction: Over the course of 2013, the average price of a pound of coffee beans was
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT8.png
+            path: VLAT-full-randomized/VLAT8.png
             style: {
                 width: 800px
             }
@@ -1713,7 +1760,7 @@
             instruction: What was the number of girls named 'Amelia' in 2010 in the UK?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT9.png
+            path: VLAT-full-randomized/VLAT9.png
             style: {
                 width: 800px
             }
@@ -1764,7 +1811,7 @@
             instruction: About what was the ratio of the number of girls named 'Olivia' to those named 'Isla' in 2014 in the UK?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT9.png
+            path: VLAT-full-randomized/VLAT9.png
             style: {
                 width: 800px
             }
@@ -1815,7 +1862,7 @@
             instruction: Over the course of years between 2009 and 2014, when was the number of girls named 'Amelia' at the maximum?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT9.png
+            path: VLAT-full-randomized/VLAT9.png
             style: {
                 width: 800px
             }
@@ -1866,7 +1913,7 @@
             instruction: The number of girls named 'Isla' was __________ from 2009 to 2012.
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT9.png
+            path: VLAT-full-randomized/VLAT9.png
             style: {
                 width: 800px
             }
@@ -1913,7 +1960,7 @@
             instruction: In the UK, the number of girls named 'Amelia' in 2014 was more than it was in 2013.
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT9.png
+            path: VLAT-full-randomized/VLAT9.png
             style: {
                 width: 800px
             }
@@ -1956,7 +2003,7 @@
             instruction: Over the course of years between 2009 and 2014, the number of girls named 'Isla' was always more than 'Olivia'.
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT9.png
+            path: VLAT-full-randomized/VLAT9.png
             style: {
                 width: 800px
             }
@@ -1999,7 +2046,7 @@
             instruction: What is the total length of the metro system in Beijing?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT10.png
+            path: VLAT-full-randomized/VLAT10.png
             style: {
                 width: 800px
             }
@@ -2050,7 +2097,7 @@
             instruction: Which city's metro system has the largest number of stations?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT10.png
+            path: VLAT-full-randomized/VLAT10.png
             style: {
                 width: 800px
             }
@@ -2101,7 +2148,7 @@
             instruction: What is the range of the total length of the metro systems?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT10.png
+            path: VLAT-full-randomized/VLAT10.png
             style: {
                 width: 800px
             }
@@ -2152,7 +2199,7 @@
             instruction: Which city's metro system does lie outside the relationship between the total system length and the number of stations most?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT10.png
+            path: VLAT-full-randomized/VLAT10.png
             style: {
                 width: 800px
             }
@@ -2203,7 +2250,7 @@
             instruction: A group of the metro systems of the world has approximately 300 stations and around a 200 km system length.
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT10.png
+            path: VLAT-full-randomized/VLAT10.png
             style: {
                 width: 800px
             }
@@ -2246,7 +2293,7 @@
             instruction: In general, the ridership of the metro system increases as the number of stations increases.
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT10.png
+            path: VLAT-full-randomized/VLAT10.png
             style: {
                 width: 800px
             }
@@ -2289,7 +2336,7 @@
             instruction: The metro system in Shanghai has more ridership than the metro system in Beijing.
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT10.png
+            path: VLAT-full-randomized/VLAT10.png
             style: {
                 width: 800px
             }
@@ -2332,7 +2379,7 @@
             instruction: What was the unemployment rate for Indiana (IN) in 2015?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT11.png
+            path: VLAT-full-randomized/VLAT11.png
             style: {
                 width: 800px
             }
@@ -2383,7 +2430,7 @@
             instruction: In which state was the unemployment rate the highest in 2015?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT11.png
+            path: VLAT-full-randomized/VLAT11.png
             style: {
                 width: 800px
             }
@@ -2434,7 +2481,7 @@
             instruction: In 2015, the unemployment rate for Washington (WA) was higher than that of Wisconsin (WI).
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT11.png
+            path: VLAT-full-randomized/VLAT11.png
             style: {
                 width: 800px
             }
@@ -2477,7 +2524,7 @@
             instruction: For which website was the number of unique visitors the largest in 2010?
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT12.png
+            path: VLAT-full-randomized/VLAT12.png
             style: {
                 width: 800px
             }
@@ -2528,7 +2575,7 @@
             instruction: The number of unique visitors for Amazon was more than that of Yahoo in 2010.
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT12.png
+            path: VLAT-full-randomized/VLAT12.png
             style: {
                 width: 800px
             }
@@ -2571,7 +2618,7 @@
             instruction: Samsung is nested in the Financial category.
             instructionLocation: sidebar
             type: image
-            path: VLAT/VLAT12.png
+            path: VLAT-full-randomized/VLAT12.png
             style: {
                 width: 800px
             }
@@ -2602,62 +2649,130 @@
             ]
         }
     }
-    sequence: { 
+    sequence: {
         order: fixed
         components: [
             introduction
-            q1
-            q2
-            q3
-            q4
-            q5
-            q6
-            q7
-            q8
-            q9
-            q10
-            q11
-            q12
-            q13
-            q14
-            q15
-            q16
-            q17
-            q18
-            q19
-            q20
-            q21
-            q22
-            q23
-            q24
-            q25
-            q26
-            q27
-            q28
-            q29
-            q30
-            q31
-            q32
-            q33
-            q34
-            q35
-            q36
-            q37
-            q38
-            q39
-            q40
-            q41
-            q42
-            q43
-            q44
-            q45
-            q46
-            q47
-            q48
-            q49
-            q50
-            q51
-            q52
+            consent
+            {
+                order: random
+                components: [
+                    {
+                        order: fixed
+                        components: [
+                            q0
+                            q1
+                            q2
+                            q3
+                            q4
+                        ]
+                    },
+                    {
+                        order: fixed
+                        components: [
+                            q5
+                            q6
+                            q7
+                            q8
+                        ]
+                    }
+                    {
+                        order: fixed
+                        components: [
+                            q9
+                            q10
+                            q11
+                            q12
+                            q13
+                        ]
+                    }
+                    {
+                        order: fixed
+                        components: [
+                            q14
+                            q15
+                            q16
+                        ]
+                    }
+                    {
+                        order: fixed
+                        components: [
+                            q17
+                            q18
+                            q19
+                        ]
+                    }
+                    {
+                        order: fixed
+                        components: [
+                            q20
+                            q21
+                            q22
+                        ]
+                    }
+                    {
+                        order: fixed
+                        components: [
+                            q23
+                            q24
+                            q25
+                            q26
+                            q27
+                            q28
+                            q29
+                        ]
+                    }
+                    {
+                        order: fixed
+                        components: [
+                            q30
+                            q31
+                            q32
+                            q33
+                        ]
+                    }
+                    {
+                        order: fixed
+                        components: [
+                            q34
+                            q35
+                            q36
+                            q37
+                            q38
+                            q39
+                        ]
+                    }
+                    {
+                        order: fixed
+                        components: [
+                            q40
+                            q41
+                            q42
+                            q43
+                            q44
+                            q45
+                            q46
+                        ]
+                    }
+                    {
+                        order: fixed
+                        components: [
+                            q47
+                            q48
+                            q49
+                        ]
+                    }
+                    {
+                        order: fixed
+                        components: [
+                            q50
+                            q51
+                            q52
+                        ]
+                    }
+                ]
+            }
+            survey
         ]
     }
 }
