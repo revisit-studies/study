@@ -23,7 +23,7 @@
         "chart": "stacked bar"
       },
       "description": "A chart with correct answer of 0.66",
-      "instruction": "Two rankings with two groups (colored red and blue) are displayed.",
+      "instruction": "Two rankings with two groups (colored red and blue) are displayed. \n Select the ranking which you think is fairer.",
       "type": "react-component",
       "path": "fairness-jnd/FairnessJND.tsx",
       "parameters": {
@@ -39,7 +39,8 @@
           "prompt": "Which ranking do you think is fairer?",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "hidden": true
         },
         {
           "id": "leftARP",
