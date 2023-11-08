@@ -28,7 +28,7 @@ export interface BrushParams {brushType: BrushNames, dataset: string, x: string,
 
 export type BrushNames = 'Rectangular Selection' | 'Axis Selection' | 'Slider Selection' | 'Paintbrush Selection'
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function BrushPlot({ parameters, trialId, setAnswer }: StimulusParams<BrushParams>) {
+export function BrushPlot({ parameters, trialId, setAnswer, updateProvenance }: StimulusParams<BrushParams>) {
     const [filteredTable, setFilteredTable] = useState<ColumnTable | null>(null);
     const [brushState, setBrushState] = useState<BrushState>({hasBrush: false, x1: 0, y1: 0, x2: 0, y2: 0, ids: []});
 
@@ -36,7 +36,7 @@ export function BrushPlot({ parameters, trialId, setAnswer }: StimulusParams<Bru
 
     // load data
     useEffect(() => {
-        d3.csv(`./data/${parameters.dataset}.csv`).then((data) => {
+        d3.csv(`/brush-interactions/data/${parameters.dataset}.csv`).then((data) => {
             setData(data);
         });
     }, [parameters]);
@@ -57,26 +57,26 @@ export function BrushPlot({ parameters, trialId, setAnswer }: StimulusParams<Bru
         const reg = Registry.create();
     
         const brush = reg.register('brush', (state, brush: BrushState) => {
-            state = {...brush};
+            state = {all: {...brush}};
             return state;
         });
 
         const brushMove = reg.register('brushMove', (state, brush: BrushState) => {
-            state = {...brush};
+            state = {all: {...brush}};
             return state;
         });
 
         const brushResize = reg.register('brushResize', (state, brush: BrushState) => {
-            state = {...brush};
+            state = {all: {...brush}};
             return state;
         });
 
         const clearBrush = reg.register('brushClear', (state, brush: BrushState) => {
-            state = {...brush};
+            state = {all: {...brush}};
             return state;
         });
     
-        const trrackInst = initializeTrrack({registry: reg, initialState: {hasBrush: false, x1: null, x2: null, y1: null, y2: null} });
+        const trrackInst = initializeTrrack({registry: reg, initialState: { all: {hasBrush: false, x1: null, x2: null, y1: null, y2: null, ids: [] } } });
     
         return {
             actions: {
@@ -143,8 +143,6 @@ export function BrushPlot({ parameters, trialId, setAnswer }: StimulusParams<Bru
 
         if(selType === 'drag' || selType === 'handle') {
             debouncedCallback(selType, newState);
-
-            console.log(Object.keys(trrack.graph.backend.nodes).length);
         }
         else if(selType === 'clear') {
             trrack.apply('Clear Brush', actions.clearBrush(newState));
@@ -152,13 +150,15 @@ export function BrushPlot({ parameters, trialId, setAnswer }: StimulusParams<Bru
 
         setFilteredTable(filteredTable);
 
+        updateProvenance(trrack.graph.backend);
+
         setAnswer({
             trialId: id,
             status: true,
-            provenanceGraph: trrack.graph.backend,
+            provenanceRoot: trrack.graph.root.id,
             answers: {}
           });
-    }, [brushState, fullTable, parameters, trrack, id, setAnswer, debouncedCallback, actions]);
+    }, [brushState, fullTable, parameters, trrack, id, setAnswer, debouncedCallback, actions, updateProvenance]);
 
     // Which table the bar chart uses, either the base or the filtered table if any selections
     const barsTable = useMemo(() => {

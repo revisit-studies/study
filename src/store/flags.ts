@@ -7,8 +7,8 @@ import {
   TypedUseSelectorHook,
 } from 'react-redux';
 import { ResponseBlockLocation } from '../parser/types';
-import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import { StimulusParams } from './types';
+import { NodeId } from '@trrack/core';
 
 type TrialRecord = Record<
   string,
@@ -19,7 +19,7 @@ type TrialRecord = Record<
       sidebar: boolean;
     };
     answers: Record<string, any>;
-    provenanceGraph: ProvenanceGraph<any, any, any> | null,
+    provenanceRoot: NodeId | null,
   }
 >;
 
@@ -53,7 +53,7 @@ const flags = createSlice({
         location: ResponseBlockLocation;
         trialId: string;
         status: boolean;
-        provenanceGraph?: ProvenanceGraph<any, any, any>
+        provenanceRoot?: NodeId;
         answers: Record<string, any>;
       }>
     ) => {
@@ -67,15 +67,15 @@ const flags = createSlice({
             sidebar: false,
           },
           answers: {},
-          provenanceGraph: null,
+          provenanceRoot: null,
         };
       }
       state.trialRecord[payload.trialId].valid[payload.location] =
         payload.status;
         const prev = state.trialRecord[payload.trialId].answers;
 
-      if(payload.provenanceGraph !== undefined) {
-        state.trialRecord[payload.trialId].provenanceGraph = payload.provenanceGraph;
+      if(payload.provenanceRoot !== undefined) {
+        state.trialRecord[payload.trialId].provenanceRoot = payload.provenanceRoot;
       }
 
       const answers = {...prev,...payload.answers};
@@ -116,12 +116,12 @@ export const useFlagsSelector: TypedUseSelectorHook<FlagStore> =
 export const useFlagsDispatch: () => FlagDispatch =
   createDispatchHook<FlagStore>(flagsContext);
 
-export function setAnswer({trialId, status, provenanceGraph, answers}: Parameters<StimulusParams<any>['setAnswer']>[0]) {
+export function setAnswer({trialId, status, provenanceRoot, answers}: Parameters<StimulusParams<any>['setAnswer']>[0]) {
     flagsStore.dispatch(updateResponseBlockValidation({
       location: 'sidebar',
       trialId,
       status,
-      provenanceGraph,
+      provenanceRoot,
       answers,
     }));
 }

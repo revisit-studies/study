@@ -1,7 +1,7 @@
 {
     "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
-        "title": "Dynamic React.js Stimuli: An Experiment on Brush Interactions",
+        "title": "Interactive Selections in Scatterplots",
         "version": "pilot",
         "authors": [
             "The reVISit Team"
@@ -30,24 +30,24 @@
             "path": "brush-interactions/BrushPlot.tsx",
             "nextButtonLocation": "sidebar",
             "instructionLocation": "sidebar",
-            "response": [
-                {
-                    "id": "response",
-                    "prompt": "Answer:",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "numerical",
-                    "max": 100,
-                    "min": 0
-                }
-            ]
+            response: []
         }
     },
     "components": {
         "introduction": {
             "type": "markdown",
             "path": "brush-interactions/introduction.md",
-            "response": []
+            response: [
+                {
+                    id: prolificId
+                    prompt: Please enter your Prolific ID
+                    required: true
+                    location: belowStimulus
+                    type: shortText
+                    placeholder: Prolific ID
+                    paramCapture: PROLIFIC_PID
+                }
+            ]
         },
         "consent": {
             "type": "markdown",
@@ -92,7 +92,19 @@
                 "category":"Origin",
                 "ids":"id",
                 "brushType":"Rectangular Selection"
-            }
+            },
+            "response": [
+                {
+                    correctAnswer: 17,
+                    "id": "response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "max": 100,
+                    "min": 0
+                }
+            ]
         },
         "rectangleBrush_q2": {
             "baseComponent": "scatterPlot",
@@ -107,6 +119,7 @@
             },
             "response": [
                 {
+                    correctAnswer: 'Japan',
                     "id": "max-response",
                     "prompt": "Most Cars:",
                     "required": true,
@@ -128,6 +141,7 @@
                     ]    
                 },
                 {
+                    correctAnswer: 'Europe',
                     "id": "min-response",
                     "prompt": "Least Cars:",
                     "required": true,
@@ -152,20 +166,7 @@
         },
         "axisBrush_q1": {
             "baseComponent": "scatterPlot",
-            "instruction": "How many days from September to the end of the year, is it sunny?",
-            "parameters": {
-                "dataType": "date",
-                "dataset": "weather",
-                "x": "Date",
-                "y": "Maximum Temperature",
-                "category":"Weather",
-                "ids":"id",
-                "brushType":"Axis Selection"
-            }
-        },        
-        "axisBrush_q2": { 
-            "baseComponent": "scatterPlot",
-            "instruction": "Consider only days between June and October with temperatures above 20 degrees. What is the most and least common weather types during those days?" ,
+            "instruction": "How many days from September to the end of the year is it sunny?",
             "parameters": {
                 "dataType": "date",
                 "dataset": "weather",
@@ -177,6 +178,32 @@
             },
             "response": [
                 {
+                    correctAnswer: 32,
+                    "id": "response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "max": 100,
+                    "min": 0
+                }
+            ]
+        },        
+        "axisBrush_q2": { 
+            "baseComponent": "scatterPlot",
+            "instruction": "Consider only days between June and October with temperatures above 20 degrees. What are the most and least common weather types during those days?" ,
+            "parameters": {
+                "dataType": "date",
+                "dataset": "weather",
+                "x": "Date",
+                "y": "Maximum Temperature",
+                "category":"Weather",
+                "ids":"id",
+                "brushType":"Axis Selection"
+            },
+            "response": [
+                {
+                    correctAnswer: 'sun',
                     "id": "max-response",
                     "prompt": "Most common Weather:",
                     "required": true,
@@ -202,6 +229,7 @@
                     ]
                 },
                 {
+                    correctAnswer: 'drizzle',
                     "id": "min-response",
                     "prompt": "Least common Weather:",
                     "required": true,
@@ -238,11 +266,23 @@
                 "category":"Species",
                 "ids":"id",
                 "brushType":"Slider Selection"
-            }    
+            },
+            "response": [
+                {
+                    correctAnswer: 15,
+                    "id": "response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "max": 100,
+                    "min": 0
+                }
+            ]
         },        
         "sliderBrush_q2": {
             "baseComponent": "scatterPlot",
-            "instruction": "Consider only penguins that weigh between 4k and 5k grams (g), and have flipper lengths between 200 and 210mm.  What is the most and least common type of penguin in this subset?" ,
+            "instruction": "Consider only penguins that weigh between 4k and 5k grams (g) and have flipper lengths between 200 and 215mm. What is the most and least common type of penguin in this subset?" ,
             "parameters": {
                 "dataset": "penguin",
                 "x": "Body Mass (g)",
@@ -253,6 +293,7 @@
             },
             "response": [
                 {
+                    correctAnswer: 'Gentoo'
                     "id": "max-response",
                     "prompt": "Most common Penguin:",
                     "required": true,
@@ -274,6 +315,7 @@
                     ]  
                 },
                 {
+                    correctAnswer: 'Adelie',
                     "id": "min-response",
                     "prompt": "Least common Penguin:",
                     "required": true,
@@ -306,7 +348,19 @@
                 "category":"Genre",
                 "ids":"id",
                 "brushType":"Paintbrush Selection"
-            }   
+            },
+            "response": [
+                {
+                    correctAnswer: 28,
+                    "id": "response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
         },        
         "paintBrush_q2": {
             "baseComponent": "scatterPlot",
@@ -321,6 +375,7 @@
             },   
             "response": [
                 {
+                    correctAnswer: Action,
                     "id": "max-response",
                     "prompt": "Most common Genre:",
                     "required": true,
@@ -346,6 +401,7 @@
                     ]
                 },
                 {
+                    correctAnswer: "Comedy",
                     "id": "min-response",
                     "prompt": "Least common Genre:",
                     "required": true,
@@ -417,8 +473,8 @@
                 },
                 {
                     "id": "q5",
-                    "prompt": "Please provide any comments about the different methods (optional)",
-                    "required": true,
+                    "prompt": "Please provide any comments about the different methods",
+                    "required": false,
                     "location": "aboveStimulus",
                     "type": "longText",
                     "placeholder": "Enter your comments here"
