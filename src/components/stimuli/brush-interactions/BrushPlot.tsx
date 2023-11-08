@@ -36,7 +36,7 @@ export function BrushPlot({ parameters, trialId, setAnswer, updateProvenance }: 
 
     // load data
     useEffect(() => {
-        d3.csv(`./data/${parameters.dataset}.csv`).then((data) => {
+        d3.csv(`/brush-interactions/data/${parameters.dataset}.csv`).then((data) => {
             setData(data);
         });
     }, [parameters]);
@@ -143,8 +143,6 @@ export function BrushPlot({ parameters, trialId, setAnswer, updateProvenance }: 
 
         if(selType === 'drag' || selType === 'handle') {
             debouncedCallback(selType, newState);
-
-            console.log(Object.keys(trrack.graph.backend.nodes).length);
         }
         else if(selType === 'clear') {
             trrack.apply('Clear Brush', actions.clearBrush(newState));
@@ -153,8 +151,6 @@ export function BrushPlot({ parameters, trialId, setAnswer, updateProvenance }: 
         setFilteredTable(filteredTable);
 
         updateProvenance(trrack.graph.backend);
-
-        console.log(trrack.graph.backend);
 
         setAnswer({
             trialId: id,

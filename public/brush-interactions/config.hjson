@@ -1,7 +1,7 @@
 {
     "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
-        "title": "Dynamic React.js Stimuli: An Experiment on Brush Interactions",
+        "title": "Interactive Selections in Scatterplots",
         "version": "pilot",
         "authors": [
             "The reVISit Team"
@@ -37,7 +37,17 @@
         "introduction": {
             "type": "markdown",
             "path": "brush-interactions/introduction.md",
-            "response": []
+            response: [
+                {
+                    id: prolificId
+                    prompt: Please enter your Prolific ID
+                    required: true
+                    location: belowStimulus
+                    type: shortText
+                    placeholder: Prolific ID
+                    paramCapture: PROLIFIC_PID
+                }
+            ]
         },
         "consent": {
             "type": "markdown",
