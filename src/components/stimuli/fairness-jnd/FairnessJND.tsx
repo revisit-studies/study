@@ -34,7 +34,7 @@ const Ranking = ({ rankings }: { rankings: number[] }) => {
   );
 };
 
-const FairnessJND = ({ parameters, setAnswer }: StimulusParams) => {
+const FairnessJND = ({ parameters, setAnswer }: StimulusParams<any>) => {
   const id = useLocation().pathname;
   const [selectedArp, setSelectedArp] = useState(-1);
 
