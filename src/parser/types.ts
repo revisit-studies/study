@@ -67,6 +67,7 @@ export interface BaseResponse {
   requiredValue?: unknown;
   requiredLabel?: string;
   paramCapture?: string;
+  hidden?:boolean;
 }
 
 /**
