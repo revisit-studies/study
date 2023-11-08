@@ -46,35 +46,40 @@
           "prompt": "leftARP",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "hidden": true
         },
         {
           "id": "rightARP",
           "prompt": "rightARP",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "hidden": true
         },
         {
           "id": "leftRanking",
           "prompt": "leftRanking",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "hidden": true
         },
         {
           "id": "rightRanking",
           "prompt": "rightRanking",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "hidden": true
         },
         {
           "id": "correctChoice",
           "prompt": "correctChoice",
           "required": true,
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "hidden": true
         }
       ],
       "nextButtonLocation": "sidebar",
