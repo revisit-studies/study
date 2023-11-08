@@ -102,7 +102,7 @@ export default function ResponseBlock({
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const answer = deepCopy(aggregateResponses!);
 
-    const graph = flagsSelector.trialRecord[id].provenanceGraph;
+    const root = flagsSelector.trialRecord[id].provenanceRoot;
 
     if (!status?.complete) {
       appDispatch(
@@ -110,7 +110,7 @@ export default function ResponseBlock({
           trialName: currentStep,
           trialId: id || 'NoID',
           answer,
-          provenanceGraph: graph || undefined,
+          provenanceRoot: root || undefined,
           startTime,
           endTime: Date.now(),
         })
