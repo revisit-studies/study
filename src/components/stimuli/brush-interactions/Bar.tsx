@@ -15,7 +15,7 @@ import { Loader, Tooltip } from '@mantine/core';
 const margin = {
     top: 15,
     left: 100,
-    right: 15,
+    right: 50,
     bottom: 50
 };
 
@@ -39,7 +39,7 @@ export function Bar({ fullTable, barsTable, parameters, data } : {fullTable: Col
         if(!barsTable) {
             return null;
         }
-        return d3.scaleLinear([margin.left, width + margin.left]).domain([0, d3.max(barsTable.objects().map((obj: any) => obj.count)) as any]);
+        return d3.scaleLinear([margin.left, width + margin.left]).domain([0, d3.max(barsTable.objects().map((obj: any) => obj.count)) as any]).nice();
     }, [barsTable, width]);
 
 
@@ -62,15 +62,16 @@ export function Bar({ fullTable, barsTable, parameters, data } : {fullTable: Col
                 return null;
             }
 
-            return <Tooltip.Floating key={i} label={car.count} withinPortal>
-                <rect key={i} x={margin.left} y={yScale(car[parameters.category])} fill={colorScale(car[parameters.category])} height={yScale.bandwidth()} width={xScale(car.count) - margin.left}/>
-                </Tooltip.Floating>;
+            return <g>
+                    <rect key={i} x={margin.left} y={yScale(car[parameters.category])} fill={colorScale(car[parameters.category])} height={yScale.bandwidth()} width={xScale(car.count) - margin.left}/>
+                    <text x={xScale(car.count) + 5} y={yScale(car[parameters.category])! + (yScale.bandwidth() / 2)} style={{textAlign: 'center', dominantBaseline: 'middle', fontSize: 14}}>{car.count}</text>
+                </g>;
         });
     }, [barsTable, colorScale, parameters.category, xScale, yScale]);
 
 
     return yScale && xScale ? (
-        <svg ref={ref} style={{height: '200px', width: '500px'}}>
+        <svg ref={ref} style={{height: '200px', width: '550px', fontFamily: 'BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif'}}>
             <XAxisBar xScale={xScale} yRange={yScale.range() as [number, number]} vertPosition={height + margin.top} showLines={false} label={'Count'} ticks={xScale.ticks(5).map((value) => ({
                 value: value.toString(),
                 offset: xScale(value),

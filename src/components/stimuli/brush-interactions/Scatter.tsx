@@ -224,11 +224,11 @@ export function Scatter({
         </Group>
         <Group style={{width: '100%', height: '100%'}} noWrap>
 
-            <svg id={'scatterSvgBrushStudy'} ref={ref} style={{height: '500px', width: '530px', fontFamily: 'BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif'}}>
+            <svg id={'scatterSvgBrushStudy'} ref={ref} style={{height: '500px', width: params.brushType === 'Axis Selection' ? '800px' : '530px', fontFamily: 'BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif'}}>
 
                 {xScale && yScale ? <g>
                     <YAxis yScale={yScale} label={params.y} horizontalPosition={margin.left} xRange={xScale.range()} />
-                    <XAxisBar xScale={xScale} yRange={yScale.range() as [number, number]} isDate={params.dataType === 'date'} vertPosition={height + margin.top} label={params.x} ticks={xScale.ticks(5).map((value) => ({
+                    <XAxisBar xScale={xScale} yRange={yScale.range() as [number, number]} isDate={params.dataType === 'date'} vertPosition={height + margin.top} label={params.x} ticks={xScale.ticks(params.brushType === 'Axis Selection' ? 12 : 5).map((value) => ({
                         value: value.toString(),
                         offset: xScale(value),
                         }))}/>
