@@ -1,4 +1,5 @@
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
+import { merge } from 'lodash';
 import { download } from '../components/DownloadPanel';
 
 import {
@@ -114,11 +115,17 @@ function processToRow(
         : null;
       const duration = (answer?.endTime || 0) - (answer?.startTime || 0);
 
-      const trialConfig = config.components[trialId];
+      let trialConfig = config.components[trialId];
+
+      // extend trial config from config.baseComponent[trialConfig.baseComponent]
+      if (trialConfig.baseComponent) {
+        trialConfig = merge(config.baseComponents[trialConfig.baseComponent], trialConfig);
+      }
 
       const answers: { [key: string]: string } = answer?.answer as {
         [key: string]: string;
       };
+
       for (const key in answers) {
         if (Object.prototype.hasOwnProperty.call(answers, key)) {
           const answerField = key.split('/').filter((f) => f.length > 0);
@@ -132,7 +139,7 @@ function processToRow(
             measure: answerField[2],
             correctAnswer:
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              trialConfig.response.find((a: any) => a.id === answerField[2])
+              trialConfig.response?.find((a: any) => a.id === answerField[2])
                 ?.correctAnswer || '',
             description: trial.description,
             instruction: trialConfig.instruction,
