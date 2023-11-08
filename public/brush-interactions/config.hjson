@@ -30,6 +30,7 @@
             "path": "brush-interactions/BrushPlot.tsx",
             "nextButtonLocation": "sidebar",
             "instructionLocation": "sidebar",
+            response: []
         }
     },
     "components": {
