@@ -9,6 +9,7 @@ import {
 import { getAllSessions } from './queries';
 import { FsSession, ProvenanceStorage } from './types';
 import { TrialResult } from '../store/types';
+import { isPartialComponent } from '../parser/parser';
 
 export const OPTIONAL_COMMON_PROPS = [
   'description',
@@ -118,7 +119,7 @@ function processToRow(
       let trialConfig = config.components[trialId];
 
       // extend trial config from config.baseComponent[trialConfig.baseComponent]
-      if (trialConfig.baseComponent) {
+      if (isPartialComponent(trialConfig) && trialConfig.baseComponent) {
         trialConfig = merge(config.baseComponents[trialConfig.baseComponent], trialConfig);
       }
 
