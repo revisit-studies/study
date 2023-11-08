@@ -7,7 +7,6 @@ import MarkdownController from './MarkdownController';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useCurrentStep } from '../routes';
 import { useComponentStatus } from '../store/hooks/useComponentStatus';
-import { TrialProvenanceContext, createTrialProvenance } from '../store/trialProvenance';
 import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
 import { isPartialComponent } from '../parser/parser';
 import merge from 'lodash/merge';
@@ -19,8 +18,6 @@ export default function ComponentController() {
   const studyConfig = useStudyConfig();
   const step = useCurrentStep();
   const stepConfig = studyConfig.components[step];
-
-  const trialProvenance = createTrialProvenance();
   
   // If we have a trial, use that config to render the right component else use the step
   const status = useComponentStatus();
@@ -33,34 +30,32 @@ export default function ComponentController() {
 
   return (
     <>
-      <TrialProvenanceContext.Provider value={trialProvenance}>
-        {instructionLocation === 'aboveStimulus' && <ReactMarkdownWrapper text={instruction} />}
-        <ResponseBlock
-          status={status}
-          config={currentConfig}
-          location="aboveStimulus"
-        />
+      {instructionLocation === 'aboveStimulus' && <ReactMarkdownWrapper text={instruction} />}
+      <ResponseBlock
+        status={status}
+        config={currentConfig}
+        location="aboveStimulus"
+      />
 
-        <Suspense key={step} fallback={<div>Loading...</div>}>
-          {currentConfig.type === 'markdown' && <MarkdownController path={currentConfig.path || ''} />}
-          {currentConfig.type === 'website' && <IframeController path={currentConfig.path || ''} parameters={currentConfig.parameters} />}
-          {currentConfig.type === 'image' && 
-            <ImageController
-              path={currentConfig.path}
-              style={currentConfig.style}
-            />}
-          {currentConfig.type === 'react-component' &&
-            <ReactComponentController path={currentConfig.path || ''} parameters={currentConfig.parameters} trialId={step}/>
-          }
-        </Suspense>
+      <Suspense key={step} fallback={<div>Loading...</div>}>
+        {currentConfig.type === 'markdown' && <MarkdownController path={currentConfig.path || ''} />}
+        {currentConfig.type === 'website' && <IframeController path={currentConfig.path || ''} parameters={currentConfig.parameters} />}
+        {currentConfig.type === 'image' && 
+          <ImageController
+            path={currentConfig.path}
+            style={currentConfig.style}
+          />}
+        {currentConfig.type === 'react-component' &&
+          <ReactComponentController path={currentConfig.path || ''} parameters={currentConfig.parameters} trialId={step}/>
+        }
+      </Suspense>
 
-        {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
-        <ResponseBlock
-          status={status}
-          config={currentConfig}
-          location="belowStimulus"
-        />
-      </TrialProvenanceContext.Provider>
+      {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
+      <ResponseBlock
+        status={status}
+        config={currentConfig}
+        location="belowStimulus"
+      />
     </>
   );
 }

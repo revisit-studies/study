@@ -1,5 +1,3 @@
-import { useHoverInteraction } from '../hooks/useHoverInteraction';
-
 export const StackedBars = ({
   data,
   barWidth,
@@ -13,9 +11,6 @@ export const StackedBars = ({
   yScale: any;
   trialId: string;
 }) => {
-  const { handleMouseEnter, handleMouseLeave } =
-    useHoverInteraction(trialId);
-
   return (
     <g>
       {data.map((d, i) => (

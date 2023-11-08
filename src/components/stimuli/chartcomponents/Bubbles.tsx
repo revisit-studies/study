@@ -1,5 +1,3 @@
-import { useHoverInteraction } from '../hooks/useHoverInteraction';
-
 export const Bubbles = ({
   data,
   trialId,
@@ -8,9 +6,6 @@ export const Bubbles = ({
   data: any[];
   trialId: string;
 }) => {
-  const { handleMouseEnter, handleMouseLeave } =
-    useHoverInteraction(trialId);
-
   return (
     <g>
       {data.map(({ bubble: d, data }, i) => (

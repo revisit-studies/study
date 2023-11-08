@@ -1,5 +1,4 @@
 import { ScaleBand, ScaleLinear } from 'd3';
-import { useHoverInteraction } from '../hooks/useHoverInteraction';
 
 export const Bars = ({
   trialId,
@@ -15,9 +14,6 @@ export const Bars = ({
   xScale: ScaleBand<string>;
   height: number;
 }) => {
-  const { handleMouseEnter, handleMouseLeave } =
-    useHoverInteraction(trialId);
-
   return (
     <g>
       {
