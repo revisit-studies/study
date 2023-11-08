@@ -35,11 +35,46 @@
       },
       "response": [
         {
-          "id": "arp",
+          "id": "choice",
           "prompt": "Which ranking do you think is fairer?",
           "required": true,
           "location": "sidebar",
-          "type": "iframe"
+          "type": "shortText"
+        },
+        {
+          "id": "leftARP",
+          "prompt": "leftARP",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText"
+        },
+        {
+          "id": "rightARP",
+          "prompt": "rightARP",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText"
+        },
+        {
+          "id": "leftRanking",
+          "prompt": "leftRanking",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText"
+        },
+        {
+          "id": "rightRanking",
+          "prompt": "rightRanking",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText"
+        },
+        {
+          "id": "correctChoice",
+          "prompt": "correctChoice",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText"
         }
       ],
       "nextButtonLocation": "sidebar",

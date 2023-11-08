@@ -91,18 +91,16 @@ const FairnessJND = ({ parameters, setAnswer }: StimulusParams) => {
         trialId: id,
         status: true,
         answers: {
-          [`${id}/${parameters.taskid}/left/arp`]: r1.arp,
-          [`${id}/${parameters.taskid}/right/arp`]: r2.arp,
-          [`${id}/${parameters.taskid}/left/ranking`]: r1.ranking,
-          [`${id}/${parameters.taskid}/right/ranking`]: r2.ranking,
-          [`${id}/${parameters.taskid}/choice`]:
-            r1.arp === arp ? 'left' : 'right',
-          [`${id}/${parameters.taskid}/correctChoice`]:
-            r1.arp < r2.arp ? 'left' : 'right',
+          [`${id}/leftARP`]: r1.arp,
+          [`${id}/rightARP`]: r2.arp,
+          [`${id}/leftRanking`]: JSON.stringify(r1.ranking),
+          [`${id}/rightRanking`]: JSON.stringify(r2.ranking),
+          [`${id}/choice`]: r1.arp === arp ? 'left' : 'right',
+          [`${id}/correctChoice`]: r1.arp < r2.arp ? 'left' : 'right',
         },
       });
     },
-    [parameters, r1, r2, id, setAnswer]
+    [r1, r2, id, setAnswer]
   );
 
   useEffect(() => {
