@@ -9,14 +9,8 @@ id,Name,Miles per Gallon,Cylinders,Displacement,Horsepower,Weight (lbs),Accelera
 7,plymouth fury iii,14.0,8,440.0,215.0,4312,8.5,1970-01-01,USA
 8,pontiac catalina,14.0,8,455.0,225.0,4425,10.0,1970-01-01,USA
 9,amc ambassador dpl,15.0,8,390.0,190.0,3850,8.5,1970-01-01,USA
-10,citroen ds-21 pallas,,4,133.0,115.0,3090,17.5,1970-01-01,Europe
-11,chevrolet chevelle concours (sw),,8,350.0,165.0,4142,11.5,1970-01-01,USA
-12,ford torino (sw),,8,351.0,153.0,4034,11.0,1970-01-01,USA
-13,plymouth satellite (sw),,8,383.0,175.0,4166,10.5,1970-01-01,USA
-14,amc rebel sst (sw),,8,360.0,175.0,3850,11.0,1970-01-01,USA
 15,dodge challenger se,15.0,8,383.0,170.0,3563,10.0,1970-01-01,USA
 16,plymouth 'cuda 340,14.0,8,340.0,160.0,3609,8.0,1970-01-01,USA
-17,ford mustang boss 302,,8,302.0,140.0,3353,8.0,1970-01-01,USA
 18,chevrolet monte carlo,15.0,8,400.0,150.0,3761,9.5,1970-01-01,USA
 19,buick estate wagon (sw),14.0,8,455.0,225.0,3086,10.0,1970-01-01,USA
 20,toyota corona mark ii,24.0,4,113.0,95.0,2372,15.0,1970-01-01,Japan
@@ -37,8 +31,6 @@ id,Name,Miles per Gallon,Cylinders,Displacement,Horsepower,Weight (lbs),Accelera
 35,datsun pl510,27.0,4,97.0,88.0,2130,14.5,1971-01-01,Japan
 36,chevrolet vega 2300,28.0,4,140.0,90.0,2264,15.5,1971-01-01,USA
 37,toyota corona,25.0,4,113.0,95.0,2228,14.0,1971-01-01,Japan
-38,ford pinto,25.0,4,98.0,,2046,19.0,1971-01-01,USA
-39,volkswagen super beetle 117,,4,97.0,48.0,1978,20.0,1971-01-01,Europe
 40,amc gremlin,19.0,6,232.0,100.0,2634,13.0,1971-01-01,USA
 41,plymouth satellite custom,16.0,6,225.0,105.0,3439,15.5,1971-01-01,USA
 42,chevrolet chevelle malibu,17.0,6,250.0,100.0,3329,15.5,1971-01-01,USA
@@ -132,7 +124,6 @@ id,Name,Miles per Gallon,Cylinders,Displacement,Horsepower,Weight (lbs),Accelera
 130,toyota mark ii,20.0,6,156.0,122.0,2807,13.5,1973-01-01,Japan
 131,oldsmobile omega,11.0,8,350.0,180.0,3664,11.0,1973-01-01,USA
 132,plymouth duster,20.0,6,198.0,95.0,3102,16.5,1974-01-01,USA
-133,ford maverick,21.0,6,200.0,,2875,17.0,1974-01-01,USA
 134,amc hornet,19.0,6,232.0,100.0,2901,16.0,1974-01-01,USA
 135,chevrolet nova,15.0,6,250.0,100.0,3336,17.0,1974-01-01,USA
 136,datsun b210,31.0,4,79.0,67.0,1950,19.0,1974-01-01,Japan
@@ -336,13 +327,11 @@ id,Name,Miles per Gallon,Cylinders,Displacement,Horsepower,Weight (lbs),Accelera
 334,audi 5000s (diesel),36.4,5,121.0,67.0,2950,19.9,1980-01-01,Europe
 335,mercedes-benz 240d,30.0,4,146.0,67.0,3250,21.8,1980-01-01,Europe
 336,honda civic 1500 gl,44.6,4,91.0,67.0,1850,13.8,1980-01-01,Japan
-337,renault lecar deluxe,40.9,4,85.0,,1835,17.3,1980-01-01,Europe
 338,subaru dl,33.8,4,97.0,67.0,2145,18.0,1980-01-01,Japan
 339,vokswagen rabbit,29.8,4,89.0,62.0,1845,15.3,1980-01-01,Europe
 340,datsun 280-zx,32.7,6,168.0,132.0,2910,11.4,1980-01-01,Japan
 341,mazda rx-7 gs,23.7,3,70.0,100.0,2420,12.5,1980-01-01,Japan
 342,triumph tr7 coupe,35.0,4,122.0,88.0,2500,15.1,1980-01-01,Europe
-343,ford mustang cobra,23.6,4,140.0,,2905,14.3,1980-01-01,USA
 344,honda Accelerationord,32.4,4,107.0,72.0,2290,17.0,1980-01-01,Japan
 345,plymouth reliant,27.2,4,135.0,84.0,2490,15.7,1982-01-01,USA
 346,buick skylark,26.6,4,151.0,84.0,2635,16.4,1982-01-01,USA
@@ -360,13 +349,11 @@ id,Name,Miles per Gallon,Cylinders,Displacement,Horsepower,Weight (lbs),Accelera
 358,ford escort 4w,34.4,4,98.0,65.0,2045,16.2,1982-01-01,USA
 359,ford escort 2h,29.9,4,98.0,65.0,2380,20.7,1982-01-01,USA
 360,volkswagen jetta,33.0,4,105.0,74.0,2190,14.2,1982-01-01,Europe
-361,renault 18i,34.5,4,100.0,,2320,15.8,1982-01-01,Europe
 362,honda prelude,33.7,4,107.0,75.0,2210,14.4,1982-01-01,Japan
 363,toyota corolla,32.4,4,108.0,75.0,2350,16.8,1982-01-01,Japan
 364,datsun 200sx,32.9,4,119.0,100.0,2615,14.8,1982-01-01,Japan
 365,mazda 626,31.6,4,120.0,74.0,2635,18.3,1982-01-01,Japan
 366,peugeot 505s turbo diesel,28.1,4,141.0,80.0,3230,20.4,1982-01-01,Europe
-367,saab 900s,,4,121.0,110.0,2800,15.4,1982-01-01,Europe
 368,volvo diesel,30.7,6,145.0,76.0,3160,19.6,1982-01-01,Europe
 369,toyota cressida,25.4,6,168.0,116.0,2900,12.6,1982-01-01,Japan
 370,datsun 810 maxima,24.2,6,146.0,120.0,2930,13.8,1982-01-01,Japan
@@ -381,7 +368,6 @@ id,Name,Miles per Gallon,Cylinders,Displacement,Horsepower,Weight (lbs),Accelera
 379,dodge aries se,29.0,4,135.0,84.0,2525,16.0,1982-01-01,USA
 380,pontiac phoenix,27.0,4,151.0,90.0,2735,18.0,1982-01-01,USA
 381,ford fairmont futura,24.0,4,140.0,92.0,2865,16.4,1982-01-01,USA
-382,amc concord dl,23.0,4,151.0,,3035,20.5,1982-01-01,USA
 383,volkswagen rabbit l,36.0,4,105.0,74.0,1980,15.3,1982-01-01,Europe
 384,mazda glc custom l,37.0,4,91.0,68.0,2025,18.2,1982-01-01,Japan
 385,mazda glc custom,31.0,4,91.0,68.0,1970,17.6,1982-01-01,Japan
