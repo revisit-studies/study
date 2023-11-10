@@ -1,5 +1,5 @@
 import { Image } from '@mantine/core';
-import { PREFIX } from '../App';
+import { PREFIX } from '../components/GlobalConfigParser';
 
 const defaultStyle = {
   maxWidth: '100%',

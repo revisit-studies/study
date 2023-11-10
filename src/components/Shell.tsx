@@ -33,8 +33,7 @@ import {
 import { NavigateWithParams } from '../utils/NavigateWithParams';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 
-import { useDisclosure } from '@mantine/hooks';
-import { PREFIX } from '../App';
+import { PREFIX } from './GlobalConfigParser';
 import ComponentController from '../controllers/ComponentController';
 import { FirebaseContext, getSession, initFirebase } from '../storage/init';
 import { ProvenanceStorage } from '../storage/types';

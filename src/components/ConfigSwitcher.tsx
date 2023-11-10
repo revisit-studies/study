@@ -2,7 +2,7 @@ import { Card, Container, Image, Text, UnstyledButton } from '@mantine/core';
 import { GlobalConfig, StudyConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 
-import { PREFIX } from '../App';
+import { PREFIX } from './GlobalConfigParser';
 import { useNavigate } from 'react-router-dom';
 
 type Props = {

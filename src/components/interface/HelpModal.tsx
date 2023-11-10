@@ -3,7 +3,7 @@ import { toggleShowHelpText, useFlagsDispatch, useFlagsSelector } from '../../st
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 import { useAppSelector } from '../../store/store';
 import { useEffect, useState } from 'react';
-import { PREFIX } from '../../App';
+import { PREFIX } from '.././GlobalConfigParser';
 
 
 export default function HelpModal() {

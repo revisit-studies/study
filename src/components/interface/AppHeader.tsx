@@ -18,7 +18,7 @@ import {
 } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PREFIX } from '../../App';
+import { PREFIX } from '.././GlobalConfigParser';
 import { useCurrentStep } from '../../routes';
 import { useAppSelector, useCreatedStore } from '../../store/store';
 import {

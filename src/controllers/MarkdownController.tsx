@@ -1,4 +1,4 @@
-import { PREFIX } from '../App';
+import { PREFIX } from '../components/GlobalConfigParser';
 import { useEffect, useState } from 'react';
 import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
 
