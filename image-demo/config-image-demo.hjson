@@ -7,7 +7,7 @@
             The reVISit Team
         ]
         date: 2023-04-14
-        description: A demo of image stimuli, based on the study design by Padilla et al., Frontiers in Psychology, 2021.
+        description: A demo of image stimuli, based on the study design by Padilla et al., Frontiers in Psychology, 2021 (doi:10.3389/fpsyg.2020.579267). Data is collected via form fields.
         organizations: [
             University of Utah
             WPI
