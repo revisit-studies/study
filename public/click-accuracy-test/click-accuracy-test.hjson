@@ -1,7 +1,7 @@
 {
     $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json
     studyMetadata: {
-        title: Dynamic React Stimuli and Provenace Tracking
+        title: Dynamic React Stimuli and Provenance Tracking
         version: pilot
         authors: [
             The reVISit Team
