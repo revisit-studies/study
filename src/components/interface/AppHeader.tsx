@@ -21,6 +21,9 @@ import { useNavigate } from 'react-router-dom';
 import { PREFIX } from '.././GlobalConfigParser';
 import { useCurrentStep } from '../../routes';
 import { useStoreDispatch, useStoreSelector, useUntrrackedActions } from '../../store/store';
+import { MODE } from '../../storage/initialize';
+
+
 export default function AppHeader() {
   const studyConfig = useStoreSelector((state) => state.unTrrackedSlice.config);
   const order = useStoreSelector((state) => state.trrackedSlice.sequence);
@@ -46,6 +49,9 @@ export default function AppHeader() {
 
   const logoPath = studyConfig?.uiConfig.logoPath;
   const withProgressBar = studyConfig?.uiConfig.withProgressBar;
+
+  const [searchParams, setSearchParams] = useState(new URLSearchParams(window.location.search));
+  const admin = searchParams.get('admin') || 'f';
 
   return (
     <Header height="70" p="md">
@@ -77,49 +83,50 @@ export default function AppHeader() {
 
             <Space w="md"></Space>
 
-            <Menu
-              shadow="md"
-              width={200}
-              zIndex={1}
-              opened={menuOpened}
-              onChange={setMenuOpened}
-            >
-              <Menu.Target>
-                <ActionIcon size="lg">
-                  <IconDotsVertical />
-                </ActionIcon>
-              </Menu.Target>
+            {(MODE === 'dev' || admin === 't') && (
+              <Menu
+                shadow="md"
+                width={200}
+                zIndex={1}
+                opened={menuOpened}
+                onChange={setMenuOpened}
+              >
+                <Menu.Target>
+                  <ActionIcon size="lg">
+                    <IconDotsVertical />
+                  </ActionIcon>
+                </Menu.Target>
+                <Menu.Dropdown>
+                  <Menu.Item
+                    icon={<IconSchema size={14} />}
+                    onClick={() => storeDispatch(toggleShowAdmin())}
+                  >
+                    Admin Mode
+                  </Menu.Item>
 
-              <Menu.Dropdown>
-                <Menu.Item
-                  icon={<IconSchema size={14} />}
-                  onClick={() => storeDispatch(toggleShowAdmin())}
-                >
-                  Admin Mode
-                </Menu.Item>
-
-                <Menu.Item
-                  component="a"
-                  href={
-                    studyConfig !== null
-                      ? `mailto:${studyConfig.uiConfig.contactEmail}`
-                      : undefined
-                  }
-                  icon={<IconMail size={14} />}
-                >
-                  Contact
-                </Menu.Item>
-                <Menu.Item
-                  onClick={async () => {
-                    // await clearCache();
-                    navigate(0);
-                  }}
-                  icon={<IconTrash size={14} />}
-                >
-                  Clear Cache & Refresh
-                </Menu.Item>
-              </Menu.Dropdown>
-            </Menu>
+                  <Menu.Item
+                    component="a"
+                    href={
+                      studyConfig !== null
+                        ? `mailto:${studyConfig.uiConfig.contactEmail}`
+                        : undefined
+                    }
+                    icon={<IconMail size={14} />}
+                  >
+                    Contact
+                  </Menu.Item>
+                  <Menu.Item
+                    onClick={async () => {
+                      // await clearCache();
+                      navigate(0);
+                    }}
+                    icon={<IconTrash size={14} />}
+                  >
+                    Clear Cache & Refresh
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            )}
           </Flex>
         </Grid.Col>
       </Grid>

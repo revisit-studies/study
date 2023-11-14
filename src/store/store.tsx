@@ -8,6 +8,7 @@ import { ResponseBlockLocation, StudyConfig } from '../parser/types';
 import { RootState, Step, TrrackedAnswer, TrrackedState } from './types';
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import { ParticipantData } from '../storage/types';
+import { NodeId } from '@trrack/core';
 
 export const PID = 'PARTICIPANT_ID';
 export const SESSION_ID = 'SESSION_ID';
@@ -64,6 +65,7 @@ export async function studyStoreCreator(
   const steps = getSteps(sequence);
   const emptyAnswers = Object.assign({}, ...Object.keys(steps).map((id) => ({[id]: {}})));
 
+
   const initialTrrackedState: TrrackedState = {
     studyIdentifiers: {
       study_id: studyId,
@@ -96,21 +98,22 @@ export async function studyStoreCreator(
           trialId: string;
           answer: string | object;
           startTime: number;
-          provenanceGraph?: ProvenanceGraph<any, any, any>,
+          provenanceRoot?: NodeId,
           endTime: number;
         }>
       ) {
-       
+
         (state[payload.trialName] as TrialRecord) = ({
           complete: true,
           answer: payload.answer,
           startTime: payload.startTime,
-          provenanceGraph: payload.provenanceGraph,
+          provenanceRoot: payload.provenanceRoot,
           endTime: payload.endTime,
         } as any);
       },
     },
   });
+
 
   const configSlice = createSlice({
     name: 'studySlice',

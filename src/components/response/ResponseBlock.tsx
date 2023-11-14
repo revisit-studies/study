@@ -73,6 +73,7 @@ export default function ResponseBlock({
 
   const unTrrackedActions = useUntrrackedActions();
 
+
   useEffect(() => {
     if (storedAnswer) {
       answerValidator.setValues(storedAnswer);
@@ -104,9 +105,9 @@ export default function ResponseBlock({
       storeDispatch(
         saveTrialAnswer({
           trialName: currentStep,
-          trialId: trialId || 'NoID',
+          trialId: id || 'NoID',
           answer,
-          provenanceGraph: graph || undefined,
+          provenanceRoot: root || undefined,
           startTime,
           endTime: Date.now(),
         })
@@ -137,20 +138,26 @@ export default function ResponseBlock({
     <div style={style}>
       {responses.map((response) => (
         <React.Fragment key={`${response.id}-${id}`}>
-          <ResponseSwitcher
-            status={status}
-            storedAnswer={ response.type === 'iframe' ? (aggregateResponses || {})[`${id}/${response.id}`]
-              : (storedAnswer as any)[`${id}/${response.id}`]
-            }
-            answer={{
-              ...answerValidator.getInputProps(`${id}/${response.id}`, {
-                type: response.type === 'checkbox' ? 'checkbox' : 'input',
-              }),
-            }}
-            response={response}
-          />
-          {hasCorrectAnswer && checkClicked && (
-            <Text>The correct answer is: {configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer}</Text>
+          {response.hidden ? (
+            ''
+          ) : (
+            <>
+              <ResponseSwitcher
+                status={status}
+                storedAnswer={ response.type === 'iframe' ? (aggregateResponses || {})[`${id}/${response.id}`]
+                  : (storedAnswer as any)[`${id}/${response.id}`]
+                }
+                answer={{
+                  ...answerValidator.getInputProps(`${id}/${response.id}`, {
+                    type: response.type === 'checkbox' ? 'checkbox' : 'input',
+                  }),
+                }}
+                response={response}
+              />
+              {hasCorrectAnswer && checkClicked && (
+                <Text>The correct answer is: {configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer}</Text>
+              )}
+            </>
           )}
         </React.Fragment>
       ))}
@@ -171,10 +178,11 @@ export default function ResponseBlock({
                 ? !checkClicked
                 : !areResponsesValid
             }
-            to={
-                `/${studyId}/${nextStep}`
-            }
-            process={() => {setCheckClicked(false); processNext();}}
+            to={`/${studyId}/${nextStep}`}
+            process={() => {
+              setCheckClicked(false);
+              processNext();
+            }}
             label={configInUse.nextButtonText || 'Next'}
           />
         )}

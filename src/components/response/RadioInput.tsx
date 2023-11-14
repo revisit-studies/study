@@ -18,10 +18,11 @@ export default function RadioInput({
   return (
     <>
       <Radio.Group
-        name="radioInput"
+        name={`radioInput${response.id}`}
         label={prompt}
         withAsterisk={required}
         size={'md'}
+        key={response.id}
         {...answer}
         // This overrides the answers error. Which..is bad?
         error={generateErrorMessage(response, answer, options)}

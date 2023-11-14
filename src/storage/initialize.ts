@@ -6,7 +6,7 @@ export function appendMode(str: string, mode: string) {
   return `${mode}-${str}`;
 }
 
-const MODE = import.meta.env.PROD ? 'prod' : 'dev';
+export const MODE = import.meta.env.PROD ? 'prod' : 'dev';
 const constants: StorageEngineConstants = {
   MODE: MODE,
   PID_KEY: '__pid',

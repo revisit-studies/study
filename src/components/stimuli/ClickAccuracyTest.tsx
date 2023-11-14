@@ -23,7 +23,7 @@ interface ClickAccuracyTest {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ClickAccuracyTest = ({ parameters, trialId, setAnswer }: StimulusParams) => {
+const ClickAccuracyTest = ({ parameters, trialId, setAnswer }: StimulusParams<any>) => {
   const [ref, dms] = useChartDimensions(chartSettings);
   const [x, setX] = useState(100);
   const [y, setY] = useState(100);
@@ -64,7 +64,7 @@ const ClickAccuracyTest = ({ parameters, trialId, setAnswer }: StimulusParams) =
     setAnswer({
       trialId: id,
       status: true,
-      provenanceGraph: trrack.graph.backend,
+      provenanceRoot: trrack.graph.root.id,
       answers: {
           [`${id}/${taskid}`]: [
           ...new Set([distance]),

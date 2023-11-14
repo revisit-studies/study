@@ -26,10 +26,10 @@ export function NextButton({
       onClick={async () => {
         if (process) process();
         if (to === 'auto' && computedTo) {
-          navigate(`${computedTo}`);
+          navigate(`${computedTo}${window.location.search}`);
         }
         if (to !== 'auto') {
-          navigate(to);
+          navigate(`${to}${window.location.search}`);
         }
       }}
     >

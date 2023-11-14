@@ -5,6 +5,7 @@ import { TrrackedAnswer } from '../../../store/types';
 
 export const generateInitFields = (responses: Response[], id: string, storedAnswer: TrrackedAnswer) => {
   let initObj = {};
+
   responses.forEach((response) => {
     const answer = storedAnswer[`${id}/${response.id}`];
     if (answer) {
