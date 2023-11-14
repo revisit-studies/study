@@ -1,6 +1,6 @@
-import { useAppSelector } from '../store';
+import { useStoreSelector } from '../store';
 
 export function useSurvey() {
-  const { survey } = useAppSelector((state) => state.trrackedSlice);
+  const { survey } = useStoreSelector((state) => state.trrackedSlice);
   return survey;
 }

@@ -20,20 +20,16 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PREFIX } from '.././GlobalConfigParser';
 import { useCurrentStep } from '../../routes';
-import { useAppSelector, useCreatedStore } from '../../store/store';
-import {
-  toggleShowAdmin,
-  toggleShowHelpText,
-  useFlagsDispatch,
-} from '../../store/flags';
-
+import { useStoreDispatch, useStoreSelector, useUntrrackedActions } from '../../store/store';
 export default function AppHeader() {
-  const studyConfig = useAppSelector((state) => state.unTrrackedSlice.config);
-  const order = useAppSelector((state) => state.trrackedSlice.order);
+  const studyConfig = useStoreSelector((state) => state.unTrrackedSlice.config);
+  const order = useStoreSelector((state) => state.trrackedSlice.sequence);
 
-  const clearCache = useCreatedStore().clearCache;
-  const flagsDispatch = useFlagsDispatch();
+  const storeDispatch = useStoreDispatch();
   const navigate = useNavigate();
+
+  const unTrrackedActions = useUntrrackedActions();
+  const { toggleShowHelpText, toggleShowAdmin } = unTrrackedActions;
 
   const currentStep = useCurrentStep();
 
@@ -73,7 +69,7 @@ export default function AppHeader() {
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"
-                onClick={() => flagsDispatch(toggleShowHelpText())}
+                onClick={() => storeDispatch(toggleShowHelpText())}
               >
                 Help
               </Button>
@@ -97,7 +93,7 @@ export default function AppHeader() {
               <Menu.Dropdown>
                 <Menu.Item
                   icon={<IconSchema size={14} />}
-                  onClick={() => flagsDispatch(toggleShowAdmin())}
+                  onClick={() => storeDispatch(toggleShowAdmin())}
                 >
                   Admin Mode
                 </Menu.Item>
@@ -115,7 +111,7 @@ export default function AppHeader() {
                 </Menu.Item>
                 <Menu.Item
                   onClick={async () => {
-                    await clearCache();
+                    // await clearCache();
                     navigate(0);
                   }}
                   icon={<IconTrash size={14} />}

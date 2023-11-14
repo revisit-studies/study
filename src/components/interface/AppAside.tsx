@@ -8,18 +8,17 @@ import {
   Text
 } from '@mantine/core';
 import { useCurrentStep } from '../../routes';
-import { useFlagsSelector } from '../../store/flags';
 import { DownloadPanel } from '../DownloadPanel';
 import { StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
-import { useAppDispatch, useAppSelector } from '../../store/store';
+import { useStoreSelector } from '../../store/store';
 import React from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IconArrowRight } from '@tabler/icons-react';
 
 export default function AppAside() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const showAdmin = useFlagsSelector((state: any) => state.showAdmin);
+  const showAdmin = useStoreSelector((state: any) => state.unTrrackedSlice.showAdmin);
   const navigate = useNavigate();
 
   const step = useCurrentStep();
@@ -30,7 +29,7 @@ export default function AppAside() {
 
   const studyConfig = useStudyConfig();
 
-  const taskList = useAppSelector((state) => state.trrackedSlice.order);
+  const taskList = useStoreSelector((state) => state.trrackedSlice.sequence);
 
   const tasks = taskList.map((task) => ({...studyConfig.components[task], id: task}));
 

@@ -2,7 +2,7 @@ import { NodeId } from '@trrack/core';
 import { Firestore } from 'firebase/firestore';
 import localforage from 'localforage';
 import { StudyProvenance } from '../store/store';
-import { StudyConfig } from '../parser/types';
+import { Answer, StudyConfig } from '../parser/types';
 
 export type LocalForage = typeof localforage;
 
@@ -15,7 +15,6 @@ export type ProvenanceStorage = {
     trrack: StudyProvenance
   ): Promise<null | {
     createNew(): Promise<any>;
-    restoreSession(): Promise<any>;
   }>;
   firestore: Firestore;
 startFirestore: () => void;
@@ -59,3 +58,8 @@ export type FsSession = {
     } | null;
   };
 };
+
+export interface ParticipantData {
+  sequence: string[],
+  answers: Record<string, Answer>,
+}

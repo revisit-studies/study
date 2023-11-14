@@ -1,11 +1,11 @@
-import { useAppSelector } from '../store';
+import { useStoreSelector } from '../store';
 import { useCurrentStep } from '../../routes';
 
 export function useNextStep() {
   const currentStep = useCurrentStep();
 
-  const config = useAppSelector((state) => state.unTrrackedSlice.config);
-  const { steps } = useAppSelector((state) => state.unTrrackedSlice);
+  const config = useStoreSelector((state) => state.unTrrackedSlice.config);
+  const { steps } = useStoreSelector((state) => state.unTrrackedSlice);
 
   if (currentStep === 'end' || currentStep === '') return null;
 

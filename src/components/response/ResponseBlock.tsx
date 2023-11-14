@@ -7,22 +7,15 @@ import {
   ResponseBlockLocation,
 } from '../../parser/types';
 import { useCurrentStep } from '../../routes';
-import { useAppDispatch, useStoreActions, useStudySelector } from '../../store/store';
-import {
-  setIframeAnswers,
-  updateResponseBlockValidation,
-  useAggregateResponses,
-  useAreResponsesValid,
-  useFlagsDispatch,
-  useFlagsSelector,
-} from '../../store/flags';
+import { useStoreDispatch, useTrrackedActions, useAreResponsesValid, useAggregateResponses, useStoreSelector, useUntrrackedActions } from '../../store/store';
 import { useNextStep } from '../../store/hooks/useNextStep';
-import { TrialResult } from '../../store/types';
+import { TrialResult, TrrackedAnswer } from '../../store/types';
 import { deepCopy } from '../../utils/deepCopy';
 import { NextButton } from '../NextButton';
 import { useAnswerField } from '../stimuli/inputcomponents/utils';
 import ResponseSwitcher from './ResponseSwitcher';
 import React from 'react';
+import { useStorageEngine } from '../../store/contexts/storage';
 
 type Props = {
   status: TrialResult | null;
@@ -31,15 +24,10 @@ type Props = {
   style?: React.CSSProperties;
 };
 
-function useSavedSurvey() {
-  const survey = useStudySelector().survey;
-  return Object.keys(survey || {}).length > 0 ? survey : null;
-}
-
 export default function ResponseBlock({
   config,
   location,
-  status = null,
+  status,
   style,
 }: Props) {
   const { trialId = null, studyId = null } = useParams<{
@@ -54,19 +42,17 @@ export default function ResponseBlock({
   const responses = configInUse?.response?.filter((r) =>
     r.location ? r.location === location : location === 'belowStimulus'
   ) || [];
-  const savedSurvey = useSavedSurvey();
 
-  const { saveTrialAnswer } = useStoreActions();
-  const appDispatch = useAppDispatch();
-  const flagDispatch = useFlagsDispatch();
-  const answerValidator = useAnswerField(responses, id);
+  const { saveTrialAnswer } = useTrrackedActions();
+  const storeDispatch = useStoreDispatch();
+  const answerValidator = useAnswerField(responses, id, storedAnswer as TrrackedAnswer);
   const areResponsesValid = useAreResponsesValid(id);
   const aggregateResponses = useAggregateResponses(id);
   const [disableNext, setDisableNext] = useInputState(!storedAnswer);
   const [checkClicked, setCheckClicked] = useState(false);
   const currentStep = useCurrentStep();
   const nextStep = useNextStep();
-  const flagsSelector = useFlagsSelector((state) => state);
+  const storeSelector = useStoreSelector((state) => state);
 
   const hasCorrectAnswer = ((configInUse?.correctAnswer?.length || 0) > 0);
 
@@ -81,30 +67,41 @@ export default function ResponseBlock({
     const iframeResponse = responses.find((r) => r.type === 'iframe');
     if (iframeResponse) {
       const answerId = `${id}/${iframeResponse.id}`;
-      answerValidator.setValues({...answerValidator.values, [answerId]: flagsSelector.iframeAnswers});
+      answerValidator.setValues({...answerValidator.values, [answerId]: storeSelector.unTrrackedSlice.iframeAnswers});
     }
-  }, [flagsSelector.iframeAnswers]);
+  }, [storeSelector.unTrrackedSlice.iframeAnswers]);
+
+  const unTrrackedActions = useUntrrackedActions();
 
   useEffect(() => {
-    flagDispatch(
-      updateResponseBlockValidation({
+    if (storedAnswer) {
+      answerValidator.setValues(storedAnswer);
+    }
+  }, [storedAnswer]);
+
+  useEffect(() => {
+    console.log('here');
+    storeDispatch(
+      unTrrackedActions.updateResponseBlockValidation({
         location,
         trialId: id,
         status: answerValidator.isValid(),
         answers: deepCopy(answerValidator.values),
       })
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answerValidator.values, id]);
+    console.log(location, answerValidator.isValid(), answerValidator.values, storedAnswer);
+  }, [answerValidator.values,]);
+
+  const { storageEngine } = useStorageEngine();
 
   const processNext = useCallback(() => {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const answer = deepCopy(aggregateResponses!);
 
-    const graph = flagsSelector.trialRecord[id].provenanceGraph;
+    const graph = storeSelector.unTrrackedSlice.trialRecord[id].provenanceGraph;
 
-    if (!status?.complete) {
-      appDispatch(
+    if (!storedAnswer) {
+      storeDispatch(
         saveTrialAnswer({
           trialName: currentStep,
           trialId: trialId || 'NoID',
@@ -114,15 +111,19 @@ export default function ResponseBlock({
           endTime: Date.now(),
         })
       );
-      flagDispatch(setIframeAnswers([]));
+      storeDispatch(unTrrackedActions.setIframeAnswers([]));
+
+      // Update database
+      if (storageEngine) {
+        storageEngine.saveAnswer(currentStep, answer);
+      }
     }
 
     setDisableNext(!disableNext);
   }, [
     aggregateResponses,
     answerValidator.values,
-    appDispatch,
-    savedSurvey,
+    storeDispatch,
     config?.type,
     currentStep,
     disableNext,
@@ -132,23 +133,14 @@ export default function ResponseBlock({
     trialId,
   ]);
 
-
   return (
     <div style={style}>
       {responses.map((response) => (
         <React.Fragment key={`${response.id}-${id}`}>
           <ResponseSwitcher
             status={status}
-            storedAnswer={ response.type === 'iframe' ? (aggregateResponses || {})[`${id}/${response.id}`] : null
-              // isSurvey
-              //   ? savedSurvey
-              //     ? (savedSurvey as any)[`${id}/${response.id}`]
-              //     : null
-              //   : storedAnswer
-              //   ? (storedAnswer as any)[`${id}/${response.id}`]
-              //   : response.type === 'iframe'
-              //   ? (aggregateResponses || {})[`${id}/${response.id}`]
-              //   : null
+            storedAnswer={ response.type === 'iframe' ? (aggregateResponses || {})[`${id}/${response.id}`]
+              : (storedAnswer as any)[`${id}/${response.id}`]
             }
             answer={{
               ...answerValidator.getInputProps(`${id}/${response.id}`, {
@@ -177,10 +169,9 @@ export default function ResponseBlock({
             disabled={
               hasCorrectAnswer
                 ? !checkClicked
-                : !status?.complete && !areResponsesValid
+                : !areResponsesValid
             }
             to={
-
                 `/${studyId}/${nextStep}`
             }
             process={() => {setCheckClicked(false); processNext();}}

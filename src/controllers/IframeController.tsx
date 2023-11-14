@@ -3,12 +3,8 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { PREFIX as BASE_PREFIX } from '../components/GlobalConfigParser';
 import { useCurrentStep } from '../routes';
-import {
-  setIframeAnswers,
-  useFlagsDispatch,
-} from '../store/flags';
 import { useNextStep } from '../store/hooks/useNextStep';
-import {useStoreActions} from '../store/store';
+import { useStoreDispatch, useTrrackedActions, useUntrrackedActions } from '../store/store';
 
 
 const PREFIX = '@REVISIT_COMMS';
@@ -26,9 +22,10 @@ type Props = {
 };
 
 export default function IframeController({path, parameters}: Props) {
-  const { saveTrialAnswer } = useStoreActions();
+  const { saveTrialAnswer } = useTrrackedActions();
 
-  const flagDispatch = useFlagsDispatch();
+  const unTrrackedActions = useUntrrackedActions();
+  const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
 
   const ref = useRef<HTMLIFrameElement>(null);
@@ -75,7 +72,7 @@ export default function IframeController({path, parameters}: Props) {
             }
             break;
           case `${PREFIX}/ANSWERS`:
-              flagDispatch(setIframeAnswers(data.message.answer));
+              storeDispatch(unTrrackedActions.setIframeAnswers(data.message.answer));
             break;
 
 
@@ -87,7 +84,7 @@ export default function IframeController({path, parameters}: Props) {
 
     return () => window.removeEventListener('message', handler);
   }, [
-    flagDispatch,
+    storeDispatch,
     computedTo,
     currentStep,
     dispatch,

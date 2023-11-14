@@ -1,4 +1,4 @@
-import { useAppSelector } from '../store';
+import { useStoreSelector } from '../store';
 import { useCurrentStep } from '../../routes';
 import { TrialResult } from '../types';
 
@@ -9,11 +9,11 @@ import { TrialResult } from '../types';
  */
 
 export function useComponentStatus(): TrialResult | null {
-  const study = useAppSelector((state) => state.trrackedSlice);
+  const study = useStoreSelector((state) => state.trrackedSlice);
 
   const currentStep = useCurrentStep();
 
-  const status = (study[currentStep] as any as TrialResult);
+  const status = (study.answers[currentStep] as any as TrialResult);
 
   return status;
 }

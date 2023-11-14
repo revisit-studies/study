@@ -1,7 +1,8 @@
 import { Suspense } from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
 import { ReactComponent } from '../parser/types';
-import { setAnswer } from '../store/flags';
+import { StimulusParams } from '../store/types';
+import { useStoreDispatch, useUntrrackedActions } from '../store/store';
 
 const modules = import.meta.glob(
   '../components/stimuli/**/*.{mjs,js,mts,ts,jsx,tsx}',
@@ -20,6 +21,18 @@ const ReactComponentController = ({
   const reactPath = `../components/stimuli/${path}`;
 
   const StimulusComponent = (modules[reactPath] as ModuleNamespace).default;
+
+  const storeDispatch = useStoreDispatch();
+  const unTrrackedActions = useUntrrackedActions();
+  function setAnswer({trialId, status, provenanceGraph, answers}: Parameters<StimulusParams['setAnswer']>[0]) {
+    storeDispatch(unTrrackedActions.updateResponseBlockValidation({
+      location: 'sidebar',
+      trialId,
+      status,
+      provenanceGraph,
+      answers,
+    }));
+  }
 
   return (
     <Suspense fallback={<div>Loading...</div>}>

@@ -4,16 +4,40 @@ import { clearIndexedDbPersistence, terminate } from 'firebase/firestore';
 import localforage from 'localforage';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
-import { StudyConfig } from '../parser/types';
-import { ProvenanceStorage } from '../storage/types';
-import { flagsStore, setTrrackExists } from './flags';
-import { RootState, Step, TrialRecord, TrrackedState, UnTrrackedState } from './types';
+import { ResponseBlockLocation, StudyConfig } from '../parser/types';
+import { RootState, Step, TrrackedAnswer, TrrackedState } from './types';
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
+import { ParticipantData } from '../storage/types';
 
 export const PID = 'PARTICIPANT_ID';
 export const SESSION_ID = 'SESSION_ID';
 
 export const __ACTIVE_SESSION = '__active_session';
+
+
+type TrialRecord = Record<
+  string,
+  {
+    valid: {
+      aboveStimulus: boolean;
+      belowStimulus: boolean;
+      sidebar: boolean;
+    };
+    answers: TrrackedAnswer;
+    provenanceGraph: ProvenanceGraph<any, any, any> | null,
+  }
+>;
+
+interface UnTrrackedState {
+  // Three identifiers given by the study platform
+  steps: Record<string, Step>;
+  config: StudyConfig;
+  showAdmin: boolean;
+  showHelpText: boolean;
+  trialRecord: TrialRecord;
+  trrackExists: boolean;
+  iframeAnswers: string[];
+}
 
 function getSteps(sequence: string[]): Record<string, Step> {
   const steps: Record<string, Step> = {};
@@ -30,30 +54,33 @@ function getSteps(sequence: string[]): Record<string, Step> {
 export async function studyStoreCreator(
   studyId: string,
   config: StudyConfig,
-  order: string[],
-  firebase: ProvenanceStorage
+  sequence: string[],
+  answers: TrrackedAnswer,
 ) {
-
   const lf = localforage.createInstance({
     name: 'sessions',
   });
 
-  const steps = getSteps(order);
-  const stepsToAnswers = Object.assign({}, ...Object.keys(steps).map((id) => ({[id]: {}})));
+  const steps = getSteps(sequence);
+  const emptyAnswers = Object.assign({}, ...Object.keys(steps).map((id) => ({[id]: {}})));
 
   const initialTrrackedState: TrrackedState = {
     studyIdentifiers: {
-      pid: firebase.pid,
       study_id: studyId,
       session_id: crypto.randomUUID(),
     },
-    ...stepsToAnswers,
-    order,
+    answers: answers || emptyAnswers,
+    sequence,
   };
 
   const initialUntrrackedState: UnTrrackedState = {
     steps,
     config,
+    showAdmin: false,
+    showHelpText: false,
+    trialRecord: {} as TrialRecord,
+    trrackExists: false,
+    iframeAnswers: [] as string[],
   };
 
   const studySlice = createTrrackableSlice({
@@ -95,6 +122,56 @@ export async function studyStoreCreator(
       completeStep(state, step) {
         state.steps[step.payload].complete = true;
       },
+      setTrrackExists: (state, action: PayloadAction<boolean>) => {
+        state.trrackExists = action.payload;
+      },
+      toggleShowAdmin: (state) => {
+        state.showAdmin = !state.showAdmin;
+      },
+      toggleShowHelpText: (state) => {
+        state.showHelpText = !state.showHelpText;
+      },
+      setIframeAnswers: (state, action: PayloadAction<string[]>) => {
+        state.iframeAnswers = action.payload;
+      },
+      updateResponseBlockValidation: (
+        state,
+        {
+          payload,
+        }: PayloadAction<{
+          location: ResponseBlockLocation;
+          trialId: string;
+          status: boolean;
+          provenanceGraph?: ProvenanceGraph<any, any, any>
+          answers: Record<string, any>;
+        }>
+      ) => {
+        if (payload.trialId.length === 0) return state;
+  
+        if (!state.trialRecord[payload.trialId]) {
+          state.trialRecord[payload.trialId] = {
+            valid: {
+              aboveStimulus: false,
+              belowStimulus: false,
+              sidebar: false,
+            },
+            answers: {},
+            provenanceGraph: null,
+          };
+        }
+        state.trialRecord[payload.trialId].valid[payload.location] =
+          payload.status;
+        const prev = state.trialRecord[payload.trialId].answers;
+  
+        if(payload.provenanceGraph !== undefined) {
+          state.trialRecord[payload.trialId].provenanceGraph = payload.provenanceGraph;
+        }
+  
+        state.trialRecord[payload.trialId].answers = {
+          ...prev,
+          ...payload.answers,
+        };
+      },
     },
   });
 
@@ -110,41 +187,17 @@ export async function studyStoreCreator(
   // is trrack instance in local storage?
   const savedSessionId = (await getFromLS(lf, studyId)) || trrack.root.id;
 
-  const trrackExists = await firebase.initialize(
-    studyId,
-    savedSessionId,
-    trrack
-  );
-
-  if (!trrackExists) {
-    await saveToLS(lf, studyId, trrack.root.id);
-  }
-
-  flagsStore.dispatch(setTrrackExists(!!trrackExists));
-
-  trrack.currentChange((trigger: any) => {
-    if (trigger === 'new') {
-      firebase.saveNewProvenanceNode(trrack);
-    }
-  });
-
   return {
     store,
     trrack,
     trrackStore,
     actions: studySlice.actions,
+    unTrrackedActions: configSlice.actions,
     async clearCache() {
       await terminate(firebase.firestore);
       await clearIndexedDbPersistence(firebase.firestore);
       firebase.startFirestore();
       await lf.clear();
-    },
-    restoreSession() {
-      if (!trrackExists) {
-        return;
-      }
-
-      trrackExists.restoreSession();
     },
     startNewSession() {
       if (!trrackExists) {
@@ -181,21 +234,49 @@ export type StudyStore = Awaited<ReturnType<typeof studyStoreCreator>>;
 export type StudyProvenance = StudyStore['trrack'];
 export type StudyState = ReturnType<StudyStore['store']['getState']>;
 
-export const MainStoreContext = createContext<StudyStore>(null!);
+export const StudyStoreContext = createContext<StudyStore>(null!);
 
 export function useCreatedStore() {
-  return useContext(MainStoreContext);
+  return useContext(StudyStoreContext);
 }
 
-export function useStoreActions() {
+export function useTrrackedActions() {
   return useCreatedStore().actions;
 }
 
-// Hooks
-type AppDispatch = StudyStore['store']['dispatch'];
-
-export const useAppDispatch: () => AppDispatch = useDispatch;
-export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector;
-export function useStudySelector() {
-  return useAppSelector((s) => s.trrackedSlice);
+export function useUntrrackedActions() {
+  return useCreatedStore().unTrrackedActions;
 }
+
+// Hooks
+type StoreDispatch = StudyStore['store']['dispatch'];
+
+export const useStoreDispatch: () => StoreDispatch = useDispatch;
+export const useStoreSelector: TypedUseSelectorHook<RootState> = useSelector;
+export function useStudySelector() {
+  return useStoreSelector((s) => s.trrackedSlice);
+}
+
+export function useAreResponsesValid(id: string) {
+  return useStoreSelector((state) => {
+    if (id.length === 0) return true;
+
+    const valid = state.unTrrackedSlice.trialRecord[id]?.valid;
+
+    if (!valid) return false;
+
+    return Object.values(valid).every((x) => x);
+  });
+}
+
+export function useAggregateResponses(id: string) {
+return useStoreSelector((state) => {
+  if (id.length === 0) return null;
+
+  const answers = state.unTrrackedSlice.trialRecord[id]?.answers;
+  if (!answers) return null;
+
+  return answers; // Test
+});
+}
+

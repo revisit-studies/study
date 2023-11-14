@@ -3,11 +3,10 @@ import { useDisclosure } from '@mantine/hooks';
 import { IconCodeDots, IconCodePlus, IconTable } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
 import { useStudyId } from '../routes';
-import { useFirebase } from '../storage/init';
-import { getAllSessionGraphs } from '../storage/queries';
-import { useAppSelector, useCreatedStore } from '../store/store';
+import { useStoreSelector, useCreatedStore } from '../store/store';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { DownloadTidy } from './DownloadTidy';
+import { useStorageEngine } from '../store/contexts/storage';
 
 export function download(graph: string, filename: string) {
   const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(graph);
@@ -22,9 +21,9 @@ export function download(graph: string, filename: string) {
 export function DownloadPanel() {
   const { trrack } = useCreatedStore();
   const config = useStudyConfig();
-  const ids = useAppSelector((s) => s.trrackedSlice.studyIdentifiers);
+  const ids = useStoreSelector((s) => s.trrackedSlice.studyIdentifiers);
   const studyId = useStudyId();
-  const firebase = useFirebase();
+  const { storageEngine } = useStorageEngine();
   const [openDownload, { open, close }] = useDisclosure(false);
 
   const autoDownload = config?.uiConfig.autoDownloadStudy || false;
@@ -38,11 +37,12 @@ export function DownloadPanel() {
 
   useEffect(() => {
     async function fn() {
-      await firebase.completeSession(trrack.root.id);
+      if (!storageEngine) return;
+      await storageEngine.finalizeParticipantSession();
     }
 
     fn();
-  }, [trrack, firebase]);
+  }, [trrack]);
 
   useEffect(() => {
     if (delayCounter <= 0) return;
@@ -79,13 +79,13 @@ export function DownloadPanel() {
         Download Current (JSON)
       </Button>
       <Button
-        disabled={!firebase.connected}
+        disabled={!storageEngine?.isConnected()}
         leftIcon={<IconCodePlus />}
         mt="1em"
         mr="0.5em"
         onClick={async () => {
-          const graphs = await getAllSessionGraphs(firebase.firestore, studyId);
-
+          if (!storageEngine) return;
+          const graphs = await storageEngine.getAllParticpantsData(studyId);
           download(JSON.stringify(graphs, null, 2), jsonFilename);
         }}
         display="block"
@@ -93,7 +93,7 @@ export function DownloadPanel() {
         Download All (JSON)
       </Button>
       <Button
-        disabled={!firebase.connected}
+        disabled={!storageEngine?.isConnected()}
         leftIcon={<IconTable />}
         mt="1em"
         mr="0.5em"
