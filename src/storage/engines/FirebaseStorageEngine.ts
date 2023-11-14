@@ -6,4 +6,11 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   // TODO: Implement
+  connect(): Promise<void> {
+    return Promise.resolve();
+  }
+
+  isConnected(): boolean {
+    return false;
+  }
 }
