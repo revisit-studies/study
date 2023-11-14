@@ -16,7 +16,6 @@ import {
   Property,
   REQUIRED_PROPS,
 } from '../storage/downloadTidy';
-import { useFirebase } from '../storage/init';
 import { useStoreSelector } from '../store/store';
 
 type Props = {
@@ -26,7 +25,6 @@ type Props = {
 };
 
 export function DownloadTidy({ opened, close, filename }: Props) {
-  const fb = useFirebase();
   const studyId = useStudyId();
   const sequence = useStoreSelector((state) => state.unTrrackedSlice.config.components);
 
