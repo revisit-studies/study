@@ -20,14 +20,13 @@ type Props = {
 };
 
 export default function ResponseSwitcher({
-  status = null,
-  disabled = !!status?.complete,
   response,
   answer,
   storedAnswer,
 }: Props) {
 
   const ans: any = storedAnswer ? { value: storedAnswer } : answer;
+  const disabled = !!ans;
 
   return (
     <>
