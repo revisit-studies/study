@@ -1,11 +1,17 @@
 import { useForm } from '@mantine/form';
 import { useEffect, useState } from 'react';
 import { BaseResponse, Option, Response } from '../../../parser/types';
+import { TrrackedAnswer } from '../../../store/types';
 
-export const generateInitFields = (responses: Response[], id: string) => {
+export const generateInitFields = (responses: Response[], id: string, storedAnswer: TrrackedAnswer) => {
   let initObj = {};
   responses.forEach((response) => {
-    initObj = { ...initObj, [`${id}/${response.id}`]: response.type === 'iframe' ? [] : '' };
+    const answer = storedAnswer[`${id}/${response.id}`];
+    if (answer) {
+      initObj = { ...initObj, [`${id}/${response.id}`]: answer };
+    } else {
+      initObj = { ...initObj, [`${id}/${response.id}`]: response.type === 'iframe' ? [] : '' };
+    }
   });
 
   return { ...initObj };
@@ -43,11 +49,11 @@ const generateValidation = (responses: Response[], id: string) => {
   return validateObj;
 };
 
-export function useAnswerField(responses: Response[], id: string) {
+export function useAnswerField(responses: Response[], id: string, storedAnswer: TrrackedAnswer) {
   const [_id, setId] = useState<string | null>(null);
 
   const answerField = useForm({
-    initialValues: generateInitFields(responses, id),
+    initialValues: generateInitFields(responses, id, storedAnswer),
     validate: generateValidation(responses, id),
   });
 
