@@ -4,7 +4,7 @@ test('html demo works as intended', async ({ page }) => {
   await page.goto('/');
 
   // Click on html-demo
-  await page.getByRole('button', { name: 'HTML as a Stimulus A simple demo of using stimuli in an HTML file that renders a D3 visualization. Data is collected via a numeric response field.' }).click();
+  await page.getByRole('button', { name: 'HTML as a Stimulus' }).click();
 
   // Check that the page contains the introduction text
   const introText = await page.getByText('Welcome to our study. This is an example study to show how to embed html element');
