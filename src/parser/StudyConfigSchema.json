@@ -33,6 +33,10 @@
       "additionalProperties": false,
       "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.",
       "properties": {
+        "correctAnswer": {},
+        "hidden": {
+          "type": "boolean"
+        },
         "id": {
           "type": "string"
         },
@@ -77,6 +81,10 @@
       "additionalProperties": false,
       "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options.",
       "properties": {
+        "correctAnswer": {},
+        "hidden": {
+          "type": "boolean"
+        },
         "id": {
           "type": "string"
         },
@@ -124,6 +132,10 @@
       "additionalProperties": false,
       "description": "The IFrameResponse interface is used to define the properties of an iframe response. IFrameResponses render as a list, that is connected to a WebsiteComponent. When data is sent from the WebsiteComponent, it is displayed in the list.",
       "properties": {
+        "correctAnswer": {},
+        "hidden": {
+          "type": "boolean"
+        },
         "id": {
           "type": "string"
         },
@@ -249,8 +261,12 @@
       "additionalProperties": false,
       "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the preset. For example, preset: 5 will render 5 radio buttons, and preset: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.",
       "properties": {
+        "correctAnswer": {},
         "desc": {
           "type": "string"
+        },
+        "hidden": {
+          "type": "boolean"
         },
         "id": {
           "type": "string"
@@ -299,6 +315,10 @@
       "additionalProperties": false,
       "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder.",
       "properties": {
+        "correctAnswer": {},
+        "hidden": {
+          "type": "boolean"
+        },
         "id": {
           "type": "string"
         },
@@ -392,6 +412,10 @@
       "additionalProperties": false,
       "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.",
       "properties": {
+        "correctAnswer": {},
+        "hidden": {
+          "type": "boolean"
+        },
         "id": {
           "type": "string"
         },
@@ -610,6 +634,10 @@
       "additionalProperties": false,
       "description": "The RadioResponse interface is used to define the properties of a radio response. RadioResponses render as a radio input with user specified options, and optionally left and right labels.",
       "properties": {
+        "correctAnswer": {},
+        "hidden": {
+          "type": "boolean"
+        },
         "id": {
           "type": "string"
         },
@@ -756,6 +784,10 @@
       "additionalProperties": false,
       "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.",
       "properties": {
+        "correctAnswer": {},
+        "hidden": {
+          "type": "boolean"
+        },
         "id": {
           "type": "string"
         },
@@ -796,6 +828,10 @@
       "additionalProperties": false,
       "description": "The SliderResponse interface is used to define the properties of a slider response. SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100.",
       "properties": {
+        "correctAnswer": {},
+        "hidden": {
+          "type": "boolean"
+        },
         "id": {
           "type": "string"
         },

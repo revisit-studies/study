@@ -10,8 +10,7 @@
         VLAT-full-randomized
         VLAT-mini-randomized
         MVNV
-        
-    
+        brush-interactions
     ],
     configs: {
         html-demo: {
@@ -40,6 +39,9 @@
         },
         survey-demo: {
             path: survey-demo/config-survey-demo.hjson
+        },
+        brush-interactions: {
+            path: brush-interactions/config.hjson
         }
     }
 }

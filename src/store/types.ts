@@ -1,6 +1,7 @@
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import { BaseIndividualComponent, OrderConfig, OrderObject, StudyConfig } from '../parser/types';
 import { StudyStore } from './store';
+import { NodeId } from '@trrack/core';
 
 export type RootState = ReturnType<StudyStore['store']['getState']>;
 
@@ -42,8 +43,9 @@ export interface UnTrrackedState {
   config: StudyConfig;
 }
 
-export interface StimulusParams {
-  parameters: any;
+export interface StimulusParams<T> {
+  parameters: T;
   trialId: string;
-  setAnswer: ({trialId, status, provenanceGraph, answers} : {trialId: string, status: boolean, provenanceGraph?: ProvenanceGraph<any, any, any>, answers: Record<string, any>}) => void
+  updateProvenance: (graph: ProvenanceGraph<any, any, any>) => void;
+  setAnswer: ({trialId, status, provenanceRoot, answers} : {trialId: string, status: boolean, provenanceRoot?: NodeId, answers: Record<string, any>}) => void
 }

@@ -63,9 +63,11 @@ export interface BaseResponse {
   prompt: string;
   required: boolean;
   location: ResponseBlockLocation;
+  correctAnswer?: unknown;
   requiredValue?: unknown;
   requiredLabel?: string;
   paramCapture?: string;
+  hidden?:boolean;
 }
 
 /**

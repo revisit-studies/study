@@ -85,6 +85,7 @@ export default function ResponseBlock({
     }
   }, [flagsSelector.iframeAnswers]);
 
+
   useEffect(() => {
     flagDispatch(
       updateResponseBlockValidation({
@@ -101,15 +102,15 @@ export default function ResponseBlock({
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const answer = deepCopy(aggregateResponses!);
 
-    const graph = flagsSelector.trialRecord[id].provenanceGraph;
+    const root = flagsSelector.trialRecord[id].provenanceRoot;
 
     if (!status?.complete) {
       appDispatch(
         saveTrialAnswer({
           trialName: currentStep,
-          trialId: trialId || 'NoID',
+          trialId: id || 'NoID',
           answer,
-          provenanceGraph: graph || undefined,
+          provenanceRoot: root || undefined,
           startTime,
           endTime: Date.now(),
         })
@@ -137,28 +138,44 @@ export default function ResponseBlock({
     <div style={style}>
       {responses.map((response) => (
         <React.Fragment key={`${response.id}-${id}`}>
-          <ResponseSwitcher
-            status={status}
-            storedAnswer={ response.type === 'iframe' ? (aggregateResponses || {})[`${id}/${response.id}`] : null
-              // isSurvey
-              //   ? savedSurvey
-              //     ? (savedSurvey as any)[`${id}/${response.id}`]
-              //     : null
-              //   : storedAnswer
-              //   ? (storedAnswer as any)[`${id}/${response.id}`]
-              //   : response.type === 'iframe'
-              //   ? (aggregateResponses || {})[`${id}/${response.id}`]
-              //   : null
-            }
-            answer={{
-              ...answerValidator.getInputProps(`${id}/${response.id}`, {
-                type: response.type === 'checkbox' ? 'checkbox' : 'input',
-              }),
-            }}
-            response={response}
-          />
-          {hasCorrectAnswer && checkClicked && (
-            <Text>The correct answer is: {configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer}</Text>
+          {response.hidden ? (
+            ''
+          ) : (
+            <>
+              <ResponseSwitcher
+                status={status}
+                storedAnswer={
+                  response.type === 'iframe'
+                    ? (aggregateResponses || {})[`${id}/${response.id}`]
+                    : null
+                  // isSurvey
+                  //   ? savedSurvey
+                  //     ? (savedSurvey as any)[`${id}/${response.id}`]
+                  //     : null
+                  //   : storedAnswer
+                  //   ? (storedAnswer as any)[`${id}/${response.id}`]
+                  //   : response.type === 'iframe'
+                  //   ? (aggregateResponses || {})[`${id}/${response.id}`]
+                  //   : null
+                }
+                answer={{
+                  ...answerValidator.getInputProps(`${id}/${response.id}`, {
+                    type: response.type === 'checkbox' ? 'checkbox' : 'input',
+                  }),
+                }}
+                response={response}
+              />
+              {hasCorrectAnswer && checkClicked && (
+                <Text>
+                  The correct answer is:{' '}
+                  {
+                    configInUse.correctAnswer?.find(
+                      (answer) => answer.id === response.id
+                    )?.answer
+                  }
+                </Text>
+              )}
+            </>
           )}
         </React.Fragment>
       ))}
@@ -179,11 +196,11 @@ export default function ResponseBlock({
                 ? !checkClicked
                 : !status?.complete && !areResponsesValid
             }
-            to={
-
-                `/${studyId}/${nextStep}`
-            }
-            process={() => {setCheckClicked(false); processNext();}}
+            to={`/${studyId}/${nextStep}`}
+            process={() => {
+              setCheckClicked(false);
+              processNext();
+            }}
             label={configInUse.nextButtonText || 'Next'}
           />
         )}
