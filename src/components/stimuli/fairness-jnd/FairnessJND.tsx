@@ -4,11 +4,6 @@ import { IconCircleCheck } from '@tabler/icons-react';
 import { getHotkeyHandler } from '@mantine/hooks';
 import { useLocation } from 'react-router-dom';
 import { StimulusParams } from '../../../store/types';
-import RankingCombinations from './ranking-combinations.json';
-
-const CombinationsByArp: { [arp: string]: number[][] } = (
-  RankingCombinations as { arp: number; rankings: number[] }[]
-).reduce((a, v) => ({ ...a, [v.arp.toString()]: v.rankings }), {});
 
 const Ranking = ({ rankings }: { rankings: number[] }) => {
   return (
@@ -34,79 +29,57 @@ const Ranking = ({ rankings }: { rankings: number[] }) => {
   );
 };
 
-const FairnessJND = ({ parameters, setAnswer }: StimulusParams<any>) => {
+const FairnessJND = ({
+  parameters,
+  setAnswer,
+}: StimulusParams<{
+  data: { r1: number[]; r2: number[]; r1ARP: string; r2ARP: string };
+}>) => {
   const id = useLocation().pathname;
-  const [selectedArp, setSelectedArp] = useState(-1);
+  const [userChoice, setUserChoice] = useState('');
 
-  const [r1, r2] = useMemo(() => {
-    if (Math.floor(Math.random() * 2) === 0) {
-      return [
-        {
-          arp: parameters.data.r1,
-          ranking:
-            CombinationsByArp[parameters.data.r1][
-              Math.floor(
-                Math.random() * CombinationsByArp[parameters.data.r1].length
-              )
-            ],
-        },
-        {
-          arp: parameters.data.r2,
-          ranking:
-            CombinationsByArp[parameters.data.r2][
-              Math.floor(
-                Math.random() * CombinationsByArp[parameters.data.r2].length
-              )
-            ],
-        },
-      ];
-    } else {
-      return [
-        {
-          arp: parameters.data.r2,
-          ranking:
-            CombinationsByArp[parameters.data.r2][
-              Math.floor(
-                Math.random() * CombinationsByArp[parameters.data.r2].length
-              )
-            ],
-        },
-        {
-          arp: parameters.data.r1,
-          ranking:
-            CombinationsByArp[parameters.data.r1][
-              Math.floor(
-                Math.random() * CombinationsByArp[parameters.data.r1].length
-              )
-            ],
-        },
-      ];
-    }
-  }, [parameters]);
+  const left = useMemo(
+    () => (Math.floor(Math.random() * 2) === 0 ? 'r1' : 'r2'),
+    []
+  );
+
+  const [searchParams] = useState(new URLSearchParams(window.location.search));
+  const isAdmin = (searchParams.get('admin') || 'f') === 't';
 
   const updateAnswer = useCallback(
-    (arp: number) => {
-      setSelectedArp(arp);
+    (choice: string) => {
+      setUserChoice(choice); // left or right
       setAnswer({
         trialId: id,
         status: true,
         answers: {
-          [`${id}/leftARP`]: r1.arp,
-          [`${id}/rightARP`]: r2.arp,
-          [`${id}/leftRanking`]: JSON.stringify(r1.ranking),
-          [`${id}/rightRanking`]: JSON.stringify(r2.ranking),
-          [`${id}/choice`]: r1.arp === arp ? 'left' : 'right',
-          [`${id}/correctChoice`]: r1.arp < r2.arp ? 'left' : 'right',
+          [`${id}/leftARP`]:
+            left === 'r1' ? parameters.data.r1ARP : parameters.data.r2ARP,
+          [`${id}/rightARP`]:
+            left === 'r2' ? parameters.data.r1ARP : parameters.data.r2ARP,
+          [`${id}/leftRanking`]: JSON.stringify(
+            left == 'r1' ? parameters.data.r1 : parameters.data.r2
+          ),
+          [`${id}/rightRanking`]: JSON.stringify(
+            left == 'r2' ? parameters.data.r1 : parameters.data.r2
+          ),
+          [`${id}/choice`]: choice,
+          [`${id}/correctChoice`]:
+            left === 'r1' &&
+            parseFloat(parameters.data.r1ARP) <
+              parseFloat(parameters.data.r2ARP)
+              ? 'left'
+              : 'right',
         },
       });
     },
-    [r1, r2, id, setAnswer]
+    [id, left, parameters.data, setAnswer]
   );
 
   useEffect(() => {
     const ev = getHotkeyHandler([
-      ['ArrowLeft', () => updateAnswer(r1.arp)],
-      ['ArrowRight', () => updateAnswer(r2.arp)],
+      ['ArrowLeft', () => updateAnswer('left')],
+      ['ArrowRight', () => updateAnswer('right')],
     ]);
 
     document.body.addEventListener('keydown', ev);
@@ -114,45 +87,89 @@ const FairnessJND = ({ parameters, setAnswer }: StimulusParams<any>) => {
     return () => {
       document.body.removeEventListener('keydown', ev);
     };
-  }, [r1, r2, updateAnswer]);
+  }, [updateAnswer]);
+
+  let isUserChoiceCorrect = false;
+
+  if (left === 'r1') {
+    if (
+      (userChoice === 'left' &&
+        parseFloat(parameters.data.r1ARP) <
+          parseFloat(parameters.data.r2ARP)) ||
+      (userChoice === 'right' &&
+        parseFloat(parameters.data.r2ARP) < parseFloat(parameters.data.r1ARP))
+    ) {
+      isUserChoiceCorrect = true;
+    }
+  } else {
+    if (
+      (userChoice === 'left' &&
+        parseFloat(parameters.data.r2ARP) <
+          parseFloat(parameters.data.r1ARP)) ||
+      (userChoice === 'right' &&
+        parseFloat(parameters.data.r1ARP) < parseFloat(parameters.data.r2ARP))
+    ) {
+      isUserChoiceCorrect = true;
+    }
+  }
 
   return (
     <div>
       <Grid>
         <Grid.Col span={2}>
-          <Ranking rankings={r1.ranking} />
+          <Ranking
+            rankings={left === 'r1' ? parameters.data.r1 : parameters.data.r2}
+          />
 
           <Button
             fullWidth
-            disabled={r1.arp === selectedArp}
+            disabled={userChoice === 'left'}
             onClick={() => {
-              updateAnswer(r1.arp);
+              updateAnswer('left');
             }}
           >
-            {r1.arp === selectedArp ? (
+            {userChoice === 'left' ? (
               <IconCircleCheck />
             ) : (
               'Select this ranking'
             )}
           </Button>
+          {isAdmin && userChoice && (
+            <div>
+              {left === 'r1' ? parameters.data.r1ARP : parameters.data.r2ARP}
+            </div>
+          )}
         </Grid.Col>
         <Grid.Col span={2}>
-          <Ranking rankings={r2.ranking} />
+          <Ranking
+            rankings={left === 'r1' ? parameters.data.r2 : parameters.data.r1}
+          />
           <Button
             fullWidth
-            disabled={r2.arp === selectedArp}
+            disabled={userChoice === 'right'}
             onClick={() => {
-              updateAnswer(r2.arp);
+              updateAnswer('right');
             }}
           >
-            {r2.arp === selectedArp ? (
+            {userChoice === 'right' ? (
               <IconCircleCheck />
             ) : (
               'Select this ranking'
             )}
           </Button>
+          {isAdmin && userChoice && (
+            <div>
+              {left === 'r1' ? parameters.data.r2ARP : parameters.data.r1ARP}
+            </div>
+          )}
         </Grid.Col>
       </Grid>
+
+      {isAdmin && userChoice && (
+        <div style={{ padding: 20, textAlign: 'center', width: 300 }}>
+          {isUserChoiceCorrect ? 'CORRECT' : 'INCORRECT'}
+        </div>
+      )}
     </div>
   );
 };
