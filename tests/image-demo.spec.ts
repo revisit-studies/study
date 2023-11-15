@@ -4,7 +4,7 @@ test('test', async ({ page }) => {
   await page.goto('/');
 
   // Click on image-demo
-  await page.getByRole('button', { name: 'Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations A demo of image stimuli, based on the study design by Padilla et al., Frontiers in Psychology, 2021.' }).click();
+  await page.getByRole('button', { name: 'Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations' }).click();
 
   // Check that the page contains the introduction text
   const introText = await page.getByText('Welcome to our study. This is a replication of a study by Padilla et al., publis');

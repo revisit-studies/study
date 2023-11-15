@@ -2,7 +2,7 @@ import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Question Types Demo A demo of supported survey question types' }).click();
+  await page.getByRole('button', { name: 'Question Types and Form Elements Demo' }).click();
 
   // Check for introduction page
   const introText = await page.getByText('Welcome to our study. This is an example survey study. It asks basic questions o');
@@ -17,7 +17,7 @@ test('test', async ({ page }) => {
   await page.getByPlaceholder('Enter your answer here').fill('ads');
   await page.getByPlaceholder('Enter your long comments here').fill('asdf');
   await page.getByText('0BadMidGood').click();
-  await page.getByRole('checkbox', { name: 'Mid' }).click();
+  await page.getByRole('checkbox', { name: 'Option 2' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
   // Check that the thank you message is displayed
