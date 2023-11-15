@@ -1,9 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+import { StorageEngineProvider } from './store/contexts/storage';
+import { GlobalInitializer } from './components/GlobalInitializer';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
-    <App />
+    <StorageEngineProvider>
+      <GlobalInitializer />
+    </StorageEngineProvider>
   </React.StrictMode>
 );
