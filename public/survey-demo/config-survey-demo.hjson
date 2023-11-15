@@ -1,13 +1,13 @@
 {
     $schema: https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json
     studyMetadata: {
-        title: Question Types Demo
+        title: Question Types and Form Elements Demo
         version: pilot
         authors: [
             The reVISit Team
         ]
         date: 2023-04-30
-        description: A demo of supported survey question types
+        description: A demo of supported survey question types and form elements. 
         organizations: [
             University of Utah
             WPI
@@ -69,7 +69,7 @@
                 }
                 {
                     id: q3
-                    prompt: Likert example
+                    prompt: Likert scale example
                     required: true
                     location: aboveStimulus
                     type: likert
@@ -79,7 +79,7 @@
                 }
                 {
                     id: q4
-                    prompt: short text example
+                    prompt: Short text example
                     required: true
                     location: aboveStimulus
                     type: shortText
@@ -87,7 +87,7 @@
                 }
                 {
                     id: q5
-                    prompt: long text example
+                    prompt: Long text example
                     required: true
                     location: aboveStimulus
                     type: longText
@@ -95,30 +95,30 @@
                 }
                 {
                     id: q7
-                    prompt: Checkbox example
-                    required: true
+                    prompt: Checkbox example (not required)
+                    required: false
                     location: aboveStimulus
                     type: checkbox
                     options: 
                         [
                         {
-                            label: Bad
-                            value: hello
+                            label: Option 1
+                            value: opt-1
                         }
                         {
-                            label: Mid
-                            value: world
+                            label: Option 2
+                            value: opt-2
                         }
                         {
-                            label: Good
-                            value: idk
+                            label: Option 3
+                            value: opt-3
                         }
                         ]
                     
                 }
                 {
                     id: q6
-                    prompt: Slider example, iframe input example please refer to MVNV example or HTML input demo
+                    prompt: Slider example
                     location: aboveStimulus
                     required: true
                     type: slider

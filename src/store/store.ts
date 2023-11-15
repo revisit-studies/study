@@ -8,7 +8,7 @@ import { StudyConfig } from '../parser/types';
 import { ProvenanceStorage } from '../storage/types';
 import { flagsStore, setTrrackExists } from './flags';
 import { RootState, Step, TrialRecord, TrrackedState, UnTrrackedState } from './types';
-import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
+import { NodeId } from '@trrack/core';
 
 export const PID = 'PARTICIPANT_ID';
 export const SESSION_ID = 'SESSION_ID';
@@ -70,7 +70,7 @@ export async function studyStoreCreator(
           trialId: string;
           answer: string | object;
           startTime: number;
-          provenanceGraph?: ProvenanceGraph<any, any, any>,
+          provenanceRoot?: NodeId,
           endTime: number;
         }>
       ) {
@@ -79,7 +79,7 @@ export async function studyStoreCreator(
           complete: true,
           answer: payload.answer,
           startTime: payload.startTime,
-          provenanceGraph: payload.provenanceGraph,
+          provenanceRoot: payload.provenanceRoot,
           endTime: payload.endTime,
         } as any);
       },
