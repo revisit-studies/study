@@ -1,0 +1,767 @@
+{
+  "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Fairness JND",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2023-04-28",
+    "description": "",
+    "organizations": ["University of Utah", "WPI", "University of Toronto"]
+  },
+  "uiConfig": {
+    "contactEmail": "test@test.com",
+    "helpTextPath": "fairness-jnd/help.md",
+    "logoPath": "assets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true
+  },
+  "baseComponents": {
+    "rankCompare": {
+      "meta": {
+        "difficulty": 5,
+        "chart": "stacked bar"
+      },
+      "description": "A chart with correct answer of 0.66",
+      "instruction": "Two rankings with two groups (colored red and blue) are displayed. \n Select the ranking which you think is fairer.",
+      "type": "react-component",
+      "path": "fairness-jnd/FairnessJND.tsx",
+      "parameters": {
+        "data": {
+          "r1": 0.0,
+          "r2": 0.1
+        },
+        "taskid": "arp"
+      },
+      "response": [
+        {
+          "id": "choice",
+          "prompt": "Which ranking do you think is fairer?",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "hidden": true
+        },
+        {
+          "id": "leftARP",
+          "prompt": "leftARP",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "hidden": true
+        },
+        {
+          "id": "rightARP",
+          "prompt": "rightARP",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "hidden": true
+        },
+        {
+          "id": "leftRanking",
+          "prompt": "leftRanking",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "hidden": true
+        },
+        {
+          "id": "rightRanking",
+          "prompt": "rightRanking",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "hidden": true
+        },
+        {
+          "id": "correctChoice",
+          "prompt": "correctChoice",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "hidden": true
+        }
+      ],
+      "nextButtonLocation": "sidebar",
+      "instructionLocation": "sidebar"
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "fairness-jnd/introduction.md",
+      "response": []
+    },
+    "s1": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1],
+          "r2": [0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0],
+          "r1ARP": "0.00",
+          "r2ARP": "0.10"
+        }
+      }
+    },
+    "s2": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0],
+          "r2": [0, 0, 1, 0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 1],
+          "r1ARP": "0.00",
+          "r2ARP": "0.20"
+        }
+      }
+    },
+    "s3": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1],
+          "r2": [0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0],
+          "r1ARP": "0.00",
+          "r2ARP": "0.30"
+        }
+      }
+    },
+    "s4": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0],
+          "r2": [0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 0],
+          "r1ARP": "0.00",
+          "r2ARP": "0.40"
+        }
+      }
+    },
+    "s5": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 0, 0],
+          "r2": [0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 1, 0, 1, 0, 0, 0, 0],
+          "r1ARP": "0.00",
+          "r2ARP": "0.50"
+        }
+      }
+    },
+    "s6": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 0, 0, 1],
+          "r2": [0, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.00",
+          "r2ARP": "0.60"
+        }
+      }
+    },
+    "s7": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 1],
+          "r2": [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+          "r1ARP": "0.00",
+          "r2ARP": "0.70"
+        }
+      }
+    },
+    "s8": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1],
+          "r2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+          "r1ARP": "0.00",
+          "r2ARP": "0.80"
+        }
+      }
+    },
+    "s9": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0],
+          "r2": [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.00",
+          "r2ARP": "0.90"
+        }
+      }
+    },
+    "s10": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1],
+          "r2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.00",
+          "r2ARP": "1.00"
+        }
+      }
+    },
+    "s11": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 1, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0],
+          "r2": [0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1],
+          "r1ARP": "0.10",
+          "r2ARP": "0.20"
+        }
+      }
+    },
+    "s12": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+          "r2": [0, 1, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1],
+          "r1ARP": "0.10",
+          "r2ARP": "0.30"
+        }
+      }
+    },
+    "s13": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 1, 0],
+          "r2": [0, 0, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1],
+          "r1ARP": "0.10",
+          "r2ARP": "0.40"
+        }
+      }
+    },
+    "s14": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1],
+          "r2": [0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1],
+          "r1ARP": "0.10",
+          "r2ARP": "0.50"
+        }
+      }
+    },
+    "s15": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1],
+          "r2": [0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1],
+          "r1ARP": "0.10",
+          "r2ARP": "0.60"
+        }
+      }
+    },
+    "s16": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0, 0],
+          "r2": [0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1],
+          "r1ARP": "0.10",
+          "r2ARP": "0.70"
+        }
+      }
+    },
+    "s17": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0],
+          "r2": [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.10",
+          "r2ARP": "0.80"
+        }
+      }
+    },
+    "s18": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1],
+          "r2": [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.10",
+          "r2ARP": "0.90"
+        }
+      }
+    },
+    "s19": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0],
+          "r2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.10",
+          "r2ARP": "1.00"
+        }
+      }
+    },
+    "s20": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 1, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 0, 1, 1, 0, 1],
+          "r2": [0, 1, 1, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 0, 0, 1, 0],
+          "r1ARP": "0.20",
+          "r2ARP": "0.30"
+        }
+      }
+    },
+    "s21": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 0],
+          "r2": [0, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0],
+          "r1ARP": "0.20",
+          "r2ARP": "0.40"
+        }
+      }
+    },
+    "s22": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 1, 1, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0],
+          "r2": [0, 0, 1, 1, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1],
+          "r1ARP": "0.20",
+          "r2ARP": "0.50"
+        }
+      }
+    },
+    "s23": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0],
+          "r2": [0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 0, 0, 1, 0, 1, 1, 1, 1],
+          "r1ARP": "0.20",
+          "r2ARP": "0.60"
+        }
+      }
+    },
+    "s24": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1, 0, 0],
+          "r2": [0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1],
+          "r1ARP": "0.20",
+          "r2ARP": "0.70"
+        }
+      }
+    },
+    "s25": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1],
+          "r2": [0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1],
+          "r1ARP": "0.20",
+          "r2ARP": "0.80"
+        }
+      }
+    },
+    "s26": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 1, 1, 0],
+          "r2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1],
+          "r1ARP": "0.20",
+          "r2ARP": "0.90"
+        }
+      }
+    },
+    "s27": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 1, 1, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1],
+          "r2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.20",
+          "r2ARP": "1.00"
+        }
+      }
+    },
+    "s28": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0],
+          "r2": [0, 1, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 1, 1, 0, 0, 1, 1, 1],
+          "r1ARP": "0.30",
+          "r2ARP": "0.40"
+        }
+      }
+    },
+    "s29": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 1],
+          "r2": [0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 1, 1],
+          "r1ARP": "0.30",
+          "r2ARP": "0.50"
+        }
+      }
+    },
+    "s30": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1, 0],
+          "r2": [0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 0, 0, 1, 1, 1, 1],
+          "r1ARP": "0.30",
+          "r2ARP": "0.60"
+        }
+      }
+    },
+    "s31": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 0, 0, 0],
+          "r2": [0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1],
+          "r1ARP": "0.30",
+          "r2ARP": "0.70"
+        }
+      }
+    },
+    "s32": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 0, 0, 0, 0, 1, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1],
+          "r2": [0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.30",
+          "r2ARP": "0.80"
+        }
+      }
+    },
+    "s33": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 0, 0, 0, 1, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1],
+          "r2": [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.30",
+          "r2ARP": "0.90"
+        }
+      }
+    },
+    "s34": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1],
+          "r2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.30",
+          "r2ARP": "1.00"
+        }
+      }
+    },
+    "s35": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0],
+          "r2": [0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 0, 1],
+          "r1ARP": "0.40",
+          "r2ARP": "0.50"
+        }
+      }
+    },
+    "s36": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 0, 1],
+          "r2": [0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1],
+          "r1ARP": "0.40",
+          "r2ARP": "0.60"
+        }
+      }
+    },
+    "s37": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 0],
+          "r2": [0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.40",
+          "r2ARP": "0.70"
+        }
+      }
+    },
+    "s38": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 0, 1, 0, 1],
+          "r2": [0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.40",
+          "r2ARP": "0.80"
+        }
+      }
+    },
+    "s39": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1],
+          "r2": [0, 0, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.40",
+          "r2ARP": "0.90"
+        }
+      }
+    },
+    "s40": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 1],
+          "r2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.40",
+          "r2ARP": "1.00"
+        }
+      }
+    },
+    "s41": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 1, 0],
+          "r2": [0, 1, 1, 0, 1, 1, 1, 1, 1, 1, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0],
+          "r1ARP": "0.50",
+          "r2ARP": "0.60"
+        }
+      }
+    },
+    "s42": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1, 1, 1, 1, 0, 0, 1, 1, 1],
+          "r2": [0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1],
+          "r1ARP": "0.50",
+          "r2ARP": "0.70"
+        }
+      }
+    },
+    "s43": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 1, 1, 1, 0, 0, 1],
+          "r2": [0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.50",
+          "r2ARP": "0.80"
+        }
+      }
+    },
+    "s44": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1],
+          "r2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1],
+          "r1ARP": "0.50",
+          "r2ARP": "0.90"
+        }
+      }
+    },
+    "s45": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1],
+          "r2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.50",
+          "r2ARP": "1.00"
+        }
+      }
+    },
+    "s46": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 0, 1, 1],
+          "r2": [0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1],
+          "r1ARP": "0.60",
+          "r2ARP": "0.70"
+        }
+      }
+    },
+    "s47": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 0, 0, 1, 0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0, 1, 1, 1],
+          "r2": [0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.60",
+          "r2ARP": "0.80"
+        }
+      }
+    },
+    "s48": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 1, 0, 1, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 1, 1, 1],
+          "r2": [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.60",
+          "r2ARP": "0.90"
+        }
+      }
+    },
+    "s49": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1],
+          "r2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.60",
+          "r2ARP": "1.00"
+        }
+      }
+    },
+    "s50": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1],
+          "r2": [0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.70",
+          "r2ARP": "0.80"
+        }
+      }
+    },
+    "s51": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 1, 1, 1],
+          "r2": [0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.70",
+          "r2ARP": "0.90"
+        }
+      }
+    },
+    "s52": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 0, 1, 1, 1, 1, 1, 1, 1],
+          "r2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.70",
+          "r2ARP": "1.00"
+        }
+      }
+    },
+    "s53": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1, 0, 1, 1, 1, 1, 1],
+          "r2": [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.80",
+          "r2ARP": "0.90"
+        }
+      }
+    },
+    "s54": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 0, 1, 1, 1, 1, 1],
+          "r2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.80",
+          "r2ARP": "1.00"
+        }
+      }
+    },
+    "s55": {
+      "baseComponent": "rankCompare",
+      "parameters": {
+        "data": {
+          "r1": [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1],
+          "r2": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+          "r1ARP": "0.90",
+          "r2ARP": "1.00"
+        }
+      }
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      {
+        "order": "random",
+        "components": [
+          "s1",
+          "s2",
+          "s3",
+          "s4",
+          "s5",
+          "s6",
+          "s7",
+          "s8",
+          "s9",
+          "s10",
+          "s11",
+          "s12",
+          "s13",
+          "s14",
+          "s15",
+          "s16",
+          "s17",
+          "s18",
+          "s19",
+          "s21",
+          "s22",
+          "s23",
+          "s24",
+          "s25",
+          "s26",
+          "s27",
+          "s28",
+          "s29",
+          "s30",
+          "s31",
+          "s32",
+          "s33",
+          "s34",
+          "s35",
+          "s36",
+          "s37",
+          "s38",
+          "s39",
+          "s40",
+          "s41",
+          "s42",
+          "s43",
+          "s44",
+          "s45",
+          "s46",
+          "s47",
+          "s48",
+          "s49",
+          "s50",
+          "s51",
+          "s52",
+          "s53",
+          "s54",
+          "s55"
+        ]
+      }
+    ]
+  }
+}

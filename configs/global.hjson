@@ -11,8 +11,12 @@
         VLAT-mini-randomized
         MVNV
         brush-interactions
+        fairness-jnd
     ],
     configs: {
+        fairness-jnd: {
+            path: fairness-jnd/config-fairness-jnd.json
+        }
         html-demo: {
             path: html-demo/config-html-demo.hjson
         },
