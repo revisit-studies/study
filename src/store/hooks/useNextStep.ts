@@ -5,13 +5,14 @@ export function useNextStep() {
   const currentStep = useCurrentStep();
 
   const config = useStoreSelector((state) => state.unTrrackedSlice.config);
-  const { steps } = useStoreSelector((state) => state.unTrrackedSlice);
+  const { sequence } = useStoreSelector((state) => state.trrackedSlice);
 
   if (currentStep === 'end' || currentStep === '') return null;
 
   if (!config) return null;
 
-  return (
-    currentStep && steps[currentStep] && (steps[currentStep].next || 'end')
-  );
+  const currentStepIndex = sequence.indexOf(currentStep);
+  const nextStep = sequence[currentStepIndex + 1];
+
+  return nextStep || 'end';
 }

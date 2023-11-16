@@ -112,16 +112,14 @@ export function generateStudiesRoutes(
   const routes: RouteObject[] = [];
  
   if (studyId && config && sequence) {
-    const enhancedSequence = [...sequence as string[], 'end'];
-
     const stepRoutes: RouteObject[] = [];
 
     stepRoutes.push({
       path: '/',
-      element: <NavigateWithParams to={`${enhancedSequence[0]}`} replace />,
+      element: <NavigateWithParams to={`${sequence[0]}`} replace />,
     });
 
-    enhancedSequence.forEach((step: string) => {
+    sequence.forEach((step: string) => {
       if (step === 'end') {
         stepRoutes.push({
           path: '/end',

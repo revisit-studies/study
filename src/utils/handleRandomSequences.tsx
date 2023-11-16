@@ -92,7 +92,12 @@ export function generateSequenceArray(config: StudyConfig, numSequences = 10000)
 
   const sequenceArray: string[][] = [];
   Array.from({ length: numSequences }).forEach(() => {
+    // Generate a sequence
     const sequence = orderObjectToList(config.sequence, latinSquareObject);
+    sequence.push('end');
+
+    // Add the sequence to the array
+    sequenceArray.push(sequence);
 
     // Refill the latin square if it is empty
     Object.entries(latinSquareObject).forEach(([key, value]) => {
@@ -100,8 +105,6 @@ export function generateSequenceArray(config: StudyConfig, numSequences = 10000)
         latinSquareObject[key] = generateLatinSquare(config, key);
       }
     });
-
-    sequenceArray.push(sequence);
   });
 
   return sequenceArray;
