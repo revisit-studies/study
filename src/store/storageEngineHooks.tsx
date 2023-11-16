@@ -1,6 +1,6 @@
 import React, { ReactNode, createContext, useContext } from 'react';
 
-import { StorageEngine } from '../../storage/engines/StorageEngine';
+import { StorageEngine } from '../storage/engines/StorageEngine';
 
 interface StorageContextValue {
   storageEngine: StorageEngine | undefined;

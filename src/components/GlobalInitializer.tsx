@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useStorageEngine } from '../store/contexts/storage';
+import { useStorageEngine } from '../store/storageEngineHooks';
 import { GlobalConfigParser } from './GlobalConfigParser';
 import { initalizeStorageEngine } from '../storage/initialize';
 

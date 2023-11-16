@@ -2,6 +2,7 @@ import { StorageEngineConstants, StorageEngine } from './StorageEngine';
 import localforage from 'localforage';
 import { ParticipantData } from '../types';
 import { Answer } from '../../parser/types';
+import { v4 as uuidv4 } from 'uuid';
 
 export class LocalStorageEngine extends StorageEngine {
   private studyDatabase: LocalForage | undefined = undefined;
@@ -18,7 +19,7 @@ export class LocalStorageEngine extends StorageEngine {
     return this.studyDatabase !== undefined;
   }
 
-  async initializeStudy(studyId: string, config: object) {
+  async initializeStudyDb(studyId: string, config: object) {
     // Create or retrieve database for study
     this.studyDatabase = await localforage.createInstance({
       name: studyId,
@@ -69,8 +70,6 @@ export class LocalStorageEngine extends StorageEngine {
       participant = await this.studyDatabase.getItem(participantId);
     }
 
-    console.log(participantId, participant);
-
     return participant;
   }
 
@@ -83,7 +82,16 @@ export class LocalStorageEngine extends StorageEngine {
       throw new Error('Study database not initialized');
     }
 
-    return await this.studyDatabase.getItem('currentParticipant') as string | null;
+    const currentParticipantId = await this.studyDatabase.getItem('currentParticipant');
+    if (currentParticipantId) {
+      this.currentParticipantId = currentParticipantId as string;
+      return currentParticipantId as string;
+    } else {
+      const newParticipantId = uuidv4();
+      await this.studyDatabase.setItem('currentParticipant', newParticipantId);
+      this.currentParticipantId = newParticipantId;
+      return newParticipantId;
+    }
   }
 
   async clearCurrentParticipantId() {
@@ -140,7 +148,6 @@ export class LocalStorageEngine extends StorageEngine {
     }
 
     // Get the current row
-    console.log(sequenceArray);
     const currentRow = sequenceArray.pop();
     if (!currentRow) {
       throw new Error('Latin square is empty');

@@ -6,7 +6,7 @@ import { useStudyId } from '../routes';
 import { useStoreSelector, useCreatedStore } from '../store/store';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { DownloadTidy } from './DownloadTidy';
-import { useStorageEngine } from '../store/contexts/storage';
+import { useStorageEngine } from '../store/storageEngineHooks';
 
 export function download(graph: string, filename: string) {
   const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(graph);

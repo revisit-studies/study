@@ -33,13 +33,13 @@ export abstract class StorageEngine {
 
   abstract connect(): Promise<void>;
 
-  abstract initializeStudy(studyId: string, config: object): Promise<void>;
+  abstract initializeStudyDb(studyId: string, config: object): Promise<void>;
 
   abstract initializeParticipantSession(participantId: string, sequence: string[]): Promise<ParticipantData>;
   abstract getParticipantSession(participantId: string): Promise<ParticipantData | null>;
   abstract finalizeParticipantSession(): Promise<void>;
 
-  abstract getCurrentParticipantId(): Promise<string | null>;
+  abstract getCurrentParticipantId(): Promise<string>;
   abstract clearCurrentParticipantId(): Promise<void>;
 
   abstract saveAnswer(taskId: string, answer: Answer['answer']): Promise<void>;

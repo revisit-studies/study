@@ -15,7 +15,7 @@ import { NextButton } from '../NextButton';
 import { useAnswerField } from '../stimuli/inputcomponents/utils';
 import ResponseSwitcher from './ResponseSwitcher';
 import React from 'react';
-import { useStorageEngine } from '../../store/contexts/storage';
+import { useStorageEngine } from '../../store/storageEngineHooks';
 
 type Props = {
   status: TrialResult | null;
