@@ -17,7 +17,6 @@ export async function studyStoreCreator(
     {},
     ...sequence.map((id) => ({[id]: { aboveStimulus: { valid: false, values: {} }, belowStimulus: { valid: false, values: {} }, sidebar: { valid: false, values: {} } }}))
   );
-  console.log(sequence, emptyValidation);
 
   const initialTrrackedState: TrrackedState = {
     studyId,

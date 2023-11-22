@@ -6,8 +6,6 @@ import { StoredAnswer } from '../../../store/types';
 export const generateInitFields = (responses: Response[], currentStep: string, storedAnswer: StoredAnswer['answer']) => {
   let initObj = {};
 
-  console.log(storedAnswer);
-
   responses.forEach((response) => {
     const answer = storedAnswer ? storedAnswer[`${currentStep}/${response.id}`] : {};
     if (answer) {
