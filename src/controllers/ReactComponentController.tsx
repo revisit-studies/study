@@ -13,17 +13,9 @@ const modules = import.meta.glob(
   { eager: true }
 );
 
-const ReactComponentController = ({
-  path,
-  parameters,
-  trialId,
-}: {
-  path: string;
-  parameters: ReactComponent['parameters'];
-  trialId: string | null;
-}) => {
-  const reactPath = `../components/stimuli/${path}`;
+const ReactComponentController = ({ currentConfig }: { currentConfig: ReactComponent; }) => {
 
+  const reactPath = `../components/stimuli/${path}`;
   const StimulusComponent = (modules[reactPath] as ModuleNamespace).default;
 
   const storeDispatch = useStoreDispatch();
@@ -53,7 +45,7 @@ const ReactComponentController = ({
   return (
     <Suspense fallback={<div>Loading...</div>}>
       <StimulusComponent
-        parameters={parameters}
+        parameters={currentConfig.parameters}
         trialId={trialId}
         setAnswer={setAnswer}
         updateProvenance={updateProvenance}

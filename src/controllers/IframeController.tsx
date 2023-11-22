@@ -4,7 +4,8 @@ import { useNavigate } from 'react-router-dom';
 import { PREFIX as BASE_PREFIX } from '../components/GlobalConfigParser';
 import { useCurrentStep } from '../routes';
 import { useNextStep } from '../store/hooks/useNextStep';
-import { useStoreDispatch, useTrrackedActions, useUntrrackedActions } from '../store/store';
+import { useStoreDispatch, useUntrrackedActions } from '../store/store';
+import { WebsiteComponent } from '../parser/types';
 
 
 const PREFIX = '@REVISIT_COMMS';
@@ -16,14 +17,7 @@ const defaultStyle = {
   marginTop: '-50px'
 };
 
-type Props = {
-  path: string;
-  parameters?: Record<string, unknown>;
-};
-
-export default function IframeController({path, parameters}: Props) {
-  const { saveTrialAnswer } = useTrrackedActions();
-
+export default function IframeController({ currentConfig }: { currentConfig: WebsiteComponent; }) {
   const unTrrackedActions = useUntrrackedActions();
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
@@ -62,8 +56,8 @@ export default function IframeController({path, parameters}: Props) {
       if (typeof data === 'object' && iframeId === data.iframeId) {
         switch (data.type) {
           case `${PREFIX}/WINDOW_READY`:
-            if (parameters) {
-              sendMessage('STUDY_DATA', parameters);
+            if (currentConfig.parameters) {
+              sendMessage('STUDY_DATA', currentConfig.parameters);
             }
             break;
           case `${PREFIX}/READY`:
@@ -90,16 +84,15 @@ export default function IframeController({path, parameters}: Props) {
     dispatch,
     iframeId,
     navigate,
-    parameters,
+    currentConfig,
     sendMessage,
-    saveTrialAnswer,
   ]);
   
   return (
     <div >
       <iframe
         ref={ref}
-        src={`${BASE_PREFIX}${path}?trialid=${currentStep}&id=${iframeId}`}
+        src={`${BASE_PREFIX}${currentConfig.path}?trialid=${currentStep}&id=${iframeId}`}
         style={defaultStyle}
       ></iframe>
     </div>

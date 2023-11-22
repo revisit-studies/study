@@ -38,16 +38,10 @@ export default function ComponentController() {
       />
 
       <Suspense key={step} fallback={<div>Loading...</div>}>
-        {currentConfig.type === 'markdown' && <MarkdownController path={currentConfig.path || ''} />}
-        {currentConfig.type === 'website' && <IframeController path={currentConfig.path || ''} parameters={currentConfig.parameters} />}
-        {currentConfig.type === 'image' && 
-          <ImageController
-            path={currentConfig.path}
-            style={currentConfig.style}
-          />}
-        {currentConfig.type === 'react-component' &&
-          <ReactComponentController path={currentConfig.path || ''} parameters={currentConfig.parameters} trialId={step}/>
-        }
+        {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
+        {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} />}
+        {currentConfig.type === 'image' && <ImageController  currentConfig={currentConfig}/>}
+        {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} />}
       </Suspense>
 
       {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
