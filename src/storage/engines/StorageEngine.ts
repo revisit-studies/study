@@ -1,4 +1,4 @@
-import { Answer } from '../../parser/types';
+import { StoredAnswer } from '../../store/types';
 import { ParticipantData } from '../types';
 
 export type StorageEngineConstants = {
@@ -42,7 +42,7 @@ export abstract class StorageEngine {
   abstract getCurrentParticipantId(): Promise<string>;
   abstract clearCurrentParticipantId(): Promise<void>;
 
-  abstract saveAnswer(taskId: string, answer: Answer['answer']): Promise<void>;
+  abstract saveAnswer(currentStep: string, answer: StoredAnswer): Promise<void>;
 
   abstract setSequenceArray(latinSquare: string[][]): Promise<void>;
   abstract getSequenceArray(): Promise<string[][] | null>;

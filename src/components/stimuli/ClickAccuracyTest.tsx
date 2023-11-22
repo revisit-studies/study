@@ -4,7 +4,7 @@ import {useCallback, useEffect, useMemo, useState} from 'react';
 import {Box, Slider} from '@mantine/core';
 import {initializeTrrack, Registry} from '@trrack/core';
 import { StimulusParams } from '../../store/types';
-import { useLocation } from 'react-router-dom';
+import { useCurrentStep } from '../../routes';
 
 const chartSettings = {
   marginBottom: 40,
@@ -23,11 +23,11 @@ interface ClickAccuracyTest {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const ClickAccuracyTest = ({ parameters, trialId, setAnswer }: StimulusParams<any>) => {
+const ClickAccuracyTest = ({ parameters, setAnswer }: StimulusParams<any>) => {
   const [ref, dms] = useChartDimensions(chartSettings);
   const [x, setX] = useState(100);
   const [y, setY] = useState(100);
-  const id = useLocation().pathname;
+  const currentStep = useCurrentStep();
   const [speed, setSpeed] = useState(300);
   const taskid = parameters.taskid;
 
@@ -62,16 +62,15 @@ const ClickAccuracyTest = ({ parameters, trialId, setAnswer }: StimulusParams<an
     trrack.apply('Clicked', actions.click({distance: +distance, clickX: pointer[0], clickY: pointer[1]}));
     
     setAnswer({
-      trialId: id,
       status: true,
-      provenanceRoot: trrack.graph.root.id,
+      provenanceGraph: trrack.graph.backend,
       answers: {
-          [`${id}/${taskid}`]: [
+          [`${currentStep}/${taskid}`]: [
           ...new Set([distance]),
         ],
       },
     });
-  },[actions, id, setAnswer, taskid, trrack]);
+  },[actions, currentStep, setAnswer, taskid, trrack]);
 
 
   useEffect(() => {

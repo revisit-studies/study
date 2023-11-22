@@ -1,8 +1,8 @@
 import { StorageEngineConstants, StorageEngine } from './StorageEngine';
 import localforage from 'localforage';
 import { ParticipantData } from '../types';
-import { Answer } from '../../parser/types';
 import { v4 as uuidv4 } from 'uuid';
+import { StoredAnswer } from '../../store/types';
 
 export class LocalStorageEngine extends StorageEngine {
   private studyDatabase: LocalForage | undefined = undefined;
@@ -102,7 +102,7 @@ export class LocalStorageEngine extends StorageEngine {
     await this.studyDatabase.removeItem('currentParticipant');
   }
 
-  async saveAnswer(taskId: string, answer: Answer['answer']) {
+  async saveAnswer(currentStep: string, answer: StoredAnswer) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
@@ -118,13 +118,7 @@ export class LocalStorageEngine extends StorageEngine {
     }
 
     // Save answer
-    if (!participant.answers[taskId]) {
-      participant.answers[taskId] = {
-        id: taskId,
-        answer: answer,
-      };
-    }
-    participant.answers[taskId].answer = answer;
+    participant.answers[currentStep] = answer;
     await this.studyDatabase.setItem(this.currentParticipantId, participant);
   }
 

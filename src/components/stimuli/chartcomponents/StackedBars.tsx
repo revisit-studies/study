@@ -2,14 +2,12 @@ export const StackedBars = ({
   data,
   barWidth,
   yScale,
-  trialId,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any[];
   barWidth: number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   yScale: any;
-  trialId: string;
 }) => {
   return (
     <g>

@@ -5,11 +5,11 @@ import { NodeId } from '@trrack/core';
 
 export type RootState = ReturnType<StudyStore['store']['getState']>;
 
-export interface TrialResult {
-  complete: boolean;
-  answer: string | object | null;
+export interface StoredAnswer {
+  answer: Record<string, Record<string, unknown>>;
   startTime: number;
   endTime: number;
+  provenanceGraph?: TrrackedProvenance,
 }
 
 export type PracticeResult = TrialResult;

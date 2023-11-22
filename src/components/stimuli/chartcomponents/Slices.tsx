@@ -1,9 +1,7 @@
 export const Slices = ({
-  trialId,
   arcs,
   data,
 }: {
-  trialId: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   arcs: any[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

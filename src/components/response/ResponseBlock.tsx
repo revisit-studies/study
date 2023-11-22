@@ -30,11 +30,10 @@ export default function ResponseBlock({
   status,
   style,
 }: Props) {
-  const { trialId = null, studyId = null } = useParams<{
-    trialId: string;
+  const { studyId = null } = useParams<{
     studyId: string;
   }>();
-  const id = useLocation().pathname;
+  const currentStep = useCurrentStep();
   const storedAnswer = status?.answer;
 
   const configInUse = (config) as IndividualComponent;
@@ -45,12 +44,11 @@ export default function ResponseBlock({
 
   const { saveTrialAnswer } = useTrrackedActions();
   const storeDispatch = useStoreDispatch();
-  const answerValidator = useAnswerField(responses, id, storedAnswer as TrrackedAnswer);
+  const answerValidator = useAnswerField(responses, currentStep, storedAnswer);
   const areResponsesValid = useAreResponsesValid(id);
   const aggregateResponses = useAggregateResponses(id);
   const [disableNext, setDisableNext] = useInputState(!storedAnswer);
   const [checkClicked, setCheckClicked] = useState(false);
-  const currentStep = useCurrentStep();
   const nextStep = useNextStep();
   const storeSelector = useStoreSelector((state) => state);
 
@@ -66,7 +64,7 @@ export default function ResponseBlock({
   useEffect(() => {
     const iframeResponse = responses.find((r) => r.type === 'iframe');
     if (iframeResponse) {
-      const answerId = `${id}/${iframeResponse.id}`;
+      const answerId = `${currentStep}/${iframeResponse.id}`;
       answerValidator.setValues({...answerValidator.values, [answerId]: storeSelector.unTrrackedSlice.iframeAnswers});
     }
   }, [storeSelector.unTrrackedSlice.iframeAnswers]);
@@ -81,43 +79,45 @@ export default function ResponseBlock({
   }, [storedAnswer]);
 
   useEffect(() => {
-    console.log('here');
     storeDispatch(
       unTrrackedActions.updateResponseBlockValidation({
         location,
-        trialId: id,
+        currentStep,
         status: answerValidator.isValid(),
-        answers: deepCopy(answerValidator.values),
+        values: deepCopy(answerValidator.values),
       })
     );
-    console.log(location, answerValidator.isValid(), answerValidator.values, storedAnswer);
-  }, [answerValidator.values,]);
+  }, [answerValidator.values, currentStep, location]);
 
   const { storageEngine } = useStorageEngine();
 
   const processNext = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const answer = deepCopy(aggregateResponses!);
+    // Get answer from across the 3 response blocks and the provenance graph
+    const trialValidation = deepCopy(storeSelector.unTrrackedSlice.trialValidation[currentStep]);
+    const answer = Object.values(trialValidation).reduce((acc, curr) => {
+      if (Object.hasOwn(curr, 'values')) {
+        return {...acc, ...(curr as ValidationStatus).values};
+      }
+      return acc;
+    }, {});
+    const provenanceGraph = storeSelector.unTrrackedSlice.trialValidation[currentStep].provenanceGraph;
+    const endTime = Date.now();
 
-    const graph = storeSelector.unTrrackedSlice.trialRecord[id].provenanceGraph;
-
-    if (!storedAnswer) {
+    if (Object.keys(storedAnswer || {}).length === 0) {
       storeDispatch(
         saveTrialAnswer({
-          trialName: currentStep,
-          trialId: id || 'NoID',
+          currentStep,
           answer,
-          provenanceRoot: root || undefined,
           startTime,
-          endTime: Date.now(),
+          endTime,
+          provenanceGraph,
         })
       );
-      storeDispatch(unTrrackedActions.setIframeAnswers([]));
-
       // Update database
       if (storageEngine) {
-        storageEngine.saveAnswer(currentStep, answer);
+        storageEngine.saveAnswer(currentStep, { answer, startTime, endTime, provenanceGraph });
       }
+      storeDispatch(unTrrackedActions.setIframeAnswers([]));
     }
 
     setDisableNext(!disableNext);

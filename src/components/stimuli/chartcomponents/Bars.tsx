@@ -1,13 +1,11 @@
 import { ScaleBand, ScaleLinear } from 'd3';
 
 export const Bars = ({
-  trialId,
   data,
   xScale,
   yScale,
   height,
 }: {
-  trialId: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any;
   yScale: ScaleLinear<number, number>;

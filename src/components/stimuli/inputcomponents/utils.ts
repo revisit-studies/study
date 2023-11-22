@@ -1,30 +1,32 @@
 import { useForm } from '@mantine/form';
 import { useEffect, useState } from 'react';
 import { BaseResponse, Option, Response } from '../../../parser/types';
-import { TrrackedAnswer } from '../../../store/types';
+import { StoredAnswer } from '../../../store/types';
 
-export const generateInitFields = (responses: Response[], id: string, storedAnswer: TrrackedAnswer) => {
+export const generateInitFields = (responses: Response[], currentStep: string, storedAnswer: StoredAnswer['answer']) => {
   let initObj = {};
 
+  console.log(storedAnswer);
+
   responses.forEach((response) => {
-    const answer = storedAnswer[`${id}/${response.id}`];
+    const answer = storedAnswer ? storedAnswer[`${currentStep}/${response.id}`] : {};
     if (answer) {
-      initObj = { ...initObj, [`${id}/${response.id}`]: answer };
+      initObj = { ...initObj, [`${currentStep}/${response.id}`]: answer };
     } else {
-      initObj = { ...initObj, [`${id}/${response.id}`]: response.type === 'iframe' ? [] : '' };
+      initObj = { ...initObj, [`${currentStep}/${response.id}`]: response.type === 'iframe' ? [] : '' };
     }
   });
 
   return { ...initObj };
 };
 
-const generateValidation = (responses: Response[], id: string) => {
+const generateValidation = (responses: Response[], currentStep: string) => {
   let validateObj = {};
   responses.forEach((response) => {
     if (response.required) {
       validateObj = {
         ...validateObj,
-        [`${id}/${response.id}`]: (value: string | string[]) => {
+        [`${currentStep}/${response.id}`]: (value: string | string[]) => {
           if (Array.isArray(value)) {
             if(response.requiredValue != null && !Array.isArray(response.requiredValue)) {
               return 'Incorrect required value';
@@ -50,20 +52,20 @@ const generateValidation = (responses: Response[], id: string) => {
   return validateObj;
 };
 
-export function useAnswerField(responses: Response[], id: string, storedAnswer: TrrackedAnswer) {
+export function useAnswerField(responses: Response[], currentStep: string, storedAnswer: StoredAnswer['answer']) {
   const [_id, setId] = useState<string | null>(null);
 
   const answerField = useForm({
-    initialValues: generateInitFields(responses, id, storedAnswer),
-    validate: generateValidation(responses, id),
+    initialValues: generateInitFields(responses, currentStep, storedAnswer),
+    validate: generateValidation(responses, currentStep),
   });
 
   useEffect(() => {
-    if (_id !== id) {
-      setId(id);
+    if (_id !== currentStep) {
+      setId(currentStep);
       answerField.reset();
     }
-  }, [_id, answerField, id]);
+  }, [_id, answerField, currentStep]);
 
   return answerField;
 }

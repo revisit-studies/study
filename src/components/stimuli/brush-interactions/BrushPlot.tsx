@@ -1,16 +1,16 @@
 
-import {Button, Group, Loader, SegmentedControl, Stack} from '@mantine/core';
+import { Loader, Stack } from '@mantine/core';
 import { StimulusParams } from '../../../store/types';
 import Bar from './Bar';
 import Scatter from './Scatter';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import {from, escape} from 'arquero';
+import { from, escape } from 'arquero';
 import ColumnTable from 'arquero/dist/types/table/column-table';
 import { Registry, initializeTrrack } from '@trrack/core';
-import { useLocation } from 'react-router-dom';
 
 import * as d3 from 'd3';
 import { debounce } from 'lodash';
+import { useCurrentStep } from '../../../routes';
 
 export interface BrushState {
     hasBrush: boolean;
@@ -28,7 +28,7 @@ export interface BrushParams {brushType: BrushNames, dataset: string, x: string,
 
 export type BrushNames = 'Rectangular Selection' | 'Axis Selection' | 'Slider Selection' | 'Paintbrush Selection'
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function BrushPlot({ parameters, trialId, setAnswer, updateProvenance }: StimulusParams<BrushParams>) {
+export function BrushPlot({ parameters, setAnswer }: StimulusParams<BrushParams>) {
     const [filteredTable, setFilteredTable] = useState<ColumnTable | null>(null);
     const [brushState, setBrushState] = useState<BrushState>({hasBrush: false, x1: 0, y1: 0, x2: 0, y2: 0, ids: []});
 
@@ -48,9 +48,6 @@ export function BrushPlot({ parameters, trialId, setAnswer, updateProvenance }: 
         
         return null;
     }, [data]);
-
-    //get trial id
-    const id = useLocation().pathname;
 
     // creating provenance tracking
     const { actions, trrack } = useMemo(() => {
@@ -150,15 +147,12 @@ export function BrushPlot({ parameters, trialId, setAnswer, updateProvenance }: 
 
         setFilteredTable(filteredTable);
 
-        updateProvenance(trrack.graph.backend);
-
         setAnswer({
-            trialId: id,
             status: true,
-            provenanceRoot: trrack.graph.root.id,
+            provenanceGraph: trrack.graph.backend,
             answers: {}
           });
-    }, [brushState, fullTable, parameters, trrack, id, setAnswer, debouncedCallback, actions, updateProvenance]);
+    }, [brushState, fullTable, parameters, trrack, setAnswer, debouncedCallback, actions]);
 
     // Which table the bar chart uses, either the base or the filtered table if any selections
     const barsTable = useMemo(() => {
