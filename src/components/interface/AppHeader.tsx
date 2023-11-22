@@ -38,11 +38,9 @@ export default function AppHeader() {
 
   const progressBarCurrent =
     studyConfig !== null
-      ? currentStep === 'end'
-        ? 100
-        : order.indexOf(currentStep)
+      ? order.indexOf(currentStep)
       : 0;
-  const progressBarMax = order.length || 0;
+  const progressBarMax = order.length - 1;
   const progressPercent = (progressBarCurrent / progressBarMax) * 100;
 
   const [menuOpened, setMenuOpened] = useState(false);
@@ -50,7 +48,7 @@ export default function AppHeader() {
   const logoPath = studyConfig?.uiConfig.logoPath;
   const withProgressBar = studyConfig?.uiConfig.withProgressBar;
 
-  const [searchParams, setSearchParams] = useState(new URLSearchParams(window.location.search));
+  const [searchParams] = useState(new URLSearchParams(window.location.search));
   const admin = searchParams.get('admin') || 'f';
 
   return (
@@ -114,15 +112,6 @@ export default function AppHeader() {
                     icon={<IconMail size={14} />}
                   >
                     Contact
-                  </Menu.Item>
-                  <Menu.Item
-                    onClick={async () => {
-                      // await clearCache();
-                      navigate(0);
-                    }}
-                    icon={<IconTrash size={14} />}
-                  >
-                    Clear Cache & Refresh
                   </Menu.Item>
                 </Menu.Dropdown>
               </Menu>
