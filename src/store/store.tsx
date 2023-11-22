@@ -1,86 +1,35 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { configureTrrackableStore, createTrrackableSlice } from '@trrack/redux';
-import { clearIndexedDbPersistence, terminate } from 'firebase/firestore';
-import localforage from 'localforage';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { ResponseBlockLocation, StudyConfig } from '../parser/types';
-import { RootState, Step, TrrackedAnswer, TrrackedState } from './types';
+import { RootState, StoredAnswer, TrialValidation, TrrackedProvenance, TrrackedState, UnTrrackedState } from './types';
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
-import { ParticipantData } from '../storage/types';
-import { NodeId } from '@trrack/core';
-
-export const PID = 'PARTICIPANT_ID';
-export const SESSION_ID = 'SESSION_ID';
-
-export const __ACTIVE_SESSION = '__active_session';
-
-
-type TrialRecord = Record<
-  string,
-  {
-    valid: {
-      aboveStimulus: boolean;
-      belowStimulus: boolean;
-      sidebar: boolean;
-    };
-    answers: TrrackedAnswer;
-    provenanceGraph: ProvenanceGraph<any, any, any> | null,
-  }
->;
-
-interface UnTrrackedState {
-  // Three identifiers given by the study platform
-  steps: Record<string, Step>;
-  config: StudyConfig;
-  showAdmin: boolean;
-  showHelpText: boolean;
-  trialRecord: TrialRecord;
-  trrackExists: boolean;
-  iframeAnswers: string[];
-}
-
-function getSteps(sequence: string[]): Record<string, Step> {
-  const steps: Record<string, Step> = {};
-  (sequence).forEach((id, idx, arr) => {
-    steps[id] = {
-      complete: false,
-      next: arr[idx + 1] || 'end',
-    } as Step;
-  });
-
-  return steps;
-}
 
 export async function studyStoreCreator(
   studyId: string,
   config: StudyConfig,
   sequence: string[],
-  answers: TrrackedAnswer,
+  answers: Record<string, StoredAnswer>,
 ) {
-  const lf = localforage.createInstance({
-    name: 'sessions',
-  });
-
-  const steps = getSteps(sequence);
-  const emptyAnswers = Object.assign({}, ...Object.keys(steps).map((id) => ({[id]: {}})));
-
+  const emptyAnswers = Object.assign({}, sequence.map((id) => ({[id]: {}})));
+  const emptyValidation: TrialValidation = Object.assign(
+    {},
+    ...sequence.map((id) => ({[id]: { aboveStimulus: { valid: false, values: {} }, belowStimulus: { valid: false, values: {} }, sidebar: { valid: false, values: {} } }}))
+  );
+  console.log(sequence, emptyValidation);
 
   const initialTrrackedState: TrrackedState = {
-    studyIdentifiers: {
-      study_id: studyId,
-      session_id: crypto.randomUUID(),
-    },
+    studyId,
     answers: answers || emptyAnswers,
     sequence,
   };
 
   const initialUntrrackedState: UnTrrackedState = {
-    steps,
     config,
     showAdmin: false,
     showHelpText: false,
-    trialRecord: {} as TrialRecord,
+    trialValidation: emptyValidation,
     trrackExists: false,
     iframeAnswers: [] as string[],
   };
@@ -94,22 +43,21 @@ export async function studyStoreCreator(
         {
           payload,
         }: PayloadAction<{
-          trialName: string;
-          trialId: string;
-          answer: string | object;
+          currentStep: string;
+          answer: Record<string, unknown>;
           startTime: number;
-          provenanceRoot?: NodeId,
           endTime: number;
+          provenanceGraph?: TrrackedProvenance;
         }>
       ) {
+        const { currentStep, answer, startTime, endTime, provenanceGraph } = payload;
 
-        (state[payload.trialName] as TrialRecord) = ({
-          complete: true,
-          answer: payload.answer,
-          startTime: payload.startTime,
-          provenanceRoot: payload.provenanceRoot,
-          endTime: payload.endTime,
-        } as any);
+        state.answers[currentStep] = {
+          answer: answer,
+          startTime: startTime,
+          endTime: endTime,
+          provenanceGraph,
+        };
       },
     },
   });
@@ -121,9 +69,6 @@ export async function studyStoreCreator(
     reducers: {
       setConfig (state, payload: PayloadAction<StudyConfig>) {
         state.config = payload.payload;
-      },
-      completeStep(state, step) {
-        state.steps[step.payload].complete = true;
       },
       setTrrackExists: (state, action: PayloadAction<boolean>) => {
         state.trrackExists = action.payload;
@@ -143,37 +88,27 @@ export async function studyStoreCreator(
           payload,
         }: PayloadAction<{
           location: ResponseBlockLocation;
-          trialId: string;
+          currentStep: string | undefined;
           status: boolean;
-          provenanceGraph?: ProvenanceGraph<any, any, any>
-          answers: Record<string, any>;
+          values: object;
+          provenanceGraph?: ProvenanceGraph<any, any, any>;
         }>
       ) => {
-        if (payload.trialId.length === 0) return state;
+        if (!payload.currentStep || payload.currentStep.length === 0) return state;
   
-        if (!state.trialRecord[payload.trialId]) {
-          state.trialRecord[payload.trialId] = {
-            valid: {
-              aboveStimulus: false,
-              belowStimulus: false,
-              sidebar: false,
-            },
-            answers: {},
-            provenanceGraph: null,
+        if (!state.trialValidation[payload.currentStep]) {
+          state.trialValidation[payload.currentStep] = {
+            aboveStimulus: { valid: false, values: {} },
+            belowStimulus: { valid: false, values: {} },
+            sidebar: { valid: false, values: {} },
+            provenanceGraph: undefined,
           };
         }
-        state.trialRecord[payload.trialId].valid[payload.location] =
-          payload.status;
-        const prev = state.trialRecord[payload.trialId].answers;
-  
-        if(payload.provenanceGraph !== undefined) {
-          state.trialRecord[payload.trialId].provenanceGraph = payload.provenanceGraph;
+        state.trialValidation[payload.currentStep][payload.location] = { valid: payload.status, values: payload.values };
+
+        if (payload.provenanceGraph) {
+          state.trialValidation[payload.currentStep].provenanceGraph = payload.provenanceGraph;
         }
-  
-        state.trialRecord[payload.trialId].answers = {
-          ...prev,
-          ...payload.answers,
-        };
       },
     },
   });
@@ -186,51 +121,13 @@ export async function studyStoreCreator(
     slices: [studySlice, configSlice],
   });
 
-  // Check local/fb
-  // is trrack instance in local storage?
-  const savedSessionId = (await getFromLS(lf, studyId)) || trrack.root.id;
-
   return {
     store,
     trrack,
     trrackStore,
     actions: studySlice.actions,
     unTrrackedActions: configSlice.actions,
-    async clearCache() {
-      await terminate(firebase.firestore);
-      await clearIndexedDbPersistence(firebase.firestore);
-      firebase.startFirestore();
-      await lf.clear();
-    },
-    startNewSession() {
-      if (!trrackExists) {
-        return;
-      }
-
-      trrackExists.createNew().then(() => {
-        return saveToLS(lf, studyId, trrack.root.id);
-      });
-    },
-    loadGraph(graph: string) {
-      trrack.import(graph);
-    },
   };
-}
-
-async function saveToLS(lf: LocalForage, studyId: string, sessionId: string) {
-  const sessionsObject: Record<string, string> =
-    (await lf.getItem(__ACTIVE_SESSION)) || {};
-
-  sessionsObject[studyId] = sessionId;
-
-  lf.setItem(__ACTIVE_SESSION, sessionsObject);
-}
-
-async function getFromLS(lf: LocalForage, studyId: string) {
-  const sessionsObject: Record<string, string> =
-    (await lf.getItem(__ACTIVE_SESSION)) || {};
-
-  return sessionsObject && sessionsObject[studyId];
 }
 
 export type StudyStore = Awaited<ReturnType<typeof studyStoreCreator>>;
@@ -260,26 +157,14 @@ export function useStudySelector() {
   return useStoreSelector((s) => s.trrackedSlice);
 }
 
-export function useAreResponsesValid(id: string) {
+export function useAreResponsesValid(id?: string) {
   return useStoreSelector((state) => {
-    if (id.length === 0) return true;
+    if (id === undefined || id.length === 0) return true;
 
-    const valid = state.unTrrackedSlice.trialRecord[id]?.valid;
+    const valid = Object.values(state.unTrrackedSlice.trialValidation[id]).every((x) => x);
 
     if (!valid) return false;
 
     return Object.values(valid).every((x) => x);
   });
 }
-
-export function useAggregateResponses(id: string) {
-return useStoreSelector((state) => {
-  if (id.length === 0) return null;
-
-  const answers = state.unTrrackedSlice.trialRecord[id]?.answers;
-  if (!answers) return null;
-
-  return answers; // Test
-});
-}
-
