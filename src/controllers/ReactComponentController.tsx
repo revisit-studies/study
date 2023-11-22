@@ -27,6 +27,10 @@ const ReactComponentController = ({ currentConfig }: { currentConfig: ReactCompo
       values: answers,
       provenanceGraph,
     }));
+
+    storeDispatch(unTrrackedActions.setIframeAnswers(
+      Object.values(answers).map((value) => value)
+    ));
   }
 
   return (

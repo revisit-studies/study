@@ -140,7 +140,7 @@ export default function ResponseBlock({
           ) : (
             <>
               <ResponseSwitcher
-                storedAnswer={ storedAnswer ? (storedAnswer)[`${currentStep}/${response.id}`] : undefined }
+                storedAnswer={ storedAnswer ? storedAnswer[`${currentStep}/${response.id}`] : undefined }
                 answer={{
                   ...answerValidator.getInputProps(`${currentStep}/${response.id}`, {
                     type: response.type === 'checkbox' ? 'checkbox' : 'input',

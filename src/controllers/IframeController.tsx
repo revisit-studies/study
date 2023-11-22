@@ -66,10 +66,8 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
             }
             break;
           case `${PREFIX}/ANSWERS`:
-              storeDispatch(unTrrackedActions.setIframeAnswers(data.message.answer));
+            storeDispatch(unTrrackedActions.setIframeAnswers(data.message.answer));
             break;
-
-
         }
       }
     };
@@ -87,7 +85,7 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
     currentConfig,
     sendMessage,
   ]);
-  
+
   return (
     <div >
       <iframe

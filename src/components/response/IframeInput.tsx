@@ -12,6 +12,7 @@ export default function IframeInput({
   answer,
 }: inputProps) {
   const { prompt } = response;
+
   return (
     <>
       <Text fz={'md'} fw={500}>
@@ -19,7 +20,7 @@ export default function IframeInput({
       </Text>
 
       <List>
-        {(answer.value || []).map((item) => {
+        {Array.isArray(answer.value) && (answer.value).map((item) => {
           return <List.Item key={item}>{item}</List.Item>;
         })}
       </List>
