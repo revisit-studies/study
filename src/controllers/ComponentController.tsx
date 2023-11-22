@@ -6,7 +6,7 @@ import ReactComponentController from './ReactComponentController';
 import MarkdownController from './MarkdownController';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useCurrentStep } from '../routes';
-import { useComponentStatus } from '../store/hooks/useComponentStatus';
+import { useStoredAnswer } from '../store/hooks/useStoredAnswer';
 import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
 import { isPartialComponent } from '../parser/parser';
 import merge from 'lodash/merge';
@@ -20,7 +20,7 @@ export default function ComponentController() {
   const stepConfig = studyConfig.components[step];
   
   // If we have a trial, use that config to render the right component else use the step
-  const status = useComponentStatus();
+  const status = useStoredAnswer();
 
   const currentConfig = isPartialComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
 

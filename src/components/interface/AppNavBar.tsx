@@ -1,7 +1,7 @@
 import { Navbar, Text } from '@mantine/core';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
-import { useComponentStatus } from '../../store/hooks/useComponentStatus';
+import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import ResponseBlock from '../response/ResponseBlock';
 import { useCurrentStep } from '../../routes';
 import { IndividualComponent } from '../../parser/types';
@@ -26,7 +26,7 @@ export default function AppNavBar() {
         ) as IndividualComponent)
       : (stepConfig as IndividualComponent)
     : null;
-  const status = useComponentStatus();
+  const status = useStoredAnswer();
   const instruction = currentConfig?.instruction || '';
 
   const instructionInSideBar =
