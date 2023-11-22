@@ -25,8 +25,8 @@ export default function ResponseSwitcher({
   storedAnswer,
 }: Props) {
 
-  const ans: any = storedAnswer ? { value: storedAnswer } : answer;
-  const disabled = !!ans;
+  const ans: any = (storedAnswer ? { value: storedAnswer } : answer) || {value: undefined};
+  const disabled = !!storedAnswer;
   const isDisabled = disabled || !!response.paramCapture;
 
   return (

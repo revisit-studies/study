@@ -1,24 +1,24 @@
 import { Button, Group, Text } from '@mantine/core';
 import { useInputState } from '@mantine/hooks';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useLocation, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   IndividualComponent,
   ResponseBlockLocation,
 } from '../../parser/types';
 import { useCurrentStep } from '../../routes';
-import { useStoreDispatch, useTrrackedActions, useAreResponsesValid, useAggregateResponses, useStoreSelector, useUntrrackedActions } from '../../store/store';
+import { useStoreDispatch, useTrrackedActions, useAreResponsesValid, useStoreSelector, useUntrrackedActions } from '../../store/store';
 import { useNextStep } from '../../store/hooks/useNextStep';
-import { TrialResult, TrrackedAnswer } from '../../store/types';
 import { deepCopy } from '../../utils/deepCopy';
 import { NextButton } from '../NextButton';
 import { useAnswerField } from '../stimuli/inputcomponents/utils';
 import ResponseSwitcher from './ResponseSwitcher';
 import React from 'react';
 import { useStorageEngine } from '../../store/storageEngineHooks';
+import { StoredAnswer, ValidationStatus } from '../../store/types';
 
 type Props = {
-  status: TrialResult | null;
+  status: StoredAnswer;
   config: IndividualComponent | null;
   location: ResponseBlockLocation;
   style?: React.CSSProperties;
@@ -45,12 +45,11 @@ export default function ResponseBlock({
   const { saveTrialAnswer } = useTrrackedActions();
   const storeDispatch = useStoreDispatch();
   const answerValidator = useAnswerField(responses, currentStep, storedAnswer);
-  const areResponsesValid = useAreResponsesValid(id);
-  const aggregateResponses = useAggregateResponses(id);
   const [disableNext, setDisableNext] = useInputState(!storedAnswer);
   const [checkClicked, setCheckClicked] = useState(false);
   const nextStep = useNextStep();
   const storeSelector = useStoreSelector((state) => state);
+  const areResponsesValid = useAreResponsesValid(currentStep);
 
   const hasCorrectAnswer = ((configInUse?.correctAnswer?.length || 0) > 0);
 
@@ -122,7 +121,6 @@ export default function ResponseBlock({
 
     setDisableNext(!disableNext);
   }, [
-    aggregateResponses,
     answerValidator.values,
     storeDispatch,
     config?.type,
@@ -131,24 +129,20 @@ export default function ResponseBlock({
     saveTrialAnswer,
     status,
     setDisableNext,
-    trialId,
   ]);
 
   return (
     <div style={style}>
       {responses.map((response) => (
-        <React.Fragment key={`${response.id}-${id}`}>
+        <React.Fragment key={`${response.id}-${currentStep}`}>
           {response.hidden ? (
             ''
           ) : (
             <>
               <ResponseSwitcher
-                status={status}
-                storedAnswer={ response.type === 'iframe' ? (aggregateResponses || {})[`${id}/${response.id}`]
-                  : (storedAnswer as any)[`${id}/${response.id}`]
-                }
+                storedAnswer={ storedAnswer ? (storedAnswer)[`${currentStep}/${response.id}`] : undefined }
                 answer={{
-                  ...answerValidator.getInputProps(`${id}/${response.id}`, {
+                  ...answerValidator.getInputProps(`${currentStep}/${response.id}`, {
                     type: response.type === 'checkbox' ? 'checkbox' : 'input',
                   }),
                 }}

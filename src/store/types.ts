@@ -1,9 +1,28 @@
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
-import { BaseIndividualComponent, StudyConfig } from '../parser/types';
+import { StudyConfig } from '../parser/types';
 import { StudyStore } from './store';
-import { NodeId } from '@trrack/core';
 
 export type RootState = ReturnType<StudyStore['store']['getState']>;
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type TrrackedProvenance = ProvenanceGraph<any, any, any>;
+
+export type ValidationStatus = { valid: boolean, values: object }
+export type TrialValidation = Record<
+  string,
+  {
+    aboveStimulus: ValidationStatus;
+    belowStimulus: ValidationStatus;
+    sidebar: ValidationStatus;
+    provenanceGraph?: TrrackedProvenance;
+  }
+>;
+
+export interface TrrackedState {
+  studyId: string;
+  answers: Record<string, StoredAnswer>;
+  sequence: string[]
+}
 
 export interface StoredAnswer {
   answer: Record<string, Record<string, unknown>>;
@@ -12,36 +31,17 @@ export interface StoredAnswer {
   provenanceGraph?: TrrackedProvenance,
 }
 
-export type PracticeResult = TrialResult;
-
-export type TrialRecord = Record<string, TrialResult>;
-
-export type PracticeRecord = Record<string, PracticeResult>;
-
-export interface Step extends BaseIndividualComponent {
-  complete: boolean;
-  next: string | null;
-}
-
-export type StudyIdentifiers = {
-  pid: string; // unique id for each participant
-  study_id: string; // unique id for each study. Should be same for participants in the same study.
-  session_id: string; // unique id for each session. Can be  unique each time link is clicked.
-};
-
-export interface TrrackedState {
-  // Three identifiers given by the study platform
-  studyIdentifiers: StudyIdentifiers;
-  [name: string]: TrialRecord | StudyIdentifiers | StudyConfig | Record<string, Step> | string[];
-  order: string[]
-}
-
-
 export interface StimulusParams<T> {
   parameters: T;
-  trialId: string;
-  updateProvenance: (graph: ProvenanceGraph<any, any, any>) => void;
-  setAnswer: ({trialId, status, provenanceRoot, answers} : {trialId: string, status: boolean, provenanceRoot?: NodeId, answers: Record<string, any>}) => void
+  setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
 }
 
-export type TrrackedAnswer = Record<string, unknown>;
+
+export interface UnTrrackedState {
+  config: StudyConfig;
+  showAdmin: boolean;
+  showHelpText: boolean;
+  trialValidation: TrialValidation;
+  trrackExists: boolean;
+  iframeAnswers: string[];
+}
