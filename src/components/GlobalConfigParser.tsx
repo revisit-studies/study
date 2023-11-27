@@ -52,7 +52,7 @@ export function GlobalConfigParser() {
     fetchGlobalConfigArray().then((gc) => {
       setGlobalConfig(gc);
     });
-  }, []);
+  }, [globalConfig]);
 
   return globalConfig ? (
     <BrowserRouter basename={PREFIX}>

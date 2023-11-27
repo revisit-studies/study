@@ -49,8 +49,7 @@ export function parseGlobalConfig(fileData: string) {
 // This function verifies the study config file satisfies conditions that are not covered by the schema
 function verifyStudyConfig(data: StudyConfig) {
   const errors: { message: string }[] = [];
-  const componentsVerified = Object.entries(data.components).every(([componentName, component]) => {
-
+  const componentsVerified = Object.values(data.components).every((component) => {
     return isPartialComponent(component) ? !!data.baseComponents?.[component.baseComponent] : true;
   });
 

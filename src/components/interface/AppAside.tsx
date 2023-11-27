@@ -7,12 +7,11 @@ import {
   Space,
   Text,
 } from '@mantine/core';
-import { useCurrentStep } from '../../routes';
 import { DownloadPanel } from '../DownloadPanel';
 import { StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoreSelector } from '../../store/store';
-import React from 'react';
+import React, { ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IconArrowRight } from '@tabler/icons-react';
 
@@ -81,7 +80,7 @@ export default function AppAside() {
                     Object.keys(task.meta).map((key) => {
                       return (
                         <Text key={key}>
-                          {key}: {(task.meta as any)[key]}
+                          {key}: {(task.meta as Record<string, ReactNode>)[key]}
                         </Text>
                       );
                     })}

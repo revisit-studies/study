@@ -5,7 +5,7 @@ import { StudyStore } from './store';
 export type RootState = ReturnType<StudyStore['store']['getState']>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type TrrackedProvenance = ProvenanceGraph<any, any, any>;
+export type TrrackedProvenance = ProvenanceGraph<any, any>;
 
 export type ValidationStatus = { valid: boolean, values: object }
 export type TrialValidation = Record<
@@ -33,6 +33,7 @@ export interface StoredAnswer {
 
 export interface StimulusParams<T> {
   parameters: T;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
 }
 

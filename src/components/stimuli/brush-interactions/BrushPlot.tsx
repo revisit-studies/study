@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { Loader, Stack } from '@mantine/core';
 import { StimulusParams } from '../../../store/types';
@@ -9,8 +10,7 @@ import ColumnTable from 'arquero/dist/types/table/column-table';
 import { Registry, initializeTrrack } from '@trrack/core';
 
 import * as d3 from 'd3';
-import { debounce } from 'lodash';
-import { useCurrentStep } from '../../../routes';
+import { debounce } from 'lodash.debounce';
 
 export interface BrushState {
     hasBrush: boolean;
@@ -27,7 +27,6 @@ export type SelectionType = 'drag' | 'handle' | 'clear' | null
 export interface BrushParams {brushType: BrushNames, dataset: string, x: string, y: string, category: string, ids: string, dataType?: 'date'}
 
 export type BrushNames = 'Rectangular Selection' | 'Axis Selection' | 'Slider Selection' | 'Paintbrush Selection'
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function BrushPlot({ parameters, setAnswer }: StimulusParams<BrushParams>) {
     const [filteredTable, setFilteredTable] = useState<ColumnTable | null>(null);
     const [brushState, setBrushState] = useState<BrushState>({hasBrush: false, x1: 0, y1: 0, x2: 0, y2: 0, ids: []});
@@ -166,7 +165,7 @@ export function BrushPlot({ parameters, setAnswer }: StimulusParams<BrushParams>
     return data ? (
         <Stack spacing="xs">
             <Scatter brushedPoints={brushState?.ids} data={data} params={parameters} filteredTable={filteredTable} brushType={parameters.brushType}  setBrushedSpace={brushedSpaceCallback} brushState={brushState} fullTable={fullTable} setFilteredTable={filteredCallback}/>
-            <Bar data={data} parameters={parameters} fullTable={filteredTable ? filteredTable : fullTable} barsTable={barsTable}/>
+            <Bar data={data} parameters={parameters} barsTable={barsTable}/>
         </Stack>
   ) : <Loader/>;
 }

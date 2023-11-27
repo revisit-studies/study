@@ -7,17 +7,17 @@ function _orderObjectToList(
   order: OrderObject, 
   pathsFromFirebase: Record<string, string[][]>,
   path: string
- ) : string[] {
+ ) : (string | OrderObject)[] | string {
   
   for(let i = 0; i < order.components.length; i ++) {
     const curr = order.components[i];
     if(typeof curr !== 'string') {
-      order.components[i] = _orderObjectToList(curr, pathsFromFirebase, path + '-' + i) as any;
+      order.components[i] = _orderObjectToList(curr, pathsFromFirebase, path + '-' + i) as string;
     }
   }
 
   if(order.order === 'random') {
-    const randomArr = order.components.sort((a, b) => 0.5 - Math.random());
+    const randomArr = order.components.sort(() => 0.5 - Math.random());
 
     order.components = randomArr;
   }
@@ -33,17 +33,17 @@ function _orderObjectToList(
     });
   }
 
-  return order.components.flat().slice(0, order.numSamples ? order.numSamples : undefined) as any;
+  return order.components.flat().slice(0, order.numSamples ? order.numSamples : undefined);
 }
 
 function orderObjectToList(
   order: OrderObject, 
   pathsFromFirebase: Record<string, string[][]>,
- ) : string[] {
+ ) : (string | OrderObject)[] {
   const orderCopy = deepCopy(order);
 
   _orderObjectToList(orderCopy, pathsFromFirebase, 'root');
-  return orderCopy.components.flat().slice(0, orderCopy.numSamples ? orderCopy.numSamples : undefined) as any;
+  return orderCopy.components.flat().slice(0, orderCopy.numSamples ? orderCopy.numSamples : undefined);
 }
 
 function _createRandomOrders(order: OrderObject, paths: string[], path: string, index = 0) {
@@ -69,17 +69,17 @@ function createRandomOrders(order: OrderObject) {
 function generateLatinSquare(config: StudyConfig, path: string) {
   const pathArr = path.split('-');
 
-  let locationInSequence: any;
+  let locationInSequence: Partial<OrderObject> | string = {};
   pathArr.forEach((p) => {
     if (p === 'root') {
       locationInSequence = config.sequence;
     }
     else {
-      locationInSequence = locationInSequence.components[+p];
+      locationInSequence = (locationInSequence as OrderObject).components[+p];
     }
   });
 
-  const options = locationInSequence.components.map((c: unknown, i: number) => typeof c === 'string' ? c : `_orderObj${i}`);
+  const options = (locationInSequence as OrderObject).components.map((c: unknown, i: number) => typeof c === 'string' ? c : `_orderObj${i}`);
   const newSquare: string[][] = latinSquare<string>(options.sort(() => 0.5 - Math.random()), true);
   return newSquare;
 }
@@ -97,7 +97,7 @@ export function generateSequenceArray(config: StudyConfig, numSequences = 10000)
     sequence.push('end');
 
     // Add the sequence to the array
-    sequenceArray.push(sequence);
+    sequenceArray.push(sequence as string[]);
 
     // Refill the latin square if it is empty
     Object.entries(latinSquareObject).forEach(([key, value]) => {

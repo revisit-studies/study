@@ -6,7 +6,7 @@ import ResponseBlock from '../response/ResponseBlock';
 import { useCurrentStep } from '../../routes';
 import { IndividualComponent } from '../../parser/types';
 import { isPartialComponent } from '../../parser/parser';
-import merge from 'lodash/merge';
+import { merge } from 'lodash.merge';
 
 export default function AppNavBar() {
   const trialHasSideBar = useStudyConfig()?.uiConfig.sidebar;

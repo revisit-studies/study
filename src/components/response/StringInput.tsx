@@ -5,7 +5,7 @@ import { generateErrorMessage } from '../stimuli/inputcomponents/utils';
 type inputProps = {
   response: ShortTextResponse;
   disabled: boolean;
-  answer: any;
+  answer: { value?: string };
 };
 
 export default function StringInput({

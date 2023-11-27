@@ -5,7 +5,7 @@ import { generateErrorMessage } from '../stimuli/inputcomponents/utils';
 type inputProps = {
   response: RadioResponse;
   disabled: boolean;
-  answer: any;
+  answer: object;
 };
 
 export default function RadioInput({

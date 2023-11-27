@@ -30,11 +30,11 @@ export const REQUIRED_PROPS = [
   'trialId',
 ] as const;
 
-// type OptionalProperty = (typeof OPTIONAL_COMMON_PROPS)[number];
-// type RequiredProperty = (typeof REQUIRED_PROPS)[number];
-// type MetaProperty = `meta-${string}`;
+type OptionalProperty = (typeof OPTIONAL_COMMON_PROPS)[number];
+type RequiredProperty = (typeof REQUIRED_PROPS)[number];
+type MetaProperty = `meta-${string}`;
 
-// export type Property = OptionalProperty | RequiredProperty | MetaProperty;
+export type Property = OptionalProperty | RequiredProperty | MetaProperty;
 
 // export type TidyRow = Prettify<
 //   Record<RequiredProperty, any> &

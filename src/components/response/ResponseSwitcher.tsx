@@ -1,6 +1,6 @@
 import { Box } from '@mantine/core';
 import { Nullable, Response } from '../../parser/types';
-import { TrialResult } from '../../store/types';
+import { TrialValidation } from '../../store/types';
 import CheckBoxInput from './CheckBoxInput';
 import DropdownInput from './DropdownInput';
 import IframeInput from './IframeInput';
@@ -13,10 +13,10 @@ import TextAreaInput from './TextAreaInput';
 
 type Props = {
   response: Response;
-  status?: Nullable<TrialResult>;
-  answer: any;
+  status?: Nullable<TrialValidation>;
+  answer: { value?: object };
   disabled?: boolean;
-  storedAnswer?: any;
+  storedAnswer?: Record<string, unknown>;
 };
 
 export default function ResponseSwitcher({
@@ -25,7 +25,8 @@ export default function ResponseSwitcher({
   storedAnswer,
 }: Props) {
 
-  const ans: any = (storedAnswer ? { value: storedAnswer } : answer) || {value: undefined};
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ans: { value?: any } = (storedAnswer ? { value: storedAnswer } : answer) || { value: undefined };
   const disabled = !!storedAnswer;
   const isDisabled = disabled || !!response.paramCapture;
 
@@ -73,7 +74,7 @@ export default function ResponseSwitcher({
           />
         )}
         {response.type === 'iframe' && (
-          <IframeInput response={response} disabled={isDisabled} answer={ans} />
+          <IframeInput response={response} disabled={isDisabled} answer={ans as { value: string[] }} />
         )}
       </Box>
     </>

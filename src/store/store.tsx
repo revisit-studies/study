@@ -4,7 +4,6 @@ import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { ResponseBlockLocation, StudyConfig } from '../parser/types';
 import { RootState, StoredAnswer, TrialValidation, TrrackedProvenance, TrrackedState, UnTrrackedState } from './types';
-import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 
 export async function studyStoreCreator(
   studyId: string,
@@ -43,7 +42,7 @@ export async function studyStoreCreator(
           payload,
         }: PayloadAction<{
           currentStep: string;
-          answer: Record<string, unknown>;
+          answer: Record<string, Record<string, unknown>>;
           startTime: number;
           endTime: number;
           provenanceGraph?: TrrackedProvenance;
@@ -90,7 +89,7 @@ export async function studyStoreCreator(
           currentStep: string | undefined;
           status: boolean;
           values: object;
-          provenanceGraph?: ProvenanceGraph<any, any, any>;
+          provenanceGraph?: TrrackedProvenance;
         }>
       ) => {
         if (!payload.currentStep || payload.currentStep.length === 0) return state;

@@ -161,7 +161,7 @@ export class LocalStorageEngine extends StorageEngine {
     return await this.studyDatabase.getItem('sequenceArray') as string[][] | null;
   }
 
-  async getAllParticpantsData(studyId: string) {
+  async getAllParticpantsData() {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }

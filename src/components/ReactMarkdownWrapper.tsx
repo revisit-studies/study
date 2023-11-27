@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import ReactMarkdown from 'react-markdown';
 import { Image,  Text, Title, Anchor, List } from '@mantine/core';
 import { ReactNode } from 'react';

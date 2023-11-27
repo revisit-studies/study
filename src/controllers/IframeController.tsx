@@ -75,16 +75,7 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [
-    storeDispatch,
-    computedTo,
-    currentStep,
-    dispatch,
-    iframeId,
-    navigate,
-    currentConfig,
-    sendMessage,
-  ]);
+  }, [storeDispatch, computedTo, currentStep, dispatch, iframeId, navigate, currentConfig, sendMessage, unTrrackedActions]);
 
   return (
     <div >

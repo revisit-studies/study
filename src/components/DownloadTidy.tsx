@@ -86,11 +86,11 @@ export function DownloadTidy({ opened, close, filename }: Props) {
           leftIcon={<IconTable />}
           onClick={() => {
             downloadTidy(
-              fb,
-              studyId,
-              Object.keys(sequence),
-              selectedProperties,
-              `${filename}.csv`
+              // fb,
+              // studyId,
+              // Object.keys(sequence),
+              // selectedProperties,
+              // `${filename}.csv`
             );
           }}
         >

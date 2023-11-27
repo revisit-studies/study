@@ -24,8 +24,6 @@ export const Bars = ({
           width={xScale.bandwidth()}
           height={height - yScale(d.value)}
           fill="transparent"
-          onMouseEnter={() => handleMouseEnter(d)}
-          onMouseLeave={() => handleMouseLeave(d)}
           stroke="currentColor"
         />
       ))}

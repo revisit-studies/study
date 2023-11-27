@@ -6,7 +6,7 @@ export const Bubbles = ({
 }) => {
   return (
     <g>
-      {data.map(({ bubble: d, data }, i) => (
+      {data.map(({ bubble: d }, i) => (
         <circle
           key={i}
           cx={d.x}
@@ -14,8 +14,6 @@ export const Bubbles = ({
           r={d.r}
           fill="transparent"
           stroke="currentColor"
-          onMouseEnter={() => handleMouseEnter(data)}
-          onMouseLeave={() => handleMouseLeave(data)}
         />
       ))}
     </g>

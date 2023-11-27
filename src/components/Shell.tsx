@@ -89,7 +89,7 @@ export function Shell({ globalConfig }: {
       setRoutes(generateStudiesRoutes(studyId, activeConfig, participantSession.sequence));
     }
     initializeUserStoreRouting();
-  }, [storageEngine, activeConfig]);
+  }, [storageEngine, activeConfig, studyId]);
 
   const routing = useRoutes(routes);
   

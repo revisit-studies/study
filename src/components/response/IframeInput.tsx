@@ -4,11 +4,10 @@ import { IFrameResponse } from '../../parser/types';
 type inputProps = {
   response: IFrameResponse;
   disabled: boolean;
-  answer: { value: string[] | undefined };
+  answer: { value?: string[] };
 };
 export default function IframeInput({
   response,
-  disabled,
   answer,
 }: inputProps) {
   const { prompt } = response;

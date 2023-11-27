@@ -15,7 +15,7 @@ export type ProvenanceStorage = {
     sessionId: string,
     trrack: StudyProvenance
   ): Promise<null | {
-    createNew(): Promise<any>;
+    createNew(): Promise<unknown>;
   }>;
   firestore: Firestore;
   startFirestore: () => void;

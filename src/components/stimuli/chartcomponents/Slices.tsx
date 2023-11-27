@@ -1,11 +1,8 @@
 export const Slices = ({
   arcs,
-  data,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   arcs: any[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  data: any[];
 }) => {
   return (
     <g>
@@ -15,8 +12,6 @@ export const Slices = ({
           d={arc()}
           fill="transparent"
           stroke="currentColor"
-          onMouseEnter={() => handleMouseEnter(data[i])}
-          onMouseLeave={() => handleMouseLeave(data[i])}
         />
       ))}
     </g>

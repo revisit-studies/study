@@ -1,4 +1,4 @@
-import { Anchor, Card, Container, Image, NavLink, Text, UnstyledButton } from '@mantine/core';
+import { Anchor, Card, Container, Image, Text, UnstyledButton } from '@mantine/core';
 import { GlobalConfig, StudyConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 

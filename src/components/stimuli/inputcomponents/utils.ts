@@ -69,8 +69,8 @@ export function useAnswerField(responses: Response[], currentStep: string, store
 }
 
 export function areAnswersEqual(
-  ob1: Record<string, any>,
-  ob2: Record<string, any>
+  ob1: Record<string, unknown>,
+  ob2: Record<string, unknown>
 ) {
   if (Object.keys(ob1).length !== Object.keys(ob2).length) return false;
 
@@ -88,7 +88,7 @@ export function areAnswersEqual(
 
 export function generateErrorMessage(
   response: BaseResponse,
-  answer: any,
+  answer: { value?: string | string[]; checked?: string[] },
   options?: Option[]
 ) {
   const { requiredValue, requiredLabel } = response;

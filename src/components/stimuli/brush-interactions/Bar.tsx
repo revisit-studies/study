@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { useResizeObserver } from '@mantine/hooks';
 import { useMemo } from 'react';
 import ColumnTable from 'arquero/dist/types/table/column-table';
@@ -7,7 +8,7 @@ import * as d3 from 'd3';
 import { XAxisBar } from './XAxisBar';
 import { YAxisBar } from './YAxisBar';
 import { BrushParams } from './BrushPlot';
-import { Loader, Tooltip } from '@mantine/core';
+import { Loader } from '@mantine/core';
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 
@@ -19,7 +20,7 @@ const margin = {
     bottom: 50
 };
 
-export function Bar({ fullTable, barsTable, parameters, data } : {fullTable: ColumnTable | null, barsTable: ColumnTable | null, parameters: BrushParams, data: any[]}) {
+export function Bar({ barsTable, parameters, data } : {barsTable: ColumnTable | null, parameters: BrushParams, data: Record<string, string>[]}) {
     const [ ref, { height: originalHeight, width: originalWidth } ] = useResizeObserver();
 
     const width = useMemo(() => {
@@ -39,6 +40,7 @@ export function Bar({ fullTable, barsTable, parameters, data } : {fullTable: Col
         if(!barsTable) {
             return null;
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return d3.scaleLinear([margin.left, width + margin.left]).domain([0, d3.max(barsTable.objects().map((obj: any) => obj.count)) as any]).nice();
     }, [barsTable, width]);
 
@@ -57,6 +59,7 @@ export function Bar({ fullTable, barsTable, parameters, data } : {fullTable: Col
             return null;
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return (barsTable.objects() as any[]).map((car: any, i) => {
             if(car[parameters.category] === null || car.count === null) {
                 return null;

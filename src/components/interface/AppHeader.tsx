@@ -14,10 +14,8 @@ import {
   IconDotsVertical,
   IconMail,
   IconSchema,
-  IconTrash,
 } from '@tabler/icons-react';
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { PREFIX } from '.././GlobalConfigParser';
 import { useCurrentStep } from '../../routes';
 import { useStoreDispatch, useStoreSelector, useUntrrackedActions } from '../../store/store';
@@ -29,7 +27,6 @@ export default function AppHeader() {
   const order = useStoreSelector((state) => state.trrackedSlice.sequence);
 
   const storeDispatch = useStoreDispatch();
-  const navigate = useNavigate();
 
   const unTrrackedActions = useUntrrackedActions();
   const { toggleShowHelpText, toggleShowAdmin } = unTrrackedActions;

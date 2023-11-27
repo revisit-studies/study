@@ -20,8 +20,6 @@ export const StackedBars = ({
           height={yScale(d[0][0]) - yScale(d[0][1])}
           fill="transparent"
           stroke="currentColor"
-          onMouseEnter={() => handleMouseEnter({name: d.key})}
-          onMouseLeave={() => handleMouseLeave({name: d.key})}
         />
       ))}
     </g>

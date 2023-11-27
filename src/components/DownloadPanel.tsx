@@ -21,7 +21,8 @@ export function download(graph: string, filename: string) {
 export function DownloadPanel() {
   const { trrack } = useCreatedStore();
   const config = useStudyConfig();
-  const ids = useStoreSelector((s) => s.trrackedSlice.studyIdentifiers);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const ids: any = useStoreSelector((s) => null); // s.trrackedSlice.studyIdentifiers
   const studyId = useStudyId();
   const { storageEngine } = useStorageEngine();
   const [openDownload, { open, close }] = useDisclosure(false);
@@ -42,7 +43,7 @@ export function DownloadPanel() {
     }
 
     fn();
-  }, [trrack]);
+  }, [storageEngine, trrack]);
 
   useEffect(() => {
     if (delayCounter <= 0) return;
@@ -85,7 +86,7 @@ export function DownloadPanel() {
         mr="0.5em"
         onClick={async () => {
           if (!storageEngine) return;
-          const graphs = await storageEngine.getAllParticpantsData(studyId);
+          const graphs = await storageEngine.getAllParticpantsData();
           download(JSON.stringify(graphs, null, 2), jsonFilename);
         }}
         display="block"
