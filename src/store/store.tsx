@@ -159,7 +159,12 @@ export function useAreResponsesValid(id?: string) {
   return useStoreSelector((state) => {
     if (id === undefined || id.length === 0) return true;
 
-    const valid = Object.values(state.unTrrackedSlice.trialValidation[id]).every((x) => x);
+    const valid = Object.values(state.unTrrackedSlice.trialValidation[id]).every((x) => {
+      if (typeof x === 'object' && 'valid' in x) {
+        return x.valid;
+      }
+      return true;
+    });
 
     if (!valid) return false;
 

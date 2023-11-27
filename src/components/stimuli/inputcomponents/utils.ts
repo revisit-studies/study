@@ -39,10 +39,13 @@ const generateValidation = (responses: Response[], currentStep: string) => {
             }
             return value.length === 0 ? 'Empty input' : null;
           }
-          if(response.required && response.requiredValue != null && value != null) {
+          if (response.required && response.requiredValue != null && value != null) {
             return value.toString() !== response.requiredValue.toString() ? 'Incorrect input' : null;
           }
-          return value == null ? 'Empty input' : null;
+          if (response.required) {
+            return value === null || value === undefined || value === '' ? 'Empty input' : null;
+          }
+          return value === null ? 'Empty input' : null;
         }
       };
     }
