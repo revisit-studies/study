@@ -31,6 +31,7 @@ export const OPTIONAL_COMMON_PROPS = [
 export const REQUIRED_PROPS = [
   'participantId',
   'trialId',
+  'responseId',
 ] as const;
 
 type OptionalProperty = (typeof OPTIONAL_COMMON_PROPS)[number];
@@ -87,19 +88,24 @@ function processToRow(session: ParticipantData, studyConfig: StudyConfig): TidyR
     console.log(trialId, trialAns, session.participantId);
 
     const duration = trialAnswer.endTime - trialAnswer.startTime;
-    console.log(duration, 'ms');
-    return {
-      participantId: session.participantId,
-      trialId,
-      description: completeComponent.description,
-      instruction: completeComponent.instruction,
-      answer: trialAnswer.answer,
-      correctAnswer: completeComponent.correctAnswer,
-      startTime: new Date(trialAnswer.startTime).toUTCString(),
-      endTime: new Date(trialAnswer.endTime).toUTCString(),
-      duration,
-    } as TidyRow;
-  });
+
+    const rows = Object.entries(trialAnswer.answer).map(([key, value]) => {
+      return {
+        participantId: session.participantId,
+        trialId,
+        responseId: key,
+        description: completeComponent.description,
+        instruction: completeComponent.instruction,
+        answer: value,
+        correctAnswer: completeComponent.correctAnswer,
+        startTime: new Date(trialAnswer.startTime).toUTCString(),
+        endTime: new Date(trialAnswer.endTime).toUTCString(),
+        duration,
+      } as TidyRow;
+    }).flat();
+
+    return rows;
+  }).flat();
 }
 
 
