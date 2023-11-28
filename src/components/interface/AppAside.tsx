@@ -14,6 +14,7 @@ import { useStoreSelector } from '../../store/store';
 import React, { ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IconArrowRight } from '@tabler/icons-react';
+import { useCurrentStep } from '../../routes';
 
 export default function AppAside() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -24,6 +25,7 @@ export default function AppAside() {
     studyId: string;
   }>();
 
+  const currentStep = useCurrentStep();
   const studyConfig = useStudyConfig();
 
   const taskList = useStoreSelector((state) => state.trrackedSlice.sequence);
@@ -41,7 +43,7 @@ export default function AppAside() {
         </Aside.Section>
 
         <Aside.Section grow component={ScrollArea} px="xs" my="lg">
-          <DownloadPanel />
+          {currentStep === 'end' && <DownloadPanel studyConfig={studyConfig} />}
         </Aside.Section>
 
         <Aside.Section grow component={ScrollArea} px="xs" my="lg">

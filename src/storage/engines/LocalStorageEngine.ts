@@ -43,6 +43,7 @@ export class LocalStorageEngine extends StorageEngine {
 
     // Initialize participant
     const participantData: ParticipantData = {
+      participantId,
       sequence,
       answers: {},
     };

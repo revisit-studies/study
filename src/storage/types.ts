@@ -61,6 +61,7 @@ export type FsSession = {
 };
 
 export interface ParticipantData {
+  participantId: string;
   sequence: string[],
-  answers: Record<string, StoredAnswer>,
+  answers: Record<string, StoredAnswer | undefined>,
 }

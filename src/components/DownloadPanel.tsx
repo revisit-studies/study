@@ -2,11 +2,11 @@ import { Button, Stack, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconCodeDots, IconCodePlus, IconTable } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
-import { useStudyId } from '../routes';
-import { useStoreSelector, useCreatedStore } from '../store/store';
-import { useStudyConfig } from '../store/hooks/useStudyConfig';
+import { useCreatedStore } from '../store/store';
 import { DownloadTidy } from './DownloadTidy';
 import { useStorageEngine } from '../store/storageEngineHooks';
+import { StudyConfig } from '../parser/types';
+import { ParticipantData } from '../storage/types';
 
 export function download(graph: string, filename: string) {
   const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(graph);
@@ -18,18 +18,14 @@ export function download(graph: string, filename: string) {
   downloadAnchorNode.remove();
 }
 
-export function DownloadPanel() {
+export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
   const { trrack } = useCreatedStore();
-  const config = useStudyConfig();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const ids: any = useStoreSelector((s) => null); // s.trrackedSlice.studyIdentifiers
-  const studyId = useStudyId();
   const { storageEngine } = useStorageEngine();
   const [openDownload, { open, close }] = useDisclosure(false);
 
-  const autoDownload = config?.uiConfig.autoDownloadStudy || false;
+  const autoDownload = studyConfig.uiConfig.autoDownloadStudy || false;
   const autoDownloadDelay = autoDownload
-    ? config?.uiConfig.autoDownloadTime || -1
+    ? studyConfig.uiConfig.autoDownloadTime || -1
     : -1;
 
   const [delayCounter, setDelayCounter] = useState(
@@ -55,18 +51,21 @@ export function DownloadPanel() {
     return () => clearInterval(interval);
   }, [delayCounter]);
 
-  if (!config || !ids) return null;
+  const [participantData, setParticipantData] = useState<ParticipantData | null>();
+  const [participantId, setParticipantId] = useState('');
+  const baseFilename = studyConfig.studyMetadata.title.replace(' ', '_');
+  useEffect(() => {
+    async function fetchParticipantId() {
+      if (storageEngine) {
+        const participantId = await storageEngine.getCurrentParticipantId();
+        const participantData = await storageEngine.getParticipantData();
 
-  const graph = JSON.parse(trrack.export());
-
-  const baseFilename = `${config.studyMetadata.title.replace(' ', '_')}_${
-    ids.session_id
-  }`;
-  const jsonFilename = `${baseFilename}.json`;
-
-  if (delayCounter === 0) {
-    download(JSON.stringify(graph, null, 2), jsonFilename);
-  }
+        setParticipantId(participantId);
+        setParticipantData(participantData);
+      }
+    }
+    fetchParticipantId();
+  }, [storageEngine]);
 
   return (
     <Stack>
@@ -74,7 +73,7 @@ export function DownloadPanel() {
         leftIcon={<IconCodeDots />}
         mt="1em"
         mr="0.5em"
-        onClick={() => download(JSON.stringify(graph, null, 2), jsonFilename)}
+        onClick={() => download(JSON.stringify(participantData, null, 2), `${baseFilename}_${participantId}.json`)}
         display="block"
       >
         Download Current (JSON)
@@ -87,7 +86,7 @@ export function DownloadPanel() {
         onClick={async () => {
           if (!storageEngine) return;
           const graphs = await storageEngine.getAllParticpantsData();
-          download(JSON.stringify(graphs, null, 2), jsonFilename);
+          download(JSON.stringify(graphs, null, 2), `${baseFilename}_all.json`);
         }}
         display="block"
       >
@@ -112,7 +111,8 @@ export function DownloadPanel() {
       <DownloadTidy
         opened={openDownload}
         close={close}
-        filename={baseFilename}
+        filename={`${baseFilename}_${participantId}.csv`}
+        studyConfig={studyConfig}
       />
     </Stack>
   );
