@@ -1,14 +1,12 @@
 import { Button, Group, Text } from '@mantine/core';
 import { useInputState } from '@mantine/hooks';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
 import {
   IndividualComponent,
   ResponseBlockLocation,
 } from '../../parser/types';
 import { useCurrentStep } from '../../routes';
 import { useStoreDispatch, useAreResponsesValid, useStoreSelector, useStoreActions } from '../../store/store';
-import { useNextStep } from '../../store/hooks/useNextStep';
 import { deepCopy } from '../../utils/deepCopy';
 import { NextButton } from '../NextButton';
 import { useAnswerField } from '../stimuli/inputcomponents/utils';
@@ -18,7 +16,7 @@ import { useStorageEngine } from '../../store/storageEngineHooks';
 import { StoredAnswer, ValidationStatus } from '../../store/types';
 
 type Props = {
-  status: StoredAnswer;
+  status?: StoredAnswer;
   config: IndividualComponent | null;
   location: ResponseBlockLocation;
   style?: React.CSSProperties;
@@ -30,9 +28,6 @@ export default function ResponseBlock({
   status,
   style,
 }: Props) {
-  const { studyId = null } = useParams<{
-    studyId: string;
-  }>();
   const currentStep = useCurrentStep();
   const storedAnswer = status?.answer;
 
@@ -47,11 +42,12 @@ export default function ResponseBlock({
   const answerValidator = useAnswerField(responses, currentStep, storedAnswer);
   const [disableNext, setDisableNext] = useInputState(!storedAnswer);
   const [checkClicked, setCheckClicked] = useState(false);
-  const nextStep = useNextStep();
   const { iframeAnswers, trialValidation } = useStoreSelector((state) => state);
   const areResponsesValid = useAreResponsesValid(currentStep);
-
+  const { storageEngine } = useStorageEngine();
   const hasCorrectAnswer = ((configInUse?.correctAnswer?.length || 0) > 0);
+
+  console.log(location, answerValidator.values, trialValidation);
 
   const startTime = useMemo(() => {
     return Date.now();
@@ -63,18 +59,10 @@ export default function ResponseBlock({
   useEffect(() => {
     const iframeResponse = responses.find((r) => r.type === 'iframe');
     if (iframeResponse) {
-      const answerId = `${currentStep}/${iframeResponse.id}`;
+      const answerId = iframeResponse.id;
       answerValidator.setValues({...answerValidator.values, [answerId]: iframeAnswers});
     }
   }, [iframeAnswers]);
-
-
-
-  useEffect(() => {
-    if (storedAnswer) {
-      answerValidator.setValues(storedAnswer);
-    }
-  }, [storedAnswer]);
 
   useEffect(() => {
     storeDispatch(
@@ -86,8 +74,6 @@ export default function ResponseBlock({
       })
     );
   }, [answerValidator.values, currentStep, location]);
-
-  const { storageEngine } = useStorageEngine();
 
   const processNext = useCallback(() => {
     // Get answer from across the 3 response blocks and the provenance graph
@@ -139,9 +125,9 @@ export default function ResponseBlock({
           ) : (
             <>
               <ResponseSwitcher
-                storedAnswer={ storedAnswer ? storedAnswer[`${currentStep}/${response.id}`] : undefined }
+                storedAnswer={ storedAnswer ? storedAnswer[response.id] : undefined }
                 answer={{
-                  ...answerValidator.getInputProps(`${currentStep}/${response.id}`, {
+                  ...answerValidator.getInputProps(response.id, {
                     type: response.type === 'checkbox' ? 'checkbox' : 'input',
                   }),
                 }}
@@ -171,7 +157,6 @@ export default function ResponseBlock({
                 ? !checkClicked
                 : !areResponsesValid
             }
-            to={`/${studyId}/${nextStep}`}
             process={() => {
               setCheckClicked(false);
               processNext();

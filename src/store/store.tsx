@@ -15,6 +15,10 @@ export async function studyStoreCreator(
     {},
     ...sequence.map((id) => ({[id]: { aboveStimulus: { valid: false, values: {} }, belowStimulus: { valid: false, values: {} }, sidebar: { valid: false, values: {} } }}))
   );
+  const allValid = Object.assign(
+    {},
+    ...sequence.map((id) => ({[id]: { aboveStimulus: true, belowStimulus: true, sidebar: true, values: {} } }))
+  );
 
   const initialState: StoreState = {
     studyId,
@@ -23,7 +27,7 @@ export async function studyStoreCreator(
     config,
     showAdmin: false,
     showHelpText: false,
-    trialValidation: emptyValidation,
+    trialValidation: answers ? allValid : emptyValidation,
     iframeAnswers: [] as string[],
   };
 
@@ -129,6 +133,7 @@ export function useAreResponsesValid(id?: string) {
       }
       return true;
     });
+    console.log(id, valid, state.trialValidation[id]);
 
     if (!valid) return false;
 

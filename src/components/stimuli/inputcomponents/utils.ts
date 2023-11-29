@@ -3,28 +3,29 @@ import { useEffect, useState } from 'react';
 import { BaseResponse, Option, Response } from '../../../parser/types';
 import { StoredAnswer } from '../../../store/types';
 
-export const generateInitFields = (responses: Response[], currentStep: string, storedAnswer: StoredAnswer['answer']) => {
+export const generateInitFields = (responses: Response[], storedAnswer: StoredAnswer['answer']) => {
   let initObj = {};
 
   responses.forEach((response) => {
-    const answer = storedAnswer ? storedAnswer[`${currentStep}/${response.id}`] : {};
+    const answer = storedAnswer ? storedAnswer[response.id] : {};
     if (answer) {
-      initObj = { ...initObj, [`${currentStep}/${response.id}`]: answer };
+      console.log(response.id, answer);
+      initObj = { ...initObj, [response.id]: answer };
     } else {
-      initObj = { ...initObj, [`${currentStep}/${response.id}`]: response.type === 'iframe' ? [] : '' };
+      initObj = { ...initObj, [response.id]: response.type === 'iframe' ? [] : '' };
     }
   });
 
   return { ...initObj };
 };
 
-const generateValidation = (responses: Response[], currentStep: string) => {
+const generateValidation = (responses: Response[]) => {
   let validateObj = {};
   responses.forEach((response) => {
     if (response.required) {
       validateObj = {
         ...validateObj,
-        [`${currentStep}/${response.id}`]: (value: string | string[]) => {
+        [response.id]: (value: string | string[]) => {
           if (Array.isArray(value)) {
             if(response.requiredValue != null && !Array.isArray(response.requiredValue)) {
               return 'Incorrect required value';
@@ -57,8 +58,8 @@ export function useAnswerField(responses: Response[], currentStep: string, store
   const [_id, setId] = useState<string | null>(null);
 
   const answerField = useForm({
-    initialValues: generateInitFields(responses, currentStep, storedAnswer),
-    validate: generateValidation(responses, currentStep),
+    initialValues: generateInitFields(responses, storedAnswer),
+    validate: generateValidation(responses),
   });
 
   useEffect(() => {

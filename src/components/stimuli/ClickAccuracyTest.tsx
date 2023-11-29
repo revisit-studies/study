@@ -65,7 +65,7 @@ const ClickAccuracyTest = ({ parameters, setAnswer }: StimulusParams<any>) => {
       status: true,
       provenanceGraph: trrack.graph.backend,
       answers: {
-          [`${currentStep}/${taskid}`]: [
+          [taskid]: [
           ...new Set([distance]),
         ],
       },

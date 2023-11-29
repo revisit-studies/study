@@ -13,7 +13,6 @@ type Props = {
 export function NextButton({
   label = 'Next',
   process = null,
-  to = 'auto',
   disabled = false,
 }: Props) {
   const navigate = useNavigate();
@@ -22,15 +21,10 @@ export function NextButton({
   return (
     <Button
       type="submit"
-      disabled={disabled || (to === 'auto' && !computedTo)}
+      disabled={disabled}
       onClick={async () => {
         if (process) process();
-        if (to === 'auto' && computedTo) {
-          navigate(`${computedTo}${window.location.search}`);
-        }
-        if (to !== 'auto') {
-          navigate(`${to}${window.location.search}`);
-        }
+        navigate(`${computedTo}${window.location.search}`);
       }}
     >
       {label}

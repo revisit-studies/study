@@ -14,8 +14,8 @@ export default function AppNavBar() {
 
   // Get the config for the current step
   const studyConfig = useStudyConfig();
-  const step = useCurrentStep();
-  const stepConfig = studyConfig.components[step];
+  const currentStep = useCurrentStep();
+  const stepConfig = studyConfig.components[currentStep];
 
   const currentConfig = stepConfig
     ? isPartialComponent(stepConfig) && studyConfig.baseComponents
@@ -53,6 +53,7 @@ export default function AppNavBar() {
         <Navbar.Section p="xl">
           {
             <ResponseBlock
+              key={`${currentStep}-sidebar-response-block`}
               status={status}
               config={currentConfig}
               location="sidebar"
@@ -63,6 +64,7 @@ export default function AppNavBar() {
     </Navbar>
   ) : (
     <ResponseBlock
+      key={`${currentStep}-sidebar-response-block`}
       status={status}
       config={currentConfig}
       location="sidebar"

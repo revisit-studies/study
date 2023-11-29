@@ -16,8 +16,8 @@ import { IndividualComponent } from '../parser/types';
 export default function ComponentController() {
   // Get the config for the current step
   const studyConfig = useStudyConfig();
-  const step = useCurrentStep();
-  const stepConfig = studyConfig.components[step];
+  const currentStep = useCurrentStep();
+  const stepConfig = studyConfig.components[currentStep];
   
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
@@ -32,12 +32,13 @@ export default function ComponentController() {
     <>
       {instructionLocation === 'aboveStimulus' && <ReactMarkdownWrapper text={instruction} />}
       <ResponseBlock
+        key={`${currentStep}-above-response-block`}
         status={status}
         config={currentConfig}
         location="aboveStimulus"
       />
 
-      <Suspense key={step} fallback={<div>Loading...</div>}>
+      <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
         {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
         {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} />}
         {currentConfig.type === 'image' && <ImageController  currentConfig={currentConfig}/>}
@@ -46,6 +47,7 @@ export default function ComponentController() {
 
       {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
       <ResponseBlock
+        key={`${currentStep}-below-response-block`}
         status={status}
         config={currentConfig}
         location="belowStimulus"
