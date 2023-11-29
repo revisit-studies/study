@@ -17,15 +17,18 @@ import {
 } from '@tabler/icons-react';
 import { useState } from 'react';
 import { PREFIX } from '.././GlobalConfigParser';
-import { useCurrentStep } from '../../routes';
+import { useCurrentStep, useStudyId } from '../../routes';
 import { useStoreDispatch, useStoreSelector, useStoreActions } from '../../store/store';
 import { MODE } from '../../storage/initialize';
+import { useStorageEngine } from '../../store/storageEngineHooks';
+import { useHref } from 'react-router-dom';
 
 
 export default function AppHeader() {
   const { config: studyConfig, sequence: order } = useStoreSelector((state) => state);
   const storeDispatch = useStoreDispatch();
   const { toggleShowHelpText, toggleShowAdmin } = useStoreActions();
+  const { storageEngine } = useStorageEngine();
 
   const currentStep = useCurrentStep();
 
@@ -43,6 +46,18 @@ export default function AppHeader() {
 
   const [searchParams] = useState(new URLSearchParams(window.location.search));
   const admin = searchParams.get('admin') || 'f';
+
+  const studyId = useStudyId();
+  const studyHref = useHref(`/${studyId}`);
+  function getNewParticipant() {
+    storageEngine?.nextParticipant()
+      .then(() => {
+        window.location.href = studyHref;
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }
 
   return (
     <Header height="70" p="md">
@@ -105,6 +120,13 @@ export default function AppHeader() {
                     icon={<IconMail size={14} />}
                   >
                     Contact
+                  </Menu.Item>
+
+                  <Menu.Item
+                    icon={<IconSchema size={14} />}
+                    onClick={() => getNewParticipant()}
+                  >
+                    Next Participant
                   </Menu.Item>
                 </Menu.Dropdown>
               </Menu>

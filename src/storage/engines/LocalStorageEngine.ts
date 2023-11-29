@@ -191,6 +191,34 @@ export class LocalStorageEngine extends StorageEngine {
     return await this.studyDatabase.getItem(participantId) as ParticipantData | null;
   }
 
+  async nextParticipant() {
+    if (!this._verifyStudyDatabase(this.studyDatabase)) {
+      throw new Error('Study database not initialized');
+    }
+
+    // Generate a new participant id
+    const newParticipantId = uuidv4();
+
+    // Set current participant id
+    this.studyDatabase.setItem('currentParticipant', newParticipantId);
+    this.currentParticipantId = newParticipantId;
+
+    // Get participant data
+    let participant: ParticipantData | null = await this.studyDatabase.getItem(newParticipantId);
+    if (!participant) {
+      // Generate a new participant
+      const newParticipant: ParticipantData = {
+        participantId: newParticipantId,
+        sequence: [],
+        answers: {},
+      };
+      await this.studyDatabase.setItem(newParticipantId, newParticipant);
+      participant = newParticipant;
+    }
+
+    return participant as ParticipantData;
+  }
+
 
   private _verifyStudyDatabase(db: LocalForage | undefined): db is LocalForage  {
     return db !== undefined;

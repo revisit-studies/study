@@ -50,4 +50,6 @@ export abstract class StorageEngine {
 
   abstract getAllParticpantsData(): Promise<ParticipantData[]>;
   abstract getParticipantData(): Promise<ParticipantData | null>;
+
+  abstract nextParticipant(): Promise<ParticipantData>;
 }
