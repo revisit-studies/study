@@ -9,7 +9,6 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
   responses.forEach((response) => {
     const answer = storedAnswer ? storedAnswer[response.id] : {};
     if (answer) {
-      console.log(response.id, answer);
       initObj = { ...initObj, [response.id]: answer };
     } else {
       initObj = { ...initObj, [response.id]: response.type === 'iframe' ? [] : '' };

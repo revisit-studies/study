@@ -85,7 +85,6 @@ function processToRow(session: ParticipantData, studyConfig: StudyConfig): TidyR
     // Get the answer for this trial or an empty answer if it doesn't exist
     const trialAns = session.answers[trialId];
     const trialAnswer: StoredAnswer = trialAns !== undefined ? trialAns : { answer: {}, startTime: -1, endTime: -1 };
-    console.log(trialId, trialAns, session.participantId);
 
     const duration = trialAnswer.endTime - trialAnswer.startTime;
 

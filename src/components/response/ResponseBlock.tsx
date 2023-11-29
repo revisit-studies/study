@@ -47,8 +47,6 @@ export default function ResponseBlock({
   const { storageEngine } = useStorageEngine();
   const hasCorrectAnswer = ((configInUse?.correctAnswer?.length || 0) > 0);
 
-  console.log(location, answerValidator.values, trialValidation);
-
   const startTime = useMemo(() => {
     return Date.now();
   }, []);

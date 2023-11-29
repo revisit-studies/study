@@ -133,7 +133,6 @@ export function useAreResponsesValid(id?: string) {
       }
       return true;
     });
-    console.log(id, valid, state.trialValidation[id]);
 
     if (!valid) return false;
 
