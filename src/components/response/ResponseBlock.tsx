@@ -7,7 +7,7 @@ import {
   ResponseBlockLocation,
 } from '../../parser/types';
 import { useCurrentStep } from '../../routes';
-import { useStoreDispatch, useTrrackedActions, useAreResponsesValid, useStoreSelector, useUntrrackedActions } from '../../store/store';
+import { useStoreDispatch, useAreResponsesValid, useStoreSelector, useStoreActions } from '../../store/store';
 import { useNextStep } from '../../store/hooks/useNextStep';
 import { deepCopy } from '../../utils/deepCopy';
 import { NextButton } from '../NextButton';
@@ -42,13 +42,13 @@ export default function ResponseBlock({
     r.location ? r.location === location : location === 'belowStimulus'
   ) || [];
 
-  const { saveTrialAnswer } = useTrrackedActions();
   const storeDispatch = useStoreDispatch();
+  const { saveTrialAnswer, updateResponseBlockValidation, setIframeAnswers } = useStoreActions();
   const answerValidator = useAnswerField(responses, currentStep, storedAnswer);
   const [disableNext, setDisableNext] = useInputState(!storedAnswer);
   const [checkClicked, setCheckClicked] = useState(false);
   const nextStep = useNextStep();
-  const storeSelector = useStoreSelector((state) => state);
+  const { iframeAnswers, trialValidation } = useStoreSelector((state) => state);
   const areResponsesValid = useAreResponsesValid(currentStep);
 
   const hasCorrectAnswer = ((configInUse?.correctAnswer?.length || 0) > 0);
@@ -64,11 +64,10 @@ export default function ResponseBlock({
     const iframeResponse = responses.find((r) => r.type === 'iframe');
     if (iframeResponse) {
       const answerId = `${currentStep}/${iframeResponse.id}`;
-      answerValidator.setValues({...answerValidator.values, [answerId]: storeSelector.unTrrackedSlice.iframeAnswers});
+      answerValidator.setValues({...answerValidator.values, [answerId]: iframeAnswers});
     }
-  }, [storeSelector.unTrrackedSlice.iframeAnswers]);
+  }, [iframeAnswers]);
 
-  const unTrrackedActions = useUntrrackedActions();
 
 
   useEffect(() => {
@@ -79,7 +78,7 @@ export default function ResponseBlock({
 
   useEffect(() => {
     storeDispatch(
-      unTrrackedActions.updateResponseBlockValidation({
+      updateResponseBlockValidation({
         location,
         currentStep,
         status: answerValidator.isValid(),
@@ -92,14 +91,14 @@ export default function ResponseBlock({
 
   const processNext = useCallback(() => {
     // Get answer from across the 3 response blocks and the provenance graph
-    const trialValidation = deepCopy(storeSelector.unTrrackedSlice.trialValidation[currentStep]);
-    const answer = Object.values(trialValidation).reduce((acc, curr) => {
+    const trialValidationCopy = deepCopy(trialValidation[currentStep]);
+    const answer = Object.values(trialValidationCopy).reduce((acc, curr) => {
       if (Object.hasOwn(curr, 'values')) {
         return {...acc, ...(curr as ValidationStatus).values};
       }
       return acc;
     }, {});
-    const provenanceGraph = storeSelector.unTrrackedSlice.trialValidation[currentStep].provenanceGraph;
+    const provenanceGraph = trialValidationCopy.provenanceGraph;
     const endTime = Date.now();
 
     if (Object.keys(storedAnswer || {}).length === 0) {
@@ -116,7 +115,7 @@ export default function ResponseBlock({
       if (storageEngine) {
         storageEngine.saveAnswer(currentStep, { answer, startTime, endTime, provenanceGraph });
       }
-      storeDispatch(unTrrackedActions.setIframeAnswers([]));
+      storeDispatch(setIframeAnswers([]));
     }
 
     setDisableNext(!disableNext);

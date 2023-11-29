@@ -18,18 +18,14 @@ import {
 import { useState } from 'react';
 import { PREFIX } from '.././GlobalConfigParser';
 import { useCurrentStep } from '../../routes';
-import { useStoreDispatch, useStoreSelector, useUntrrackedActions } from '../../store/store';
+import { useStoreDispatch, useStoreSelector, useStoreActions } from '../../store/store';
 import { MODE } from '../../storage/initialize';
 
 
 export default function AppHeader() {
-  const studyConfig = useStoreSelector((state) => state.unTrrackedSlice.config);
-  const order = useStoreSelector((state) => state.trrackedSlice.sequence);
-
+  const { config: studyConfig, sequence: order } = useStoreSelector((state) => state);
   const storeDispatch = useStoreDispatch();
-
-  const unTrrackedActions = useUntrrackedActions();
-  const { toggleShowHelpText, toggleShowAdmin } = unTrrackedActions;
+  const { toggleShowHelpText, toggleShowAdmin } = useStoreActions();
 
   const currentStep = useCurrentStep();
 

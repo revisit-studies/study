@@ -1338,11 +1338,6 @@
     fast-json-patch "^3.1.1"
     uuid "^9.0.0"
 
-"@trrack/redux@^0.0.6":
-  version "0.0.6"
-  resolved "https://registry.yarnpkg.com/@trrack/redux/-/redux-0.0.6.tgz#2e5393a53c204a358eb6a410705a0c41f28a9c1e"
-  integrity sha512-p0FUawAFWZpXWuPBeDGpZRJbrcfe8rYu15isROQfUiVRQvJ1ng7nKPQnyFBGKpRXX8CPSYEwnCE1rIQbnAttlA==
-
 "@trrack/vis-react@^1.5.0":
   version "1.5.0"
   resolved "https://registry.yarnpkg.com/@trrack/vis-react/-/vis-react-1.5.0.tgz#8dbb27f61e53470687e9da949d17fec241775b7f"

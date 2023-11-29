@@ -18,12 +18,6 @@ export type TrialValidation = Record<
   }
 >;
 
-export interface TrrackedState {
-  studyId: string;
-  answers: Record<string, StoredAnswer>;
-  sequence: string[]
-}
-
 export interface StoredAnswer {
   answer: Record<string, Record<string, unknown>>;
   startTime: number;
@@ -38,11 +32,13 @@ export interface StimulusParams<T> {
 }
 
 
-export interface UnTrrackedState {
+export interface StoreState {
+  studyId: string;
+  answers: Record<string, StoredAnswer>;
+  sequence: string[]
   config: StudyConfig;
   showAdmin: boolean;
   showHelpText: boolean;
   trialValidation: TrialValidation;
-  trrackExists: boolean;
   iframeAnswers: string[];
 }

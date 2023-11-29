@@ -17,8 +17,7 @@ import { IconArrowRight } from '@tabler/icons-react';
 import { useCurrentStep } from '../../routes';
 
 export default function AppAside() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const showAdmin = useStoreSelector((state: any) => state.unTrrackedSlice.showAdmin);
+  const { showAdmin, sequence } = useStoreSelector((state) => state);
   const navigate = useNavigate();
 
   const { studyId = null } = useParams<{
@@ -28,9 +27,7 @@ export default function AppAside() {
   const currentStep = useCurrentStep();
   const studyConfig = useStudyConfig();
 
-  const taskList = useStoreSelector((state) => state.trrackedSlice.sequence);
-
-  const tasks = taskList.map((task) => ({
+  const tasks = sequence.map((task) => ({
     ...studyConfig.components[task],
     id: task,
   }));

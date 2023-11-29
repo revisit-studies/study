@@ -2,7 +2,6 @@ import { Button, Stack, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconCodeDots, IconCodePlus, IconTable } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
-import { useCreatedStore } from '../store/store';
 import { DownloadTidy } from './DownloadTidy';
 import { useStorageEngine } from '../store/storageEngineHooks';
 import { StudyConfig } from '../parser/types';
@@ -19,7 +18,6 @@ export function download(graph: string, filename: string) {
 }
 
 export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
-  const { trrack } = useCreatedStore();
   const { storageEngine } = useStorageEngine();
   const [openDownload, { open, close }] = useDisclosure(false);
 
@@ -39,7 +37,7 @@ export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
     }
 
     fn();
-  }, [storageEngine, trrack]);
+  }, [storageEngine]);
 
   useEffect(() => {
     if (delayCounter <= 0) return;

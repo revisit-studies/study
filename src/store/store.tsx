@@ -1,9 +1,8 @@
-import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-import { configureTrrackableStore, createTrrackableSlice } from '@trrack/redux';
+import { createSlice, configureStore, type PayloadAction } from '@reduxjs/toolkit';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { ResponseBlockLocation, StudyConfig } from '../parser/types';
-import { RootState, StoredAnswer, TrialValidation, TrrackedProvenance, TrrackedState, UnTrrackedState } from './types';
+import { RootState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState } from './types';
 
 export async function studyStoreCreator(
   studyId: string,
@@ -17,59 +16,23 @@ export async function studyStoreCreator(
     ...sequence.map((id) => ({[id]: { aboveStimulus: { valid: false, values: {} }, belowStimulus: { valid: false, values: {} }, sidebar: { valid: false, values: {} } }}))
   );
 
-  const initialTrrackedState: TrrackedState = {
+  const initialState: StoreState = {
     studyId,
     answers: answers || emptyAnswers,
     sequence,
-  };
-
-  const initialUntrrackedState: UnTrrackedState = {
     config,
     showAdmin: false,
     showHelpText: false,
     trialValidation: emptyValidation,
-    trrackExists: false,
     iframeAnswers: [] as string[],
   };
 
-  const studySlice = createTrrackableSlice({
-    name: 'trrackedStudySlice',
-    initialState: initialTrrackedState,
-    reducers: {
-      saveTrialAnswer(
-        state,
-        {
-          payload,
-        }: PayloadAction<{
-          currentStep: string;
-          answer: Record<string, Record<string, unknown>>;
-          startTime: number;
-          endTime: number;
-          provenanceGraph?: TrrackedProvenance;
-        }>
-      ) {
-        const { currentStep, answer, startTime, endTime, provenanceGraph } = payload;
-
-        state.answers[currentStep] = {
-          answer: answer,
-          startTime: startTime,
-          endTime: endTime,
-          provenanceGraph,
-        };
-      },
-    },
-  });
-
-
-  const configSlice = createSlice({
-    name: 'studySlice',
-    initialState: initialUntrrackedState,
+  const storeSlice = createSlice({
+    name: 'storeSlice',
+    initialState: initialState,
     reducers: {
       setConfig (state, payload: PayloadAction<StudyConfig>) {
         state.config = payload.payload;
-      },
-      setTrrackExists: (state, action: PayloadAction<boolean>) => {
-        state.trrackExists = action.payload;
       },
       toggleShowAdmin: (state) => {
         state.showAdmin = !state.showAdmin;
@@ -108,42 +71,46 @@ export async function studyStoreCreator(
           state.trialValidation[payload.currentStep].provenanceGraph = payload.provenanceGraph;
         }
       },
+      saveTrialAnswer(
+        state,
+        {
+          payload,
+        }: PayloadAction<{
+          currentStep: string;
+          answer: Record<string, Record<string, unknown>>;
+          startTime: number;
+          endTime: number;
+          provenanceGraph?: TrrackedProvenance;
+        }>
+      ) {
+        const { currentStep, answer, startTime, endTime, provenanceGraph } = payload;
+
+        state.answers[currentStep] = {
+          answer: answer,
+          startTime: startTime,
+          endTime: endTime,
+          provenanceGraph,
+        };
+      },
     },
   });
 
-  const { store, trrack, trrackStore } = configureTrrackableStore({
-    reducer: {
-      trrackedSlice: studySlice.reducer,
-      unTrrackedSlice: configSlice.reducer
+  const store = configureStore(
+    {
+      reducer: storeSlice.reducer,
+      preloadedState: initialState,
     },
-    slices: [studySlice, configSlice],
-  });
-
-  return {
-    store,
-    trrack,
-    trrackStore,
-    actions: studySlice.actions,
-    unTrrackedActions: configSlice.actions,
-  };
+  );
+  
+  return { store, actions: storeSlice.actions };
 }
 
 export type StudyStore = Awaited<ReturnType<typeof studyStoreCreator>>;
-export type StudyProvenance = StudyStore['trrack'];
-export type StudyState = ReturnType<StudyStore['store']['getState']>;
 
 export const StudyStoreContext = createContext<StudyStore>(null!);
 
-export function useCreatedStore() {
-  return useContext(StudyStoreContext);
-}
-
-export function useTrrackedActions() {
-  return useCreatedStore().actions;
-}
-
-export function useUntrrackedActions() {
-  return useCreatedStore().unTrrackedActions;
+export function useStoreActions() {
+  return useContext(StudyStoreContext).actions;
 }
 
 // Hooks
@@ -151,15 +118,12 @@ type StoreDispatch = StudyStore['store']['dispatch'];
 
 export const useStoreDispatch: () => StoreDispatch = useDispatch;
 export const useStoreSelector: TypedUseSelectorHook<RootState> = useSelector;
-export function useStudySelector() {
-  return useStoreSelector((s) => s.trrackedSlice);
-}
 
 export function useAreResponsesValid(id?: string) {
   return useStoreSelector((state) => {
     if (id === undefined || id.length === 0) return true;
 
-    const valid = Object.values(state.unTrrackedSlice.trialValidation[id]).every((x) => {
+    const valid = Object.values(state.trialValidation[id]).every((x) => {
       if (typeof x === 'object' && 'valid' in x) {
         return x.valid;
       }

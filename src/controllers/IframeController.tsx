@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { PREFIX as BASE_PREFIX } from '../components/GlobalConfigParser';
 import { useCurrentStep } from '../routes';
 import { useNextStep } from '../store/hooks/useNextStep';
-import { useStoreDispatch, useUntrrackedActions } from '../store/store';
+import { useStoreDispatch, useStoreActions } from '../store/store';
 import { WebsiteComponent } from '../parser/types';
 
 
@@ -18,7 +18,7 @@ const defaultStyle = {
 };
 
 export default function IframeController({ currentConfig }: { currentConfig: WebsiteComponent; }) {
-  const unTrrackedActions = useUntrrackedActions();
+  const { setIframeAnswers } = useStoreActions();
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
 
@@ -66,7 +66,7 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
             }
             break;
           case `${PREFIX}/ANSWERS`:
-            storeDispatch(unTrrackedActions.setIframeAnswers(data.message.answer));
+            storeDispatch(setIframeAnswers(data.message.answer));
             break;
         }
       }
@@ -75,7 +75,7 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, computedTo, currentStep, dispatch, iframeId, navigate, currentConfig, sendMessage, unTrrackedActions]);
+  }, [storeDispatch, computedTo, currentStep, dispatch, iframeId, navigate, currentConfig, sendMessage]);
 
   return (
     <div >

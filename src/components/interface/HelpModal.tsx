@@ -1,18 +1,16 @@
 import { Modal } from '@mantine/core';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
-import { useStoreDispatch, useStoreSelector, useUntrrackedActions } from '../../store/store';
+import { useStoreDispatch, useStoreSelector, useStoreActions } from '../../store/store';
 import { useEffect, useState } from 'react';
 import { PREFIX } from '.././GlobalConfigParser';
 
 
 export default function HelpModal() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const showHelpText = useStoreSelector((state: any) => state.unTrrackedSlice.showHelpText);
-  const config = useStoreSelector((state) => state.unTrrackedSlice.config);
+  const { showHelpText, config} = useStoreSelector((state: any) => state);
 
   const storeDispatch = useStoreDispatch();
-  const unTrrackedActions = useUntrrackedActions();
-  const { toggleShowHelpText } = unTrrackedActions;
+  const { toggleShowHelpText } = useStoreActions();
 
   const [helpText, setHelpText] = useState('');
   useEffect(() => {

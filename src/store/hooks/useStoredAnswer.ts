@@ -8,7 +8,7 @@ import { useCurrentStep } from '../../routes';
  */
 
 export function useStoredAnswer() {
-  const study = useStoreSelector((state) => state.trrackedSlice);
+  const { answers } = useStoreSelector((state) => state);
   const currentStep = useCurrentStep();
-  return study.answers[currentStep];
+  return answers[currentStep];
 }

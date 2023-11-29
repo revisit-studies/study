@@ -4,8 +4,7 @@ import { useCurrentStep } from '../../routes';
 export function useNextStep() {
   const currentStep = useCurrentStep();
 
-  const config = useStoreSelector((state) => state.unTrrackedSlice.config);
-  const { sequence } = useStoreSelector((state) => state.trrackedSlice);
+  const { sequence, config } = useStoreSelector((state) => state);
 
   if (currentStep === 'end' || currentStep === '') return null;
 
