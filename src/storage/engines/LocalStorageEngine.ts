@@ -1,4 +1,4 @@
-import { StorageEngineConstants, StorageEngine } from './StorageEngine';
+import { StorageEngine } from './StorageEngine';
 import localforage from 'localforage';
 import { ParticipantData } from '../types';
 import { v4 as uuidv4 } from 'uuid';
@@ -7,16 +7,13 @@ import { StoredAnswer } from '../../store/types';
 export class LocalStorageEngine extends StorageEngine {
   private studyDatabase: LocalForage | undefined = undefined;
 
-  constructor(constants: StorageEngineConstants) {
-    super('localStorage', constants);
+  constructor() {
+    super('localStorage');
   }
 
   async connect() {
-    // nothing to do here
-  }
-
-  isConnected() {
-    return this.studyDatabase !== undefined;
+    this.connected = true;
+    return;
   }
 
   async initializeStudyDb(studyId: string, config: object) {
@@ -25,7 +22,6 @@ export class LocalStorageEngine extends StorageEngine {
       name: studyId,
     });
     await this.studyDatabase.setItem('config', config);
-    this.connected = true;
   }
 
   async initializeParticipantSession(participantId: string, sequence: string[]) {
@@ -62,13 +58,12 @@ export class LocalStorageEngine extends StorageEngine {
     }
 
     // Get currentParticipantId
-    const participantId: string | null = await this.studyDatabase.getItem('currentParticipant');
-    this.currentParticipantId = participantId;
+    this.getCurrentParticipantId();
 
     // Get participant data
     let participant: ParticipantData | null = null;
-    if (participantId !== null) {
-      participant = await this.studyDatabase.getItem(participantId);
+    if (this.currentParticipantId !== null) {
+      participant = await this.studyDatabase.getItem(this.currentParticipantId);
     }
 
     return participant;
@@ -218,7 +213,6 @@ export class LocalStorageEngine extends StorageEngine {
 
     return participant as ParticipantData;
   }
-
 
   private _verifyStudyDatabase(db: LocalForage | undefined): db is LocalForage  {
     return db !== undefined;

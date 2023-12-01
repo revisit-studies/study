@@ -1,31 +1,19 @@
 import { StoredAnswer } from '../../store/types';
 import { ParticipantData } from '../types';
 
-export type StorageEngineConstants = {
-  MODE: 'prod' | 'dev',
-  PID_KEY: '__pid',
-  CONN_CHECK: string,
-  PARTICIPANTS: string,
-  STUDIES: string,
-  SESSIONS: string,
-  TRRACKS: string,
-  NODES: string,
-  TRRACK: string,
-  RECAPTCHAV3TOKEN: string,
-}
 
 export abstract class StorageEngine {
   protected engine: string;
   protected connected = false;
-  protected constants: StorageEngineConstants;
   protected currentParticipantId: string | null = null;
 
-  constructor(engine: string, constants: StorageEngineConstants) {
+  constructor(engine: string) {
     this.engine = engine;
-    this.constants = constants;
   }
  
-  abstract isConnected(): boolean;
+  isConnected() {
+    return this.connected;
+  }
 
   getEngine() {
     return this.engine;
