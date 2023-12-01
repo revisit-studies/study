@@ -200,7 +200,7 @@ export class LocalStorageEngine extends StorageEngine {
       // Generate a new participant
       const newParticipant: ParticipantData = {
         participantId: newParticipantId,
-        sequence: [],
+        sequence: await this.getSequence(),
         answers: {},
       };
       await this.studyDatabase.setItem(newParticipantId, newParticipant);
