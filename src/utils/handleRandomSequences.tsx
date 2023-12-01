@@ -84,7 +84,7 @@ function generateLatinSquare(config: StudyConfig, path: string) {
   return newSquare;
 }
 
-export function generateSequenceArray(config: StudyConfig, numSequences = 10000) {
+export function generateSequenceArray(config: StudyConfig, numSequences = 1000) {
   const paths = createRandomOrders(config.sequence);
   const latinSquareObject: Record<string, string[][]> = paths
     .map((p) => ({ [p]: generateLatinSquare(config, p) }))
