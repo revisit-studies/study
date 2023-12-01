@@ -1,10 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Randomized Full VLAT (Visualization Literacy Assessment Test)' }).click();
-  
-  await page.goto('/vlat-full-randomized?prolificId=test');
+  await page.goto('/vlat-full-randomized?PROLIFIC_ID=test');
 
   await page.getByRole('heading', { name: 'What is VLAT?' }).click();
   await page.getByRole('button', { name: 'Next' }).click();

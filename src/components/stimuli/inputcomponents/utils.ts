@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { BaseResponse, Option, Response } from '../../../parser/types';
 import { StoredAnswer } from '../../../store/types';
 
+const queryParameters = new URLSearchParams(window.location.search);
 export const generateInitFields = (responses: Response[], storedAnswer: StoredAnswer['answer']) => {
   let initObj = {};
 
@@ -11,7 +12,7 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
     if (answer) {
       initObj = { ...initObj, [response.id]: answer };
     } else {
-      initObj = { ...initObj, [response.id]: response.type === 'iframe' ? [] : '' };
+      initObj = { ...initObj, [response.id]: response.type === 'iframe' ? [] : (response.paramCapture ? queryParameters.get(response.paramCapture): '') };
     }
   });
 
