@@ -19,7 +19,6 @@ import { useState } from 'react';
 import { PREFIX } from '.././GlobalConfigParser';
 import { useCurrentStep, useStudyId } from '../../routes';
 import { useStoreDispatch, useStoreSelector, useStoreActions } from '../../store/store';
-import { MODE } from '../../storage/initialize';
 import { useStorageEngine } from '../../store/storageEngineHooks';
 import { useHref } from 'react-router-dom';
 
@@ -89,7 +88,7 @@ export default function AppHeader() {
 
             <Space w="md"></Space>
 
-            {(MODE === 'dev' || admin === 't') && (
+            {(import.meta.env.DEV || admin === 't') && (
               <Menu
                 shadow="md"
                 width={200}
