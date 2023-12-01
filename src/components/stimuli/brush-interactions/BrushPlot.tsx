@@ -10,7 +10,7 @@ import ColumnTable from 'arquero/dist/types/table/column-table';
 import { Registry, initializeTrrack } from '@trrack/core';
 
 import * as d3 from 'd3';
-import { debounce } from 'lodash.debounce';
+import debounce from 'lodash.debounce';
 
 export interface BrushState {
     hasBrush: boolean;

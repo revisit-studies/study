@@ -16,7 +16,7 @@ test('test', async ({ page }) => {
   await page.getByLabel('7').check();
   await page.getByPlaceholder('Enter your answer here').fill('ads');
   await page.getByPlaceholder('Enter your long comments here').fill('asdf');
-  await page.getByText('0BadMidGood').click();
+  await page.locator('.mantine-Slider-track').click();
   await page.getByRole('checkbox', { name: 'Option 2' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 

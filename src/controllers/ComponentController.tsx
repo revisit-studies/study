@@ -9,7 +9,7 @@ import { useCurrentStep } from '../routes';
 import { useStoredAnswer } from '../store/hooks/useStoredAnswer';
 import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
 import { isPartialComponent } from '../parser/parser';
-import { merge } from 'lodash.merge';
+import merge from 'lodash.merge';
 import { IndividualComponent } from '../parser/types';
 
 // current active stimuli presented to the user

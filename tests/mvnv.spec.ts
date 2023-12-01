@@ -40,6 +40,13 @@ test('test', async ({ page }) => {
 
     const qText = await page.getByText('Task:Question:');
     await expect(qText).toBeVisible();
+
+    if (url.includes('task0')) {
+      await page.getByText('Selected name(s) will show here').click();
+      await page.frameLocator('#root iframe').locator('#answerBox318046158 rect').click();
+      const q0ans = await page.getByText('Krist Wongsuphasawat');
+      await expect(q0ans).toBeVisible();
+    }
     
     if (url.slice(-2) === 'k1') {
       await page.frameLocator('#root iframe').locator('#answerBox318046158 rect').click();
@@ -116,6 +123,7 @@ test('test', async ({ page }) => {
       await page.frameLocator('#root iframe').locator('#answerBox191257554 rect').click();
       const q11ans1 = await page.getByText('Papadopoulos Teo');
       const q11ans2 = await page.getByText('Eamonn Maguire');
+      await page.getByPlaceholder('answer text').fill('test');
       await expect(q11ans1).toBeVisible();
       await expect(q11ans2).toBeVisible();
     }

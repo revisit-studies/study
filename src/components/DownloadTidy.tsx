@@ -15,7 +15,7 @@ import { ParticipantData } from '../storage/types';
 import { useStorageEngine } from '../store/storageEngineHooks';
 import { Prettify, StudyConfig } from '../parser/types';
 import { isPartialComponent } from '../parser/parser';
-import { merge } from 'lodash.merge';
+import merge from 'lodash.merge';
 import { StoredAnswer } from '../store/types';
 
 export const OPTIONAL_COMMON_PROPS = [
