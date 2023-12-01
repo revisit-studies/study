@@ -31,15 +31,6 @@ export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
   );
 
   useEffect(() => {
-    async function fn() {
-      if (!storageEngine) return;
-      await storageEngine.finalizeParticipantSession();
-    }
-
-    fn();
-  }, [storageEngine]);
-
-  useEffect(() => {
     if (delayCounter <= 0) return;
 
     const interval = setInterval(() => {

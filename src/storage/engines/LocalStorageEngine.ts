@@ -69,10 +69,6 @@ export class LocalStorageEngine extends StorageEngine {
     return participant;
   }
 
-  async finalizeParticipantSession() {
-    // TODO: implement
-  }
-
   async getCurrentParticipantId() {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');

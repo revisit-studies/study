@@ -25,7 +25,6 @@ export abstract class StorageEngine {
 
   abstract initializeParticipantSession(participantId: string, sequence: string[]): Promise<ParticipantData>;
   abstract getParticipantSession(participantId: string): Promise<ParticipantData | null>;
-  abstract finalizeParticipantSession(): Promise<void>;
 
   abstract getCurrentParticipantId(): Promise<string>;
   abstract clearCurrentParticipantId(): Promise<void>;
