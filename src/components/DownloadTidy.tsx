@@ -40,10 +40,8 @@ type MetaProperty = `meta-${string}`;
 
 export type Property = OptionalProperty | RequiredProperty | MetaProperty;
 
-export type TidyRow = Prettify<
-  Record<RequiredProperty, any> &
-    Partial<Record<OptionalProperty | MetaProperty, any>>
->;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export type TidyRow = Prettify<Record<RequiredProperty, any> & Partial<Record<OptionalProperty | MetaProperty, any>>>;
 
 export async function downloadTidy(
   properties: Property[] = [...REQUIRED_PROPS, ...OPTIONAL_COMMON_PROPS],

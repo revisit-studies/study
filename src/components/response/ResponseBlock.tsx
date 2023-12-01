@@ -39,7 +39,7 @@ export default function ResponseBlock({
 
   const storeDispatch = useStoreDispatch();
   const { saveTrialAnswer, updateResponseBlockValidation, setIframeAnswers } = useStoreActions();
-  const answerValidator = useAnswerField(responses, currentStep, storedAnswer);
+  const answerValidator = useAnswerField(responses, currentStep, storedAnswer || {});
   const [disableNext, setDisableNext] = useInputState(!storedAnswer);
   const [checkClicked, setCheckClicked] = useState(false);
   const { iframeAnswers, trialValidation } = useStoreSelector((state) => state);

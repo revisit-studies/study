@@ -164,7 +164,7 @@ export function BrushPlot({ parameters, setAnswer }: StimulusParams<BrushParams>
 
     return data ? (
         <Stack spacing="xs">
-            <Scatter brushedPoints={brushState?.ids} data={data} params={parameters} filteredTable={filteredTable} brushType={parameters.brushType}  setBrushedSpace={brushedSpaceCallback} brushState={brushState} fullTable={fullTable} setFilteredTable={filteredCallback}/>
+            <Scatter brushedPoints={brushState?.ids} data={data} params={parameters} brushType={parameters.brushType}  setBrushedSpace={brushedSpaceCallback} brushState={brushState} setFilteredTable={filteredCallback}/>
             <Bar data={data} parameters={parameters} barsTable={barsTable}/>
         </Stack>
   ) : <Loader/>;

@@ -55,7 +55,7 @@ const PieChart = ({
             dms.marginTop + radius,
           ].join(',')})`}
         >
-          <Slices arcs={arcsGen} data={data.data} />
+          <Slices arcs={arcsGen} />
           <SlicesDotMarks positions={labelArcs} />
         </g>
       </svg>
