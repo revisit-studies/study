@@ -6,7 +6,7 @@ export async function initalizeStorageEngine() {
   let storageEngine: StorageEngine;
   let fallback = false;
 
-  if (import.meta.env.VITE_STORAGE_ENGINE === 'firebase') {
+  if (import.meta.env.VITE_DATABASE_ENGINE === 'firebase') {
     const firebaseStorageEngine = new FirebaseStorageEngine();
     await firebaseStorageEngine.connect();
 
@@ -17,7 +17,7 @@ export async function initalizeStorageEngine() {
     }
   }
 
-  if (import.meta.env.VITE_STORAGE_ENGINE === 'localStorage' || fallback) {
+  if (import.meta.env.VITE_DATABASE_ENGINE === 'localStorage' || fallback) {
     const localStorageEngine = new LocalStorageEngine();
     await localStorageEngine.connect();
 
