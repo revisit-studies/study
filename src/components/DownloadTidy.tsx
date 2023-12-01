@@ -78,7 +78,7 @@ export async function downloadTidy(
 function processToRow(session: ParticipantData, studyConfig: StudyConfig): TidyRow[] {
   return Object.entries(studyConfig.components).map(([trialId, trialConfig]) => {
     // Get the whole component, including the base component if there is inheritance
-    const completeComponent = isPartialComponent(trialConfig) && trialConfig.baseComponent && studyConfig.baseComponents ? merge(studyConfig.baseComponents[trialConfig.baseComponent], trialConfig) : trialConfig;
+    const completeComponent = isPartialComponent(trialConfig) && trialConfig.baseComponent && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents[trialConfig.baseComponent], trialConfig) : trialConfig;
 
     // Get the answer for this trial or an empty answer if it doesn't exist
     const trialAns = session.answers[trialId];
