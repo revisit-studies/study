@@ -1,12 +1,28 @@
 import { LocalStorageEngine } from './engines/LocalStorageEngine';
 import { FirebaseStorageEngine } from './engines/FirebaseStorageEngine';
+import { StorageEngine } from './engines/StorageEngine';
 
 export async function initalizeStorageEngine() {
-  const localStorageEngine = new LocalStorageEngine();
-  const firebaseStorageEngine = new FirebaseStorageEngine();
+  let storageEngine: StorageEngine;
+  let fallback = false;
 
-  await firebaseStorageEngine.connect();
-  await localStorageEngine.connect();
+  if (import.meta.env.VITE_STORAGE_ENGINE === 'firebase') {
+    const firebaseStorageEngine = new FirebaseStorageEngine();
+    await firebaseStorageEngine.connect();
 
-  return firebaseStorageEngine.isConnected() ? firebaseStorageEngine : localStorageEngine;
+    if (firebaseStorageEngine.isConnected()) {
+      storageEngine = firebaseStorageEngine;
+    } else {
+      fallback = true;
+    }
+  }
+
+  if (import.meta.env.VITE_STORAGE_ENGINE === 'localStorage' || fallback) {
+    const localStorageEngine = new LocalStorageEngine();
+    await localStorageEngine.connect();
+
+    storageEngine = localStorageEngine;
+  }
+
+  return storageEngine!;
 }
