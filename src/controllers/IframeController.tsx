@@ -42,7 +42,7 @@ export default function IframeController({path, parameters}: Props) {
   // navigation
   const currentStep = useCurrentStep();
   const navigate = useNavigate();
-  const computedTo = useNextStep();
+  const { nextStep: computedTo } = useNextStep();
 
   const sendMessage = useCallback(
     (tag: string, message: unknown) => {

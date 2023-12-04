@@ -1,37 +1,32 @@
 import { Button } from '@mantine/core';
-import { To, useNavigate } from 'react-router-dom';
-import { useStudyId } from '../routes';
 import { useNextStep } from '../store/hooks/useNextStep';
+import { useCallback } from 'react';
 
 type Props = {
   label?: string;
   disabled?: boolean;
-  process?: null | (() => void | Promise<void>);
-  to?: To | 'auto';
+  onClick?: null | (() => void | Promise<void>);
 };
 
 export function NextButton({
   label = 'Next',
-  process = null,
-  to = 'auto',
   disabled = false,
+  onClick,
 }: Props) {
-  const navigate = useNavigate();
-  const computedTo = `/${useStudyId()}/${useNextStep()}`;
+  const { isDisabled, goToNextStep } = useNextStep();
+
+  const handleClick = useCallback(() => {
+    if (onClick) {
+      onClick();
+    }
+    goToNextStep();
+  }, [goToNextStep, onClick]);
 
   return (
     <Button
       type="submit"
-      disabled={disabled || (to === 'auto' && !computedTo)}
-      onClick={async () => {
-        if (process) process();
-        if (to === 'auto' && computedTo) {
-          navigate(`${computedTo}${window.location.search}`);
-        }
-        if (to !== 'auto') {
-          navigate(`${to}${window.location.search}`);
-        }
-      }}
+      disabled={disabled || isDisabled}
+      onClick={handleClick}
     >
       {label}
     </Button>
