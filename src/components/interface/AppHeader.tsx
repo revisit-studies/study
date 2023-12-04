@@ -14,37 +14,28 @@ import {
   IconDotsVertical,
   IconMail,
   IconSchema,
-  IconTrash,
 } from '@tabler/icons-react';
 import { useState } from 'react';
-import {useNavigate} from 'react-router-dom';
-import { PREFIX } from '../../App';
-import { useCurrentStep } from '../../routes';
-import { useAppSelector, useCreatedStore } from '../../store/store';
-import {
-  toggleShowAdmin,
-  toggleShowHelpText,
-  useFlagsDispatch,
-} from '../../store/flags';
-import { MODE } from '../../storage/constants';
+import { PREFIX } from '.././GlobalConfigParser';
+import { useCurrentStep, useStudyId } from '../../routes';
+import { useStoreDispatch, useStoreSelector, useStoreActions } from '../../store/store';
+import { useStorageEngine } from '../../store/storageEngineHooks';
+import { useHref } from 'react-router-dom';
+
 
 export default function AppHeader() {
-  const studyConfig = useAppSelector((state) => state.unTrrackedSlice.config);
-  const order = useAppSelector((state) => state.trrackedSlice.order);
-
-  const clearCache = useCreatedStore().clearCache;
-  const flagsDispatch = useFlagsDispatch();
-  const navigate = useNavigate();
+  const { config: studyConfig, sequence: order } = useStoreSelector((state) => state);
+  const storeDispatch = useStoreDispatch();
+  const { toggleShowHelpText, toggleShowAdmin } = useStoreActions();
+  const { storageEngine } = useStorageEngine();
 
   const currentStep = useCurrentStep();
 
   const progressBarCurrent =
     studyConfig !== null
-      ? currentStep === 'end'
-        ? 100
-        : order.indexOf(currentStep)
+      ? order.indexOf(currentStep)
       : 0;
-  const progressBarMax = order.length || 0;
+  const progressBarMax = order.length - 1;
   const progressPercent = (progressBarCurrent / progressBarMax) * 100;
 
   const [menuOpened, setMenuOpened] = useState(false);
@@ -52,8 +43,20 @@ export default function AppHeader() {
   const logoPath = studyConfig?.uiConfig.logoPath;
   const withProgressBar = studyConfig?.uiConfig.withProgressBar;
 
-  const [searchParams, setSearchParams] = useState(new URLSearchParams(window.location.search));
+  const [searchParams] = useState(new URLSearchParams(window.location.search));
   const admin = searchParams.get('admin') || 'f';
+
+  const studyId = useStudyId();
+  const studyHref = useHref(`/${studyId}`);
+  function getNewParticipant() {
+    storageEngine?.nextParticipant()
+      .then(() => {
+        window.location.href = studyHref;
+      })
+      .catch((err) => {
+        console.error(err);
+      });
+  }
 
   return (
     <Header height="70" p="md">
@@ -77,7 +80,7 @@ export default function AppHeader() {
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"
-                onClick={() => flagsDispatch(toggleShowHelpText())}
+                onClick={() => storeDispatch(toggleShowHelpText())}
               >
                 Help
               </Button>
@@ -85,7 +88,7 @@ export default function AppHeader() {
 
             <Space w="md"></Space>
 
-            {(MODE === 'dev' || admin === 't') && (
+            {(import.meta.env.DEV || admin === 't') && (
               <Menu
                 shadow="md"
                 width={200}
@@ -98,11 +101,10 @@ export default function AppHeader() {
                     <IconDotsVertical />
                   </ActionIcon>
                 </Menu.Target>
-
                 <Menu.Dropdown>
                   <Menu.Item
                     icon={<IconSchema size={14} />}
-                    onClick={() => flagsDispatch(toggleShowAdmin())}
+                    onClick={() => storeDispatch(toggleShowAdmin())}
                   >
                     Admin Mode
                   </Menu.Item>
@@ -118,14 +120,12 @@ export default function AppHeader() {
                   >
                     Contact
                   </Menu.Item>
+
                   <Menu.Item
-                    onClick={async () => {
-                      await clearCache();
-                      navigate(0);
-                    }}
-                    icon={<IconTrash size={14} />}
+                    icon={<IconSchema size={14} />}
+                    onClick={() => getNewParticipant()}
                   >
-                    Clear Cache & Refresh
+                    Next Participant
                   </Menu.Item>
                 </Menu.Dropdown>
               </Menu>

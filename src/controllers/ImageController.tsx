@@ -1,22 +1,16 @@
 import { Image } from '@mantine/core';
-import { PREFIX } from '../App';
+import { PREFIX } from '../components/GlobalConfigParser';
+import { ImageComponent } from '../parser/types';
 
 const defaultStyle = {
   maxWidth: '100%',
 };
 
-const ImageController = ({
-  path,
-  style = {},
-}: {
-  path?: string;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  style?: { [key: string]: any };
-}) => {
-  const imageStyle = { ...defaultStyle, ...style };
+const ImageController = ({ currentConfig }: { currentConfig: ImageComponent; }) => {
+  const imageStyle = { ...defaultStyle, ...currentConfig.style };
 
   return (
-    <Image mx="auto" src={`${PREFIX}${path}`} style={imageStyle} />
+    <Image mx="auto" src={`${PREFIX}${currentConfig.path}`} style={imageStyle} />
   );
 };
 

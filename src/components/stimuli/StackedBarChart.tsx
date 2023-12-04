@@ -15,7 +15,7 @@ const chartSettings = {
 };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const StackedBarChart = ({ parameters, trialId }: { parameters: any, trialId: string }) => {
+const StackedBarChart = ({ parameters }: { parameters: any }) => {
   const tickLength = 6;
   const [ref, dms] = useChartDimensions(chartSettings);
 
@@ -103,7 +103,7 @@ const StackedBarChart = ({ parameters, trialId }: { parameters: any, trialId: st
             />
           </g>
           <g transform={'translate(0, 0)'}>
-            <StackedBars data={series} barWidth={barWidth} yScale={yScale} trialId={trialId} />
+            <StackedBars data={series} barWidth={barWidth} yScale={yScale} />
             <DotMarks positions={markPositions} />
           </g>
         </g>

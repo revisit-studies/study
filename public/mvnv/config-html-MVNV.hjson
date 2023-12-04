@@ -246,7 +246,7 @@
                 taskName: Attr. of Common Neighbors.
             }
             description: Jeffrey and Robert's common neighbor with most followers
-            instruction: Among all people who have interacted with both Jeffrey and Robert, who has the most followers?
+            instruction: **Question:** Among all people who have interacted with both Jeffrey and Robert, who has the most followers?
             type: website
             path: mvnv/index.html
             nextButtonLocation: sidebar

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Route, Routes, useParams } from 'react-router-dom';
-import ConfigSwitcher from './components/ConfigSwitcher';
-import { Shell } from './components/Shell';
-import { parseGlobalConfig, parseStudyConfig } from './parser/parser';
-import { GlobalConfig, Nullable, StudyConfig } from './parser/types';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import ConfigSwitcher from './ConfigSwitcher';
+import { Shell } from './Shell';
+import { parseGlobalConfig, parseStudyConfig } from '../parser/parser';
+import { GlobalConfig, Nullable, StudyConfig } from '../parser/types';
 
 export const PREFIX = import.meta.env.PROD
   ? import.meta.env.VITE_BASE_PATH
@@ -33,20 +33,16 @@ async function fetchStudyConfigs(globalConfig: GlobalConfig) {
   return studyConfigs;
 }
 
-export default function AppShellDemo() {
-  const [globalConfig, setGlobalConfig] =
-    useState<Nullable<GlobalConfig>>(null);
-
-  const [studyConfigs, setStudyConfigs] = useState<{
-    [key: string]: StudyConfig;
-  }>({});
+export function GlobalConfigParser() {
+  const [globalConfig, setGlobalConfig] = useState<Nullable<GlobalConfig>>(null);
+  const [studyConfigs, setStudyConfigs] = useState<Record<string, StudyConfig>>({});
 
   useEffect(() => {
-    const fetchData = async () => {
+    async function fetchData() {
       if (globalConfig) {
         setStudyConfigs(await fetchStudyConfigs(globalConfig));
       }
-    };
+    }
     fetchData();
   }, [globalConfig]);
 
@@ -72,15 +68,9 @@ export default function AppShellDemo() {
         />
         <Route
           path="/:studyId/*"
-          element={<ShellWrapper globalConfig={globalConfig} />}
+          element={<Shell globalConfig={globalConfig} />}
         />
       </Routes>
     </BrowserRouter>
   ) : null;
-}
-
-function ShellWrapper(props: any) {
-  const { studyId } = useParams();
-
-  return <Shell key={studyId} {...props} />;
 }

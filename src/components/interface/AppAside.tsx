@@ -7,30 +7,27 @@ import {
   Space,
   Text,
 } from '@mantine/core';
-import { useCurrentStep } from '../../routes';
-import { useFlagsSelector } from '../../store/flags';
 import { DownloadPanel } from '../DownloadPanel';
 import { StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
-import { useAppSelector } from '../../store/store';
-import React from 'react';
+import { useStoreSelector } from '../../store/store';
+import React, { ReactNode } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IconArrowRight } from '@tabler/icons-react';
+import { useCurrentStep } from '../../routes';
 
 export default function AppAside() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const showAdmin = useFlagsSelector((state: any) => state.showAdmin);
+  const { showAdmin, sequence } = useStoreSelector((state) => state);
   const navigate = useNavigate();
 
   const { studyId = null } = useParams<{
     studyId: string;
   }>();
 
+  const currentStep = useCurrentStep();
   const studyConfig = useStudyConfig();
 
-  const taskList = useAppSelector((state) => state.trrackedSlice.order);
-
-  const tasks = taskList.map((task) => ({
+  const tasks = sequence.map((task) => ({
     ...studyConfig.components[task],
     id: task,
   }));
@@ -43,7 +40,7 @@ export default function AppAside() {
         </Aside.Section>
 
         <Aside.Section grow component={ScrollArea} px="xs" my="lg">
-          <DownloadPanel />
+          {currentStep === 'end' && <DownloadPanel studyConfig={studyConfig} />}
         </Aside.Section>
 
         <Aside.Section grow component={ScrollArea} px="xs" my="lg">
@@ -82,7 +79,7 @@ export default function AppAside() {
                     Object.keys(task.meta).map((key) => {
                       return (
                         <Text key={key}>
-                          {key}: {(task.meta as any)[key]}
+                          {key}: {(task.meta as Record<string, ReactNode>)[key]}
                         </Text>
                       );
                     })}

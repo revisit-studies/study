@@ -1,9 +1,8 @@
 import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
-  await page.goto('/');
-  await page.getByRole('button', { name: 'Randomized Full VLAT (Visualization Literacy Assessment Test)' }).click();
-  
+  await page.goto('/vlat-full-randomized?PROLIFIC_ID=test');
+
   await page.getByRole('heading', { name: 'What is VLAT?' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
@@ -11,6 +10,7 @@ test('test', async ({ page }) => {
   await page.getByRole('button', { name: 'Next' }).click();
 
   const questionArray = new Array(53).fill(null);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   for (const idx of questionArray) {
     const questionText = await page.getByText('Task:');
     await expect(questionText).toBeVisible();

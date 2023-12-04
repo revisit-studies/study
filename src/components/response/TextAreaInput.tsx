@@ -5,7 +5,7 @@ import { generateErrorMessage } from '../stimuli/inputcomponents/utils';
 type inputProps = {
   response: LongTextResponse;
   disabled: boolean;
-  answer: any;
+  answer: { value?: string };
 };
 
 export default function TextAreaInput({

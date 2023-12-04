@@ -1,11 +1,11 @@
-import { Slider, Stack, Text } from '@mantine/core';
+import { Slider, SliderProps, Stack, Text } from '@mantine/core';
 import { SliderResponse } from '../../parser/types';
 import { generateErrorMessage } from '../stimuli/inputcomponents/utils';
 
 type inputProps = {
   response: SliderResponse;
   disabled: boolean;
-  answer: any;
+  answer: object;
 };
 
 export default function SliderInput({
@@ -26,9 +26,8 @@ export default function SliderInput({
         disabled={disabled}
         labelAlwaysOn
         sx={{ marginTop: '5px', marginBottom: '30px' }}
-        marks={options}
+        marks={options as SliderProps['marks']}
         {...answer}
-        error={generateErrorMessage(response, answer)}
         styles={(theme) => ({
           mark: {
             width: 12,

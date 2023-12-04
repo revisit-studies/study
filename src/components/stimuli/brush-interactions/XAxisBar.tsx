@@ -12,11 +12,10 @@ export function XAxisBar({
   isDate = false,
   showLines = true,
   compact = false,
-  arrowAsc = false,
-  arrowDesc = false,
 }: {
   showLines?: boolean;
   isDate?: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   xScale: d3.ScaleTime<any, any> | d3.ScaleLinear<number, number>;
   yRange: [number, number];
   vertPosition: number;
@@ -36,9 +35,10 @@ export function XAxisBar({
   }, [ticks, xScale]);
 
   const format = useCallback((str: string | Date) => {
-    const myFormat: (s: any) => string = isDate ? d3.utcFormat('%B') : d3.format('.2s');
+    const myFormat = isDate ? d3.utcFormat('%B') : d3.format('.2s');
 
-    return myFormat(str);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return myFormat(str as any);
   }, [isDate]);
 
   return (

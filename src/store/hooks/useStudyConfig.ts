@@ -1,5 +1,5 @@
-import { useAppSelector } from '../store';
+import { useStoreSelector } from '../store';
 
 export function useStudyConfig() {
-  return useAppSelector((state) => state.unTrrackedSlice.config);
+  return useStoreSelector((state) => state.config);
 }

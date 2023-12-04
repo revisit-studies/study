@@ -1,44 +1,47 @@
-import { useAppDispatch, useAppSelector, useStoreActions } from '../store';
+import {
+  useStoreSelector,
+  useStoreActions,
+  useStoreDispatch,
+  useAreResponsesValid,
+} from '../store';
 import { useCurrentStep, useStudyId } from '../../routes';
 import { useCallback, useMemo } from 'react';
-import {
-  setIframeAnswers,
-  useAggregateResponses,
-  useAreResponsesValid,
-  useFlagsDispatch,
-  useFlagsSelector,
-} from '../flags';
-import { useLocation, useNavigate } from 'react-router-dom';
+
+import { useNavigate } from 'react-router-dom';
 import { deepCopy } from '../../utils/deepCopy';
-import { useComponentStatus } from './useComponentStatus';
+import { ValidationStatus } from '../types';
+import { useStorageEngine } from '../storageEngineHooks';
+import { useStoredAnswer } from './useStoredAnswer';
+// import { useStoreSelector } from '../store';
 
 export function useNextStep() {
   const currentStep = useCurrentStep();
 
-  const config = useAppSelector((state) => state.unTrrackedSlice.config);
-  const { steps } = useAppSelector((state) => state.unTrrackedSlice);
+  const { sequence, trialValidation } = useStoreSelector(
+    (state) => state
+  );
 
-  const id = useLocation().pathname;
-  const status = useComponentStatus();
+  const status = useStoredAnswer();
 
-  const aggregateResponses = useAggregateResponses(id);
-  const flagsSelector = useFlagsSelector((state) => state);
-  const appDispatch = useAppDispatch();
-  const { saveTrialAnswer } = useStoreActions();
-  const flagDispatch = useFlagsDispatch();
+  const storeDispatch = useStoreDispatch();
+  const { saveTrialAnswer, setIframeAnswers } = useStoreActions();
+  const { storageEngine } = useStorageEngine();
 
-  const areResponsesValid = useAreResponsesValid(id);
+  const areResponsesValid = useAreResponsesValid(currentStep);
 
   // Status of the next button. If false, the next button should be disabled
-  const isNextDisabled = !status?.complete && !areResponsesValid;
+  const isNextDisabled = !areResponsesValid;
+
+  const storedAnswer = status?.answer;
 
   const navigate = useNavigate();
 
   const nextStep = useMemo(() => {
-    return currentStep === 'end' || currentStep === '' || !config
-      ? null
-      : currentStep && steps[currentStep] && (steps[currentStep].next || 'end');
-  }, [currentStep, steps, config]);
+    const currentStepIndex = sequence.indexOf(currentStep);
+    const nextStep = sequence[currentStepIndex + 1];
+
+    return nextStep || 'end';
+  }, [currentStep, sequence]);
 
   const computedTo = `/${useStudyId()}/${nextStep}`;
 
@@ -47,37 +50,50 @@ export function useNextStep() {
   }, []);
 
   const goToNextStep = useCallback(() => {
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    const answer = deepCopy(aggregateResponses!);
+    // Get answer from across the 3 response blocks and the provenance graph
+    const trialValidationCopy = deepCopy(trialValidation[currentStep]);
+    const answer = Object.values(trialValidationCopy).reduce((acc, curr) => {
+      if (Object.hasOwn(curr, 'values')) {
+        return { ...acc, ...(curr as ValidationStatus).values };
+      }
+      return acc;
+    }, {});
+    const provenanceGraph = trialValidationCopy.provenanceGraph;
+    const endTime = Date.now();
 
-    const root = flagsSelector.trialRecord[id].provenanceRoot;
-
-    if (!status?.complete) {
-      appDispatch(
+    if (Object.keys(storedAnswer || {}).length === 0) {
+      storeDispatch(
         saveTrialAnswer({
-          trialName: currentStep,
-          trialId: id || 'NoID',
+          currentStep,
           answer,
-          provenanceRoot: root || undefined,
           startTime,
-          endTime: Date.now(),
+          endTime,
+          provenanceGraph,
         })
       );
-      flagDispatch(setIframeAnswers([]));
+      // Update database
+      if (storageEngine) {
+        storageEngine.saveAnswer(currentStep, {
+          answer,
+          startTime,
+          endTime,
+          provenanceGraph,
+        });
+      }
+      storeDispatch(setIframeAnswers([]));
     }
 
     navigate(`${computedTo}${window.location.search}`);
   }, [
-    aggregateResponses,
-    flagDispatch,
-    flagsSelector,
-    id,
+    setIframeAnswers,
+    storageEngine,
+    storeDispatch,
+    storedAnswer,
+    trialValidation,
     navigate,
     startTime,
-    appDispatch,
     currentStep,
     saveTrialAnswer,
-    status,
     computedTo,
   ]);
 

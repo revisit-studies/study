@@ -6,24 +6,21 @@ import ReactComponentController from './ReactComponentController';
 import MarkdownController from './MarkdownController';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useCurrentStep } from '../routes';
-import { useComponentStatus } from '../store/hooks/useComponentStatus';
-import { TrialProvenanceContext, createTrialProvenance } from '../store/trialProvenance';
+import { useStoredAnswer } from '../store/hooks/useStoredAnswer';
 import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
 import { isPartialComponent } from '../parser/parser';
-import merge from 'lodash/merge';
+import merge from 'lodash.merge';
 import { IndividualComponent } from '../parser/types';
 
 // current active stimuli presented to the user
 export default function ComponentController() {
   // Get the config for the current step
   const studyConfig = useStudyConfig();
-  const step = useCurrentStep();
-  const stepConfig = studyConfig.components[step];
-
-  const trialProvenance = createTrialProvenance();
+  const currentStep = useCurrentStep();
+  const stepConfig = studyConfig.components[currentStep];
   
   // If we have a trial, use that config to render the right component else use the step
-  const status = useComponentStatus();
+  const status = useStoredAnswer();
 
   const currentConfig = isPartialComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
 
@@ -33,34 +30,28 @@ export default function ComponentController() {
 
   return (
     <>
-      <TrialProvenanceContext.Provider value={trialProvenance}>
-        {instructionLocation === 'aboveStimulus' && <ReactMarkdownWrapper text={instruction} />}
-        <ResponseBlock
-          status={status}
-          config={currentConfig}
-          location="aboveStimulus"
-        />
+      {instructionLocation === 'aboveStimulus' && <ReactMarkdownWrapper text={instruction} />}
+      <ResponseBlock
+        key={`${currentStep}-above-response-block`}
+        status={status}
+        config={currentConfig}
+        location="aboveStimulus"
+      />
 
-        <Suspense key={step} fallback={<div>Loading...</div>}>
-          {currentConfig.type === 'markdown' && <MarkdownController path={currentConfig.path || ''} />}
-          {currentConfig.type === 'website' && <IframeController path={currentConfig.path || ''} parameters={currentConfig.parameters} />}
-          {currentConfig.type === 'image' && 
-            <ImageController
-              path={currentConfig.path}
-              style={currentConfig.style}
-            />}
-          {currentConfig.type === 'react-component' &&
-            <ReactComponentController path={currentConfig.path || ''} parameters={currentConfig.parameters} trialId={step}/>
-          }
-        </Suspense>
+      <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
+        {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
+        {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} />}
+        {currentConfig.type === 'image' && <ImageController  currentConfig={currentConfig}/>}
+        {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} />}
+      </Suspense>
 
-        {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
-        <ResponseBlock
-          status={status}
-          config={currentConfig}
-          location="belowStimulus"
-        />
-      </TrialProvenanceContext.Provider>
+      {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
+      <ResponseBlock
+        key={`${currentStep}-below-response-block`}
+        status={status}
+        config={currentConfig}
+        location="belowStimulus"
+      />
     </>
   );
 }

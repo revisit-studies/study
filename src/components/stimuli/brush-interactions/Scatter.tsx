@@ -1,17 +1,15 @@
+/* eslint-disable react-hooks/exhaustive-deps */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useResizeObserver } from '@mantine/hooks';
 import { useEffect, useMemo, useState } from 'react';
 import ColumnTable from 'arquero/dist/types/table/column-table';
-import {escape} from 'arquero';
 import * as d3 from 'd3';
 import { XAxisBar } from './XAxisBar';
 import { YAxis } from './YAxis';
 import { BrushNames, BrushParams, BrushState } from './BrushPlot';
 import { Button, Group, RangeSlider, SegmentedControl, Stack, Text } from '@mantine/core';
 import { Paintbrush } from './Paintbrush';
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-
 
 const margin = {
     top: 15,
@@ -21,8 +19,6 @@ const margin = {
 };
 
 export function Scatter({
-        fullTable, 
-        filteredTable,
         setFilteredTable, 
         brushState, 
         setBrushedSpace, 
@@ -34,9 +30,7 @@ export function Scatter({
     {
         brushedPoints: string[],
         data: any[],
-        fullTable: ColumnTable | null, 
         params: BrushParams,
-        filteredTable: ColumnTable | null,
         setFilteredTable: (c: ColumnTable | null) => void, 
         brushState: BrushState, 
         setBrushedSpace: (brush: [[number | null, number | null], [number | null, number | null]], xScale: any, yScale: any, selType: 'drag' | 'handle' | 'clear' | null, ids?: string[]) => void, 
@@ -237,7 +231,7 @@ export function Scatter({
                 {circles}
                 <g id="brushXRef" ref={brushXRef}></g>
                 <g id="brushYRef" ref={brushYRef}></g>
-                {xScale && yScale && brushType === 'Paintbrush Selection' ? <Paintbrush brushState={brushState} setBrushedSpace={setBrushedSpace} params={params} data={data} filteredTable={filteredTable} isSelect={isPaintbrushSelect} xScale={xScale as any} yScale={yScale} table={fullTable}/> : null}
+                {xScale && yScale && brushType === 'Paintbrush Selection' ? <Paintbrush brushState={brushState} setBrushedSpace={setBrushedSpace} params={params} data={data} isSelect={isPaintbrushSelect} xScale={xScale as any} yScale={yScale}/> : null}
             </svg>
             {brushType === 'Slider Selection' && xScale && yScale ? 
                 <Stack style={{flexGrow: 1}} spacing={50}>

@@ -2,8 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Grid } from '@mantine/core';
 import { IconCircleCheck } from '@tabler/icons-react';
 import { getHotkeyHandler } from '@mantine/hooks';
-import { useLocation } from 'react-router-dom';
 import { StimulusParams } from '../../../store/types';
+import { useCurrentStep } from '../../../routes';
 
 const Ranking = ({ rankings }: { rankings: number[] }) => {
   return (
@@ -35,7 +35,7 @@ const FairnessJND = ({
 }: StimulusParams<{
   data: { r1: number[]; r2: number[]; r1ARP: string; r2ARP: string };
 }>) => {
-  const id = useLocation().pathname;
+  const id = useCurrentStep();
   const [userChoice, setUserChoice] = useState('');
 
   const left = useMemo(
@@ -50,7 +50,6 @@ const FairnessJND = ({
     (choice: string) => {
       setUserChoice(choice); // left or right
       setAnswer({
-        trialId: id,
         status: true,
         answers: {
           [`${id}/leftARP`]:
