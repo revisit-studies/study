@@ -1,9 +1,6 @@
 import { useEffect, useState } from 'react';
 import * as d3 from 'd3';
 
-import ColumnTable from 'arquero/dist/types/table/column-table';
-
-import {escape} from 'arquero';
 import { BrushParams, BrushState } from './BrushPlot';
 
 const BRUSH_SIZE = 15;
@@ -12,21 +9,19 @@ export function Paintbrush(
     {   xScale, 
         yScale, 
         setBrushedSpace,
-        table, 
-        filteredTable,
         params,
         data,
         brushState,
         isSelect = true
     } : 
     {   
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data: any[]
         brushState: BrushState,
         xScale: d3.ScaleLinear<number, number>, 
         yScale: d3.ScaleLinear<number, number>, 
-        setBrushedSpace: (brush: [[number | null, number | null], [number | null, number | null]], xScale: any, yScale: any, selType: 'drag' | 'handle' | 'clear' | null, ids?: string[]) => void, 
-        filteredTable: ColumnTable | null, 
-        table: ColumnTable | null,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setBrushedSpace: (brush: [[number | null, number | null], [number | null, number | null]], xScale: any, yScale: any, selType: 'drag' | 'handle' | 'clear' | null, ids?: string[]) => void,
         params: BrushParams,
         isSelect?: boolean
 }) {
@@ -34,9 +29,11 @@ export function Paintbrush(
     const [isBrushing, setIsBrushing] = useState<boolean>(false);
 
     useEffect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const svg = d3.select<SVGGElement, any>('#scatterSvgBrushStudy');
 
         if(svg) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const svgPos = svg.node()!.getBoundingClientRect();
             svg.on('mousemove', (e: React.MouseEvent) => {
 
@@ -72,11 +69,12 @@ export function Paintbrush(
                 e.preventDefault();
             });
 
-            svg.on('mouseup', (e) => {
+            svg.on('mouseup', () => {
                 setIsBrushing(false);
             });
         }
 
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [brushState.ids, data, isBrushing, isSelect, params, xScale, yScale]);
     
     return (

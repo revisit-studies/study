@@ -39,7 +39,7 @@ const createMarkPositions = (bubbleData: any[], selected: number[]) => {
 };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const BubbleChart = ({ parameters, trialId }: { parameters: any, trialId: string }) => {
+const BubbleChart = ({ parameters }: { parameters: any }) => {
   const [ref, dms] = useChartDimensions(chartSettings);
   const bubbleData = createBubbleData(parameters, dms.width, dms.height);
   const markPositions = createMarkPositions(bubbleData, parameters.selectedIndices);
@@ -52,7 +52,7 @@ const BubbleChart = ({ parameters, trialId }: { parameters: any, trialId: string
             ','
           )})`}
         >
-          <Bubbles data={bubbleData} trialId={trialId} />
+          <Bubbles data={bubbleData} />
           <DotMarks positions={markPositions} />
         </g>
       </svg>

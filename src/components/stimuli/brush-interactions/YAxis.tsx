@@ -4,8 +4,10 @@ import { useMemo } from 'react';
 import * as d3 from 'd3';
 
 // code taken from https://wattenberger.com/blog/react-and-d3
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function YAxis({ yScale, xRange, horizontalPosition, label }: {yScale: any, xRange: any, horizontalPosition: any, label: string}) {
   const ticks = useMemo(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return yScale.ticks(5).map((value: any) => ({
       value,
       yOffset: yScale(value),

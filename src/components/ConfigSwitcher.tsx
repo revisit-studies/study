@@ -1,8 +1,8 @@
-import { Anchor, Card, Container, Image, NavLink, Text, UnstyledButton } from '@mantine/core';
+import { Anchor, Card, Container, Image, Text, UnstyledButton } from '@mantine/core';
 import { GlobalConfig, StudyConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 
-import { PREFIX } from '../App';
+import { PREFIX } from './GlobalConfigParser';
 import { useNavigate } from 'react-router-dom';
 
 const REVISIT_GITHUB_PUBLIC = 'https://github.com/revisit-studies/study/tree/main/public/';

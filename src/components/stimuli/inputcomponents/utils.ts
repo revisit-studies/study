@@ -1,34 +1,31 @@
 import { useForm } from '@mantine/form';
 import { useEffect, useState } from 'react';
 import { BaseResponse, Option, Response } from '../../../parser/types';
+import { StoredAnswer } from '../../../store/types';
 
-export const generateInitFields = (responses: Response[], id: string) => {
-  const queryParameters = new URLSearchParams(window.location.search);
-  
+const queryParameters = new URLSearchParams(window.location.search);
+export const generateInitFields = (responses: Response[], storedAnswer: StoredAnswer['answer']) => {
   let initObj = {};
 
   responses.forEach((response) => {
-    initObj = {
-      ...initObj,
-      [`${id}/${response.id}`]:
-        response.type === 'iframe'
-          ? []
-          : (response.paramCapture &&
-              queryParameters.get(response.paramCapture)) ||
-            '',
-    };
+    const answer = storedAnswer ? storedAnswer[response.id] : {};
+    if (answer) {
+      initObj = { ...initObj, [response.id]: answer };
+    } else {
+      initObj = { ...initObj, [response.id]: response.type === 'iframe' ? [] : (response.paramCapture ? queryParameters.get(response.paramCapture): '') };
+    }
   });
 
   return { ...initObj };
 };
 
-const generateValidation = (responses: Response[], id: string) => {
+const generateValidation = (responses: Response[]) => {
   let validateObj = {};
   responses.forEach((response) => {
     if (response.required) {
       validateObj = {
         ...validateObj,
-        [`${id}/${response.id}`]: (value: string | string[]) => {
+        [response.id]: (value: string | string[]) => {
           if (Array.isArray(value)) {
             if(response.requiredValue != null && !Array.isArray(response.requiredValue)) {
               return 'Incorrect required value';
@@ -43,10 +40,13 @@ const generateValidation = (responses: Response[], id: string) => {
             }
             return value.length === 0 ? 'Empty input' : null;
           }
-          if(response.required && response.requiredValue != null && value != null) {
+          if (response.required && response.requiredValue != null && value != null) {
             return value.toString() !== response.requiredValue.toString() ? 'Incorrect input' : null;
           }
-          return value == null ? 'Empty input' : null;
+          if (response.required) {
+            return value === null || value === undefined || value === '' ? 'Empty input' : null;
+          }
+          return value === null ? 'Empty input' : null;
         }
       };
     }
@@ -54,27 +54,27 @@ const generateValidation = (responses: Response[], id: string) => {
   return validateObj;
 };
 
-export function useAnswerField(responses: Response[], id: string) {
+export function useAnswerField(responses: Response[], currentStep: string, storedAnswer: StoredAnswer['answer']) {
   const [_id, setId] = useState<string | null>(null);
 
   const answerField = useForm({
-    initialValues: generateInitFields(responses, id),
-    validate: generateValidation(responses, id),
+    initialValues: generateInitFields(responses, storedAnswer),
+    validate: generateValidation(responses),
   });
 
   useEffect(() => {
-    if (_id !== id) {
-      setId(id);
+    if (_id !== currentStep) {
+      setId(currentStep);
       answerField.reset();
     }
-  }, [_id, answerField, id]);
+  }, [_id, answerField, currentStep]);
 
   return answerField;
 }
 
 export function areAnswersEqual(
-  ob1: Record<string, any>,
-  ob2: Record<string, any>
+  ob1: Record<string, unknown>,
+  ob2: Record<string, unknown>
 ) {
   if (Object.keys(ob1).length !== Object.keys(ob2).length) return false;
 
@@ -92,7 +92,7 @@ export function areAnswersEqual(
 
 export function generateErrorMessage(
   response: BaseResponse,
-  answer: any,
+  answer: { value?: string | string[]; checked?: string[] },
   options?: Option[]
 ) {
   const { requiredValue, requiredLabel } = response;

@@ -1,17 +1,17 @@
-import { useAppSelector } from '../store';
+import { useStoreSelector } from '../store';
 import { useCurrentStep } from '../../routes';
 
 export function useNextStep() {
   const currentStep = useCurrentStep();
 
-  const config = useAppSelector((state) => state.unTrrackedSlice.config);
-  const { steps } = useAppSelector((state) => state.unTrrackedSlice);
+  const { sequence, config } = useStoreSelector((state) => state);
 
   if (currentStep === 'end' || currentStep === '') return null;
 
   if (!config) return null;
 
-  return (
-    currentStep && steps[currentStep] && (steps[currentStep].next || 'end')
-  );
+  const currentStepIndex = sequence.indexOf(currentStep);
+  const nextStep = sequence[currentStepIndex + 1];
+
+  return nextStep || 'end';
 }

@@ -4,14 +4,14 @@ import { IFrameResponse } from '../../parser/types';
 type inputProps = {
   response: IFrameResponse;
   disabled: boolean;
-  answer: { value: string[] | undefined };
+  answer: { value?: string[] };
 };
 export default function IframeInput({
   response,
-  disabled,
   answer,
 }: inputProps) {
   const { prompt } = response;
+
   return (
     <>
       <Text fz={'md'} fw={500}>
@@ -19,7 +19,7 @@ export default function IframeInput({
       </Text>
 
       <List>
-        {(answer.value || []).map((item) => {
+        {Array.isArray(answer.value) && (answer.value).map((item) => {
           return <List.Item key={item}>{item}</List.Item>;
         })}
       </List>

@@ -4,7 +4,7 @@ import RadioInput from './RadioInput';
 type inputProps = {
   response: LikertResponse;
   disabled: boolean;
-  answer: any;
+  answer: object;
 };
 
 export default function LikertInput({

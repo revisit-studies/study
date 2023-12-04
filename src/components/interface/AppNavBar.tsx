@@ -1,12 +1,12 @@
 import { Navbar, Text } from '@mantine/core';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
-import { useComponentStatus } from '../../store/hooks/useComponentStatus';
+import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import ResponseBlock from '../response/ResponseBlock';
 import { useCurrentStep } from '../../routes';
 import { IndividualComponent } from '../../parser/types';
 import { isPartialComponent } from '../../parser/parser';
-import merge from 'lodash/merge';
+import merge from 'lodash.merge';
 
 export default function AppNavBar() {
   const trialHasSideBar = useStudyConfig()?.uiConfig.sidebar;
@@ -14,8 +14,8 @@ export default function AppNavBar() {
 
   // Get the config for the current step
   const studyConfig = useStudyConfig();
-  const step = useCurrentStep();
-  const stepConfig = studyConfig.components[step];
+  const currentStep = useCurrentStep();
+  const stepConfig = studyConfig.components[currentStep];
 
   const currentConfig = stepConfig
     ? isPartialComponent(stepConfig) && studyConfig.baseComponents
@@ -26,7 +26,7 @@ export default function AppNavBar() {
         ) as IndividualComponent)
       : (stepConfig as IndividualComponent)
     : null;
-  const status = useComponentStatus();
+  const status = useStoredAnswer();
   const instruction = currentConfig?.instruction || '';
 
   const instructionInSideBar =
@@ -53,6 +53,7 @@ export default function AppNavBar() {
         <Navbar.Section p="xl">
           {
             <ResponseBlock
+              key={`${currentStep}-sidebar-response-block`}
               status={status}
               config={currentConfig}
               location="sidebar"
@@ -63,6 +64,7 @@ export default function AppNavBar() {
     </Navbar>
   ) : (
     <ResponseBlock
+      key={`${currentStep}-sidebar-response-block`}
       status={status}
       config={currentConfig}
       location="sidebar"
