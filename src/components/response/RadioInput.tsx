@@ -1,6 +1,6 @@
 import { Group, Radio, Text } from '@mantine/core';
 import { RadioResponse } from '../../parser/types';
-import { generateErrorMessage } from '../stimuli/inputcomponents/utils';
+import { generateErrorMessage } from './utils';
 
 type inputProps = {
   response: RadioResponse;

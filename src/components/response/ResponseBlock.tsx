@@ -9,7 +9,7 @@ import { useCurrentStep } from '../../routes';
 import { useStoreDispatch, useAreResponsesValid, useStoreSelector, useStoreActions } from '../../store/store';
 import { deepCopy } from '../../utils/deepCopy';
 import { NextButton } from '../NextButton';
-import { useAnswerField } from '../stimuli/inputcomponents/utils';
+import { useAnswerField } from './utils';
 import ResponseSwitcher from './ResponseSwitcher';
 import React from 'react';
 import { useStorageEngine } from '../../store/storageEngineHooks';

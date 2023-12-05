@@ -1,6 +1,6 @@
 import { NumberInput } from '@mantine/core';
 import { NumericalResponse } from '../../parser/types';
-import { generateErrorMessage } from '../stimuli/inputcomponents/utils';
+import { generateErrorMessage } from './utils';
 
 type inputProps = {
   response: NumericalResponse;
