@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Grid } from '@mantine/core';
 import { IconCircleCheck } from '@tabler/icons-react';
 import { getHotkeyHandler } from '@mantine/hooks';
-import { StimulusParams } from '../../../store/types';
-import { useCurrentStep } from '../../../routes';
-import { useNextStep } from '../../../store/hooks/useNextStep';
+import { StimulusParams } from '../../store/types';
+import { useCurrentStep } from '../../routes';
+import { useNextStep } from '../../store/hooks/useNextStep';
 
 const Ranking = ({ rankings }: { rankings: number[] }) => {
   return (

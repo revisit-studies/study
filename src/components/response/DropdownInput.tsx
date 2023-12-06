@@ -1,6 +1,6 @@
 import { Select, SelectItem } from '@mantine/core';
 import { DropdownResponse } from '../../parser/types';
-import { generateErrorMessage } from '../stimuli/inputcomponents/utils';
+import { generateErrorMessage } from './utils';
 
 
 type inputProps = {

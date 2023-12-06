@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { useChartDimensions } from './hooks/useChartDimensions';
+import { useChartDimensions } from '../cleveland/hooks/useChartDimensions';
 import {useCallback, useEffect, useMemo, useState} from 'react';
 import {Box, Slider} from '@mantine/core';
 import {initializeTrrack, Registry} from '@trrack/core';
