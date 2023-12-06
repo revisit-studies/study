@@ -52,7 +52,7 @@ export async function downloadTidy(
   const allParticipantData = await storageEngine.getAllParticpantsData();
 
   const rows = allParticipantData
-    .map((participantSession) => processToRow(participantSession, studyConfig))
+    .map((participantSession) => processToRow(participantSession, studyConfig, properties))
     .flat();
 
   const escapeDoubleQuotes = (s: string) => s.replace(/"/g, '""');
@@ -75,7 +75,7 @@ export async function downloadTidy(
   download(csv, filename);
 }
 
-function processToRow(session: ParticipantData, studyConfig: StudyConfig): TidyRow[] {
+function processToRow(session: ParticipantData, studyConfig: StudyConfig, properties: Property[]): TidyRow[] {
   return Object.entries(studyConfig.components).map(([trialId, trialConfig]) => {
     // Get the whole component, including the base component if there is inheritance
     const completeComponent = isPartialComponent(trialConfig) && trialConfig.baseComponent && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents[trialConfig.baseComponent], trialConfig) : trialConfig;
@@ -87,18 +87,27 @@ function processToRow(session: ParticipantData, studyConfig: StudyConfig): TidyR
     const duration = trialAnswer.endTime - trialAnswer.startTime;
 
     const rows = Object.entries(trialAnswer.answer).map(([key, value]) => {
-      return {
+      const tidyRow: TidyRow = {
         participantId: session.participantId,
         trialId,
         responseId: key,
-        description: completeComponent.description,
-        instruction: completeComponent.instruction,
-        answer: value,
-        correctAnswer: completeComponent.correctAnswer,
         startTime: new Date(trialAnswer.startTime).toUTCString(),
         endTime: new Date(trialAnswer.endTime).toUTCString(),
         duration,
-      } as TidyRow;
+      };
+
+      if (properties.includes('description')) {
+        tidyRow.description = completeComponent.description;
+      }
+      if (properties.includes('instruction')) {
+        tidyRow.instruction = completeComponent.instruction;
+      }
+      if (properties.includes('answer')) {
+        tidyRow.answer = value;
+      }
+      if (properties.includes('correctAnswer')) {
+        tidyRow.correctAnswer = completeComponent.correctAnswer;
+      }
     }).flat();
 
     return rows;
