@@ -12,7 +12,6 @@ import { deepCopy } from '../../utils/deepCopy';
 import { ValidationStatus } from '../types';
 import { useStorageEngine } from '../storageEngineHooks';
 import { useStoredAnswer } from './useStoredAnswer';
-// import { useStoreSelector } from '../store';
 
 export function useNextStep() {
   const currentStep = useCurrentStep();
@@ -99,7 +98,7 @@ export function useNextStep() {
 
   return {
     nextStep,
-    isDisabled: isNextDisabled,
+    isNextDisabled,
     goToNextStep,
   };
 }

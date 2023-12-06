@@ -13,7 +13,7 @@ export function NextButton({
   disabled = false,
   onClick,
 }: Props) {
-  const { isDisabled, goToNextStep } = useNextStep();
+  const { isNextDisabled, goToNextStep } = useNextStep();
 
   const handleClick = useCallback(() => {
     if (onClick) {
@@ -25,7 +25,7 @@ export function NextButton({
   return (
     <Button
       type="submit"
-      disabled={disabled || isDisabled}
+      disabled={disabled || isNextDisabled}
       onClick={handleClick}
     >
       {label}

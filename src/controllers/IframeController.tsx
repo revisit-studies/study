@@ -3,7 +3,6 @@ import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { PREFIX as BASE_PREFIX } from '../components/GlobalConfigParser';
 import { useCurrentStep } from '../routes';
-import { useNextStep } from '../store/hooks/useNextStep';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { WebsiteComponent } from '../parser/types';
 
@@ -29,11 +28,9 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
     []
   );
 
-
   // navigation
   const currentStep = useCurrentStep();
   const navigate = useNavigate();
-  const { nextStep: computedTo } = useNextStep();
 
   const sendMessage = useCallback(
     (tag: string, message: unknown) => {
@@ -75,7 +72,15 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, computedTo, currentStep, dispatch, iframeId, navigate, currentConfig, sendMessage]);
+  }, [
+    storeDispatch,
+    currentStep,
+    dispatch,
+    iframeId,
+    navigate,
+    currentConfig,
+    sendMessage,
+  ]);
 
   return (
     <div >

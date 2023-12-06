@@ -47,7 +47,6 @@ export default function ResponseBlock({
   const showNextBtn =
     location === (configInUse?.nextButtonLocation || 'belowStimulus');
 
-  // TODO: shift following effects to useNextStep hook, fix dependencies
   useEffect(() => {
     const iframeResponse = responses.find((r) => r.type === 'iframe');
     if (iframeResponse) {
