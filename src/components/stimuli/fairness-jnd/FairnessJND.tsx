@@ -4,6 +4,7 @@ import { IconCircleCheck } from '@tabler/icons-react';
 import { getHotkeyHandler } from '@mantine/hooks';
 import { StimulusParams } from '../../../store/types';
 import { useCurrentStep } from '../../../routes';
+import { useNextStep } from '../../../store/hooks/useNextStep';
 
 const Ranking = ({ rankings }: { rankings: number[] }) => {
   return (
@@ -37,6 +38,8 @@ const FairnessJND = ({
 }>) => {
   const id = useCurrentStep();
   const [userChoice, setUserChoice] = useState('');
+
+  const { goToNextStep, isDisabled } = useNextStep();
 
   const left = useMemo(
     () => (Math.floor(Math.random() * 2) === 0 ? 'r1' : 'r2'),
@@ -75,10 +78,17 @@ const FairnessJND = ({
     [id, left, parameters.data, setAnswer]
   );
 
+  const handleNextStimuli = useCallback(() => {
+    if (!isDisabled) {
+      goToNextStep();
+    }
+  }, [isDisabled, goToNextStep]);
+
   useEffect(() => {
     const ev = getHotkeyHandler([
       ['ArrowLeft', () => updateAnswer('left')],
       ['ArrowRight', () => updateAnswer('right')],
+      ['Enter', handleNextStimuli],
     ]);
 
     document.body.addEventListener('keydown', ev);
@@ -86,7 +96,7 @@ const FairnessJND = ({
     return () => {
       document.body.removeEventListener('keydown', ev);
     };
-  }, [updateAnswer]);
+  }, [updateAnswer, handleNextStimuli]);
 
   let isUserChoiceCorrect = false;
 
