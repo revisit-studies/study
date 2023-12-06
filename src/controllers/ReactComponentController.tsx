@@ -6,7 +6,7 @@ import { useStoreDispatch, useStoreActions } from '../store/store';
 import { useCurrentStep } from '../routes';
 
 const modules = import.meta.glob(
-  '../components/stimuli/**/*.{mjs,js,mts,ts,jsx,tsx}',
+  '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
   { eager: true }
 );
 
@@ -14,7 +14,7 @@ const ReactComponentController = ({ currentConfig }: { currentConfig: ReactCompo
 
   const currentStep = useCurrentStep();
 
-  const reactPath = `../components/stimuli/${currentConfig.path}`;
+  const reactPath = `../public/${currentConfig.path}`;
   const StimulusComponent = (modules[reactPath] as ModuleNamespace).default;
 
   const storeDispatch = useStoreDispatch();

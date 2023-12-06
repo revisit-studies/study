@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { Loader, Stack } from '@mantine/core';
-import { StimulusParams } from '../../../store/types';
+import { StimulusParams } from '../../store/types';
 import Bar from './Bar';
 import Scatter from './Scatter';
 import { useCallback, useEffect, useMemo, useState } from 'react';
