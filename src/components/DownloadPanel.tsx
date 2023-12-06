@@ -74,8 +74,8 @@ export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
         mr="0.5em"
         onClick={async () => {
           if (!storageEngine) return;
-          const graphs = await storageEngine.getAllParticpantsData();
-          download(JSON.stringify(graphs, null, 2), `${baseFilename}_all.json`);
+          const participants = await storageEngine.getAllParticpantsData();
+          download(JSON.stringify(participants, null, 2), `${baseFilename}_all.json`);
         }}
         display="block"
       >
