@@ -103,9 +103,7 @@ export default function ResponseBlock({
         {showNextBtn && (
           <NextButton
             disabled={hasCorrectAnswer && !checkClicked}
-            onClick={() => {
-              setCheckClicked(false);
-            }}
+            setCheckClicked={setCheckClicked}
             label={configInUse.nextButtonText || 'Next'}
           />
         )}
