@@ -39,7 +39,7 @@ const FairnessJND = ({
   const id = useCurrentStep();
   const [userChoice, setUserChoice] = useState('');
 
-  const { goToNextStep, isDisabled } = useNextStep();
+  const { goToNextStep, isNextDisabled } = useNextStep();
 
   const left = useMemo(
     () => (Math.floor(Math.random() * 2) === 0 ? 'r1' : 'r2'),
@@ -79,10 +79,10 @@ const FairnessJND = ({
   );
 
   const handleNextStimuli = useCallback(() => {
-    if (!isDisabled) {
+    if (!isNextDisabled) {
       goToNextStep();
     }
-  }, [isDisabled, goToNextStep]);
+  }, [isNextDisabled, goToNextStep]);
 
   useEffect(() => {
     const ev = getHotkeyHandler([
