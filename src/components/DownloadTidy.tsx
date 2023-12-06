@@ -26,6 +26,7 @@ export const OPTIONAL_COMMON_PROPS = [
   'startTime',
   'endTime',
   'duration',
+  'taskOrder',
 ] as const;
 
 export const REQUIRED_PROPS = [
@@ -108,6 +109,11 @@ function processToRow(session: ParticipantData, studyConfig: StudyConfig, proper
       if (properties.includes('correctAnswer')) {
         tidyRow.correctAnswer = completeComponent.correctAnswer;
       }
+      if (properties.includes('taskOrder')) {
+        tidyRow.taskOrder = session.sequence.indexOf(trialId);
+      }
+
+      return tidyRow;
     }).flat();
 
     return rows;
