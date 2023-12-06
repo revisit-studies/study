@@ -37,7 +37,7 @@
             description: try to click on the center of the moving dot
             instruction: Click on the moving dot
             type: react-component
-            path: ClickAccuracyTest.tsx
+            path: click-accuracy-test/ClickAccuracyTest.tsx
             parameters: {
                 speed: 100
                 taskid: accuracy

@@ -32,7 +32,7 @@
                 What percentage do you believe the smaller value represents relative to the larger value?
                 '''
             type: react-component
-            path: BubbleChart.tsx
+            path: cleveland/BubbleChart.tsx
             parameters: {
                 data: [
                     {
@@ -86,7 +86,7 @@
                 What percentage do you believe the smaller value represents relative to the larger value?
                 '''
             type: react-component
-            path: StackedBarChart.tsx
+            path: cleveland/StackedBarChart.tsx
             parameters: {
                 data: [
                     {
@@ -140,7 +140,7 @@
                 What percentage do you believe the smaller value represents relative to the larger value?
                 '''
             type: react-component
-            path: BarChart.tsx
+            path: cleveland/BarChart.tsx
             parameters: {
                 data: [
                     {
@@ -194,7 +194,7 @@
                 What percentage do you believe the smaller value represents relative to the larger value?
                 '''
             type: react-component
-            path: PieChart.tsx
+            path: cleveland/PieChart.tsx
             parameters: {
                 data: [
                     {
