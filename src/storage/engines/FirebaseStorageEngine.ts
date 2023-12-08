@@ -46,11 +46,10 @@ export class FirebaseStorageEngine extends StorageEngine {
       await signInAnonymously(auth);
       if (!auth.currentUser) throw new Error('Login failed with firebase');
       enableNetwork(this.firestore);
+      this.connected = true;
     } catch (e) {
       console.warn('Failed to connect to Firebase');
     }
-
-    this.connected = true;
   }
 
   async initializeStudyDb(studyId: string, config: object) {
