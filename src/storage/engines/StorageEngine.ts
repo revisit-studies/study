@@ -39,4 +39,6 @@ export abstract class StorageEngine {
   abstract getParticipantData(): Promise<ParticipantData | null>;
 
   abstract nextParticipant(): Promise<ParticipantData>;
+
+  abstract verifyCompletion(): Promise<boolean>;
 }

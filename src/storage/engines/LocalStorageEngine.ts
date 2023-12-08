@@ -210,6 +210,27 @@ export class LocalStorageEngine extends StorageEngine {
     return participant as ParticipantData;
   }
 
+  async verifyCompletion() {
+    if (!this._verifyStudyDatabase(this.studyDatabase)) {
+      throw new Error('Study database not initialized');
+    }
+
+    // Get the participantData
+    const participantData = await this.getParticipantData();
+    if (!participantData) {
+      throw new Error('Participant not initialized');
+    }
+
+    // Loop over the sequence and check if all answers are present
+    participantData.sequence.forEach((step) => {
+      if (!participantData.answers[step]) {
+        return false;
+      }
+    });
+
+    return true;
+  }
+
   private _verifyStudyDatabase(db: LocalForage | undefined): db is LocalForage  {
     return db !== undefined;
   }

@@ -325,6 +325,27 @@ export class FirebaseStorageEngine extends StorageEngine {
     return participant;
   }
 
+  async verifyCompletion() {
+    if (!this._verifyStudyDatabase(this.studyCollection)) {
+      throw new Error('Study database not initialized');
+    }
+
+    // Get the participantData
+    const participantData = await this.getParticipantData();
+    if (!participantData) {
+      throw new Error('Participant not initialized');
+    }
+
+    // Loop over the sequence and check if all answers are present
+    participantData.sequence.forEach((step) => {
+      if (!participantData.answers[step]) {
+        return false;
+      }
+    });
+
+    return true;
+  }
+
   private _verifyStudyDatabase(db: CollectionReference<DocumentData, DocumentData> | undefined): db is CollectionReference<DocumentData, DocumentData>  {
     return db !== undefined;
   }
