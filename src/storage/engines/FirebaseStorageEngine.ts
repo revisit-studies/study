@@ -337,13 +337,14 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
 
     // Loop over the sequence and check if all answers are present
-    participantData.sequence.forEach((step) => {
-      if (!participantData.answers[step]) {
-        return false;
+    const allAnswersPresent = participantData.sequence.every((step) => {
+      if (step === 'end') {
+        return true;
       }
+      return participantData.answers[step] !== undefined;
     });
 
-    return true;
+    return allAnswersPresent;
   }
 
   private _verifyStudyDatabase(db: CollectionReference<DocumentData, DocumentData> | undefined): db is CollectionReference<DocumentData, DocumentData>  {
