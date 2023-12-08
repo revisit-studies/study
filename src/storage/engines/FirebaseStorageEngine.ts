@@ -228,7 +228,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return currentRow;
   }
 
-  async getAllParticpantsData() {
+  async getAllParticipantsData() {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }

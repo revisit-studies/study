@@ -35,7 +35,7 @@ export abstract class StorageEngine {
   abstract getSequenceArray(): Promise<string[][] | null>;
   abstract getSequence(): Promise<string[]>;
 
-  abstract getAllParticpantsData(): Promise<ParticipantData[]>;
+  abstract getAllParticipantsData(): Promise<ParticipantData[]>;
   abstract getParticipantData(): Promise<ParticipantData | null>;
 
   abstract nextParticipant(): Promise<ParticipantData>;

@@ -2,7 +2,7 @@ import { LocalStorageEngine } from './engines/LocalStorageEngine';
 import { FirebaseStorageEngine } from './engines/FirebaseStorageEngine';
 import { StorageEngine } from './engines/StorageEngine';
 
-export async function initalizeStorageEngine() {
+export async function initializeStorageEngine() {
   let storageEngine: StorageEngine | undefined;
 
   const storageEngineName: string = import.meta.env.VITE_STORAGE_ENGINE; 
