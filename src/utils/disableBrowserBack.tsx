@@ -14,7 +14,7 @@ export function disableBrowserBack() {
     window.history.pushState(null, '', window.location.href);
     window.onpopstate = () => {
       window.history.pushState(null, '', window.location.href);
-      storeDispatch(setAlertModal({ show: true, message: 'Please use the buttons on the page to navigate.' }));
+      storeDispatch(setAlertModal({ show: true, message: 'Using the browser\'s back button is prohibited during the study.' }));
     };
   }, [currentStep, setAlertModal, storeDispatch]);
 }
