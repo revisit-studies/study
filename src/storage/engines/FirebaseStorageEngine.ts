@@ -3,7 +3,8 @@ import { ParticipantData } from '../types';
 import { StorageEngine } from './StorageEngine';
 import { parse as hjsonParse } from 'hjson';
 import { initializeApp } from 'firebase/app';
-import { CollectionReference, DocumentData, DocumentReference, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, setDoc } from 'firebase/firestore';
+import { getStorage, ref, uploadBytes } from 'firebase/storage';
+import { CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, setDoc } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
 import localforage from 'localforage';
@@ -13,6 +14,7 @@ export class FirebaseStorageEngine extends StorageEngine {
   private firestore: Firestore;
   private collectionPrefix = import.meta.env.DEV ? 'dev-' : 'prod-';
   private studyCollection: CollectionReference<DocumentData, DocumentData> | undefined = undefined;
+  private studyId = '';
 
   // localForage instance for storing currentParticipantId
   private localForage = localforage.createInstance({ name: 'currentParticipantId' });
@@ -56,7 +58,7 @@ export class FirebaseStorageEngine extends StorageEngine {
   async initializeStudyDb(studyId: string, config: object) {
     // Create or retrieve database for study
     this.studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
-
+    this.studyId = studyId;
     const configDoc = doc(this.studyCollection, 'config');
     return await setDoc(configDoc, config);
   }
@@ -151,14 +153,15 @@ export class FirebaseStorageEngine extends StorageEngine {
     const participantDoc = doc(this.studyCollection, this.currentParticipantId);
 
     // Check if we have provenance data
-    let provenanceDoc: DocumentReference<DocumentData> | undefined = undefined;
     if (answer.provenanceGraph !== undefined) {
-      // Make sure the participant has a provenance collection
-      const provenanceCollection = collection(participantDoc, 'provenance');
+      const storage = getStorage();
+      const storageRef = ref(storage, `${this.studyId}/${currentStep}/${answer.provenanceGraph.root}`);
 
-      // Create a new provenance doc
-      provenanceDoc = doc(provenanceCollection);
-      await setDoc(provenanceDoc, answer.provenanceGraph);
+      const blob = new Blob([JSON.stringify(answer.provenanceGraph)], {
+        type: 'application/json',
+      });
+
+      uploadBytes(storageRef, blob);
     }
 
     const answerToSave: { answer: Record<string, Record<string, unknown>>, startTime: number, endTime: number } & Partial<{ provenanceGraph: string }> = {
@@ -168,8 +171,8 @@ export class FirebaseStorageEngine extends StorageEngine {
     };
 
     // If we don't have a provenance graph, remove it, else add the provenance doc reference
-    if (provenanceDoc !== undefined) {
-      answerToSave.provenanceGraph = provenanceDoc.id;
+    if (answer.provenanceGraph !== undefined) {
+      answerToSave.provenanceGraph = answer.provenanceGraph.root;
     }
 
     await setDoc(participantDoc, { answers: { [currentStep]: answerToSave } }, { merge: true });
