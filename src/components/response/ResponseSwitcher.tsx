@@ -28,7 +28,7 @@ export default function ResponseSwitcher({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ans: { value?: any } = (storedAnswer ? { value: storedAnswer } : answer) || { value: undefined };
   const disabled = !!storedAnswer;
-  const isDisabled = disabled || !!response.paramCapture;
+  const isDisabled = disabled || (!!response.paramCapture && !!answer.value);
 
   return (
     <>

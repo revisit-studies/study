@@ -48,11 +48,10 @@ export class FirebaseStorageEngine extends StorageEngine {
       await signInAnonymously(auth);
       if (!auth.currentUser) throw new Error('Login failed with firebase');
       enableNetwork(this.firestore);
+      this.connected = true;
     } catch (e) {
       console.warn('Failed to connect to Firebase');
     }
-
-    this.connected = true;
   }
 
   async initializeStudyDb(studyId: string, config: object) {
@@ -231,7 +230,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return currentRow;
   }
 
-  async getAllParticpantsData() {
+  async getAllParticipantsData() {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -326,6 +325,28 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
 
     return participant;
+  }
+
+  async verifyCompletion() {
+    if (!this._verifyStudyDatabase(this.studyCollection)) {
+      throw new Error('Study database not initialized');
+    }
+
+    // Get the participantData
+    const participantData = await this.getParticipantData();
+    if (!participantData) {
+      throw new Error('Participant not initialized');
+    }
+
+    // Loop over the sequence and check if all answers are present
+    const allAnswersPresent = participantData.sequence.every((step) => {
+      if (step === 'end') {
+        return true;
+      }
+      return participantData.answers[step] !== undefined;
+    });
+
+    return allAnswersPresent;
   }
 
   private _verifyStudyDatabase(db: CollectionReference<DocumentData, DocumentData> | undefined): db is CollectionReference<DocumentData, DocumentData>  {
