@@ -26,5 +26,5 @@ export async function initializeStorageEngine() {
     storageEngine = localStorageEngine;
   }
 
-  return storageEngine;
+  return storageEngine!;
 }

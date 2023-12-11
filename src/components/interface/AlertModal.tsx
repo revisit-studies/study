@@ -28,7 +28,7 @@ export function AlertModal() {
           {alertModal.message}
         </Text>
 
-        <Box align="right" color='red'>
+        <Box style={{ float: 'right' }} color='red'>
           <Button onClick={close} color='red' variant='filled'>Continue Study</Button>
         </Box>
       </Alert>
