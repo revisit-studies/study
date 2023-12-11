@@ -11,6 +11,7 @@ import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
 import { isPartialComponent } from '../parser/parser';
 import merge from 'lodash.merge';
 import { IndividualComponent } from '../parser/types';
+import { disableBrowserBack } from '../utils/disableBrowserBack';
 
 // current active stimuli presented to the user
 export default function ComponentController() {
@@ -27,6 +28,9 @@ export default function ComponentController() {
   const instruction = (currentConfig.instruction || '');
   const instructionLocation = currentConfig.instructionLocation;
   const instructionInSideBar = studyConfig.uiConfig.sidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
+
+  // Disable browser back button from all stimuli
+  disableBrowserBack();
 
   return (
     <>

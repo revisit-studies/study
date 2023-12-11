@@ -1,10 +1,14 @@
 import { Center, Flex, Text } from '@mantine/core';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import ReactMarkdownWrapper from './ReactMarkdownWrapper';
+import { disableBrowserBack } from '../utils/disableBrowserBack';
 
 
 export function StudyEnd() {
   const config = useStudyConfig();
+
+  // Disable browser back button on study end
+  disableBrowserBack();
 
   return (
       <>
