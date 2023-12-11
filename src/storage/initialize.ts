@@ -4,6 +4,7 @@ import { StorageEngine } from './engines/StorageEngine';
 
 export async function initializeStorageEngine() {
   let storageEngine: StorageEngine | undefined;
+  let fallback = false;
 
   const storageEngineName: string = import.meta.env.VITE_STORAGE_ENGINE; 
 
@@ -13,18 +14,16 @@ export async function initializeStorageEngine() {
 
     if (firebaseStorageEngine.isConnected()) {
       storageEngine = firebaseStorageEngine;
+    } else {
+      fallback = true;
     }
   }
 
-  if (storageEngineName === 'localStorage') {
+  if (storageEngineName === 'localStorage' || fallback) {
     const localStorageEngine = new LocalStorageEngine();
     await localStorageEngine.connect();
 
     storageEngine = localStorageEngine;
-  }
-
-  if (!storageEngine) {
-    throw new Error(`The requested storage engine "${storageEngineName}" could not be initialized.`);
   }
 
   return storageEngine;
