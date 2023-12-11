@@ -4,6 +4,7 @@ import AppAside from './interface/AppAside';
 import AppHeader from './interface/AppHeader';
 import AppNavBar from './interface/AppNavBar';
 import HelpModal from './interface/HelpModal';
+import { AlertModal } from './interface/AlertModal';
 
 export function StepRenderer() {
   return (
@@ -13,6 +14,7 @@ export function StepRenderer() {
       header={<AppHeader />}
     >
       <HelpModal />
+      <AlertModal/>
       <Outlet />
     </AppShell>
   );
