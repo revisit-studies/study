@@ -6,6 +6,5 @@ export function sanitizeStringForUrl(fileName: string) {
     .replace(/\.[^\.]+$/, '') // Remove extension
     .replace('.', '_') // Replace other periods
     .replace(' ', '_') // Replace spaces
-    .replace('/', '_') // Replace paths
-    .toLowerCase();
+    .replace('/', '_'); // Replace paths
 }
