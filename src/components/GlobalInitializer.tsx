@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useStorageEngine } from '../store/storageEngineHooks';
 import { GlobalConfigParser } from './GlobalConfigParser';
-import { initalizeStorageEngine } from '../storage/initialize';
+import { initializeStorageEngine } from '../storage/initialize';
 
 export function GlobalInitializer() {
   // Initialize storage engine
@@ -10,7 +10,7 @@ export function GlobalInitializer() {
     if (storageEngine !== undefined) return;
 
     async function fn() {
-      const storageEngine = await initalizeStorageEngine();
+      const storageEngine = await initializeStorageEngine();
       setStorageEngine(storageEngine);
     }
     fn();

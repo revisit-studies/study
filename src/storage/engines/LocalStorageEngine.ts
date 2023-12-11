@@ -153,7 +153,7 @@ export class LocalStorageEngine extends StorageEngine {
     return await this.studyDatabase.getItem('sequenceArray') as string[][] | null;
   }
 
-  async getAllParticpantsData() {
+  async getAllParticipantsData() {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
@@ -208,6 +208,28 @@ export class LocalStorageEngine extends StorageEngine {
     }
 
     return participant as ParticipantData;
+  }
+
+  async verifyCompletion() {
+    if (!this._verifyStudyDatabase(this.studyDatabase)) {
+      throw new Error('Study database not initialized');
+    }
+
+    // Get the participantData
+    const participantData = await this.getParticipantData();
+    if (!participantData) {
+      throw new Error('Participant not initialized');
+    }
+
+    // Loop over the sequence and check if all answers are present
+    const allAnswersPresent = participantData.sequence.every((step) => {
+      if (step === 'end') {
+        return true;
+      }
+      return participantData.answers[step] !== undefined;
+    });
+
+    return allAnswersPresent;
   }
 
   private _verifyStudyDatabase(db: LocalForage | undefined): db is LocalForage  {
