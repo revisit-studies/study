@@ -50,7 +50,7 @@ export async function downloadTidy(
   storageEngine: StorageEngine,
   studyConfig: StudyConfig,
 ) {
-  const allParticipantData = await storageEngine.getAllParticpantsData();
+  const allParticipantData = await storageEngine.getAllParticipantsData();
 
   const rows = allParticipantData
     .map((participantSession) => processToRow(participantSession, studyConfig, properties))
