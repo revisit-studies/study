@@ -25,6 +25,7 @@ import { StepRenderer } from './StepRenderer';
 import { StudyEnd } from './StudyEnd';
 import { useStorageEngine } from '../store/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
+import { Box, Center, Loader } from '@mantine/core';
 
 async function fetchStudyConfig(configLocation: string, configKey: string) {
   const config = await (await fetch(`${PREFIX}${configLocation}`)).text();
@@ -84,9 +85,12 @@ export function Shell({ globalConfig }: {
 
   const routing = useRoutes(routes);
   
-  if (!routing || !store) return null;
-
-  return (
+  return !routing || !store ? 
+    (<Box style={{height: '100vh'}}>
+      <Center style={{height: '100%'}}>
+        <Loader style={{height: '100%'}} size={60} />
+      </Center>
+    </Box>) : (
     <StudyStoreContext.Provider value={store}>
       <Provider store={store.store}>
         {routing}
