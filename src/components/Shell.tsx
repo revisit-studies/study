@@ -68,18 +68,9 @@ export function Shell({ globalConfig }: {
         await storageEngine.setSequenceArray(await generateSequenceArray(activeConfig));
       }
 
-      // Get or create a participant id and pull their session
-      const participantId = await storageEngine.getCurrentParticipantId();
-      let participantSession = await storageEngine.getParticipantSession(participantId);
 
-      if (!participantSession) {
         // If we don't have a user's session, we need to generate one
-        const sequence = await storageEngine.getSequence();
-        participantSession = await storageEngine.initializeParticipantSession(
-          participantId,
-          sequence,
-        );
-      }
+      const participantSession = await storageEngine.initializeParticipantSession();
 
       // Initialize the redux stores
       const store = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, participantSession.answers);

@@ -13,6 +13,7 @@ export function StudyEnd() {
 
   const [completed, setCompleted] = useState(false);
   useEffect(() => {
+    console.log('in the use effect');
     // verify that storageEngine.verifyCompletion() returns true, loop until it does
     const interval = setInterval(async () => {
       const isComplete = await storageEngine!.verifyCompletion(answers);
