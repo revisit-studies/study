@@ -3,7 +3,8 @@ import { ParticipantData } from '../types';
 import { StorageEngine } from './StorageEngine';
 import { parse as hjsonParse } from 'hjson';
 import { initializeApp } from 'firebase/app';
-import { CollectionReference, DocumentData, DocumentReference, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, setDoc } from 'firebase/firestore';
+import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
+import { CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, setDoc } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
 import localforage from 'localforage';
@@ -13,9 +14,12 @@ export class FirebaseStorageEngine extends StorageEngine {
   private firestore: Firestore;
   private collectionPrefix = import.meta.env.DEV ? 'dev-' : 'prod-';
   private studyCollection: CollectionReference<DocumentData, DocumentData> | undefined = undefined;
+  private studyId = '';
 
   // localForage instance for storing currentParticipantId
   private localForage = localforage.createInstance({ name: 'currentParticipantId' });
+
+  private localProvenanceCopy: Record<string, TrrackedProvenance> = {};
 
   constructor() {
     super('firebase');
@@ -55,58 +59,44 @@ export class FirebaseStorageEngine extends StorageEngine {
   async initializeStudyDb(studyId: string, config: object) {
     // Create or retrieve database for study
     this.studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
-
+    this.studyId = studyId;
     const configDoc = doc(this.studyCollection, 'config');
     return await setDoc(configDoc, config);
   }
 
-  async initializeParticipantSession(participantId: string, sequence: string[]) {
+  async initializeParticipantSession() {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
 
+    // Ensure that we have a participantId
+    await this.getCurrentParticipantId();
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+
     // Check if the participant has already been initialized
-    const participantDoc = doc(this.studyCollection, participantId);
+    const participantDoc = doc(this.studyCollection, this.currentParticipantId);
     const participant = (await getDoc(participantDoc)).data() as ParticipantData | null;
+
+    // Restore localProvenanceCopy
+    this.localProvenanceCopy = await this._getFirebaseProvenance(this.currentParticipantId);
 
     if (participant) {
       // Participant already initialized
-      this.currentParticipantId = participantId;
       return participant;
     } else {
       // Initialize participant
       const participantData: ParticipantData = {
-        participantId,
-        sequence,
+        participantId: this.currentParticipantId,
+        sequence: await this.getSequence(),
         answers: {},
       };
       await setDoc(participantDoc, participantData);
 
-      // Set current participant id if updated
-      await this.localForage.setItem('currentParticipantId', participantId);
-      this.currentParticipantId = participantId;
-
       return participantData;
     }
 
-  }
-
-  async getParticipantSession() {
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
-    
-    // Ensure we have currentParticipantId
-    this.getCurrentParticipantId();
-
-    // Get participant data
-    let participant: ParticipantData | null = null;
-    if (this.currentParticipantId !== null) {
-      const participantDoc = doc(this.studyCollection, this.currentParticipantId);
-      participant = (await getDoc(participantDoc)).data() as ParticipantData | null;
-    }
-
-    return participant;
   }
 
   async getCurrentParticipantId() {
@@ -149,29 +139,18 @@ export class FirebaseStorageEngine extends StorageEngine {
     // Get the participant doc
     const participantDoc = doc(this.studyCollection, this.currentParticipantId);
 
-    // Check if we have provenance data
-    let provenanceDoc: DocumentReference<DocumentData> | undefined = undefined;
-    if (answer.provenanceGraph !== undefined) {
-      // Make sure the participant has a provenance collection
-      const provenanceCollection = collection(participantDoc, 'provenance');
-
-      // Create a new provenance doc
-      provenanceDoc = doc(provenanceCollection);
-      await setDoc(provenanceDoc, answer.provenanceGraph);
-    }
-
-    const answerToSave: { answer: Record<string, Record<string, unknown>>, startTime: number, endTime: number } & Partial<{ provenanceGraph: string }> = {
+    const answerToSave = {
       answer: answer.answer,
       startTime: answer.startTime,
       endTime: answer.endTime,
     };
 
-    // If we don't have a provenance graph, remove it, else add the provenance doc reference
-    if (provenanceDoc !== undefined) {
-      answerToSave.provenanceGraph = provenanceDoc.id;
-    }
-
     await setDoc(participantDoc, { answers: { [currentStep]: answerToSave } }, { merge: true });
+
+    if (answer.provenanceGraph) {
+      this.localProvenanceCopy[currentStep] = answer.provenanceGraph;
+      await this._uploadLocalProvenance();
+    }
   }
 
   async setSequenceArray(latinSquare: string[][]) {
@@ -242,13 +221,13 @@ export class FirebaseStorageEngine extends StorageEngine {
       if (participant.id === 'config' || participant.id === 'sequenceArray') return;
       
       const participantDataItem = participant.data() as ParticipantData;
-      const provenanceCollection = await getDocs(collection(participant.ref, 'provenance'));
 
+      const fullProvObj = await this._getFirebaseProvenance(participantDataItem.participantId);
+
+      // Rehydrate the provenance graphs
       participantDataItem.answers = Object.fromEntries(Object.entries(participantDataItem.answers).map(([key, value]) => {
         if (value === undefined) return [key, value];
-
-        const provenanceGraphDoc = provenanceCollection.docs.find((doc) => doc.id === (value.provenanceGraph as unknown as string));
-        const provenanceGraph = provenanceGraphDoc?.data() as TrrackedProvenance;
+        const provenanceGraph = fullProvObj[key];
         return [key, { ...value, provenanceGraph }];
       }));
       participantData.push(participantDataItem);
@@ -275,15 +254,12 @@ export class FirebaseStorageEngine extends StorageEngine {
 
       // Get provenance data
       if (participant !== null) {
-        const provenanceCollection = collection(participantDoc, 'provenance');
-        const provenanceDocs = await getDocs(provenanceCollection);
+        const fullProvObj = await this._getFirebaseProvenance(this.currentParticipantId);
 
         // Iterate over the participant answers and add the provenance graph
-        Object.values(participant.answers).forEach((answer) => {
+        Object.entries(participant.answers).forEach(([step, answer]) => {
           if (answer === undefined) return;
-
-          const provenanceGraph = provenanceDocs.docs.find((doc) => doc.id === (answer.provenanceGraph as unknown as string));
-          answer.provenanceGraph = provenanceGraph?.data() as TrrackedProvenance;
+          answer.provenanceGraph = fullProvObj[step];
         });
       }
     }
@@ -348,5 +324,34 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   private _verifyStudyDatabase(db: CollectionReference<DocumentData, DocumentData> | undefined): db is CollectionReference<DocumentData, DocumentData>  {
     return db !== undefined;
+  }
+
+  private async _uploadLocalProvenance() {
+    // If we have provenance graphs, upload them to storage
+    if (Object.entries(this.localProvenanceCopy).length > 0) {
+      const storage = getStorage();
+      const storageRef = ref(storage, `${this.studyId}/${this.currentParticipantId}`); // Provenance graphs are saved to study/partipant
+      const blob = new Blob([JSON.stringify(this.localProvenanceCopy)], {
+        type: 'application/json',
+      });
+      await uploadBytes(storageRef, blob);
+    }
+  }
+  
+  private async _getFirebaseProvenance(participantId: string) {
+    const storage = getStorage();
+    const storageRef = ref(storage, `${this.studyId}/${participantId}`);
+
+    let fullProvObj: Record<string, TrrackedProvenance> = {};
+    try {
+      const url = await getDownloadURL(storageRef);
+      const response = await fetch(url);
+      const fullProvStr = await response.text();
+      fullProvObj = JSON.parse(fullProvStr);
+    } catch {
+      console.info(`Participant ${participantId} does not have a provenance graph for ${this.studyId}.`);
+    }
+
+    return fullProvObj;
   }
 }

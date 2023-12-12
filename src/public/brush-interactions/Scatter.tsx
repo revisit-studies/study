@@ -211,7 +211,7 @@ export function Scatter({
                     onChange={(val) => setIsPaintbrushSelect(val === 'Select' ? true : false)}
                     data={[
                         { label: 'Select', value: 'Select' },
-                        { label: 'De-Select', value: 'De-Select' }
+                        { label: 'De-Select', value: 'De-Select', disabled: brushedPoints.length === 0 }
                     ]}
                 /> : null
                 }
@@ -237,7 +237,7 @@ export function Scatter({
                 <Stack style={{flexGrow: 1}} spacing={50}>
                     <Stack spacing={0}>
                         <Text>{params.x}</Text>
-                        <RangeSlider label={null} min={xScale.domain()[0] as any} max={xScale.domain()[1] as any} labelAlwaysOn={false} onChange={(value) => {
+                        <RangeSlider minRange={1} label={null} min={xScale.domain()[0] as any} max={xScale.domain()[1] as any} labelAlwaysOn={false} onChange={(value) => {
                             setBrushedSpace([[xScale(value[0]), brushState.y1], [xScale(value[1]),brushState.y2]], xScale, yScale, 'drag');
                         }} style={{width: '300px'}} 
                             marks={
@@ -250,7 +250,7 @@ export function Scatter({
                     </Stack>
                     <Stack spacing={0}>
                         <Text>{params.y}</Text>
-                        <RangeSlider label={null} min={yScale.domain()[0]} max={yScale.domain()[1]}  onChange={(value) => {
+                        <RangeSlider minRange={1} label={null} min={yScale.domain()[0]} max={yScale.domain()[1]}  onChange={(value) => {
                             setBrushedSpace([[brushState.x1, yScale(value[1])], [brushState.x2, yScale(value[0])]], xScale, yScale, 'drag');
                         }} style={{width: '300px'}} marks={
                                 yScale.ticks(5).map((t) => ({

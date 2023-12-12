@@ -3,17 +3,19 @@ import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import ReactMarkdownWrapper from './ReactMarkdownWrapper';
 import { useStorageEngine } from '../store/storageEngineHooks';
 import { useEffect, useState } from 'react';
+import { useStoreSelector } from '../store/store';
 
 
 export function StudyEnd() {
   const config = useStudyConfig();
   const { storageEngine } = useStorageEngine();
+  const { answers } = useStoreSelector((state) => state);
 
   const [completed, setCompleted] = useState(false);
   useEffect(() => {
     // verify that storageEngine.verifyCompletion() returns true, loop until it does
     const interval = setInterval(async () => {
-      const isComplete = await storageEngine!.verifyCompletion();
+      const isComplete = await storageEngine!.verifyCompletion(answers);
       if (isComplete) {
         setCompleted(true);
         clearInterval(interval);
