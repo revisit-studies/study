@@ -3,7 +3,7 @@ import { ParticipantData } from '../types';
 import { StorageEngine } from './StorageEngine';
 import { parse as hjsonParse } from 'hjson';
 import { initializeApp } from 'firebase/app';
-import { getStorage, ref, uploadBytes } from 'firebase/storage';
+import { getDownloadURL, getStorage, ref, uploadBytes } from 'firebase/storage';
 import { CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, setDoc } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
@@ -151,28 +151,24 @@ export class FirebaseStorageEngine extends StorageEngine {
     // Get the participant doc
     const participantDoc = doc(this.studyCollection, this.currentParticipantId);
 
-    // Check if we have provenance data
-    if (answer.provenanceGraph !== undefined) {
-      const storage = getStorage();
-      const storageRef = ref(storage, `${this.studyId}/${currentStep}/${answer.provenanceGraph.root}`);
+    // // Check if we have provenance data
+    // if (answer.provenanceGraph !== undefined) {
+    //   const storage = getStorage();
+    //   const storageRef = ref(storage, `${this.studyId}/${this.currentParticipantId}/${answer.provenanceGraph.root}`);
 
-      const blob = new Blob([JSON.stringify(answer.provenanceGraph)], {
-        type: 'application/json',
-      });
+    //   const blob = new Blob([JSON.stringify(answer.provenanceGraph)], {
+    //     type: 'application/json',
+    //   });
 
-      uploadBytes(storageRef, blob);
-    }
+    //   uploadBytes(storageRef, blob);
+    // }
 
-    const answerToSave: { answer: Record<string, Record<string, unknown>>, startTime: number, endTime: number } & Partial<{ provenanceGraph: string }> = {
+    // Don't save provenance graph, that's handled later in verifyCompletion so we can just do 1 file upload
+    const answerToSave = {
       answer: answer.answer,
       startTime: answer.startTime,
       endTime: answer.endTime,
     };
-
-    // If we don't have a provenance graph, remove it, else add the provenance doc reference
-    if (answer.provenanceGraph !== undefined) {
-      answerToSave.provenanceGraph = answer.provenanceGraph.root;
-    }
 
     await setDoc(participantDoc, { answers: { [currentStep]: answerToSave } }, { merge: true });
   }
@@ -239,19 +235,26 @@ export class FirebaseStorageEngine extends StorageEngine {
     const participants = await getDocs(this.studyCollection);
     const participantData: ParticipantData[] = [];
 
+    const storage = getStorage();
+
     // Iterate over the participants and add the provenance graph
     const participantPulls = participants.docs.map(async (participant) => {
       // Exclude the config doc and the sequenceArray doc
       if (participant.id === 'config' || participant.id === 'sequenceArray') return;
       
       const participantDataItem = participant.data() as ParticipantData;
-      const provenanceCollection = await getDocs(collection(participant.ref, 'provenance'));
 
+      const storageRef = ref(storage, `${this.studyId}/${this.currentParticipantId}`);
+
+      const url = await getDownloadURL(storageRef);
+      const response = await fetch(url);
+      const fullProvStr = await response.text();
+      const fullProvObj = JSON.parse(fullProvStr);
+
+      // Rehydrate the provenance graphs
       participantDataItem.answers = Object.fromEntries(Object.entries(participantDataItem.answers).map(([key, value]) => {
         if (value === undefined) return [key, value];
-
-        const provenanceGraphDoc = provenanceCollection.docs.find((doc) => doc.id === (value.provenanceGraph as unknown as string));
-        const provenanceGraph = provenanceGraphDoc?.data() as TrrackedProvenance;
+        const provenanceGraph = fullProvObj[key];
         return [key, { ...value, provenanceGraph }];
       }));
       participantData.push(participantDataItem);
@@ -267,7 +270,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Study database not initialized');
     }
 
-    // Ensure we have currentParticipantId
+    // Ensure we have currentParticipantId 
     await this.getCurrentParticipantId();
 
     // Get participant data
@@ -278,16 +281,23 @@ export class FirebaseStorageEngine extends StorageEngine {
 
       // Get provenance data
       if (participant !== null) {
-        const provenanceCollection = collection(participantDoc, 'provenance');
-        const provenanceDocs = await getDocs(provenanceCollection);
+        const storage = getStorage();
+        const storageRef = ref(storage, `${this.studyId}/${this.currentParticipantId}`);
 
-        // Iterate over the participant answers and add the provenance graph
-        Object.values(participant.answers).forEach((answer) => {
-          if (answer === undefined) return;
+        try {
+          const url = await getDownloadURL(storageRef);
+          const response = await fetch(url);
+          const fullProvStr = await response.text();
+          const fullProvObj = JSON.parse(fullProvStr);
 
-          const provenanceGraph = provenanceDocs.docs.find((doc) => doc.id === (answer.provenanceGraph as unknown as string));
-          answer.provenanceGraph = provenanceGraph?.data() as TrrackedProvenance;
-        });
+          // Iterate over the part icipant answers and add the provenance graph
+          Object.entries(participant.answers).forEach(([step, answer]) => {
+            if (answer === undefined) return;
+            answer.provenanceGraph = fullProvObj[step];
+          });
+        } catch {
+          console.info(`Participant ${this.currentParticipantId} does not have a provenance graph for ${this.studyId}.`);
+        }
       }
     }
 
@@ -327,9 +337,27 @@ export class FirebaseStorageEngine extends StorageEngine {
     return participant;
   }
 
-  async verifyCompletion() {
+  async verifyCompletion(answers: Record<string, StoredAnswer>) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
+    }
+
+    // Generate combined provenance object
+    const fullProvObj: Record<string, TrrackedProvenance> = {};
+    Object.entries(answers).forEach(([step, answer]) => {
+      if (answer.provenanceGraph !== undefined) {
+        fullProvObj[step] = answer.provenanceGraph;
+      }
+    });
+
+    // If we have provenance graphs, upload them to storage
+    if (Object.entries(fullProvObj).length > 0) {
+      const storage = getStorage();
+      const storageRef = ref(storage, `${this.studyId}/${this.currentParticipantId}`); // Provenance graphs are saved to study/partipant
+      const blob = new Blob([JSON.stringify(fullProvObj)], {
+        type: 'application/json',
+      });
+      await uploadBytes(storageRef, blob);
     }
 
     // Get the participantData

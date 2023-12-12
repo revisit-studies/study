@@ -40,5 +40,5 @@ export abstract class StorageEngine {
 
   abstract nextParticipant(): Promise<ParticipantData>;
 
-  abstract verifyCompletion(): Promise<boolean>;
+  abstract verifyCompletion(answers: Record<string, StoredAnswer>): Promise<boolean>;
 }
