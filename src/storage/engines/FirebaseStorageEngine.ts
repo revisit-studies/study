@@ -139,7 +139,6 @@ export class FirebaseStorageEngine extends StorageEngine {
     // Get the participant doc
     const participantDoc = doc(this.studyCollection, this.currentParticipantId);
 
-    // Don't save provenance graph, that's handled later in verifyCompletion so we can just do 1 file upload
     const answerToSave = {
       answer: answer.answer,
       startTime: answer.startTime,
@@ -244,7 +243,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Study database not initialized');
     }
 
-    // Ensure we have currentParticipantId 
+    // Ensure we have currentParticipantId
     await this.getCurrentParticipantId();
 
     // Get participant data
@@ -257,7 +256,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       if (participant !== null) {
         const fullProvObj = await this._getFirebaseProvenance(this.currentParticipantId);
 
-        // Iterate over the part icipant answers and add the provenance graph
+        // Iterate over the participant answers and add the provenance graph
         Object.entries(participant.answers).forEach(([step, answer]) => {
           if (answer === undefined) return;
           answer.provenanceGraph = fullProvObj[step];
