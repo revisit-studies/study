@@ -30,7 +30,7 @@ export class LocalStorageEngine extends StorageEngine {
     }
 
     // Ensure participantId
-    this.getCurrentParticipantId();
+    await this.getCurrentParticipantId();
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
     }
