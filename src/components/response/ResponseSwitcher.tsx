@@ -10,6 +10,8 @@ import RadioInput from './RadioInput';
 import SliderInput from './SliderInput';
 import StringInput from './StringInput';
 import TextAreaInput from './TextAreaInput';
+import { useSearchParams } from 'react-router-dom';
+import { useMemo } from 'react';
 
 type Props = {
   response: Response;
@@ -28,7 +30,18 @@ export default function ResponseSwitcher({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ans: { value?: any } = (storedAnswer ? { value: storedAnswer } : answer) || { value: undefined };
   const disabled = !!storedAnswer;
-  const isDisabled = disabled || !!response.paramCapture;
+
+  const [searchParams] = useSearchParams();
+
+  const isDisabled = useMemo(() => {
+
+    if(response.paramCapture) {
+      const responseParam = searchParams.get(response.paramCapture);
+      return disabled || !!responseParam;
+    }
+
+    return disabled;
+  }, [disabled, response.paramCapture, searchParams]);
 
   return (
     <>
