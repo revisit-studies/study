@@ -11,10 +11,14 @@ export function disableBrowserBack() {
   const storeDispatch = useStoreDispatch();
 
   useEffect(() => {
-    window.history.pushState(null, '', window.location.href);
-    window.onpopstate = () => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const isAdmin = (searchParams.get('admin') || 'f') === 't';
+
+    if (import.meta.env.DEV && !isAdmin)
       window.history.pushState(null, '', window.location.href);
-      storeDispatch(setAlertModal({ show: true, message: 'Using the browser\'s back button is prohibited during the study.' }));
-    };
-  }, [currentStep, setAlertModal, storeDispatch]);
+      window.onpopstate = () => {
+        window.history.pushState(null, '', window.location.href);
+        storeDispatch(setAlertModal({ show: true, message: 'Using the browser\'s back button is prohibited during the study.' }));
+      };
+    }, [currentStep, setAlertModal, storeDispatch]);
 }
