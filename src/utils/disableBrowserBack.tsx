@@ -14,7 +14,7 @@ export function disableBrowserBack() {
     const searchParams = new URLSearchParams(window.location.search);
     const isAdmin = (searchParams.get('admin') || 'f') === 't';
 
-    if (import.meta.env.DEV && !isAdmin)
+    if (import.meta.env.PROD && !isAdmin)
       window.history.pushState(null, '', window.location.href);
       window.onpopstate = () => {
         window.history.pushState(null, '', window.location.href);
