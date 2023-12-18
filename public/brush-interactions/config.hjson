@@ -82,6 +82,12 @@
                 }
             ]
         },
+        "tutorial": {
+            "type": "markdown",
+            "path": "brush-interactions/tutorial.md",
+            "nextButtonText": "",
+            "response": []
+        },
         "rectangleBrush_q1": {
             "baseComponent": "scatterPlot",
             "instruction": "How many cars from Japan have a Miles Per Gallon value greater than 35?",
@@ -517,6 +523,7 @@
         "components": [
             "introduction",
             "consent",
+            "tutorial",
             {
                 "order": "random",
                 "components": 
