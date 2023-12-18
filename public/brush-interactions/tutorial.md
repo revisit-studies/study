@@ -1,5 +1,5 @@
 # Tutorial
-In this study we will have you complete 8 tasks using 4 different ways to select points in a scatterplot. Utilize the selection type and the linked chart to answer the questions. Some of the questions will ask you to enter specific numbers, please estimate the best you can.The four selection types are 
+In this study you will complete 8 tasks using 4 different ways to select points in a scatterplot. Utilize the selection type and the linked chart to answer the questions. Some of the questions will ask you to enter specific numbers, please estimate the best you can. The four selection types, with instructions on how to use them, are listed below. You can access this information during the study at any time via the help button in the upper left.
 
 ## Axis Selection
 
@@ -9,9 +9,9 @@ Use the handles on the x and y axis to edit the selection.
 
 Click and drag over the plot to create a selection. Drag the center or the edges of the rectangle to edit the selection.
 
-## Slider Seleciton
+## Slider Selection
 
-Use the handles of the sliders to edit the selection.
+Use the handles of the sliders to the right of the chart to edit the selection.
 
 ## Paintbrush Selection
 

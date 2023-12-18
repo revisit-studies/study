@@ -16,7 +16,7 @@
     },
     "uiConfig": {
         "contactEmail": "cnobre@cs.toronto.edu",
-        "helpTextPath": "brush-interactions/help.md",
+        "helpTextPath": "brush-interactions/tutorial.md",
         "logoPath": "assets/revisitLogoSquare.svg",
         "withProgressBar": true,
         "autoDownloadStudy": false,

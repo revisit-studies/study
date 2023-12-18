@@ -23,7 +23,7 @@ export default function HelpModal() {
   }, [config]);
 
   return (
-    <Modal size={'auto'} opened={showHelpText} onClose={() => storeDispatch(toggleShowHelpText())} title="Help">
+    <Modal size={'auto'} opened={showHelpText} onClose={() => storeDispatch(toggleShowHelpText())}>
       <ReactMarkdownWrapper text={helpText} />
     </Modal>
   );
