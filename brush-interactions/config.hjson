@@ -16,7 +16,7 @@
     },
     "uiConfig": {
         "contactEmail": "cnobre@cs.toronto.edu",
-        "helpTextPath": "brush-interactions/help.md",
+        "helpTextPath": "brush-interactions/tutorial.md",
         "logoPath": "assets/revisitLogoSquare.svg",
         "withProgressBar": true,
         "autoDownloadStudy": false,
@@ -82,6 +82,12 @@
                 }
             ]
         },
+        "tutorial": {
+            "type": "markdown",
+            "path": "brush-interactions/tutorial.md",
+            "nextButtonText": "",
+            "response": []
+        },
         "rectangleBrush_q1": {
             "baseComponent": "scatterPlot",
             "instruction": "How many cars from Japan have a Miles Per Gallon value greater than 35?",
@@ -108,7 +114,7 @@
         },
         "rectangleBrush_q2": {
             "baseComponent": "scatterPlot",
-            "instruction": "Consider only cars that have a miles per gallon value greater than 30 AND weigh more than 2000 pounds. Which country produces the most and the least of these cars?",
+            "instruction": "Consider only cars that have a miles per gallon value greater than 30 AND weigh more than 2000 pounds. Which country or region produces the most and the least of these cars?",
             "parameters": {
                 "dataset": "cars",
                 "x": "Miles per Gallon",
@@ -517,6 +523,7 @@
         "components": [
             "introduction",
             "consent",
+            "tutorial",
             {
                 "order": "random",
                 "components": 
