@@ -39,6 +39,7 @@ export interface StoreState {
   config: StudyConfig;
   showAdmin: boolean;
   showHelpText: boolean;
+  alertModal: { show: boolean, message: string };
   trialValidation: TrialValidation;
   iframeAnswers: string[];
 }

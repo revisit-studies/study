@@ -27,6 +27,7 @@ export async function studyStoreCreator(
     config,
     showAdmin: false,
     showHelpText: false,
+    alertModal: { show: false, message: '' },
     trialValidation: answers ? allValid : emptyValidation,
     iframeAnswers: [] as string[],
   };
@@ -43,6 +44,9 @@ export async function studyStoreCreator(
       },
       toggleShowHelpText: (state) => {
         state.showHelpText = !state.showHelpText;
+      },
+      setAlertModal: (state, action: PayloadAction<{ show: boolean; message: string }>) => {
+        state.alertModal = action.payload;
       },
       setIframeAnswers: (state, action: PayloadAction<string[]>) => {
         state.iframeAnswers = action.payload;
