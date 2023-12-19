@@ -44,6 +44,7 @@
     "react-markdown": "^8.0.5",
     "react-redux": "^8.0.5",
     "react-router-dom": "^6.10.0",
+    "rehype-raw": "^7.0.0",
     "ts-json-schema-generator": "^1.4.1",
     "typedoc": "^0.25.4",
     "typedoc-plugin-frontmatter": "^0.0.2",
