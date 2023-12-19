@@ -3,9 +3,11 @@ import ReactMarkdown from 'react-markdown';
 import { Image,  Text, Title, Anchor, List } from '@mantine/core';
 import { ReactNode } from 'react';
 
+import rehypeRaw from 'rehype-raw';
+
 export default function ReactMarkdownWrapper({ text }: { text: string; }) {
   const components = {
-    img: ({ node, ...props }: { node: unknown; }) => <Image {...props} width='auto' height={'500px'}/>,
+    img: ({ node, ...props }: { node: unknown; }) => <Image {...props}/>,
     p: ({ node, ...props }: { node: unknown; }) => <Text {...props} pb={8}/>,
     h1: ({ node, ...props }: { node: unknown; }) => <Title order={1} {...props} pb={12} />,
     h2: ({ node, ...props }: { node: unknown; }) => <Title order={2} {...props} pb={12} />,
@@ -19,6 +21,6 @@ export default function ReactMarkdownWrapper({ text }: { text: string; }) {
   };
 
   return <>
-    <ReactMarkdown components={components}>{text}</ReactMarkdown>
+    <ReactMarkdown components={components} rehypePlugins={[rehypeRaw]}>{text}</ReactMarkdown>
   </>;
 }

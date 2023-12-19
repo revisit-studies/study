@@ -5,23 +5,26 @@ In this study you will complete 8 tasks using 4 different ways to select points 
 
 Use the handles on the x and y axis to edit the selection.
 
-![Axis Selection](./tutorialImages/axis.png)
+<img src="./tutorialImages/axis.gif" width="auto" height="300px">
 
 ## Rectangular Selection
 
 Click and drag over the plot to create a selection. Drag the center or the edges of the rectangle to edit the selection.
-![Rectangular Selection](./tutorialImages/rectangle.png)
+
+<img src="./tutorialImages/rectangleGif.gif" width="auto" height="300px">
 
 
 ## Slider Selection
 
 Use the handles of the sliders to the right of the chart to edit the selection.
-![Slider Selection](./tutorialImages/slider.png)
+
+<img src="./tutorialImages/sliderGif.gif" width="auto" height="300px">
 
 
 ## Paintbrush Selection
 
 Click and drag to select points. Use the tool above the scatterplot to switch to deselect if you want to deselect points in your selection.
-![Paintbrush Selection](./tutorialImages/paintbrush.png)
+
+<img src="./tutorialImages/paintbrush.gif" width="auto" height="300px">
 
 
