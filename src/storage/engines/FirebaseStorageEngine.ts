@@ -49,7 +49,12 @@ export class FirebaseStorageEngine extends StorageEngine {
       const auth = getAuth();
       await signInAnonymously(auth);
       if (!auth.currentUser) throw new Error('Login failed with firebase');
-      enableNetwork(this.firestore);
+      await enableNetwork(this.firestore);
+
+      // Check the connection to the database
+      const connectedRef = await doc(this.firestore, '.info/connected');
+      await getDoc(connectedRef);
+
       this.connected = true;
     } catch (e) {
       console.warn('Failed to connect to Firebase');
@@ -349,7 +354,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       const fullProvStr = await response.text();
       fullProvObj = JSON.parse(fullProvStr);
     } catch {
-      console.info(`Participant ${participantId} does not have a provenance graph for ${this.studyId}.`);
+      console.warn(`Participant ${participantId} does not have a provenance graph for ${this.studyId}.`);
     }
 
     return fullProvObj;
