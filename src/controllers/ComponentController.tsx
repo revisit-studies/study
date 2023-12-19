@@ -13,7 +13,7 @@ import merge from 'lodash.merge';
 import { IndividualComponent } from '../parser/types';
 import { disableBrowserBack } from '../utils/disableBrowserBack';
 import { useStorageEngine } from '../store/storageEngineHooks';
-import { useStoreActions } from '../store/store';
+import { useStoreActions, useStoreDispatch } from '../store/store';
 
 // current active stimuli presented to the user
 export default function ComponentController() {
@@ -36,15 +36,16 @@ export default function ComponentController() {
 
   // Check if we have issues connecting to the database, if so show alert modal
   const { storageEngine } = useStorageEngine();
+  const storeDispatch = useStoreDispatch();
   const { setAlertModal } = useStoreActions();
   useEffect(() => {
     if (storageEngine?.getEngine() !== import.meta.env.VITE_STORAGE_ENGINE) {
-      setAlertModal({
+      storeDispatch(setAlertModal({
         show: true,
         message: `There was an issue connecting to the ${import.meta.env.VITE_STORAGE_ENGINE} database. This could be caused by a network issue or your adblocker. If you are using an adblocker, please disable it for this website and refresh.`,
-      });
+      }));
     }
-  }, [setAlertModal, storageEngine]);
+  }, [setAlertModal, storageEngine, storeDispatch]);
 
   return (
     <>
