@@ -2,7 +2,6 @@
 import ReactMarkdown from 'react-markdown';
 import { Image,  Text, Title, Anchor, List } from '@mantine/core';
 import { ReactNode } from 'react';
-
 import rehypeRaw from 'rehype-raw';
 
 export default function ReactMarkdownWrapper({ text }: { text: string; }) {
@@ -21,6 +20,7 @@ export default function ReactMarkdownWrapper({ text }: { text: string; }) {
   };
 
   return <>
-    <ReactMarkdown components={components} rehypePlugins={[rehypeRaw]}>{text}</ReactMarkdown>
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+       <ReactMarkdown components={components} rehypePlugins={[rehypeRaw] as any}>{text}</ReactMarkdown>
   </>;
 }
