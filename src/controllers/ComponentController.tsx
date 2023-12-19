@@ -14,6 +14,7 @@ import { IndividualComponent } from '../parser/types';
 import { disableBrowserBack } from '../utils/disableBrowserBack';
 import { useStorageEngine } from '../store/storageEngineHooks';
 import { useStoreActions, useStoreDispatch } from '../store/store';
+import { useOutletContext } from 'react-router-dom';
 
 // current active stimuli presented to the user
 export default function ComponentController() {
@@ -21,6 +22,10 @@ export default function ComponentController() {
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
   const stepConfig = studyConfig.components[currentStep];
+
+  const [windowEvents] = useOutletContext();
+
+  console.log(windowEvents.current);
   
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
