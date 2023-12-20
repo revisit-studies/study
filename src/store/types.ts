@@ -45,4 +45,17 @@ export interface StoreState {
 }
 
 // timestamp, event type, event data
-export type EventType = [number, 'mousemove', number[]]
+type CopyEvent = [number, 'copy', string];
+type DragEvent = [number, 'drag', number[]];
+type WheelEvent = [number, 'wheel', number[]];
+type FocusEvent = [number, 'focus', string];
+type InputEvent = [number, 'input', string];
+type KeypressEvent = [number, 'keypress', string];
+type ClickEvent = [number, 'click', number[]];
+type SelectionEvent = [number, 'selection', string];
+type MouseMoveEvent = [number, 'mousemove', number[]];
+type ResizeEvent = [number, 'resize', number[]];
+type ScrollEvent = [number, 'scroll', number[]];
+type VisibilityEvent = [number, 'visibility', string];
+
+export type EventType = MouseMoveEvent | ClickEvent | KeypressEvent | ScrollEvent | CopyEvent | DragEvent | WheelEvent | FocusEvent | InputEvent | SelectionEvent | ResizeEvent | VisibilityEvent;
