@@ -12,6 +12,7 @@ import { deepCopy } from '../../utils/deepCopy';
 import { ValidationStatus } from '../types';
 import { useStorageEngine } from '../storageEngineHooks';
 import { useStoredAnswer } from './useStoredAnswer';
+import { useWindowEvents } from '../../components/StepRenderer';
 
 export function useNextStep() {
   const currentStep = useCurrentStep();
@@ -48,6 +49,7 @@ export function useNextStep() {
     return Date.now();
   }, []);
 
+  const windowEvents = useWindowEvents();
   const goToNextStep = useCallback(() => {
     // Get answer from across the 3 response blocks and the provenance graph
     const trialValidationCopy = deepCopy(trialValidation[currentStep]);
@@ -59,6 +61,8 @@ export function useNextStep() {
     }, {});
     const provenanceGraph = trialValidationCopy.provenanceGraph;
     const endTime = Date.now();
+
+    console.log(windowEvents?.current);
 
     if (Object.keys(storedAnswer || {}).length === 0) {
       storeDispatch(
