@@ -1,4 +1,4 @@
-import { StoredAnswer, TrrackedProvenance } from '../../store/types';
+import { EventType, StoredAnswer, TrrackedProvenance } from '../../store/types';
 import { ParticipantData } from '../types';
 import { StorageEngine } from './StorageEngine';
 import { parse as hjsonParse } from 'hjson';
@@ -20,6 +20,7 @@ export class FirebaseStorageEngine extends StorageEngine {
   private localForage = localforage.createInstance({ name: 'currentParticipantId' });
 
   private localProvenanceCopy: Record<string, TrrackedProvenance> = {};
+  private localWindowEvents: Record<string, EventType[]> = {};
 
   constructor() {
     super('firebase');
@@ -86,6 +87,9 @@ export class FirebaseStorageEngine extends StorageEngine {
 
     // Restore localProvenanceCopy
     this.localProvenanceCopy = await this._getFirebaseProvenance(this.currentParticipantId);
+
+    // Restore localWindowEvents
+    this.localWindowEvents = await this._getWindowEvents(this.currentParticipantId);
 
     if (participant) {
       // Participant already initialized
@@ -156,6 +160,9 @@ export class FirebaseStorageEngine extends StorageEngine {
       this.localProvenanceCopy[currentStep] = answer.provenanceGraph;
       await this._uploadLocalProvenance();
     }
+
+    this.localWindowEvents[currentStep] = answer.windowEvents;
+    await this._uploadWindowEvents();
   }
 
   async setSequenceArray(latinSquare: string[][]) {
@@ -331,18 +338,6 @@ export class FirebaseStorageEngine extends StorageEngine {
     return db !== undefined;
   }
 
-  private async _uploadLocalProvenance() {
-    // If we have provenance graphs, upload them to storage
-    if (Object.entries(this.localProvenanceCopy).length > 0) {
-      const storage = getStorage();
-      const storageRef = ref(storage, `${this.studyId}/${this.currentParticipantId}`); // Provenance graphs are saved to study/partipant
-      const blob = new Blob([JSON.stringify(this.localProvenanceCopy)], {
-        type: 'application/json',
-      });
-      await uploadBytes(storageRef, blob);
-    }
-  }
-  
   private async _getFirebaseProvenance(participantId: string) {
     const storage = getStorage();
     const storageRef = ref(storage, `${this.studyId}/${participantId}`);
@@ -358,5 +353,47 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
 
     return fullProvObj;
+  }
+
+  private async _uploadLocalProvenance() {
+    // If we have provenance graphs, upload them to storage
+    if (Object.entries(this.localProvenanceCopy).length > 0) {
+      const storage = getStorage();
+      const storageRef = ref(storage, `${this.studyId}/${this.currentParticipantId}`); // Provenance graphs are saved to study/partipant
+      const blob = new Blob([JSON.stringify(this.localProvenanceCopy)], {
+        type: 'application/json',
+      });
+      await uploadBytes(storageRef, blob);
+    }
+  }
+
+  private async _getWindowEvents(participantId: string) {
+    const storage = getStorage();
+    const storageRef = ref(storage, `${this.studyId}/${participantId}_windowEvents`);
+
+    let windowEvents: Record<string, EventType[]> = {};
+    try {
+      const url = await getDownloadURL(storageRef);
+      const response = await fetch(url);
+      const windowEventsStr = await response.text();
+      windowEvents = JSON.parse(windowEventsStr);
+    } catch {
+      console.warn(`Participant ${participantId} does not have window events for ${this.studyId}.`);
+    }
+
+    return windowEvents;
+  }
+
+  private async _uploadWindowEvents() {
+    // If we have window events, upload them to storage
+    if (Object.keys(this.localWindowEvents).length > 0) {
+      const storage = getStorage();
+      const storageRef = ref(storage, `${this.studyId}/${this.currentParticipantId}_windowEvents`); 
+      const blob = new Blob([JSON.stringify(this.localWindowEvents)], {
+        type: 'application/json',
+      });
+      await uploadBytes(storageRef, blob);
+    }
+    
   }
 }

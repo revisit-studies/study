@@ -23,6 +23,7 @@ export interface StoredAnswer {
   startTime: number;
   endTime: number;
   provenanceGraph?: TrrackedProvenance,
+  windowEvents: EventType[];
 }
 
 export interface StimulusParams<T> {
