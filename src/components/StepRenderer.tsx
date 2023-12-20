@@ -5,11 +5,20 @@ import AppHeader from './interface/AppHeader';
 import AppNavBar from './interface/AppNavBar';
 import HelpModal from './interface/HelpModal';
 import { AlertModal } from './interface/AlertModal';
-import { useEffect, useRef } from 'react';
+import { createContext, useContext, useEffect, useRef } from 'react';
 import debounce from 'lodash.debounce';
+import { EventType } from '../store/types';
 
-// timestamp, event type, event data
-type EventType = [number, 'mousemove', number[]]
+// Create a context
+const WindowEventsContext = createContext<React.Ref<EventType[]>>(null);
+
+export function useWindowEvents(): React.Ref<EventType[]> {
+  const context = useContext(WindowEventsContext);
+  if (!context) {
+    throw new Error('useWindowEvents must be used within a WindowEventsProvider');
+  }
+  return context;
+}
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
@@ -28,14 +37,16 @@ export function StepRenderer() {
   }, []);
 
   return (
-    <AppShell
-      navbar={<AppNavBar />}
-      aside={<AppAside />}
-      header={<AppHeader />}
-    >
-      <HelpModal />
-      <AlertModal/>
-      <Outlet context={[windowEvents]}/>
-    </AppShell>
+    <WindowEventsContext.Provider value={windowEvents}>
+      <AppShell
+        navbar={<AppNavBar />}
+        aside={<AppAside />}
+        header={<AppHeader />}
+      >
+        <HelpModal />
+        <AlertModal />
+        <Outlet />
+      </AppShell>
+    </WindowEventsContext.Provider>
   );
 }

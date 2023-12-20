@@ -43,3 +43,6 @@ export interface StoreState {
   trialValidation: TrialValidation;
   iframeAnswers: string[];
 }
+
+// timestamp, event type, event data
+export type EventType = [number, 'mousemove', number[]]
