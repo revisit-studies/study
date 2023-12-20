@@ -62,6 +62,9 @@ export function useNextStep() {
     const provenanceGraph = trialValidationCopy.provenanceGraph;
     const endTime = Date.now();
 
+    // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
+    const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ?  windowEvents.current.splice(0, windowEvents.current.length) : [];
+
     if (Object.keys(storedAnswer || {}).length === 0) {
       storeDispatch(
         saveTrialAnswer({
@@ -70,13 +73,11 @@ export function useNextStep() {
           startTime,
           endTime,
           provenanceGraph,
+          windowEvents: currentWindowEvents,
         })
       );
       // Update database
       if (storageEngine) {
-        // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
-        const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ?  windowEvents.current.splice(0, windowEvents.current.length) : [];
-
         storageEngine.saveAnswer(
           currentStep, 
           {
