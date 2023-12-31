@@ -60,8 +60,7 @@ export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
     <Stack>
       <Button
         leftIcon={<IconCodeDots />}
-        mt="1em"
-        mr="0.5em"
+        
         onClick={() => download(JSON.stringify(participantData, null, 2), `${baseFilename}_${participantId}.json`)}
         display="block"
       >
@@ -70,8 +69,6 @@ export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
       <Button
         disabled={!storageEngine?.isConnected()}
         leftIcon={<IconCodePlus />}
-        mt="1em"
-        mr="0.5em"
         onClick={async () => {
           if (!storageEngine) return;
           const participants = await storageEngine.getAllParticipantsData();
@@ -84,8 +81,6 @@ export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
       <Button
         disabled={!storageEngine?.isConnected()}
         leftIcon={<IconTable />}
-        mt="1em"
-        mr="0.5em"
         onClick={open}
         display="block"
       >

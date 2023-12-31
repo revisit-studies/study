@@ -1,96 +1,85 @@
 import {
-  ActionIcon,
   Aside,
-  Flex,
-  Paper,
   ScrollArea,
-  Space,
   Text,
 } from '@mantine/core';
 import { DownloadPanel } from '../DownloadPanel';
 import { StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoreSelector } from '../../store/store';
-import React, { ReactNode } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { IconArrowRight } from '@tabler/icons-react';
+import React, { useMemo } from 'react';
 import { useCurrentStep } from '../../routes';
+import { OrderObject } from '../../parser/types';
+import { deepCopy } from '../../utils/deepCopy';
+
+/**
+ * Recursively search and return first child component
+ */
+const getFirstChildComponent = (orderObj: OrderObject): string => {
+  if (typeof orderObj.components[0] === 'string') {
+    return orderObj.components[0] as string;
+  }
+  return getFirstChildComponent(orderObj.components[0] as OrderObject);
+};
+
+/**
+ * Returns an order object according to the sequence provided for the participant
+ */
+const getFullOrder = (sequence: string[], orderObj: OrderObject) => {
+  const order = deepCopy(orderObj);
+
+  order.components.sort((a, b) => {
+    const keyA = typeof a === 'string' ? a : getFirstChildComponent(a);
+    const keyB = typeof b === 'string' ? b : getFirstChildComponent(b);
+    return sequence.indexOf(keyA) - sequence.indexOf(keyB);
+  });
+
+  order.components = order.components.map((c) => {
+    if (typeof c === 'string') {
+      return c;
+    }
+    return getFullOrder(sequence, c);
+  });
+
+  return order;
+};
 
 export default function AppAside() {
   const { showAdmin, sequence } = useStoreSelector((state) => state);
-  const navigate = useNavigate();
-
-  const { studyId = null } = useParams<{
-    studyId: string;
-  }>();
 
   const currentStep = useCurrentStep();
   const studyConfig = useStudyConfig();
 
-  const tasks = sequence.map((task) => ({
-    ...studyConfig.components[task],
-    id: task,
-  }));
+  const fullOrder = useMemo(() => {
+    const r = getFullOrder(sequence, studyConfig.sequence);
+    r.components.push('end');
+    return r;
+  }, [sequence, studyConfig.sequence]);
 
-  return showAdmin ? (
-    <Aside p="0" width={{ base: 300 }} style={{ zIndex: 0 }}>
+  if (!showAdmin) {
+    return null;
+  }
+
+  return (
+    <Aside p="0" width={{ base: 400 }} style={{ zIndex: 0 }}>
       <ScrollArea p="0">
-        <Aside.Section grow component={ScrollArea} px="xs" my="lg">
-          <StepsPanel order={studyConfig.sequence} />
-        </Aside.Section>
-
-        <Aside.Section grow component={ScrollArea} px="xs" my="lg">
-          {currentStep === 'end' && <DownloadPanel studyConfig={studyConfig} />}
-        </Aside.Section>
-
-        <Aside.Section grow component={ScrollArea} px="xs" my="lg">
-          {tasks.map((task, index) => (
-            <React.Fragment key={`admin_${task.id}`}>
-              <Paper radius={0} p={0} withBorder>
-                <Paper radius={0} p="xl">
-                  <Flex style={{ justifyContent: 'space-between' }}>
-                    <Text c="gray.9">
-                      <Text span fw={700} inherit>
-                        Task {index + 1}:
-                      </Text>{' '}
-                      {task.id}
-                    </Text>
-                    <Space></Space>
-                    <ActionIcon
-                      bg="white"
-                      onClick={() => navigate(`/${studyId}/${task.id}`)}
-                    >
-                      <IconArrowRight size="1.125rem" />
-                    </ActionIcon>
-                  </Flex>
-                </Paper>
-
-                <Paper radius={0} p="xl">
-                  {task.description && (
-                    <Text fw={900}>
-                      Description:{' '}
-                      <Text fw={400} component="span">
-                        {task.description}
-                      </Text>
-                    </Text>
-                  )}
-                  {task.meta && <Text fw={900}>Task Meta:</Text>}
-                  {task.meta &&
-                    Object.keys(task.meta).map((key) => {
-                      return (
-                        <Text key={key}>
-                          {key}: {(task.meta as Record<string, ReactNode>)[key]}
-                        </Text>
-                      );
-                    })}
-                </Paper>
-              </Paper>
-
-              <Space h="md" />
-            </React.Fragment>
-          ))}
-        </Aside.Section>
+        <Text size={'md'} p={10} weight={'bold'}>
+          Study Sequence
+        </Text>
+        <StepsPanel order={fullOrder} />
+        <div
+          style={{ padding: 10, marginTop: 10, borderTop: '1px solid #e9ecef' }}
+        >
+          {currentStep === 'end' && (
+            <>
+              <Text size={'md'} p={10} weight={'bold'}>
+                Download
+              </Text>
+              <DownloadPanel studyConfig={studyConfig} />
+            </>
+          )}
+        </div>
       </ScrollArea>
     </Aside>
-  ) : null;
+  );
 }
