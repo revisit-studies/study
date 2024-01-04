@@ -2,7 +2,7 @@ import { createSlice, configureStore, type PayloadAction } from '@reduxjs/toolki
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { ResponseBlockLocation, StudyConfig } from '../parser/types';
-import { RootState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, EventType } from './types';
+import { RootState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState } from './types';
 
 export async function studyStoreCreator(
   studyId: string,
@@ -83,14 +83,7 @@ export async function studyStoreCreator(
         state,
         {
           payload,
-        }: PayloadAction<{
-          currentStep: string;
-          answer: Record<string, Record<string, unknown>>;
-          startTime: number;
-          endTime: number;
-          provenanceGraph?: TrrackedProvenance;
-          windowEvents: EventType[];
-        }>
+        }: PayloadAction<{ currentStep: string } & StoredAnswer>
       ) {
         const { currentStep, answer, startTime, endTime, provenanceGraph, windowEvents } = payload;
 
