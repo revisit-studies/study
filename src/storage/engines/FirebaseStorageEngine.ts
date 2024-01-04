@@ -90,6 +90,15 @@ export class FirebaseStorageEngine extends StorageEngine {
 
     // Restore localWindowEvents
     this.localWindowEvents = await this._getWindowEvents(this.currentParticipantId);
+    Object.entries(this.localWindowEvents).forEach(([step, events]) => {
+      if (participant === null) return;
+
+      if (events === undefined || events.length === 0) {
+        participant.answers[step].windowEvents = [];
+      } else {
+        participant.answers[step].windowEvents = events;
+      }
+    });
 
     if (participant) {
       // Participant already initialized
@@ -235,12 +244,14 @@ export class FirebaseStorageEngine extends StorageEngine {
       const participantDataItem = participant.data() as ParticipantData;
 
       const fullProvObj = await this._getFirebaseProvenance(participantDataItem.participantId);
+      const fullWindowEventsObj = await this._getWindowEvents(participantDataItem.participantId);
 
       // Rehydrate the provenance graphs
       participantDataItem.answers = Object.fromEntries(Object.entries(participantDataItem.answers).map(([key, value]) => {
         if (value === undefined) return [key, value];
         const provenanceGraph = fullProvObj[key];
-        return [key, { ...value, provenanceGraph }];
+        const windowEvents = fullWindowEventsObj[key];
+        return [key, { ...value, provenanceGraph, windowEvents }];
       }));
       participantData.push(participantDataItem);
     });
@@ -267,11 +278,13 @@ export class FirebaseStorageEngine extends StorageEngine {
       // Get provenance data
       if (participant !== null) {
         const fullProvObj = await this._getFirebaseProvenance(this.currentParticipantId);
+        const fullWindowEventsObj = await this._getWindowEvents(this.currentParticipantId);
 
         // Iterate over the participant answers and add the provenance graph
         Object.entries(participant.answers).forEach(([step, answer]) => {
           if (answer === undefined) return;
           answer.provenanceGraph = fullProvObj[step];
+          answer.windowEvents = fullWindowEventsObj[step];
         });
       }
     }
