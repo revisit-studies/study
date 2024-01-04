@@ -69,26 +69,22 @@ export function StepRenderer() {
       windowEvents.current.push([Date.now(), 'visibility', document.visibilityState]);
     }, 100, {maxWait: 100});
 
-    window.addEventListener('drag', dragListener);
     window.addEventListener('focus', focusListener, true);
     window.addEventListener('input', inputListener as () => void);
     window.addEventListener('keypress', keypressListener);
     window.addEventListener('mousedown', mouseDownListener);
     window.addEventListener('mouseup', mouseUpListener);
-    document.addEventListener('selectionchange', selectionListener);
     window.addEventListener('resize', resizeListener);
     window.addEventListener('mousemove', mouseMoveListener);
     window.addEventListener('scroll', scrollListener);
     document.addEventListener('visibilitychange', visibilityListener);
   
     return () => {
-      window.removeEventListener('drag', dragListener);
       window.removeEventListener('focus', focusListener, true);
       window.removeEventListener('input', inputListener as () => void);
       window.removeEventListener('keypress', keypressListener);
       window.addEventListener('mousedown', mouseDownListener);
       window.addEventListener('mouseup', mouseUpListener);
-      document.removeEventListener('selectionchange', selectionListener);
       window.removeEventListener('resize', resizeListener);
       window.removeEventListener('mousemove', mouseMoveListener);
       window.removeEventListener('scroll', scrollListener);
