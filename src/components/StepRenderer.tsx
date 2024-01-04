@@ -25,21 +25,6 @@ export function StepRenderer() {
 
   // Attach event listeners
   useEffect(() => {
-    // Clipboard
-    const copyListener = debounce((e: ClipboardEvent) => {
-      windowEvents.current.push([Date.now(), 'copy', e.clipboardData?.getData('text') ?? '']);
-    }, 100, {maxWait: 100});
-  
-    // Drag'n'drop
-    const dragListener = debounce((e: DragEvent) => {
-      windowEvents.current.push([Date.now(), 'drag', [e.clientX, e.clientY]]);
-    }, 100, {maxWait: 100});
-  
-    // Wheel
-    const wheelListener = debounce((e: WheelEvent) => {
-      windowEvents.current.push([Date.now(), 'wheel', [e.deltaX, e.deltaY]]);
-    }, 100, {maxWait: 100});
-  
     // Focus
     const focusListener = debounce((e: FocusEvent) => {
       windowEvents.current.push([Date.now(), 'focus', e.target instanceof HTMLElement ? e.target.tagName : '']);
@@ -56,14 +41,12 @@ export function StepRenderer() {
     }, 100, {maxWait: 100});
   
     // Mouse/Pointer/Touch
-    const clickListener = debounce((e: MouseEvent) => {
-      windowEvents.current.push([Date.now(), 'click', [e.clientX, e.clientY]]);
+    const mouseDownListener = debounce((e: MouseEvent) => {
+      windowEvents.current.push([Date.now(), 'mousedown', [e.clientX, e.clientY]]);
     }, 100, {maxWait: 100});
-  
-    // Text selection
-    const selectionListener = debounce(() => {
-      const selection = window.getSelection()?.toString();
-      windowEvents.current.push([Date.now(), 'selection', selection ?? '']);
+
+    const mouseUpListener = debounce((e: MouseEvent) => {
+      windowEvents.current.push([Date.now(), 'mouseup', [e.clientX, e.clientY]]);
     }, 100, {maxWait: 100});
   
     // Window resizing
@@ -85,14 +68,13 @@ export function StepRenderer() {
     const visibilityListener = debounce(() => {
       windowEvents.current.push([Date.now(), 'visibility', document.visibilityState]);
     }, 100, {maxWait: 100});
-  
-    window.addEventListener('copy', copyListener);
+
     window.addEventListener('drag', dragListener);
-    window.addEventListener('wheel', wheelListener);
     window.addEventListener('focus', focusListener, true);
     window.addEventListener('input', inputListener as () => void);
     window.addEventListener('keypress', keypressListener);
-    window.addEventListener('click', clickListener);
+    window.addEventListener('mousedown', mouseDownListener);
+    window.addEventListener('mouseup', mouseUpListener);
     document.addEventListener('selectionchange', selectionListener);
     window.addEventListener('resize', resizeListener);
     window.addEventListener('mousemove', mouseMoveListener);
@@ -100,13 +82,12 @@ export function StepRenderer() {
     document.addEventListener('visibilitychange', visibilityListener);
   
     return () => {
-      window.removeEventListener('copy', copyListener);
       window.removeEventListener('drag', dragListener);
-      window.removeEventListener('wheel', wheelListener);
       window.removeEventListener('focus', focusListener, true);
       window.removeEventListener('input', inputListener as () => void);
       window.removeEventListener('keypress', keypressListener);
-      window.removeEventListener('click', clickListener);
+      window.addEventListener('mousedown', mouseDownListener);
+      window.addEventListener('mouseup', mouseUpListener);
       document.removeEventListener('selectionchange', selectionListener);
       window.removeEventListener('resize', resizeListener);
       window.removeEventListener('mousemove', mouseMoveListener);
