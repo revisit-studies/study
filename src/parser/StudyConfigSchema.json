@@ -7,19 +7,18 @@
       "description": "The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks.",
       "properties": {
         "acceptableHigh": {
+          "description": "The acceptable high value for the answer. This is used to define a range of acceptable answers.",
           "type": "number"
         },
         "acceptableLow": {
+          "description": "The acceptable low value for the answer. This is used to define a range of acceptable answers.",
           "type": "number"
         },
-        "answer": {},
-        "answerCallback": {
-          "type": "string"
-        },
-        "answerRegex": {
-          "type": "string"
+        "answer": {
+          "description": "The correct answer to the question."
         },
         "id": {
+          "description": "The id of the answer. This is used to identify the answer in the data file.",
           "type": "string"
         }
       },
@@ -33,35 +32,47 @@
       "additionalProperties": false,
       "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.",
       "properties": {
-        "correctAnswer": {},
+        "correctAnswer": {
+          "description": "The correct answer to the response. This is used in the data download and can be shown in the admin panel."
+        },
         "hidden": {
+          "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
         "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
         },
         "options": {
+          "description": "The options that are displayed as checkboxes.",
           "items": {
             "$ref": "#/definitions/Option"
           },
           "type": "array"
         },
         "paramCapture": {
+          "description": "Use to capture querystring parameters such as PROLIFIC_ID. See the examples for how this is used.",
           "type": "string"
         },
         "prompt": {
+          "description": "The prompt that is displayed to the participant.",
           "type": "string"
         },
         "required": {
+          "description": "Controls whether the response is required to be answered.",
           "type": "boolean"
         },
         "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
           "type": "string"
         },
-        "requiredValue": {},
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
         "type": {
           "const": "checkbox",
           "type": "string"
@@ -81,38 +92,51 @@
       "additionalProperties": false,
       "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options.",
       "properties": {
-        "correctAnswer": {},
+        "correctAnswer": {
+          "description": "The correct answer to the response. This is used in the data download and can be shown in the admin panel."
+        },
         "hidden": {
+          "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
         "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
         },
         "options": {
+          "description": "The options that are displayed in the dropdown.",
           "items": {
             "$ref": "#/definitions/Option"
           },
           "type": "array"
         },
         "paramCapture": {
+          "description": "Use to capture querystring parameters such as PROLIFIC_ID. See the examples for how this is used.",
           "type": "string"
         },
         "placeholder": {
+          "description": "The placeholder text that is displayed in the input.",
           "type": "string"
         },
         "prompt": {
+          "description": "The prompt that is displayed to the participant.",
           "type": "string"
         },
         "required": {
+          "description": "Controls whether the response is required to be answered.",
           "type": "boolean"
         },
         "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
           "type": "string"
         },
-        "requiredValue": {},
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
         "type": {
           "const": "dropdown",
           "type": "string"
@@ -132,29 +156,40 @@
       "additionalProperties": false,
       "description": "The IFrameResponse interface is used to define the properties of an iframe response. IFrameResponses render as a list, that is connected to a WebsiteComponent. When data is sent from the WebsiteComponent, it is displayed in the list.",
       "properties": {
-        "correctAnswer": {},
+        "correctAnswer": {
+          "description": "The correct answer to the response. This is used in the data download and can be shown in the admin panel."
+        },
         "hidden": {
+          "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
         "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
         },
         "paramCapture": {
+          "description": "Use to capture querystring parameters such as PROLIFIC_ID. See the examples for how this is used.",
           "type": "string"
         },
         "prompt": {
+          "description": "The prompt that is displayed to the participant.",
           "type": "string"
         },
         "required": {
+          "description": "Controls whether the response is required to be answered.",
           "type": "boolean"
         },
         "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
           "type": "string"
         },
-        "requiredValue": {},
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
         "type": {
           "const": "iframe",
           "type": "string"
@@ -174,34 +209,43 @@
       "description": "The ImageComponent interface is used to define the properties of an image component. This component is used to render an image with optional styling.",
       "properties": {
         "correctAnswer": {
+          "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
           "items": {
             "$ref": "#/definitions/Answer"
           },
           "type": "array"
         },
         "description": {
+          "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instruction": {
+          "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the instructions."
         },
         "meta": {
           "additionalProperties": {},
+          "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the next button."
         },
         "nextButtonText": {
+          "description": "The text that is displayed on the next button.",
           "type": "string"
         },
         "path": {
+          "description": "The path to the image. This should be a relative path from the public folder.",
           "type": "string"
         },
         "response": {
+          "description": "The responses to the component",
           "items": {
             "$ref": "#/definitions/Response"
           },
@@ -211,10 +255,8 @@
           "additionalProperties": {
             "type": "string"
           },
+          "description": "The style of the image. This is an object with css properties as keys and css values as values.",
           "type": "object"
-        },
-        "title": {
-          "type": "string"
         },
         "type": {
           "const": "image",
@@ -247,53 +289,58 @@
         }
       ]
     },
-    "InheritedComponent": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/IndividualComponent"
-        },
-        {
-          "$ref": "#/definitions/PartialComponent"
-        }
-      ]
-    },
     "LikertResponse": {
       "additionalProperties": false,
       "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the preset. For example, preset: 5 will render 5 radio buttons, and preset: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.",
       "properties": {
-        "correctAnswer": {},
+        "correctAnswer": {
+          "description": "The correct answer to the response. This is used in the data download and can be shown in the admin panel."
+        },
         "desc": {
+          "description": "The description of the likert scale.",
           "type": "string"
         },
         "hidden": {
+          "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
         "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
         "leftLabel": {
+          "description": "The left label of the likert scale. E.g Strongly Disagree",
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
         },
         "paramCapture": {
+          "description": "Use to capture querystring parameters such as PROLIFIC_ID. See the examples for how this is used.",
           "type": "string"
         },
         "preset": {
+          "description": "The number of options to render.",
           "type": "number"
         },
         "prompt": {
+          "description": "The prompt that is displayed to the participant.",
           "type": "string"
         },
         "required": {
+          "description": "Controls whether the response is required to be answered.",
           "type": "boolean"
         },
         "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
           "type": "string"
         },
-        "requiredValue": {},
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
         "rightLabel": {
+          "description": "The right label of the likert scale. E.g Strongly Agree",
           "type": "string"
         },
         "type": {
@@ -315,32 +362,44 @@
       "additionalProperties": false,
       "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder.",
       "properties": {
-        "correctAnswer": {},
+        "correctAnswer": {
+          "description": "The correct answer to the response. This is used in the data download and can be shown in the admin panel."
+        },
         "hidden": {
+          "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
         "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
         },
         "paramCapture": {
+          "description": "Use to capture querystring parameters such as PROLIFIC_ID. See the examples for how this is used.",
           "type": "string"
         },
         "placeholder": {
+          "description": "The placeholder text that is displayed in the input.",
           "type": "string"
         },
         "prompt": {
+          "description": "The prompt that is displayed to the participant.",
           "type": "string"
         },
         "required": {
+          "description": "Controls whether the response is required to be answered.",
           "type": "boolean"
         },
         "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
           "type": "string"
         },
-        "requiredValue": {},
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
         "type": {
           "const": "longText",
           "type": "string"
@@ -360,41 +419,47 @@
       "description": "The MarkdownComponent interface is used to define the properties of a markdown component. The components can be used to render many different things, such as consent forms, instructions, and debriefs. Additionally, you can use the markdown component to render images, videos, and other media, with supporting text.",
       "properties": {
         "correctAnswer": {
+          "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
           "items": {
             "$ref": "#/definitions/Answer"
           },
           "type": "array"
         },
         "description": {
+          "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instruction": {
+          "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the instructions."
         },
         "meta": {
           "additionalProperties": {},
+          "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the next button."
         },
         "nextButtonText": {
+          "description": "The text that is displayed on the next button.",
           "type": "string"
         },
         "path": {
+          "description": "The path to the markdown file. This should be a relative path from the public folder.",
           "type": "string"
         },
         "response": {
+          "description": "The responses to the component",
           "items": {
             "$ref": "#/definitions/Response"
           },
           "type": "array"
-        },
-        "title": {
-          "type": "string"
         },
         "type": {
           "const": "markdown",
@@ -412,38 +477,52 @@
       "additionalProperties": false,
       "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.",
       "properties": {
-        "correctAnswer": {},
+        "correctAnswer": {
+          "description": "The correct answer to the response. This is used in the data download and can be shown in the admin panel."
+        },
         "hidden": {
+          "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
         "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
         },
         "max": {
+          "description": "The maximum value that is accepted in the input.",
           "type": "number"
         },
         "min": {
+          "description": "The minimum value that is accepted in the input.",
           "type": "number"
         },
         "paramCapture": {
+          "description": "Use to capture querystring parameters such as PROLIFIC_ID. See the examples for how this is used.",
           "type": "string"
         },
         "placeholder": {
+          "description": "The placeholder text that is displayed in the input.",
           "type": "string"
         },
         "prompt": {
+          "description": "The prompt that is displayed to the participant.",
           "type": "string"
         },
         "required": {
+          "description": "Controls whether the response is required to be answered.",
           "type": "boolean"
         },
         "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
           "type": "string"
         },
-        "requiredValue": {},
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
         "type": {
           "const": "numerical",
           "type": "string"
@@ -463,9 +542,11 @@
       "description": "The Option interface is used to define the options for a dropdown, slider, radio, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file. The Option interface is used in the Response interface.",
       "properties": {
         "label": {
+          "description": "The label displayed to participants.",
           "type": "string"
         },
         "value": {
+          "description": "The value stored in the participant's data.",
           "type": [
             "string",
             "number"
@@ -480,8 +561,10 @@
     },
     "OrderObject": {
       "additionalProperties": false,
+      "description": "The OrderObject interface is used to define the properties of an order object. This is used to define the order of components in a study. It supports random assignment of trials using a pure random assignment and a latin square.",
       "properties": {
         "components": {
+          "description": "The components that are included in the order.",
           "items": {
             "anyOf": [
               {
@@ -495,9 +578,11 @@
           "type": "array"
         },
         "numSamples": {
+          "description": "The number of samples to use for the random assignments. This means you can randomize across 3 components while only showing a participant 2 at a time.",
           "type": "number"
         },
         "order": {
+          "description": "The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed.",
           "enum": [
             "random",
             "latinSquare",
@@ -514,43 +599,64 @@
     },
     "PartialComponent": {
       "additionalProperties": false,
+      "description": "It's possible to defined PartialComponents in the baseComponents of a StudyConfig. A PartialComponent is a regular component that is missing some portion of its properties. These can be use by inherited components in the components section of the StudyConfig allowing for reuse of PartialComponents.",
       "properties": {
         "baseComponent": {
           "type": "string"
         },
         "correctAnswer": {
+          "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
           "items": {
             "$ref": "#/definitions/Answer"
           },
           "type": "array"
         },
         "description": {
+          "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instruction": {
+          "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the instructions."
         },
         "meta": {
           "additionalProperties": {},
+          "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the next button."
         },
         "nextButtonText": {
+          "description": "The text that is displayed on the next button.",
           "type": "string"
         },
         "parameters": {
-          "additionalProperties": {},
-          "type": "object"
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
+              "type": "object"
+            }
+          ],
+          "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
         },
         "path": {
+          "description": "The path to the markdown file. This should be a relative path from the public folder.",
           "type": "string"
         },
         "response": {
+          "description": "The responses to the component",
           "items": {
             "$ref": "#/definitions/Response"
           },
@@ -560,10 +666,8 @@
           "additionalProperties": {
             "type": "string"
           },
+          "description": "The style of the image. This is an object with css properties as keys and css values as values.",
           "type": "object"
-        },
-        "title": {
-          "type": "string"
         },
         "type": {
           "enum": [
@@ -586,38 +690,43 @@
       "description": "The QuestionnaireComponent interface is used to define the properties of a questionnaire component. A QuestionnaireComponent is used to render questions with different response types. The response types are also defined with these documentation. The main use case of this component type is to ask participants questions, without using markdown, websites, images, etc.",
       "properties": {
         "correctAnswer": {
+          "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
           "items": {
             "$ref": "#/definitions/Answer"
           },
           "type": "array"
         },
         "description": {
+          "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instruction": {
+          "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the instructions."
         },
         "meta": {
           "additionalProperties": {},
+          "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the next button."
         },
         "nextButtonText": {
+          "description": "The text that is displayed on the next button.",
           "type": "string"
         },
         "response": {
+          "description": "The responses to the component",
           "items": {
             "$ref": "#/definitions/Response"
           },
           "type": "array"
-        },
-        "title": {
-          "type": "string"
         },
         "type": {
           "const": "questionnaire",
@@ -634,18 +743,23 @@
       "additionalProperties": false,
       "description": "The RadioResponse interface is used to define the properties of a radio response. RadioResponses render as a radio input with user specified options, and optionally left and right labels.",
       "properties": {
-        "correctAnswer": {},
+        "correctAnswer": {
+          "description": "The correct answer to the response. This is used in the data download and can be shown in the admin panel."
+        },
         "hidden": {
+          "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
         "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
         "leftLabel": {
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
         },
         "options": {
           "items": {
@@ -654,18 +768,24 @@
           "type": "array"
         },
         "paramCapture": {
+          "description": "Use to capture querystring parameters such as PROLIFIC_ID. See the examples for how this is used.",
           "type": "string"
         },
         "prompt": {
+          "description": "The prompt that is displayed to the participant.",
           "type": "string"
         },
         "required": {
+          "description": "Controls whether the response is required to be answered.",
           "type": "boolean"
         },
         "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
           "type": "string"
         },
-        "requiredValue": {},
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
         "rightLabel": {
           "type": "string"
         },
@@ -689,45 +809,52 @@
       "description": "The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.",
       "properties": {
         "correctAnswer": {
+          "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
           "items": {
             "$ref": "#/definitions/Answer"
           },
           "type": "array"
         },
         "description": {
+          "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instruction": {
+          "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the instructions."
         },
         "meta": {
           "additionalProperties": {},
+          "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the next button."
         },
         "nextButtonText": {
+          "description": "The text that is displayed on the next button.",
           "type": "string"
         },
         "parameters": {
           "additionalProperties": {},
+          "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
           "type": "object"
         },
         "path": {
+          "description": "The path to the react component. This should be a relative path from the src/public folder.",
           "type": "string"
         },
         "response": {
+          "description": "The responses to the component",
           "items": {
             "$ref": "#/definitions/Response"
           },
           "type": "array"
-        },
-        "title": {
-          "type": "string"
         },
         "type": {
           "const": "react-component",
@@ -784,32 +911,44 @@
       "additionalProperties": false,
       "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.",
       "properties": {
-        "correctAnswer": {},
+        "correctAnswer": {
+          "description": "The correct answer to the response. This is used in the data download and can be shown in the admin panel."
+        },
         "hidden": {
+          "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
         "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
         },
         "paramCapture": {
+          "description": "Use to capture querystring parameters such as PROLIFIC_ID. See the examples for how this is used.",
           "type": "string"
         },
         "placeholder": {
+          "description": "The placeholder text that is displayed in the input.",
           "type": "string"
         },
         "prompt": {
+          "description": "The prompt that is displayed to the participant.",
           "type": "string"
         },
         "required": {
+          "description": "Controls whether the response is required to be answered.",
           "type": "boolean"
         },
         "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
           "type": "string"
         },
-        "requiredValue": {},
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
         "type": {
           "const": "shortText",
           "type": "string"
@@ -828,35 +967,47 @@
       "additionalProperties": false,
       "description": "The SliderResponse interface is used to define the properties of a slider response. SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100.",
       "properties": {
-        "correctAnswer": {},
+        "correctAnswer": {
+          "description": "The correct answer to the response. This is used in the data download and can be shown in the admin panel."
+        },
         "hidden": {
+          "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
         "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
         },
         "options": {
+          "description": "This define the steps in the slider and the extent of the slider.",
           "items": {
             "$ref": "#/definitions/Option"
           },
           "type": "array"
         },
         "paramCapture": {
+          "description": "Use to capture querystring parameters such as PROLIFIC_ID. See the examples for how this is used.",
           "type": "string"
         },
         "prompt": {
+          "description": "The prompt that is displayed to the participant.",
           "type": "string"
         },
         "required": {
+          "description": "Controls whether the response is required to be answered.",
           "type": "boolean"
         },
         "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
           "type": "string"
         },
-        "requiredValue": {},
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
         "type": {
           "const": "slider",
           "type": "string"
@@ -877,28 +1028,41 @@
       "description": "The StudyConfig interface is used to define the properties of a study configuration. These are the hjson files that live in the public folder. In our repo, one example of this would be public/cleveland/config-cleveland.hjson.",
       "properties": {
         "$schema": {
+          "description": "A required json schema property. This should point to the github link for the version of the schema you would like. See examples for more information",
           "type": "string"
         },
         "baseComponents": {
           "additionalProperties": {
-            "$ref": "#/definitions/IndividualComponent"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/IndividualComponent"
+              },
+              {
+                "$ref": "#/definitions/PartialComponent"
+              }
+            ]
           },
+          "description": "The components that are used in the study (baseComponents allow PartialComponents which allows for inheriting from them in components).",
           "type": "object"
         },
         "components": {
           "additionalProperties": {
-            "$ref": "#/definitions/InheritedComponent"
+            "$ref": "#/definitions/IndividualComponent"
           },
+          "description": "The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents.",
           "type": "object"
         },
         "sequence": {
-          "$ref": "#/definitions/OrderObject"
+          "$ref": "#/definitions/OrderObject",
+          "description": "The order of the components in the study. This might include some randomness."
         },
         "studyMetadata": {
-          "$ref": "#/definitions/StudyMetadata"
+          "$ref": "#/definitions/StudyMetadata",
+          "description": "The metadata for the study. This is used to identify the study and version in the data file."
         },
         "uiConfig": {
-          "$ref": "#/definitions/UIConfig"
+          "$ref": "#/definitions/UIConfig",
+          "description": "The UI configuration for the study. This is used to configure the UI of the app."
         }
       },
       "required": [
@@ -915,27 +1079,33 @@
       "description": "The StudyMetadata is used to describe certain properties of a study. Some of this data is displayed on the landing page when running the app, such as the title and description. This data is also included in the data file that is downloaded at the end of the study, to help identify the study and version.",
       "properties": {
         "authors": {
+          "description": "The authors of your study.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "date": {
+          "description": "The date of your study, may be useful for the researcher.",
           "type": "string"
         },
         "description": {
+          "description": "The description of your study, shown on the landing page.",
           "type": "string"
         },
         "organizations": {
+          "description": "The organizations that are associated with your study.",
           "items": {
             "type": "string"
           },
           "type": "array"
         },
         "title": {
+          "description": "The title of your study, shown on the landing page.",
           "type": "string"
         },
         "version": {
+          "description": "The version of your study, shown on the landing page and attached to participant data. This might be useful for seeing which version of the study a participant saw.",
           "type": "string"
         }
       },
@@ -954,30 +1124,39 @@
       "description": "The UIConfig is used to configure the UI of the app. This includes the logo, contact email, and whether to show a progress bar. The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses.",
       "properties": {
         "autoDownloadStudy": {
+          "description": "Controls whether the study data is automatically downloaded at the end of the study.",
           "type": "boolean"
         },
         "autoDownloadTime": {
+          "description": "The time in milliseconds to wait before automatically downloading the study data.",
           "type": "number"
         },
         "contactEmail": {
+          "description": "The email address that used during the study if a participant clicks contact.",
           "type": "string"
         },
         "helpTextPath": {
+          "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported.",
           "type": "string"
         },
         "logoPath": {
+          "description": "The path to the logo image. This is displayed on the landing page and the header.",
           "type": "string"
         },
         "sidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question.",
           "type": "boolean"
         },
         "studyEndMsg": {
+          "description": "The message to display when the study ends.",
           "type": "string"
         },
         "windowEventDebounceTime": {
+          "description": "Debounce time in milliseconds for automatically tracked window events. E.g 100 here means 1000ms / 100ms = 10 times a second, 200 here means 1000ms / 200ms = 5 times per second",
           "type": "number"
         },
         "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered in the study.",
           "type": "boolean"
         }
       },
@@ -994,51 +1173,52 @@
       "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder.",
       "properties": {
         "correctAnswer": {
+          "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
           "items": {
             "$ref": "#/definitions/Answer"
           },
           "type": "array"
         },
         "description": {
+          "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instruction": {
+          "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the instructions."
         },
         "meta": {
           "additionalProperties": {},
+          "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation"
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the next button."
         },
         "nextButtonText": {
+          "description": "The text that is displayed on the next button.",
           "type": "string"
         },
         "parameters": {
           "additionalProperties": {},
+          "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
           "type": "object"
         },
         "path": {
+          "description": "The path to the website. This should be a relative path from the public folder or could be an external website.",
           "type": "string"
         },
         "response": {
+          "description": "The responses to the component",
           "items": {
             "$ref": "#/definitions/Response"
           },
           "type": "array"
-        },
-        "style": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        },
-        "title": {
-          "type": "string"
         },
         "type": {
           "const": "website",
