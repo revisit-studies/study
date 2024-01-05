@@ -351,7 +351,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return db !== undefined;
   }
 
-  private async _getFromFirebaseStorage<T extends 'provenance' | 'windowEvents'>(participantId: string, type: T): Promise<Record<string, T extends 'provenance' ? TrrackedProvenance : EventType[]>> {
+  private async _getFromFirebaseStorage<T extends 'provenance' | 'windowEvents'>(participantId: string, type: T) {
     const storage = getStorage();
     const storageRef = ref(storage, `${this.studyId}/${participantId}_${type}`);
 
