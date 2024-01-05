@@ -8,6 +8,7 @@ import { AlertModal } from './interface/AlertModal';
 import { createContext, useContext, useEffect, useRef } from 'react';
 import debounce from 'lodash.debounce';
 import { EventType } from '../store/types';
+import { useStudyConfig } from '../store/hooks/useStudyConfig';
 
 // Create a context
 const WindowEventsContext = createContext<React.Ref<EventType[]>>(null);
@@ -23,51 +24,55 @@ export function useWindowEvents(): React.Ref<EventType[]> {
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
 
+  const studyConfig = useStudyConfig();
+  const windowEventDebounceTime = studyConfig.uiConfig.windowEventDebounceTime ?? 100;
+  console.log(windowEventDebounceTime);
+
   // Attach event listeners
   useEffect(() => {
     // Focus
     const focusListener = debounce((e: FocusEvent) => {
       windowEvents.current.push([Date.now(), 'focus', e.target instanceof HTMLElement ? e.target.tagName : '']);
-    }, 100, {maxWait: 100});
+    }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
   
     // Inputs
     const inputListener = debounce((e: InputEvent) => {
       windowEvents.current.push([Date.now(), 'input', e.data ?? '']);
-    }, 100, {maxWait: 100});
+    }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
   
     // Keyboard
     const keypressListener = debounce((e: KeyboardEvent) => {
       windowEvents.current.push([Date.now(), 'keypress', e.key]);
-    }, 100, {maxWait: 100});
+    }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
   
     // Mouse/Pointer/Touch
     const mouseDownListener = debounce((e: MouseEvent) => {
       windowEvents.current.push([Date.now(), 'mousedown', [e.clientX, e.clientY]]);
-    }, 100, {maxWait: 100});
+    }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
 
     const mouseUpListener = debounce((e: MouseEvent) => {
       windowEvents.current.push([Date.now(), 'mouseup', [e.clientX, e.clientY]]);
-    }, 100, {maxWait: 100});
+    }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
   
     // Window resizing
     const resizeListener = debounce(() => {
       windowEvents.current.push([Date.now(), 'resize', [window.innerWidth, window.innerHeight]]);
-    }, 100, {maxWait: 100});
+    }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
 
     // Mouse movement
     const mouseMoveListener = debounce((e: MouseEvent) => {
       windowEvents.current.push([Date.now(), 'mousemove', [e.clientX, e.clientY]]);
-    }, 100, {maxWait: 100});
+    }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
 
     // Scroll
     const scrollListener = debounce(() => {
       windowEvents.current.push([Date.now(), 'scroll', [window.scrollX, window.scrollY]]);
-    }, 100, {maxWait: 100});
+    }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
 
     // Visibility change
     const visibilityListener = debounce(() => {
       windowEvents.current.push([Date.now(), 'visibility', document.visibilityState]);
-    }, 100, {maxWait: 100});
+    }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
 
     window.addEventListener('focus', focusListener, true);
     window.addEventListener('input', inputListener as () => void);
