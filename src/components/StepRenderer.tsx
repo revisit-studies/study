@@ -26,7 +26,6 @@ export function StepRenderer() {
 
   const studyConfig = useStudyConfig();
   const windowEventDebounceTime = studyConfig.uiConfig.windowEventDebounceTime ?? 100;
-  console.log(windowEventDebounceTime);
 
   // Attach event listeners
   useEffect(() => {
