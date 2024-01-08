@@ -34,7 +34,6 @@
                 nr-dots: 20
                 temp: low
             }
-            title: T1-low-temp
             description: Low temperature variant
             instruction: Will you issue blankets to the alpacas?
             type: image
@@ -69,7 +68,6 @@
                 nr-dots: 20
                 temp: mid
             }
-            title: T2-mid-temp
             description: Medium temperature variant
             instruction: Will you issue blankets to the alpacas?
             type: image
@@ -99,7 +97,6 @@
             ]
         }
         dotplot-high: {
-            title: T3-high-temp
             meta: {
                 difficulty: 1
                 nr-dots: 20

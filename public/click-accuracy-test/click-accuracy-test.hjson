@@ -33,7 +33,6 @@
             meta: {
                 nr-dots: 1
             }
-            title: Click Accuracy Test
             description: try to click on the center of the moving dot
             instruction: Click on the moving dot
             type: react-component
