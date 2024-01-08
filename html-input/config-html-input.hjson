@@ -50,10 +50,6 @@
             }
             description: A trial for the user to click the largest bar
             instruction: Click on the largest bar
-            // style that will be applied to iframe
-            style: {
-                height: 500px
-            }
             instructionLocation: aboveStimulus
             
         }
