@@ -3,7 +3,7 @@ import { parse as hjsonParse } from 'hjson';
 import Ajv from 'ajv';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
-import { GlobalConfig, IndividualComponent, PartialComponent, StudyConfig } from './types';
+import { GlobalConfig, IndividualComponent, InheritedComponent, StudyConfig } from './types';
 
 const ajv1 = new Ajv();
 ajv1.addSchema(globalSchema);
@@ -28,8 +28,8 @@ function verifyGlobalConfig(data: GlobalConfig) {
   return [configsListVerified, errors] as const;
 }
 
-export function isPartialComponent(comp: IndividualComponent | PartialComponent) : comp is PartialComponent {
-  return (<PartialComponent>comp).baseComponent !== undefined;
+export function isInheritedComponent(comp: IndividualComponent | InheritedComponent) : comp is InheritedComponent {
+  return (<InheritedComponent>comp).baseComponent !== undefined;
 }
 
 export function parseGlobalConfig(fileData: string) {
@@ -50,7 +50,7 @@ export function parseGlobalConfig(fileData: string) {
 function verifyStudyConfig(data: StudyConfig) {
   const errors: { message: string }[] = [];
   const componentsVerified = Object.values(data.components).every((component) => {
-    return isPartialComponent(component) ? !!data.baseComponents?.[component.baseComponent] : true;
+    return isInheritedComponent(component) ? !!data.baseComponents?.[component.baseComponent] : true;
   });
 
   return [componentsVerified, errors] as const;

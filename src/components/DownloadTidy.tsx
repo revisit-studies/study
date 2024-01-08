@@ -14,7 +14,7 @@ import { download } from './DownloadPanel';
 import { ParticipantData } from '../storage/types';
 import { useStorageEngine } from '../store/storageEngineHooks';
 import { Prettify, StudyConfig } from '../parser/types';
-import { isPartialComponent } from '../parser/parser';
+import { isInheritedComponent } from '../parser/parser';
 import merge from 'lodash.merge';
 import { StoredAnswer } from '../store/types';
 
@@ -79,7 +79,7 @@ export async function downloadTidy(
 function processToRow(session: ParticipantData, studyConfig: StudyConfig, properties: Property[]): TidyRow[] {
   return Object.entries(studyConfig.components).map(([trialId, trialConfig]) => {
     // Get the whole component, including the base component if there is inheritance
-    const completeComponent = isPartialComponent(trialConfig) && trialConfig.baseComponent && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents[trialConfig.baseComponent], trialConfig) : trialConfig;
+    const completeComponent = isInheritedComponent(trialConfig) && trialConfig.baseComponent && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents[trialConfig.baseComponent], trialConfig) : trialConfig;
 
     // Get the answer for this trial or an empty answer if it doesn't exist
     const trialAns = session.answers[trialId];

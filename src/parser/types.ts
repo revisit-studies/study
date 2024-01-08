@@ -324,8 +324,8 @@ export interface OrderObject {
   numSamples?: number
 }
 
-/** It's possible to defined PartialComponents in the baseComponents of a StudyConfig. A PartialComponent is a regular component that is missing some portion of its properties. These can be use by inherited components in the components section of the StudyConfig allowing for reuse of PartialComponents. */
-export type PartialComponent = (Partial<IndividualComponent> & { baseComponent: string })
+/** An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component). */
+export type InheritedComponent = (Partial<IndividualComponent> & { baseComponent: string })
 
 /**
  * The StudyConfig interface is used to define the properties of a study configuration. These are the hjson files that live in the public folder. In our repo, one example of this would be public/cleveland/config-cleveland.hjson. 
@@ -338,9 +338,9 @@ export interface StudyConfig {
   /** The UI configuration for the study. This is used to configure the UI of the app. */
   uiConfig: UIConfig;
   /** The components that are used in the study (baseComponents allow PartialComponents which allows for inheriting from them in components). */
-  baseComponents?: Record<string, IndividualComponent | PartialComponent>;
+  baseComponents?: Record<string, IndividualComponent | Partial<IndividualComponent>>;
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
-  components: Record<string, IndividualComponent>
+  components: Record<string, IndividualComponent | InheritedComponent>
   /** The order of the components in the study. This might include some randomness. */
   sequence: OrderObject;
 }

@@ -289,6 +289,94 @@
         }
       ]
     },
+    "InheritedComponent": {
+      "additionalProperties": false,
+      "description": "An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component).",
+      "properties": {
+        "baseComponent": {
+          "type": "string"
+        },
+        "correctAnswer": {
+          "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instruction": {
+          "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the instructions."
+        },
+        "meta": {
+          "additionalProperties": {},
+          "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "object"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the next button."
+        },
+        "nextButtonText": {
+          "description": "The text that is displayed on the next button.",
+          "type": "string"
+        },
+        "parameters": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
+              "type": "object"
+            }
+          ],
+          "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
+        },
+        "path": {
+          "description": "The path to the markdown file. This should be a relative path from the public folder.",
+          "type": "string"
+        },
+        "response": {
+          "description": "The responses to the component",
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "style": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The style of the image. This is an object with css properties as keys and css values as values.",
+          "type": "object"
+        },
+        "type": {
+          "enum": [
+            "markdown",
+            "react-component",
+            "image",
+            "website",
+            "questionnaire"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "baseComponent"
+      ],
+      "type": "object"
+    },
     "LikertResponse": {
       "additionalProperties": false,
       "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the preset. For example, preset: 5 will render 5 radio buttons, and preset: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.",
@@ -594,94 +682,6 @@
       "required": [
         "order",
         "components"
-      ],
-      "type": "object"
-    },
-    "PartialComponent": {
-      "additionalProperties": false,
-      "description": "It's possible to defined PartialComponents in the baseComponents of a StudyConfig. A PartialComponent is a regular component that is missing some portion of its properties. These can be use by inherited components in the components section of the StudyConfig allowing for reuse of PartialComponents.",
-      "properties": {
-        "baseComponent": {
-          "type": "string"
-        },
-        "correctAnswer": {
-          "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
-          "items": {
-            "$ref": "#/definitions/Answer"
-          },
-          "type": "array"
-        },
-        "description": {
-          "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
-          "type": "string"
-        },
-        "instruction": {
-          "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
-          "type": "string"
-        },
-        "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "The location of the instructions."
-        },
-        "meta": {
-          "additionalProperties": {},
-          "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
-          "type": "object"
-        },
-        "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "The location of the next button."
-        },
-        "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
-          "type": "string"
-        },
-        "parameters": {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
-              "type": "object"
-            }
-          ],
-          "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
-        },
-        "path": {
-          "description": "The path to the markdown file. This should be a relative path from the public folder.",
-          "type": "string"
-        },
-        "response": {
-          "description": "The responses to the component",
-          "items": {
-            "$ref": "#/definitions/Response"
-          },
-          "type": "array"
-        },
-        "style": {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "description": "The style of the image. This is an object with css properties as keys and css values as values.",
-          "type": "object"
-        },
-        "type": {
-          "enum": [
-            "markdown",
-            "react-component",
-            "image",
-            "website",
-            "questionnaire"
-          ],
-          "type": "string"
-        }
-      },
-      "required": [
-        "baseComponent"
       ],
       "type": "object"
     },
@@ -1038,7 +1038,85 @@
                 "$ref": "#/definitions/IndividualComponent"
               },
               {
-                "$ref": "#/definitions/PartialComponent"
+                "additionalProperties": false,
+                "properties": {
+                  "correctAnswer": {
+                    "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
+                    "items": {
+                      "$ref": "#/definitions/Answer"
+                    },
+                    "type": "array"
+                  },
+                  "description": {
+                    "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
+                    "type": "string"
+                  },
+                  "instructionLocation": {
+                    "$ref": "#/definitions/ResponseBlockLocation",
+                    "description": "The location of the instructions."
+                  },
+                  "meta": {
+                    "additionalProperties": {},
+                    "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
+                    "type": "object"
+                  },
+                  "nextButtonLocation": {
+                    "$ref": "#/definitions/ResponseBlockLocation",
+                    "description": "The location of the next button."
+                  },
+                  "nextButtonText": {
+                    "description": "The text that is displayed on the next button.",
+                    "type": "string"
+                  },
+                  "parameters": {
+                    "anyOf": [
+                      {
+                        "additionalProperties": {},
+                        "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
+                        "type": "object"
+                      },
+                      {
+                        "additionalProperties": {},
+                        "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
+                        "type": "object"
+                      }
+                    ],
+                    "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
+                  },
+                  "path": {
+                    "description": "The path to the markdown file. This should be a relative path from the public folder.",
+                    "type": "string"
+                  },
+                  "response": {
+                    "description": "The responses to the component",
+                    "items": {
+                      "$ref": "#/definitions/Response"
+                    },
+                    "type": "array"
+                  },
+                  "style": {
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "The style of the image. This is an object with css properties as keys and css values as values.",
+                    "type": "object"
+                  },
+                  "type": {
+                    "enum": [
+                      "markdown",
+                      "react-component",
+                      "image",
+                      "website",
+                      "questionnaire"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "type": "object"
               }
             ]
           },
@@ -1047,7 +1125,14 @@
         },
         "components": {
           "additionalProperties": {
-            "$ref": "#/definitions/IndividualComponent"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/IndividualComponent"
+              },
+              {
+                "$ref": "#/definitions/InheritedComponent"
+              }
+            ]
           },
           "description": "The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents.",
           "type": "object"
@@ -1152,7 +1237,7 @@
           "type": "string"
         },
         "windowEventDebounceTime": {
-          "description": "Debounce time in milliseconds for automatically tracked window events. E.g 100 here means 1000ms / 100ms = 10 times a second, 200 here means 1000ms / 200ms = 5 times per second",
+          "description": "Debounce time in milliseconds for automatically tracked window events. Defaults to 100. E.g 100 here means 1000ms / 100ms = 10 times a second, 200 here means 1000ms / 200ms = 5 times per second",
           "type": "number"
         },
         "withProgressBar": {
