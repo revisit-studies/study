@@ -5,7 +5,7 @@ import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import ResponseBlock from '../response/ResponseBlock';
 import { useCurrentStep } from '../../routes';
 import { IndividualComponent } from '../../parser/types';
-import { isPartialComponent } from '../../parser/parser';
+import { isInheritedComponent } from '../../parser/parser';
 import merge from 'lodash.merge';
 
 export default function AppNavBar() {
@@ -18,7 +18,7 @@ export default function AppNavBar() {
   const stepConfig = studyConfig.components[currentStep];
 
   const currentConfig = stepConfig
-    ? isPartialComponent(stepConfig) && studyConfig.baseComponents
+    ? isInheritedComponent(stepConfig) && studyConfig.baseComponents
       ? (merge(
           {},
           studyConfig.baseComponents?.[stepConfig.baseComponent],

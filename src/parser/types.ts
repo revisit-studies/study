@@ -3,12 +3,17 @@
  * This list is displayed on the landing page when running the app.
 */ 
 export interface GlobalConfig {
+  /** A required json schema property. This should point to the github link for the version of the schema you would like. See examples for more information */
   $schema: string;
+  /** A required property that specifies the options for the configList property.   */
   configs: {
+    /** The key is used to identify the study config file. This key is used in the configList property. */
     [key: string]: {
+      /** The path to the study config file. This should be a relative path from the public folder. */
       path: string;
     };
   };
+  /** A required property that is used to generate the list of available studies in the UI. This list is displayed on the landing page when running the app. */
   configsList: string[];
 }
 
@@ -18,11 +23,17 @@ export interface GlobalConfig {
  * This data is also included in the data file that is downloaded at the end of the study, to help identify the study and version.
 */
 export interface StudyMetadata {
+  /** The title of your study, shown on the landing page. */
   title: string;
+  /** The version of your study, shown on the landing page and attached to participant data. This might be useful for seeing which version of the study a participant saw. */
   version: string;
+  /** The authors of your study. */
   authors: string[];
+  /** The date of your study, may be useful for the researcher. */
   date: string;
+  /** The description of your study, shown on the landing page. */
   description: string;
+  /** The organizations that are associated with your study. */
   organizations: string[];
 }
 
@@ -32,14 +43,23 @@ export interface StudyMetadata {
  * The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses.
  */
 export interface UIConfig {
+  /** The email address that used during the study if a participant clicks contact. */
   contactEmail: string;
+  /** The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. */
   helpTextPath?: string;
+  /** The path to the logo image. This is displayed on the landing page and the header. */
   logoPath: string;
+  /** Controls whether the progress bar is rendered in the study. */
   withProgressBar: boolean;
+  /** Controls whether the study data is automatically downloaded at the end of the study. */
   autoDownloadStudy?: boolean;
+  /** The time in milliseconds to wait before automatically downloading the study data. */
   autoDownloadTime?: number;
+  /** The message to display when the study ends. */
   studyEndMsg?: string;
+  /** Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. */
   sidebar: boolean;
+  /** Debounce time in milliseconds for automatically tracked window events. Defaults to 100. E.g 100 here means 1000ms / 100ms = 10 times a second, 200 here means 1000ms / 200ms = 5 times per second  */
   windowEventDebounceTime?: number;
 }
 
@@ -49,7 +69,9 @@ export interface UIConfig {
  * The Option interface is used in the Response interface.
  */
 export interface Option {
+  /** The label displayed to participants. */
   label: string;
+  /** The value stored in the participant's data. */
   value: string | number;
 }
 
@@ -59,16 +81,24 @@ export interface Option {
  * Therefore, all responses must include these properties.
  */
 export interface BaseResponse {
-  // Required fields for all responses
+  /** The id of the response. This is used to identify the response in the data file. */
   id: string;
+  /** The prompt that is displayed to the participant. */
   prompt: string;
+  /** Controls whether the response is required to be answered. */
   required: boolean;
+  /** Controls the response location. These might be the same for all responses, or differ across responses. */
   location: ResponseBlockLocation;
+  /** The correct answer to the response. This is used in the data download and can be shown in the admin panel. */
   correctAnswer?: unknown;
+  /** You can provide a required value, which makes it so a participant has to answer with that value. */
   requiredValue?: unknown;
+  /** You can provide a required label, which makes it so a participant has to answer with a response that matches label. */
   requiredLabel?: string;
+  /** Use to capture querystring parameters such as PROLIFIC_ID. See the examples for how this is used. */
   paramCapture?: string;
-  hidden?:boolean;
+  /** Controls whether the response is hidden. */
+  hidden?: boolean;
 }
 
 /**
@@ -77,8 +107,11 @@ export interface BaseResponse {
  */
 export interface NumericalResponse extends BaseResponse {
   type: 'numerical';
+  /** The placeholder text that is displayed in the input. */
   placeholder?: string;
+  /** The minimum value that is accepted in the input. */
   min?: number;
+  /** The maximum value that is accepted in the input. */
   max?: number;
 }
 
@@ -88,6 +121,7 @@ export interface NumericalResponse extends BaseResponse {
  */
 export interface ShortTextResponse extends BaseResponse {
   type: 'shortText';
+  /** The placeholder text that is displayed in the input. */
   placeholder?: string;
 }
 
@@ -97,6 +131,7 @@ export interface ShortTextResponse extends BaseResponse {
  */
 export interface LongTextResponse extends BaseResponse {
   type: 'longText';
+  /** The placeholder text that is displayed in the input. */
   placeholder?: string;
 }
 
@@ -108,9 +143,13 @@ export interface LongTextResponse extends BaseResponse {
  */
 export interface LikertResponse extends BaseResponse {
   type: 'likert';
+  /** The number of options to render. */
   preset: number;
+  /** The description of the likert scale. */
   desc?: string;
+  /** The left label of the likert scale. E.g Strongly Disagree */
   leftLabel?: string;
+  /** The right label of the likert scale. E.g Strongly Agree */
   rightLabel?: string;
 }
 
@@ -120,7 +159,9 @@ export interface LikertResponse extends BaseResponse {
  */
 export interface DropdownResponse extends BaseResponse {
   type: 'dropdown';
+  /** The placeholder text that is displayed in the input. */
   placeholder?: string;
+  /** The options that are displayed in the dropdown. */
   options: Option[];
 }
 
@@ -130,6 +171,7 @@ export interface DropdownResponse extends BaseResponse {
  */
 export interface SliderResponse extends BaseResponse {
   type: 'slider';
+  /** This define the steps in the slider and the extent of the slider. */
   options: Option[];
 }
 
@@ -150,6 +192,7 @@ export interface RadioResponse extends BaseResponse {
  */
 export interface CheckboxResponse extends BaseResponse {
   type: 'checkbox';
+  /** The options that are displayed as checkboxes. */
   options: Option[];
 }
 
@@ -167,13 +210,15 @@ export type Response = NumericalResponse | ShortTextResponse | LongTextResponse 
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks.
  */
 export interface Answer {
+  /** The id of the answer. This is used to identify the answer in the data file. */
   id: string;
+  /** The correct answer to the question. */
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   answer: any;
+  /** The acceptable low value for the answer. This is used to define a range of acceptable answers. */
   acceptableLow?: number;
+  /** The acceptable high value for the answer. This is used to define a range of acceptable answers. */
   acceptableHigh?: number;
-  answerCallback?: string;
-  answerRegex?: string;
 }
 
 /**
@@ -198,17 +243,24 @@ export type ResponseBlockLocation = (typeof responseBlockLocations)[number];
  */
 export interface BaseIndividualComponent {
   // Required fields for all components
+  /** The responses to the component */
   response: Response[];
 
   // Optional fields
+  /** The text that is displayed on the next button. */
   nextButtonText?: string;
+  /** The location of the next button. */
   nextButtonLocation?: ResponseBlockLocation;
+  /** The location of the instructions. */
   instructionLocation?: ResponseBlockLocation;
+  /** The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess. */
   correctAnswer?: Answer[];
+  /** The meta data for the component. This is used to identify and provide additional information for the component in the admin panel. */
   meta?: Record<string, unknown>;
+  /** The description of the component. This is used to identify and provide additional information for the component in the admin panel. */
   description?: string;
+  /** The instruction of the component. This is used to identify and provide additional information for the component in the admin panel. */
   instruction?: string;
-  title?: string;
 }
 
 /**
@@ -216,6 +268,7 @@ export interface BaseIndividualComponent {
  */
 export interface MarkdownComponent extends BaseIndividualComponent {
   type: 'markdown';
+  /** The path to the markdown file. This should be a relative path from the public folder. */
   path: string;
 }
 
@@ -224,7 +277,9 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  */
 export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
+  /** The path to the react component. This should be a relative path from the src/public folder. */
   path: string;
+  /** The parameters that are passed to the react component. These can be used within your react component to render different things. */
   parameters?: Record<string, unknown>;
 }
 
@@ -233,7 +288,9 @@ export interface ReactComponent extends BaseIndividualComponent {
  */
 export interface ImageComponent extends BaseIndividualComponent {
   type: 'image';
+  /** The path to the image. This should be a relative path from the public folder. */
   path: string;
+  /** The style of the image. This is an object with css properties as keys and css values as values. */
   style?: Record<string, string>;
 }
 
@@ -242,8 +299,9 @@ export interface ImageComponent extends BaseIndividualComponent {
  */
 export interface WebsiteComponent extends BaseIndividualComponent {
   type: 'website';
+  /** The path to the website. This should be a relative path from the public folder or could be an external website. */
   path: string;
-  style?: Record<string, string>;
+  /** The parameters that are passed to the website (iframe). These can be used within your website to render different things. */
   parameters?: Record<string, unknown>;
 }
 
@@ -256,29 +314,35 @@ export interface QuestionnaireComponent extends BaseIndividualComponent {
 
 export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent;
 
+/** The OrderObject interface is used to define the properties of an order object. This is used to define the order of components in a study. It supports random assignment of trials using a pure random assignment and a latin square. */
 export interface OrderObject {
+  /** The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed. */
   order: 'random' | 'latinSquare' | 'fixed'
+  /** The components that are included in the order. */
   components: (string | OrderObject)[]
+  /** The number of samples to use for the random assignments. This means you can randomize across 3 components while only showing a participant 2 at a time. */
   numSamples?: number
 }
 
-export type PartialComponent = (Partial<IndividualComponent> & { baseComponent: string })
-export type InheritedComponent  = IndividualComponent | PartialComponent
+/** An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component). */
+export type InheritedComponent = (Partial<IndividualComponent> & { baseComponent: string })
 
 /**
  * The StudyConfig interface is used to define the properties of a study configuration. These are the hjson files that live in the public folder. In our repo, one example of this would be public/cleveland/config-cleveland.hjson. 
  */
 export interface StudyConfig {
+  /** A required json schema property. This should point to the github link for the version of the schema you would like. See examples for more information */
   $schema: string;
+  /** The metadata for the study. This is used to identify the study and version in the data file. */
   studyMetadata: StudyMetadata;
+  /** The UI configuration for the study. This is used to configure the UI of the app. */
   uiConfig: UIConfig;
-  baseComponents?: Record<string, IndividualComponent>;
-  components: Record<string, InheritedComponent>
+  /** The components that are used in the study (baseComponents allow PartialComponents which allows for inheriting from them in components). */
+  baseComponents?: Record<string, IndividualComponent | Partial<IndividualComponent>>;
+  /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
+  components: Record<string, IndividualComponent | InheritedComponent>
+  /** The order of the components in the study. This might include some randomness. */
   sequence: OrderObject;
-}
-
-export interface OrderConfig {
-  sequence: string[];
 }
 
 /**

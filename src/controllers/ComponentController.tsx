@@ -8,7 +8,7 @@ import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useCurrentStep } from '../routes';
 import { useStoredAnswer } from '../store/hooks/useStoredAnswer';
 import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
-import { isPartialComponent } from '../parser/parser';
+import { isInheritedComponent } from '../parser/parser';
 import merge from 'lodash.merge';
 import { IndividualComponent } from '../parser/types';
 import { disableBrowserBack } from '../utils/disableBrowserBack';
@@ -25,7 +25,7 @@ export default function ComponentController() {
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
 
-  const currentConfig = isPartialComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
+  const currentConfig = isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
 
   const instruction = (currentConfig.instruction || '');
   const instructionLocation = currentConfig.instructionLocation;
