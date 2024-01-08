@@ -974,6 +974,9 @@
         "studyEndMsg": {
           "type": "string"
         },
+        "windowEventDebounceTime": {
+          "type": "number"
+        },
         "withProgressBar": {
           "type": "boolean"
         }

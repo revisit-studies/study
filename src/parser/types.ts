@@ -40,6 +40,7 @@ export interface UIConfig {
   autoDownloadTime?: number;
   studyEndMsg?: string;
   sidebar: boolean;
+  windowEventDebounceTime?: number;
 }
 
 /**

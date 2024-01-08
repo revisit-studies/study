@@ -83,21 +83,16 @@ export async function studyStoreCreator(
         state,
         {
           payload,
-        }: PayloadAction<{
-          currentStep: string;
-          answer: Record<string, Record<string, unknown>>;
-          startTime: number;
-          endTime: number;
-          provenanceGraph?: TrrackedProvenance;
-        }>
+        }: PayloadAction<{ currentStep: string } & StoredAnswer>
       ) {
-        const { currentStep, answer, startTime, endTime, provenanceGraph } = payload;
+        const { currentStep, answer, startTime, endTime, provenanceGraph, windowEvents } = payload;
 
         state.answers[currentStep] = {
           answer: answer,
           startTime: startTime,
           endTime: endTime,
           provenanceGraph,
+          windowEvents,
         };
       },
     },

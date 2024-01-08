@@ -12,6 +12,7 @@ import { deepCopy } from '../../utils/deepCopy';
 import { ValidationStatus } from '../types';
 import { useStorageEngine } from '../storageEngineHooks';
 import { useStoredAnswer } from './useStoredAnswer';
+import { useWindowEvents } from '../../components/StepRenderer';
 
 export function useNextStep() {
   const currentStep = useCurrentStep();
@@ -48,6 +49,7 @@ export function useNextStep() {
     return Date.now();
   }, []);
 
+  const windowEvents = useWindowEvents();
   const goToNextStep = useCallback(() => {
     // Get answer from across the 3 response blocks and the provenance graph
     const trialValidationCopy = deepCopy(trialValidation[currentStep]);
@@ -60,6 +62,9 @@ export function useNextStep() {
     const provenanceGraph = trialValidationCopy.provenanceGraph;
     const endTime = Date.now();
 
+    // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
+    const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ?  windowEvents.current.splice(0, windowEvents.current.length) : [];
+
     if (Object.keys(storedAnswer || {}).length === 0) {
       storeDispatch(
         saveTrialAnswer({
@@ -68,16 +73,21 @@ export function useNextStep() {
           startTime,
           endTime,
           provenanceGraph,
+          windowEvents: currentWindowEvents,
         })
       );
       // Update database
       if (storageEngine) {
-        storageEngine.saveAnswer(currentStep, {
-          answer,
-          startTime,
-          endTime,
-          provenanceGraph,
-        });
+        storageEngine.saveAnswer(
+          currentStep, 
+          {
+            answer,
+            startTime,
+            endTime,
+            provenanceGraph,
+            windowEvents: currentWindowEvents,
+          },
+        );
       }
       storeDispatch(setIframeAnswers([]));
     }
@@ -94,6 +104,7 @@ export function useNextStep() {
     currentStep,
     saveTrialAnswer,
     computedTo,
+    windowEvents,
   ]);
 
   return {

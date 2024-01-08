@@ -23,6 +23,7 @@ export interface StoredAnswer {
   startTime: number;
   endTime: number;
   provenanceGraph?: TrrackedProvenance,
+  windowEvents: EventType[];
 }
 
 export interface StimulusParams<T> {
@@ -43,3 +44,16 @@ export interface StoreState {
   trialValidation: TrialValidation;
   iframeAnswers: string[];
 }
+
+// timestamp, event type, event data
+type FocusEvent = [number, 'focus', string];
+type InputEvent = [number, 'input', string];
+type KeypressEvent = [number, 'keypress', string];
+type MouseDownEvent = [number, 'mousedown', number[]];
+type MouseUpEvent = [number, 'mouseup', number[]];
+type MouseMoveEvent = [number, 'mousemove', number[]];
+type ResizeEvent = [number, 'resize', number[]];
+type ScrollEvent = [number, 'scroll', number[]];
+type VisibilityEvent = [number, 'visibility', string];
+
+export type EventType = MouseMoveEvent | MouseDownEvent | MouseUpEvent | KeypressEvent | ScrollEvent | FocusEvent | InputEvent | ResizeEvent | VisibilityEvent;
