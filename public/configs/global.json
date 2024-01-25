@@ -1,0 +1,51 @@
+{
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/GlobalConfigSchema.json",
+    "configsList": [
+        "html-demo",
+        "image-demo",
+        "html-input",
+        "survey-demo",
+        "cleveland",
+        "click-accuracy-test",
+        "VLAT-full-randomized",
+        "VLAT-mini-randomized",
+        "MVNV",
+        "brush-interactions",
+        "fairness-jnd"
+    ],
+    "configs": {
+        "fairness-jnd": {
+            "path": "fairness-jnd/config-fairness-jnd.json"
+        },
+        "html-demo": {
+            "path": "html-demo/config-html-demo.hjson"
+        },
+        "image-demo": {
+            "path": "image-demo/config-image-demo.hjson"
+        },
+        "html-input": {
+            "path": "html-input/config-html-input.hjson"
+        },
+        "cleveland": {
+            "path": "cleveland/config-cleveland.hjson"
+        },
+        "MVNV": {
+            "path": "mvnv/config-html-MVNV.hjson"
+        },
+        "VLAT-full-randomized": {
+            "path": "VLAT-full-randomized/config-VLAT-full-randomized.hjson"
+        },
+        "VLAT-mini-randomized": {
+            "path": "VLAT-mini-randomized/config-VLAT-mini-randomized.hjson"
+        },
+        "click-accuracy-test": {
+            "path": "click-accuracy-test/click-accuracy-test.hjson"
+        },
+        "survey-demo": {
+            "path": "survey-demo/config-survey-demo.hjson"
+        },
+        "brush-interactions": {
+            "path": "brush-interactions/config.hjson"
+        }
+    }
+}

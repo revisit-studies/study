@@ -42,7 +42,7 @@ export function parseGlobalConfig(fileData: string) {
     return data as GlobalConfig;
   } else {
     console.error('Global config parsing errors', [...(globalValidate.errors || []), ...extraValidation[1]]);
-    throw Error('There was an issue validating your file global.hjson');
+    throw Error('There was an issue validating your file global.json');
   }
 }
 
