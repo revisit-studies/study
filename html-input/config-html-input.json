@@ -1,0 +1,61 @@
+{
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+        "title": "Passing Data into reVISit from HTML",
+        "version": "pilot",
+        "authors": [
+            "The reVISit Team"
+        ],
+        "date": "2023-04-14",
+        "description": "A demo of how to pass data from HTML into reVISit.",
+        "organizations": [
+            "University of Utah",
+            "WPI",
+            "University of Toronto"
+        ]
+    },
+    "uiConfig": {
+        "contactEmail": "test@test.com",
+        "helpTextPath": "html-input/help.md",
+        "logoPath": "assets/revisitLogoSquare.svg",
+        "withProgressBar": true,
+        "autoDownloadStudy": false,
+        "autoDownloadTime": 5000,
+        "sidebar": false
+    },
+    "components": {
+        "introduction": {
+            "type": "markdown",
+            "path": "html-input/introduction.md",
+            "response": []
+        },
+        "barChart": {
+            "type": "website",
+            "response": [
+                {
+                    "id": "barChart",
+                    "prompt": "Your selected answer:",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "iframe"
+                }
+            ],
+            "path": "html-input/bar-chart-interaction.html",
+            "meta": {
+                "chart": "bar",
+                "AttrNo": 7,
+                "misleading": false
+            },
+            "description": "A trial for the user to click the largest bar",
+            "instruction": "Click on the largest bar",
+            "instructionLocation": "aboveStimulus"
+        }
+    },
+    "sequence": {
+        "order": "fixed",
+        "components": [
+            "introduction",
+            "barChart"
+        ]
+    }
+}

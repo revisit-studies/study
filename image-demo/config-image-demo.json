@@ -1,0 +1,143 @@
+{
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+        "title": "Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations",
+        "version": "pilot",
+        "authors": [
+            "The reVISit Team"
+        ],
+        "date": "2023-04-14",
+        "description": "A demo of image stimuli, based on the study design by Padilla et al., Frontiers in Psychology, 2021 (doi:10.3389/fpsyg.2020.579267). Data is collected via form fields.",
+        "organizations": [
+            "University of Utah",
+            "WPI",
+            "University of Toronto"
+        ]
+    },
+    "uiConfig": {
+        "contactEmail": "test@test.com",
+        "helpTextPath": "image-demo/help.md",
+        "logoPath": "assets/revisitLogoSquare.svg",
+        "withProgressBar": true,
+        "autoDownloadStudy": false,
+        "sidebar": true
+    },
+    "components": {
+        "introduction": {
+            "type": "markdown",
+            "path": "image-demo/introduction.md",
+            "response": []
+        },
+        "dotplot-low": {
+            "meta": {
+                "difficulty": 1,
+                "nr-dots": 20,
+                "temp": "low"
+            },
+            "description": "Low temperature variant",
+            "instruction": "Will you issue blankets to the alpacas?",
+            "type": "image",
+            "path": "image-demo/uncertainty-1.png",
+            "style": {
+                "width": "800px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+                {
+                    "id": "image-demo-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                    ]
+                }
+            ]
+        },
+        "dotplot-medium": {
+            "meta": {
+                "difficulty": 2,
+                "nr-dots": 20,
+                "temp": "mid"
+            },
+            "description": "Medium temperature variant",
+            "instruction": "Will you issue blankets to the alpacas?",
+            "type": "image",
+            "path": "image-demo/uncertainty-2.png",
+            "style": {
+                "width": "800px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+                {
+                    "id": "image-demo-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                    ]
+                }
+            ]
+        },
+        "dotplot-high": {
+            "meta": {
+                "difficulty": 1,
+                "nr-dots": 20,
+                "temp": "hi"
+            },
+            "description": "High temperature variant",
+            "instruction": "Will you issue blankets to the alpacas?",
+            "type": "image",
+            "path": "image-demo/uncertainty-3.png",
+            "style": {
+                "width": "800px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+                {
+                    "id": "image-demo-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    "sequence": {
+        "order": "fixed",
+        "components": [
+            "introduction",
+            "dotplot-low",
+            "dotplot-medium",
+            "dotplot-high"
+        ]
+    }
+}

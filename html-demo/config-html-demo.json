@@ -1,0 +1,62 @@
+{
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+        "title": "HTML as a Stimulus",
+        "version": "pilot",
+        "authors": [
+            "The reVISit Team"
+        ],
+        "date": "2023-04-14",
+        "description": "A simple demo of using stimuli in an HTML file that renders a D3 visualization. Data is collected via a numeric response field.",
+        "organizations": [
+            "University of Utah",
+            "WPI",
+            "University of Toronto"
+        ]
+    },
+    "uiConfig": {
+        "contactEmail": "test@test.com",
+        "helpTextPath": "html-demo/help.md",
+        "logoPath": "assets/revisitLogoSquare.svg",
+        "withProgressBar": true,
+        "autoDownloadStudy": false,
+        "sidebar": true,
+        "windowEventDebounceTime": 200
+    },
+    "components": {
+        "introduction": {
+            "type": "markdown",
+            "path": "html-demo/introduction.md",
+            "response": []
+        },
+        "barChart": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to count the number of bars that have a value greater than 1.",
+            "instruction": "How many bars have a value greater than 1?",
+            "path": "html-demo/bar-chart.html",
+            "response": [
+                {
+                    "id": "html-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-7",
+                    "min": 0,
+                    "max": 7
+                }
+            ]
+        }
+    },
+    "sequence": {
+        "order": "fixed",
+        "components": [
+            "introduction",
+            "barChart"
+        ]
+    }
+}
