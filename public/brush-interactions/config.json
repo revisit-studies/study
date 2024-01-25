@@ -21,7 +21,7 @@
         "withProgressBar": true,
         "autoDownloadStudy": false,
         "sidebar": true,
-        studyEndMsg: **Thank you for completing the study. You may click this link and return to Prolific**: [https://app.prolific.com/submissions/complete?cc=C1MXB7XQ](https://app.prolific.com/submissions/complete?cc=C1MXB7XQ)
+        "studyEndMsg": "**Thank you for completing the study. You may click this link and return to Prolific**: [https://app.prolific.com/submissions/complete?cc=C1MXB7XQ](https://app.prolific.com/submissions/complete?cc=C1MXB7XQ)"
     },
     "baseComponents": {
         "scatterPlot": {
@@ -30,22 +30,22 @@
             "path": "brush-interactions/BrushPlot.tsx",
             "nextButtonLocation": "sidebar",
             "instructionLocation": "sidebar",
-            response: []
+            "response": []
         }
     },
     "components": {
         "introduction": {
             "type": "markdown",
             "path": "brush-interactions/introduction.md",
-            response: [
+            "response": [
                 {
-                    id: prolificId
-                    prompt: Please enter your Prolific ID
-                    required: true
-                    location: belowStimulus
-                    type: shortText
-                    placeholder: Prolific ID
-                    paramCapture: PROLIFIC_PID
+                    "id": "prolificId",
+                    "prompt": "Please enter your Prolific ID",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "shortText",
+                    "placeholder": "Prolific ID",
+                    "paramCapture": "PROLIFIC_PID"
                 }
             ]
         },
@@ -95,13 +95,13 @@
                 "dataset": "cars",
                 "x": "Miles per Gallon",
                 "y": "Weight (lbs)",
-                "category":"Origin",
-                "ids":"id",
-                "brushType":"Rectangular Selection"
+                "category": "Origin",
+                "ids": "id",
+                "brushType": "Rectangular Selection"
             },
             "response": [
                 {
-                    correctAnswer: 17,
+                    "correctAnswer": 17,
                     "id": "response",
                     "prompt": "Answer:",
                     "required": true,
@@ -119,13 +119,13 @@
                 "dataset": "cars",
                 "x": "Miles per Gallon",
                 "y": "Weight (lbs)",
-                "category":"Origin",
-                "ids":"id",
-                "brushType":"Rectangular Selection"
+                "category": "Origin",
+                "ids": "id",
+                "brushType": "Rectangular Selection"
             },
             "response": [
                 {
-                    correctAnswer: 'Japan',
+                    "correctAnswer": "Japan",
                     "id": "max-response",
                     "prompt": "Most Cars:",
                     "required": true,
@@ -144,10 +144,10 @@
                             "label": "USA",
                             "value": "USA"
                         }
-                    ]    
+                    ]
                 },
                 {
-                    correctAnswer: 'Europe',
+                    "correctAnswer": "Europe",
                     "id": "min-response",
                     "prompt": "Least Cars:",
                     "required": true,
@@ -166,7 +166,7 @@
                             "label": "USA",
                             "value": "USA"
                         }
-                    ]             
+                    ]
                 }
             ]
         },
@@ -178,13 +178,13 @@
                 "dataset": "weather",
                 "x": "Date",
                 "y": "Maximum Temperature",
-                "category":"Weather",
-                "ids":"id",
-                "brushType":"Axis Selection"
+                "category": "Weather",
+                "ids": "id",
+                "brushType": "Axis Selection"
             },
             "response": [
                 {
-                    correctAnswer: 32,
+                    "correctAnswer": 32,
                     "id": "response",
                     "prompt": "Answer:",
                     "required": true,
@@ -194,22 +194,22 @@
                     "min": 0
                 }
             ]
-        },        
-        "axisBrush_q2": { 
+        },
+        "axisBrush_q2": {
             "baseComponent": "scatterPlot",
-            "instruction": "Consider only days between June and October with temperatures above 20 degrees. What are the most and least common weather types during those days?" ,
+            "instruction": "Consider only days between June and October with temperatures above 20 degrees. What are the most and least common weather types during those days?",
             "parameters": {
                 "dataType": "date",
                 "dataset": "weather",
                 "x": "Date",
                 "y": "Maximum Temperature",
-                "category":"Weather",
-                "ids":"id",
-                "brushType":"Axis Selection"
+                "category": "Weather",
+                "ids": "id",
+                "brushType": "Axis Selection"
             },
             "response": [
                 {
-                    correctAnswer: 'sun',
+                    "correctAnswer": "sun",
                     "id": "max-response",
                     "prompt": "Most common Weather:",
                     "required": true,
@@ -235,7 +235,7 @@
                     ]
                 },
                 {
-                    correctAnswer: 'drizzle',
+                    "correctAnswer": "drizzle",
                     "id": "min-response",
                     "prompt": "Least common Weather:",
                     "required": true,
@@ -269,13 +269,13 @@
                 "dataset": "penguin",
                 "x": "Body Mass (g)",
                 "y": "Flipper Length (mm)",
-                "category":"Species",
-                "ids":"id",
-                "brushType":"Slider Selection"
+                "category": "Species",
+                "ids": "id",
+                "brushType": "Slider Selection"
             },
             "response": [
                 {
-                    correctAnswer: 15,
+                    "correctAnswer": 15,
                     "id": "response",
                     "prompt": "Answer:",
                     "required": true,
@@ -285,21 +285,21 @@
                     "min": 0
                 }
             ]
-        },        
+        },
         "sliderBrush_q2": {
             "baseComponent": "scatterPlot",
-            "instruction": "Consider only penguins that weigh between 4k and 5k grams (g) and have flipper lengths between 200 and 215mm. What is the most and least common type of penguin in this subset?" ,
+            "instruction": "Consider only penguins that weigh between 4k and 5k grams (g) and have flipper lengths between 200 and 215mm. What is the most and least common type of penguin in this subset?",
             "parameters": {
                 "dataset": "penguin",
                 "x": "Body Mass (g)",
                 "y": "Flipper Length (mm)",
-                "category":"Species",
-                "ids":"id",
-                "brushType":"Slider Selection"
+                "category": "Species",
+                "ids": "id",
+                "brushType": "Slider Selection"
             },
             "response": [
                 {
-                    correctAnswer: 'Gentoo'
+                    "correctAnswer": "Gentoo",
                     "id": "max-response",
                     "prompt": "Most common Penguin:",
                     "required": true,
@@ -318,10 +318,10 @@
                             "label": "Gentoo",
                             "value": "Gentoo"
                         }
-                    ]  
+                    ]
                 },
                 {
-                    correctAnswer: 'Adelie',
+                    "correctAnswer": "Adelie",
                     "id": "min-response",
                     "prompt": "Least common Penguin:",
                     "required": true,
@@ -340,7 +340,7 @@
                             "label": "Gentoo",
                             "value": "Gentoo"
                         }
-                    ]  
+                    ]
                 }
             ]
         },
@@ -351,13 +351,13 @@
                 "dataset": "movies",
                 "x": "Production Budget",
                 "y": "Gross Income",
-                "category":"Genre",
-                "ids":"id",
-                "brushType":"Paintbrush Selection"
+                "category": "Genre",
+                "ids": "id",
+                "brushType": "Paintbrush Selection"
             },
             "response": [
                 {
-                    correctAnswer: 28,
+                    "correctAnswer": 28,
                     "id": "response",
                     "prompt": "Answer:",
                     "required": true,
@@ -366,22 +366,22 @@
                     "max": 100,
                     "min": 0
                 }
-            ],
-        },        
+            ]
+        },
         "paintBrush_q2": {
             "baseComponent": "scatterPlot",
-            "instruction": "Consider only movies that had a production budget greater than 100 million and made less than 150  Million in Gross income. Which genres had the most and the least movies in this group of movies? " ,
+            "instruction": "Consider only movies that had a production budget greater than 100 million and made less than 150  Million in Gross income. Which genres had the most and the least movies in this group of movies? ",
             "parameters": {
                 "dataset": "movies",
                 "x": "Production Budget",
                 "y": "Gross Income",
-                "category":"Genre",
-                "ids":"id",
-                "brushType":"Paintbrush Selection"
-            },   
+                "category": "Genre",
+                "ids": "id",
+                "brushType": "Paintbrush Selection"
+            },
             "response": [
                 {
-                    correctAnswer: Action,
+                    "correctAnswer": "Action",
                     "id": "max-response",
                     "prompt": "Most common Genre:",
                     "required": true,
@@ -407,7 +407,7 @@
                     ]
                 },
                 {
-                    correctAnswer: "Comedy",
+                    "correctAnswer": "Comedy",
                     "id": "min-response",
                     "prompt": "Least common Genre:",
                     "required": true,
@@ -447,7 +447,7 @@
                     "rightLabel": "Like",
                     "leftLabel": "Dislike"
                 },
-                                {
+                {
                     "id": "q2",
                     "prompt": "How useful did you find the axis-aligned selection? ",
                     "required": true,
@@ -457,7 +457,7 @@
                     "rightLabel": "Like",
                     "leftLabel": "Dislike"
                 },
-                                {
+                {
                     "id": "q3",
                     "prompt": "How useful did you find the paint-brush selection?",
                     "required": true,
@@ -467,7 +467,7 @@
                     "rightLabel": "Like",
                     "leftLabel": "Dislike"
                 },
-                                {
+                {
                     "id": "q4",
                     "prompt": "How useful did you find the slider selection?",
                     "required": true,
@@ -487,33 +487,33 @@
                 }
             ]
         },
-        survey: {
-            type: markdown
-            path: VLAT-mini-randomized/survey.md
-            response: [
+        "survey": {
+            "type": "markdown",
+            "path": "VLAT-mini-randomized/survey.md",
+            "response": [
                 {
-                    id: surveyExperience
-                    prompt: Did you experience any problems with our tool?
-                    required: true
-                    location: belowStimulus
-                    type: longText
-                    placeholder: Enter your answer here.
-                }
+                    "id": "surveyExperience",
+                    "prompt": "Did you experience any problems with our tool?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "longText",
+                    "placeholder": "Enter your answer here."
+                },
                 {
-                    id: surveyRenderIssues
-                    prompt: Did anything not render or display properly?
-                    required: true
-                    location: belowStimulus
-                    type: longText
-                    placeholder: Enter your answer here
-                }
+                    "id": "surveyRenderIssues",
+                    "prompt": "Did anything not render or display properly?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "longText",
+                    "placeholder": "Enter your answer here"
+                },
                 {
-                    id: surveyOtherIssues
-                    prompt: Any other issues or anything you would like to tell us?
-                    required: true
-                    location: belowStimulus
-                    type: longText
-                    placeholder: Enter your answer here
+                    "id": "surveyOtherIssues",
+                    "prompt": "Any other issues or anything you would like to tell us?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "longText",
+                    "placeholder": "Enter your answer here"
                 }
             ]
         }
@@ -526,16 +526,17 @@
             "tutorial",
             {
                 "order": "random",
-                "components": 
-                    ["paintBrush_q1",
+                "components": [
+                    "paintBrush_q1",
                     "paintBrush_q2",
                     "rectangleBrush_q1",
                     "rectangleBrush_q2",
                     "axisBrush_q1",
                     "axisBrush_q2",
                     "sliderBrush_q1",
-                    "sliderBrush_q2"]}
-            ,
+                    "sliderBrush_q2"
+                ]
+            },
             "post-study-survey",
             "survey"
         ]
