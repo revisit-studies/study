@@ -18,34 +18,34 @@
             "path": "fairness-jnd/config-fairness-jnd.json"
         },
         "html-demo": {
-            "path": "html-demo/config-html-demo.hjson"
+            "path": "html-demo/config-html-demo.json"
         },
         "image-demo": {
-            "path": "image-demo/config-image-demo.hjson"
+            "path": "image-demo/config-image-demo.json"
         },
         "html-input": {
-            "path": "html-input/config-html-input.hjson"
+            "path": "html-input/config-html-input.json"
         },
         "cleveland": {
-            "path": "cleveland/config-cleveland.hjson"
+            "path": "cleveland/config-cleveland.json"
         },
         "MVNV": {
-            "path": "mvnv/config-html-MVNV.hjson"
+            "path": "mvnv/config-html-MVNV.json"
         },
         "VLAT-full-randomized": {
-            "path": "VLAT-full-randomized/config-VLAT-full-randomized.hjson"
+            "path": "VLAT-full-randomized/config-VLAT-full-randomized.json"
         },
         "VLAT-mini-randomized": {
-            "path": "VLAT-mini-randomized/config-VLAT-mini-randomized.hjson"
+            "path": "VLAT-mini-randomized/config-VLAT-mini-randomized.json"
         },
         "click-accuracy-test": {
-            "path": "click-accuracy-test/click-accuracy-test.hjson"
+            "path": "click-accuracy-test/click-accuracy-test.json"
         },
         "survey-demo": {
-            "path": "survey-demo/config-survey-demo.hjson"
+            "path": "survey-demo/config-survey-demo.json"
         },
         "brush-interactions": {
-            "path": "brush-interactions/config.hjson"
+            "path": "brush-interactions/config.json"
         }
     }
 }
