@@ -24,13 +24,13 @@ export class LocalStorageEngine extends StorageEngine {
     await this.studyDatabase.setItem('config', config);
   }
 
-  async initializeParticipantSession(searchParams: URLSearchParams) {
+  async initializeParticipantSession(searchParams: URLSearchParams, urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
 
     // Ensure participantId
-    await this.getCurrentParticipantId();
+    await this.getCurrentParticipantId(urlParticipantId);
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
     }
@@ -54,13 +54,20 @@ export class LocalStorageEngine extends StorageEngine {
     return participantData;
   }
 
-  async getCurrentParticipantId() {
+  async getCurrentParticipantId(urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
 
+    // Check the database for a participantId
     const currentParticipantId = await this.studyDatabase.getItem('currentParticipant');
-    if (currentParticipantId) {
+
+    // Prioritize urlParticipantId, then currentParticipantId, then generate a new participantId
+    if (urlParticipantId) {
+      this.currentParticipantId = urlParticipantId;
+      await this.studyDatabase.setItem('currentParticipant', urlParticipantId);
+      return urlParticipantId;
+    } else if (currentParticipantId) {
       this.currentParticipantId = currentParticipantId as string;
       return currentParticipantId as string;
     } else {

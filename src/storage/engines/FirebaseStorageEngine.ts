@@ -76,7 +76,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
 
     // Ensure that we have a participantId
-    await this.getCurrentParticipantId();
+    await this.getCurrentParticipantId(urlParticipantId);
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
     }
@@ -118,11 +118,16 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   }
 
-  async getCurrentParticipantId() {
+  async getCurrentParticipantId(urlParticipantId?: string) {
     // Get currentParticipantId from localForage
     const currentParticipantId = await this.localForage.getItem('currentParticipantId');
 
-    if (currentParticipantId) {
+    // Prioritize urlParticipantId, then currentParticipantId, then generate a new participantId
+    if (urlParticipantId) {
+      this.currentParticipantId = urlParticipantId;
+      await this.localForage.setItem('currentParticipantId', urlParticipantId);
+      return urlParticipantId;
+    } else if (currentParticipantId) {
       this.currentParticipantId = currentParticipantId as string;
       return currentParticipantId as string;
     } else {

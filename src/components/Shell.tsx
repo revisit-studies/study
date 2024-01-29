@@ -71,7 +71,8 @@ export function Shell({ globalConfig }: {
       }
 
       // Get or generate participant session
-      const participantSession = await storageEngine.initializeParticipantSession(searchParams);
+      const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) : undefined;
+      const participantSession = await storageEngine.initializeParticipantSession(searchParams, urlParticipantId);
 
       // Initialize the redux stores
       const store = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, participantSession.answers);
