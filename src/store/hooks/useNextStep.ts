@@ -1,3 +1,5 @@
+import { useCallback, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   useStoreSelector,
   useStoreActions,
@@ -5,9 +7,7 @@ import {
   useAreResponsesValid,
 } from '../store';
 import { useCurrentStep, useStudyId } from '../../routes';
-import { useCallback, useMemo } from 'react';
 
-import { useNavigate } from 'react-router-dom';
 import { deepCopy } from '../../utils/deepCopy';
 import { ValidationStatus } from '../types';
 import { useStorageEngine } from '../storageEngineHooks';
@@ -18,7 +18,7 @@ export function useNextStep() {
   const currentStep = useCurrentStep();
 
   const { sequence, trialValidation } = useStoreSelector(
-    (state) => state
+    (state) => state,
   );
 
   const status = useStoredAnswer();
@@ -38,16 +38,14 @@ export function useNextStep() {
 
   const nextStep = useMemo(() => {
     const currentStepIndex = sequence.indexOf(currentStep);
-    const nextStep = sequence[currentStepIndex + 1];
+    const _nextStep = sequence[currentStepIndex + 1];
 
-    return nextStep || 'end';
+    return _nextStep || 'end';
   }, [currentStep, sequence]);
 
   const computedTo = `/${useStudyId()}/${nextStep}`;
 
-  const startTime = useMemo(() => {
-    return Date.now();
-  }, []);
+  const startTime = useMemo(() => Date.now(), []);
 
   const windowEvents = useWindowEvents();
   const goToNextStep = useCallback(() => {
@@ -59,11 +57,11 @@ export function useNextStep() {
       }
       return acc;
     }, {});
-    const provenanceGraph = trialValidationCopy.provenanceGraph;
+    const { provenanceGraph } = trialValidationCopy;
     const endTime = Date.now();
 
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
-    const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ?  windowEvents.current.splice(0, windowEvents.current.length) : [];
+    const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
 
     if (Object.keys(storedAnswer || {}).length === 0) {
       storeDispatch(
@@ -74,12 +72,12 @@ export function useNextStep() {
           endTime,
           provenanceGraph,
           windowEvents: currentWindowEvents,
-        })
+        }),
       );
       // Update database
       if (storageEngine) {
         storageEngine.saveAnswer(
-          currentStep, 
+          currentStep,
           {
             answer,
             startTime,

@@ -10,24 +10,24 @@ type inputProps = {
 export default function NumericInput({
   response,
   disabled,
-  answer
+  answer,
 }: inputProps) {
-  const { prompt, required, min, max, placeholder } = response;
+  const {
+    prompt, required, min, max, placeholder,
+  } = response;
 
   return (
-    <>
-      <NumberInput
-        disabled={disabled}
-        placeholder={placeholder}
-        label={prompt}
-        withAsterisk={required}
-        radius={'md'}
-        size={'md'}
-        min={min}
-        max={max}
-        {...answer}
-        error={generateErrorMessage(response, answer)}
-      />
-    </>
+    <NumberInput
+      disabled={disabled}
+      placeholder={placeholder}
+      label={prompt}
+      withAsterisk={required}
+      radius="md"
+      size="md"
+      min={min}
+      max={max}
+      {...answer}
+      error={generateErrorMessage(response, answer)}
+    />
   );
 }

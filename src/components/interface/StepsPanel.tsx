@@ -1,8 +1,8 @@
 import { Badge, Group, Stack } from '@mantine/core';
-import { useCurrentStep } from '../../routes';
 import { useNavigate, useParams } from 'react-router-dom';
-import { OrderObject } from '../../parser/types';
 import { IconArrowsShuffle } from '@tabler/icons-react';
+import { useCurrentStep } from '../../routes';
+import { OrderObject } from '../../parser/types';
 
 export function StepsPanel({ order }: { order: OrderObject }) {
   const { studyId = null } = useParams<{
@@ -30,26 +30,25 @@ export function StepsPanel({ order }: { order: OrderObject }) {
               </Badge>
             </Group>
           );
-        } else {
-          return (
-            <Stack spacing="xs" key={idx}>
-              <Group
-                spacing="xs"
-                style={{ width: '100%' }}
-                noWrap
-                align="center"
-                position="center"
-              >
-                {step.order === 'random' || step.order === 'latinSquare' ? (
-                  <IconArrowsShuffle textAnchor="middle" />
-                ) : null}
-                <Stack style={{ width: '100%' }}>
-                  <StepsPanel order={step}></StepsPanel>
-                </Stack>
-              </Group>
-            </Stack>
-          );
         }
+        return (
+          <Stack spacing="xs" key={idx}>
+            <Group
+              spacing="xs"
+              style={{ width: '100%' }}
+              noWrap
+              align="center"
+              position="center"
+            >
+              {step.order === 'random' || step.order === 'latinSquare' ? (
+                <IconArrowsShuffle textAnchor="middle" />
+              ) : null}
+              <Stack style={{ width: '100%' }}>
+                <StepsPanel order={step} />
+              </Stack>
+            </Group>
+          </Stack>
+        );
       })}
     </Stack>
   );

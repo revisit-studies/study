@@ -14,9 +14,9 @@ const chartSettings = {
 
 const createBubbleData = (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  { data: data }: { data: any[] },
+  { data }: { data: any[] },
   width = 100,
-  height = 100
+  height = 100,
 ) => {
   const dataArr = data.map((d) => +d.value);
   const jsonData = { children: dataArr.map((d) => ({ value: d })) };
@@ -30,16 +30,14 @@ const createBubbleData = (
   return bubble(bubbleNodes)
     .descendants()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .filter((d: any) => !d.children).map((d: any, idx: number) => ({bubble: d, data: data[idx]}));
+    .filter((d: any) => !d.children).map((d: any, idx: number) => ({ bubble: d, data: data[idx] }));
 };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const createMarkPositions = (bubbleData: any[], selected: number[]) => {
-  return bubbleData.filter((d, i) => selected.includes(i)).map(({bubble: d}) => ({x: d.x, y: d.y}));
-};
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const createMarkPositions = (bubbleData: any[], selected: number[]) => bubbleData.filter((d, i) => selected.includes(i)).map(({ bubble: d }) => ({ x: d.x, y: d.y }));
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const BubbleChart = ({ parameters }: { parameters: any }) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function BubbleChart({ parameters }: { parameters: any }) {
   const [ref, dms] = useChartDimensions(chartSettings);
   const bubbleData = createBubbleData(parameters, dms.width, dms.height);
   const markPositions = createMarkPositions(bubbleData, parameters.selectedIndices);
@@ -49,7 +47,7 @@ const BubbleChart = ({ parameters }: { parameters: any }) => {
       <svg width={dms.width} height={dms.height}>
         <g
           transform={`translate(${[dms.marginLeft / 2, dms.marginTop / 2].join(
-            ','
+            ',',
           )})`}
         >
           <Bubbles data={bubbleData} />
@@ -58,6 +56,6 @@ const BubbleChart = ({ parameters }: { parameters: any }) => {
       </svg>
     </div>
   );
-};
+}
 
 export default BubbleChart;

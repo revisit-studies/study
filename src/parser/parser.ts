@@ -3,7 +3,9 @@ import { parse as hjsonParse } from 'hjson';
 import Ajv from 'ajv';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
-import { GlobalConfig, IndividualComponent, InheritedComponent, StudyConfig } from './types';
+import {
+  GlobalConfig, IndividualComponent, InheritedComponent, StudyConfig,
+} from './types';
 
 const ajv1 = new Ajv();
 ajv1.addSchema(globalSchema);
@@ -20,9 +22,8 @@ function verifyGlobalConfig(data: GlobalConfig) {
     if (data.configs[configName] === undefined) {
       errors.push({ message: `Config ${configName} is not defined in configs object, but is present in configsList` });
       return false;
-    } else {
-      return true;
     }
+    return true;
   });
 
   return [configsListVerified, errors] as const;
@@ -34,24 +35,21 @@ export function isInheritedComponent(comp: IndividualComponent | InheritedCompon
 
 export function parseGlobalConfig(fileData: string) {
   const data = hjsonParse(fileData);
-  
+
   const validatedData = globalValidate(data) as boolean;
   const extraValidation = verifyGlobalConfig(data);
 
   if (validatedData && extraValidation[0]) {
     return data as GlobalConfig;
-  } else {
-    console.error('Global config parsing errors', [...(globalValidate.errors || []), ...extraValidation[1]]);
-    throw Error('There was an issue validating your file global.hjson');
   }
+  console.error('Global config parsing errors', [...(globalValidate.errors || []), ...extraValidation[1]]);
+  throw Error('There was an issue validating your file global.hjson');
 }
 
 // This function verifies the study config file satisfies conditions that are not covered by the schema
 function verifyStudyConfig(data: StudyConfig) {
   const errors: { message: string }[] = [];
-  const componentsVerified = Object.values(data.components).every((component) => {
-    return isInheritedComponent(component) ? !!data.baseComponents?.[component.baseComponent] : true;
-  });
+  const componentsVerified = Object.values(data.components).every((component) => (isInheritedComponent(component) ? !!data.baseComponents?.[component.baseComponent] : true));
 
   return [componentsVerified, errors] as const;
 }
@@ -63,8 +61,7 @@ export function parseStudyConfig(fileData: string, fileName: string) {
 
   if (validatedData && extraValidation[0]) {
     return data as StudyConfig;
-  } else {
-    console.error(`${fileName} parsing errors`, [...(studyValidate.errors || []), ...extraValidation[1]]);
-    throw Error(`There was an issue validating your file ${fileName}`);
   }
+  console.error(`${fileName} parsing errors`, [...(studyValidate.errors || []), ...extraValidation[1]]);
+  throw Error(`There was an issue validating your file ${fileName}`);
 }

@@ -1,7 +1,7 @@
 import * as d3 from 'd3';
 import { useMemo } from 'react';
 
-export const NumericAxisH = ({
+export function NumericAxisH({
   domain = [0, 100],
   range = [10, 100],
   withTick = true,
@@ -17,7 +17,7 @@ export const NumericAxisH = ({
   tickLen: number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tickFilter: (t: any) => any;
-}) => {
+}) {
   const ticks = useMemo(() => {
     const xScale = d3.scaleLinear().domain(domain).range(range);
     const width = range[1] - range[0];
@@ -27,7 +27,7 @@ export const NumericAxisH = ({
       xScale.ticks(numberOfTicksTarget).map((value) => ({
         value,
         xOffset: xScale(value),
-      }))
+      })),
     );
   }, [domain, range, tickFilter]);
   return (
@@ -48,8 +48,9 @@ export const NumericAxisH = ({
         stroke="currentColor"
       />
 
-      {withTick &&
-        ticks.map(({ value, xOffset }: { value: string; xOffset: number }) => (
+      {withTick
+        // eslint-disable-next-line react/no-unused-prop-types
+        && ticks.map(({ value, xOffset }: { value: string; xOffset: number }) => (
           <g key={value} transform={`translate(${xOffset}, 0)`}>
             <line y2={`${tickLen}`} stroke="currentColor" />
             <text
@@ -66,4 +67,4 @@ export const NumericAxisH = ({
         ))}
     </g>
   );
-};
+}

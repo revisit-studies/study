@@ -13,36 +13,34 @@ export default function RadioInput({
   disabled,
   answer,
 }: inputProps) {
-  const { prompt, required, options, leftLabel, rightLabel } = response;
+  const {
+    prompt, required, options, leftLabel, rightLabel,
+  } = response;
 
   return (
-    <>
-      <Radio.Group
-        name={`radioInput${response.id}`}
-        label={prompt}
-        withAsterisk={required}
-        size={'md'}
-        key={response.id}
-        {...answer}
+    <Radio.Group
+      name={`radioInput${response.id}`}
+      label={prompt}
+      withAsterisk={required}
+      size="md"
+      key={response.id}
+      {...answer}
         // This overrides the answers error. Which..is bad?
-        error={generateErrorMessage(response, answer, options)}
-      >
-        {leftLabel ? <Text>{leftLabel}</Text> : null}
-        <Group mt="xs">
-          {options.map((radio) => {
-            return (
-              <Radio
-                disabled={disabled}
-                value={radio.value}
-                label={radio.label}
-                key={radio.label}
-              />
-            );
-          })}
-        </Group>
-        <Text>{rightLabel}</Text>
+      error={generateErrorMessage(response, answer, options)}
+    >
+      {leftLabel ? <Text>{leftLabel}</Text> : null}
+      <Group mt="xs">
+        {options.map((radio) => (
+          <Radio
+            disabled={disabled}
+            value={radio.value}
+            label={radio.label}
+            key={radio.label}
+          />
+        ))}
+      </Group>
+      <Text>{rightLabel}</Text>
 
-      </Radio.Group>
-    </>
+    </Radio.Group>
   );
 }

@@ -1,4 +1,6 @@
-import { Center, Group, Text, Tooltip } from '@mantine/core';
+import {
+  Center, Group, Text, Tooltip,
+} from '@mantine/core';
 import { useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
 
@@ -22,10 +24,7 @@ export function XAxisBar({
   label: string;
   ticks: { value: string; offset: number }[];
   compact?: boolean;
-  arrowAsc?: boolean;
-  arrowDesc?: boolean;
 }) {
-
   const tickWidth = useMemo(() => {
     if (ticks.length > 1) {
       return Math.abs(ticks[1].offset - ticks[0].offset);
@@ -65,7 +64,13 @@ export function XAxisBar({
           <foreignObject x={0 - tickWidth / 2} y={10} width={tickWidth} height={20}>
             <Center>
               <Tooltip withinPortal label={value}>
-                <Text px={2} size={10} style={{ textAlign: 'center', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                <Text
+                  px={2}
+                  size={10}
+                  style={{
+                    textAlign: 'center', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap',
+                  }}
+                >
                   {+value === 0 ? 0 : format(isDate ? new Date(value) : value)}
                 </Text>
               </Tooltip>

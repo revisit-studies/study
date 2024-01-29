@@ -26,10 +26,10 @@ export default function LikertInput({
   };
 
   return (
-      <RadioInput
-        disabled={disabled}
-        response={radioResponse}
-        answer={answer}
-      />
+    <RadioInput
+      disabled={disabled}
+      response={radioResponse}
+      answer={answer}
+    />
   );
 }

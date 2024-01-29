@@ -1,12 +1,14 @@
 import { AppShell } from '@mantine/core';
 import { Outlet } from 'react-router-dom';
+import {
+  createContext, useContext, useEffect, useRef,
+} from 'react';
+import debounce from 'lodash.debounce';
 import AppAside from './interface/AppAside';
 import AppHeader from './interface/AppHeader';
 import AppNavBar from './interface/AppNavBar';
 import HelpModal from './interface/HelpModal';
 import { AlertModal } from './interface/AlertModal';
-import { createContext, useContext, useEffect, useRef } from 'react';
-import debounce from 'lodash.debounce';
 import { EventType } from '../store/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 
@@ -33,17 +35,17 @@ export function StepRenderer() {
     const focusListener = debounce((e: FocusEvent) => {
       windowEvents.current.push([Date.now(), 'focus', e.target instanceof HTMLElement ? e.target.tagName : '']);
     }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
-  
+
     // Inputs
     const inputListener = debounce((e: InputEvent) => {
       windowEvents.current.push([Date.now(), 'input', e.data ?? '']);
     }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
-  
+
     // Keyboard
     const keypressListener = debounce((e: KeyboardEvent) => {
       windowEvents.current.push([Date.now(), 'keypress', e.key]);
     }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
-  
+
     // Mouse/Pointer/Touch
     const mouseDownListener = debounce((e: MouseEvent) => {
       windowEvents.current.push([Date.now(), 'mousedown', [e.clientX, e.clientY]]);
@@ -52,7 +54,7 @@ export function StepRenderer() {
     const mouseUpListener = debounce((e: MouseEvent) => {
       windowEvents.current.push([Date.now(), 'mouseup', [e.clientX, e.clientY]]);
     }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
-  
+
     // Window resizing
     const resizeListener = debounce(() => {
       windowEvents.current.push([Date.now(), 'resize', [window.innerWidth, window.innerHeight]]);
@@ -82,7 +84,7 @@ export function StepRenderer() {
     window.addEventListener('mousemove', mouseMoveListener);
     window.addEventListener('scroll', scrollListener);
     document.addEventListener('visibilitychange', visibilityListener);
-  
+
     return () => {
       window.removeEventListener('focus', focusListener, true);
       window.removeEventListener('input', inputListener as () => void);

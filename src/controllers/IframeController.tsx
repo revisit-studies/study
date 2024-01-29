@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef } from 'react';
+import {
+  useCallback, useEffect, useMemo, useRef,
+} from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { PREFIX as BASE_PREFIX } from '../components/GlobalConfigParser';
@@ -6,14 +8,13 @@ import { useCurrentStep } from '../routes';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { WebsiteComponent } from '../parser/types';
 
-
 const PREFIX = '@REVISIT_COMMS';
 
 const defaultStyle = {
   minHeight: '500px',
   width: '100%',
   border: 0,
-  marginTop: '-50px'
+  marginTop: '-50px',
 };
 
 export default function IframeController({ currentConfig }: { currentConfig: WebsiteComponent; }) {
@@ -25,7 +26,7 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
 
   const iframeId = useMemo(
     () => (crypto.randomUUID ? crypto.randomUUID() : `testID-${Date.now()}`),
-    []
+    [],
   );
 
   // navigation
@@ -41,15 +42,15 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
           iframeId,
           message,
         },
-        '*'
+        '*',
       );
     },
-    [ref, iframeId]
+    [ref, iframeId],
   );
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {
-      const data = e.data;
+      const { data } = e;
       if (typeof data === 'object' && iframeId === data.iframeId) {
         switch (data.type) {
           case `${PREFIX}/WINDOW_READY`:
@@ -64,6 +65,8 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
             break;
           case `${PREFIX}/ANSWERS`:
             storeDispatch(setIframeAnswers(data.message.answer));
+            break;
+          default:
             break;
         }
       }
@@ -83,12 +86,12 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
   ]);
 
   return (
-    <div >
+    <div>
       <iframe
         ref={ref}
         src={`${BASE_PREFIX}${currentConfig.path}?trialid=${currentStep}&id=${iframeId}`}
         style={defaultStyle}
-      ></iframe>
+      />
     </div>
   );
 }

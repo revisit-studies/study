@@ -1,6 +1,6 @@
 import { Button } from '@mantine/core';
-import { useNextStep } from '../store/hooks/useNextStep';
 import { useCallback } from 'react';
+import { useNextStep } from '../store/hooks/useNextStep';
 
 type Props = {
   label?: string;

@@ -9,13 +9,13 @@ import {
 import { useInputState } from '@mantine/hooks';
 import { IconTable } from '@tabler/icons-react';
 import { useCallback, useMemo } from 'react';
+import merge from 'lodash.merge';
 import { StorageEngine } from '../storage/engines/StorageEngine';
 import { download } from './DownloadPanel';
 import { ParticipantData } from '../storage/types';
 import { useStorageEngine } from '../store/storageEngineHooks';
 import { Prettify, StudyConfig } from '../parser/types';
 import { isInheritedComponent } from '../parser/parser';
-import merge from 'lodash.merge';
 import { StoredAnswer } from '../store/types';
 
 export const OPTIONAL_COMMON_PROPS = [
@@ -44,38 +44,6 @@ export type Property = OptionalProperty | RequiredProperty | MetaProperty;
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TidyRow = Prettify<Record<RequiredProperty, any> & Partial<Record<OptionalProperty | MetaProperty, any>>>;
 
-export async function downloadTidy(
-  properties: Property[] = [...REQUIRED_PROPS, ...OPTIONAL_COMMON_PROPS],
-  filename: string,
-  storageEngine: StorageEngine,
-  studyConfig: StudyConfig,
-) {
-  const allParticipantData = await storageEngine.getAllParticipantsData();
-
-  const rows = allParticipantData
-    .map((participantSession) => processToRow(participantSession, studyConfig, properties))
-    .flat();
-
-  const escapeDoubleQuotes = (s: string) => s.replace(/"/g, '""');
-
-  const csvRows = rows.map((row) =>
-    properties
-      .map((header) => {
-        if (row === null) {
-          return '';
-        } else if (typeof row[header] === 'string') {
-          return `"${escapeDoubleQuotes(row[header])}"`;
-        } else {
-          return JSON.stringify(row[header]);
-        }
-      })
-      .join(',')
-  );
-  const csv = [properties.join(','), ...csvRows].join('\n');
-
-  download(csv, filename);
-}
-
 function processToRow(session: ParticipantData, studyConfig: StudyConfig, properties: Property[]): TidyRow[] {
   return Object.entries(studyConfig.components).map(([trialId, trialConfig]) => {
     // Get the whole component, including the base component if there is inheritance
@@ -83,7 +51,9 @@ function processToRow(session: ParticipantData, studyConfig: StudyConfig, proper
 
     // Get the answer for this trial or an empty answer if it doesn't exist
     const trialAns = session.answers[trialId];
-    const trialAnswer: StoredAnswer = trialAns !== undefined ? trialAns : { answer: {}, startTime: -1, endTime: -1, windowEvents: [] };
+    const trialAnswer: StoredAnswer = trialAns !== undefined ? trialAns : {
+      answer: {}, startTime: -1, endTime: -1, windowEvents: [],
+    };
 
     const duration = trialAnswer.endTime - trialAnswer.startTime;
 
@@ -120,7 +90,6 @@ function processToRow(session: ParticipantData, studyConfig: StudyConfig, proper
   }).flat();
 }
 
-
 type Props = {
   opened: boolean;
   close: () => void;
@@ -128,19 +97,47 @@ type Props = {
   studyConfig: StudyConfig;
 };
 
-export function DownloadTidy({ opened, close, filename, studyConfig }: Props) {
+export async function downloadTidy(
+  filename: string,
+  storageEngine: StorageEngine,
+  studyConfig: StudyConfig,
+  properties: Property[] = [...REQUIRED_PROPS, ...OPTIONAL_COMMON_PROPS],
+) {
+  const allParticipantData = await storageEngine.getAllParticipantsData();
+
+  const rows = allParticipantData
+    .map((participantSession) => processToRow(participantSession, studyConfig, properties))
+    .flat();
+
+  const escapeDoubleQuotes = (s: string) => s.replace(/"/g, '""');
+
+  const csvRows = rows.map((row) => properties
+    .map((header) => {
+      if (row === null) {
+        return '';
+      } if (typeof row[header] === 'string') {
+        return `"${escapeDoubleQuotes(row[header])}"`;
+      }
+      return JSON.stringify(row[header]);
+    })
+    .join(','));
+  const csv = [properties.join(','), ...csvRows].join('\n');
+
+  download(csv, filename);
+}
+
+export function DownloadTidy({
+  opened, close, filename, studyConfig,
+}: Props) {
   const [selectedProperties, setSelectedProperties] = useInputState<
     Array<Property>
   >([...REQUIRED_PROPS, ...OPTIONAL_COMMON_PROPS]);
 
   const setSelected = useCallback((values: Property[]) => {
-    if (REQUIRED_PROPS.every((rp) => values.includes(rp)))
-      setSelectedProperties(values);
+    if (REQUIRED_PROPS.every((rp) => values.includes(rp))) setSelectedProperties(values);
   }, [setSelectedProperties]);
 
-  const combinedProperties = useMemo(() => {
-    return [...REQUIRED_PROPS, ...OPTIONAL_COMMON_PROPS];
-  }, []);
+  const combinedProperties = useMemo(() => [...REQUIRED_PROPS, ...OPTIONAL_COMMON_PROPS], []);
 
   const { storageEngine } = useStorageEngine();
 
@@ -164,11 +161,11 @@ export function DownloadTidy({ opened, close, filename, studyConfig }: Props) {
           data={combinedProperties}
           value={selectedProperties}
           onChange={setSelected}
-          label={
+          label={(
             <Text fw="bold" size="lg">
               Select properties to include in tidy csv:
             </Text>
-          }
+          )}
           placeholder="Select atleast one property"
         />
       </Box>
@@ -189,7 +186,7 @@ export function DownloadTidy({ opened, close, filename, studyConfig }: Props) {
       >
         <Button
           leftIcon={<IconTable />}
-          onClick={() => downloadTidy(selectedProperties, filename, storageEngine, studyConfig)}
+          onClick={() => downloadTidy(filename, storageEngine, studyConfig, selectedProperties)}
         >
           Download
         </Button>

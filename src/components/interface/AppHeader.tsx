@@ -16,12 +16,11 @@ import {
   IconSchema,
 } from '@tabler/icons-react';
 import { useState } from 'react';
-import { PREFIX } from '.././GlobalConfigParser';
+import { useHref } from 'react-router-dom';
+import { PREFIX } from '../GlobalConfigParser';
 import { useCurrentStep, useStudyId } from '../../routes';
 import { useStoreDispatch, useStoreSelector, useStoreActions } from '../../store/store';
 import { useStorageEngine } from '../../store/storageEngineHooks';
-import { useHref } from 'react-router-dom';
-
 
 export default function AppHeader() {
   const { config: studyConfig, sequence: order } = useStoreSelector((state) => state);
@@ -31,10 +30,9 @@ export default function AppHeader() {
 
   const currentStep = useCurrentStep();
 
-  const progressBarCurrent =
-    studyConfig !== null
-      ? order.indexOf(currentStep)
-      : 0;
+  const progressBarCurrent = studyConfig !== null
+    ? order.indexOf(currentStep)
+    : 0;
   const progressBarMax = order.length - 1;
   const progressPercent = (progressBarCurrent / progressBarMax) * 100;
 
@@ -64,7 +62,7 @@ export default function AppHeader() {
         <Grid.Col span={4}>
           <Flex align="center">
             <Image maw={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" />
-            <Space w="md"></Space>
+            <Space w="md" />
             <Title order={4}>{studyConfig?.studyMetadata.title}</Title>
           </Flex>
         </Grid.Col>
@@ -86,7 +84,7 @@ export default function AppHeader() {
               </Button>
             )}
 
-            <Space w="md"></Space>
+            <Space w="md" />
 
             {(import.meta.env.DEV || admin === 't') && (
               <Menu

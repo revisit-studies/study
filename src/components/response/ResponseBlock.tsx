@@ -1,6 +1,6 @@
 import { Button, Group, Text } from '@mantine/core';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   IndividualComponent,
   ResponseBlockLocation,
@@ -12,7 +12,6 @@ import { deepCopy } from '../../utils/deepCopy';
 import { NextButton } from '../NextButton';
 import { useAnswerField } from './utils';
 import ResponseSwitcher from './ResponseSwitcher';
-import React from 'react';
 import { StoredAnswer } from '../../store/types';
 
 type Props = {
@@ -33,9 +32,7 @@ export default function ResponseBlock({
 
   const configInUse = config as IndividualComponent;
 
-  const responses = configInUse?.response?.filter((r) =>
-    r.location ? r.location === location : location === 'belowStimulus'
-  ) || [];
+  const responses = configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [];
 
   const storeDispatch = useStoreDispatch();
   const { updateResponseBlockValidation } = useStoreActions();
@@ -44,14 +41,13 @@ export default function ResponseBlock({
   const { iframeAnswers } = useStoreSelector((state) => state);
   const hasCorrectAnswer = ((configInUse?.correctAnswer?.length || 0) > 0);
 
-  const showNextBtn =
-    location === (configInUse?.nextButtonLocation || 'belowStimulus');
+  const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
 
   useEffect(() => {
     const iframeResponse = responses.find((r) => r.type === 'iframe');
     if (iframeResponse) {
       const answerId = iframeResponse.id;
-      answerValidator.setValues({...answerValidator.values, [answerId]: iframeAnswers});
+      answerValidator.setValues({ ...answerValidator.values, [answerId]: iframeAnswers });
     }
   }, [iframeAnswers]);
 
@@ -62,7 +58,7 @@ export default function ResponseBlock({
         currentStep,
         status: answerValidator.isValid(),
         values: deepCopy(answerValidator.values),
-      })
+      }),
     );
   }, [answerValidator.values, currentStep, location]);
 
@@ -75,7 +71,7 @@ export default function ResponseBlock({
           ) : (
             <>
               <ResponseSwitcher
-                storedAnswer={ storedAnswer ? storedAnswer[response.id] : undefined }
+                storedAnswer={storedAnswer ? storedAnswer[response.id] : undefined}
                 answer={{
                   ...answerValidator.getInputProps(response.id, {
                     type: response.type === 'checkbox' ? 'checkbox' : 'input',
@@ -84,7 +80,10 @@ export default function ResponseBlock({
                 response={response}
               />
               {hasCorrectAnswer && checkClicked && (
-                <Text>The correct answer is: {configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer}</Text>
+                <Text>
+                  The correct answer is:
+                  {configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer}
+                </Text>
               )}
             </>
           )}
