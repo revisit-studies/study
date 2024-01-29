@@ -328,7 +328,7 @@ export interface OrderObject {
 export type InheritedComponent = (Partial<IndividualComponent> & { baseComponent: string })
 
 /**
- * The StudyConfig interface is used to define the properties of a study configuration. These are the hjson files that live in the public folder. In our repo, one example of this would be public/cleveland/config-cleveland.hjson.
+ * The StudyConfig interface is used to define the properties of a study configuration. These are the hjson files that live in the public folder. In our repo, one example of this would be public/cleveland/config-cleveland.json.
  */
 export interface StudyConfig {
   /** A required json schema property. This should point to the github link for the version of the schema you would like. See examples for more information */

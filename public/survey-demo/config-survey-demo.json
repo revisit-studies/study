@@ -1,0 +1,148 @@
+{
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+        "title": "Question Types and Form Elements Demo",
+        "version": "pilot",
+        "authors": [
+            "The reVISit Team"
+        ],
+        "date": "2023-04-30",
+        "description": "A demo of supported survey question types and form elements.",
+        "organizations": [
+            "University of Utah",
+            "WPI",
+            "University of Toronto"
+        ]
+    },
+    "uiConfig": {
+        "contactEmail": "test@test.com",
+        "helpTextPath": "survey-demo/help.md",
+        "logoPath": "assets/revisitLogoSquare.svg",
+        "withProgressBar": true,
+        "autoDownloadStudy": false,
+        "sidebar": true
+    },
+    "components": {
+        "introduction": {
+            "type": "markdown",
+            "path": "survey-demo/introduction.md",
+            "response": []
+        },
+        "survey": {
+            "type": "questionnaire",
+            "response": [
+                {
+                    "id": "q1",
+                    "prompt": "Dropdown example",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "dropdown",
+                    "placeholder": "Enter your preference",
+                    "options": [
+                        {
+                            "label": "Bar",
+                            "value": "Bar"
+                        },
+                        {
+                            "label": "Bubble",
+                            "value": "Bubble"
+                        },
+                        {
+                            "label": "Pie",
+                            "value": "Pie"
+                        },
+                        {
+                            "label": "Stacked Bar",
+                            "value": "Stacked Bar"
+                        }
+                    ]
+                },
+                {
+                    "id": "q2",
+                    "prompt": "Numerical example",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "numerical",
+                    "placeholder": "Enter your age here, range from 0 - 100",
+                    "max": 100,
+                    "min": 0
+                },
+                {
+                    "id": "q3",
+                    "prompt": "Likert scale example",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "likert",
+                    "preset": 9,
+                    "rightLabel": "Like",
+                    "leftLabel": "Dislike"
+                },
+                {
+                    "id": "q4",
+                    "prompt": "Short text example",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "shortText",
+                    "placeholder": "Enter your answer here"
+                },
+                {
+                    "id": "q5",
+                    "prompt": "Long text example",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "longText",
+                    "placeholder": "Enter your long comments here"
+                },
+                {
+                    "id": "q7",
+                    "prompt": "Checkbox example (not required)",
+                    "required": false,
+                    "location": "aboveStimulus",
+                    "type": "checkbox",
+                    "options": [
+                        {
+                            "label": "Option 1",
+                            "value": "opt-1"
+                        },
+                        {
+                            "label": "Option 2",
+                            "value": "opt-2"
+                        },
+                        {
+                            "label": "Option 3",
+                            "value": "opt-3"
+                        }
+                    ]
+                },
+                {
+                    "id": "q6",
+                    "prompt": "Slider example",
+                    "location": "aboveStimulus",
+                    "required": true,
+                    "type": "slider",
+                    "options": [
+                        {
+                            "label": "Bad",
+                            "value": 0
+                        },
+                        {
+                            "label": "Mid",
+                            "value": 50
+                        },
+                        {
+                            "label": "Good",
+                            "value": 100
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    "sequence": {
+        "order": "fixed",
+        "components": [
+            "introduction",
+            "survey"
+        ]
+    }
+}
