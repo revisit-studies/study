@@ -70,7 +70,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return await setDoc(configDoc, config);
   }
 
-  async initializeParticipantSession(searchParams: URLSearchParams) {
+  async initializeParticipantSession(searchParams: Record<string, string>, urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -323,6 +323,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         participantId: newParticipantId,
         sequence: await this.getSequence(),
         answers: {},
+        searchParams: {},
       };
       await setDoc(newParticipant, newParticipantData);
       participant = newParticipantData;

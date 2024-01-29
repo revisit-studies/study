@@ -71,8 +71,9 @@ export function Shell({ globalConfig }: {
       }
 
       // Get or generate participant session
-      const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) : undefined;
-      const participantSession = await storageEngine.initializeParticipantSession(searchParams, urlParticipantId);
+      const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) || undefined : undefined;
+      const searchParamsObject = Object.fromEntries(searchParams.entries());
+      const participantSession = await storageEngine.initializeParticipantSession(searchParamsObject, urlParticipantId);
 
       // Initialize the redux stores
       const store = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, participantSession.answers);
@@ -82,7 +83,7 @@ export function Shell({ globalConfig }: {
       setRoutes(generateStudiesRoutes(studyId, activeConfig, participantSession.sequence));
     }
     initializeUserStoreRouting();
-  }, [storageEngine, activeConfig, studyId]);
+  }, [storageEngine, activeConfig, studyId, searchParams]);
 
   const routing = useRoutes(routes);
   

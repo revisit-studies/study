@@ -24,7 +24,7 @@ export class LocalStorageEngine extends StorageEngine {
     await this.studyDatabase.setItem('config', config);
   }
 
-  async initializeParticipantSession(searchParams: URLSearchParams, urlParticipantId?: string) {
+  async initializeParticipantSession(searchParams: Record<string, string>, urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
@@ -194,6 +194,7 @@ export class LocalStorageEngine extends StorageEngine {
         participantId: newParticipantId,
         sequence: await this.getSequence(),
         answers: {},
+        searchParams: {},
       };
       await this.studyDatabase.setItem(newParticipantId, newParticipant);
       participant = newParticipant;
