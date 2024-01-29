@@ -1237,7 +1237,7 @@
           "type": "string"
         },
         "urlParticipantIdParam": {
-          "description": "If the participant ID is passed in the URL, this is the name of the querystring parameter that is used to capture the participant ID (e.g. PROLIFIC_ID).",
+          "description": "If the participant ID is passed in the URL, this is the name of the querystring parameter that is used to capture the participant ID (e.g. PROLIFIC_ID). This will allow a user to continue a study on different devices and browsers.",
           "type": "string"
         },
         "windowEventDebounceTime": {
