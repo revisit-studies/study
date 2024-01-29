@@ -23,7 +23,7 @@ export abstract class StorageEngine {
 
   abstract initializeStudyDb(studyId: string, config: object): Promise<void>;
 
-  abstract initializeParticipantSession(): Promise<ParticipantData>;
+  abstract initializeParticipantSession(searchParams: URLSearchParams): Promise<ParticipantData>;
 
   abstract getCurrentParticipantId(): Promise<string>;
   abstract clearCurrentParticipantId(): Promise<void>;
