@@ -81,8 +81,7 @@ export default function ResponseBlock({
               />
               {hasCorrectAnswer && checkClicked && (
                 <Text>
-                  The correct answer is:
-                  {configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer}
+                  {`The correct answer is: ${configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer}`}
                 </Text>
               )}
             </>
