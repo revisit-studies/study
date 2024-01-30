@@ -1,5 +1,6 @@
 import { Navbar, Text } from '@mantine/core';
 import merge from 'lodash.merge';
+import { useMemo } from 'react';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
@@ -17,15 +18,20 @@ export default function AppNavBar() {
   const currentStep = useCurrentStep();
   const stepConfig = studyConfig.components[currentStep];
 
-  const currentConfig = stepConfig
-    ? isInheritedComponent(stepConfig) && studyConfig.baseComponents
-      ? (merge(
-        {},
-        studyConfig.baseComponents?.[stepConfig.baseComponent],
-        stepConfig,
-      ) as IndividualComponent)
-      : (stepConfig as IndividualComponent)
-    : null;
+  const currentConfig = useMemo(() => {
+    if (stepConfig) {
+      return isInheritedComponent(stepConfig) && studyConfig.baseComponents
+        ? (merge(
+          {},
+          studyConfig.baseComponents?.[stepConfig.baseComponent],
+          stepConfig,
+        ) as IndividualComponent)
+        : (stepConfig as IndividualComponent);
+    }
+
+    return null;
+  }, [stepConfig]);
+
   const status = useStoredAnswer();
   const instruction = currentConfig?.instruction || '';
 

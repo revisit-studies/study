@@ -18,6 +18,13 @@
     "sourceType": "module"
   },
   "plugins": ["@typescript-eslint", "react"],
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx", ".d.ts"]
+      }
+    }
+  },
   "ignorePatterns": ["/public/*"],
   "rules": {
     "class-methods-use-this": "off",
@@ -25,6 +32,7 @@
     "no-restricted-exports": "off",
     "no-restricted-syntax": "off",
     "no-underscore-dangle": "off",
+    "no-console": ["error", { "allow": ["warn", "error"] }],
     "@typescript-eslint/no-unused-expressions": [
       "error",
       {

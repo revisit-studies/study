@@ -37,11 +37,11 @@ function StackedBarChart({ parameters }: { parameters: any }) {
   const createSeries = (seriesData: any[]) => {
     const dataArr = seriesData.map((d) => +d.value);
     const sumOfData = dataArr.reduce((curSum, val) => Number(curSum) + Number(val));
-    const dividen = sumOfData / 100;
+    const dividend = sumOfData / 100;
     const obj1: { [key: string]: number } = {};
-    for (let i = 0; i < dataArr.length; i++) {
-      obj1[String.fromCharCode(i + 65)] = dataArr[i] / dividen;
-    }
+    dataArr.forEach((d, i) => {
+      obj1[String.fromCharCode(i + 65)] = d / dividend;
+    });
     const dataset = [obj1];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return d3.stack().keys(parameters.data.map((d: { name: any }) => d.name))(

@@ -13,22 +13,7 @@ import debounce from 'lodash.debounce';
 import { Scatter } from './Scatter';
 import { Bar } from './Bar';
 import { StimulusParams } from '../../store/types';
-
-export interface BrushState {
-    hasBrush: boolean;
-    x1: number;
-    x2: number;
-    y1: number;
-    y2: number;
-
-    ids: string[];
-  }
-
-export type SelectionType = 'drag' | 'handle' | 'clear' | null
-
-export type BrushNames = 'Rectangular Selection' | 'Axis Selection' | 'Slider Selection' | 'Paintbrush Selection'
-
-export interface BrushParams {brushType: BrushNames, dataset: string, x: string, y: string, category: string, ids: string, dataType?: 'date'}
+import { BrushParams, BrushState, SelectionType } from './types';
 
 export function BrushPlot({ parameters, setAnswer }: StimulusParams<BrushParams>) {
   const [filteredTable, setFilteredTable] = useState<ColumnTable | null>(null);
@@ -58,22 +43,22 @@ export function BrushPlot({ parameters, setAnswer }: StimulusParams<BrushParams>
     const reg = Registry.create();
 
     const brush = reg.register('brush', (state, currBrush: BrushState) => {
-      state = { all: { brush: currBrush } };
+      state.all = { brush: currBrush };
       return state;
     });
 
     const brushMove = reg.register('brushMove', (state, currBrush: BrushState) => {
-      state = { all: { brush: currBrush } };
+      state.all = { brush: currBrush };
       return state;
     });
 
     const brushResize = reg.register('brushResize', (state, currBrush: BrushState) => {
-      state = { all: { brush: currBrush } };
+      state.all = { brush: currBrush };
       return state;
     });
 
     const clearBrush = reg.register('brushClear', (state, currBrush: BrushState) => {
-      state = { all: { brush: currBrush } };
+      state.all = { brush: currBrush };
       return state;
     });
 
@@ -154,7 +139,15 @@ export function BrushPlot({ parameters, setAnswer }: StimulusParams<BrushParams>
   }, [brushState, fullTable, parameters, trrack, setAnswer, debouncedCallback, actions]);
 
   // Which table the bar chart uses, either the base or the filtered table if any selections
-  const barsTable = useMemo(() => (filteredTable ? filteredTable.groupby(parameters.category).count() : fullTable ? fullTable.groupby(parameters.category).count() : null), [filteredTable, fullTable, parameters.category]);
+  const barsTable = useMemo(() => {
+    if (filteredTable) {
+      return filteredTable?.groupby(parameters.category).count();
+    }
+    if (fullTable) {
+      return fullTable?.groupby(parameters.category).count();
+    }
+    return null;
+  }, [filteredTable, fullTable, parameters.category]);
 
   const filteredCallback = useCallback((c: ColumnTable | null) => {
     setFilteredTable(c);

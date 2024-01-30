@@ -17,10 +17,10 @@ import {
 } from '@tabler/icons-react';
 import { useState } from 'react';
 import { useHref } from 'react-router-dom';
-import { PREFIX } from '../GlobalConfigParser';
 import { useCurrentStep, useStudyId } from '../../routes';
 import { useStoreDispatch, useStoreSelector, useStoreActions } from '../../store/store';
 import { useStorageEngine } from '../../store/storageEngineHooks';
+import { PREFIX } from '../Prefix';
 
 export default function AppHeader() {
   const { config: studyConfig, sequence: order } = useStoreSelector((state) => state);

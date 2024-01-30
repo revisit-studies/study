@@ -2,20 +2,10 @@ import { Button, Stack, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconCodeDots, IconCodePlus, IconTable } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
-import { DownloadTidy } from './DownloadTidy';
+import { DownloadTidy, download } from './DownloadTidy';
 import { useStorageEngine } from '../store/storageEngineHooks';
 import { StudyConfig } from '../parser/types';
 import { ParticipantData } from '../storage/types';
-
-export function download(graph: string, filename: string) {
-  const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(graph)}`;
-  const downloadAnchorNode = document.createElement('a');
-  downloadAnchorNode.setAttribute('href', dataStr);
-  downloadAnchorNode.setAttribute('download', filename);
-  document.body.appendChild(downloadAnchorNode); // required for firefox
-  downloadAnchorNode.click();
-  downloadAnchorNode.remove();
-}
 
 export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
   const { storageEngine } = useStorageEngine();

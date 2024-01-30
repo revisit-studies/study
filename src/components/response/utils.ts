@@ -12,7 +12,8 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
     if (answer) {
       initObj = { ...initObj, [response.id]: answer };
     } else {
-      initObj = { ...initObj, [response.id]: response.type === 'iframe' ? [] : (response.paramCapture ? queryParameters.get(response.paramCapture) : '') };
+      const initField = response.paramCapture ? queryParameters.get(response.paramCapture) : '';
+      initObj = { ...initObj, [response.id]: response.type === 'iframe' ? [] : initField };
     }
   });
 
@@ -80,14 +81,7 @@ export function areAnswersEqual(
 
   const keys = Object.keys(ob1);
 
-  for (let i = 0; i < keys.length; ++i) {
-    const v1 = ob1[keys[i]];
-    const v2 = ob2[keys[i]];
-
-    if (JSON.stringify(v1) !== JSON.stringify(v2)) return false;
-  }
-
-  return true;
+  return keys.every((key) => JSON.stringify(ob1[key]) === JSON.stringify(ob2[key]));
 }
 
 export function generateErrorMessage(

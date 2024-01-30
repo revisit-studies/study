@@ -3,10 +3,10 @@ import {
 } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { PREFIX as BASE_PREFIX } from '../components/GlobalConfigParser';
 import { useCurrentStep } from '../routes';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { WebsiteComponent } from '../parser/types';
+import { PREFIX as BASE_PREFIX } from '../components/Prefix';
 
 const PREFIX = '@REVISIT_COMMS';
 

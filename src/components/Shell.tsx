@@ -19,13 +19,13 @@ import {
 } from '../store/store';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 
-import { PREFIX } from './GlobalConfigParser';
 import ComponentController from '../controllers/ComponentController';
 import { NavigateWithParams } from '../utils/NavigateWithParams';
 import { StepRenderer } from './StepRenderer';
 import { StudyEnd } from './StudyEnd';
 import { useStorageEngine } from '../store/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
+import { PREFIX } from './Prefix';
 
 async function fetchStudyConfig(configLocation: string, configKey: string) {
   const config = await (await fetch(`${PREFIX}${configLocation}`)).text();

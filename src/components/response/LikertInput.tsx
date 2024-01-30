@@ -15,7 +15,8 @@ export default function LikertInput({
   const { preset } = response;
 
   const options = [];
-  for (let i = 1; i <= +preset; i++) {
+
+  for (let i = 1; i <= +preset; i += 1) {
     options.push({ label: `${i}`, value: `${i}` });
   }
 

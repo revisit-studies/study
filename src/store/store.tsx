@@ -3,7 +3,7 @@ import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { ResponseBlockLocation, StudyConfig } from '../parser/types';
 import {
-  RootState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState,
+  StoredAnswer, TrialValidation, TrrackedProvenance, StoreState,
 } from './types';
 
 export async function studyStoreCreator(
@@ -128,7 +128,7 @@ export function useStoreActions() {
 type StoreDispatch = StudyStore['store']['dispatch'];
 
 export const useStoreDispatch: () => StoreDispatch = useDispatch;
-export const useStoreSelector: TypedUseSelectorHook<RootState> = useSelector;
+export const useStoreSelector: TypedUseSelectorHook<StoreState> = useSelector;
 
 export function useAreResponsesValid(id?: string) {
   return useStoreSelector((state) => {

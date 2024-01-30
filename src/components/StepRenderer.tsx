@@ -1,7 +1,7 @@
 import { AppShell } from '@mantine/core';
 import { Outlet } from 'react-router-dom';
 import {
-  createContext, useContext, useEffect, useRef,
+  useEffect, useRef,
 } from 'react';
 import debounce from 'lodash.debounce';
 import AppAside from './interface/AppAside';
@@ -11,17 +11,7 @@ import HelpModal from './interface/HelpModal';
 import { AlertModal } from './interface/AlertModal';
 import { EventType } from '../store/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
-
-// Create a context
-const WindowEventsContext = createContext<React.Ref<EventType[]>>(null);
-
-export function useWindowEvents(): React.Ref<EventType[]> {
-  const context = useContext(WindowEventsContext);
-  if (!context) {
-    throw new Error('useWindowEvents must be used within a WindowEventsProvider');
-  }
-  return context;
-}
+import { WindowEventsContext } from '../store/hooks/useWindowEvents';
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);

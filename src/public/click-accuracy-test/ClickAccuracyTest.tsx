@@ -6,7 +6,6 @@ import { Box, Slider } from '@mantine/core';
 import { initializeTrrack, Registry } from '@trrack/core';
 import { useChartDimensions } from '../cleveland/hooks/useChartDimensions';
 import { StimulusParams } from '../../store/types';
-import { useCurrentStep } from '../../routes';
 
 const chartSettings = {
   marginBottom: 40,
@@ -29,7 +28,6 @@ function ClickAccuracyTest({ parameters, setAnswer }: StimulusParams<any>) {
   const [ref, dms] = useChartDimensions(chartSettings);
   const [x, setX] = useState(100);
   const [y, setY] = useState(100);
-  const currentStep = useCurrentStep();
   const [speed, setSpeed] = useState(300);
   const { taskid } = parameters;
 
@@ -81,7 +79,7 @@ function ClickAccuracyTest({ parameters, setAnswer }: StimulusParams<any>) {
     const nxtX = Math.random() * 800;
     const nxtY = Math.random() * 600;
     const distance = Math.sqrt((nxtX - x) ** 2 + (nxtY - y) ** 2);
-    const time = distance / speed * 1000;
+    const time = (distance / speed) * 1000;
     const svgElement = d3.select(ref.current);
     svgElement.select('circle')
       .transition()

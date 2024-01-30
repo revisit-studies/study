@@ -7,7 +7,7 @@ import * as d3 from 'd3';
 import { Loader } from '@mantine/core';
 import { XAxisBar } from './XAxisBar';
 import { YAxisBar } from './YAxisBar';
-import { BrushParams } from './BrushPlot';
+import { BrushParams } from './types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 

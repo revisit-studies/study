@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import * as d3 from 'd3';
-
-import { BrushParams, BrushState } from './BrushPlot';
+import { BrushParams, BrushState } from './types';
 
 const BRUSH_SIZE = 15;
 

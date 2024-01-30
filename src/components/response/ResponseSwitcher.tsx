@@ -1,8 +1,7 @@
 import { Box } from '@mantine/core';
 import { useSearchParams } from 'react-router-dom';
 import { useMemo } from 'react';
-import { Nullable, Response } from '../../parser/types';
-import { TrialValidation } from '../../store/types';
+import { Response } from '../../parser/types';
 import CheckBoxInput from './CheckBoxInput';
 import DropdownInput from './DropdownInput';
 import IframeInput from './IframeInput';

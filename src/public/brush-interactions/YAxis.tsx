@@ -8,9 +8,10 @@ import * as d3 from 'd3';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function YAxis({
   yScale, xRange, horizontalPosition, label,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 }: {yScale: any, xRange: any, horizontalPosition: any, label: string}) {
   const ticks = useMemo(
-    () => yScale.ticks(5).map((value: any) => ({
+    () => yScale.ticks(5).map((value: unknown) => ({
       value,
       yOffset: yScale(value),
     })),

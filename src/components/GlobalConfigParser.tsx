@@ -4,10 +4,7 @@ import ConfigSwitcher from './ConfigSwitcher';
 import { Shell } from './Shell';
 import { parseGlobalConfig, parseStudyConfig } from '../parser/parser';
 import { GlobalConfig, Nullable, StudyConfig } from '../parser/types';
-
-export const PREFIX = import.meta.env.PROD
-  ? import.meta.env.VITE_BASE_PATH
-  : '/';
+import { PREFIX } from './Prefix';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}configs/global.json`);

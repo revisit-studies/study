@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-unresolved
 import latinSquare from '@quentinroy/latin-square';
 import { OrderObject, StudyConfig } from '../parser/types';
 import { deepCopy } from './deepCopy';
@@ -7,6 +8,7 @@ function _orderObjectToList(
   pathsFromFirebase: Record<string, string[][]>,
   path: string,
 ) : (string | OrderObject)[] | string {
+  // eslint-disable-next-line no-plusplus
   for (let i = 0; i < order.components.length; i++) {
     const curr = order.components[i];
     if (typeof curr !== 'string') {

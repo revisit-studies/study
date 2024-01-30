@@ -1,8 +1,5 @@
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import { StudyConfig } from '../parser/types';
-import { StudyStore } from './store';
-
-export type RootState = ReturnType<StudyStore['store']['getState']>;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TrrackedProvenance = ProvenanceGraph<any, any>;

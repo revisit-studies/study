@@ -11,7 +11,6 @@ import { IconTable } from '@tabler/icons-react';
 import { useCallback, useMemo } from 'react';
 import merge from 'lodash.merge';
 import { StorageEngine } from '../storage/engines/StorageEngine';
-import { download } from './DownloadPanel';
 import { ParticipantData } from '../storage/types';
 import { useStorageEngine } from '../store/storageEngineHooks';
 import { Prettify, StudyConfig } from '../parser/types';
@@ -43,6 +42,16 @@ export type Property = OptionalProperty | RequiredProperty | MetaProperty;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TidyRow = Prettify<Record<RequiredProperty, any> & Partial<Record<OptionalProperty | MetaProperty, any>>>;
+
+export function download(graph: string, filename: string) {
+  const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(graph)}`;
+  const downloadAnchorNode = document.createElement('a');
+  downloadAnchorNode.setAttribute('href', dataStr);
+  downloadAnchorNode.setAttribute('download', filename);
+  document.body.appendChild(downloadAnchorNode); // required for firefox
+  downloadAnchorNode.click();
+  downloadAnchorNode.remove();
+}
 
 function processToRow(session: ParticipantData, studyConfig: StudyConfig, properties: Property[]): TidyRow[] {
   return Object.entries(studyConfig.components).map(([trialId, trialConfig]) => {

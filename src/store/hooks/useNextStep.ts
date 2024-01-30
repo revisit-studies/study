@@ -12,7 +12,7 @@ import { deepCopy } from '../../utils/deepCopy';
 import { ValidationStatus } from '../types';
 import { useStorageEngine } from '../storageEngineHooks';
 import { useStoredAnswer } from './useStoredAnswer';
-import { useWindowEvents } from '../../components/StepRenderer';
+import { useWindowEvents } from './useWindowEvents';
 
 export function useNextStep() {
   const currentStep = useCurrentStep();

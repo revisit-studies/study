@@ -9,8 +9,8 @@ import {
 } from '@mantine/core';
 import { XAxisBar } from './XAxisBar';
 import { YAxis } from './YAxis';
-import { BrushNames, BrushParams, BrushState } from './BrushPlot';
 import { Paintbrush } from './Paintbrush';
+import { BrushNames, BrushParams, BrushState } from './types';
 
 const margin = {
   top: 15,
@@ -178,7 +178,7 @@ export function Scatter({
 
       const xVal = params.dataType === 'date' ? xScale(new Date(d[params.x])) : xScale(d[params.x]);
 
-      return <circle key={i} opacity={brushedSet ? brushedSet.has(d[params.ids]) ? 1 : 0.3 : 1} r={3} fill={brushedSet ? brushedSet.has(d[params.ids]) ? colorScale(d[params.category]) : 'lightgray' : colorScale(d[params.category])} cx={xVal} cy={yScale(d[params.y])} />;
+      return <circle key={i} opacity={brushedSet && !brushedSet.has(d[params.ids]) ? 0.3 : 1} r={3} fill={brushedSet && !brushedSet.has(d[params.ids]) ? 'lightgray' : colorScale(d[params.category])} cx={xVal} cy={yScale(d[params.y])} />;
     });
   }, [brushedSet, colorScale, data, params.category, params.ids, params.x, params.y, xScale, yScale]);
 
