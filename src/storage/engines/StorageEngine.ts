@@ -23,9 +23,9 @@ export abstract class StorageEngine {
 
   abstract initializeStudyDb(studyId: string, config: object): Promise<void>;
 
-  abstract initializeParticipantSession(): Promise<ParticipantData>;
+  abstract initializeParticipantSession(searchParams: Record<string, string>, urlParticipantId?: string): Promise<ParticipantData>;
 
-  abstract getCurrentParticipantId(): Promise<string>;
+  abstract getCurrentParticipantId(urlParticipantId?: string): Promise<string>;
   abstract clearCurrentParticipantId(): Promise<void>;
 
   abstract saveAnswer(currentStep: string, answer: StoredAnswer): Promise<void>;

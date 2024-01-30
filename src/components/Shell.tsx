@@ -3,7 +3,7 @@ import {
   useState,
 } from 'react';
 import { Provider } from 'react-redux';
-import { RouteObject, useParams, useRoutes } from 'react-router-dom';
+import { RouteObject, useParams, useRoutes, useSearchParams } from 'react-router-dom';
 import { parseStudyConfig } from '../parser/parser';
 import {
   GlobalConfig,
@@ -57,6 +57,7 @@ export function Shell({ globalConfig }: {
   const [routes, setRoutes] = useState<RouteObject[]>([]);
   const [store, setStore] = useState<Nullable<StudyStore>>(null);
   const { storageEngine } = useStorageEngine();
+  const [searchParams] = useSearchParams();
   useEffect(() => {
     async function initializeUserStoreRouting() {
       // Check that we have a storage engine and active config (studyId is set for config, but typescript complains)
@@ -69,9 +70,10 @@ export function Shell({ globalConfig }: {
         await storageEngine.setSequenceArray(await generateSequenceArray(activeConfig));
       }
 
-
-        // If we don't have a user's session, we need to generate one
-      const participantSession = await storageEngine.initializeParticipantSession();
+      // Get or generate participant session
+      const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) || undefined : undefined;
+      const searchParamsObject = Object.fromEntries(searchParams.entries());
+      const participantSession = await storageEngine.initializeParticipantSession(searchParamsObject, urlParticipantId);
 
       // Initialize the redux stores
       const store = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, participantSession.answers);
@@ -81,7 +83,7 @@ export function Shell({ globalConfig }: {
       setRoutes(generateStudiesRoutes(studyId, activeConfig, participantSession.sequence));
     }
     initializeUserStoreRouting();
-  }, [storageEngine, activeConfig, studyId]);
+  }, [storageEngine, activeConfig, studyId, searchParams]);
 
   const routing = useRoutes(routes);
   

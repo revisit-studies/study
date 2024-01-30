@@ -4,4 +4,5 @@ export interface ParticipantData {
   participantId: string;
   sequence: string[],
   answers: Record<string, StoredAnswer>,
+  searchParams: Record<string, string>,
 }
