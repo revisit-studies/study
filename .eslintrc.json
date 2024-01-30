@@ -22,18 +22,9 @@
   "rules": {
     "class-methods-use-this": "off",
     "linebreak-style": "off",
-    "no-console": "off",
-    "no-continue": "off",
-    "no-multi-assign": "warn",
-    "no-nested-ternary": "off",
-    "no-return-assign": "warn",
     "no-restricted-exports": "off",
     "no-restricted-syntax": "off",
-    "no-plusplus": "off",
-    "no-prototype-builtins": "warn",
-    "no-minusminus": "off",
     "no-underscore-dangle": "off",
-    "@typescript-eslint/no-explicit-any": "warn",
     "@typescript-eslint/no-unused-expressions": [
       "error",
       {
@@ -43,16 +34,13 @@
       }
     ],
     "react/no-array-index-key": "off",
-    "no-mixed-operators": "off",
     "jsx-a11y/click-events-have-key-events": "off",
     "no-return-await": "off",
     "@typescript-eslint/no-unused-vars": "warn",
     "max-classes-per-file": "off",
-    "no-param-reassign": ["warn", { "props": true, "ignorePropertyModificationsFor": ["state"] }], // Exclude state as required by redux-toolkit: https://redux-toolkit.js.org/usage/immer-reducers#linting-state-mutations
+    "no-param-reassign": ["error", { "props": false }],
     "cypress/unsafe-to-chain-command": "off",
     "import/no-extraneous-dependencies": "off",
-    "import/no-webpack-loader-syntax": "off", // Disable to allow webpack file-loaders syntax
-    "import/no-unresolved": "off", // Disable to allow webpack file-loaders syntax
     "import/prefer-default-export": "off",
     "import/order": "error",
     "prefer-destructuring": ["warn", { "object": true, "array": false }],
@@ -61,14 +49,11 @@
     "react/react-in-jsx-scope": 0,
     "max-len": 0,
     "react/jsx-filename-extension": 0,
-    "import/extensions": 0,
-    "import/no-cycle": 0,
+    "import/extensions": ["error", "never"],
     "@typescript-eslint/ban-ts-comment": "warn",
     "react/destructuring-assignment": "off",
-    "react/jsx-curly-brace-presence": "warn",
     "react/jsx-props-no-spreading": "off",
     "react/no-unused-class-component-methods": "warn",
-    "react/prop-types": "off",
     "react/require-default-props": "off",
     "react/static-property-placement": [
       "warn",
