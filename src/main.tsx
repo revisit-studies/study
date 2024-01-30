@@ -8,5 +8,5 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
     <StorageEngineProvider>
       <GlobalInitializer />
     </StorageEngineProvider>
-  </React.StrictMode>
+  </React.StrictMode>,
 );

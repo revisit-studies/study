@@ -7,13 +7,13 @@ import {
   Space,
   Text,
 } from '@mantine/core';
+import React, { ReactNode } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { IconArrowRight } from '@tabler/icons-react';
 import { DownloadPanel } from '../DownloadPanel';
 import { StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoreSelector } from '../../store/store';
-import React, { ReactNode } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { IconArrowRight } from '@tabler/icons-react';
 import { useCurrentStep } from '../../routes';
 
 export default function AppAside() {
@@ -51,11 +51,15 @@ export default function AppAside() {
                   <Flex style={{ justifyContent: 'space-between' }}>
                     <Text c="gray.9">
                       <Text span fw={700} inherit>
-                        Task {index + 1}:
-                      </Text>{' '}
+                        Task
+                        {' '}
+                        {index + 1}
+                        :
+                      </Text>
+                      {' '}
                       {task.id}
                     </Text>
-                    <Space></Space>
+                    <Space />
                     <ActionIcon
                       bg="white"
                       onClick={() => navigate(`/${studyId}/${task.id}`)}
@@ -68,21 +72,22 @@ export default function AppAside() {
                 <Paper radius={0} p="xl">
                   {task.description && (
                     <Text fw={900}>
-                      Description:{' '}
+                      Description:
+                      {' '}
                       <Text fw={400} component="span">
                         {task.description}
                       </Text>
                     </Text>
                   )}
                   {task.meta && <Text fw={900}>Task Meta:</Text>}
-                  {task.meta &&
-                    Object.keys(task.meta).map((key) => {
-                      return (
-                        <Text key={key}>
-                          {key}: {(task.meta as Record<string, ReactNode>)[key]}
-                        </Text>
-                      );
-                    })}
+                  {task.meta
+                    && Object.keys(task.meta).map((key) => (
+                      <Text key={key}>
+                        {key}
+                        :
+                        {(task.meta as Record<string, ReactNode>)[key]}
+                      </Text>
+                    ))}
                 </Paper>
               </Paper>
 

@@ -10,8 +10,8 @@ export function GlobalInitializer() {
     if (storageEngine !== undefined) return;
 
     async function fn() {
-      const storageEngine = await initializeStorageEngine();
-      setStorageEngine(storageEngine);
+      const _storageEngine = await initializeStorageEngine();
+      setStorageEngine(_storageEngine);
     }
     fn();
   }, [setStorageEngine, storageEngine]);

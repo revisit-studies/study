@@ -1,4 +1,4 @@
-export const StackedBars = ({
+export function StackedBars({
   data,
   barWidth,
   yScale,
@@ -8,7 +8,7 @@ export const StackedBars = ({
   barWidth: number;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   yScale: any;
-}) => {
+}) {
   return (
     <g>
       {data.map((d, i) => (
@@ -24,4 +24,4 @@ export const StackedBars = ({
       ))}
     </g>
   );
-};
+}

@@ -1,4 +1,6 @@
 import { Navbar, Text } from '@mantine/core';
+import merge from 'lodash.merge';
+import { useMemo } from 'react';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
@@ -6,7 +8,6 @@ import ResponseBlock from '../response/ResponseBlock';
 import { useCurrentStep } from '../../routes';
 import { IndividualComponent } from '../../parser/types';
 import { isInheritedComponent } from '../../parser/parser';
-import merge from 'lodash.merge';
 
 export default function AppNavBar() {
   const trialHasSideBar = useStudyConfig()?.uiConfig.sidebar;
@@ -17,21 +18,25 @@ export default function AppNavBar() {
   const currentStep = useCurrentStep();
   const stepConfig = studyConfig.components[currentStep];
 
-  const currentConfig = stepConfig
-    ? isInheritedComponent(stepConfig) && studyConfig.baseComponents
-      ? (merge(
+  const currentConfig = useMemo(() => {
+    if (stepConfig) {
+      return isInheritedComponent(stepConfig) && studyConfig.baseComponents
+        ? (merge(
           {},
           studyConfig.baseComponents?.[stepConfig.baseComponent],
-          stepConfig
+          stepConfig,
         ) as IndividualComponent)
-      : (stepConfig as IndividualComponent)
-    : null;
+        : (stepConfig as IndividualComponent);
+    }
+
+    return null;
+  }, [stepConfig]);
+
   const status = useStoredAnswer();
   const instruction = currentConfig?.instruction || '';
 
-  const instructionInSideBar =
-    currentConfig?.instructionLocation === 'sidebar' ||
-    currentConfig?.instructionLocation === undefined;
+  const instructionInSideBar = currentConfig?.instructionLocation === 'sidebar'
+    || currentConfig?.instructionLocation === undefined;
 
   return trialHasSideBar && currentConfig ? (
     <Navbar bg="gray.1" display="block" width={{ base: 300 }} style={{ zIndex: 0, overflowY: 'scroll' }}>
@@ -51,14 +56,12 @@ export default function AppNavBar() {
 
       {trialHasSideBarResponses && (
         <Navbar.Section p="xl">
-          {
-            <ResponseBlock
-              key={`${currentStep}-sidebar-response-block`}
-              status={status}
-              config={currentConfig}
-              location="sidebar"
-            />
-          }
+          <ResponseBlock
+            key={`${currentStep}-sidebar-response-block`}
+            status={status}
+            config={currentConfig}
+            location="sidebar"
+          />
         </Navbar.Section>
       )}
     </Navbar>

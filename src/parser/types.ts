@@ -1,7 +1,7 @@
 /**
  * The GlobalConfig is used to generate the list of available studies in the UI.
  * This list is displayed on the landing page when running the app.
-*/ 
+*/
 export interface GlobalConfig {
   /** A required json schema property. This should point to the github link for the version of the schema you would like. See examples for more information */
   $schema: string;
@@ -17,7 +17,7 @@ export interface GlobalConfig {
   configsList: string[];
 }
 
-/** 
+/**
  * The StudyMetadata is used to describe certain properties of a study.
  * Some of this data is displayed on the landing page when running the app, such as the title and description.
  * This data is also included in the data file that is downloaded at the end of the study, to help identify the study and version.
@@ -78,6 +78,19 @@ export interface Option {
   /** The value stored in the participant's data. */
   value: string | number;
 }
+
+/**
+ * @ignore
+ */
+export const responseBlockLocations = [
+  'sidebar',
+  'aboveStimulus',
+  'belowStimulus',
+] as const;
+/**
+ * @ignore
+ */
+export type ResponseBlockLocation = (typeof responseBlockLocations)[number];
 
 /**
  * The BaseResponse interface is used to define the required fields for all responses.
@@ -226,21 +239,8 @@ export interface Answer {
 }
 
 /**
- * @ignore
- */
-export const responseBlockLocations = [
-  'sidebar',
-  'aboveStimulus',
-  'belowStimulus',
-] as const;
-/**
- * @ignore
- */
-export type ResponseBlockLocation = (typeof responseBlockLocations)[number];
-
-/**
  * The BaseIndividualComponent interface is used to define the required fields for all components. The only exception is the ContainerComponent, which is used to group components together.
- * 
+ *
  * All components must include the response field, which is an array of Response interfaces.
  * There are additional optional fields that can be included in a component that help layout the task. These include the nextButtonText, nextButtonLocation, instructionLocation, correctAnswer.
  * There are other fields that can be included in a component that are used to identify the task in the admin panel. These include the meta, description, instruction, and title fields.
@@ -332,7 +332,7 @@ export interface OrderObject {
 export type InheritedComponent = (Partial<IndividualComponent> & { baseComponent: string })
 
 /**
- * The StudyConfig interface is used to define the properties of a study configuration. These are the hjson files that live in the public folder. In our repo, one example of this would be public/cleveland/config-cleveland.json. 
+ * The StudyConfig interface is used to define the properties of a study configuration. These are the hjson files that live in the public folder. In our repo, one example of this would be public/cleveland/config-cleveland.json.
  */
 export interface StudyConfig {
   /** A required json schema property. This should point to the github link for the version of the schema you would like. See examples for more information */

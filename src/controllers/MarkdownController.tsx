@@ -1,7 +1,7 @@
-import { PREFIX } from '../components/GlobalConfigParser';
 import { useEffect, useState } from 'react';
 import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
 import { MarkdownComponent } from '../parser/types';
+import { PREFIX } from '../components/Prefix';
 
 export default function MarkdownController({ currentConfig }: { currentConfig: MarkdownComponent; }) {
   const [importedText, setImportedText] = useState<string | null>(null);
@@ -14,7 +14,7 @@ export default function MarkdownController({ currentConfig }: { currentConfig: M
 
   if (importedText === null) return null;
 
-  return <>
+  return (
     <ReactMarkdownWrapper text={importedText} />
-  </>;
+  );
 }

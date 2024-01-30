@@ -1,13 +1,12 @@
 import { Modal } from '@mantine/core';
+import { useEffect, useState } from 'react';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 import { useStoreDispatch, useStoreSelector, useStoreActions } from '../../store/store';
-import { useEffect, useState } from 'react';
-import { PREFIX } from '.././GlobalConfigParser';
-
+import { PREFIX } from '../Prefix';
 
 export default function HelpModal() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { showHelpText, config} = useStoreSelector((state: any) => state);
+  const { showHelpText, config } = useStoreSelector((state: any) => state);
 
   const storeDispatch = useStoreDispatch();
   const { toggleShowHelpText } = useStoreActions();
@@ -23,7 +22,7 @@ export default function HelpModal() {
   }, [config]);
 
   return (
-    <Modal size={'70%'} opened={showHelpText} withCloseButton={false} onClose={() => storeDispatch(toggleShowHelpText())}>
+    <Modal size="70%" opened={showHelpText} withCloseButton={false} onClose={() => storeDispatch(toggleShowHelpText())}>
       <ReactMarkdownWrapper text={helpText} />
     </Modal>
   );

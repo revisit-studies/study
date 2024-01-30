@@ -15,15 +15,13 @@ const StorageEngineContext = createContext<StorageContextValue>({
 
 export const useStorageEngine = () => useContext(StorageEngineContext);
 
-export const StorageEngineProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+export function StorageEngineProvider({ children }: { children: ReactNode}) {
   const [storageEngine, setStorageEngine] = React.useState<StorageEngine | undefined>(undefined);
 
-  const value = React.useMemo(() => {
-    return {
-      storageEngine,
-      setStorageEngine,
-    };
-  }, [storageEngine]);
+  const value = React.useMemo(() => ({
+    storageEngine,
+    setStorageEngine,
+  }), [storageEngine]);
 
   return <StorageEngineContext.Provider value={value}>{children}</StorageEngineContext.Provider>;
-};
+}

@@ -1,8 +1,8 @@
-export const DotMarks = ({
+export function DotMarks({
   positions,
 }: {
   positions: { x: number; y: number }[];
-}) => {
+}) {
   return (
     <g>
       {positions.map((d, i) => (
@@ -11,10 +11,10 @@ export const DotMarks = ({
           cx={d.x}
           cy={d.y}
           r={2}
-          fill={'black'}
+          fill="black"
           stroke="currentColor"
         />
       ))}
     </g>
   );
-};
+}

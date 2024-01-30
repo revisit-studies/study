@@ -1,4 +1,6 @@
-import { Slider, SliderProps, Stack, Text } from '@mantine/core';
+import {
+  Slider, SliderProps, Stack, Text,
+} from '@mantine/core';
 import { SliderResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 
@@ -15,11 +17,10 @@ export default function SliderInput({
 }: inputProps) {
   const { prompt, options } = response;
 
-
   const errorMessage = generateErrorMessage(response, answer);
   return (
     <Stack spacing={2}>
-      <Text fz={'md'} fw={500}>
+      <Text fz="md" fw={500}>
         {prompt}
       </Text>
       <Slider
@@ -65,7 +66,7 @@ export default function SliderInput({
           },
         })}
       />
-      {errorMessage ? <Text size={12} c={'#fa5252'}>{errorMessage}</Text> : null}
+      {errorMessage ? <Text size={12} c="#fa5252">{errorMessage}</Text> : null}
     </Stack>
   );
 }

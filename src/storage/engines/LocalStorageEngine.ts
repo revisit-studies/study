@@ -1,7 +1,7 @@
-import { StorageEngine } from './StorageEngine';
 import localforage from 'localforage';
-import { ParticipantData } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { StorageEngine } from './StorageEngine';
+import { ParticipantData } from '../types';
 import { StoredAnswer } from '../../store/types';
 
 export class LocalStorageEngine extends StorageEngine {
@@ -13,7 +13,6 @@ export class LocalStorageEngine extends StorageEngine {
 
   async connect() {
     this.connected = true;
-    return;
   }
 
   async initializeStudyDb(studyId: string, config: object) {
@@ -34,7 +33,7 @@ export class LocalStorageEngine extends StorageEngine {
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
     }
-    
+
     // Check if the participant has already been initialized
     const participant: ParticipantData | null = await this.studyDatabase.getItem(this.currentParticipantId);
     if (participant) {
@@ -67,15 +66,14 @@ export class LocalStorageEngine extends StorageEngine {
       this.currentParticipantId = urlParticipantId;
       await this.studyDatabase.setItem('currentParticipant', urlParticipantId);
       return urlParticipantId;
-    } else if (currentParticipantId) {
+    } if (currentParticipantId) {
       this.currentParticipantId = currentParticipantId as string;
       return currentParticipantId as string;
-    } else {
-      const newParticipantId = uuidv4();
-      await this.studyDatabase.setItem('currentParticipant', newParticipantId);
-      this.currentParticipantId = newParticipantId;
-      return newParticipantId;
     }
+    const newParticipantId = uuidv4();
+    await this.studyDatabase.setItem('currentParticipant', newParticipantId);
+    this.currentParticipantId = newParticipantId;
+    return newParticipantId;
   }
 
   async clearCurrentParticipantId() {
@@ -133,7 +131,7 @@ export class LocalStorageEngine extends StorageEngine {
 
     // Update the latin square
     await this.studyDatabase.setItem('sequenceArray', sequenceArray);
-    
+
     return currentRow;
   }
 
@@ -225,7 +223,7 @@ export class LocalStorageEngine extends StorageEngine {
     return allAnswersPresent;
   }
 
-  private _verifyStudyDatabase(db: LocalForage | undefined): db is LocalForage  {
+  private _verifyStudyDatabase(db: LocalForage | undefined): db is LocalForage {
     return db !== undefined;
   }
 }
