@@ -61,6 +61,10 @@ export interface UIConfig {
   sidebar: boolean;
   /** Debounce time in milliseconds for automatically tracked window events. Defaults to 100. E.g 100 here means 1000ms / 100ms = 10 times a second, 200 here means 1000ms / 200ms = 5 times per second  */
   windowEventDebounceTime?: number;
+  /**
+   * If the participant ID is passed in the URL, this is the name of the querystring parameter that is used to capture the participant ID (e.g. PROLIFIC_ID). This will allow a user to continue a study on different devices and browsers.
+   */
+  urlParticipantIdParam?: string;
 }
 
 /**
@@ -108,7 +112,7 @@ export interface BaseResponse {
   requiredValue?: unknown;
   /** You can provide a required label, which makes it so a participant has to answer with a response that matches label. */
   requiredLabel?: string;
-  /** Use to capture querystring parameters such as PROLIFIC_ID. See the examples for how this is used. */
+  /** Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID. */
   paramCapture?: string;
   /** Controls whether the response is hidden. */
   hidden?: boolean;

@@ -78,13 +78,13 @@ export class FirebaseStorageEngine extends StorageEngine {
     return await setDoc(configDoc, config);
   }
 
-  async initializeParticipantSession() {
+  async initializeParticipantSession(searchParams: Record<string, string>, urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
 
     // Ensure that we have a participantId
-    await this.getCurrentParticipantId();
+    await this.getCurrentParticipantId(urlParticipantId);
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
     }
@@ -117,17 +117,23 @@ export class FirebaseStorageEngine extends StorageEngine {
       participantId: this.currentParticipantId,
       sequence: await this.getSequence(),
       answers: {},
+      searchParams,
     };
     await setDoc(participantDoc, participantData);
 
     return participantData;
   }
 
-  async getCurrentParticipantId() {
+  async getCurrentParticipantId(urlParticipantId?: string) {
     // Get currentParticipantId from localForage
     const currentParticipantId = await this.localForage.getItem('currentParticipantId');
 
-    if (currentParticipantId) {
+    // Prioritize urlParticipantId, then currentParticipantId, then generate a new participantId
+    if (urlParticipantId) {
+      this.currentParticipantId = urlParticipantId;
+      await this.localForage.setItem('currentParticipantId', urlParticipantId);
+      return urlParticipantId;
+    } if (currentParticipantId) {
       this.currentParticipantId = currentParticipantId as string;
       return currentParticipantId as string;
     }
@@ -321,6 +327,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         participantId: newParticipantId,
         sequence: await this.getSequence(),
         answers: {},
+        searchParams: {},
       };
       await setDoc(newParticipant, newParticipantData);
       participant = newParticipantData;
