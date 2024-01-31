@@ -14,7 +14,7 @@ import { ParticipantData } from '../types';
 import { EventType, StoredAnswer, TrrackedProvenance } from '../../store/types';
 
 export class FirebaseStorageEngine extends StorageEngine {
-  private RECAPTCHAV3TOKEN = import.meta.env.VITE_FIREBASE_CONFIG;
+  private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
 
   private firestore: Firestore;
 
