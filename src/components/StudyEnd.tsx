@@ -1,11 +1,12 @@
-import { Center, Flex, Loader, Space, Text } from '@mantine/core';
+import {
+  Center, Flex, Loader, Space, Text,
+} from '@mantine/core';
+import { useEffect, useState } from 'react';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import ReactMarkdownWrapper from './ReactMarkdownWrapper';
 import { disableBrowserBack } from '../utils/disableBrowserBack';
 import { useStorageEngine } from '../store/storageEngineHooks';
-import { useEffect, useState } from 'react';
 import { useStoreSelector } from '../store/store';
-
 
 export function StudyEnd() {
   const config = useStudyConfig();
@@ -28,26 +29,26 @@ export function StudyEnd() {
   disableBrowserBack();
 
   return (
-      <>
-        <Center style={{ height: '100%' }}>
-          <Flex direction="column">
-              {completed ? 
-                <Text size="xl" display="block">
-                  {config.uiConfig.studyEndMsg
-                      ? <ReactMarkdownWrapper text={config.uiConfig.studyEndMsg} />
-                      : 'Thank you for completing the study. You may close this window now.'}
-                </Text>
-              :
-                <>
-                  <Text size="xl" display="block">Please wait while your answers are uploaded.</Text>
-                  <Space h="lg" />
-                  <Center>
-                    <Loader color="blue" />
-                  </Center>
-                </>
-              }
-          </Flex>
-        </Center>
-      </>
+    <Center style={{ height: '100%' }}>
+      <Flex direction="column">
+        {completed
+          ? (
+            <Text size="xl" display="block">
+              {config.uiConfig.studyEndMsg
+                ? <ReactMarkdownWrapper text={config.uiConfig.studyEndMsg} />
+                : 'Thank you for completing the study. You may close this window now.'}
+            </Text>
+          )
+          : (
+            <>
+              <Text size="xl" display="block">Please wait while your answers are uploaded.</Text>
+              <Space h="lg" />
+              <Center>
+                <Loader color="blue" />
+              </Center>
+            </>
+          )}
+      </Flex>
+    </Center>
   );
 }

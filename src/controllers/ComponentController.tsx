@@ -1,4 +1,5 @@
 import { Suspense, useEffect } from 'react';
+import merge from 'lodash.merge';
 import ResponseBlock from '../components/response/ResponseBlock';
 import IframeController from './IframeController';
 import ImageController from './ImageController';
@@ -8,8 +9,7 @@ import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useCurrentStep } from '../routes';
 import { useStoredAnswer } from '../store/hooks/useStoredAnswer';
 import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
-import { isPartialComponent } from '../parser/parser';
-import merge from 'lodash.merge';
+import { isInheritedComponent } from '../parser/parser';
 import { IndividualComponent } from '../parser/types';
 import { disableBrowserBack } from '../utils/disableBrowserBack';
 import { useStorageEngine } from '../store/storageEngineHooks';
@@ -21,14 +21,14 @@ export default function ComponentController() {
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
   const stepConfig = studyConfig.components[currentStep];
-  
+
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
 
-  const currentConfig = isPartialComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
+  const currentConfig = isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
 
   const instruction = (currentConfig.instruction || '');
-  const instructionLocation = currentConfig.instructionLocation;
+  const { instructionLocation } = currentConfig;
   const instructionInSideBar = studyConfig.uiConfig.sidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
 
   // Disable browser back button from all stimuli
@@ -60,7 +60,7 @@ export default function ComponentController() {
       <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
         {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
         {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} />}
-        {currentConfig.type === 'image' && <ImageController  currentConfig={currentConfig}/>}
+        {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
         {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} />}
       </Suspense>
 

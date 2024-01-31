@@ -2,20 +2,10 @@ import { Button, Stack, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconCodeDots, IconCodePlus, IconTable } from '@tabler/icons-react';
 import { useEffect, useState } from 'react';
-import { DownloadTidy } from './DownloadTidy';
+import { DownloadTidy, download } from './DownloadTidy';
 import { useStorageEngine } from '../store/storageEngineHooks';
 import { StudyConfig } from '../parser/types';
 import { ParticipantData } from '../storage/types';
-
-export function download(graph: string, filename: string) {
-  const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(graph);
-  const downloadAnchorNode = document.createElement('a');
-  downloadAnchorNode.setAttribute('href', dataStr);
-  downloadAnchorNode.setAttribute('download', filename);
-  document.body.appendChild(downloadAnchorNode); // required for firefox
-  downloadAnchorNode.click();
-  downloadAnchorNode.remove();
-}
 
 export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
   const { storageEngine } = useStorageEngine();
@@ -27,11 +17,11 @@ export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
     : -1;
 
   const [delayCounter, setDelayCounter] = useState(
-    Math.floor(autoDownloadDelay / 1000)
+    Math.floor(autoDownloadDelay / 1000),
   );
 
   useEffect(() => {
-    if (delayCounter <= 0) return;
+    if (delayCounter <= 0) return () => null;
 
     const interval = setInterval(() => {
       setDelayCounter((c) => c - 1);
@@ -46,11 +36,11 @@ export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
   useEffect(() => {
     async function fetchParticipantId() {
       if (storageEngine) {
-        const participantId = await storageEngine.getCurrentParticipantId();
-        const participantData = await storageEngine.getParticipantData();
+        const _participantId = await storageEngine.getCurrentParticipantId();
+        const _participantData = await storageEngine.getParticipantData();
 
-        setParticipantId(participantId);
-        setParticipantData(participantData);
+        setParticipantId(_participantId);
+        setParticipantData(_participantData);
       }
     }
     fetchParticipantId();
@@ -60,7 +50,6 @@ export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
     <Stack>
       <Button
         leftIcon={<IconCodeDots />}
-        
         onClick={() => download(JSON.stringify(participantData, null, 2), `${baseFilename}_${participantId}.json`)}
         display="block"
       >
@@ -88,7 +77,11 @@ export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
       </Button>
       {autoDownload && (
         <Text size="lg">
-          Study results will be downloaded in {delayCounter} seconds. If the
+          Study results will be downloaded in
+          {' '}
+          {delayCounter}
+          {' '}
+          seconds. If the
           download does not start automatically, click above to download.
         </Text>
       )}

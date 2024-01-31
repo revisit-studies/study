@@ -7,13 +7,16 @@
       "description": "The GlobalConfig is used to generate the list of available studies in the UI. This list is displayed on the landing page when running the app.",
       "properties": {
         "$schema": {
+          "description": "A required json schema property. This should point to the github link for the version of the schema you would like. See examples for more information",
           "type": "string"
         },
         "configs": {
           "additionalProperties": {
             "additionalProperties": false,
+            "description": "The key is used to identify the study config file. This key is used in the configList property.",
             "properties": {
               "path": {
+                "description": "The path to the study config file. This should be a relative path from the public folder.",
                 "type": "string"
               }
             },
@@ -22,9 +25,11 @@
             ],
             "type": "object"
           },
+          "description": "A required property that specifies the options for the configList property.",
           "type": "object"
         },
         "configsList": {
+          "description": "A required property that is used to generate the list of available studies in the UI. This list is displayed on the landing page when running the app.",
           "items": {
             "type": "string"
           },

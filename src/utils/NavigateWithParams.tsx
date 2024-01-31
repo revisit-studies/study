@@ -1,7 +1,7 @@
 import { Navigate, NavigateProps, useSearchParams } from 'react-router-dom';
 
 export function NavigateWithParams(
-  props: Omit<NavigateProps, 'to'> & { to: string }
+  props: Omit<NavigateProps, 'to'> & { to: string },
 ) {
   const [url] = useSearchParams();
 

@@ -1,9 +1,9 @@
-export const Bubbles = ({
+export function Bubbles({
   data,
 }: {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   data: any[];
-}) => {
+}) {
   return (
     <g>
       {data.map(({ bubble: d }, i) => (
@@ -18,4 +18,4 @@ export const Bubbles = ({
       ))}
     </g>
   );
-};
+}

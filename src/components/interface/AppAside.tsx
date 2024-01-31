@@ -3,11 +3,11 @@ import {
   ScrollArea,
   Text,
 } from '@mantine/core';
+import React, { useMemo } from 'react';
 import { DownloadPanel } from '../DownloadPanel';
 import { StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoreSelector } from '../../store/store';
-import React, { useMemo } from 'react';
 import { useCurrentStep } from '../../routes';
 import { deepCopy } from '../../utils/deepCopy';
 
@@ -30,7 +30,7 @@ export default function AppAside() {
   return (
     <Aside p="0" width={{ base: 400 }} style={{ zIndex: 0 }}>
       <ScrollArea p="0">
-        <Text size={'md'} p={10} weight={'bold'}>
+        <Text size="md" p={10} weight="bold">
           Study Sequence
         </Text>
         <StepsPanel order={fullOrder} sequence={sequence} />
@@ -39,7 +39,7 @@ export default function AppAside() {
         >
           {currentStep === 'end' && (
             <>
-              <Text size={'md'} p={10} weight={'bold'}>
+              <Text size="md" p={10} weight="bold">
                 Download
               </Text>
               <DownloadPanel studyConfig={studyConfig} />

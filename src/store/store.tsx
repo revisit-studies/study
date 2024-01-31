@@ -2,7 +2,9 @@ import { createSlice, configureStore, type PayloadAction } from '@reduxjs/toolki
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { ResponseBlockLocation, StudyConfig } from '../parser/types';
-import { RootState, StoredAnswer, TrialValidation, TrrackedProvenance, StoreState } from './types';
+import {
+  StoredAnswer, TrialValidation, TrrackedProvenance, StoreState,
+} from './types';
 
 export async function studyStoreCreator(
   studyId: string,
@@ -10,14 +12,18 @@ export async function studyStoreCreator(
   sequence: string[],
   answers: Record<string, StoredAnswer>,
 ) {
-  const emptyAnswers = Object.assign({}, sequence.map((id) => ({[id]: {}})));
+  const emptyAnswers = { ...sequence.map((id) => ({ [id]: {} })) };
   const emptyValidation: TrialValidation = Object.assign(
     {},
-    ...sequence.map((id) => ({[id]: { aboveStimulus: { valid: false, values: {} }, belowStimulus: { valid: false, values: {} }, sidebar: { valid: false, values: {} } }}))
+    ...sequence.map((id) => ({ [id]: { aboveStimulus: { valid: false, values: {} }, belowStimulus: { valid: false, values: {} }, sidebar: { valid: false, values: {} } } })),
   );
   const allValid = Object.assign(
     {},
-    ...sequence.map((id) => ({[id]: { aboveStimulus: true, belowStimulus: true, sidebar: true, values: {} } }))
+    ...sequence.map((id) => ({
+      [id]: {
+        aboveStimulus: true, belowStimulus: true, sidebar: true, values: {},
+      },
+    })),
   );
 
   const initialState: StoreState = {
@@ -34,9 +40,9 @@ export async function studyStoreCreator(
 
   const storeSlice = createSlice({
     name: 'storeSlice',
-    initialState: initialState,
+    initialState,
     reducers: {
-      setConfig (state, payload: PayloadAction<StudyConfig>) {
+      setConfig(state, payload: PayloadAction<StudyConfig>) {
         state.config = payload.payload;
       },
       toggleShowAdmin: (state) => {
@@ -61,10 +67,10 @@ export async function studyStoreCreator(
           status: boolean;
           values: object;
           provenanceGraph?: TrrackedProvenance;
-        }>
+        }>,
       ) => {
-        if (!payload.currentStep || payload.currentStep.length === 0) return state;
-  
+        if (!payload.currentStep || payload.currentStep.length === 0) return;
+
         if (!state.trialValidation[payload.currentStep]) {
           state.trialValidation[payload.currentStep] = {
             aboveStimulus: { valid: false, values: {} },
@@ -83,21 +89,18 @@ export async function studyStoreCreator(
         state,
         {
           payload,
-        }: PayloadAction<{
-          currentStep: string;
-          answer: Record<string, Record<string, unknown>>;
-          startTime: number;
-          endTime: number;
-          provenanceGraph?: TrrackedProvenance;
-        }>
+        }: PayloadAction<{ currentStep: string } & StoredAnswer>,
       ) {
-        const { currentStep, answer, startTime, endTime, provenanceGraph } = payload;
+        const {
+          currentStep, answer, startTime, endTime, provenanceGraph, windowEvents,
+        } = payload;
 
         state.answers[currentStep] = {
-          answer: answer,
-          startTime: startTime,
-          endTime: endTime,
+          answer,
+          startTime,
+          endTime,
           provenanceGraph,
+          windowEvents,
         };
       },
     },
@@ -109,7 +112,7 @@ export async function studyStoreCreator(
       preloadedState: initialState,
     },
   );
-  
+
   return { store, actions: storeSlice.actions };
 }
 
@@ -125,7 +128,7 @@ export function useStoreActions() {
 type StoreDispatch = StudyStore['store']['dispatch'];
 
 export const useStoreDispatch: () => StoreDispatch = useDispatch;
-export const useStoreSelector: TypedUseSelectorHook<RootState> = useSelector;
+export const useStoreSelector: TypedUseSelectorHook<StoreState> = useSelector;
 
 export function useAreResponsesValid(id?: string) {
   return useStoreSelector((state) => {

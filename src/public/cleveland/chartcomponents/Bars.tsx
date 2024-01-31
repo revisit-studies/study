@@ -1,6 +1,6 @@
 import { ScaleBand, ScaleLinear } from 'd3';
 
-export const Bars = ({
+export function Bars({
   data,
   xScale,
   yScale,
@@ -11,7 +11,7 @@ export const Bars = ({
   yScale: ScaleLinear<number, number>;
   xScale: ScaleBand<string>;
   height: number;
-}) => {
+}) {
   return (
     <g>
       {
@@ -26,7 +26,8 @@ export const Bars = ({
           fill="transparent"
           stroke="currentColor"
         />
-      ))}
+      ))
+}
     </g>
   );
-};
+}

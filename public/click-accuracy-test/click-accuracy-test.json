@@ -1,0 +1,62 @@
+{
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+        "title": "Dynamic React Stimuli and Provenance Tracking",
+        "version": "pilot",
+        "authors": [
+            "The reVISit Team"
+        ],
+        "date": "2023-06-15",
+        "description": "A demo of using dynamic React stimuli and using provenance tracking with the trrack library for data collection.",
+        "organizations": [
+            "University of Utah",
+            "WPI",
+            "University of Toronto"
+        ]
+    },
+    "uiConfig": {
+        "contactEmail": "test@test.com",
+        "helpTextPath": "click-accuracy-test/help.md",
+        "logoPath": "assets/revisitLogoSquare.svg",
+        "withProgressBar": true,
+        "autoDownloadStudy": false,
+        "sidebar": true
+    },
+    "components": {
+        "introduction": {
+            "type": "markdown",
+            "path": "click-accuracy-test/introduction.md",
+            "response": []
+        },
+        "trial": {
+            "meta": {
+                "nr-dots": 1
+            },
+            "description": "try to click on the center of the moving dot",
+            "instruction": "Click on the moving dot",
+            "type": "react-component",
+            "path": "click-accuracy-test/ClickAccuracyTest.tsx",
+            "parameters": {
+                "speed": 100,
+                "taskid": "accuracy"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+                {
+                    "id": "accuracy",
+                    "prompt": "Your click distance to circle center",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "iframe"
+                }
+            ]
+        }
+    },
+    "sequence": {
+        "order": "fixed",
+        "components": [
+            "introduction",
+            "trial"
+        ]
+    }
+}

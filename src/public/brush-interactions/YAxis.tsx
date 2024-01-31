@@ -1,3 +1,4 @@
+/* eslint-disable react/no-unused-prop-types */
 import { Center, Group, Text } from '@mantine/core';
 import * as React from 'react';
 import { useMemo } from 'react';
@@ -5,22 +6,23 @@ import * as d3 from 'd3';
 
 // code taken from https://wattenberger.com/blog/react-and-d3
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function YAxis({ yScale, xRange, horizontalPosition, label }: {yScale: any, xRange: any, horizontalPosition: any, label: string}) {
-  const ticks = useMemo(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return yScale.ticks(5).map((value: any) => ({
+export function YAxis({
+  yScale, xRange, horizontalPosition, label,
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+}: {yScale: any, xRange: any, horizontalPosition: any, label: string}) {
+  const ticks = useMemo(
+    () => yScale.ticks(5).map((value: unknown) => ({
       value,
       yOffset: yScale(value),
-    }));
-  }, [yScale]);
+    })),
+    [yScale],
+  );
 
-  const format = useMemo(() => {
-    return d3.format('.2s');
-  }, []);
+  const format = useMemo(() => d3.format('.2s'), []);
 
   return (
     <>
-    <g transform={`translate(${horizontalPosition - 60}, ${yScale.range()[0]}) rotate(-90)`}>
+      <g transform={`translate(${horizontalPosition - 60}, ${yScale.range()[0]}) rotate(-90)`}>
         <foreignObject width={Math.abs(yScale.range()[1] - yScale.range()[0])} height={20}>
           <Center>
             <Group spacing={3}>
@@ -51,7 +53,7 @@ export function YAxis({ yScale, xRange, horizontalPosition, label }: {yScale: an
               textAnchor: 'end',
               transform: 'translateX(-8px)',
               fill: 'black',
-              font: 'Roboto'
+              font: 'Roboto',
             }}
           >
             {format(value)}

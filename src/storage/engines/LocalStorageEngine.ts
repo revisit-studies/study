@@ -1,7 +1,7 @@
-import { StorageEngine } from './StorageEngine';
 import localforage from 'localforage';
-import { ParticipantData } from '../types';
 import { v4 as uuidv4 } from 'uuid';
+import { StorageEngine } from './StorageEngine';
+import { ParticipantData } from '../types';
 import { StoredAnswer } from '../../store/types';
 
 export class LocalStorageEngine extends StorageEngine {
@@ -13,7 +13,6 @@ export class LocalStorageEngine extends StorageEngine {
 
   async connect() {
     this.connected = true;
-    return;
   }
 
   async initializeStudyDb(studyId: string, config: object) {
@@ -24,17 +23,17 @@ export class LocalStorageEngine extends StorageEngine {
     await this.studyDatabase.setItem('config', config);
   }
 
-  async initializeParticipantSession() {
+  async initializeParticipantSession(searchParams: Record<string, string>, urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
 
     // Ensure participantId
-    await this.getCurrentParticipantId();
+    await this.getCurrentParticipantId(urlParticipantId);
     if (!this.currentParticipantId) {
       throw new Error('Participant not initialized');
     }
-    
+
     // Check if the participant has already been initialized
     const participant: ParticipantData | null = await this.studyDatabase.getItem(this.currentParticipantId);
     if (participant) {
@@ -47,27 +46,34 @@ export class LocalStorageEngine extends StorageEngine {
       participantId: this.currentParticipantId,
       sequence: await this.getSequence(),
       answers: {},
+      searchParams,
     };
     await this.studyDatabase?.setItem(this.currentParticipantId, participantData);
 
     return participantData;
   }
 
-  async getCurrentParticipantId() {
+  async getCurrentParticipantId(urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
 
+    // Check the database for a participantId
     const currentParticipantId = await this.studyDatabase.getItem('currentParticipant');
-    if (currentParticipantId) {
+
+    // Prioritize urlParticipantId, then currentParticipantId, then generate a new participantId
+    if (urlParticipantId) {
+      this.currentParticipantId = urlParticipantId;
+      await this.studyDatabase.setItem('currentParticipant', urlParticipantId);
+      return urlParticipantId;
+    } if (currentParticipantId) {
       this.currentParticipantId = currentParticipantId as string;
       return currentParticipantId as string;
-    } else {
-      const newParticipantId = uuidv4();
-      await this.studyDatabase.setItem('currentParticipant', newParticipantId);
-      this.currentParticipantId = newParticipantId;
-      return newParticipantId;
     }
+    const newParticipantId = uuidv4();
+    await this.studyDatabase.setItem('currentParticipant', newParticipantId);
+    this.currentParticipantId = newParticipantId;
+    return newParticipantId;
   }
 
   async clearCurrentParticipantId() {
@@ -125,7 +131,7 @@ export class LocalStorageEngine extends StorageEngine {
 
     // Update the latin square
     await this.studyDatabase.setItem('sequenceArray', sequenceArray);
-    
+
     return currentRow;
   }
 
@@ -186,6 +192,7 @@ export class LocalStorageEngine extends StorageEngine {
         participantId: newParticipantId,
         sequence: await this.getSequence(),
         answers: {},
+        searchParams: {},
       };
       await this.studyDatabase.setItem(newParticipantId, newParticipant);
       participant = newParticipant;
@@ -216,7 +223,7 @@ export class LocalStorageEngine extends StorageEngine {
     return allAnswersPresent;
   }
 
-  private _verifyStudyDatabase(db: LocalForage | undefined): db is LocalForage  {
+  private _verifyStudyDatabase(db: LocalForage | undefined): db is LocalForage {
     return db !== undefined;
   }
 }

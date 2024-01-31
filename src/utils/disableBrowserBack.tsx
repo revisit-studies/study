@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/rules-of-hooks */
 // rules-of-hooks is disabled because this is a custom hook that is only called in functional components
 import { useEffect } from 'react';
 import { useStoreActions, useStoreDispatch } from '../store/store';

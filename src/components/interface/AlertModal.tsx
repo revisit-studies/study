@@ -1,7 +1,9 @@
-import { Alert, Box, Button, Modal, Text } from '@mantine/core';
+import {
+  Alert, Box, Button, Modal, Text,
+} from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
-import { useStoreActions, useStoreDispatch, useStoreSelector } from '../../store/store';
 import { useCallback, useEffect, useState } from 'react';
+import { useStoreActions, useStoreDispatch, useStoreSelector } from '../../store/store';
 
 export function AlertModal() {
   const { alertModal } = useStoreSelector((state) => state);
@@ -14,25 +16,24 @@ export function AlertModal() {
   useEffect(() => setOpened(alertModal.show), [alertModal.show]);
 
   return (
-    <Modal opened={opened} centered size="lg" withCloseButton={false} styles={{modal: { padding: '0 !important' }}} onClose={close}>
+    <Modal opened={opened} centered size="lg" withCloseButton={false} styles={{ modal: { padding: '0 !important' } }} onClose={close}>
       <Alert
         color="red"
         radius="xs"
         p="lg"
-        title='Alert'
+        title="Alert"
         icon={<IconAlertCircle />}
         onClose={close}
-        styles={{root: { backgroundColor: 'unset' }}}
+        styles={{ root: { backgroundColor: 'unset' } }}
       >
         <Text my="md">
           {alertModal.message}
         </Text>
 
-        <Box style={{ float: 'right' }} color='red'>
-          <Button onClick={close} color='red' variant='filled'>Continue Study</Button>
+        <Box style={{ float: 'right' }} color="red">
+          <Button onClick={close} color="red" variant="filled">Continue Study</Button>
         </Box>
       </Alert>
     </Modal>
   );
 }
-

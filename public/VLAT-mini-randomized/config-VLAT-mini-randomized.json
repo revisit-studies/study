@@ -1,0 +1,646 @@
+{
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+        "title": "Visualization understanding questionnaire",
+        "version": "pilot",
+        "authors": [
+            "The reVISit Team"
+        ],
+        "date": "2023-06-14",
+        "description": "A replication of the mini VLAT questionnaire by Pandey et al, CGF 2023 (doi:10.1111:cgf.14809), using image stimuli. Demonstrates randomization of questions.",
+        "organizations": [
+            "University of Utah",
+            "WPI",
+            "University of Toronto"
+        ]
+    },
+    "uiConfig": {
+        "contactEmail": "test@test.com",
+        "helpTextPath": "VLAT-mini-randomized/help.md",
+        "logoPath": "assets/revisitLogoSquare.svg",
+        "withProgressBar": true,
+        "autoDownloadStudy": false,
+        "sidebar": true,
+        "studyEndMsg": "**Thank you for completing the study. You may click this link and return to Prolific**: [https://app.prolific.com/submissions/complete?cc=CE96X7ST](https://app.prolific.com/submissions/complete?cc=CE96X7ST)",
+        "urlParticipantIdParam": "PROLIFIC_ID"
+    },
+    "components": {
+        "introduction": {
+            "type": "markdown",
+            "path": "VLAT-mini-randomized/introduction.md",
+            "response": [
+                {
+                    "id": "prolificId",
+                    "prompt": "Please enter your Prolific ID",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "shortText",
+                    "placeholder": "Prolific ID",
+                    "paramCapture": "PROLIFIC_ID"
+                }
+            ]
+        },
+        "consent": {
+            "type": "markdown",
+            "path": "VLAT-mini-randomized/consent.md",
+            "response": [
+                {
+                    "id": "userInitials",
+                    "prompt": "Please type your initials below. These are not used in our analyses, but required for the consent process.",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "shortText",
+                    "placeholder": "Your Initials"
+                }
+            ]
+        },
+        "prolificCode": {
+            "type": "markdown",
+            "path": "VLAT-mini-randomized/prolific-code.md",
+            "response": []
+        },
+        "survey": {
+            "type": "markdown",
+            "path": "VLAT-mini-randomized/survey.md",
+            "response": [
+                {
+                    "id": "surveyExperience",
+                    "prompt": "Did you experience any problems with our tool?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "longText",
+                    "placeholder": "Enter your answer here."
+                },
+                {
+                    "id": "surveyRenderIssues",
+                    "prompt": "Did anything not render or display properly?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "longText",
+                    "placeholder": "Enter your answer here"
+                },
+                {
+                    "id": "surveyOtherIssues",
+                    "prompt": "Any other issues or anything you would like to tell us?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "longText",
+                    "placeholder": "Enter your answer here"
+                }
+            ]
+        },
+        "q1": {
+            "meta": {
+                "trueAnswer": 1,
+                "chartType": "treemap"
+            },
+            "instruction": "eBay is nested in the Software category.",
+            "instructionLocation": "sidebar",
+            "type": "image",
+            "path": "VLAT-mini-randomized/TreeMap.png",
+            "style": {
+                "width": "500px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+                {
+                    "id": "res1",
+                    "prompt": "Your answer",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "correctAnswer": "False",
+                    "options": [
+                        {
+                            "label": "True",
+                            "value": "True"
+                        },
+                        {
+                            "label": "False",
+                            "value": "False"
+                        },
+                        {
+                            "label": "Skip",
+                            "value": "Skip"
+                        }
+                    ]
+                }
+            ]
+        },
+        "q2": {
+            "meta": {
+                "trueAnswer": 0,
+                "chartType": "stackedBar100"
+            },
+            "instruction": "Which country has the lowest proportion of Gold medals?",
+            "instructionLocation": "sidebar",
+            "type": "image",
+            "path": "VLAT-mini-randomized/Stacked100.png",
+            "style": {
+                "width": "600px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+                {
+                    "id": "res2",
+                    "prompt": "Your answer",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "correctAnswer": "Great Britain",
+                    "options": [
+                        {
+                            "label": "Great Britain",
+                            "value": "Great Britain"
+                        },
+                        {
+                            "label": "USA",
+                            "value": "USA"
+                        },
+                        {
+                            "label": "Japan",
+                            "value": "Japan"
+                        },
+                        {
+                            "label": "Australia",
+                            "value": "Australia"
+                        },
+                        {
+                            "label": "Skip",
+                            "value": "Skip"
+                        }
+                    ]
+                }
+            ]
+        },
+        "q3": {
+            "meta": {
+                "trueAnswer": 1,
+                "chartType": "histogram"
+            },
+            "instruction": "What distance have customers traveled in the taxi the most?",
+            "instructionLocation": "sidebar",
+            "type": "image",
+            "path": "VLAT-mini-randomized/Histogram.png",
+            "style": {
+                "width": "500px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+                {
+                    "id": "res3",
+                    "prompt": "Your answer",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "correctAnswer": "30 - 40km",
+                    "options": [
+                        {
+                            "label": "50 - 70km",
+                            "value": "50 - 70km"
+                        },
+                        {
+                            "label": "30 - 40km",
+                            "value": "30 - 40km"
+                        },
+                        {
+                            "label": "20 - 30km",
+                            "value": "20 - 30km"
+                        },
+                        {
+                            "label": "50 - 60km",
+                            "value": "50 - 60km"
+                        },
+                        {
+                            "label": "Skip",
+                            "value": "Skip"
+                        }
+                    ]
+                }
+            ]
+        },
+        "q4": {
+            "meta": {
+                "trueAnswer": 0,
+                "chartType": "choropleth"
+            },
+            "instruction": "In 2020, the unemployment rate for Washington (WA) was higher than that of Wisconsin (WI)?",
+            "instructionLocation": "sidebar",
+            "type": "image",
+            "path": "VLAT-mini-randomized/Choropleth.png",
+            "style": {
+                "width": "500px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+                {
+                    "id": "res4",
+                    "prompt": "Your answer",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "correctAnswer": "True",
+                    "options": [
+                        {
+                            "label": "True",
+                            "value": "True"
+                        },
+                        {
+                            "label": "False",
+                            "value": "False"
+                        },
+                        {
+                            "label": "Skip",
+                            "value": "Skip"
+                        }
+                    ]
+                }
+            ]
+        },
+        "q5": {
+            "meta": {
+                "trueAnswer": 0,
+                "chartType": "piechart"
+            },
+            "instruction": "What is the approximate global smartphone market share of Samsung?",
+            "instructionLocation": "sidebar",
+            "type": "image",
+            "path": "VLAT-mini-randomized/PieChart.png",
+            "style": {
+                "width": "500px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+                {
+                    "id": "res5",
+                    "prompt": "Your answer",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "correctAnswer": "17.6%",
+                    "options": [
+                        {
+                            "label": "17.6%",
+                            "value": "17.6%"
+                        },
+                        {
+                            "label": "25.3%",
+                            "value": "25.3%"
+                        },
+                        {
+                            "label": "10.9%",
+                            "value": "10.9%"
+                        },
+                        {
+                            "label": "35.2%",
+                            "value": "35.2%"
+                        },
+                        {
+                            "label": "Skip",
+                            "value": "Skip"
+                        }
+                    ]
+                }
+            ]
+        },
+        "q6": {
+            "meta": {
+                "trueAnswer": 1,
+                "chartType": "bubblechart"
+            },
+            "instruction": "Which city's metro system has the largest number of stations?",
+            "instructionLocation": "sidebar",
+            "type": "image",
+            "path": "VLAT-mini-randomized/BubbleChart.png",
+            "style": {
+                "width": "500px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+                {
+                    "id": "res6",
+                    "prompt": "Your answer",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "correctAnswer": "Shanghai",
+                    "options": [
+                        {
+                            "label": "Beijing",
+                            "value": "Beijing"
+                        },
+                        {
+                            "label": "Shanghai",
+                            "value": "Shanghai"
+                        },
+                        {
+                            "label": "London",
+                            "value": "London"
+                        },
+                        {
+                            "label": "Seoul",
+                            "value": "Seoul"
+                        },
+                        {
+                            "label": "Skip",
+                            "value": "Skip"
+                        }
+                    ]
+                }
+            ]
+        },
+        "q7": {
+            "meta": {
+                "trueAnswer": 1,
+                "chartType": "stackedbar"
+            },
+            "instruction": "What is the cost of peanuts in Seoul?",
+            "instructionLocation": "sidebar",
+            "type": "image",
+            "path": "VLAT-mini-randomized/StackedBar.png",
+            "style": {
+                "width": "600px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+                {
+                    "id": "res7",
+                    "prompt": "Your answer",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "correctAnswer": "$6.1",
+                    "options": [
+                        {
+                            "label": "$5.2",
+                            "value": "$5.2"
+                        },
+                        {
+                            "label": "$6.1",
+                            "value": "$6.1"
+                        },
+                        {
+                            "label": "$7.5",
+                            "value": "$7.5"
+                        },
+                        {
+                            "label": "$4.5",
+                            "value": "$4.5"
+                        },
+                        {
+                            "label": "Skip",
+                            "value": "Skip"
+                        }
+                    ]
+                }
+            ]
+        },
+        "q8": {
+            "meta": {
+                "trueAnswer": 0,
+                "chartType": "linechart"
+            },
+            "instruction": "What was the price of a barrel of oil in February 2020?",
+            "instructionLocation": "sidebar",
+            "type": "image",
+            "path": "VLAT-mini-randomized/LineChart.png",
+            "style": {
+                "width": "550px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+                {
+                    "id": "res8",
+                    "prompt": "Your answer",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "correctAnswer": "$50.54",
+                    "options": [
+                        {
+                            "label": "$50.54",
+                            "value": "$50.54"
+                        },
+                        {
+                            "label": "$47.02",
+                            "value": "$47.02"
+                        },
+                        {
+                            "label": "$42.34",
+                            "value": "$42.34"
+                        },
+                        {
+                            "label": "$43.48",
+                            "value": "$43.48"
+                        },
+                        {
+                            "label": "Skip",
+                            "value": "Skip"
+                        }
+                    ]
+                }
+            ]
+        },
+        "q9": {
+            "meta": {
+                "trueAnswer": 1,
+                "chartType": "barchart"
+            },
+            "instruction": "What is the average internet speed in Japan?",
+            "instructionLocation": "sidebar",
+            "type": "image",
+            "path": "VLAT-mini-randomized/BarChart.png",
+            "style": {
+                "width": "500px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+                {
+                    "id": "res9",
+                    "prompt": "Your answer",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "correctAnswer": "40.51 Mbps",
+                    "options": [
+                        {
+                            "label": "42.30 Mbps",
+                            "value": "42.30 Mbps"
+                        },
+                        {
+                            "label": "40.51 Mbps",
+                            "value": "40.51 Mbps"
+                        },
+                        {
+                            "label": "35.25 Mbps",
+                            "value": "35.25 Mbps"
+                        },
+                        {
+                            "label": "16.16 Mbps",
+                            "value": "16.16 Mbps"
+                        },
+                        {
+                            "label": "Skip",
+                            "value": "Skip"
+                        }
+                    ]
+                }
+            ]
+        },
+        "q10": {
+            "meta": {
+                "trueAnswer": 0,
+                "chartType": "areachart"
+            },
+            "instruction": "What was the average price of a pound of coffee in October 2019?",
+            "instructionLocation": "sidebar",
+            "type": "image",
+            "path": "VLAT-mini-randomized/AreaChart.png",
+            "style": {
+                "width": "500px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+                {
+                    "id": "res10",
+                    "prompt": "Your answer",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "correctAnswer": "$0.71",
+                    "options": [
+                        {
+                            "label": "$0.71",
+                            "value": "$0.71"
+                        },
+                        {
+                            "label": "$0.90",
+                            "value": "$0.90"
+                        },
+                        {
+                            "label": "$0.80",
+                            "value": "$0.80"
+                        },
+                        {
+                            "label": "$0.63",
+                            "value": "$0.63"
+                        },
+                        {
+                            "label": "Skip",
+                            "value": "Skip"
+                        }
+                    ]
+                }
+            ]
+        },
+        "q11": {
+            "meta": {
+                "trueAnswer": 1,
+                "chartType": "stackedarea"
+            },
+            "instruction": "What was the ratio of girls named \"Isla\" to girls named \"Amelia\" in 2012 in the UK?",
+            "instructionLocation": "sidebar",
+            "type": "image",
+            "path": "VLAT-mini-randomized/StackedArea.png",
+            "style": {
+                "width": "500px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+                {
+                    "id": "res11",
+                    "prompt": "Your answer",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "correctAnswer": "1 to 2",
+                    "options": [
+                        {
+                            "label": "1 to 1",
+                            "value": "1 to 1"
+                        },
+                        {
+                            "label": "1 to 2",
+                            "value": "1 to 2"
+                        },
+                        {
+                            "label": "1 to 3",
+                            "value": "1 to 3"
+                        },
+                        {
+                            "label": "1 to 4",
+                            "value": "1 to 4"
+                        },
+                        {
+                            "label": "Skip",
+                            "value": "Skip"
+                        }
+                    ]
+                }
+            ]
+        },
+        "q12": {
+            "meta": {
+                "trueAnswer": 1,
+                "chartType": "scatterplot"
+            },
+            "instruction": "There is a negative relationship between the height and the weight of the 85 males.",
+            "instructionLocation": "sidebar",
+            "type": "image",
+            "path": "VLAT-mini-randomized/Scatterplot.png",
+            "style": {
+                "width": "500px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+                {
+                    "id": "res12",
+                    "prompt": "Your answer",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "correctAnswer": "False",
+                    "options": [
+                        {
+                            "label": "True",
+                            "value": "True"
+                        },
+                        {
+                            "label": "False",
+                            "value": "False"
+                        },
+                        {
+                            "label": "Skip",
+                            "value": "Skip"
+                        }
+                    ]
+                }
+            ]
+        }
+    },
+    "sequence": {
+        "order": "fixed",
+        "components": [
+            "introduction",
+            "consent",
+            {
+                "order": "random",
+                "components": [
+                    "q1",
+                    "q2",
+                    "q3",
+                    "q4",
+                    "q5",
+                    "q6",
+                    "q7",
+                    "q8",
+                    "q9",
+                    "q10",
+                    "q11",
+                    "q12"
+                ]
+            },
+            "survey"
+        ]
+    }
+}

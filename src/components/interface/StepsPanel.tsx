@@ -1,27 +1,21 @@
 import { NavLink, Text } from '@mantine/core';
-import { useCurrentStep } from '../../routes';
+import { ReactNode, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { OrderObject } from '../../parser/types';
 import { IconArrowsShuffle } from '@tabler/icons-react';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
-import { ReactNode, useMemo } from 'react';
 import { deepCopy } from '../../utils/deepCopy';
+import { useCurrentStep } from '../../routes';
+import { OrderObject } from '../../parser/types';
 
-const getFlatMap = (orderObj: OrderObject): string[] => {
-  return orderObj.components.flatMap((component) =>
-    typeof component === 'string' ? component : getFlatMap(component)
-  );
-};
+const getFlatMap = (orderObj: OrderObject): string[] => orderObj.components.flatMap((component) => (typeof component === 'string' ? component : getFlatMap(component)));
 
 const getVisibleChildComponent = (
   sequence: string[],
-  orderObj: OrderObject
+  orderObj: OrderObject,
 ) => {
   const flatObj = getFlatMap(orderObj);
 
-  const visibleChild = flatObj.find((component) => {
-    return sequence.indexOf(component) !== -1;
-  });
+  const visibleChild = flatObj.find((component) => sequence.indexOf(component) !== -1);
 
   return visibleChild;
 };
@@ -45,10 +39,8 @@ export function StepsPanel({
 
     // reorder based on sequence
     nOrder.components.sort((a, b) => {
-      const keyA =
-        typeof a === 'string' ? a : getVisibleChildComponent(sequence, a);
-      const keyB =
-        typeof b === 'string' ? b : getVisibleChildComponent(sequence, b);
+      const keyA = typeof a === 'string' ? a : getVisibleChildComponent(sequence, a);
+      const keyB = typeof b === 'string' ? b : getVisibleChildComponent(sequence, b);
       const idxA = keyA ? sequence.indexOf(keyA) : 10000;
       const idxB = keyB ? sequence.indexOf(keyB) : 10000;
       return (idxA === -1 ? 10000 : idxA) - (idxB === -1 ? 10000 : idxB);
@@ -60,13 +52,12 @@ export function StepsPanel({
     <div>
       {newOrder.components.map((step, idx) => {
         if (typeof step === 'string') {
-          const task =
-            step in studyConfig.components && studyConfig.components[step];
+          const task = step in studyConfig.components && studyConfig.components[step];
           return (
             <NavLink
               active={step === currentStep}
               key={idx}
-              label={
+              label={(
                 <div
                   style={{ opacity: sequence.indexOf(step) === -1 ? '.3' : 1 }}
                 >
@@ -81,58 +72,61 @@ export function StepsPanel({
                     >
                       {task.description && (
                         <Text fw={900}>
-                          Description:{' '}
+                          Description:
+                          {' '}
                           <Text fw={400} component="span">
                             {task.description}
                           </Text>
                         </Text>
                       )}
                       {task.meta && <Text fw={900}>Task Meta:</Text>}
-                      {task.meta &&
-                        Object.keys(task.meta).map((key) => {
-                          return (
-                            <Text key={key}>
-                              {key}:{' '}
-                              {(task.meta as Record<string, ReactNode>)[key]}
-                            </Text>
-                          );
-                        })}
+                      {task.meta
+                        && Object.keys(task.meta).map((key) => (
+                          <Text key={key}>
+                            {key}
+                            :
+                            {' '}
+                            {(task.meta as Record<string, ReactNode>)[key]}
+                          </Text>
+                        ))}
                     </div>
                   )}
                 </div>
-              }
+              )}
               onClick={() => navigate(`/${studyId}/${step}`)}
             />
           );
-        } else {
-          return (
-            <NavLink
-              key={idx}
-              label={
-                <div
-                  style={{
-                    opacity: getVisibleChildComponent(sequence, step) ? 1 : 0.5,
-                  }}
-                >
-                  Group: {step.order}{' '}
-                  {step.order === 'random' || step.order === 'latinSquare'}
-                  <IconArrowsShuffle size="15" />
-                </div>
-              }
-              defaultOpened
-              childrenOffset={30}
-              style={{
-                position: 'sticky',
-                top: 0,
-                backgroundColor: '#fff',
-              }}
-            >
-              <div style={{ borderLeft: '1px solid #e9ecef' }}>
-                <StepsPanel order={step} sequence={sequence} />
-              </div>
-            </NavLink>
-          );
         }
+        return (
+          <NavLink
+            key={idx}
+            label={(
+              <div
+                style={{
+                  opacity: getVisibleChildComponent(sequence, step) ? 1 : 0.5,
+                }}
+              >
+                Group:
+                {' '}
+                {step.order}
+                {' '}
+                {step.order === 'random' || step.order === 'latinSquare'}
+                <IconArrowsShuffle size="15" />
+              </div>
+              )}
+            defaultOpened
+            childrenOffset={30}
+            style={{
+              position: 'sticky',
+              top: 0,
+              backgroundColor: '#fff',
+            }}
+          >
+            <div style={{ borderLeft: '1px solid #e9ecef' }}>
+              <StepsPanel order={step} sequence={sequence} />
+            </div>
+          </NavLink>
+        );
       })}
     </div>
   );

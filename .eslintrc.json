@@ -5,6 +5,9 @@
     "node": true
   },
   "extends": [
+    "airbnb-base",
+    "airbnb/rules/react",
+    "plugin:react/recommended",
     "eslint:recommended",
     "plugin:import/typescript",
     "plugin:@typescript-eslint/recommended"
@@ -14,15 +17,61 @@
     "ecmaVersion": 2022,
     "sourceType": "module"
   },
-  "plugins": ["@typescript-eslint", "react-hooks"],
+  "plugins": ["@typescript-eslint", "react"],
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "extensions": [".js", ".jsx", ".ts", ".tsx", ".d.ts"]
+      }
+    }
+  },
   "ignorePatterns": ["/public/*"],
   "rules": {
-    "linebreak-style": ["error", "unix"],
-    "quotes": ["error", "single"],
-    "semi": ["error", "always"],
-    "import/extensions": "off",
-    "arrow-parens": ["error", "always"],
-    "react-hooks/rules-of-hooks": "error", // Checks rules of Hooks
-    "react-hooks/exhaustive-deps": "warn" // Checks effect dependencies
+    "class-methods-use-this": "off",
+    "linebreak-style": "off",
+    "no-restricted-exports": "off",
+    "no-restricted-syntax": "off",
+    "no-underscore-dangle": "off",
+    "no-console": ["error", { "allow": ["warn", "error"] }],
+    "@typescript-eslint/no-unused-expressions": [
+      "error",
+      {
+        "allowShortCircuit": true,
+        "allowTernary": true,
+        "allowTaggedTemplates": true
+      }
+    ],
+    "react/no-array-index-key": "off",
+    "jsx-a11y/click-events-have-key-events": "off",
+    "no-return-await": "off",
+    "@typescript-eslint/no-unused-vars": "warn",
+    "max-classes-per-file": "off",
+    "no-param-reassign": ["error", { "props": false }],
+    "cypress/unsafe-to-chain-command": "off",
+    "import/no-extraneous-dependencies": "off",
+    "import/prefer-default-export": "off",
+    "import/order": "error",
+    "prefer-destructuring": ["warn", { "object": true, "array": false }],
+    "prefer-promise-reject-errors": "warn",
+    "prefer-spread": "warn",
+    "react/react-in-jsx-scope": 0,
+    "max-len": 0,
+    "react/jsx-filename-extension": 0,
+    "import/extensions": ["error", "never"],
+    "@typescript-eslint/ban-ts-comment": "warn",
+    "react/destructuring-assignment": "off",
+    "react/jsx-props-no-spreading": "off",
+    "react/no-unused-class-component-methods": "warn",
+    "react/require-default-props": "off",
+    "react/static-property-placement": [
+      "warn",
+      "property assignment",
+      {
+        "childContextTypes": "static getter",
+        "contextTypes": "static public field",
+        "contextType": "static public field",
+        "displayName": "static public field"
+      }
+    ]
   }
 }

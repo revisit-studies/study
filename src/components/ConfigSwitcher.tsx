@@ -1,9 +1,10 @@
-import { Anchor, Card, Container, Image, Text, UnstyledButton } from '@mantine/core';
+import {
+  Anchor, Card, Container, Image, Text, UnstyledButton,
+} from '@mantine/core';
+import { useNavigate } from 'react-router-dom';
 import { GlobalConfig, StudyConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
-
-import { PREFIX } from './GlobalConfigParser';
-import { useNavigate } from 'react-router-dom';
+import { PREFIX } from './Prefix';
 
 const REVISIT_GITHUB_PUBLIC = 'https://github.com/revisit-studies/study/tree/main/public/';
 
@@ -12,7 +13,7 @@ type Props = {
   studyConfigs: {[key: string]: StudyConfig};
 };
 
-const ConfigSwitcher = ({ globalConfig, studyConfigs }: Props) => {
+function ConfigSwitcher({ globalConfig, studyConfigs }: Props) {
   const { configsList } = globalConfig;
   const navigate = useNavigate();
 
@@ -45,18 +46,29 @@ const ConfigSwitcher = ({ globalConfig, studyConfigs }: Props) => {
           >
             <Card shadow="sm" radius="md" withBorder>
               <Text fw="bold">{config.studyMetadata.title}</Text>
-              <Text c="dimmed">Authors: {config.studyMetadata.authors}</Text>
+              <Text c="dimmed">
+                Authors:
+                {config.studyMetadata.authors}
+              </Text>
               <Text c="dimmed">{config.studyMetadata.description}</Text>
-              <Text c="dimmed" ta="right" style={{paddingRight: 5}}>
-                <Anchor target="_blank" onClick={(e) => e.stopPropagation()} 
-                href={`${REVISIT_GITHUB_PUBLIC}${url}`}>View source: {url}</Anchor></Text>
-             </Card>      
+              <Text c="dimmed" ta="right" style={{ paddingRight: 5 }}>
+                <Anchor
+                  target="_blank"
+                  onClick={(e) => e.stopPropagation()}
+                  href={`${REVISIT_GITHUB_PUBLIC}${url}`}
+                >
+                  View source:
+                  {' '}
+                  {url}
+                </Anchor>
+              </Text>
+            </Card>
           </UnstyledButton>
         );
       })}
-       
+
     </Container>
   );
-};
+}
 
 export default ConfigSwitcher;
