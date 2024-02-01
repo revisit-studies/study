@@ -3,6 +3,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { StorageEngine } from './StorageEngine';
 import { ParticipantData } from '../types';
 import { StoredAnswer } from '../../store/types';
+import { hash } from './utils';
+import { StudyConfig } from '../../parser/types';
 
 export class LocalStorageEngine extends StorageEngine {
   private studyDatabase: LocalForage | undefined = undefined;
@@ -15,15 +17,22 @@ export class LocalStorageEngine extends StorageEngine {
     this.connected = true;
   }
 
-  async initializeStudyDb(studyId: string, config: object) {
+  async initializeStudyDb(studyId: string, config: StudyConfig) {
     // Create or retrieve database for study
     this.studyDatabase = await localforage.createInstance({
       name: studyId,
     });
-    await this.studyDatabase.setItem('config', config);
+    const participantConfigHash = await hash(JSON.stringify(config));
+
+    // Add the config to the database
+    const allConfigs = await this.studyDatabase.getItem('configs') as object;
+    await this.studyDatabase.setItem('configs', {
+      ...allConfigs,
+      [participantConfigHash]: config,
+    });
   }
 
-  async initializeParticipantSession(searchParams: Record<string, string>, urlParticipantId?: string) {
+  async initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
@@ -42,8 +51,10 @@ export class LocalStorageEngine extends StorageEngine {
     }
 
     // Initialize participant
+    const participantConfigHash = await hash(JSON.stringify(config));
     const participantData: ParticipantData = {
       participantId: this.currentParticipantId,
+      participantConfigHash,
       sequence: await this.getSequence(),
       answers: {},
       searchParams,
@@ -172,7 +183,7 @@ export class LocalStorageEngine extends StorageEngine {
     return await this.studyDatabase.getItem(participantId) as ParticipantData | null;
   }
 
-  async nextParticipant() {
+  async nextParticipant(config: StudyConfig) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
@@ -187,9 +198,11 @@ export class LocalStorageEngine extends StorageEngine {
     // Get participant data
     let participant: ParticipantData | null = await this.studyDatabase.getItem(newParticipantId);
     if (!participant) {
+      const participantConfigHash = await hash(JSON.stringify(config));
       // Generate a new participant
       const newParticipant: ParticipantData = {
         participantId: newParticipantId,
+        participantConfigHash,
         sequence: await this.getSequence(),
         answers: {},
         searchParams: {},
