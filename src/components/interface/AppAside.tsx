@@ -32,7 +32,7 @@ export default function AppAside() {
     id: task,
   }));
 
-  return showAdmin ? (
+  return showAdmin || (currentStep === 'end' && studyConfig.uiConfig.autoDownloadStudy) ? (
     <Aside p="0" width={{ base: 300 }} style={{ zIndex: 0 }}>
       <ScrollArea p="0">
         <Aside.Section grow component={ScrollArea} px="xs" my="lg">
