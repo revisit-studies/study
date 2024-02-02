@@ -21,6 +21,7 @@ export default function CheckBoxInput({
       withAsterisk={required}
       {...answer}
       error={generateErrorMessage(response, answer, options)}
+      size="md"
     >
       <Group mt="md">
         {options.map((option) => (
