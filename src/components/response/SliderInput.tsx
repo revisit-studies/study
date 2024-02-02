@@ -3,6 +3,7 @@ import {
 } from '@mantine/core';
 import { SliderResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
+import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 
 type inputProps = {
   response: SliderResponse;
@@ -21,7 +22,7 @@ export default function SliderInput({
   return (
     <Input.Wrapper
       withAsterisk={required}
-      label={prompt}
+      label={<ReactMarkdownWrapper text={prompt} />}
       error={errorMessage}
       size="md"
     >

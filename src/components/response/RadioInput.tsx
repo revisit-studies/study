@@ -1,6 +1,7 @@
 import { Group, Radio, Text } from '@mantine/core';
 import { RadioResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
+import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 
 type inputProps = {
   response: RadioResponse;
@@ -20,7 +21,7 @@ export default function RadioInput({
   return (
     <Radio.Group
       name={`radioInput${response.id}`}
-      label={prompt}
+      label={<ReactMarkdownWrapper text={prompt} />}
       withAsterisk={required}
       size="md"
       key={response.id}

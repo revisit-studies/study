@@ -1,6 +1,7 @@
 import { TextInput } from '@mantine/core';
 import { ShortTextResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
+import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 
 type inputProps = {
   response: ShortTextResponse;
@@ -19,7 +20,7 @@ export default function StringInput({
     <TextInput
       disabled={disabled}
       placeholder={placeholder}
-      label={prompt}
+      label={<ReactMarkdownWrapper text={prompt} />}
       radius="md"
       size="md"
       withAsterisk={required}

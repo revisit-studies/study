@@ -1,6 +1,7 @@
 import { Checkbox, Group } from '@mantine/core';
 import { CheckboxResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
+import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 
 type inputProps = {
   response: CheckboxResponse;
@@ -17,7 +18,7 @@ export default function CheckBoxInput({
 
   return (
     <Checkbox.Group
-      label={prompt}
+      label={<ReactMarkdownWrapper text={prompt} />}
       withAsterisk={required}
       {...answer}
       error={generateErrorMessage(response, answer, options)}
