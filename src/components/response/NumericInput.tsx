@@ -1,6 +1,7 @@
 import { NumberInput } from '@mantine/core';
 import { NumericalResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
+import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 
 type inputProps = {
   response: NumericalResponse;
@@ -20,7 +21,7 @@ export default function NumericInput({
     <NumberInput
       disabled={disabled}
       placeholder={placeholder}
-      label={prompt}
+      label={<ReactMarkdownWrapper text={prompt} />}
       withAsterisk={required}
       radius="md"
       size="md"

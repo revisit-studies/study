@@ -1,6 +1,7 @@
 import { Select, SelectItem } from '@mantine/core';
 import { DropdownResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
+import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 
 type inputProps = {
   response: DropdownResponse;
@@ -20,7 +21,7 @@ export default function DropdownInput({
   return (
     <Select
       disabled={disabled}
-      label={prompt}
+      label={<ReactMarkdownWrapper text={prompt} />}
       placeholder={placeholder}
       data={options as SelectItem[]}
       withAsterisk={required}
