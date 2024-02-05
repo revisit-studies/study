@@ -1,5 +1,6 @@
 import { List, Text } from '@mantine/core';
 import { IFrameResponse } from '../../parser/types';
+import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 
 type inputProps = {
   response: IFrameResponse;
@@ -14,7 +15,7 @@ export default function IframeInput({
   return (
     <>
       <Text fz="md" fw={500}>
-        {prompt}
+        <ReactMarkdownWrapper text={prompt} />
       </Text>
 
       <List>
