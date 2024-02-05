@@ -16,7 +16,7 @@ import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
 
 export class FirebaseStorageEngine extends StorageEngine {
-  private RECAPTCHAV3TOKEN = '6LdjOd0lAAAAAASvFfDZFWgtbzFSS9Y3so8rHJth';
+  private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
 
   private firestore: Firestore;
 

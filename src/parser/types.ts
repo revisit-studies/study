@@ -100,7 +100,7 @@ export type ResponseBlockLocation = (typeof responseBlockLocations)[number];
 export interface BaseResponse {
   /** The id of the response. This is used to identify the response in the data file. */
   id: string;
-  /** The prompt that is displayed to the participant. */
+  /** The prompt that is displayed to the participant. You can use markdown here to render images, links, etc. */
   prompt: string;
   /** Controls whether the response is required to be answered. */
   required: boolean;
