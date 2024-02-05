@@ -12,6 +12,8 @@ import localforage from 'localforage';
 import { StorageEngine } from './StorageEngine';
 import { ParticipantData } from '../types';
 import { EventType, StoredAnswer, TrrackedProvenance } from '../../store/types';
+import { hash } from './utils';
+import { StudyConfig } from '../../parser/types';
 
 export class FirebaseStorageEngine extends StorageEngine {
   private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
@@ -70,15 +72,21 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async initializeStudyDb(studyId: string, config: object) {
+  async initializeStudyDb(studyId: string, config: StudyConfig) {
+    // Hash the config
+    const configHash = await hash(JSON.stringify(config));
+
     // Create or retrieve database for study
     this.studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
     this.studyId = studyId;
-    const configDoc = doc(this.studyCollection, 'config');
+    const configsDoc = doc(this.studyCollection, 'configs');
+    const configsCollection = collection(configsDoc, 'configs');
+    const configDoc = doc(configsCollection, configHash);
+
     return await setDoc(configDoc, config);
   }
 
-  async initializeParticipantSession(searchParams: Record<string, string>, urlParticipantId?: string) {
+  async initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -113,8 +121,10 @@ export class FirebaseStorageEngine extends StorageEngine {
       return participant;
     }
     // Initialize participant
+    const participantConfigHash = await hash(JSON.stringify(config));
     const participantData: ParticipantData = {
       participantId: this.currentParticipantId,
+      participantConfigHash,
       sequence: await this.getSequence(),
       answers: {},
       searchParams,
@@ -302,7 +312,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return participant;
   }
 
-  async nextParticipant(): Promise<ParticipantData> {
+  async nextParticipant(config: StudyConfig): Promise<ParticipantData> {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -322,9 +332,11 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
 
     if (!participant) {
+      const participantConfigHash = await hash(JSON.stringify(config));
       // Generate a new participant
       const newParticipantData: ParticipantData = {
         participantId: newParticipantId,
+        participantConfigHash,
         sequence: await this.getSequence(),
         answers: {},
         searchParams: {},
