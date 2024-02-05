@@ -1,7 +1,7 @@
 import { Button, Stack, Text } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { IconCodeDots, IconCodePlus, IconTable } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { DownloadTidy, download } from './DownloadTidy';
 import { useStorageEngine } from '../store/storageEngineHooks';
 import { StudyConfig } from '../parser/types';
@@ -10,25 +10,6 @@ import { ParticipantData } from '../storage/types';
 export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
   const { storageEngine } = useStorageEngine();
   const [openDownload, { open, close }] = useDisclosure(false);
-
-  const autoDownload = studyConfig.uiConfig.autoDownloadStudy || false;
-  const autoDownloadDelay = autoDownload
-    ? studyConfig.uiConfig.autoDownloadTime || -1
-    : -1;
-
-  const [delayCounter, setDelayCounter] = useState(
-    Math.floor(autoDownloadDelay / 1000),
-  );
-
-  useEffect(() => {
-    if (delayCounter <= 0) return () => null;
-
-    const interval = setInterval(() => {
-      setDelayCounter((c) => c - 1);
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [delayCounter]);
 
   const [participantData, setParticipantData] = useState<ParticipantData | null>();
   const [participantId, setParticipantId] = useState('');
@@ -45,6 +26,33 @@ export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
     }
     fetchParticipantId();
   }, [storageEngine]);
+
+  const downloadParticipant = useCallback(async () => {
+    download(JSON.stringify(participantData, null, 2), `${baseFilename}_${participantId}.json`);
+  }, [participantData]);
+
+  const autoDownload = studyConfig.uiConfig.autoDownloadStudy || false;
+  const autoDownloadDelay = autoDownload
+    ? studyConfig.uiConfig.autoDownloadTime || -1
+    : -1;
+
+  const [delayCounter, setDelayCounter] = useState(
+    Math.floor(autoDownloadDelay / 1000),
+  );
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDelayCounter((c) => c - 1);
+    }, 1000);
+
+    if (delayCounter <= 0) {
+      downloadParticipant();
+      clearInterval(interval);
+      return () => clearInterval(interval);
+    }
+
+    return () => clearInterval(interval);
+  }, [delayCounter]);
 
   return (
     <Stack>
