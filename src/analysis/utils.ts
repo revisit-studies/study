@@ -30,3 +30,9 @@ export const isWithinRange = (answers: Record<string, StoredAnswer>, rangeTime: 
   }
   return Math.min(...timeStamps) >= rangeTime[0].getTime() && Math.max(...timeStamps) <= rangeTime[1].getTime();
 };
+
+export function toDisplayData(milliseconds:number) {
+  const minutes = Math.floor(milliseconds / (1000 * 60));
+  const seconds = ((milliseconds % (1000 * 60)) / 1000).toFixed(0);
+  return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+}

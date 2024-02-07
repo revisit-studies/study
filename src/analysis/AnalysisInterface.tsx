@@ -5,7 +5,7 @@ import AppHeader from './components/interface/AppHeader';
 import AppNav from './components/interface/AppNav';
 import { GlobalConfig } from '../parser/types';
 import { SummaryBlock } from './dashboard/SummaryBlock';
-import { StatsBoard } from './stats/StatsBoard.';
+import { StatsBoard } from './stats/StatsBoard';
 
 export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   const { page } = useParams();
