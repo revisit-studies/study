@@ -113,8 +113,7 @@ export function StepsPanel({
                 {' '}
                 {step.order}
                 {' '}
-                {step.order === 'random' || step.order === 'latinSquare'}
-                <IconArrowsShuffle size="15" />
+                {step.order === 'random' || step.order === 'latinSquare' ? <IconArrowsShuffle size="15" /> : null}
               </div>
               )}
             defaultOpened
