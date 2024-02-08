@@ -1,6 +1,7 @@
 import { Textarea } from '@mantine/core';
 import { LongTextResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
+import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 
 type inputProps = {
   response: LongTextResponse;
@@ -19,7 +20,7 @@ export default function TextAreaInput({
     <Textarea
       disabled={disabled}
       placeholder={placeholder}
-      label={prompt}
+      label={<ReactMarkdownWrapper text={prompt} />}
       radius="md"
       size="md"
       withAsterisk={required}

@@ -23,9 +23,9 @@ export default function ReactMarkdownWrapper({ text }: { text: string; }) {
   };
 
   return (
-    <>
+    <div style={{ display: 'inherit' }}>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <ReactMarkdown components={components} rehypePlugins={[rehypeRaw] as any}>{text}</ReactMarkdown>
-    </>
+    </div>
   );
 }

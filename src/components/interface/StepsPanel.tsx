@@ -7,14 +7,14 @@ import { deepCopy } from '../../utils/deepCopy';
 import { useCurrentStep } from '../../routes';
 import { OrderObject } from '../../parser/types';
 
-function getFlatMap (orderObj: OrderObject){
+function getFlatMap(orderObj: OrderObject) {
   return orderObj.components.flatMap((component) => (typeof component === 'string' ? component : getFlatMap(component)));
 }
 
 function getVisibleChildComponent(
   sequence: string[],
   orderObj: OrderObject,
-){
+) {
   const flatObj = getFlatMap(orderObj);
 
   const visibleChild = flatObj.find((component) => sequence.indexOf(component) !== -1);

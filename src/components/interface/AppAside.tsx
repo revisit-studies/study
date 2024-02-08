@@ -23,12 +23,8 @@ export default function AppAside() {
     return r;
   }, [studyConfig.sequence]);
 
-  if (!showAdmin) {
-    return null;
-  }
-
-  return (
-    <Aside p="0" width={{ base: 400 }} style={{ zIndex: 0 }}>
+  return showAdmin || (currentStep === 'end' && studyConfig.uiConfig.autoDownloadStudy) ? (
+    <Aside p="0" width={{ base: 300 }} style={{ zIndex: 0 }}>
       <ScrollArea p="0">
         <Text size="md" p={10} weight="bold">
           Study Sequence
@@ -48,5 +44,5 @@ export default function AppAside() {
         </div>
       </ScrollArea>
     </Aside>
-  );
+  ) : null;
 }
