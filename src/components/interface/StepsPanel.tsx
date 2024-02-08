@@ -7,18 +7,20 @@ import { deepCopy } from '../../utils/deepCopy';
 import { useCurrentStep } from '../../routes';
 import { OrderObject } from '../../parser/types';
 
-const getFlatMap = (orderObj: OrderObject): string[] => orderObj.components.flatMap((component) => (typeof component === 'string' ? component : getFlatMap(component)));
+function getFlatMap (orderObj: OrderObject){
+  return orderObj.components.flatMap((component) => (typeof component === 'string' ? component : getFlatMap(component)));
+}
 
-const getVisibleChildComponent = (
+function getVisibleChildComponent(
   sequence: string[],
   orderObj: OrderObject,
-) => {
+){
   const flatObj = getFlatMap(orderObj);
 
   const visibleChild = flatObj.find((component) => sequence.indexOf(component) !== -1);
 
   return visibleChild;
-};
+}
 
 export function StepsPanel({
   sequence,
