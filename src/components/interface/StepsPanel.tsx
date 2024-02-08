@@ -96,6 +96,7 @@ export function StepsPanel({
                 </div>
               )}
               onClick={() => navigate(`/${studyId}/${step}`)}
+              disabled={sequence.indexOf(step) === -1}
             />
           );
         }
