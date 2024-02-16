@@ -31,7 +31,7 @@ function _orderObjectToList(
     });
   }
 
-  return order.components.flat().slice(0, order.numSamples ? order.numSamples : undefined);
+  return order.components.slice(0, order.numSamples ? order.numSamples : undefined).flat();
 }
 
 function orderObjectToList(
@@ -41,7 +41,7 @@ function orderObjectToList(
   const orderCopy = deepCopy(order);
 
   _orderObjectToList(orderCopy, pathsFromFirebase, 'root');
-  return orderCopy.components.flat().slice(0, orderCopy.numSamples ? orderCopy.numSamples : undefined);
+  return orderCopy.components.slice(0, orderCopy.numSamples ? orderCopy.numSamples : undefined).flat();
 }
 
 function _createRandomOrders(order: OrderObject, paths: string[], path: string, index = 0) {
