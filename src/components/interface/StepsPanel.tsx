@@ -25,6 +25,16 @@ function getVisibleChildComponent(sequence: string[], orderObj: OrderObject) {
   return visibleChild;
 }
 
+function getVisibleChildrenComponents(sequence: string[], orderObj: OrderObject) {
+  const flatObj = getFlatMap(orderObj);
+
+  const visibleChildren = flatObj.filter(
+    (component:string) => sequence.indexOf(component) !== -1,
+  );
+
+  return visibleChildren;
+}
+
 function StepItem({
   step,
   currentStep,
@@ -150,19 +160,24 @@ export function StepsPanel({
             />
           );
         }
+
+        const flatSteps = getFlatMap(step);
+        const visibleChildren = getVisibleChildrenComponents(sequence, step);
+
         return (
           <NavLink
             key={idx}
             label={(
               <div
                 style={{
-                  opacity: getVisibleChildComponent(sequence, step) ? 1 : 0.5,
+                  opacity: visibleChildren.length ? 1 : 0.5,
                 }}
               >
                 Group:
                 <Badge ml={5}>
-                  {step.numSamples && (`${step.numSamples}/`)}
-                  {step.components.length}
+                  {visibleChildren.length}
+                  /
+                  {flatSteps.length}
                 </Badge>
                 <Text c="dimmed" display="inline" mr={5} ml={5}>
                   {step.order}
