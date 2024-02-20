@@ -4,7 +4,7 @@ import {
   getDownloadURL, getStorage, ref, uploadBytes,
 } from 'firebase/storage';
 import {
-  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, setDoc,
+  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
@@ -218,21 +218,34 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Study database not initialized');
     }
 
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+
     // Get the latin square
     const sequenceArray: string[][] | null = await this.getSequenceArray();
     if (!sequenceArray) {
       throw new Error('Latin square not initialized');
     }
 
+    // Note intent to get a sequence in the sequenceAssignment collection
+    const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(sequenceAssignmentDoc, 'sequenceAssignment');
+    const participantSequenceAssignmentDoc = doc(sequenceAssignmentCollection, this.currentParticipantId);
+    await setDoc(participantSequenceAssignmentDoc, { participantId: this.currentParticipantId, timestamp: serverTimestamp() });
+
+    // Query all the intents to get a sequence and find our position in the queue
+    const intentsQuery = query(sequenceAssignmentCollection, orderBy('timestamp', 'asc'));
+    const intentDocs = await getDocs(intentsQuery);
+    const intents = intentDocs.docs.map((intent) => intent.data());
+
     // Get the current row
-    const currentRow = sequenceArray.pop();
+    const intentIndex = intents.findIndex((intent) => intent.participantId === this.currentParticipantId);
+    const currentRow = sequenceArray[intentIndex % sequenceArray.length];
 
     if (!currentRow) {
       throw new Error('Latin square is empty');
     }
-
-    // Update the latin square
-    await this.setSequenceArray(sequenceArray);
 
     return currentRow;
   }
