@@ -1228,6 +1228,10 @@
           "description": "The path to the logo image. This is displayed on the landing page and the header.",
           "type": "string"
         },
+        "numSequences": {
+          "description": "The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000.",
+          "type": "number"
+        },
         "sidebar": {
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question.",
           "type": "boolean"

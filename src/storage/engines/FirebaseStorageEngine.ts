@@ -4,7 +4,7 @@ import {
   getDownloadURL, getStorage, ref, uploadBytes,
 } from 'firebase/storage';
 import {
-  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, setDoc,
+  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
@@ -188,11 +188,11 @@ export class FirebaseStorageEngine extends StorageEngine {
 
     if (answer.provenanceGraph) {
       this.localProvenanceCopy[currentStep] = answer.provenanceGraph;
-      await this._pushToFirebaseStorage('provenance');
+      await this._pushToFirebaseStorage(this.currentParticipantId, 'provenance', this.localProvenanceCopy);
     }
 
     this.localWindowEvents[currentStep] = answer.windowEvents;
-    await this._pushToFirebaseStorage('windowEvents');
+    await this._pushToFirebaseStorage(this.currentParticipantId, 'windowEvents', this.localWindowEvents);
   }
 
   async setSequenceArray(latinSquare: string[][]) {
@@ -200,12 +200,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Study database not initialized');
     }
 
-    // convert the latin square to a firebase-friendly format (nested arrays are not supported)
-    const firebaseFriendlyLatinSquare = latinSquare.map((row) => row.join(','));
-
-    const sequenceArrayDoc = doc(this.studyCollection, 'sequenceArray');
-    const sequenceArrayDocData = { sequenceArray: firebaseFriendlyLatinSquare };
-    return await setDoc(sequenceArrayDoc, sequenceArrayDocData);
+    this._pushToFirebaseStorage('', 'sequenceArray', { sequenceArray: latinSquare });
   }
 
   async getSequenceArray() {
@@ -213,19 +208,18 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Study database not initialized');
     }
 
-    const sequenceArrayDoc = doc(this.studyCollection, 'sequenceArray');
-    const sequenceArrayDocData = (await getDoc(sequenceArrayDoc)).data() as { sequenceArray: string[] };
+    const sequenceArrayDocData = await this._getFromFirebaseStorage('', 'sequenceArray');
 
-    if (sequenceArrayDocData === undefined) {
-      return null;
-    }
-    // convert the firebase-friendly format back to a latin square
-    return sequenceArrayDocData.sequenceArray.map((row: string) => row.split(','));
+    return sequenceArrayDocData.sequenceArray;
   }
 
   async getSequence() {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
+    }
+
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
     }
 
     // Get the latin square
@@ -234,15 +228,24 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Latin square not initialized');
     }
 
+    // Note intent to get a sequence in the sequenceAssignment collection
+    const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(sequenceAssignmentDoc, 'sequenceAssignment');
+    const participantSequenceAssignmentDoc = doc(sequenceAssignmentCollection, this.currentParticipantId);
+    await setDoc(participantSequenceAssignmentDoc, { participantId: this.currentParticipantId, timestamp: serverTimestamp() });
+
+    // Query all the intents to get a sequence and find our position in the queue
+    const intentsQuery = query(sequenceAssignmentCollection, orderBy('timestamp', 'asc'));
+    const intentDocs = await getDocs(intentsQuery);
+    const intents = intentDocs.docs.map((intent) => intent.data());
+
     // Get the current row
-    const currentRow = sequenceArray.pop();
+    const intentIndex = intents.findIndex((intent) => intent.participantId === this.currentParticipantId);
+    const currentRow = sequenceArray[intentIndex % sequenceArray.length];
 
     if (!currentRow) {
       throw new Error('Latin square is empty');
     }
-
-    // Update the latin square
-    await this.setSequenceArray(sequenceArray);
 
     return currentRow;
   }
@@ -374,29 +377,28 @@ export class FirebaseStorageEngine extends StorageEngine {
     return db !== undefined;
   }
 
-  private async _getFromFirebaseStorage<T extends 'provenance' | 'windowEvents'>(participantId: string, type: T) {
+  // Firebase storage helpers
+  private async _getFromFirebaseStorage<T extends 'provenance' | 'windowEvents' | 'sequenceArray'>(prefix: string, type: T) {
     const storage = getStorage();
-    const storageRef = ref(storage, `${this.studyId}/${participantId}_${type}`);
+    const storageRef = ref(storage, `${this.studyId}/${prefix}_${type}`);
 
-    let storageObj: Record<string, T extends 'provenance' ? TrrackedProvenance : EventType[]> = {};
+    let storageObj: Record<string, T extends 'provenance' ? TrrackedProvenance : T extends 'windowEvents' ? EventType[] : string[][]> = {};
     try {
       const url = await getDownloadURL(storageRef);
       const response = await fetch(url);
       const fullProvStr = await response.text();
       storageObj = JSON.parse(fullProvStr);
     } catch {
-      console.warn(`Participant ${participantId} does not have ${type} for ${this.studyId}.`);
+      console.warn(`${prefix} does not have ${type} for ${this.studyId}.`);
     }
 
     return storageObj;
   }
 
-  private async _pushToFirebaseStorage<T extends 'provenance' | 'windowEvents'>(type: T) {
-    const objectToUpload = type === 'provenance' ? this.localProvenanceCopy : this.localWindowEvents;
-
+  private async _pushToFirebaseStorage<T extends 'provenance' | 'windowEvents' | 'sequenceArray'>(prefix: string, type: T, objectToUpload: Record<string, T extends 'provenance' ? TrrackedProvenance : T extends 'windowEvents' ? EventType[] : string[][]> = {}) {
     if (Object.keys(objectToUpload).length > 0) {
       const storage = getStorage();
-      const storageRef = ref(storage, `${this.studyId}/${this.currentParticipantId}_${type}`);
+      const storageRef = ref(storage, `${this.studyId}/${prefix}_${type}`);
       const blob = new Blob([JSON.stringify(objectToUpload)], {
         type: 'application/json',
       });
