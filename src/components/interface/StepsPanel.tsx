@@ -5,14 +5,14 @@ import { useNavigate } from 'react-router-dom';
 import { IconArrowsShuffle, IconBrain } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import { createPortal } from 'react-dom';
-import { OrderObject } from '../../parser/types';
+import { ComponentBlock } from '../../parser/types';
 import { Sequence } from '../../store/types';
 import { deepCopy } from '../../utils/deepCopy';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 
-export type OrderObjectWithOrderPath = Omit<OrderObject, 'components'> & { orderPath: string; components: (OrderObjectWithOrderPath | string)[]};
+export type ComponentBlockWithOrderPath = Omit<ComponentBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]};
 
 function findTaskIndexInSequence(sequence: Sequence, step: string, startIndex: number, requestedPath: string): number {
   let index = 0;
@@ -39,7 +39,7 @@ function findTaskIndexInSequence(sequence: Sequence, step: string, startIndex: n
   return index;
 }
 
-function countInterruptionsRecursively(configSequence: OrderObjectWithOrderPath, participantSequence: Sequence) {
+function countInterruptionsRecursively(configSequence: ComponentBlockWithOrderPath, participantSequence: Sequence) {
   let count = 0;
 
   // Loop through the participant sequence and count the interruptions that are defined in the configSequence
@@ -48,7 +48,7 @@ function countInterruptionsRecursively(configSequence: OrderObjectWithOrderPath,
       count += 1;
     } else if (typeof component !== 'string') {
       // If the component is a sequence, find the corresponding sequence in the configSequence and count the interruptions
-      const configSubSequence = configSequence.components.find((c) => typeof c !== 'string' && c.orderPath === component.orderPath) as OrderObjectWithOrderPath;
+      const configSubSequence = configSequence.components.find((c) => typeof c !== 'string' && c.orderPath === component.orderPath) as ComponentBlockWithOrderPath;
       count += countInterruptionsRecursively(configSubSequence, component);
     }
   });
@@ -56,8 +56,8 @@ function countInterruptionsRecursively(configSequence: OrderObjectWithOrderPath,
   return count;
 }
 
-function reorderComponents(configSequence: OrderObjectWithOrderPath['components'], participantSequence: Sequence['components']) {
-  const newComponents: (string | OrderObjectWithOrderPath)[] = [];
+function reorderComponents(configSequence: ComponentBlockWithOrderPath['components'], participantSequence: Sequence['components']) {
+  const newComponents: (string | ComponentBlockWithOrderPath)[] = [];
 
   // Iterate through the sequence components and reorder the orderComponents
   participantSequence.forEach((sequenceComponent) => {
@@ -168,7 +168,7 @@ export function StepsPanel({
   fullSequence,
   participantSequence,
 }: {
-  configSequence: OrderObjectWithOrderPath,
+  configSequence: ComponentBlockWithOrderPath,
   fullSequence: Sequence,
   participantSequence?: Sequence,
 }) {

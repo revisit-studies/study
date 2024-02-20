@@ -342,12 +342,12 @@ interface RandomInterruption {
 
 export type InterruptionBlock = DeterministicInterruption | RandomInterruption;
 
-/** The OrderObject interface is used to define the properties of an order object. This is used to define the order of components in a study. It supports random assignment of trials using a pure random assignment and a latin square. */
-export interface OrderObject {
+/** The ComponentBlock interface is used to define the properties of an order object. This is used to define the order of components in a study. It supports random assignment of trials using a pure random assignment and a latin square. */
+export interface ComponentBlock {
   /** The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed. */
   order: 'random' | 'latinSquare' | 'fixed'
   /** The components that are included in the order. */
-  components: (string | OrderObject)[]
+  components: (string | ComponentBlock)[]
   /** The number of samples to use for the random assignments. This means you can randomize across 3 components while only showing a participant 2 at a time. */
   numSamples?: number
   /** The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks.  */
@@ -372,7 +372,7 @@ export interface StudyConfig {
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
   components: Record<string, IndividualComponent | InheritedComponent>
   /** The order of the components in the study. This might include some randomness. */
-  sequence: OrderObject;
+  sequence: ComponentBlock;
 }
 
 /**
