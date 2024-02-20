@@ -90,7 +90,7 @@
     },
     "ComponentBlock": {
       "additionalProperties": false,
-      "description": "The ComponentBlock interface is used to define the properties of an order object. This is used to define the order of components in a study. It supports random assignment of trials using a pure random assignment and a latin square.",
+      "description": "The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a latin square.",
       "properties": {
         "components": {
           "description": "The components that are included in the order.",
@@ -105,6 +105,10 @@
             ]
           },
           "type": "array"
+        },
+        "id": {
+          "description": "The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.",
+          "type": "string"
         },
         "interruptions": {
           "description": "The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks.",
@@ -125,11 +129,48 @@
             "fixed"
           ],
           "type": "string"
+        },
+        "skip": {
+          "$ref": "#/definitions/SkipCondition",
+          "description": "The skip conditions for the block."
         }
       },
       "required": [
         "order",
         "components"
+      ],
+      "type": "object"
+    },
+    "ComponentBlockCondition": {
+      "additionalProperties": false,
+      "properties": {
+        "check": {
+          "const": "block",
+          "description": "The check we'll perform.",
+          "type": "string"
+        },
+        "condition": {
+          "description": "The condition to check.",
+          "enum": [
+            "numCorrect",
+            "numIncorrect"
+          ],
+          "type": "string"
+        },
+        "to": {
+          "description": "The id of the component or block to skip to",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value to check.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "check",
+        "condition",
+        "value",
+        "to"
       ],
       "type": "object"
     },
@@ -333,6 +374,44 @@
           "$ref": "#/definitions/QuestionnaireComponent"
         }
       ]
+    },
+    "IndividualComponentCondition": {
+      "additionalProperties": false,
+      "description": "The ComponentBlock interface is used to define the properties of an order object. This is used to define the order of components in a study. It supports random assignment of trials using a pure random assignment and a latin square.",
+      "properties": {
+        "check": {
+          "const": "response",
+          "description": "The check we'll perform.",
+          "type": "string"
+        },
+        "id": {
+          "description": "The id of the component to check.",
+          "type": "string"
+        },
+        "responseId": {
+          "description": "The response id to check.",
+          "type": "string"
+        },
+        "to": {
+          "description": "The id of the component or block to skip to",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value to check.",
+          "type": [
+            "string",
+            "number"
+          ]
+        }
+      },
+      "required": [
+        "id",
+        "check",
+        "responseId",
+        "value",
+        "to"
+      ],
+      "type": "object"
     },
     "InheritedComponent": {
       "additionalProperties": false,
@@ -1026,6 +1105,16 @@
         "type"
       ],
       "type": "object"
+    },
+    "SkipCondition": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/IndividualComponentCondition"
+        },
+        {
+          "$ref": "#/definitions/ComponentBlockCondition"
+        }
+      ]
     },
     "SliderResponse": {
       "additionalProperties": false,

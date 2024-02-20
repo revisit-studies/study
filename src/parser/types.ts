@@ -343,7 +343,36 @@ interface RandomInterruption {
 export type InterruptionBlock = DeterministicInterruption | RandomInterruption;
 
 /** The ComponentBlock interface is used to define the properties of an order object. This is used to define the order of components in a study. It supports random assignment of trials using a pure random assignment and a latin square. */
+export interface IndividualComponentCondition {
+  /** The id of the component to check. */
+  id: string;
+  /** The check we'll perform. */
+  check: 'response';
+  /** The response id to check. */
+  responseId: string;
+  /** The value to check. */
+  value: string | number;
+  /** The id of the component or block to skip to */
+  to: string;
+}
+
+export interface ComponentBlockCondition {
+  /** The check we'll perform. */
+  check: 'block';
+  /** The condition to check. */
+  condition: 'numCorrect' | 'numIncorrect';
+  /** The value to check. */
+  value: number;
+  /** The id of the component or block to skip to */
+  to: string;
+}
+
+export type SkipCondition = (IndividualComponentCondition | ComponentBlockCondition);
+
+/** The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a latin square. */
 export interface ComponentBlock {
+  /** The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition. */
+  id?: string
   /** The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed. */
   order: 'random' | 'latinSquare' | 'fixed'
   /** The components that are included in the order. */
@@ -352,6 +381,8 @@ export interface ComponentBlock {
   numSamples?: number
   /** The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks.  */
   interruptions?: InterruptionBlock[];
+  /** The skip conditions for the block. */
+  skip?: SkipCondition
 }
 
 /** An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component). */
