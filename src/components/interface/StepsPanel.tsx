@@ -1,7 +1,7 @@
 import {
   Badge, NavLink, Popover, Text,
 } from '@mantine/core';
-import { ReactNode, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IconArrowsShuffle } from '@tabler/icons-react';
 import { createPortal } from 'react-dom';
@@ -11,7 +11,7 @@ import { deepCopy } from '../../utils/deepCopy';
 import { useCurrentStep } from '../../routes';
 import { IndividualComponent, InheritedComponent, OrderObject } from '../../parser/types';
 
-function getFlatMap(orderObj: OrderObject):string[] {
+function getFlatMap(orderObj: OrderObject): string[] {
   return orderObj.components.flatMap((component) => (typeof component === 'string' ? component : getFlatMap(component)));
 }
 
@@ -19,7 +19,7 @@ function getVisibleChildComponent(sequence: string[], orderObj: OrderObject) {
   const flatObj = getFlatMap(orderObj);
 
   const visibleChild = flatObj.find(
-    (component:string) => sequence.indexOf(component) !== -1,
+    (component: string) => sequence.indexOf(component) !== -1,
   );
 
   return visibleChild;
@@ -29,7 +29,7 @@ function getVisibleChildrenComponents(sequence: string[], orderObj: OrderObject)
   const flatObj = getFlatMap(orderObj);
 
   const visibleChildren = flatObj.filter(
-    (component:string) => sequence.indexOf(component) !== -1,
+    (component: string) => sequence.indexOf(component) !== -1,
   );
 
   return visibleChildren;
@@ -92,19 +92,12 @@ function StepItem({
                   </Text>
                 </div>
               )}
-              {task.meta && <Text fw={900}>Task Meta:</Text>}
-              {task.meta
-                && Object.keys(task.meta).map((key) => (
-                  <div key={key}>
-                    <Text display="inline-block" mr={2}>
-                      {key}
-                      :
-                    </Text>
-                    <Text display="inline-block" mr={2}>
-                      {(task.meta as Record<string, ReactNode>)[key]}
-                    </Text>
-                  </div>
-                ))}
+              {task.meta && (
+                <Text>
+                  <Text fw="900" component="span">Task Meta: </Text>
+                  <pre style={{ margin: 0, padding: 0 }}>{`${JSON.stringify(task.meta, null, 2)}`}</pre>
+                </Text>
+              )}
             </div>
           </Text>
         </Popover.Dropdown>,
