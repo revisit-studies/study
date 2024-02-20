@@ -26,22 +26,20 @@ export default function AppAside() {
   return showAdmin || (currentStep === 'end' && studyConfig.uiConfig.autoDownloadStudy) ? (
     <Aside p="0" width={{ base: 300 }} style={{ zIndex: 0 }}>
       <ScrollArea p="0">
+        {currentStep === 'end' && (
+          <div
+            style={{ padding: 10, paddingBottom: 15, borderBottom: '1px solid #e9ecef' }}
+          >
+            <Text size="md" p={10} weight="bold">
+              Download
+            </Text>
+            <DownloadPanel studyConfig={studyConfig} />
+          </div>
+        )}
         <Text size="md" p={10} weight="bold">
           Study Sequence
         </Text>
         <StepsPanel order={fullOrder} sequence={sequence} />
-        <div
-          style={{ padding: 10, marginTop: 10, borderTop: '1px solid #e9ecef' }}
-        >
-          {currentStep === 'end' && (
-            <>
-              <Text size="md" p={10} weight="bold">
-                Download
-              </Text>
-              <DownloadPanel studyConfig={studyConfig} />
-            </>
-          )}
-        </div>
       </ScrollArea>
     </Aside>
   ) : null;
