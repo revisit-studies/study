@@ -31,7 +31,22 @@ function _orderObjectToList(
     });
   }
 
-  return order.components.slice(0, order.numSamples ? order.numSamples : undefined).flat();
+  let computedComponents = order.components.slice(0, order.numSamples ? order.numSamples : undefined).flat();
+
+  // If we have a break, insert it into the sequence at the correct intervals
+  if (order.break) {
+    const newComponents = [];
+    // eslint-disable-next-line no-plusplus
+    for (let i = 0; i < computedComponents.length; i++) {
+      if (i % order.break.after === 0 && i !== 0) {
+        newComponents.push(...order.break.components);
+      }
+      newComponents.push(computedComponents[i]);
+    }
+    computedComponents = newComponents;
+  }
+
+  return computedComponents;
 }
 
 function orderObjectToList(
