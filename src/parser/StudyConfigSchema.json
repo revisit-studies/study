@@ -28,6 +28,28 @@
       ],
       "type": "object"
     },
+    "BreakBlock": {
+      "additionalProperties": false,
+      "description": "The BreakBlock interface is used to define the properties of a break block. This is used to define the properties of a break block in a study.",
+      "properties": {
+        "after": {
+          "description": "The number of components between breaks.",
+          "type": "number"
+        },
+        "components": {
+          "description": "The components that are included in the break block.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        }
+      },
+      "required": [
+        "after",
+        "components"
+      ],
+      "type": "object"
+    },
     "CheckboxResponse": {
       "additionalProperties": false,
       "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.",
@@ -651,6 +673,10 @@
       "additionalProperties": false,
       "description": "The OrderObject interface is used to define the properties of an order object. This is used to define the order of components in a study. It supports random assignment of trials using a pure random assignment and a latin square.",
       "properties": {
+        "break": {
+          "$ref": "#/definitions/BreakBlock",
+          "description": "The break property specifies a component or list of components to show every x number of study components."
+        },
         "components": {
           "description": "The components that are included in the order.",
           "items": {
