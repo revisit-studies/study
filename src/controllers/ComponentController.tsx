@@ -27,18 +27,6 @@ export default function ComponentController() {
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
 
-  let currentConfig: IndividualComponent;
-  let instruction: string;
-  let instructionLocation: 'aboveStimulus' | 'belowStimulus' | 'sidebar' | undefined;
-  let instructionInSideBar = false;
-  if (currentComponent !== 'end') {
-    currentConfig = isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
-
-    instruction = (currentConfig.instruction || '');
-    ({ instructionLocation } = currentConfig);
-    instructionInSideBar = studyConfig.uiConfig.sidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
-  }
-
   // Disable browser back button from all stimuli
   disableBrowserBack();
 
@@ -55,32 +43,41 @@ export default function ComponentController() {
     }
   }, [setAlertModal, storageEngine, storeDispatch]);
 
-  return currentComponent === 'end'
-    ? <StudyEnd />
-    : (
-      <>
-        {instructionLocation === 'aboveStimulus' && <ReactMarkdownWrapper text={instruction} />}
-        <ResponseBlock
-          key={`${currentStep}-above-response-block`}
-          status={status}
-          config={currentConfig}
-          location="aboveStimulus"
-        />
+  // We're not using hooks below here, so we can return early if we're at the end of the study.
+  // This avoids issues with the component config being undefined for the end of the study.
+  if (currentComponent === 'end') {
+    return <StudyEnd />;
+  }
 
-        <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
-          {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
-          {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} />}
-          {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
-          {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} />}
-        </Suspense>
+  const currentConfig = isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
+  const instruction = (currentConfig.instruction || '');
+  const { instructionLocation } = currentConfig;
+  const instructionInSideBar = studyConfig.uiConfig.sidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
 
-        {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
-        <ResponseBlock
-          key={`${currentStep}-below-response-block`}
-          status={status}
-          config={currentConfig}
-          location="belowStimulus"
-        />
-      </>
-    );
+  return (
+    <>
+      {instructionLocation === 'aboveStimulus' && <ReactMarkdownWrapper text={instruction} />}
+      <ResponseBlock
+        key={`${currentStep}-above-response-block`}
+        status={status}
+        config={currentConfig}
+        location="aboveStimulus"
+      />
+
+      <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
+        {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
+        {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} />}
+        {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
+        {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} />}
+      </Suspense>
+
+      {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
+      <ResponseBlock
+        key={`${currentStep}-below-response-block`}
+        status={status}
+        config={currentConfig}
+        location="belowStimulus"
+      />
+    </>
+  );
 }
