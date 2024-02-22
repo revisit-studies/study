@@ -4,7 +4,7 @@ import {
 } from 'react';
 import { Provider } from 'react-redux';
 import {
-  RouteObject, useParams, useRoutes, useSearchParams,
+  RouteObject, useRoutes, useSearchParams,
 } from 'react-router-dom';
 import { Box, Center, Loader } from '@mantine/core';
 import { parseStudyConfig } from '../parser/parser';
@@ -13,7 +13,7 @@ import {
   Nullable,
   StudyConfig,
 } from '../parser/types';
-import { StudyIdParam } from '../routes';
+import { useStudyId } from '../routes/utils';
 import {
   StudyStoreContext,
   StudyStore,
@@ -24,7 +24,6 @@ import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import ComponentController from '../controllers/ComponentController';
 import { NavigateWithParams } from '../utils/NavigateWithParams';
 import { StepRenderer } from './StepRenderer';
-import { StudyEnd } from './StudyEnd';
 import { useStorageEngine } from '../store/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
 import { PREFIX } from './Prefix';
@@ -46,21 +45,12 @@ export function generateStudiesRoutes(
 
     stepRoutes.push({
       path: '/',
-      element: <NavigateWithParams to={`${sequence[0]}`} replace />,
+      element: <NavigateWithParams to="0" replace />,
     });
 
-    sequence.forEach((step: string) => {
-      if (step === 'end') {
-        stepRoutes.push({
-          path: '/end',
-          element: <StudyEnd />,
-        });
-      } else {
-        stepRoutes.push({
-          path: `/${step}`,
-          element: <ComponentController />,
-        });
-      }
+    stepRoutes.push({
+      path: '/:index',
+      element: <ComponentController />,
     });
 
     const studyRoute: RouteObject = {
@@ -78,7 +68,7 @@ export function Shell({ globalConfig }: {
   globalConfig: GlobalConfig;
 }) {
   // Pull study config
-  const { studyId } = useParams<StudyIdParam>();
+  const studyId = useStudyId();
   if (!studyId || !globalConfig.configsList.find((c) => sanitizeStringForUrl(c))) {
     throw new Error('Study id invalid');
   }

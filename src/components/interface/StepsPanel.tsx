@@ -8,7 +8,7 @@ import { createPortal } from 'react-dom';
 import { useDisclosure } from '@mantine/hooks';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { deepCopy } from '../../utils/deepCopy';
-import { useCurrentStep } from '../../routes';
+import { useCurrentStep } from '../../routes/utils';
 import { IndividualComponent, InheritedComponent, OrderObject } from '../../parser/types';
 
 function getFlatMap(orderObj: OrderObject): string[] {
@@ -37,13 +37,15 @@ function getVisibleChildrenComponents(sequence: string[], orderObj: OrderObject)
 
 function StepItem({
   step,
-  currentStep,
+  index,
+  active,
   sequence,
   task,
   studyId,
 }: {
   step: string;
-  currentStep: string;
+  index: number;
+  active: boolean;
   sequence: string[];
   task: false | IndividualComponent | InheritedComponent;
   studyId: string | null;
@@ -59,7 +61,7 @@ function StepItem({
           onMouseLeave={close}
         >
           <NavLink
-            active={step === currentStep}
+            active={active}
             style={{
               lineHeight: '32px',
               height: '32px',
@@ -70,10 +72,10 @@ function StepItem({
                   opacity: sequence.indexOf(step) === -1 ? '.3' : 1,
                 }}
               >
-                {step === currentStep ? <strong>{step}</strong> : step}
+                {active ? <strong>{step}</strong> : step}
               </div>
             )}
-            onClick={() => navigate(`/${studyId}/${step}`)}
+            onClick={() => navigate(`/${studyId}/${index}`)}
             disabled={sequence.indexOf(step) === -1}
           />
         </div>
@@ -145,7 +147,8 @@ export function StepsPanel({
           return (
             <StepItem
               key={idx}
-              currentStep={currentStep}
+              active={currentStep === idx}
+              index={idx}
               sequence={sequence}
               step={step}
               studyId={studyId}

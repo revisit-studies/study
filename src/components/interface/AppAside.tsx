@@ -8,13 +8,14 @@ import { DownloadPanel } from '../DownloadPanel';
 import { StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoreSelector } from '../../store/store';
-import { useCurrentStep } from '../../routes';
+import { useCurrentStep } from '../../routes/utils';
 import { deepCopy } from '../../utils/deepCopy';
 
 export default function AppAside() {
   const { showAdmin, sequence } = useStoreSelector((state) => state);
 
   const currentStep = useCurrentStep();
+  const currentComponent = sequence[currentStep];
   const studyConfig = useStudyConfig();
 
   const fullOrder = useMemo(() => {
@@ -23,10 +24,10 @@ export default function AppAside() {
     return r;
   }, [studyConfig.sequence]);
 
-  return showAdmin || (currentStep === 'end' && studyConfig.uiConfig.autoDownloadStudy) ? (
+  return showAdmin || (currentComponent === 'end' && studyConfig.uiConfig.autoDownloadStudy) ? (
     <Aside p="0" width={{ base: 300 }} style={{ zIndex: 0 }}>
       <ScrollArea p="0">
-        {currentStep === 'end' && (
+        {currentComponent === 'end' && (
           <div
             style={{ padding: 10, paddingBottom: 15, borderBottom: '1px solid #e9ecef' }}
           >

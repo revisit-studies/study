@@ -5,7 +5,7 @@ import {
   IndividualComponent,
   ResponseBlockLocation,
 } from '../../parser/types';
-import { useCurrentStep } from '../../routes';
+import { useCurrentStep } from '../../routes/utils';
 import { useStoreDispatch, useStoreSelector, useStoreActions } from '../../store/store';
 
 import { deepCopy } from '../../utils/deepCopy';
@@ -28,6 +28,7 @@ export default function ResponseBlock({
   style,
 }: Props) {
   const currentStep = useCurrentStep();
+  const currentComponent = useStoreSelector((state) => state.sequence[currentStep]);
   const storedAnswer = status?.answer;
 
   const configInUse = config as IndividualComponent;
@@ -36,7 +37,7 @@ export default function ResponseBlock({
 
   const storeDispatch = useStoreDispatch();
   const { updateResponseBlockValidation } = useStoreActions();
-  const answerValidator = useAnswerField(responses, currentStep, storedAnswer || {});
+  const answerValidator = useAnswerField(responses, currentComponent, storedAnswer || {});
   const [checkClicked, setCheckClicked] = useState(false);
   const { iframeAnswers } = useStoreSelector((state) => state);
   const hasCorrectAnswer = ((configInUse?.correctAnswer?.length || 0) > 0);
@@ -55,7 +56,7 @@ export default function ResponseBlock({
     storeDispatch(
       updateResponseBlockValidation({
         location,
-        currentStep,
+        currentStep: currentComponent,
         status: answerValidator.isValid(),
         values: deepCopy(answerValidator.values),
       }),

@@ -6,30 +6,38 @@ import ImageController from './ImageController';
 import ReactComponentController from './ReactComponentController';
 import MarkdownController from './MarkdownController';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
-import { useCurrentStep } from '../routes';
+import { useCurrentStep } from '../routes/utils';
 import { useStoredAnswer } from '../store/hooks/useStoredAnswer';
 import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
 import { isInheritedComponent } from '../parser/parser';
 import { IndividualComponent } from '../parser/types';
 import { disableBrowserBack } from '../utils/disableBrowserBack';
 import { useStorageEngine } from '../store/storageEngineHooks';
-import { useStoreActions, useStoreDispatch } from '../store/store';
+import { useStoreActions, useStoreDispatch, useStoreSelector } from '../store/store';
+import { StudyEnd } from '../components/StudyEnd';
 
 // current active stimuli presented to the user
 export default function ComponentController() {
   // Get the config for the current step
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
-  const stepConfig = studyConfig.components[currentStep];
+  const currentComponent = useStoreSelector((state) => state.sequence[currentStep]);
+  const stepConfig = studyConfig.components[currentComponent];
 
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
 
-  const currentConfig = isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
+  let currentConfig: IndividualComponent;
+  let instruction: string;
+  let instructionLocation: 'aboveStimulus' | 'belowStimulus' | 'sidebar' | undefined;
+  let instructionInSideBar = false;
+  if (currentComponent !== 'end') {
+    currentConfig = isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
 
-  const instruction = (currentConfig.instruction || '');
-  const { instructionLocation } = currentConfig;
-  const instructionInSideBar = studyConfig.uiConfig.sidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
+    instruction = (currentConfig.instruction || '');
+    ({ instructionLocation } = currentConfig);
+    instructionInSideBar = studyConfig.uiConfig.sidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
+  }
 
   // Disable browser back button from all stimuli
   disableBrowserBack();
@@ -47,30 +55,32 @@ export default function ComponentController() {
     }
   }, [setAlertModal, storageEngine, storeDispatch]);
 
-  return (
-    <>
-      {instructionLocation === 'aboveStimulus' && <ReactMarkdownWrapper text={instruction} />}
-      <ResponseBlock
-        key={`${currentStep}-above-response-block`}
-        status={status}
-        config={currentConfig}
-        location="aboveStimulus"
-      />
+  return currentComponent === 'end'
+    ? <StudyEnd />
+    : (
+      <>
+        {instructionLocation === 'aboveStimulus' && <ReactMarkdownWrapper text={instruction} />}
+        <ResponseBlock
+          key={`${currentStep}-above-response-block`}
+          status={status}
+          config={currentConfig}
+          location="aboveStimulus"
+        />
 
-      <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
-        {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
-        {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} />}
-        {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
-        {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} />}
-      </Suspense>
+        <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
+          {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
+          {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} />}
+          {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
+          {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} />}
+        </Suspense>
 
-      {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
-      <ResponseBlock
-        key={`${currentStep}-below-response-block`}
-        status={status}
-        config={currentConfig}
-        location="belowStimulus"
-      />
-    </>
-  );
+        {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
+        <ResponseBlock
+          key={`${currentStep}-below-response-block`}
+          status={status}
+          config={currentConfig}
+          location="belowStimulus"
+        />
+      </>
+    );
 }

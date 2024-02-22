@@ -1,7 +1,7 @@
 // rules-of-hooks is disabled because this is a custom hook that is only called in functional components
 import { useEffect } from 'react';
 import { useStoreActions, useStoreDispatch } from '../store/store';
-import { useCurrentStep } from '../routes';
+import { useCurrentStep } from '../routes/utils';
 
 // Show the error modal when the participant tries to use the browser back button
 export function disableBrowserBack() {

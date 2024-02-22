@@ -5,8 +5,9 @@ import { Button, Grid } from '@mantine/core';
 import { IconCircleCheck } from '@tabler/icons-react';
 import { getHotkeyHandler } from '@mantine/hooks';
 import { StimulusParams } from '../../store/types';
-import { useCurrentStep } from '../../routes';
+import { useCurrentStep } from '../../routes/utils';
 import { useNextStep } from '../../store/hooks/useNextStep';
+import { useStoreSelector } from '../../store/store';
 
 function Ranking({ rankings }: { rankings: number[] }) {
   return (
@@ -36,7 +37,8 @@ function FairnessJND({
 }: StimulusParams<{
   data: { r1: number[]; r2: number[]; r1ARP: string; r2ARP: string };
 }>) {
-  const id = useCurrentStep();
+  const currentStep = useCurrentStep();
+  const id = useStoreSelector((state) => state.sequence[currentStep]);
   const [userChoice, setUserChoice] = useState('');
 
   const { goToNextStep, isNextDisabled } = useNextStep();

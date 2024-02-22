@@ -5,9 +5,10 @@ import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import ResponseBlock from '../response/ResponseBlock';
-import { useCurrentStep } from '../../routes';
+import { useCurrentStep } from '../../routes/utils';
 import { IndividualComponent } from '../../parser/types';
 import { isInheritedComponent } from '../../parser/parser';
+import { useStoreSelector } from '../../store/store';
 
 export default function AppNavBar() {
   const trialHasSideBar = useStudyConfig()?.uiConfig.sidebar;
@@ -16,7 +17,8 @@ export default function AppNavBar() {
   // Get the config for the current step
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
-  const stepConfig = studyConfig.components[currentStep];
+  const currentComponent = useStoreSelector((state) => state.sequence[currentStep]);
+  const stepConfig = studyConfig.components[currentComponent];
 
   const currentConfig = useMemo(() => {
     if (stepConfig) {
@@ -57,7 +59,7 @@ export default function AppNavBar() {
       {trialHasSideBarResponses && (
         <Navbar.Section p="xl">
           <ResponseBlock
-            key={`${currentStep}-sidebar-response-block`}
+            key={`${currentComponent}-sidebar-response-block`}
             status={status}
             config={currentConfig}
             location="sidebar"
@@ -67,7 +69,7 @@ export default function AppNavBar() {
     </Navbar>
   ) : (
     <ResponseBlock
-      key={`${currentStep}-sidebar-response-block`}
+      key={`${currentComponent}-sidebar-response-block`}
       status={status}
       config={currentConfig}
       location="sidebar"
