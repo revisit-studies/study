@@ -63,26 +63,24 @@ export async function studyStoreCreator(
           payload,
         }: PayloadAction<{
           location: ResponseBlockLocation;
-          currentStep: string | undefined;
+          identifier: string;
           status: boolean;
           values: object;
           provenanceGraph?: TrrackedProvenance;
         }>,
       ) => {
-        if (!payload.currentStep || payload.currentStep.length === 0) return;
-
-        if (!state.trialValidation[payload.currentStep]) {
-          state.trialValidation[payload.currentStep] = {
+        if (!state.trialValidation[payload.identifier]) {
+          state.trialValidation[payload.identifier] = {
             aboveStimulus: { valid: false, values: {} },
             belowStimulus: { valid: false, values: {} },
             sidebar: { valid: false, values: {} },
             provenanceGraph: undefined,
           };
         }
-        state.trialValidation[payload.currentStep][payload.location] = { valid: payload.status, values: payload.values };
+        state.trialValidation[payload.identifier][payload.location] = { valid: payload.status, values: payload.values };
 
         if (payload.provenanceGraph) {
-          state.trialValidation[payload.currentStep].provenanceGraph = payload.provenanceGraph;
+          state.trialValidation[payload.identifier].provenanceGraph = payload.provenanceGraph;
         }
       },
       saveTrialAnswer(

@@ -22,7 +22,7 @@ function ReactComponentController({ currentConfig }: { currentConfig: ReactCompo
   function setAnswer({ status, provenanceGraph, answers }: Parameters<StimulusParams<unknown>['setAnswer']>[0]) {
     storeDispatch(updateResponseBlockValidation({
       location: 'sidebar',
-      currentStep: currentComponent,
+      identifier: `${currentComponent}_${currentStep}`,
       status,
       values: answers,
       provenanceGraph,

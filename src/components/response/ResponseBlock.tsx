@@ -37,7 +37,7 @@ export default function ResponseBlock({
 
   const storeDispatch = useStoreDispatch();
   const { updateResponseBlockValidation } = useStoreActions();
-  const answerValidator = useAnswerField(responses, currentComponent, storedAnswer || {});
+  const answerValidator = useAnswerField(responses, currentStep, storedAnswer || {});
   const [checkClicked, setCheckClicked] = useState(false);
   const { iframeAnswers } = useStoreSelector((state) => state);
   const hasCorrectAnswer = ((configInUse?.correctAnswer?.length || 0) > 0);
@@ -56,7 +56,7 @@ export default function ResponseBlock({
     storeDispatch(
       updateResponseBlockValidation({
         location,
-        currentStep: currentComponent,
+        identifier: `${currentComponent}_${currentStep}`,
         status: answerValidator.isValid(),
         values: deepCopy(answerValidator.values),
       }),

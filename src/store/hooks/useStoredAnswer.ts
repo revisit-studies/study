@@ -11,5 +11,6 @@ export function useStoredAnswer() {
   const { answers } = useStoreSelector((state) => state);
   const currentStep = useCurrentStep();
   const currentComponent = useStoreSelector((state) => state.sequence[currentStep]);
-  return answers[currentComponent];
+  const identifier = `${currentComponent}_${currentStep}`;
+  return answers[identifier];
 }
