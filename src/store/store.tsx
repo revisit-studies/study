@@ -127,7 +127,7 @@ type StoreDispatch = StudyStore['store']['dispatch'];
 export const useStoreDispatch: () => StoreDispatch = useDispatch;
 export const useStoreSelector: TypedUseSelectorHook<StoreState> = useSelector;
 
-export function useAreResponsesValid(id?: string) {
+export function useAreResponsesValid(id: string) {
   return useStoreSelector((state) => {
     if (id === undefined || id.length === 0) return true;
 

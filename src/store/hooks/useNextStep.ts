@@ -17,6 +17,7 @@ import { useWindowEvents } from './useWindowEvents';
 export function useNextStep() {
   const currentStep = useCurrentStep();
   const currentComponent = useStoreSelector((state) => state.sequence[currentStep]);
+  const identifier = `${currentComponent}_${currentStep}`;
 
   const { sequence, trialValidation } = useStoreSelector(
     (state) => state,
@@ -28,7 +29,7 @@ export function useNextStep() {
   const { saveTrialAnswer, setIframeAnswers } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
-  const areResponsesValid = useAreResponsesValid(currentComponent);
+  const areResponsesValid = useAreResponsesValid(identifier);
 
   // Status of the next button. If false, the next button should be disabled
   const isNextDisabled = !areResponsesValid;
@@ -46,7 +47,7 @@ export function useNextStep() {
   const windowEvents = useWindowEvents();
   const goToNextStep = useCallback(() => {
     // Get answer from across the 3 response blocks and the provenance graph
-    const trialValidationCopy = deepCopy(trialValidation[currentComponent]);
+    const trialValidationCopy = deepCopy(trialValidation[identifier]);
     const answer = Object.values(trialValidationCopy).reduce((acc, curr) => {
       if (Object.hasOwn(curr, 'values')) {
         return { ...acc, ...(curr as ValidationStatus).values };
@@ -58,8 +59,6 @@ export function useNextStep() {
 
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
-
-    const identifier = `${currentComponent}_${currentStep}`;
 
     if (Object.keys(storedAnswer || {}).length === 0) {
       storeDispatch(
@@ -101,6 +100,7 @@ export function useNextStep() {
     saveTrialAnswer,
     computedTo,
     windowEvents,
+    identifier,
   ]);
 
   return {
