@@ -19,7 +19,7 @@ export function useNextStep() {
   const currentComponent = useStoreSelector((state) => state.sequence[currentStep]);
   const identifier = `${currentComponent}_${currentStep}`;
 
-  const { sequence, trialValidation } = useStoreSelector(
+  const { trialValidation } = useStoreSelector(
     (state) => state,
   );
 
@@ -38,7 +38,7 @@ export function useNextStep() {
 
   const navigate = useNavigate();
 
-  const nextStep = useMemo(() => currentStep + 1, [currentStep, sequence]);
+  const nextStep = useMemo(() => currentStep + 1, [currentStep]);
 
   const computedTo = `/${useStudyId()}/${nextStep}`;
 
