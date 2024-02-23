@@ -15,12 +15,12 @@ export async function studyStoreCreator(
   const emptyAnswers = { ...sequence.map((id) => ({ [id]: {} })) };
   const emptyValidation: TrialValidation = Object.assign(
     {},
-    ...sequence.map((id) => ({ [id]: { aboveStimulus: { valid: false, values: {} }, belowStimulus: { valid: false, values: {} }, sidebar: { valid: false, values: {} } } })),
+    ...sequence.map((id, idx) => ({ [`${id}_${idx}`]: { aboveStimulus: { valid: false, values: {} }, belowStimulus: { valid: false, values: {} }, sidebar: { valid: false, values: {} } } })),
   );
   const allValid = Object.assign(
     {},
-    ...sequence.map((id) => ({
-      [id]: {
+    ...sequence.map((id, idx) => ({
+      [`${id}_${idx}`]: {
         aboveStimulus: true, belowStimulus: true, sidebar: true, values: {},
       },
     })),
