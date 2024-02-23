@@ -33,37 +33,6 @@ async function fetchStudyConfig(configLocation: string, configKey: string) {
   return parseStudyConfig(config, configKey);
 }
 
-export function generateStudiesRoutes(
-  studyId: Nullable<string>,
-  config: Nullable<StudyConfig>,
-  sequence: Nullable<string[]>,
-) {
-  const routes: RouteObject[] = [];
-
-  if (studyId && config && sequence) {
-    const stepRoutes: RouteObject[] = [];
-
-    stepRoutes.push({
-      path: '/',
-      element: <NavigateWithParams to="0" replace />,
-    });
-
-    stepRoutes.push({
-      path: '/:index',
-      element: <ComponentController />,
-    });
-
-    const studyRoute: RouteObject = {
-      element: <StepRenderer />,
-      children: stepRoutes,
-    };
-
-    routes.push(studyRoute);
-  }
-
-  return routes;
-}
-
 export function Shell({ globalConfig }: {
   globalConfig: GlobalConfig;
 }) {
@@ -112,7 +81,19 @@ export function Shell({ globalConfig }: {
       setStore(newStore);
 
       // Initialize the routing
-      setRoutes(generateStudiesRoutes(studyId, activeConfig, participantSession.sequence));
+      setRoutes([{
+        element: <StepRenderer />,
+        children: [
+          {
+            path: '/',
+            element: <NavigateWithParams to="0" replace />,
+          },
+          {
+            path: '/:index',
+            element: <ComponentController />,
+          },
+        ],
+      }]);
     }
     initializeUserStoreRouting();
   }, [storageEngine, activeConfig, studyId, searchParams]);
