@@ -31,7 +31,7 @@ export abstract class StorageEngine {
 
   abstract clearCurrentParticipantId(): Promise<void>;
 
-  abstract saveAnswer(currentStep: string, answer: StoredAnswer): Promise<void>;
+  abstract saveAnswer(identifier: string, answer: StoredAnswer): Promise<void>;
 
   abstract setSequenceArray(latinSquare: string[][]): Promise<void>;
 

@@ -59,10 +59,12 @@ export function useNextStep() {
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
 
+    const identifier = `${currentComponent}_${currentStep}`;
+
     if (Object.keys(storedAnswer || {}).length === 0) {
       storeDispatch(
         saveTrialAnswer({
-          currentStep: currentComponent,
+          identifier,
           answer,
           startTime,
           endTime,
@@ -73,7 +75,7 @@ export function useNextStep() {
       // Update database
       if (storageEngine) {
         storageEngine.saveAnswer(
-          currentComponent,
+          identifier,
           {
             answer,
             startTime,

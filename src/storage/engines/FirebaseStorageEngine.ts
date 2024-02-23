@@ -166,7 +166,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return await this.localForage.removeItem('currentParticipantId');
   }
 
-  async saveAnswer(currentStep: string, answer: StoredAnswer) {
+  async saveAnswer(identifier: string, answer: StoredAnswer) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -184,14 +184,14 @@ export class FirebaseStorageEngine extends StorageEngine {
       endTime: answer.endTime,
     };
 
-    await setDoc(participantDoc, { answers: { [currentStep]: answerToSave } }, { merge: true });
+    await setDoc(participantDoc, { answers: { [identifier]: answerToSave } }, { merge: true });
 
     if (answer.provenanceGraph) {
-      this.localProvenanceCopy[currentStep] = answer.provenanceGraph;
+      this.localProvenanceCopy[identifier] = answer.provenanceGraph;
       await this._pushToFirebaseStorage(this.currentParticipantId, 'provenance', this.localProvenanceCopy);
     }
 
-    this.localWindowEvents[currentStep] = answer.windowEvents;
+    this.localWindowEvents[identifier] = answer.windowEvents;
     await this._pushToFirebaseStorage(this.currentParticipantId, 'windowEvents', this.localWindowEvents);
   }
 

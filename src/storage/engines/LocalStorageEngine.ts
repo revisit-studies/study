@@ -95,7 +95,7 @@ export class LocalStorageEngine extends StorageEngine {
     await this.studyDatabase.removeItem('currentParticipant');
   }
 
-  async saveAnswer(currentStep: string, answer: StoredAnswer) {
+  async saveAnswer(identifier: string, answer: StoredAnswer) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
@@ -111,7 +111,7 @@ export class LocalStorageEngine extends StorageEngine {
     }
 
     // Save answer
-    participant.answers[currentStep] = answer;
+    participant.answers[identifier] = answer;
     await this.studyDatabase.setItem(this.currentParticipantId, participant);
   }
 
