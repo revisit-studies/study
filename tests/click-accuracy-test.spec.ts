@@ -24,5 +24,5 @@ test('test', async ({ page }) => {
   await page.getByRole('button', { name: 'Next' }).click();
 
   // Check that the thank you message is displayed
-  await page.getByText('Thank you for completing the study. You may close this window now.').click();
+  await page.getByText('Please wait while your answers are uploaded.').click();
 });

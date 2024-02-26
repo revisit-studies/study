@@ -50,6 +50,6 @@ test('test', async ({ page }) => {
   await page.getByRole('button', { name: 'Next' }).click();
 
   // Check that the end of study text renders
-  const endText = await page.getByText('Thank you for completing the study. You may close this window now.');
+  const endText = await page.getByText('Please wait while your answers are uploaded.');
   await expect(endText).toBeVisible();
 });
