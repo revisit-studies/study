@@ -27,13 +27,13 @@ export function findTaskIndexInSequence(sequence: Sequence, step: string, startI
     const component = sequence.components[i];
     if (typeof component === 'string') {
       if (requestedPath === currentPath && component === step && i >= startIndex) {
-        return index;
+        break;
       }
       index += 1;
     } else {
       index += findTaskIndexInSequence(component, step, startIndex, requestedPath, `${currentPath}-${i}`);
-      if (requestedPath === `${currentPath}-${i}`) {
-        return index - 1;
+      if (requestedPath.includes(`${currentPath}-${i}`)) {
+        break;
       }
     }
   }
