@@ -14,7 +14,7 @@ import { Sequence } from '../../store/types';
 import { findTaskIndexInSequence, getSequenceFlatMap, getSubSequence } from '../../utils/getSequenceFlatMap';
 
 function JSONstringifyOrdered(obj: object) {
-  const allKeys = new Set();
+  const allKeys = new Set<string>();
   // eslint-disable-next-line no-sequences
   JSON.stringify(obj, (key, value) => (allKeys.add(key), value));
   return JSON.stringify(obj, Array.from(allKeys).sort());
@@ -134,7 +134,7 @@ export function StepsPanel({
 
   const parentPath = path.split('-').slice(0, -1).join('-');
 
-  let sequence: Sequence | undefined = getSubSequence(fullSequence, path);
+  let sequence: Sequence = getSubSequence(fullSequence, path);
   let order: OrderObject;
 
   if (sequence === undefined) {
@@ -186,7 +186,7 @@ export function StepsPanel({
           );
         }
 
-        const orderIndex = order.components.findIndex((c, i) => {
+        const orderIndex = order.components.findIndex((c) => {
           if (JSONstringifyOrdered(c as OrderObject) === JSONstringifyOrdered(step)) {
             return true;
           }

@@ -16,6 +16,7 @@ import {
 } from '../../store/types';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 export class FirebaseStorageEngine extends StorageEngine {
   private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
@@ -365,11 +366,11 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
 
     // Loop over the sequence and check if all answers are present
-    const allAnswersPresent = participantData.sequence.every((step) => {
+    const allAnswersPresent = getSequenceFlatMap(participantData.sequence).every((step, idx) => {
       if (step === 'end') {
         return true;
       }
-      return participantData.answers[step] !== undefined;
+      return participantData.answers[`${step}_${idx}`] !== undefined;
     });
 
     return allAnswersPresent;
