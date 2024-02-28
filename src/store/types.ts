@@ -41,10 +41,15 @@ export interface StimulusParams<T> {
   setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
 }
 
+export interface Sequence {
+  path: string;
+  components: (string | Sequence)[];
+}
+
 export interface StoreState {
   studyId: string;
   answers: Record<string, StoredAnswer>;
-  sequence: string[]
+  sequence: Sequence;
   config: StudyConfig;
   showAdmin: boolean;
   showHelpText: boolean;

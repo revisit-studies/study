@@ -3,23 +3,26 @@ import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { ResponseBlockLocation, StudyConfig } from '../parser/types';
 import {
-  StoredAnswer, TrialValidation, TrrackedProvenance, StoreState,
+  StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence,
 } from './types';
+import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 
 export async function studyStoreCreator(
   studyId: string,
   config: StudyConfig,
-  sequence: string[],
+  sequence: Sequence,
   answers: Record<string, StoredAnswer>,
 ) {
-  const emptyAnswers = { ...sequence.map((id) => ({ [id]: {} })) };
+  const flatSequence = getSequenceFlatMap(sequence);
+
+  const emptyAnswers = { ...flatSequence.map((id) => ({ [id]: {} })) };
   const emptyValidation: TrialValidation = Object.assign(
     {},
-    ...sequence.map((id, idx) => ({ [`${id}_${idx}`]: { aboveStimulus: { valid: false, values: {} }, belowStimulus: { valid: false, values: {} }, sidebar: { valid: false, values: {} } } })),
+    ...flatSequence.map((id, idx) => ({ [`${id}_${idx}`]: { aboveStimulus: { valid: false, values: {} }, belowStimulus: { valid: false, values: {} }, sidebar: { valid: false, values: {} } } })),
   );
   const allValid = Object.assign(
     {},
-    ...sequence.map((id, idx) => ({
+    ...flatSequence.map((id, idx) => ({
       [`${id}_${idx}`]: {
         aboveStimulus: true, belowStimulus: true, sidebar: true, values: {},
       },
@@ -140,4 +143,8 @@ export function useAreResponsesValid(id: string) {
 
     return Object.values(valid).every((x) => x);
   });
+}
+
+export function useFlatSequence(): string[] {
+  return useStoreSelector((state) => getSequenceFlatMap(state.sequence));
 }

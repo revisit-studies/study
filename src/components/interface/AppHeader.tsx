@@ -18,19 +18,22 @@ import {
 import { useState } from 'react';
 import { useHref } from 'react-router-dom';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
-import { useStoreDispatch, useStoreSelector, useStoreActions } from '../../store/store';
+import {
+  useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,
+} from '../../store/store';
 import { useStorageEngine } from '../../store/storageEngineHooks';
 import { PREFIX } from '../Prefix';
 
 export default function AppHeader() {
-  const { config: studyConfig, sequence: order } = useStoreSelector((state) => state);
+  const { config: studyConfig } = useStoreSelector((state) => state);
+  const flatSequence = useFlatSequence();
   const storeDispatch = useStoreDispatch();
   const { toggleShowHelpText, toggleShowAdmin } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
   const currentStep = useCurrentStep();
 
-  const progressBarMax = order.length - 1;
+  const progressBarMax = flatSequence.length - 1;
   const progressPercent = (currentStep / progressBarMax) * 100;
 
   const [menuOpened, setMenuOpened] = useState(false);

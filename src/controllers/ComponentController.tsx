@@ -13,7 +13,7 @@ import { isInheritedComponent } from '../parser/parser';
 import { IndividualComponent } from '../parser/types';
 import { disableBrowserBack } from '../utils/disableBrowserBack';
 import { useStorageEngine } from '../store/storageEngineHooks';
-import { useStoreActions, useStoreDispatch, useStoreSelector } from '../store/store';
+import { useFlatSequence, useStoreActions, useStoreDispatch } from '../store/store';
 import { StudyEnd } from '../components/StudyEnd';
 
 // current active stimuli presented to the user
@@ -21,7 +21,7 @@ export default function ComponentController() {
   // Get the config for the current step
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
-  const currentComponent = useStoreSelector((state) => state.sequence[currentStep]);
+  const currentComponent = useFlatSequence()[currentStep];
   const stepConfig = studyConfig.components[currentComponent];
 
   // If we have a trial, use that config to render the right component else use the step

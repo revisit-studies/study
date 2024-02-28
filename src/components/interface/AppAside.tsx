@@ -7,7 +7,7 @@ import React, { useMemo } from 'react';
 import { DownloadPanel } from '../DownloadPanel';
 import { StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
-import { useStoreSelector } from '../../store/store';
+import { useFlatSequence, useStoreSelector } from '../../store/store';
 import { useCurrentStep } from '../../routes/utils';
 import { deepCopy } from '../../utils/deepCopy';
 
@@ -15,7 +15,7 @@ export default function AppAside() {
   const { showAdmin, sequence } = useStoreSelector((state) => state);
 
   const currentStep = useCurrentStep();
-  const currentComponent = sequence[currentStep];
+  const currentComponent = useFlatSequence()[currentStep];
   const studyConfig = useStudyConfig();
 
   const fullOrder = useMemo(() => {

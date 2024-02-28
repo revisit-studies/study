@@ -5,6 +5,7 @@ import {
   useStoreActions,
   useStoreDispatch,
   useAreResponsesValid,
+  useFlatSequence,
 } from '../store';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 
@@ -16,7 +17,7 @@ import { useWindowEvents } from './useWindowEvents';
 
 export function useNextStep() {
   const currentStep = useCurrentStep();
-  const currentComponent = useStoreSelector((state) => state.sequence[currentStep]);
+  const currentComponent = useFlatSequence()[currentStep];
   const identifier = `${currentComponent}_${currentStep}`;
 
   const { trialValidation } = useStoreSelector(

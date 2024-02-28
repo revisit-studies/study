@@ -11,7 +11,9 @@ import { getAuth, signInAnonymously } from '@firebase/auth';
 import localforage from 'localforage';
 import { StorageEngine } from './StorageEngine';
 import { ParticipantData } from '../types';
-import { EventType, StoredAnswer, TrrackedProvenance } from '../../store/types';
+import {
+  EventType, Sequence, StoredAnswer, TrrackedProvenance,
+} from '../../store/types';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
 
@@ -195,7 +197,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     await this._pushToFirebaseStorage(this.currentParticipantId, 'windowEvents', this.localWindowEvents);
   }
 
-  async setSequenceArray(latinSquare: string[][]) {
+  async setSequenceArray(latinSquare: Sequence[]) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -223,7 +225,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
 
     // Get the latin square
-    const sequenceArray: string[][] | null = await this.getSequenceArray();
+    const sequenceArray: Sequence[] | null = await this.getSequenceArray();
     if (!sequenceArray) {
       throw new Error('Latin square not initialized');
     }
@@ -382,7 +384,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     const storage = getStorage();
     const storageRef = ref(storage, `${this.studyId}/${prefix}_${type}`);
 
-    let storageObj: Record<string, T extends 'provenance' ? TrrackedProvenance : T extends 'windowEvents' ? EventType[] : string[][]> = {};
+    let storageObj: Record<string, T extends 'provenance' ? TrrackedProvenance : T extends 'windowEvents' ? EventType[] :Sequence[]> = {};
     try {
       const url = await getDownloadURL(storageRef);
       const response = await fetch(url);
@@ -395,7 +397,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return storageObj;
   }
 
-  private async _pushToFirebaseStorage<T extends 'provenance' | 'windowEvents' | 'sequenceArray'>(prefix: string, type: T, objectToUpload: Record<string, T extends 'provenance' ? TrrackedProvenance : T extends 'windowEvents' ? EventType[] : string[][]> = {}) {
+  private async _pushToFirebaseStorage<T extends 'provenance' | 'windowEvents' | 'sequenceArray'>(prefix: string, type: T, objectToUpload: Record<string, T extends 'provenance' ? TrrackedProvenance : T extends 'windowEvents' ? EventType[] : Sequence[]> = {}) {
     if (Object.keys(objectToUpload).length > 0) {
       const storage = getStorage();
       const storageRef = ref(storage, `${this.studyId}/${prefix}_${type}`);

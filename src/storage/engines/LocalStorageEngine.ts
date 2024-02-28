@@ -2,7 +2,7 @@ import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import { StorageEngine } from './StorageEngine';
 import { ParticipantData } from '../types';
-import { StoredAnswer } from '../../store/types';
+import { Sequence, StoredAnswer } from '../../store/types';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
 
@@ -115,7 +115,7 @@ export class LocalStorageEngine extends StorageEngine {
     await this.studyDatabase.setItem(this.currentParticipantId, participant);
   }
 
-  async setSequenceArray(sequenceArray: string[][]) {
+  async setSequenceArray(sequenceArray: Sequence[]) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
@@ -129,7 +129,7 @@ export class LocalStorageEngine extends StorageEngine {
     }
 
     // Get the latin square
-    const sequenceArray: string[][] | null = await this.studyDatabase.getItem('sequenceArray');
+    const sequenceArray: Sequence[] | null = await this.studyDatabase.getItem('sequenceArray');
     if (!sequenceArray) {
       throw new Error('Latin square not initialized');
     }
@@ -151,7 +151,7 @@ export class LocalStorageEngine extends StorageEngine {
       throw new Error('Study database not initialized');
     }
 
-    return await this.studyDatabase.getItem('sequenceArray') as string[][] | null;
+    return await this.studyDatabase.getItem('sequenceArray') as Sequence[] | null;
   }
 
   async getAllParticipantsData() {

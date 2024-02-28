@@ -7,7 +7,7 @@ import { getHotkeyHandler } from '@mantine/hooks';
 import { StimulusParams } from '../../store/types';
 import { useCurrentStep } from '../../routes/utils';
 import { useNextStep } from '../../store/hooks/useNextStep';
-import { useStoreSelector } from '../../store/store';
+import { useFlatSequence } from '../../store/store';
 
 function Ranking({ rankings }: { rankings: number[] }) {
   return (
@@ -38,7 +38,7 @@ function FairnessJND({
   data: { r1: number[]; r2: number[]; r1ARP: string; r2ARP: string };
 }>) {
   const currentStep = useCurrentStep();
-  const id = useStoreSelector((state) => state.sequence[currentStep]);
+  const id = useFlatSequence()[currentStep];
   const [userChoice, setUserChoice] = useState('');
 
   const { goToNextStep, isNextDisabled } = useNextStep();

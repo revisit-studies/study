@@ -8,7 +8,7 @@ import ResponseBlock from '../response/ResponseBlock';
 import { useCurrentStep } from '../../routes/utils';
 import { IndividualComponent } from '../../parser/types';
 import { isInheritedComponent } from '../../parser/parser';
-import { useStoreSelector } from '../../store/store';
+import { useFlatSequence } from '../../store/store';
 
 export default function AppNavBar() {
   const trialHasSideBar = useStudyConfig()?.uiConfig.sidebar;
@@ -17,7 +17,7 @@ export default function AppNavBar() {
   // Get the config for the current step
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
-  const currentComponent = useStoreSelector((state) => state.sequence[currentStep]);
+  const currentComponent = useFlatSequence()[currentStep];
   const stepConfig = studyConfig.components[currentComponent];
 
   const currentConfig = useMemo(() => {
