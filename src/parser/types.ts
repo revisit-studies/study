@@ -322,14 +322,25 @@ export interface QuestionnaireComponent extends BaseIndividualComponent {
 
 export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent;
 
-/** The BreakBlock interface is used to define the properties of a break block. This is used to define the properties of a break block in a study. */
-export interface BreakBlock {
+interface DeterministicInterruption {
+  /** The Location of the first instance of the interruption. If this is set to 2, the interruption will be shown after the second component (inserted at index 2). */
+  firstLocation: number;
   /** The number of components between breaks. */
-  after: number;
-  /** The components that are included in the break block. */
-  // eslint-disable-next-line no-use-before-define
+  spacing: number;
+  /** The components that are included in the interruption. These reference components in the StudyConfig.components section of the config. */
   components: (string)[]
 }
+
+interface RandomInterruption {
+  /** If spacing is set to random, reVISit will add interruptions randomly */
+  spacing: 'random';
+  /** The number of times the interruption will be randomly added */
+  numInterruptions: number;
+  /** The components that are included in the interruption. These reference components in the StudyConfig.components section of the config. */
+  components: (string)[];
+}
+
+export type InterruptionBlock = DeterministicInterruption | RandomInterruption;
 
 /** The OrderObject interface is used to define the properties of an order object. This is used to define the order of components in a study. It supports random assignment of trials using a pure random assignment and a latin square. */
 export interface OrderObject {
@@ -339,8 +350,8 @@ export interface OrderObject {
   components: (string | OrderObject)[]
   /** The number of samples to use for the random assignments. This means you can randomize across 3 components while only showing a participant 2 at a time. */
   numSamples?: number
-  /** The break property specifies a component or list of components to show every x number of study components. */
-  break?: BreakBlock;
+  /** The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks.  */
+  interruptions?: InterruptionBlock[];
 }
 
 /** An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component). */

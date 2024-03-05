@@ -28,28 +28,6 @@
       ],
       "type": "object"
     },
-    "BreakBlock": {
-      "additionalProperties": false,
-      "description": "The BreakBlock interface is used to define the properties of a break block. This is used to define the properties of a break block in a study.",
-      "properties": {
-        "after": {
-          "description": "The number of components between breaks.",
-          "type": "number"
-        },
-        "components": {
-          "description": "The components that are included in the break block.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
-        }
-      },
-      "required": [
-        "after",
-        "components"
-      ],
-      "type": "object"
-    },
     "CheckboxResponse": {
       "additionalProperties": false,
       "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.",
@@ -399,6 +377,63 @@
       ],
       "type": "object"
     },
+    "InterruptionBlock": {
+      "anyOf": [
+        {
+          "additionalProperties": false,
+          "properties": {
+            "components": {
+              "description": "The components that are included in the interruption. These reference components in the StudyConfig.components section of the config.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "firstLocation": {
+              "description": "The Location of the first instance of the interruption. If this is set to 2, the interruption will be shown after the second component (inserted at index 2).",
+              "type": "number"
+            },
+            "spacing": {
+              "description": "The number of components between breaks.",
+              "type": "number"
+            }
+          },
+          "required": [
+            "firstLocation",
+            "spacing",
+            "components"
+          ],
+          "type": "object"
+        },
+        {
+          "additionalProperties": false,
+          "properties": {
+            "components": {
+              "description": "The components that are included in the interruption. These reference components in the StudyConfig.components section of the config.",
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "numInterruptions": {
+              "description": "The number of times the interruption will be randomly added",
+              "type": "number"
+            },
+            "spacing": {
+              "const": "random",
+              "description": "If spacing is set to random, reVISit will add interruptions randomly",
+              "type": "string"
+            }
+          },
+          "required": [
+            "spacing",
+            "numInterruptions",
+            "components"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "LikertResponse": {
       "additionalProperties": false,
       "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the preset. For example, preset: 5 will render 5 radio buttons, and preset: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.",
@@ -673,10 +708,6 @@
       "additionalProperties": false,
       "description": "The OrderObject interface is used to define the properties of an order object. This is used to define the order of components in a study. It supports random assignment of trials using a pure random assignment and a latin square.",
       "properties": {
-        "break": {
-          "$ref": "#/definitions/BreakBlock",
-          "description": "The break property specifies a component or list of components to show every x number of study components."
-        },
         "components": {
           "description": "The components that are included in the order.",
           "items": {
@@ -688,6 +719,13 @@
                 "$ref": "#/definitions/OrderObject"
               }
             ]
+          },
+          "type": "array"
+        },
+        "interruptions": {
+          "description": "The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks.",
+          "items": {
+            "$ref": "#/definitions/InterruptionBlock"
           },
           "type": "array"
         },

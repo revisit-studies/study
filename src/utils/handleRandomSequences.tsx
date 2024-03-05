@@ -32,24 +32,53 @@ function _orderObjectToSequence(
     });
   }
 
-  let computedComponents = order.components.slice(0, order.numSamples ? order.numSamples : undefined).flat();
+  let computedComponents: (string | OrderObject | string[])[] = order.components.slice(0, order.numSamples ? order.numSamples : undefined).flat();
 
   // If we have a break, insert it into the sequence at the correct intervals
-  if (order.break) {
-    const newComponents = [];
-    // eslint-disable-next-line no-plusplus
-    for (let i = 0; i < computedComponents.length; i++) {
-      if (i % order.break.after === 0 && i !== 0) {
-        newComponents.push(...order.break.components);
+  if (order.interruptions) {
+    order.interruptions.forEach((interruption) => {
+      const newComponents = [];
+      if (interruption.spacing !== 'random') {
+        for (let i = 0; i < computedComponents.length; i += 1) {
+          if (
+            i === interruption.firstLocation
+            || (i > interruption.firstLocation && i % interruption.spacing === 0)
+          ) {
+            newComponents.push(interruption.components);
+          }
+          newComponents.push(computedComponents[i]);
+        }
       }
-      newComponents.push(computedComponents[i]);
-    }
-    computedComponents = newComponents;
+
+      // Handle random interruptions
+      if (interruption.spacing === 'random') {
+        // Generate the random locations
+        const randomInterruptionLocations = new Set<number>();
+        if (interruption.numInterruptions > computedComponents.length) {
+          throw new Error('Number of interruptions cannot be greater than the number of components');
+        }
+        while (randomInterruptionLocations.size < interruption.numInterruptions) {
+          const randomLocation = Math.floor(Math.random() * computedComponents.length);
+          randomInterruptionLocations.add(randomLocation);
+        }
+        const sortedRandomInterruptionLocations = Array.from(randomInterruptionLocations).sort((a, b) => a - b);
+
+        let j = 0;
+        for (let i = 0; i < computedComponents.length; i += 1) {
+          if (i === sortedRandomInterruptionLocations[j]) {
+            newComponents.push(interruption.components);
+            j += 1;
+          }
+          newComponents.push(computedComponents[i]);
+        }
+      }
+      computedComponents = newComponents;
+    });
   }
 
   return {
     orderPath: path,
-    components: computedComponents as Sequence['components'],
+    components: computedComponents.flat() as Sequence['components'],
   };
 }
 
