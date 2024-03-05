@@ -48,7 +48,7 @@ function _orderObjectToSequence(
   }
 
   return {
-    path,
+    orderPath: path,
     components: computedComponents as Sequence['components'],
   };
 }

@@ -14,6 +14,9 @@ export function getSubSequence<T extends Sequence | OrderObject>(sequence: T, pa
     if (pathComponent === 'root') {
       return;
     }
+    if (subSequence === undefined) {
+      return;
+    }
     subSequence = subSequence.components[+pathComponent] as T;
   });
 

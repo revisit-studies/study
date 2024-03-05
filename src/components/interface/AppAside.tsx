@@ -40,7 +40,7 @@ export default function AppAside() {
         <Text size="md" p={10} weight="bold">
           Study Sequence
         </Text>
-        <StepsPanel fullOrder={fullOrder} fullSequence={sequence} path="root" />
+        <StepsPanel fullOrder={fullOrder} fullSequence={sequence} sequencePath="root" />
       </ScrollArea>
     </Aside>
   ) : null;

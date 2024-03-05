@@ -42,7 +42,7 @@ export interface StimulusParams<T> {
 }
 
 export interface Sequence {
-  path: string;
+  orderPath: string;
   components: (string | Sequence)[];
 }
 

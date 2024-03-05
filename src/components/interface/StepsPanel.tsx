@@ -28,7 +28,7 @@ function reorderComponents(orderComponents: (string | OrderObject)[], sequenceCo
     if (typeof sequenceComponent === 'string') {
       newComponents.push(sequenceComponent);
     } else {
-      const sequencePathNextIndex = sequenceComponent.path.replace(`${path}-`, '').split('-')[0];
+      const sequencePathNextIndex = sequenceComponent.orderPath.replace(`${path}-`, '').split('-')[0];
       const orderComponent = orderComponents[+sequencePathNextIndex];
       newComponents.push(orderComponent);
     }
@@ -49,7 +49,7 @@ function StepItem({
   step,
   fullSequence,
   sequence,
-  path,
+  sequencePath,
   task,
   studyId,
 }: {
@@ -57,7 +57,7 @@ function StepItem({
   step: string;
   fullSequence: Sequence;
   sequence: Sequence;
-  path: string;
+  sequencePath: string;
   task: false | IndividualComponent | InheritedComponent;
   studyId: string | null;
 }) {
@@ -65,7 +65,7 @@ function StepItem({
   const [opened, { close, open }] = useDisclosure(false);
 
   const stepIsInSequence = sequence.components.includes(step);
-  const index = stepIsInSequence ? findTaskIndexInSequence(fullSequence, step, startIndex, path, 'root') : -1;
+  const index = stepIsInSequence ? findTaskIndexInSequence(fullSequence, step, startIndex, sequencePath, 'root') : -1;
   const active = useCurrentStep() === index;
 
   return (
@@ -121,20 +121,20 @@ function StepItem({
 export function StepsPanel({
   fullSequence,
   fullOrder,
-  path,
+  sequencePath,
   index = 0,
 }: {
   fullSequence: Sequence;
   fullOrder: OrderObject;
-  path: string;
+  sequencePath: string;
   index?: number;
 }) {
   const studyId = useStudyId();
   const studyConfig = useStudyConfig();
 
-  const parentPath = path.split('-').slice(0, -1).join('-');
+  const parentPath = sequencePath === 'root' ? 'root' : sequencePath.split('-').slice(0, -1).join('-');
 
-  let sequence: Sequence = getSubSequence(fullSequence, path);
+  let sequence: Sequence = getSubSequence(fullSequence, sequencePath);
   let order: OrderObject;
 
   if (sequence === undefined) {
@@ -144,7 +144,7 @@ export function StepsPanel({
 
     // Find the ones that are used in the sequence
     const usedOrderPaths: string[] = [];
-    getSubSequence(fullSequence, parentPath).components.forEach((component) => (typeof component !== 'string' ? usedOrderPaths.push(component.path) : null));
+    getSubSequence(fullSequence, parentPath)?.components.forEach((component) => (typeof component !== 'string' ? usedOrderPaths.push(component.orderPath) : null));
 
     // Find the ones that are not used
     const unusedOrderPaths = availableOrderPaths.filter((p) => !usedOrderPaths.includes(p));
@@ -153,16 +153,16 @@ export function StepsPanel({
     const unusedIndex = index - usedOrderPaths.length;
 
     order = getSubSequence(fullOrder, unusedOrderPaths[unusedIndex]);
-    sequence = { path: `${unusedOrderPaths[unusedIndex]}`, components: [] };
+    sequence = { orderPath: `${unusedOrderPaths[unusedIndex]}`, components: [] };
   } else {
-    order = getSubSequence(fullOrder, sequence.path);
+    order = getSubSequence(fullOrder, sequence.orderPath);
   }
 
   const newOrder = useMemo(() => {
     const nOrder = deepCopy(order);
 
     // Reorder the nOrder.components based on the sequence
-    nOrder.components = reorderComponents(nOrder.components, sequence?.components || [], path);
+    nOrder.components = reorderComponents(nOrder.components, sequence?.components || [], sequencePath);
 
     return nOrder;
   }, [order, sequence]);
@@ -178,7 +178,7 @@ export function StepsPanel({
               startIndex={idx}
               fullSequence={fullSequence}
               sequence={sequence}
-              path={path}
+              sequencePath={sequencePath}
               step={step}
               studyId={studyId}
               task={task}
@@ -193,9 +193,9 @@ export function StepsPanel({
           return false;
         });
 
-        const subSequence = getSubSequence(fullSequence, `${path}-${idx}`);
+        const subSequence = getSubSequence(fullSequence, `${sequencePath}-${idx}`);
         const sequenceSteps = subSequence === undefined ? [] : getSequenceFlatMap(subSequence);
-        const orderSteps = getSequenceFlatMap(getSubSequence(fullOrder, `${path}-${orderIndex}`));
+        const orderSteps = getSequenceFlatMap(getSubSequence(fullOrder, `${sequence.orderPath}-${orderIndex}`));
 
         return (
           <NavLink
@@ -230,7 +230,7 @@ export function StepsPanel({
             }}
           >
             <div style={{ borderLeft: '1px solid #e9ecef' }}>
-              <StepsPanel fullOrder={fullOrder} fullSequence={fullSequence} path={`${path}-${idx}`} index={idx} />
+              <StepsPanel fullOrder={fullOrder} fullSequence={fullSequence} sequencePath={`${sequencePath}-${idx}`} index={idx} />
             </div>
           </NavLink>
         );
