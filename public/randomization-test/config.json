@@ -97,6 +97,12 @@
     "trial20": {
       "baseComponent": "trial"
     },
+    "trial21": {
+      "baseComponent": "trial"
+    },
+    "trial22": {
+      "baseComponent": "trial"
+    },
     "break1": {
       "type": "markdown",
       "path": "randomization-test/break.md",
@@ -119,288 +125,158 @@
       "introduction",
       {
         "order": "latinSquare",
+        "numSamples": 5,
+        "components": [
+          "trial1",
+          "trial2",
+          "trial3",
+          "trial4",
+          "trial5",
+          "trial6",
+          "trial7",
+          "trial8",
+          "trial9",
+          "trial10"
+        ],
+        "interruptions": [
+          {
+            "spacing": 2,
+            "firstLocation": 0,
+            "components": [
+              "break1"
+            ]
+          },
+          {
+            "spacing": "random",
+            "numInterruptions": 2,
+            "components": [
+              "break2"
+            ]
+          }
+        ]
+      },
+      {
+        "order": "latinSquare",
         "numSamples": 1,
         "components": [
           {
             "order": "latinSquare",
-            "numSamples": 2,
+            "numSamples": 1,
             "components": [
               {
                 "order": "latinSquare",
-                "numSamples": 1,
+                "numSamples": 5,
                 "components": [
+                  "trial11",
+                  "trial12",
+                  "trial13",
+                  "trial14",
+                  "trial15",
+                  "trial16",
+                  "trial17",
+                  "trial18",
+                  "trial19",
+                  "trial20"
+                ],
+                "interruptions": [
                   {
-                    "order": "latinSquare",
-                    "numSamples": 5,
+                    "spacing": 2,
+                    "firstLocation": 0,
                     "components": [
-                      "trial1",
-                      "trial2",
-                      "trial3",
-                      "trial4",
-                      "trial5",
-                      "trial6",
-                      "trial7",
-                      "trial8",
-                      "trial9",
-                      "trial10"
-                    ],
-                    "interruptions": [
-                      {
-                        "spacing": 2,
-                        "firstLocation": 0,
-                        "components": [
-                          "break1"
-                        ]
-                      },
-                      {
-                        "spacing": "random",
-                        "numInterruptions": 2,
-                        "components": [
-                          "break2"
-                        ]
-                      }
+                      "break1"
                     ]
                   },
                   {
-                    "order": "latinSquare",
-                    "numSamples": 5,
+                    "spacing": "random",
+                    "numInterruptions": 2,
                     "components": [
-                      "trial1",
-                      "trial2",
-                      "trial3",
-                      "trial4",
-                      "trial5",
-                      "trial6",
-                      "trial7",
-                      "trial8",
-                      "trial9",
-                      "trial10"
-                    ],
-                    "interruptions": [
-                      {
-                        "spacing": 2,
-                        "firstLocation": 0,
-                        "components": [
-                          "break1"
-                        ]
-                      },
-                      {
-                        "spacing": "random",
-                        "numInterruptions": 2,
-                        "components": [
-                          "break2"
-                        ]
-                      }
+                      "break2"
                     ]
                   }
                 ]
               },
               {
                 "order": "latinSquare",
-                "numSamples": 1,
+                "numSamples": 5,
                 "components": [
+                  "trial11",
+                  "trial12",
+                  "trial13",
+                  "trial14",
+                  "trial15",
+                  "trial16",
+                  "trial17",
+                  "trial18",
+                  "trial19",
+                  "trial20"
+                ],
+                "interruptions": [
                   {
-                    "order": "latinSquare",
-                    "numSamples": 5,
+                    "spacing": 2,
+                    "firstLocation": 0,
                     "components": [
-                      "trial1",
-                      "trial2",
-                      "trial3",
-                      "trial4",
-                      "trial5",
-                      "trial6",
-                      "trial7",
-                      "trial8",
-                      "trial9",
-                      "trial10"
-                    ],
-                    "interruptions": [
-                      {
-                        "spacing": 2,
-                        "firstLocation": 0,
-                        "components": [
-                          "break1"
-                        ]
-                      },
-                      {
-                        "spacing": "random",
-                        "numInterruptions": 2,
-                        "components": [
-                          "break2"
-                        ]
-                      }
+                      "break1"
                     ]
                   },
                   {
-                    "order": "latinSquare",
-                    "numSamples": 5,
+                    "spacing": "random",
+                    "numInterruptions": 2,
                     "components": [
-                      "trial1",
-                      "trial2",
-                      "trial3",
-                      "trial4",
-                      "trial5",
-                      "trial6",
-                      "trial7",
-                      "trial8",
-                      "trial9",
-                      "trial10"
-                    ],
-                    "interruptions": [
-                      {
-                        "spacing": 2,
-                        "firstLocation": 0,
-                        "components": [
-                          "break1"
-                        ]
-                      },
-                      {
-                        "spacing": "random",
-                        "numInterruptions": 2,
-                        "components": [
-                          "break2"
-                        ]
-                      }
+                      "break2"
                     ]
                   }
                 ]
-              },
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "order": "latinSquare",
+        "numSamples": 1,
+        "components": [
+          {
+            "order": "latinSquare",
+            "numSamples": 1,
+            "components": [
+              "trial21",
+              "trial22",
               {
                 "order": "latinSquare",
                 "numSamples": 1,
                 "components": [
+                  "trial21",
+                  "trial22",
                   {
                     "order": "latinSquare",
-                    "numSamples": 5,
+                    "numSamples": 1,
                     "components": [
-                      "trial11",
-                      "trial12",
-                      "trial13",
-                      "trial14",
-                      "trial15",
-                      "trial16",
-                      "trial17",
-                      "trial18",
-                      "trial19",
-                      "trial20"
-                    ],
-                    "interruptions": [
-                      {
-                        "spacing": 2,
-                        "firstLocation": 0,
-                        "components": [
-                          "break1"
-                        ]
-                      },
-                      {
-                        "spacing": "random",
-                        "numInterruptions": 2,
-                        "components": [
-                          "break2"
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "order": "latinSquare",
-                    "numSamples": 5,
-                    "components": [
-                      "trial11",
-                      "trial12",
-                      "trial13",
-                      "trial14",
-                      "trial15",
-                      "trial16",
-                      "trial17",
-                      "trial18",
-                      "trial19",
-                      "trial20"
-                    ],
-                    "interruptions": [
-                      {
-                        "spacing": 2,
-                        "firstLocation": 0,
-                        "components": [
-                          "break1"
-                        ]
-                      },
-                      {
-                        "spacing": "random",
-                        "numInterruptions": 2,
-                        "components": [
-                          "break2"
-                        ]
-                      }
+                      "trial21",
+                      "trial22"
                     ]
                   }
                 ]
-              },
+              }
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "numSamples": 1,
+            "components": [
+              "trial21",
+              "trial22",
               {
                 "order": "latinSquare",
                 "numSamples": 1,
                 "components": [
+                  "trial21",
+                  "trial22",
                   {
                     "order": "latinSquare",
-                    "numSamples": 5,
+                    "numSamples": 1,
                     "components": [
-                      "trial11",
-                      "trial12",
-                      "trial13",
-                      "trial14",
-                      "trial15",
-                      "trial16",
-                      "trial17",
-                      "trial18",
-                      "trial19",
-                      "trial20"
-                    ],
-                    "interruptions": [
-                      {
-                        "spacing": 2,
-                        "firstLocation": 0,
-                        "components": [
-                          "break1"
-                        ]
-                      },
-                      {
-                        "spacing": "random",
-                        "numInterruptions": 2,
-                        "components": [
-                          "break2"
-                        ]
-                      }
-                    ]
-                  },
-                  {
-                    "order": "latinSquare",
-                    "numSamples": 5,
-                    "components": [
-                      "trial11",
-                      "trial12",
-                      "trial13",
-                      "trial14",
-                      "trial15",
-                      "trial16",
-                      "trial17",
-                      "trial18",
-                      "trial19",
-                      "trial20"
-                    ],
-                    "interruptions": [
-                      {
-                        "spacing": 2,
-                        "firstLocation": 0,
-                        "components": [
-                          "break1"
-                        ]
-                      },
-                      {
-                        "spacing": "random",
-                        "numInterruptions": 2,
-                        "components": [
-                          "break2"
-                        ]
-                      }
+                      "trial21",
+                      "trial22"
                     ]
                   }
                 ]
