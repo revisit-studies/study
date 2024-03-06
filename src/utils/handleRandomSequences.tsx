@@ -32,7 +32,7 @@ function _orderObjectToSequence(
     });
   }
 
-  let computedComponents: (string | OrderObject | string[])[] = order.components.slice(0, order.numSamples ? order.numSamples : undefined).flat();
+  let computedComponents: (string | OrderObject | string[])[] = order.components.slice(0, order.numSamples !== undefined ? order.numSamples : undefined).flat();
 
   // If we have a break, insert it into the sequence at the correct intervals
   if (order.interruptions) {
