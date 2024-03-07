@@ -1131,7 +1131,7 @@
             "instructionLocation": "sidebar"
         },
 
-        "stackedbarChart": {
+        "stackedbarChart1": {
             "type": "website",
             "nextButtonLocation": "sidebar",
             "meta": {
@@ -1180,15 +1180,171 @@
                     "max": 100
                 }
             ]
+        },
+
+        "stackedbarChart2": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": "30"
+                    },
+                    {
+                        "name": "B",
+                        "value": "40"
+                    },
+                    {
+                        "name": "C",
+                        "value": "50"
+                    },
+                    {
+                        "name": "D",
+                        "value": "40"
+                    },
+                    {
+                        "name": "E",
+                        "value": "60"
+                    }
+                ],
+                "selectedIndices": [
+                    1,
+                    3
+                ]
+            },            
+            "response": [
+                {
+                    "id": "html-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "min": 0,
+                    "max": 100
+                }
+            ]
+        },
+        
+        "packCircle1": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": "30"
+                    },
+                    {
+                        "name": "B",
+                        "value": "40"
+                    },
+                    {
+                        "name": "C",
+                        "value": "50"
+                    },
+                    {
+                        "name": "D",
+                        "value": "40"
+                    },
+                    {
+                        "name": "E",
+                        "value": "60"
+                    }
+                ],
+                "selectedIndices": [
+                    1,
+                    4
+                ]
+            },            
+            "response": [
+                {
+                    "id": "html-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "min": 0,
+                    "max": 100
+                }
+            ]
+        },
+
+        "packCircle2": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": "30"
+                    },
+                    {
+                        "name": "B",
+                        "value": "40"
+                    },
+                    {
+                        "name": "C",
+                        "value": "50"
+                    },
+                    {
+                        "name": "D",
+                        "value": "40"
+                    },
+                    {
+                        "name": "E",
+                        "value": "60"
+                    }
+                ],
+                "selectedIndices": [
+                    1,
+                    3
+                ]
+            },            
+            "response": [
+                {
+                    "id": "html-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "min": 0,
+                    "max": 100
+                }
+            ]
         }
     },
+    
     "sequence": {
         "order": "fixed",
         "components": [
             "introduction",
             "barChart1",
             "bubbleChart2",
-            "stackedbarChart"
+            "stackedbarChart1",
+            "stackedbarChart2",
+            "packCircle1"
             
         ]
     }
