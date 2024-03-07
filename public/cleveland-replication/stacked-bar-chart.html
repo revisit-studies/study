@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Stacked Bar Chart</title>
+    <script src="https://d3js.org/d3.v7.js"></script>
+</head>
+<body>
+    <svg></svg>
+    <script>
+        // Setup
+        let height = 400, width = 750, padding = 25;
+        let svg = d3.select("svg").attr("width", width).attr("height", height);
+
+        // Example data structure for 3 stacked bars, each with 6 data points
+        let data = [
+            // First stacked bar
+            [{value: 10}, {value: 20}, {value: 30}, {value: 40}, {value: 50}, {value: 60}],
+            // Second stacked bar
+            [{value: 15}, {value: 25}, {value: 35}, {value: 45}, {value: 55}, {value: 65}],
+            // Third stacked bar
+            [{value: 20}, {value: 30}, {value: 40}, {value: 50}, {value: 60}, {value: 70}]
+        ];
+
+        // Assume each bar's width is fixed, calculate the x position for each bar
+        let barWidth = (width - 2 * padding) / data.length - padding;
+
+        // Calculate the max height for yScale
+        let maxStackHeight = d3.max(data, d => d3.sum(d, i => i.value));
+        let yScale = d3.scaleLinear().domain([0, maxStackHeight]).range([height - padding, padding]);
+
+        // Draw stacked bars
+        data.forEach((stack, i) => {
+            let yPos = 0; // Initial y position for the first segment
+            stack.forEach((segment, index) => {
+                svg.append("rect")
+                   .attr("x", padding + i * (barWidth + padding))
+                   .attr("y", yScale(yPos + segment.value))
+                   .attr("width", barWidth)
+                   .attr("height", yScale(0) - yScale(segment.value))
+                   .style("fill", "none")
+                   .style("stroke", "black")
+                   .style("stroke-width", 1);
+                
+                yPos += segment.value; // Update yPos for the next segment
+
+                // Add dots on the second and fourth segment of the second bar
+                if (i === 1 && (index === 1 || index === 3)) {
+                    svg.append("circle")
+                       .attr("cx", padding + i * (barWidth + padding) + barWidth / 2)
+                       .attr("cy", yScale(yPos) + (yScale(0) - yScale(segment.value)) / 2)
+                       .attr("r", 5)
+                       .style("fill", "black");
+                }
+            });
+        });
+
+    </script>
+</body>
+</html>

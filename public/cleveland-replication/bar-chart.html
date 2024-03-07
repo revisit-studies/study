@@ -1,0 +1,104 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>D3 Nice Axes</title>
+    <script src="https://d3js.org/d3.v7.js"></script>
+    <script src="../js/revisit-communicate.js"></script>
+
+</head>
+
+<body>
+    <svg>
+    </svg>
+
+</body>
+<script src="../js/revisit-communicate.js"></script>
+
+
+<script>
+
+    // get data from config file using revisit communicate
+    Revisit.onDataReceive((parameters) => {
+
+        console.log(parameters)
+        
+        const height = 400;
+        const width = 750;
+        const padding = 50; 
+        const svg = d3.select("svg")
+            .attr("width", width + 2 * padding)
+            .attr("height", height + 2 * padding);
+        
+        // need to add path to config-cleaveland-replication.json
+
+
+        // const parameters = {
+        //     "data": [
+        //         { "name": "A", "value": 30 },
+        //         { "name": "B", "value": 40 },
+        //         { "name": "C", "value": 50 },
+        //         { "name": "D", "value": 40 },
+        //         { "name": "E", "value": 60 }
+        //     ],
+        //     "selectedIndices": [1, 4]
+        // };
+
+        const xScale = d3.scaleBand()
+            .domain(parameters.data.map(d => d.name))
+            .range([0, width])
+            .padding(0.1);
+
+        const yScale = d3.scaleLinear()
+            .domain([0, d3.max(parameters.data, d => d.value)])
+            .range([height, 0])
+            .nice();
+
+        svg.selectAll(".bar")
+            .data(parameters.data)
+            .join("rect")
+            .attr("class", "bar")
+            .attr("transform", `translate(${padding}, ${padding})`)
+            .attr("x", d => xScale(d.name))
+            .attr("y", d => yScale(d.value))
+            .attr("height", d => height - yScale(d.value))
+            .attr("width", xScale.bandwidth())
+            .style("fill", "none") // No fill for the bars
+            .style("stroke", "black")
+            .style("stroke-width", "1");
+
+        // Generate the Y-axis without tick marks and labels but retain the axis line
+        const yAxis = d3.axisLeft(yScale).tickSize(0).tickFormat('');
+        svg.append("g")
+            .attr("transform", `translate(${padding}, ${padding})`)
+            .call(yAxis)
+            .call(g => g.selectAll(".tick").remove()) 
+            .call(g => g.select(".domain").style("stroke", "black")); 
+
+        const xAxis = d3.axisBottom(xScale);
+        svg.append("g")
+            .attr("transform", `translate(${padding}, ${height + padding})`)
+            .call(xAxis);
+
+        svg.selectAll(".dot")
+            .data(parameters.data.filter((_, i) => parameters.selectedIndices.includes(i)))
+            .join("circle")
+            .attr("class", "dot")
+            .attr("transform", `translate(${padding}, ${padding})`)
+            .attr("cx", d => xScale(d.name) + xScale.bandwidth() / 2)
+            .attr("cy", d => yScale(d.value) - 10)
+            .attr("r", 5)
+            .style("fill", "black");
+
+
+
+    });
+
+    
+</script>
+
+
+
+
+</html>

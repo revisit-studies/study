@@ -37,7 +37,7 @@
                     "prompt": "Your selected answer:",
                     "required": true,
                     "location": "belowStimulus",
-                    "type": "iframe"
+                    "type": "iframe",
                 }
             ],
             "path": "html-input/bar-chart-interaction.html",

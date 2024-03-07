@@ -1,0 +1,167 @@
+{
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+        "title": "Cleveand Replication",
+        "version": "pilot",
+        "authors": [
+            "Aviv Nur", 
+            "Andrew Kerekon",
+            "Bijesh Shrestha",
+            "Yihan Wang"
+        ],
+        "date": "2024-03-05",
+        "description": "Assignment 3: Replication of Cleaveland - McGill Experiment.",
+        "organizations": [
+            "WPI"
+        ]
+    },
+    "uiConfig": {
+        "contactEmail": "test@test.com",
+        "helpTextPath": "cleveland-replication/help.md",
+        "logoPath": "assets/revisitLogoSquare.svg", 
+        "withProgressBar": true,
+        "autoDownloadStudy": false,
+        "sidebar": true,
+        "windowEventDebounceTime": 200
+    },
+    "components": {
+        "introduction": {
+            "type": "markdown",
+            "path": "cleveland-replication/introduction.md",
+            "response": []
+        },
+        "barChart1": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.66",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 30
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 40
+                    },
+                    {
+                        "name": "E",
+                        "value": 60
+                    }
+                ],
+                
+                "selectedIndices": [3, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart2": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.66",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [2, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+
+
+        "stackedbarChart": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "response": [
+                {
+                    "id": "html-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "min": 0,
+                    "max": 100
+                }
+            ]
+        }
+    },
+    "sequence": {
+        "order": "fixed",
+        "components": [
+            "introduction",
+            "barChart1",
+            "barChart2",
+            "stackedbarChart"
+        ]
+    }
+}
