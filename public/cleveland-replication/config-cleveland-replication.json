@@ -135,7 +135,407 @@
                 "difficulty": 5,
                 "chart": "bubble"
             },
-            "description": "A chart with correct answer of 0.66",
+            "description": "A chart with correct answer of 0.57",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [0, 1]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "bubbleChart2": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.71",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [0, 2]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "bubbleChart3": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.43",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [0, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "bubbleChart4": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.29",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [0, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "bubbleChart5": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.8",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [1, 2]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "bubbleChart6": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.75",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [1, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "bubbleChart7": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.5",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [1, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "bubbleChart8": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.6",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [2, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "bubbleChart9": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.4",
             "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
             "type": "website",
             "path": "cleveland-replication/bubble-chart.html",
@@ -180,6 +580,556 @@
             "nextButtonLocation": "sidebar",
             "instructionLocation": "sidebar"
         },
+        "bubbleChart10": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.67",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [3, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "bubbleChart11": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.78",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [0, 1]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "bubbleChart12": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.71",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [0, 2]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "bubbleChart13": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.47",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [0, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "bubbleChart14": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.64",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [0, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "bubbleChart15": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.56",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [1, 2]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "bubbleChart16": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.6",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [1, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "bubbleChart17": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.82",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [1, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "bubbleChart18": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.33",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [2, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "bubbleChart19": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.45",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [2, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "bubbleChart20": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.73",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [3, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
 
         "stackedbarChart": {
             "type": "website",
@@ -208,7 +1158,26 @@
         "order": "fixed",
         "components": [
             "introduction",
-            "bubbleChart1"
+            "bubbleChart1",
+            "bubbleChart2",
+            "bubbleChart3",
+            "bubbleChart4",
+            "bubbleChart5",
+            "bubbleChart6",
+            "bubbleChart7",
+            "bubbleChart8",
+            "bubbleChart9",
+            "bubbleChart10",
+            "bubbleChart11",
+            "bubbleChart12",
+            "bubbleChart13",
+            "bubbleChart14",
+            "bubbleChart15",
+            "bubbleChart16",
+            "bubbleChart17",
+            "bubbleChart18",
+            "bubbleChart19",
+            "bubbleChart20"
         ]
     }
 }
