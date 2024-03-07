@@ -130,7 +130,56 @@
             "nextButtonLocation": "sidebar",
             "instructionLocation": "sidebar"
         },
-
+        "bubbleChart1": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.66",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bubble-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [2, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
 
         "stackedbarChart": {
             "type": "website",
@@ -159,9 +208,7 @@
         "order": "fixed",
         "components": [
             "introduction",
-            "barChart1",
-            "barChart2",
-            "stackedbarChart"
+            "bubbleChart1"
         ]
     }
 }
