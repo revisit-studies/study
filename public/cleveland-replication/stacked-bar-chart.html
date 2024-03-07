@@ -4,57 +4,73 @@
     <meta charset="UTF-8">
     <title>Stacked Bar Chart</title>
     <script src="https://d3js.org/d3.v7.js"></script>
+    <script src="../js/revisit-communicate.js"></script>
 </head>
 <body>
     <svg></svg>
     <script>
-        // Setup
-        let height = 400, width = 750, padding = 25;
-        let svg = d3.select("svg").attr("width", width).attr("height", height);
+        // Listening for data received from the configuration JSON through revisit-communicate.js
+        Revisit.onDataReceive((parameters) => {
 
-        // Example data structure for 3 stacked bars, each with 6 data points
-        let data = [
-            // First stacked bar
-            [{value: 10}, {value: 20}, {value: 30}, {value: 40}, {value: 50}, {value: 60}],
-            // Second stacked bar
-            [{value: 15}, {value: 25}, {value: 35}, {value: 45}, {value: 55}, {value: 65}],
-            // Third stacked bar
-            [{value: 20}, {value: 30}, {value: 40}, {value: 50}, {value: 60}, {value: 70}]
-        ];
+            console.log(parameters);
 
-        // Assume each bar's width is fixed, calculate the x position for each bar
-        let barWidth = (width - 2 * padding) / data.length - padding;
-
-        // Calculate the max height for yScale
-        let maxStackHeight = d3.max(data, d => d3.sum(d, i => i.value));
-        let yScale = d3.scaleLinear().domain([0, maxStackHeight]).range([height - padding, padding]);
-
-        // Draw stacked bars
-        data.forEach((stack, i) => {
-            let yPos = 0; // Initial y position for the first segment
-            stack.forEach((segment, index) => {
-                svg.append("rect")
-                   .attr("x", padding + i * (barWidth + padding))
-                   .attr("y", yScale(yPos + segment.value))
-                   .attr("width", barWidth)
-                   .attr("height", yScale(0) - yScale(segment.value))
-                   .style("fill", "none")
-                   .style("stroke", "black")
-                   .style("stroke-width", 1);
-                
-                yPos += segment.value; // Update yPos for the next segment
-
-                // Add dots on the second and fourth segment of the second bar
-                if (i === 1 && (index === 1 || index === 3)) {
-                    svg.append("circle")
-                       .attr("cx", padding + i * (barWidth + padding) + barWidth / 2)
-                       .attr("cy", yScale(yPos) + (yScale(0) - yScale(segment.value)) / 2)
-                       .attr("r", 5)
-                       .style("fill", "black");
-                }
+            // Process data and convert any string values to numbers for the 'value' property
+            parameters.data.forEach(d => {
+                d.value = +d.value; // Unary plus (+) converts the string to a number
             });
-        });
 
+            // Now all 'value' properties are numbers and you can calculate cumulative values
+            let cumulative = 0;
+            const dataWithCumulative = parameters.data.map(d => {
+                cumulative += d.value;
+                return { ...d, cumulative: cumulative - d.value };
+            });
+
+            // SVG setup
+            const height = 500;
+            const width = 200;
+            const padding = 50;
+            const svg = d3.select("svg")
+                .attr("width", width)
+                .attr("height", height);
+
+            // Scales
+            const yScale = d3.scaleLinear()
+                .domain([0, cumulative])
+                .range([height - padding, padding]);
+
+            // Creating the stacked bar by appending rectangles
+            dataWithCumulative.forEach((d, i) => {
+                svg.append("rect")
+                    .attr("x", width / 4)
+                    .attr("y", yScale(d.cumulative + d.value))
+                    .attr("height", yScale(d.cumulative) - yScale(d.cumulative + d.value))
+                    .attr("width", width / 2)
+                    .attr("fill", "white") // Set bar fill to white
+                    .attr("stroke", "black"); // Add stroke to bar
+            });
+
+            // Add dots for selected indices
+            parameters.selectedIndices.forEach(i => {
+                const d = dataWithCumulative[i];
+                svg.append("circle")
+                    .attr("cx", width / 2)
+                    .attr("cy", yScale(d.cumulative + d.value / 2))
+                    .attr("r", 5)
+                    .attr("fill", "black"); // Set dot color to black
+            });
+
+            // Add y-axis without ticks or labels
+            const yAxis = d3.axisLeft(yScale)
+                            .tickSize(0)
+                            .tickFormat('');
+            svg.append("g")
+                .attr("transform", `translate(${width / 4}, 0)`)
+                .call(yAxis)
+                .call(g => g.selectAll(".tick").remove())
+                .call(g => g.select(".domain").attr("stroke", "black"));
+
+        });
     </script>
 </body>
 </html>

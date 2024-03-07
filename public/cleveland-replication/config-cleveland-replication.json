@@ -1140,6 +1140,34 @@
             "description": "Question that asks users to compare two and provide estimate of proportion",
             "instruction": "What percentage is the shorter bar compared to the taller?",
             "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": "30"
+                    },
+                    {
+                        "name": "B",
+                        "value": "40"
+                    },
+                    {
+                        "name": "C",
+                        "value": "50"
+                    },
+                    {
+                        "name": "D",
+                        "value": "40"
+                    },
+                    {
+                        "name": "E",
+                        "value": "60"
+                    }
+                ],
+                "selectedIndices": [
+                    1,
+                    4
+                ]
+            },            
             "response": [
                 {
                     "id": "html-response",
@@ -1158,26 +1186,10 @@
         "order": "fixed",
         "components": [
             "introduction",
-            "bubbleChart1",
+            "barChart1",
             "bubbleChart2",
-            "bubbleChart3",
-            "bubbleChart4",
-            "bubbleChart5",
-            "bubbleChart6",
-            "bubbleChart7",
-            "bubbleChart8",
-            "bubbleChart9",
-            "bubbleChart10",
-            "bubbleChart11",
-            "bubbleChart12",
-            "bubbleChart13",
-            "bubbleChart14",
-            "bubbleChart15",
-            "bubbleChart16",
-            "bubbleChart17",
-            "bubbleChart18",
-            "bubbleChart19",
-            "bubbleChart20"
+            "stackedbarChart"
+            
         ]
     }
 }
