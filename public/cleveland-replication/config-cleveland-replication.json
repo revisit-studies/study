@@ -35,7 +35,7 @@
                 "difficulty": 5,
                 "chart": "Bar"
             },
-            "description": "A chart with correct answer of 0.66",
+            "description": "A chart with correct answer of 0.57",
             "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
             "type": "website",
             "path": "cleveland-replication/bar-chart.html",
@@ -43,7 +43,7 @@
                 "data": [
                     {
                         "name": "A",
-                        "value": 30
+                        "value": 70
                     },
                     {
                         "name": "B",
@@ -55,15 +55,15 @@
                     },
                     {
                         "name": "D",
-                        "value": 40
+                        "value": 30
                     },
                     {
                         "name": "E",
-                        "value": 60
+                        "value": 20
                     }
                 ],
                 
-                "selectedIndices": [3, 4]
+                "selectedIndices": [0, 1]
             },
             "response": [
                 {
@@ -85,7 +85,357 @@
                 "difficulty": 5,
                 "chart": "Bar"
             },
-            "description": "A chart with correct answer of 0.66",
+            "description": "A chart with correct answer of 0.71",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [0, 2]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart3": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.43",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [0, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart4": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.29",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [0, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart5": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.8",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [1, 2]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart6": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.75",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [1, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart7": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.5",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [1, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart8": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.6",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [2, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart9": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.4",
             "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
             "type": "website",
             "path": "cleveland-replication/bar-chart.html",
@@ -114,6 +464,556 @@
                 ],
                 
                 "selectedIndices": [2, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart10": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.67",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [3, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart11": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.78",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [0, 1]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart12": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.71",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [0, 2]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart13": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.47",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [0, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart14": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.64",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [0, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart15": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.56",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [1, 2]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart16": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.6",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [1, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart17": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.82",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [1, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart18": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.33",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [2, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart19": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.45",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [2, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "barChart20": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "Bar"
+            },
+            "description": "A chart with correct answer of 0.73",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [3, 4]
             },
             "response": [
                 {
@@ -1137,49 +2037,48 @@
             "meta": {
                 "difficulty": "hard"
             },
-            "description": "Question that asks users to compare two and provide estimate of proportion",
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.57",
             "instruction": "What percentage is the shorter bar compared to the taller?",
             "path": "cleveland-replication/stacked-bar-chart.html",
             "parameters": {
                 "data": [
                     {
                         "name": "A",
-                        "value": "30"
+                        "value": 70
                     },
                     {
                         "name": "B",
-                        "value": "40"
+                        "value": 40
                     },
                     {
                         "name": "C",
-                        "value": "50"
+                        "value": 50
                     },
                     {
                         "name": "D",
-                        "value": "40"
+                        "value": 30
                     },
                     {
                         "name": "E",
-                        "value": "60"
+                        "value": 20
                     }
                 ],
-                "selectedIndices": [
-                    1,
-                    4
-                ]
-            },            
+                
+                "selectedIndices": [0, 1]
+            },
             "response": [
                 {
-                    "id": "html-response",
+                    "id": "cm-response",
                     "prompt": "Answer:",
                     "required": true,
                     "location": "sidebar",
                     "type": "numerical",
                     "placeholder": "0-100",
-                    "min": 0,
-                    "max": 100
+                    "max": 100,
+                    "min": 0
                 }
-            ]
+            ],
+            "instructionLocation": "sidebar"
         },
 
         "stackedbarChart2": {
@@ -1188,151 +2087,1934 @@
             "meta": {
                 "difficulty": "hard"
             },
-            "description": "Question that asks users to compare two and provide estimate of proportion",
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.71",
             "instruction": "What percentage is the shorter bar compared to the taller?",
             "path": "cleveland-replication/stacked-bar-chart.html",
             "parameters": {
                 "data": [
                     {
                         "name": "A",
-                        "value": "30"
+                        "value": 70
                     },
                     {
                         "name": "B",
-                        "value": "40"
+                        "value": 40
                     },
                     {
                         "name": "C",
-                        "value": "50"
+                        "value": 50
                     },
                     {
                         "name": "D",
-                        "value": "40"
+                        "value": 30
                     },
                     {
                         "name": "E",
-                        "value": "60"
+                        "value": 20
                     }
                 ],
-                "selectedIndices": [
-                    1,
-                    3
-                ]
-            },            
-            "response": [
-                {
-                    "id": "html-response",
-                    "prompt": "Answer:",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "numerical",
-                    "placeholder": "0-100",
-                    "min": 0,
-                    "max": 100
-                }
-            ]
-        },
-        
-        "packCircle1": {
-            "type": "website",
-            "nextButtonLocation": "sidebar",
-            "meta": {
-                "difficulty": "hard"
+                
+                "selectedIndices": [0, 2]
             },
-            "description": "Question that asks users to compare two and provide estimate of proportion",
-            "instruction": "What percentage is the shorter bar compared to the taller?",
-            "path": "cleveland-replication/packCircle.html",
-            "parameters": {
-                "data": [
-                    {
-                        "name": "A",
-                        "value": "30"
-                    },
-                    {
-                        "name": "B",
-                        "value": "40"
-                    },
-                    {
-                        "name": "C",
-                        "value": "50"
-                    },
-                    {
-                        "name": "D",
-                        "value": "40"
-                    },
-                    {
-                        "name": "E",
-                        "value": "60"
-                    }
-                ],
-                "selectedIndices": [
-                    1,
-                    4
-                ]
-            },            
             "response": [
                 {
-                    "id": "html-response",
+                    "id": "cm-response",
                     "prompt": "Answer:",
                     "required": true,
                     "location": "sidebar",
                     "type": "numerical",
                     "placeholder": "0-100",
-                    "min": 0,
-                    "max": 100
+                    "max": 100,
+                    "min": 0
                 }
-            ]
+            ],
+            "instructionLocation": "sidebar"
         },
 
-        "packCircle2": {
+        "stackedbarChart3": {
             "type": "website",
             "nextButtonLocation": "sidebar",
             "meta": {
                 "difficulty": "hard"
             },
-            "description": "Question that asks users to compare two and provide estimate of proportion",
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.43",
             "instruction": "What percentage is the shorter bar compared to the taller?",
-            "path": "cleveland-replication/packCircle.html",
+            "path": "cleveland-replication/stacked-bar-chart.html",
             "parameters": {
                 "data": [
                     {
                         "name": "A",
-                        "value": "30"
+                        "value": 70
                     },
                     {
                         "name": "B",
-                        "value": "40"
+                        "value": 40
                     },
                     {
                         "name": "C",
-                        "value": "50"
+                        "value": 50
                     },
                     {
                         "name": "D",
-                        "value": "40"
+                        "value": 30
                     },
                     {
                         "name": "E",
-                        "value": "60"
+                        "value": 20
                     }
                 ],
-                "selectedIndices": [
-                    1,
-                    3
-                ]
-            },            
+                
+                "selectedIndices": [0, 3]
+            },
             "response": [
                 {
-                    "id": "html-response",
+                    "id": "cm-response",
                     "prompt": "Answer:",
                     "required": true,
                     "location": "sidebar",
                     "type": "numerical",
                     "placeholder": "0-100",
-                    "min": 0,
-                    "max": 100
+                    "max": 100,
+                    "min": 0
                 }
-            ]
+            ],
+            "instructionLocation": "sidebar"
+        },
+
+        "stackedbarChart4": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.29",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [0, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "instructionLocation": "sidebar"
+        },
+
+        "stackedbarChart5": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.8",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [1, 2]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "instructionLocation": "sidebar"
+        },
+
+        "stackedbarChart6": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.75",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [1, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "instructionLocation": "sidebar"
+        },
+        "stackedbarChart7": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.5",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [1, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "instructionLocation": "sidebar"
+        },
+        "stackedbarChart8": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.6",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [2, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "instructionLocation": "sidebar"
+        },
+        "stackedbarChart9": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.4",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [2, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "instructionLocation": "sidebar"
+        },
+        "stackedbarChart10": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.67",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [3, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "instructionLocation": "sidebar"
+        },
+        "stackedbarChart11": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.78",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [0, 1]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "instructionLocation": "sidebar"
+        },
+        "stackedbarChart12": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.71",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [0, 2]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "instructionLocation": "sidebar"
+        },
+        "stackedbarChart13": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.47",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [0, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "instructionLocation": "sidebar"
+        },
+        "stackedbarChart14": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.64",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [0, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "instructionLocation": "sidebar"
+        },
+        "stackedbarChart15": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.56",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [1, 2]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "instructionLocation": "sidebar"
+        },
+        "stackedbarChart16": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.6",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [1, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "instructionLocation": "sidebar"
+        },
+        "stackedbarChart17": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.82",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [1, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "instructionLocation": "sidebar"
+        },
+        "stackedbarChart18": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.33",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [2, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "instructionLocation": "sidebar"
+        },
+        "stackedbarChart19": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.45",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [2, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "instructionLocation": "sidebar"
+        },
+        "stackedbarChart20": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "hard"
+            },
+            "description": "Question that asks users to compare two and provide estimate of proportion, correct 0.73",
+            "instruction": "What percentage is the shorter bar compared to the taller?",
+            "path": "cleveland-replication/stacked-bar-chart.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [3, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "instructionLocation": "sidebar"
+        },
+        "packCircle1": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.57",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [0, 1]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle2": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.71",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [0, 2]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle3": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.43",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [0, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle4": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.29",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [0, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle5": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.8",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [1, 2]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle6": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.75",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [1, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle7": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.5",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [1, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle8": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.6",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [2, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle9": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.4",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [2, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle10": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.67",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 70
+                    },
+                    {
+                        "name": "B",
+                        "value": 40
+                    },
+                    {
+                        "name": "C",
+                        "value": 50
+                    },
+                    {
+                        "name": "D",
+                        "value": 30
+                    },
+                    {
+                        "name": "E",
+                        "value": 20
+                    }
+                ],
+                
+                "selectedIndices": [3, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle11": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.78",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [0, 1]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle12": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.71",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [0, 2]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle13": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.47",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [0, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle14": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.64",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [0, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle15": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.56",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [1, 2]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle16": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.6",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [1, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle17": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.82",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [1, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle18": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.33",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [2, 3]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle19": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.45",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [2, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
+        },
+        "packCircle20": {
+            "meta": {
+                "difficulty": 5,
+                "chart": "bubble"
+            },
+            "description": "A chart with correct answer of 0.73",
+            "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
+            "type": "website",
+            "path": "cleveland-replication/packCircle.html",
+            "parameters": {
+                "data": [
+                    {
+                        "name": "A",
+                        "value": 35
+                    },
+                    {
+                        "name": "B",
+                        "value": 45
+                    },
+                    {
+                        "name": "C",
+                        "value": 25
+                    },
+                    {
+                        "name": "D",
+                        "value": 75
+                    },
+                    {
+                        "name": "E",
+                        "value": 55
+                    }
+                ],
+                
+                "selectedIndices": [3, 4]
+            },
+            "response": [
+                {
+                    "id": "cm-response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "0-100",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar"
         }
     },
     
@@ -1340,12 +4022,92 @@
         "order": "fixed",
         "components": [
             "introduction",
-            "barChart1",
-            "bubbleChart2",
-            "stackedbarChart1",
-            "stackedbarChart2",
-            "packCircle1"
-            
+            {
+                "order": "random",
+                "numSamples": 10,
+                "components": [
+                    "barChart1",
+                    "barChart2",
+                    "barChart3",
+                    "barChart4",
+                    "barChart5",
+                    "barChart6",
+                    "barChart7",
+                    "barChart8",
+                    "barChart9",
+                    "barChart10",
+                    "barChart11",
+                    "barChart12",
+                    "barChart13",
+                    "barChart14",
+                    "barChart15",
+                    "barChart16",
+                    "barChart17",
+                    "barChart18",
+                    "barChart19",
+                    "barChart20",
+                    "bubbleChart1",
+                    "bubbleChart2",
+                    "bubbleChart3",
+                    "bubbleChart4",
+                    "bubbleChart5",
+                    "bubbleChart6",
+                    "bubbleChart7",
+                    "bubbleChart8",
+                    "bubbleChart9",
+                    "bubbleChart10",
+                    "bubbleChart11",
+                    "bubbleChart12",
+                    "bubbleChart13",
+                    "bubbleChart14",
+                    "bubbleChart15",
+                    "bubbleChart16",
+                    "bubbleChart17",
+                    "bubbleChart18",
+                    "bubbleChart19",
+                    "bubbleChart20",
+                    "stackedbarChart1",
+                    "stackedbarChart2",
+                    "stackedbarChart3",
+                    "stackedbarChart4",
+                    "stackedbarChart5",
+                    "stackedbarChart6",
+                    "stackedbarChart7",
+                    "stackedbarChart8",
+                    "stackedbarChart9",
+                    "stackedbarChart10",
+                    "stackedbarChart11",
+                    "stackedbarChart12",
+                    "stackedbarChart13",
+                    "stackedbarChart14",
+                    "stackedbarChart15",
+                    "stackedbarChart16",
+                    "stackedbarChart17",
+                    "stackedbarChart18",
+                    "stackedbarChart19",
+                    "stackedbarChart20",
+                    "packCircle1",
+                    "packCircle2",
+                    "packCircle3",
+                    "packCircle4",
+                    "packCircle5",
+                    "packCircle6",
+                    "packCircle7",
+                    "packCircle8",
+                    "packCircle9",
+                    "packCircle10",
+                    "packCircle11",
+                    "packCircle12",
+                    "packCircle13",
+                    "packCircle14",
+                    "packCircle15",
+                    "packCircle16",
+                    "packCircle17",
+                    "packCircle18",
+                    "packCircle19",
+                    "packCircle20"
+                ]
+            }
         ]
     }
 }
