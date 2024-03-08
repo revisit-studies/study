@@ -30,6 +30,11 @@
             "path": "cleveland-replication/introduction.md",
             "response": []
         },
+        "training1": {
+            "type": "image",
+            "path": "cleveland-replication/instruction.png",
+            "response": []
+        },
         "barChart1": {
             "meta": {
                 "difficulty": 5,
@@ -1340,6 +1345,7 @@
         "order": "fixed",
         "components": [
             "introduction",
+            "training1",
             "barChart1",
             "bubbleChart2",
             "stackedbarChart1",
