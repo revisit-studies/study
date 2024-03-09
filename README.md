@@ -17,11 +17,9 @@ This research conducts a scientific investigation to discover the best successfu
 *error bar graph
 
 ## Technical Achievements
-
 Lorem ipsum doloret
 
 ## Design Achievements
-
 Lorem ipsum doloret
 
 ## References
