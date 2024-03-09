@@ -9,10 +9,12 @@
 <body>
     <svg></svg>
     <script>
+        const height = 400;
+        const width = 750;
+        const padding = 50; 
         const svg = d3.select("svg")
-                      .attr("viewBox", "0 0 800 800") 
-                      .append("g")
-                      .attr("transform", "translate(400,400)"); 
+            .attr("width", width + 2 * padding)
+            .attr("height", height + 2 * padding);
         Revisit.onDataReceive((parameters) => {
             console.log(parameters);
 
@@ -33,18 +35,18 @@
                 svg.selectAll("circle")
                     .data(nodes)
                     .join("circle")
-                    .attr("cx", d => d.x - 400) // Adjusted for centered positioning within viewBox
-                    .attr("cy", d => d.y - 400) // Adjusted for centered positioning within viewBox
-                    .attr("r", d => d.r)
-                    .style("fill", d => d.children ? "#fff" : "#69b3a2")
+                    .attr("cx", d => (d.x)/2) // Adjusted for centered positioning within viewBox
+                    .attr("cy", d => (d.y)/2) // Adjusted for centered positioning within viewBox
+                    .attr("r", d => (d.r)/2)
+                    .attr("fill", "white")
                     .attr("stroke", "black");
 
                 svg.selectAll(".selected")
                     .data(nodes.filter((_, i) => selectedIndices.includes(i + 1))) // Adjust index for filtering
                     .join("circle")
                     .attr("class", "selected")
-                    .attr("cx", d => d.x - 400)
-                    .attr("cy", d => d.y - 400)
+                    .attr("cx", d => (d.x)/2)
+                    .attr("cy", d => (d.y)/2)
                     .attr("r", 5)
                     .style("fill", "black");
             };
