@@ -4027,13 +4027,12 @@
         "order": "fixed",
         "components": [
             "introduction",
-            "training1",
             {
                 "order": "random",
                 "numSamples": 10,
                 "components": [
                     "training1",
-                    "barChart1",
+            "barChart1",
                     "barChart2",
                     "barChart3",
                     "barChart4",
