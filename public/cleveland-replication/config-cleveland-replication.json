@@ -4027,6 +4027,7 @@
         "order": "fixed",
         "components": [
             "introduction",
+            "training1",
             {
                 "order": "random",
                 "numSamples": 4,
