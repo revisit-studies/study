@@ -30,11 +30,6 @@
             "path": "cleveland-replication/introduction.md",
             "response": []
         },
-        "training1": {
-            "type": "image",
-            "path": "cleveland-replication/instruction.png",
-            "response": []
-        },
         "barChart1": {
             "meta": {
                 "difficulty": 5,
