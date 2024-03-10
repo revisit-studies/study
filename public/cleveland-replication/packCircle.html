@@ -42,7 +42,7 @@
                     .attr("stroke", "black");
 
                 svg.selectAll(".selected")
-                    .data(nodes.filter((_, i) => selectedIndices.includes(i + 1))) // Adjust index for filtering
+                    .data(nodes.filter((_, i) => selectedIndices.includes(i))) // Adjust index for filtering
                     .join("circle")
                     .attr("class", "selected")
                     .attr("cx", d => (d.x)/2)
