@@ -1,7 +1,7 @@
 {
     "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/GlobalConfigSchema.json",
     "configsList": [
-        "cleveland-replication-2",
+        "cleveland-replication-3",
         "html-demo"
 
     ],
@@ -12,7 +12,7 @@
         "html-demo": {
             "path": "html-demo/config-html-demo.json"
         },
-        "cleveland-replication-2": {
+        "cleveland-replication-3": {
             "path": "cleveland-replication/config-cleveland-replication.json"
         },
         "image-demo": {
