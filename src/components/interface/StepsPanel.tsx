@@ -1,72 +1,114 @@
 import {
   Badge, NavLink, Popover, Text,
 } from '@mantine/core';
-import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IconArrowsShuffle } from '@tabler/icons-react';
-import { createPortal } from 'react-dom';
+import { IconArrowsShuffle, IconBrain } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
-import { useStudyConfig } from '../../store/hooks/useStudyConfig';
+import { createPortal } from 'react-dom';
+import { OrderObject } from '../../parser/types';
+import { Sequence } from '../../store/types';
 import { deepCopy } from '../../utils/deepCopy';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
-import { IndividualComponent, InheritedComponent, OrderObject } from '../../parser/types';
-import { Sequence } from '../../store/types';
-import { findTaskIndexInSequence, getSequenceFlatMap, getSubSequence } from '../../utils/getSequenceFlatMap';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 
-function JSONstringifyOrdered(obj: object) {
-  const allKeys = new Set<string>();
-  // eslint-disable-next-line no-sequences
-  JSON.stringify(obj, (key, value) => (allKeys.add(key), value));
-  return JSON.stringify(obj, Array.from(allKeys).sort());
+export type OrderObjectWithOrderPath = Omit<OrderObject, 'components'> & { orderPath: string; components: (OrderObjectWithOrderPath | string)[]};
+
+function findTaskIndexInSequence(sequence: Sequence, step: string, startIndex: number, requestedPath: string): number {
+  let index = 0;
+
+  // Loop through the sequence components and find the index of the task if it's in this block
+  for (let i = 0; i < sequence.components.length; i += 1) {
+    const component = sequence.components[i];
+    if (typeof component === 'string') {
+      if (requestedPath === sequence.orderPath && component === step && i >= startIndex) {
+        break;
+      }
+      index += 1;
+    } else {
+      // See if the task is in the nested sequence
+      index += findTaskIndexInSequence(component, step, startIndex, requestedPath);
+
+      // If the task is in the nested sequence, break the loop. We need includes, because we need to break the loop if the task is in the nested sequence
+      if (requestedPath.includes(component.orderPath)) {
+        break;
+      }
+    }
+  }
+
+  return index;
 }
 
-function reorderComponents(orderComponents: (string | OrderObject)[], sequenceComponents: (string | Sequence)[], path: string) {
-  const newComponents: (string | OrderObject)[] = [];
+function countInterruptionsRecursively(configSequence: OrderObjectWithOrderPath, participantSequence: Sequence) {
+  let count = 0;
+
+  // Loop through the participant sequence and count the interruptions that are defined in the configSequence
+  participantSequence.components.forEach((component) => {
+    if (typeof component === 'string' && configSequence.interruptions?.flatMap((i) => i.components).includes(component)) {
+      count += 1;
+    } else if (typeof component !== 'string') {
+      // If the component is a sequence, find the corresponding sequence in the configSequence and count the interruptions
+      const configSubSequence = configSequence.components.find((c) => typeof c !== 'string' && c.orderPath === component.orderPath) as OrderObjectWithOrderPath;
+      count += countInterruptionsRecursively(configSubSequence, component);
+    }
+  });
+
+  return count;
+}
+
+function reorderComponents(configSequence: OrderObjectWithOrderPath['components'], participantSequence: Sequence['components']) {
+  const newComponents: (string | OrderObjectWithOrderPath)[] = [];
 
   // Iterate through the sequence components and reorder the orderComponents
-  sequenceComponents.forEach((sequenceComponent) => {
-    if (typeof sequenceComponent === 'string') {
+  participantSequence.forEach((sequenceComponent) => {
+    // Find the index of the sequenceComponent in the configSequence
+    const configSequenceIndex = configSequence.findIndex((c) => {
+      if (typeof c === 'string') {
+        return c === sequenceComponent;
+      }
+      return typeof sequenceComponent !== 'string' && c.orderPath === sequenceComponent.orderPath;
+    });
+
+    if (configSequenceIndex !== -1) {
+      newComponents.push(configSequence[configSequenceIndex]);
+      configSequence.splice(configSequenceIndex, 1);
+    }
+
+    if (configSequenceIndex === -1 && typeof sequenceComponent === 'string') {
       newComponents.push(sequenceComponent);
-    } else {
-      const sequencePathNextIndex = sequenceComponent.orderPath.replace(`${path}-`, '').split('-')[0];
-      const orderComponent = orderComponents[+sequencePathNextIndex];
-      newComponents.push(orderComponent);
     }
   });
 
-  // If there are any unused orderComponents, add them to the end
-  orderComponents.forEach((orderComponent) => {
-    if (!newComponents.includes(orderComponent)) {
-      newComponents.push(orderComponent);
-    }
-  });
+  newComponents.push(...configSequence);
 
   return newComponents;
 }
 
 function StepItem({
-  startIndex,
   step,
+  disabled,
   fullSequence,
-  sequence,
-  sequencePath,
-  task,
-  studyId,
+  startIndex,
+  interruption,
+  subSequence,
 }: {
-  startIndex: number;
   step: string;
+  disabled: boolean;
   fullSequence: Sequence;
-  sequence: Sequence;
-  sequencePath: string;
-  task: false | IndividualComponent | InheritedComponent;
-  studyId: string | null;
+  startIndex: number;
+  interruption: boolean,
+  subSequence?: Sequence;
 }) {
+  const studyId = useStudyId();
   const navigate = useNavigate();
+  const currentStep = useCurrentStep();
+  const studyConfig = useStudyConfig();
   const [opened, { close, open }] = useDisclosure(false);
 
-  const stepIsInSequence = sequence.components.includes(step);
-  const index = stepIsInSequence ? findTaskIndexInSequence(fullSequence, step, startIndex, sequencePath, 'root') : -1;
-  const active = useCurrentStep() === index;
+  const task = step in studyConfig.components && studyConfig.components[step];
+
+  const stepIndex = subSequence && subSequence.components.slice(startIndex).includes(step) ? findTaskIndexInSequence(fullSequence, step, startIndex, subSequence.orderPath) : -1;
+  const active = currentStep === stepIndex;
 
   return (
     <Popover position="left" withArrow arrowSize={10} shadow="md" opened={opened} offset={20}>
@@ -82,10 +124,13 @@ function StepItem({
               height: '32px',
             }}
             label={(
-              <div>{active ? <strong>{step}</strong> : step}</div>
-            )}
-            onClick={() => navigate(`/${studyId}/${index}`)}
-            disabled={!stepIsInSequence}
+              <div>
+                {interruption && <IconBrain size={16} style={{ marginRight: 4, marginBottom: -2 }} color="orange" />}
+                {active ? <strong>{step}</strong> : step}
+              </div>
+      )}
+            onClick={() => navigate(`/${studyId}/${stepIndex}`)}
+            disabled={disabled}
           />
         </div>
       </Popover.Target>
@@ -119,83 +164,44 @@ function StepItem({
 }
 
 export function StepsPanel({
+  configSequence,
   fullSequence,
-  fullOrder,
-  sequencePath,
-  index = 0,
+  participantSequence,
 }: {
-  fullSequence: Sequence;
-  fullOrder: OrderObject;
-  sequencePath: string;
-  index?: number;
+  configSequence: OrderObjectWithOrderPath,
+  fullSequence: Sequence,
+  participantSequence?: Sequence,
 }) {
-  const studyId = useStudyId();
-  const studyConfig = useStudyConfig();
-
-  const parentPath = sequencePath === 'root' ? 'root' : sequencePath.split('-').slice(0, -1).join('-');
-
-  let sequence: Sequence = getSubSequence(fullSequence, sequencePath);
-  let order: OrderObject;
-
-  if (sequence === undefined) {
-    // Find all available order paths
-    const availableOrderPaths: string[] = [];
-    getSubSequence(fullOrder, parentPath).components.forEach((component, idx) => (typeof component !== 'string' ? availableOrderPaths.push(`${parentPath}-${idx}`) : null));
-
-    // Find the ones that are used in the sequence
-    const usedOrderPaths: string[] = [];
-    getSubSequence(fullSequence, parentPath)?.components.forEach((component) => (typeof component !== 'string' ? usedOrderPaths.push(component.orderPath) : null));
-
-    // Find the ones that are not used
-    const unusedOrderPaths = availableOrderPaths.filter((p) => !usedOrderPaths.includes(p));
-
-    // Get an index for the unusedOrderPaths, based on our index passed in
-    const unusedIndex = index - usedOrderPaths.length;
-
-    order = getSubSequence(fullOrder, unusedOrderPaths[unusedIndex]);
-    sequence = { orderPath: `${unusedOrderPaths[unusedIndex]}`, components: [] };
-  } else {
-    order = getSubSequence(fullOrder, sequence.orderPath);
+  // If the participantSequence is provided, reorder the components
+  let components = deepCopy(configSequence.components);
+  if (participantSequence) {
+    const reorderedComponents = reorderComponents(deepCopy(configSequence.components), deepCopy(participantSequence.components));
+    components = reorderedComponents;
   }
-
-  const newOrder = useMemo(() => {
-    const nOrder = deepCopy(order);
-
-    // Reorder the nOrder.components based on the sequence
-    nOrder.components = reorderComponents(nOrder.components, sequence?.components || [], sequencePath);
-
-    return nOrder;
-  }, [order, sequence]);
 
   return (
     <div>
-      {newOrder.components.map((step, idx) => {
+      {components.map((step, idx) => {
         if (typeof step === 'string') {
-          const task = step in studyConfig.components && studyConfig.components[step];
           return (
             <StepItem
               key={idx}
-              startIndex={idx}
-              fullSequence={fullSequence}
-              sequence={sequence}
-              sequencePath={sequencePath}
               step={step}
-              studyId={studyId}
-              task={task}
+              disabled={participantSequence?.components[idx] !== step}
+              fullSequence={fullSequence}
+              startIndex={idx}
+              interruption={(configSequence.interruptions && (configSequence.interruptions.findIndex((i) => i.components.includes(step)) > -1)) || false}
+              subSequence={participantSequence}
+              // TODO: Add a flag for interruptions
             />
           );
         }
 
-        const orderIndex = order.components.findIndex((c) => {
-          if (JSONstringifyOrdered(c as OrderObject) === JSONstringifyOrdered(step)) {
-            return true;
-          }
-          return false;
-        });
+        const participantSubSequence = participantSequence?.components.find((s) => typeof s !== 'string' && s.orderPath === step.orderPath) as Sequence | undefined;
 
-        const subSequence = getSubSequence(fullSequence, `${sequencePath}-${idx}`);
-        const sequenceSteps = subSequence === undefined ? [] : getSequenceFlatMap(subSequence);
-        const orderSteps = getSequenceFlatMap(getSubSequence(fullOrder, `${sequence.orderPath}-${orderIndex}`));
+        // TODO: Count tasks in the sequence without interruptions
+        const sequenceStepsLength = participantSubSequence ? getSequenceFlatMap(participantSubSequence).length - countInterruptionsRecursively(step, participantSubSequence) : 0;
+        const orderSteps = getSequenceFlatMap(step);
 
         return (
           <NavLink
@@ -203,15 +209,20 @@ export function StepsPanel({
             label={(
               <div
                 style={{
-                  opacity: sequenceSteps ? 1 : 0.5,
+                  opacity: sequenceStepsLength > 0 ? 1 : 0.5,
                 }}
               >
                 Group:
                 <Badge ml={5}>
-                  {sequenceSteps.length}
+                  {sequenceStepsLength}
                   /
                   {orderSteps.length}
                 </Badge>
+                {step.interruptions && (
+                <Badge ml={5} color="orange">
+                  {participantSubSequence?.components.filter((s) => typeof s === 'string' && step.interruptions?.flatMap((i) => i.components).includes(s)).length || 0}
+                </Badge>
+                )}
                 <Text c="dimmed" display="inline" mr={5} ml={5}>
                   {step.order}
                 </Text>
@@ -230,7 +241,7 @@ export function StepsPanel({
             }}
           >
             <div style={{ borderLeft: '1px solid #e9ecef' }}>
-              <StepsPanel fullOrder={fullOrder} fullSequence={fullSequence} sequencePath={`${sequencePath}-${idx}`} index={idx} />
+              <StepsPanel configSequence={step} participantSequence={participantSubSequence} fullSequence={fullSequence} />
             </div>
           </NavLink>
         );
