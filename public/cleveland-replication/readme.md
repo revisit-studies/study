@@ -17,9 +17,10 @@ We based our learning on these experimental processes and experiences, and we co
 ## Results
 
 Table 1. Accuracy by Chart Type with Bootstrapped 95% CI
-
+![T1](public/cleveland-replication/img/T1.png)
 
 Graph 1
+![G1](public/cleveland-replication/img/G1.png)
 
 Table 2. Accuracy by Participants with Bootstrapped 95% CI
 
