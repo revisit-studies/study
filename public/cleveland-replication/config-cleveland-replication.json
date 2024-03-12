@@ -2968,6 +2968,7 @@
                     "placeholder": "0-100",
                     "max": 100,
                     "min": 0
+                    
                 }
             ],
             "instructionLocation": "sidebar"
@@ -4030,7 +4031,7 @@
             "training1",
             {
                 "order": "random",
-                "numSamples": 4,
+                "numSamples": 40,
                 "components": [
                     {
                         "order": "random",
