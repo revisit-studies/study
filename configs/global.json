@@ -11,7 +11,8 @@
         "VLAT-mini-randomized",
         "MVNV",
         "brush-interactions",
-        "fairness-jnd"
+        "fairness-jnd",
+        "randomization-test"
     ],
     "configs": {
         "fairness-jnd": {
@@ -46,6 +47,9 @@
         },
         "brush-interactions": {
             "path": "brush-interactions/config.json"
+        },
+        "randomization-test": {
+            "path": "randomization-test/config.json"
         }
     }
 }
