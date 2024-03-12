@@ -1,5 +1,5 @@
-import { useStoreSelector } from '../store';
-import { useCurrentStep } from '../../routes';
+import { useFlatSequence, useStoreSelector } from '../store';
+import { useCurrentStep } from '../../routes/utils';
 
 /**
  *
@@ -10,5 +10,7 @@ import { useCurrentStep } from '../../routes';
 export function useStoredAnswer() {
   const { answers } = useStoreSelector((state) => state);
   const currentStep = useCurrentStep();
-  return answers[currentStep];
+  const currentComponent = useFlatSequence()[currentStep];
+  const identifier = `${currentComponent}_${currentStep}`;
+  return answers[identifier];
 }

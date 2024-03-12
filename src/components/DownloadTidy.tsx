@@ -89,7 +89,7 @@ function processToRow(session: ParticipantData, studyConfig: StudyConfig, proper
         tidyRow.correctAnswer = completeComponent.correctAnswer;
       }
       if (properties.includes('taskOrder')) {
-        tidyRow.taskOrder = session.sequence.indexOf(trialId);
+        // tidyRow.taskOrder = session.sequence.indexOf(trialId);
       }
 
       return tidyRow;

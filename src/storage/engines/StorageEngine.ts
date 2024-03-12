@@ -1,5 +1,5 @@
 import { StudyConfig } from '../../parser/types';
-import { StoredAnswer } from '../../store/types';
+import { Sequence, StoredAnswer } from '../../store/types';
 import { ParticipantData } from '../types';
 
 export abstract class StorageEngine {
@@ -31,13 +31,13 @@ export abstract class StorageEngine {
 
   abstract clearCurrentParticipantId(): Promise<void>;
 
-  abstract saveAnswer(currentStep: string, answer: StoredAnswer): Promise<void>;
+  abstract saveAnswer(identifier: string, answer: StoredAnswer): Promise<void>;
 
-  abstract setSequenceArray(latinSquare: string[][]): Promise<void>;
+  abstract setSequenceArray(latinSquare: Sequence[]): Promise<void>;
 
-  abstract getSequenceArray(): Promise<string[][] | null>;
+  abstract getSequenceArray(): Promise<Sequence[] | null>;
 
-  abstract getSequence(): Promise<string[]>;
+  abstract getSequence(): Promise<Sequence>;
 
   abstract getAllParticipantsData(): Promise<ParticipantData[]>;
 

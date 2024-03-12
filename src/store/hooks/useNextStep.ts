@@ -5,8 +5,9 @@ import {
   useStoreActions,
   useStoreDispatch,
   useAreResponsesValid,
+  useFlatSequence,
 } from '../store';
-import { useCurrentStep, useStudyId } from '../../routes';
+import { useCurrentStep, useStudyId } from '../../routes/utils';
 
 import { deepCopy } from '../../utils/deepCopy';
 import { ValidationStatus } from '../types';
@@ -16,8 +17,10 @@ import { useWindowEvents } from './useWindowEvents';
 
 export function useNextStep() {
   const currentStep = useCurrentStep();
+  const currentComponent = useFlatSequence()[currentStep];
+  const identifier = `${currentComponent}_${currentStep}`;
 
-  const { sequence, trialValidation } = useStoreSelector(
+  const { trialValidation } = useStoreSelector(
     (state) => state,
   );
 
@@ -27,7 +30,7 @@ export function useNextStep() {
   const { saveTrialAnswer, setIframeAnswers } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
-  const areResponsesValid = useAreResponsesValid(currentStep);
+  const areResponsesValid = useAreResponsesValid(identifier);
 
   // Status of the next button. If false, the next button should be disabled
   const isNextDisabled = !areResponsesValid;
@@ -36,12 +39,7 @@ export function useNextStep() {
 
   const navigate = useNavigate();
 
-  const nextStep = useMemo(() => {
-    const currentStepIndex = sequence.indexOf(currentStep);
-    const _nextStep = sequence[currentStepIndex + 1];
-
-    return _nextStep || 'end';
-  }, [currentStep, sequence]);
+  const nextStep = useMemo(() => currentStep + 1, [currentStep]);
 
   const computedTo = `/${useStudyId()}/${nextStep}`;
 
@@ -50,7 +48,7 @@ export function useNextStep() {
   const windowEvents = useWindowEvents();
   const goToNextStep = useCallback(() => {
     // Get answer from across the 3 response blocks and the provenance graph
-    const trialValidationCopy = deepCopy(trialValidation[currentStep]);
+    const trialValidationCopy = deepCopy(trialValidation[identifier]);
     const answer = Object.values(trialValidationCopy).reduce((acc, curr) => {
       if (Object.hasOwn(curr, 'values')) {
         return { ...acc, ...(curr as ValidationStatus).values };
@@ -66,7 +64,7 @@ export function useNextStep() {
     if (Object.keys(storedAnswer || {}).length === 0) {
       storeDispatch(
         saveTrialAnswer({
-          currentStep,
+          identifier,
           answer,
           startTime,
           endTime,
@@ -77,7 +75,7 @@ export function useNextStep() {
       // Update database
       if (storageEngine) {
         storageEngine.saveAnswer(
-          currentStep,
+          identifier,
           {
             answer,
             startTime,
@@ -103,6 +101,7 @@ export function useNextStep() {
     saveTrialAnswer,
     computedTo,
     windowEvents,
+    identifier,
   ]);
 
   return {

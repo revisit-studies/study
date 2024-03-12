@@ -4,7 +4,7 @@ import {
 } from 'react';
 import { Provider } from 'react-redux';
 import {
-  RouteObject, useParams, useRoutes, useSearchParams,
+  RouteObject, useRoutes, useSearchParams,
 } from 'react-router-dom';
 import { Box, Center, Loader } from '@mantine/core';
 import { parseStudyConfig } from '../parser/parser';
@@ -13,7 +13,7 @@ import {
   Nullable,
   StudyConfig,
 } from '../parser/types';
-import { StudyIdParam } from '../routes';
+import { useStudyId } from '../routes/utils';
 import {
   StudyStoreContext,
   StudyStore,
@@ -24,7 +24,6 @@ import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import ComponentController from '../controllers/ComponentController';
 import { NavigateWithParams } from '../utils/NavigateWithParams';
 import { StepRenderer } from './StepRenderer';
-import { StudyEnd } from './StudyEnd';
 import { useStorageEngine } from '../store/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
 import { PREFIX } from './Prefix';
@@ -34,51 +33,11 @@ async function fetchStudyConfig(configLocation: string, configKey: string) {
   return parseStudyConfig(config, configKey);
 }
 
-export function generateStudiesRoutes(
-  studyId: Nullable<string>,
-  config: Nullable<StudyConfig>,
-  sequence: Nullable<string[]>,
-) {
-  const routes: RouteObject[] = [];
-
-  if (studyId && config && sequence) {
-    const stepRoutes: RouteObject[] = [];
-
-    stepRoutes.push({
-      path: '/',
-      element: <NavigateWithParams to={`${sequence[0]}`} replace />,
-    });
-
-    sequence.forEach((step: string) => {
-      if (step === 'end') {
-        stepRoutes.push({
-          path: '/end',
-          element: <StudyEnd />,
-        });
-      } else {
-        stepRoutes.push({
-          path: `/${step}`,
-          element: <ComponentController />,
-        });
-      }
-    });
-
-    const studyRoute: RouteObject = {
-      element: <StepRenderer />,
-      children: stepRoutes,
-    };
-
-    routes.push(studyRoute);
-  }
-
-  return routes;
-}
-
 export function Shell({ globalConfig }: {
   globalConfig: GlobalConfig;
 }) {
   // Pull study config
-  const { studyId } = useParams<StudyIdParam>();
+  const studyId = useStudyId();
   if (!studyId || !globalConfig.configsList.find((c) => sanitizeStringForUrl(c))) {
     throw new Error('Study id invalid');
   }
@@ -122,7 +81,19 @@ export function Shell({ globalConfig }: {
       setStore(newStore);
 
       // Initialize the routing
-      setRoutes(generateStudiesRoutes(studyId, activeConfig, participantSession.sequence));
+      setRoutes([{
+        element: <StepRenderer />,
+        children: [
+          {
+            path: '/',
+            element: <NavigateWithParams to="0" replace />,
+          },
+          {
+            path: '/:index',
+            element: <ComponentController />,
+          },
+        ],
+      }]);
     }
     initializeUserStoreRouting();
   }, [storageEngine, activeConfig, studyId, searchParams]);

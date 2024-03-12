@@ -10,9 +10,9 @@ test('html demo works as intended', async ({ page }) => {
   const introText = await page.getByText('Welcome to our study. This is an example study to show how to embed html element');
   await expect(introText).toBeVisible();
 
-  // Click on the next button 
+  // Click on the next button
   await page.getByRole('button', { name: 'Next' }).click();
-  
+
   // Check the page contains the question
   const questionText = await page.getByText('How many bars have a value greater than 1?');
   await expect(questionText).toBeVisible();
@@ -30,6 +30,6 @@ test('html demo works as intended', async ({ page }) => {
   await page.getByRole('button', { name: 'Next' }).click();
 
   // Check that the end of study text renders
-  const endText = await page.getByText('Thank you for completing the study. You may close this window now.');
+  const endText = await page.getByText('Please wait while your answers are uploaded.');
   await expect(endText).toBeVisible();
 });

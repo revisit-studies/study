@@ -2,17 +2,18 @@
 import latinSquare from '@quentinroy/latin-square';
 import { OrderObject, StudyConfig } from '../parser/types';
 import { deepCopy } from './deepCopy';
+import { Sequence } from '../store/types';
 
-function _orderObjectToList(
+function _orderObjectToSequence(
   order: OrderObject,
-  pathsFromFirebase: Record<string, string[][]>,
+  latinSquareObject: Record<string, string[][]>,
   path: string,
-) : (string | OrderObject)[] | string {
+): Sequence {
   // eslint-disable-next-line no-plusplus
   for (let i = 0; i < order.components.length; i++) {
     const curr = order.components[i];
     if (typeof curr !== 'string') {
-      order.components[i] = _orderObjectToList(curr, pathsFromFirebase, `${path}-${i}`) as string;
+      order.components[i] = _orderObjectToSequence(curr, latinSquareObject, `${path}-${i}`) as unknown as OrderObject;
     }
   }
 
@@ -20,9 +21,9 @@ function _orderObjectToList(
     const randomArr = order.components.sort(() => 0.5 - Math.random());
 
     order.components = randomArr;
-  } else if (order.order === 'latinSquare' && pathsFromFirebase) {
+  } else if (order.order === 'latinSquare' && latinSquareObject) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    order.components = pathsFromFirebase[path].pop()!.map((o) => {
+    order.components = latinSquareObject[path].pop()!.map((o) => {
       if (o.startsWith('_orderObj')) {
         return order.components[+o.slice(9)];
       }
@@ -31,17 +32,63 @@ function _orderObjectToList(
     });
   }
 
-  return order.components.slice(0, order.numSamples ? order.numSamples : undefined).flat();
+  let computedComponents: (string | OrderObject | string[])[] = order.components.slice(0, order.numSamples !== undefined ? order.numSamples : undefined).flat();
+
+  // If we have a break, insert it into the sequence at the correct intervals
+  if (order.interruptions) {
+    order.interruptions.forEach((interruption) => {
+      const newComponents = [];
+      if (interruption.spacing !== 'random') {
+        for (let i = 0; i < computedComponents.length; i += 1) {
+          if (
+            i === interruption.firstLocation
+            || (i > interruption.firstLocation && i % interruption.spacing === 0)
+          ) {
+            newComponents.push(interruption.components);
+          }
+          newComponents.push(computedComponents[i]);
+        }
+      }
+
+      // Handle random interruptions
+      if (interruption.spacing === 'random') {
+        // Generate the random locations
+        const randomInterruptionLocations = new Set<number>();
+        if (interruption.numInterruptions > computedComponents.length) {
+          throw new Error('Number of interruptions cannot be greater than the number of components');
+        }
+        while (randomInterruptionLocations.size < interruption.numInterruptions) {
+          const randomLocation = Math.floor(Math.random() * computedComponents.length);
+          randomInterruptionLocations.add(randomLocation);
+        }
+        const sortedRandomInterruptionLocations = Array.from(randomInterruptionLocations).sort((a, b) => a - b);
+
+        let j = 0;
+        for (let i = 0; i < computedComponents.length; i += 1) {
+          if (i === sortedRandomInterruptionLocations[j]) {
+            newComponents.push(interruption.components);
+            j += 1;
+          }
+          newComponents.push(computedComponents[i]);
+        }
+      }
+      computedComponents = newComponents;
+    });
+  }
+
+  return {
+    orderPath: path,
+    components: computedComponents.flat() as Sequence['components'],
+  };
 }
 
-function orderObjectToList(
+function orderObjectToSequence(
   order: OrderObject,
-  pathsFromFirebase: Record<string, string[][]>,
-) : (string | OrderObject)[] {
+  latinSquareObject: Record<string, string[][]>,
+): Sequence {
   const orderCopy = deepCopy(order);
 
-  _orderObjectToList(orderCopy, pathsFromFirebase, 'root');
-  return orderCopy.components.slice(0, orderCopy.numSamples ? orderCopy.numSamples : undefined).flat();
+  return _orderObjectToSequence(orderCopy, latinSquareObject, 'root');
 }
 
 function _createRandomOrders(order: OrderObject, paths: string[], path: string, index = 0) {
@@ -81,7 +128,7 @@ function generateLatinSquare(config: StudyConfig, path: string) {
   return newSquare;
 }
 
-export function generateSequenceArray(config: StudyConfig) {
+export function generateSequenceArray(config: StudyConfig): Sequence[] {
   const paths = createRandomOrders(config.sequence);
   const latinSquareObject: Record<string, string[][]> = paths
     .map((p) => ({ [p]: generateLatinSquare(config, p) }))
@@ -89,14 +136,14 @@ export function generateSequenceArray(config: StudyConfig) {
 
   const numSequences = config.uiConfig.numSequences || 1000;
 
-  const sequenceArray: string[][] = [];
+  const sequenceArray: Sequence[] = [];
   Array.from({ length: numSequences }).forEach(() => {
     // Generate a sequence
-    const sequence = orderObjectToList(config.sequence, latinSquareObject);
-    sequence.push('end');
+    const sequence = orderObjectToSequence(config.sequence, latinSquareObject);
+    sequence.components.push('end');
 
     // Add the sequence to the array
-    sequenceArray.push(sequence as string[]);
+    sequenceArray.push(sequence);
 
     // Refill the latin square if it is empty
     Object.entries(latinSquareObject).forEach(([key, value]) => {

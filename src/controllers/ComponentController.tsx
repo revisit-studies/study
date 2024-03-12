@@ -6,30 +6,26 @@ import ImageController from './ImageController';
 import ReactComponentController from './ReactComponentController';
 import MarkdownController from './MarkdownController';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
-import { useCurrentStep } from '../routes';
+import { useCurrentStep } from '../routes/utils';
 import { useStoredAnswer } from '../store/hooks/useStoredAnswer';
 import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
 import { isInheritedComponent } from '../parser/parser';
 import { IndividualComponent } from '../parser/types';
 import { disableBrowserBack } from '../utils/disableBrowserBack';
 import { useStorageEngine } from '../store/storageEngineHooks';
-import { useStoreActions, useStoreDispatch } from '../store/store';
+import { useFlatSequence, useStoreActions, useStoreDispatch } from '../store/store';
+import { StudyEnd } from '../components/StudyEnd';
 
 // current active stimuli presented to the user
 export default function ComponentController() {
   // Get the config for the current step
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
-  const stepConfig = studyConfig.components[currentStep];
+  const currentComponent = useFlatSequence()[currentStep];
+  const stepConfig = studyConfig.components[currentComponent];
 
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
-
-  const currentConfig = isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
-
-  const instruction = (currentConfig.instruction || '');
-  const { instructionLocation } = currentConfig;
-  const instructionInSideBar = studyConfig.uiConfig.sidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
 
   // Disable browser back button from all stimuli
   disableBrowserBack();
@@ -46,6 +42,17 @@ export default function ComponentController() {
       }));
     }
   }, [setAlertModal, storageEngine, storeDispatch]);
+
+  // We're not using hooks below here, so we can return early if we're at the end of the study.
+  // This avoids issues with the component config being undefined for the end of the study.
+  if (currentComponent === 'end') {
+    return <StudyEnd />;
+  }
+
+  const currentConfig = isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
+  const instruction = (currentConfig.instruction || '');
+  const { instructionLocation } = currentConfig;
+  const instructionInSideBar = studyConfig.uiConfig.sidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
 
   return (
     <>

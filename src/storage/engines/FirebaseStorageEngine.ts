@@ -11,9 +11,12 @@ import { getAuth, signInAnonymously } from '@firebase/auth';
 import localforage from 'localforage';
 import { StorageEngine } from './StorageEngine';
 import { ParticipantData } from '../types';
-import { EventType, StoredAnswer, TrrackedProvenance } from '../../store/types';
+import {
+  EventType, Sequence, StoredAnswer, TrrackedProvenance,
+} from '../../store/types';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 export class FirebaseStorageEngine extends StorageEngine {
   private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
@@ -166,7 +169,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return await this.localForage.removeItem('currentParticipantId');
   }
 
-  async saveAnswer(currentStep: string, answer: StoredAnswer) {
+  async saveAnswer(identifier: string, answer: StoredAnswer) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -184,18 +187,18 @@ export class FirebaseStorageEngine extends StorageEngine {
       endTime: answer.endTime,
     };
 
-    await setDoc(participantDoc, { answers: { [currentStep]: answerToSave } }, { merge: true });
+    await setDoc(participantDoc, { answers: { [identifier]: answerToSave } }, { merge: true });
 
     if (answer.provenanceGraph) {
-      this.localProvenanceCopy[currentStep] = answer.provenanceGraph;
+      this.localProvenanceCopy[identifier] = answer.provenanceGraph;
       await this._pushToFirebaseStorage(this.currentParticipantId, 'provenance', this.localProvenanceCopy);
     }
 
-    this.localWindowEvents[currentStep] = answer.windowEvents;
+    this.localWindowEvents[identifier] = answer.windowEvents;
     await this._pushToFirebaseStorage(this.currentParticipantId, 'windowEvents', this.localWindowEvents);
   }
 
-  async setSequenceArray(latinSquare: string[][]) {
+  async setSequenceArray(latinSquare: Sequence[]) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -223,7 +226,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
 
     // Get the latin square
-    const sequenceArray: string[][] | null = await this.getSequenceArray();
+    const sequenceArray: Sequence[] | null = await this.getSequenceArray();
     if (!sequenceArray) {
       throw new Error('Latin square not initialized');
     }
@@ -363,11 +366,11 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
 
     // Loop over the sequence and check if all answers are present
-    const allAnswersPresent = participantData.sequence.every((step) => {
+    const allAnswersPresent = getSequenceFlatMap(participantData.sequence).every((step, idx) => {
       if (step === 'end') {
         return true;
       }
-      return participantData.answers[step] !== undefined;
+      return participantData.answers[`${step}_${idx}`] !== undefined;
     });
 
     return allAnswersPresent;
@@ -382,7 +385,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     const storage = getStorage();
     const storageRef = ref(storage, `${this.studyId}/${prefix}_${type}`);
 
-    let storageObj: Record<string, T extends 'provenance' ? TrrackedProvenance : T extends 'windowEvents' ? EventType[] : string[][]> = {};
+    let storageObj: Record<string, T extends 'provenance' ? TrrackedProvenance : T extends 'windowEvents' ? EventType[] : Sequence[]> = {};
     try {
       const url = await getDownloadURL(storageRef);
       const response = await fetch(url);
@@ -395,7 +398,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return storageObj;
   }
 
-  private async _pushToFirebaseStorage<T extends 'provenance' | 'windowEvents' | 'sequenceArray'>(prefix: string, type: T, objectToUpload: Record<string, T extends 'provenance' ? TrrackedProvenance : T extends 'windowEvents' ? EventType[] : string[][]> = {}) {
+  private async _pushToFirebaseStorage<T extends 'provenance' | 'windowEvents' | 'sequenceArray'>(prefix: string, type: T, objectToUpload: Record<string, T extends 'provenance' ? TrrackedProvenance : T extends 'windowEvents' ? EventType[] : Sequence[]> = {}) {
     if (Object.keys(objectToUpload).length > 0) {
       const storage = getStorage();
       const storageRef = ref(storage, `${this.studyId}/${prefix}_${type}`);

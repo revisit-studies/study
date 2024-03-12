@@ -3,8 +3,8 @@ import {
 } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { useCurrentStep } from '../routes';
-import { useStoreDispatch, useStoreActions } from '../store/store';
+import { useCurrentStep } from '../routes/utils';
+import { useStoreDispatch, useStoreActions, useFlatSequence } from '../store/store';
 import { WebsiteComponent } from '../parser/types';
 import { PREFIX as BASE_PREFIX } from '../components/Prefix';
 
@@ -31,6 +31,7 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
 
   // navigation
   const currentStep = useCurrentStep();
+  const currentComponent = useFlatSequence()[currentStep];
   const navigate = useNavigate();
 
   const sendMessage = useCallback(
@@ -89,7 +90,7 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
     <div>
       <iframe
         ref={ref}
-        src={`${BASE_PREFIX}${currentConfig.path}?trialid=${currentStep}&id=${iframeId}`}
+        src={`${BASE_PREFIX}${currentConfig.path}?trialid=${currentComponent}&id=${iframeId}`}
         style={defaultStyle}
       />
     </div>

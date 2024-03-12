@@ -2,9 +2,10 @@ import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import { StorageEngine } from './StorageEngine';
 import { ParticipantData } from '../types';
-import { StoredAnswer } from '../../store/types';
+import { Sequence, StoredAnswer } from '../../store/types';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 export class LocalStorageEngine extends StorageEngine {
   private studyDatabase: LocalForage | undefined = undefined;
@@ -95,7 +96,7 @@ export class LocalStorageEngine extends StorageEngine {
     await this.studyDatabase.removeItem('currentParticipant');
   }
 
-  async saveAnswer(currentStep: string, answer: StoredAnswer) {
+  async saveAnswer(identifier: string, answer: StoredAnswer) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
@@ -111,11 +112,11 @@ export class LocalStorageEngine extends StorageEngine {
     }
 
     // Save answer
-    participant.answers[currentStep] = answer;
+    participant.answers[identifier] = answer;
     await this.studyDatabase.setItem(this.currentParticipantId, participant);
   }
 
-  async setSequenceArray(sequenceArray: string[][]) {
+  async setSequenceArray(sequenceArray: Sequence[]) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
@@ -129,7 +130,7 @@ export class LocalStorageEngine extends StorageEngine {
     }
 
     // Get the latin square
-    const sequenceArray: string[][] | null = await this.studyDatabase.getItem('sequenceArray');
+    const sequenceArray: Sequence[] | null = await this.studyDatabase.getItem('sequenceArray');
     if (!sequenceArray) {
       throw new Error('Latin square not initialized');
     }
@@ -151,7 +152,7 @@ export class LocalStorageEngine extends StorageEngine {
       throw new Error('Study database not initialized');
     }
 
-    return await this.studyDatabase.getItem('sequenceArray') as string[][] | null;
+    return await this.studyDatabase.getItem('sequenceArray') as Sequence[] | null;
   }
 
   async getAllParticipantsData() {
@@ -226,11 +227,11 @@ export class LocalStorageEngine extends StorageEngine {
     }
 
     // Loop over the sequence and check if all answers are present
-    const allAnswersPresent = participantData.sequence.every((step) => {
+    const allAnswersPresent = getSequenceFlatMap(participantData.sequence).every((step, idx) => {
       if (step === 'end') {
         return true;
       }
-      return participantData.answers[step] !== undefined;
+      return participantData.answers[`${step}_${idx}`] !== undefined;
     });
 
     return allAnswersPresent;
