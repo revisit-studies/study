@@ -35,7 +35,11 @@
       "path": "randomization-test/introduction.md",
       "response": [],
       "nextButtonLocation": "aboveStimulus",
-      "instructionLocation": "aboveStimulus"
+      "instructionLocation": "aboveStimulus",
+      "description": "this is an introduction to the study",
+      "meta": {
+        "difficulty": "easy"
+      }
     },
     "trial1": {
       "baseComponent": "trial"
