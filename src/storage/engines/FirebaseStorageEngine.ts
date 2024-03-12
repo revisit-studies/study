@@ -385,7 +385,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     const storage = getStorage();
     const storageRef = ref(storage, `${this.studyId}/${prefix}_${type}`);
 
-    let storageObj: Record<string, T extends 'provenance' ? TrrackedProvenance : T extends 'windowEvents' ? EventType[] :Sequence[]> = {};
+    let storageObj: Record<string, T extends 'provenance' ? TrrackedProvenance : T extends 'windowEvents' ? EventType[] : Sequence[]> = {};
     try {
       const url = await getDownloadURL(storageRef);
       const response = await fetch(url);

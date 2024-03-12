@@ -192,14 +192,13 @@ export function StepsPanel({
               startIndex={idx}
               interruption={(configSequence.interruptions && (configSequence.interruptions.findIndex((i) => i.components.includes(step)) > -1)) || false}
               subSequence={participantSequence}
-              // TODO: Add a flag for interruptions
             />
           );
         }
 
         const participantSubSequence = participantSequence?.components.find((s) => typeof s !== 'string' && s.orderPath === step.orderPath) as Sequence | undefined;
 
-        // TODO: Count tasks in the sequence without interruptions
+        // Count tasks - interruptions
         const sequenceStepsLength = participantSubSequence ? getSequenceFlatMap(participantSubSequence).length - countInterruptionsRecursively(step, participantSubSequence) : 0;
         const orderSteps = getSequenceFlatMap(step);
 
