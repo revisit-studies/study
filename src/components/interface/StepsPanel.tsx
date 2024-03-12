@@ -128,7 +128,7 @@ function StepItem({
                 {interruption && <IconBrain size={16} style={{ marginRight: 4, marginBottom: -2 }} color="orange" />}
                 {active ? <strong>{step}</strong> : step}
               </div>
-      )}
+            )}
             onClick={() => navigate(`/${studyId}/${stepIndex}`)}
             disabled={disabled}
           />

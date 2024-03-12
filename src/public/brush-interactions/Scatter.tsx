@@ -156,13 +156,13 @@ export function Scatter({
     }
 
     return () => null;
-  }, [brushState, brushType, brushXRef, brushYRef, height, ref, setBrushedSpace, width, xMax, xMin, xScale, yMax, yMin, yScale]);
+  }, [brushState.hasBrush, brushType, brushXRef, brushYRef, height, ref, setBrushedSpace, setFilteredTable, width, xMax, xMin, xScale, yMax, yMin, yScale]);
 
   useEffect(() => {
     if (brushType === 'Slider Selection' && xScale && yScale) {
       setBrushedSpace([[xScale(xMin), yScale(yMax)], [xScale(xMax), yScale(yMin)]], xScale, yScale, null);
     }
-  }, [brushType, xMax, xMin, xScale, yMax, yMin, yScale]);
+  }, [brushType, setBrushedSpace, xMax, xMin, xScale, yMax, yMin, yScale]);
 
   const brushedSet = useMemo(() => (brushedPoints.length === 0 ? null : new Set(brushedPoints)), [brushedPoints]);
 
@@ -180,7 +180,7 @@ export function Scatter({
 
       return <circle key={i} opacity={brushedSet && !brushedSet.has(d[params.ids]) ? 0.3 : 1} r={3} fill={brushedSet && !brushedSet.has(d[params.ids]) ? 'lightgray' : colorScale(d[params.category])} cx={xVal} cy={yScale(d[params.y])} />;
     });
-  }, [brushedSet, colorScale, data, params.category, params.ids, params.x, params.y, xScale, yScale]);
+  }, [brushedSet, colorScale, data, params.category, params.dataType, params.ids, params.x, params.y, xScale, yScale]);
 
   useEffect(() => {
     if (brushType === 'Axis Selection') {
