@@ -332,7 +332,7 @@ interface DeterministicInterruption {
 }
 
 interface RandomInterruption {
-  /** If spacing is set to random, reVISit will add interruptions randomly */
+  /** If spacing is set to random, reVISit will add interruptions randomly. These interruptions will not ever be displayed as the first component in the block. */
   spacing: 'random';
   /** The number of times the interruption will be randomly added */
   numInterruptions: number;
