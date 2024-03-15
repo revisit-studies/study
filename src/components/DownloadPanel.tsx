@@ -29,7 +29,7 @@ export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
 
   const downloadParticipant = useCallback(async () => {
     download(JSON.stringify(participantData, null, 2), `${baseFilename}_${participantId}.json`);
-  }, [participantData]);
+  }, [baseFilename, participantData, participantId]);
 
   const autoDownload = studyConfig.uiConfig.autoDownloadStudy || false;
   const autoDownloadDelay = autoDownload
@@ -52,7 +52,7 @@ export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
     }
 
     return () => clearInterval(interval);
-  }, [delayCounter]);
+  }, [delayCounter, downloadParticipant]);
 
   return (
     <Stack>

@@ -97,7 +97,6 @@ export function useNextStep() {
     trialValidation,
     navigate,
     startTime,
-    currentStep,
     saveTrialAnswer,
     computedTo,
     windowEvents,

@@ -32,7 +32,7 @@ export default function AppNavBar() {
     }
 
     return null;
-  }, [stepConfig]);
+  }, [stepConfig, studyConfig.baseComponents]);
 
   const status = useStoredAnswer();
   const instruction = currentConfig?.instruction || '';

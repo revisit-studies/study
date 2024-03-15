@@ -86,6 +86,7 @@ export function StepRenderer() {
       window.removeEventListener('scroll', scrollListener);
       document.removeEventListener('visibilitychange', visibilityListener);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

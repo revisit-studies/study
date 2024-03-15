@@ -1,6 +1,6 @@
 import { Button, Group, Text } from '@mantine/core';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   IndividualComponent,
   ResponseBlockLocation,
@@ -35,7 +35,7 @@ export default function ResponseBlock({
 
   const configInUse = config as IndividualComponent;
 
-  const responses = configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [];
+  const responses = useMemo(() => configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [], [configInUse?.response, location]);
 
   const storeDispatch = useStoreDispatch();
   const { updateResponseBlockValidation } = useStoreActions();
@@ -52,7 +52,7 @@ export default function ResponseBlock({
       const answerId = iframeResponse.id;
       answerValidator.setValues({ ...answerValidator.values, [answerId]: iframeAnswers });
     }
-  }, [iframeAnswers]);
+  }, [iframeAnswers, responses]);
 
   useEffect(() => {
     storeDispatch(
@@ -63,7 +63,8 @@ export default function ResponseBlock({
         values: deepCopy(answerValidator.values),
       }),
     );
-  }, [answerValidator.values, currentStep, location]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answerValidator.values, currentComponent, currentStep, location, storeDispatch, updateResponseBlockValidation]);
 
   return (
     <div style={style}>

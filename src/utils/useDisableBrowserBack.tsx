@@ -4,7 +4,7 @@ import { useStoreActions, useStoreDispatch } from '../store/store';
 import { useCurrentStep } from '../routes/utils';
 
 // Show the error modal when the participant tries to use the browser back button
-export function disableBrowserBack() {
+export function useDisableBrowserBack() {
   const currentStep = useCurrentStep();
   const { setAlertModal } = useStoreActions();
   const storeDispatch = useStoreDispatch();
