@@ -14,7 +14,8 @@
 
   <script>
     // Get data from the config file
-    Revisit.onDataReceive(function ({ data }) {
+    Revisit.onDataReceive((data) => {
+      const barData = data['barData']
       const taskID = 'barChart';
       const loc = 'belowStimulus';
       height = 400;
@@ -25,10 +26,10 @@
         .attr('width', width + 2 * padding)
         .attr('height', height + 2 * padding);
 
-      let spacing = height / data.length;
+      let spacing = height / barData.length;
 
-      let min = d3.min(data);
-      let max = d3.max(data);
+      let min = d3.min(barData);
+      let max = d3.max(barData);
 
       let xScale = d3.scaleLinear().domain([min, max]).range([0, width]).nice();
 
@@ -42,7 +43,7 @@
 
       svg
         .selectAll('.bar')
-        .data(data)
+        .data(barData)
         .join('rect')
         .classed('bar', true)
         .attr('transform', 'translate(' + padding + ',' + padding + ')')

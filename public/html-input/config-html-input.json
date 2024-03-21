@@ -17,39 +17,48 @@
     "autoDownloadTime": 5000,
     "sidebar": false
   },
+  "baseComponents":{
+    "bar-chart":{
+        "type": "website",
+        "response": [
+            {
+                "id": "barChart",
+                "prompt": "Your selected answer:",
+                "required": true,
+                "location": "belowStimulus",
+                "type": "iframe"
+            }
+        ],
+        "path": "html-input/bar-chart-interaction.html",
+        "instructionLocation": "aboveStimulus"
+    
+    }
+  },
   "components": {
     "introduction": {
       "type": "markdown",
       "path": "html-input/introduction.md",
       "response": []
     },
-    "barChart": {
-      "type": "website",
-      "parameters": {
-        "data": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]
-      },
-      "response": [
-        {
-          "id": "barChart",
-          "prompt": "Your selected answer:",
-          "required": true,
-          "location": "belowStimulus",
-          "type": "iframe"
-        }
-      ],
-      "path": "html-input/bar-chart-interaction.html",
-      "meta": {
-        "chart": "bar",
-        "AttrNo": 7,
-        "misleading": false
-      },
-      "description": "A trial for the user to click the largest bar",
-      "instruction": "Click on the largest bar",
-      "instructionLocation": "aboveStimulus"
+    "bar-chart-1":{
+      "baseComponent": "bar-chart",
+      "description": "A trial for the user to click the smallest bar",
+      "instruction": "Click on the smallest bar",
+      "parameters":{
+          "barData":[0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]
+      }
+    },
+    "bar-chart-2":{
+      "baseComponent": "bar-chart",
+      "description": "A trial for the user to click the smallest bar",
+      "instruction": "Click on the smallest bar",
+      "parameters":{
+          "barData":[1.2, 1.2, 1.2, 1.3, 0.82, 0.4, 0.3]
+      }
     }
   },
   "sequence": {
     "order": "fixed",
-    "components": ["introduction", "barChart"]
+    "components": ["introduction", "bar-chart-1","bar-chart-2"]
   }
 }
