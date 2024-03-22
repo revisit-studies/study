@@ -1,5 +1,5 @@
 import {
-  Affix, Badge, Box, Navbar, NavLink, Text,
+  Box, Navbar, NavLink, Text,
 } from '@mantine/core';
 import {
   IconZoomQuestion, IconLayoutDashboard, IconChevronRight, IconBrowserPlus,
@@ -47,17 +47,6 @@ export default function AppNav() {
             rightSection={<IconChevronRight size="0.8rem" stroke={1.5} />}
           />
         </Box>
-      </Navbar.Section>
-      <Navbar.Section p="xl">
-        <Affix position={{ bottom: 10, left: 10 }}>
-          <Box w={240}>
-            <Badge color="green">Connected</Badge>
-            {' '}
-            :
-            <Badge color="red">Disconnected</Badge>
-          </Box>
-
-        </Affix>
       </Navbar.Section>
 
     </Navbar>
