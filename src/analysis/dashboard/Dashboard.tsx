@@ -27,8 +27,6 @@ export function Dashboard(props: dashBoardProps) {
           <SummaryBlock databaseSection="/" studyId="html-demo" globalConfig={globalConfig} />
         </Tabs.Panel>
       </Tabs>
-
     </Container>
-
   );
 }
