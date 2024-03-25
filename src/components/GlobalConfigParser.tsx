@@ -7,7 +7,7 @@ import { GlobalConfig, Nullable, StudyConfig } from '../parser/types';
 import { PREFIX } from './Prefix';
 
 async function fetchGlobalConfigArray() {
-  const globalFile = await fetch(`${PREFIX}configs/global.json`);
+  const globalFile = await fetch(`${PREFIX}global.json`);
   const configs = await globalFile.text();
   return parseGlobalConfig(configs);
 }
