@@ -1,4 +1,5 @@
 {
+    "$schema": "https://typedoc.org/schema.json",
     "entryPoints": [
         "src/parser/types.ts"
     ],
@@ -6,12 +7,12 @@
         "typedoc-plugin-markdown",
         "typedoc-plugin-frontmatter"
     ],
-    "name": "",
+    "name": "documentation",
     "githubPages": false,
-    "readme": "none",
+    "readme": "typedocReadMe.md",
     "entryDocument": "index.md",
     "hideBreadcrumbs": true,
     "frontmatterGlobals": {
-      "layout": "docs",
+      "layout": "docs"
     }
 }
