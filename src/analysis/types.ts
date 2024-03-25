@@ -26,6 +26,16 @@ export interface LineChartData {
     value: number;
 }
 
+export interface LineChartProps {
+    data: LineChartData[];
+    domainV: number[];
+    rangeV: number[];
+    domainH: number[];
+    rangeH: number[];
+    labelV: string;
+    labelH: string;
+}
+
 export interface timeAxisProps {
     domain: Date[];
     range: number[];

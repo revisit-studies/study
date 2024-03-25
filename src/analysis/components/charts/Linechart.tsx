@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import * as d3 from 'd3';
-import { LineChartData } from '../../types';
+import { LineChartData, LineChartProps } from '../../types';
 import useChartDimensions from '../hooks/useChartDimension';
 import { TimeAxisX } from '../chartcomponents/TimeAxisX';
 import { AxisY } from '../chartcomponents/AxisY';
@@ -14,12 +14,11 @@ const chartSettings = {
   // height: 100
 };
 
-function Linechart(props: { data: LineChartData }) {
+function Linechart(props: LineChartProps) {
   const [ref, dms] = useChartDimensions(chartSettings);
   const pathRef = useRef<SVGPathElement>(null);
 
   const { data } = props;
-
   const xScale = useMemo(() => (
     d3.scaleTime()
       .domain([new Date(data[0].time), new Date(data[data.length - 1].time)])

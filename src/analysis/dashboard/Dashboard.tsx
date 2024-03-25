@@ -1,13 +1,9 @@
 import { Container, Tabs } from '@mantine/core';
 import { useState } from 'react';
 import { SummaryBlock } from './SummaryBlock';
-import { GlobalConfig } from '../../parser/types';
+import { DashBoardProps } from '../types';
 
-type dashBoardProps = {
-    globalConfig: GlobalConfig;
-}
-
-export function Dashboard(props: dashBoardProps) {
+export function Dashboard(props: DashBoardProps) {
   const [activeTab, setActiveTab] = useState<string | null>('Prod');
   const { globalConfig } = props;
   return (
@@ -18,10 +14,10 @@ export function Dashboard(props: dashBoardProps) {
           <Tabs.Tab value="Dev">Dev</Tabs.Tab>
         </Tabs.List>
         <Tabs.Panel value="Prod">
-          <SummaryBlock databaseSection="/" studyId="html-demo" globalConfig={globalConfig} />
+          <SummaryBlock databaseSection="/" globalConfig={globalConfig} />
         </Tabs.Panel>
         <Tabs.Panel value="Dev">
-          <SummaryBlock databaseSection="/" studyId="html-demo" globalConfig={globalConfig} />
+          <SummaryBlock databaseSection="/" globalConfig={globalConfig} />
         </Tabs.Panel>
       </Tabs>
 
