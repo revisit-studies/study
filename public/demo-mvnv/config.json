@@ -30,7 +30,7 @@
         },
         "consent": {
             "type": "markdown",
-            "path": "demo-mvnv/assets/consent-demo-mvnv/assets.md",
+            "path": "demo-mvnv/assets/consent-mvnv.md",
             "nextButtonText": "Agree",
             "response": [
                 {
@@ -62,7 +62,7 @@
         },
         "training": {
             "type": "website",
-            "path": "demo-mvnv/assets/training/demo-mvnv/assets-training.html",
+            "path": "demo-mvnv/training/mvnv-training.html",
             "response": []
         },
         "task0": {
@@ -74,7 +74,7 @@
             "description": "NA most tweets",
             "instruction": "**Question:** Find the North American with the most Tweets",
             "type": "website",
-            "path": "demo-mvnv/assets/index.html",
+            "path": "demo-mvnv/index.html",
             "nextButtonLocation": "sidebar",
             "response": [
                 {
@@ -95,7 +95,7 @@
             "description": "EU least likes",
             "instruction": "**Question:** Find the European person or institution with the least likes",
             "type": "website",
-            "path": "demo-mvnv/assets/index.html",
+            "path": "demo-mvnv/index.html",
             "nextButtonLocation": "sidebar",
             "response": [
                 {
@@ -116,7 +116,7 @@
             "description": "Most edges in network, few likes and tweets",
             "instruction": "**Question:** Which person has many interactions (edges) in this network, several followers, but few tweets and likes in general?",
             "type": "website",
-            "path": "demo-mvnv/assets/index.html",
+            "path": "demo-mvnv/index.html",
             "nextButtonLocation": "sidebar",
             "response": [
                 {
@@ -137,7 +137,7 @@
             "description": "Lane's EU neighbors",
             "instruction": "**Question:** Find all of Lane's European Neighbors",
             "type": "website",
-            "path": "demo-mvnv/assets/index.html",
+            "path": "demo-mvnv/index.html",
             "nextButtonLocation": "sidebar",
             "response": [
                 {
@@ -158,7 +158,7 @@
             "description": "giCentre's NA neighbors",
             "instruction": "**Question:** Find all of giCentre's North American Neighbors",
             "type": "website",
-            "path": "demo-mvnv/assets/index.html",
+            "path": "demo-mvnv/index.html",
             "nextButtonLocation": "sidebar",
             "response": [
                 {
@@ -179,7 +179,7 @@
             "description": "Jeffrey's most mentioned neighbors",
             "instruction": "**Question:** Who had the most mention interactions with Jeffrey?",
             "type": "website",
-            "path": "demo-mvnv/assets/index.html",
+            "path": "demo-mvnv/index.html",
             "nextButtonLocation": "sidebar",
             "response": [
                 {
@@ -200,7 +200,7 @@
             "description": "Alex's most mentioned neighbors",
             "instruction": "**Question:** Does Alex have more mention interactions with North American or European accounts? Who does he have the most mentions interactions with?",
             "type": "website",
-            "path": "demo-mvnv/assets/index.html",
+            "path": "demo-mvnv/index.html",
             "nextButtonLocation": "sidebar",
             "response": [
                 {
@@ -238,7 +238,7 @@
             "description": "Jeffrey and Robert's common neighbor with most followers",
             "instruction": "**Question:** Among all people who have interacted with both Jeffrey and Robert, who has the most followers?",
             "type": "website",
-            "path": "demo-mvnv/assets/index.html",
+            "path": "demo-mvnv/index.html",
             "nextButtonLocation": "sidebar",
             "response": [
                 {
@@ -259,7 +259,7 @@
             "description": "Evis19 and Jon's most common interaction",
             "instruction": "**Question:** What is the most common form of interaction between Evis19 and Jon? How often has this interaction happened?",
             "type": "website",
-            "path": "demo-mvnv/assets/index.html",
+            "path": "demo-mvnv/index.html",
             "nextButtonLocation": "sidebar",
             "response": [
                 {
@@ -298,7 +298,7 @@
             "description": "Noeska's neighbor more friends than followers",
             "instruction": "**Question:** Select all of Noeska’s neighbors that are people and have more friends than followers",
             "type": "website",
-            "path": "demo-mvnv/assets/index.html",
+            "path": "demo-mvnv/index.html",
             "nextButtonLocation": "sidebar",
             "response": [
                 {
@@ -319,7 +319,7 @@
             "description": "Thomas's neighbor more friends than followers (small)",
             "instruction": "**Question:** Select the people who have interacted with Thomas and have more friends than followers",
             "type": "website",
-            "path": "demo-mvnv/assets/index.html",
+            "path": "demo-mvnv/index.html",
             "nextButtonLocation": "sidebar",
             "response": [
                 {
@@ -340,7 +340,7 @@
             "description": "Thomas's neighbor more friends than followers (large)",
             "instruction": "**Question:** Select the people who have interacted with Thomas and have more friends than followers",
             "type": "website",
-            "path": "demo-mvnv/assets/index.html",
+            "path": "demo-mvnv/index.html",
             "nextButtonLocation": "sidebar",
             "response": [
                 {
@@ -369,7 +369,7 @@
             "description": "Lane and Rob's shortest path institution + continent",
             "instruction": "**Question:** What is the institution on a shortest path between Lane and Rob. What is its continent of origin?",
             "type": "website",
-            "path": "demo-mvnv/assets/index.html",
+            "path": "demo-mvnv/index.html",
             "nextButtonLocation": "sidebar",
             "response": [
                 {
@@ -415,7 +415,7 @@
             "description": "Jason and Jon's shortest path institution + continent",
             "instruction": "**Question:** What is the institution on a shortest path between Jason and Jon. What is its continent of origin?",
             "type": "website",
-            "path": "demo-mvnv/assets/index.html",
+            "path": "demo-mvnv/index.html",
             "nextButtonLocation": "sidebar",
             "response": [
                 {
@@ -461,7 +461,7 @@
             "description": "North Americans two interactions away from Sereno",
             "instruction": "**Question:** Of the North Americans who are two interactions away from Sereno, who has been on twitter the longest?",
             "type": "website",
-            "path": "demo-mvnv/assets/index.html",
+            "path": "demo-mvnv/index.html",
             "nextButtonLocation": "sidebar",
             "response": [
                 {
@@ -482,7 +482,7 @@
             "description": "Free Explore",
             "instruction": "**Question:** Please explore the network freely and report on your findings. Is there anything surprising or particularly interesting in the network?",
             "type": "website",
-            "path": "demo-mvnv/assets/index.html",
+            "path": "demo-mvnv/index.html",
             "nextButtonLocation": "sidebar",
             "response": [
                 {
