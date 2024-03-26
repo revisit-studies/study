@@ -3,7 +3,7 @@ import { getSequenceFlatMap } from '../src/utils/getSequenceFlatMap';
 import { ParticipantData } from '../src/storage/types';
 
 test('test', async ({ page }) => {
-  await page.goto('/randomization-test');
+  await page.goto('/demo-randomization-test');
 
   // Check for introduction page
   const introText = await page.getByText('This is a test file for the introduction of the project.');
@@ -12,7 +12,7 @@ test('test', async ({ page }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sequenceArray: any[] = await page.evaluate(async () => {
     let db;
-    const request = indexedDB.open('randomization-test');
+    const request = indexedDB.open('demo-randomization-test');
 
     return new Promise((resolve) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -28,7 +28,7 @@ test('test', async ({ page }) => {
 
   const currentParticipant: ParticipantData = await page.evaluate(async () => {
     let db;
-    const request = indexedDB.open('randomization-test');
+    const request = indexedDB.open('demo-randomization-test');
 
     return new Promise((resolve) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -127,5 +127,5 @@ test('test', async ({ page }) => {
   await page.getByRole('menuitem', { name: 'Admin Mode' }).click();
 
   const sequenceHeader = await page.getByText('Study Sequence');
-  expect(sequenceHeader).toBeVisible();
+  await expect(sequenceHeader).toBeVisible();
 });
