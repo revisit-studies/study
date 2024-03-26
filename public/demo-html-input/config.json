@@ -11,7 +11,7 @@
   "uiConfig": {
     "contactEmail": "test@test.com",
     "helpTextPath": "demo-html-input/help.md",
-    "logoPath": "demo-html-input/assets/revisitLogoSquare.svg",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
     "autoDownloadTime": 5000,

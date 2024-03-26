@@ -16,7 +16,7 @@
   },
   "uiConfig": {
     "contactEmail": "jwilburn@sci.utah.edu",
-    "logoPath": "demo-randomization-test/assets/revisitLogoSquare.png",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "sidebar": true,
     "withProgressBar": true
   },

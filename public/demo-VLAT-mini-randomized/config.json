@@ -17,7 +17,7 @@
     "uiConfig": {
         "contactEmail": "test@test.com",
         "helpTextPath": "demo-VLAT-mini-randomized/assets/help.md",
-        "logoPath": "demo-VLAT-mini-randomized/assets/revisitLogoSquare.svg",
+        "logoPath": "revisitAssets/revisitLogoSquare.svg",
         "withProgressBar": true,
         "autoDownloadStudy": false,
         "sidebar": true,

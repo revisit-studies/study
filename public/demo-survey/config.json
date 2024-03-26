@@ -17,7 +17,7 @@
     "uiConfig": {
         "contactEmail": "test@test.com",
         "helpTextPath": "demo-survey/assets/help.md",
-        "logoPath": "demo-survey/assets/revisitLogoSquare.svg",
+        "logoPath": "revisitAssets/revisitLogoSquare.svg",
         "withProgressBar": true,
         "autoDownloadStudy": false,
         "sidebar": true
