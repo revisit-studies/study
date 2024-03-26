@@ -4,227 +4,32 @@ Below we provide some additional information for the study configuration and its
 
 We use <a href="https://typedoc.org/" target="_blank">TypeDoc</a> to generate docuemntation for each type in our code base. The documentation can be found [here](modules.html). 
 
-test.
+# Study Configuration
 
-## Study Configuration
+The Study Configuration file is how we describe all of the information necessary to create a study. In this configuration, we describe the metdata for the study, the configuration of the UI, the set of components, and how we can sequence them in the study. You can find the detailed documentation for the study configuration [here](/typedoc/interfaces/StudyConfig.html).
 
-The Study Configuration file is how we describe all of the information necessary to create a study.
+## Study Metadata
 
-### Study Metadata
+The study metadata defines elements such as the study title, authors, and description. The title and description are shown on the landing page when you have multiple studies. The other fields are hidden to the user, but are saved to the database with participant tracking information. This allows you to see which version of the study a participant took. For more detailed documentation on the study metadata, check out the [documentation](/typedoc/interfaces/StudyMetadata.html).
 
-The study metadata defines elements such as the study title, authors, and description. The title and description are shown on the landing page when you have multiple studies. The other fields are hidden to the user, but are saved to the database with participant tracking information. This allows you to see which version of the study a participant took.
 
-For more detailed documentation on the study metadata, check out the [documentation](/typedoc/interfaces/StudyMetadata.html).
+## UI Configuration
 
-```
-{
-    ...
-    studyMetadata: {
-        title: Study title
-        version: pilot
-        authors: [
-            The reVISit Team
-        ]
-        date: 2023-08-08
-        description: A demo study for the documentation
-        organizations: [
-            University of Utah
-            WPI
-            University of Toronto
-        ]
-    }
-    ...
-}
-```
+The UI configuration tells reVISit how the UI should be laid out, such as which image to use for the study logo, whether to include a sidebar, the contact email, etc. For more detailed documentation on the UI configuration, check out the [documentation](/typedoc/interfaces/UIConfig.html).
 
-### UI Configuration
 
-The UI configuration tells reVISit how the UI should be laid out, such as which image to use for the study logo, whether to include a sidebar, the contact email, etc.
+## Study Components
 
-For more detailed documentation on the UI configuration, check out the [documentation](/typedoc/interfaces/UIConfig.html).
-
-```
-{
-    ...
-    uiConfig: {
-        contactEmail: test@test.com
-        helpTextPath: folder/help.md
-        logoPath: assets/revisitLogoSquare.svg
-        withProgressBar: true
-        autoDownloadStudy: false
-        sidebar: true
-    }
-    ...
-}
-```
-
+Study components are the building blocks for each study. There are currently 5 types of components: [Image](/typedoc/interfaces/ImageComponent.html), [Website](/typedoc/interfaces/WebsiteComponent.html), [Questionnaire](/typedoc/interfaces/QuestionnaireComponent.html), [React](/typedoc/interfaces/ReactComponent.html), and [Markdown](/typedoc/interfaces/MarkdownComponent.html). Each component extends the [BaseInvidiualComponent]((/typedoc/interfaces/BaseIndividualComponent.html)) interface. To add a component to your study (which can be thought of as a "page" of your study), you add a JSON object representing that component to the "components" object with a key which you can define how you would like. Then, the "type" key in that JSON object controls which type of component you are referring to. If you are utilizing the "baseComponents" boject of the configuration file, you will specify a "baseComponent" key rather than a "type" key. You can find more examples of each of these components within their individual documentation.
 
 #### Collecting Responses
 
-The last part of defining your study involves collecting responses from participants. This is done in the response section of each rendering component and is required. The response section is a list of questions that you want to ask participants. Each question has a prompt, a type, and a location. The prompt is the text that is displayed to the participant. The type is the type of response that you want to collect. The location is where you want to display the response to the participant. The location can be one of `aboveStimulus`, `belowStimulus`, or `sidebar`. The type of response that you want to collect depends on the type of question that you want to ask. The available types are:
-
-- `numerical`: A text box that allows the participant to enter a number.
-- `shorttext`: A text box that allows the participant to enter text.
-- `longtext`: A text area that allows the participant to enter text.
-- `likert`: A likert scale that allows the participant to select one of a set of options.
-- `dropdown`: A dropdown menu that allows the participant to select one of a set of options.
-- `slider`: A slider that allows the participant to select a value between a minimum and maximum value.
-- `checkbox`: A checkbox that allows the participant to select one or more options.
-- `radio`: A radio button that allows the participant to select one of a set of options.
-- `iframe`: A list generated by items passed from an iframe (website component).
-
-For more detailed documentation on the response section, check out the [documentation](/typedoc/index.html#response).
-
-```
-response: [
-    {
-        id: q1
-        prompt: Dropdown example
-        required: true
-        location: aboveStimulus
-        type: dropdown
-        placeholder: Enter your chart preference
-        options: [
-            {
-                label: Bar Chart
-                value: Bar Chart
-            }
-            {
-                label: Bubble Chart
-                value: Bubble Chart
-            }
-        ]
-    }
-]
-```
-
-#### Sequence
-
-The last part of defining your study involves setting the sequences in which your components should be displayed to the participants. A common sequence is *consent*, *training*,*trial_block1*, *trial_block2*, ... These blocks and components are ordered in the sequence section. The sequence section is a list in the order you want to display components to the participant.
-
-```js
-sequence: [
-    "consent",
-    "training",
-    "trials0"
-]
-```
+Each component has a list of responses which represents a set of questions to ask to the user for that paritcular component. The user can describe where the question should be displayed in the UI, the type of response input (e.g. a [numerical response](/typedoc/interfaces/NumericalResponse.html), a [dropdown](/typedoc/interfaces/DropdownResponse.html), a [slider](/typedoc/interfaces/SliderResponse.html), etc.), and more. Each response interface extends the [BaseResponse](/typedoc/interfaces/BaseResponse.html) interface. For more detailed documentation on the response section, check out the [documentation](/typedoc/index.html#response).
 
 
-## Creating Study Components
+## Sequence
 
-Study components are the building blocks for each study. Below we list the various types of study components and provide some basic examples of their usage. In this section, you define a list of the study components. There are 2 basic types of study components, one that renders something to the page and a container component. The container component exists to enable groupings of rendering components, randomization (not yet implemented), and skip logic (not yet implemented).
-
-We'll step through examples for how to the rendering components and the container components. 
-
-### Markdown Component
-
-A markdown component renders a markdown file to the page. This is useful for introducing your study, giving instructions, etc. The markdown file can be in any folder in the `public` folder (e.g., `public/cleveland/introduction.md`), and the path is relative to the `public` folder.
-
-For more detailed documentation on the markdown component, check out the [documentation](/typedoc/interfaces/MarkdownComponent.html).
-
-```
-"introduction": {
-    "type": "markdown",
-    "path": "cleveland/introduction.md",
-    response: []
-}
-```
-
-### Image Component
-
-Similar to mark down components, image components render an image to the page. The image can be in any folder in the `public` folder (e.g., `public/cleveland/cm-training.png`), and the path is relative to the `public` folder.
-
-For more detailed documentation on the image component, check out the [documentation](/typedoc/interfaces/ImageComponent.html).
-
-```
-"training1": {
-    "type": "image",
-    "path": "cleveland/cm-training.png",
-    "response": []
-}
-```
-
-
-### Website Component
-
-Similar to the above components website components render a website to the page. The website can be in any folder in the `public` folder (e.g., `public/mvnv/training/mvnv-training.html`), and the path is relative to the `public` folder, in that case. The website may also be external, in which case the path is the full URL. This would be useful for displaying publicly available websites or elements on them as a part of your study.
-
-For more detailed documentation on the website component, check out the [documentation](/typedoc/interfaces/WebsiteComponent.html).
-
-```
-"training": {
-    "type": "website",
-    "path": "mvnv/training/mvnv-training.html",
-    response: []
-}
-```
-
-
-### Questionnaire Component
-
-The questionnaire component renders a questionnaire to the page. It could be  useful for collecting demographic information, or other information that you want to collect from participants. Since this component doesn't render a stimulus, it's only useful for collecting basic information from participants.
-
-For more detailed documentation on the questionnaire component, check out the [documentation](/typedoc/interfaces/QuestionnaireComponent.html).
-
-```
-"survey": {
-    "type": "questionnaire"
-    "response": [
-        {
-            "id": "q1",
-            "prompt": "Dropdown example",
-            "required": "true",
-            "location": "aboveStimulus",
-            "type": "dropdown",
-            "placeholder": "Enter your chart preference",
-            "options": [
-                {
-                    "label": "Bar Chart",
-                    "value": "Bar Chart"
-                },
-                {
-                    "label": "Bubble Chart",
-                    "value": "Bubble Chart"
-                }
-            ]
-        }
-    ]
-}
-```
-
-### React Component
-
-The React component is by far the most complicated. It allows you to render a React component to the page. This is useful for rendering interactive stimuli, or for rendering stimuli that require a lot of customization. We have options for passing parameters to the React component that allow the same component to be used for multiple stimuli. React components require that their react code be in the `src/public` folder, and the path is relative to the `src/public` folder. We recommend that you put your react components in a folder that is named after your study to make your paths consistent with the static assets in the `public` folder in the root of the project.
-
-For the best example of how to use this component check out the Cleveland & McGill demo study, and for more detailed documentation on the react component, check out the [documentation](/typedoc/interfaces/ReactComponent.html).
-
-```
-"trial": {
-    "meta": {
-        "nr-dots": 1
-    },
-    "title": "Click Accuracy Test",
-    "description": "try to click on the center of the moving dot",
-    "instruction": "Click on the moving dot",
-    "type": "react-component",
-    "path": "cleveland/ClickAccuracyTest.tsx",
-    "parameters": {
-        "speed": 100,
-        "taskid": "accuracy"
-    }
-    "nextButtonLocation": "sidebar",
-    "response": [
-        {
-            "id": "accuracy",
-            "prompt": "Your click distance to circle center",
-            "required": true,
-            "location": "sidebar",
-            "type": "iframe"
-        }
-    ]
-}
-```
+The sequence object of the study configuration defines the order of your defined components. The standard ordering is a "fixed" ordering where components are displayed in the order that they are placed in the sequence list. reVISit also supports randomization of the components (using either true randomization or a "latin square" technique). The sequence uses the [OrderObject](/typedoc/interfaces/OrderObject.html) interface. This order object takes in a list of "components" to display and will allow you to assign the order. It is designed in a nested fashion which means that an entry in your "components" list can either be the name of one of your components or another OrderObject. This allows the user to have several fixed pages (such as an introduction and consent form) while still randomizing the rest. You can find more detailed documentation about the sequence list [here](/typedoc/interfaces/OrderObject.html).
 
 
 

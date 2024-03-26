@@ -7,7 +7,7 @@
         "typedoc-plugin-markdown",
         "typedoc-plugin-frontmatter"
     ],
-    "name": "documentation",
+    "name": "Documentation",
     "githubPages": false,
     "readme": "typedocReadMe.md",
     "entryDocument": "index.md",
