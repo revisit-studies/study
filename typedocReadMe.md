@@ -6,7 +6,7 @@ We use <a href="https://typedoc.org/" target="_blank">TypeDoc</a> to generate do
 
 # Study Configuration
 
-The Study Configuration file is how we describe all of the information necessary to create a study. In this configuration, we describe the metadata for the study, the configuration of the UI, the set of components, and how we can sequence them in the study. You can find the detailed documentation for the study configuration [here](/typedoc/interfaces/StudyConfig.html).
+The Study Configuration file is how we describe all of the information necessary to create a study. In this configuration, we describe the metadata for the study, the configuration of the UI, the set of components, and how we sequence them in the study. You can find the detailed documentation for the study configuration [here](/typedoc/interfaces/StudyConfig.html).
 
 ## Study Metadata
 
