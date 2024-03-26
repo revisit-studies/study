@@ -4,6 +4,8 @@ Below we provide some additional information for the study configuration and its
 
 We use <a href="https://typedoc.org/" target="_blank">TypeDoc</a> to generate docuemntation for each type in our code base. The documentation can be found [here](modules.html). 
 
+test.
+
 ## Study Configuration
 
 The Study Configuration file is how we describe all of the information necessary to create a study.
