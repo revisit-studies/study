@@ -25,7 +25,7 @@ export function SummaryBlock(props: SummaryBlockProps) {
         const storageEngine = new FirebaseStorageEngine();
         const config = await getConfig(studyId, globalConfig);
         if (!config || !storageEngine) return;
-        await storageEngine.connect();
+        if (!storageEngine.isConnected()) await storageEngine.connect();
         await storageEngine.initializeStudyDb(studyId, config as StudyConfig);
         allData[studyId] = await storageEngine.getAllParticipantsData();
       };
