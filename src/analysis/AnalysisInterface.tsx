@@ -12,9 +12,7 @@ export interface AnalysisInterfaceProps {
 
 export function AnalysisInterface(props: AnalysisInterfaceProps) {
   const location = useLocation();
-
   const page = location.pathname.split('/')[2];
-  // console.log(page, 'page');
 
   return (
     <AppShell>

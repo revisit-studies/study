@@ -6,12 +6,10 @@ import { TimeAxisX } from '../chartcomponents/TimeAxisX';
 import { AxisY } from '../chartcomponents/AxisY';
 
 const chartSettings = {
-  // marginLeft: 10,
-  // marginRight: 10,
-  // marginTop: 10,
-  // marginBottom: 10,
-  // width:400,
-  // height: 100
+  marginLeft: 10,
+  marginRight: 10,
+  marginTop: 10,
+  marginBottom: 0,
 };
 
 function Linechart(props: LineChartProps) {

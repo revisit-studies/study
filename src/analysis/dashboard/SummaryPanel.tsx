@@ -7,20 +7,26 @@ import { DateRangePicker, DateRangePickerValue } from '@mantine/dates';
 import Linechart from '../components/charts/Linechart';
 import { SummaryPanelProps } from '../types';
 import { ParticipantData } from '../../storage/types';
+import { isStudyCompleted, isWithinRange } from '../utils';
 
 function SummaryPanel(props: SummaryPanelProps) {
   const { studyId, data } = props;
-  const [rangeTime, setRangeTime] = useState<DateRangePickerValue | undefined>();
+  const [rangeTime, setRangeTime] = useState<DateRangePickerValue>([null, null]);
   const [completed, setCompleted] = useState<ParticipantData[]>([]);
   const [inprogress, setInprogress] = useState<ParticipantData[]>([]);
 
   useEffect(() => {
-    if (data && data.length > 0) {
-      setCompleted(data.filter((d) => d.sequence.components && d.sequence.components.length - Object.keys(d.answers).length <= 1));
+    if (data && data.length > 0 && data[0].sequence.components) {
+      const completedData = data.filter((d) => isWithinRange(d.answers, rangeTime[0]?.getTime() || 0, rangeTime[1]?.getTime() || Infinity)
+          && isStudyCompleted(d.sequence, d.answers));
 
-      setInprogress(data.filter((d) => d.sequence.components && d.sequence.components.length - Object.keys(d.answers).length > 1));
+      const InprogressData = data.filter((d) => isWithinRange(d.answers, rangeTime[0]?.getTime() || 0, rangeTime[1]?.getTime() || Infinity)
+            && !isStudyCompleted(d.sequence, d.answers));
+
+      setCompleted(completedData);
+      setInprogress(InprogressData);
     }
-  }, [data]);
+  }, [data, rangeTime]);
 
   const getCompletedStatsData = () => {
     if (completed) {
@@ -98,12 +104,6 @@ function SummaryPanel(props: SummaryPanelProps) {
 
                   </Box>
 
-                  {/* <Center> */}
-                  {/*    <Button mt={20} color="red" radius="xl" onClick={toggleTimefilter}> */}
-                  {/*        Close */}
-                  {/*    </Button> */}
-                  {/* </Center> */}
-
                   {getCompletedStatsData().length >= 2
                     ? <Linechart domainH={[0, 100]} rangeH={[10, 200]} domainV={[0, 100]} rangeV={[10, 100]} data={getCompletedStatsData()} labelV="" labelH="" />
                     : (
@@ -114,19 +114,6 @@ function SummaryPanel(props: SummaryPanelProps) {
                         </Center>
                       </Box>
                     )}
-
-                  {/* <Button disabled={data.length===0} color={'orange'} onClick={()=>setDeleteModalOpened(true)}>Delete All</Button> */}
-                  {/* <Modal opened={deleteModalOpened} onClose={onModalClose} title="Delete All"> */}
-                  {/*    <TextInput */}
-                  {/*        placeholder="Type in Study ID" */}
-                  {/*        label="To proceed, please type in the study ID. This operation will delete all data related to this study" */}
-                  {/*        ref={modalInuptRef} */}
-                  {/*        onChange={checkStudyIdInput} */}
-                  {/*    /> */}
-                  {/*    <Center> */}
-                  {/*        <Button mt={10} disabled={!studyIdValid} color={'orange'} onClick={deleteAll}>Proceed</Button> */}
-                  {/*    </Center> */}
-                  {/* </Modal> */}
 
                 </Card>
                 )

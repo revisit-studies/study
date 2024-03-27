@@ -6,9 +6,10 @@ import { ParticipantData } from '../../storage/types';
 import { SummaryBlockProps } from '../types';
 import SummaryPanel from './SummaryPanel';
 import { getConfig } from '../utils';
+import { StudyConfig } from '../../parser/types';
 
 export function SummaryBlock(props: SummaryBlockProps) {
-  const { globalConfig, databaseSection } = props;
+  const { globalConfig } = props;
   const [loading, setLoading] = useState(false);
   const [expData, setExpData] = useState<Record<string, ParticipantData[]>>({});
   const studyIds = globalConfig.configsList;
@@ -22,10 +23,10 @@ export function SummaryBlock(props: SummaryBlockProps) {
 
       const fetchData = async (studyId:string) => {
         const storageEngine = new FirebaseStorageEngine();
-        const config = await getConfig(studyId, globalConfig, databaseSection);
+        const config = await getConfig(studyId, globalConfig);
         if (!config || !storageEngine) return;
         await storageEngine.connect();
-        await storageEngine.initializeStudyDb(studyId, config);
+        await storageEngine.initializeStudyDb(studyId, config as StudyConfig);
         allData[studyId] = await storageEngine.getAllParticipantsData();
       };
 
@@ -33,10 +34,7 @@ export function SummaryBlock(props: SummaryBlockProps) {
         // const studyIds = ['html-demo'];
         const promises = studyIds.map((studyId) => fetchData(studyId));
         try {
-          // Use Promise.all to wait for all promises to resolve
           await Promise.all(promises);
-          // console.log('All data fetched successfully');
-          // console.log(allData);
           setExpData(allData);
           setLoading(false);
         } catch (error) {
@@ -54,7 +52,7 @@ export function SummaryBlock(props: SummaryBlockProps) {
       <Text mt={20} mb={20} fw={700}>Total Record: </Text>
       <Grid>
         {studyIds.map((studyID:string) => (
-          <Grid.Col key={`${studyID}panel`} md={12} xl={6}>
+          <Grid.Col key={`${studyID}-panel`} md={12} xl={6}>
             <SummaryPanel studyId={studyID} data={expData[studyID]} />
           </Grid.Col>
         ))}

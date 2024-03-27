@@ -4,7 +4,7 @@ import {
 } from '@mantine/core';
 
 // eslint-disable-next-line  import/no-unresolved
-// import logo from '../../assets/revisitLogoSquare.svg';
+import logo from '../../assets/revisitLogoSquare.svg';
 
 export default function AppHeader() {
   return (
@@ -17,7 +17,7 @@ export default function AppHeader() {
         direction="row"
         wrap="wrap"
       >
-        {/* <Image maw={50} src={logo} /> */}
+        <Image maw={50} src={logo} />
 
         <Title order={1}>reVISit Analytics Platform</Title>
 

@@ -7,8 +7,8 @@ interface Dimensions {
     marginBottom: number,
     marginRight: number,
     marginLeft: number,
-    height: number,
-    width: number,
+    height?: number,
+    width?: number,
 }
 
 interface BoundedDimensions extends Dimensions {
@@ -29,13 +29,13 @@ const combineChartDimensions = (dimensions : Dimensions) => {
   return {
     ...parsedDimensions,
     boundedHeight: Math.max(
-      parsedDimensions.height
+      parsedDimensions.height!
             - parsedDimensions.marginTop
             - parsedDimensions.marginBottom,
       0,
     ),
     boundedWidth: Math.max(
-      parsedDimensions.width
+      parsedDimensions.width!
             - parsedDimensions.marginLeft
             - parsedDimensions.marginRight,
       0,
