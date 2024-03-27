@@ -4,7 +4,11 @@ import ConfigSwitcher from './ConfigSwitcher';
 import { Shell } from './Shell';
 import { parseGlobalConfig, parseStudyConfig } from '../parser/parser';
 import { GlobalConfig, Nullable, StudyConfig } from '../parser/types';
-import { PREFIX } from './Prefix';
+import { AnalysisInterface } from '../analysis/AnalysisInterface';
+
+export const PREFIX = import.meta.env.PROD
+  ? import.meta.env.VITE_BASE_PATH
+  : '/';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
@@ -64,6 +68,11 @@ export function GlobalConfigParser() {
         <Route
           path="/:studyId/*"
           element={<Shell globalConfig={globalConfig} />}
+        />
+
+        <Route
+          path="/analysis/:page"
+          element={<AnalysisInterface globalConfig={globalConfig} />}
         />
       </Routes>
     </BrowserRouter>
