@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { StorageEngineProvider } from './store/storageEngineHooks';
-import { GlobalInitializer } from './components/GlobalInitializer';
+import { GlobalInitializer } from './GlobalInitializer';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>

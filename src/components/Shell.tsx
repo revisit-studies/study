@@ -26,7 +26,7 @@ import { NavigateWithParams } from '../utils/NavigateWithParams';
 import { StepRenderer } from './StepRenderer';
 import { useStorageEngine } from '../store/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
-import { PREFIX } from './Prefix';
+import { PREFIX } from '../utils/Prefix';
 
 async function fetchStudyConfig(configLocation: string, configKey: string) {
   const config = await (await fetch(`${PREFIX}${configLocation}`)).text();

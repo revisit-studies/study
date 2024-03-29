@@ -1,6 +1,6 @@
 import { Image } from '@mantine/core';
 import { ImageComponent } from '../parser/types';
-import { PREFIX } from '../components/Prefix';
+import { PREFIX } from '../utils/Prefix';
 
 const defaultStyle = {
   maxWidth: '100%',

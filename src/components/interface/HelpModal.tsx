@@ -2,7 +2,7 @@ import { Modal } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 import { useStoreDispatch, useStoreSelector, useStoreActions } from '../../store/store';
-import { PREFIX } from '../Prefix';
+import { PREFIX } from '../../utils/Prefix';
 
 export default function HelpModal() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any

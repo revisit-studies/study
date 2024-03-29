@@ -1,14 +1,11 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import ConfigSwitcher from './ConfigSwitcher';
-import { Shell } from './Shell';
-import { parseGlobalConfig, parseStudyConfig } from '../parser/parser';
-import { GlobalConfig, Nullable, StudyConfig } from '../parser/types';
-import { AnalysisInterface } from '../analysis/AnalysisInterface';
-
-export const PREFIX = import.meta.env.PROD
-  ? import.meta.env.VITE_BASE_PATH
-  : '/';
+import ConfigSwitcher from './components/ConfigSwitcher';
+import { Shell } from './components/Shell';
+import { parseGlobalConfig, parseStudyConfig } from './parser/parser';
+import { GlobalConfig, Nullable, StudyConfig } from './parser/types';
+import { AnalysisInterface } from './analysis/AnalysisInterface';
+import { PREFIX } from './utils/Prefix';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
