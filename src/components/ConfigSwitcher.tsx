@@ -24,7 +24,7 @@ function ConfigSwitcher({ globalConfig, studyConfigs }: Props) {
         mx="auto"
         mb="xl"
         radius="md"
-        src={`${PREFIX}assets/revisitLogoSquare.svg`}
+        src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`}
         alt="reVISit"
       />
       <Text>Select an experiment to launch:</Text>

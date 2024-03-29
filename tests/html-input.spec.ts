@@ -14,7 +14,7 @@ test('test', async ({ page }) => {
   await page.getByRole('button', { name: 'Next' }).click();
 
   // Check the page contains the question
-  const questionText = await page.getByText('Click on the smallest bar');
+  const questionText = await page.getByText('Click on the largest bar');
   await expect(questionText).toBeVisible();
 
   // Check the page contains the visualization

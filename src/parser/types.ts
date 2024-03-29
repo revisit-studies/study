@@ -20,12 +20,29 @@ export interface GlobalConfig {
 /**
  * The StudyMetadata is used to describe certain properties of a study.
  * Some of this data is displayed on the landing page when running the app, such as the title and description.
- * This data is also included in the data file that is downloaded at the end of the study, to help identify the study and version.
+ * This data is also included in the data file that is downloaded at the end of the study, to help identify the study and version. Below is an example of a StudyMetadata entry in your study configuration file:
+
+ ```JSON
+ "studyMetadata" : {
+    "title": "My New Study",
+    "version": "pilot",
+    "authors": [
+      "Jane Doe",
+      "John Doe"
+    ],
+    "date": "2024-04-01",
+    "description": "This study is meant to test your patience.",
+    "organizations": [
+      "The reVISit Team",
+      "The Other Team"
+    ]
+ }
+ ```
 */
 export interface StudyMetadata {
   /** The title of your study, shown on the landing page. */
   title: string;
-  /** The version of your study, shown on the landing page and attached to participant data. This might be useful for seeing which version of the study a participant saw. */
+  /** The version of your study, shown on the landing page and attached to participant data. When you change a configuration file after a study has already been distributed to participants, you can change the version number so that the participants who see this new configuration file can be identified. */
   version: string;
   /** The authors of your study. */
   authors: string[];
@@ -40,7 +57,24 @@ export interface StudyMetadata {
 /**
  * The UIConfig is used to configure the UI of the app.
  * This includes the logo, contact email, and whether to show a progress bar.
- * The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses.
+ * The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the UI Config would look in your study configuration
+``` JSON
+  uiConfig:{
+    "contactEmail": "test@test.com",
+    "helpTextPath": "path/to/assets/help.md",
+    "logoPath": "path/to/assets/logo.jpg",
+    "withProgressBar": true,
+    "autoDownloadStudy": true
+    "autoDownloadTime": 5000,
+    "studyEndMsg": "Thank you for completing this study. You're the best!",
+    "sidebar": true,
+    "windowEventDebounceTime": 500,
+    "urlParticipantIdParam": "PROLIFIC_ID",
+    "numSequences": 500
+  }
+```
+In the above, the `path/to/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)
+
  */
 export interface UIConfig {
   /** The email address that used during the study if a participant clicks contact. */
@@ -243,7 +277,7 @@ export interface Answer {
 }
 
 /**
- * The BaseIndividualComponent interface is used to define the required fields for all components. The only exception is the ContainerComponent, which is used to group components together.
+ * The BaseIndividualComponent interface is used to define the required fields for all components.
  *
  * All components must include the response field, which is an array of Response interfaces.
  * There are additional optional fields that can be included in a component that help layout the task. These include the nextButtonText, nextButtonLocation, instructionLocation, correctAnswer.
@@ -358,16 +392,96 @@ export interface OrderObject {
 export type InheritedComponent = (Partial<IndividualComponent> & { baseComponent: string })
 
 /**
- * The StudyConfig interface is used to define the properties of a study configuration. These are the hjson files that live in the public folder. In our repo, one example of this would be public/cleveland/config-cleveland.json.
+ * The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.
+
+ ``` JSON
+ {
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+      ...
+    },
+    "uiConfig": {
+      ...
+    },
+    "components": {
+      ...
+    },
+    "sequence": {
+      ...
+    }
+}
+```
+<div class="info-panel">
+  <div class="info-text">For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually.
+  </div>
+</div>
+<br>
+
+The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.
  */
 export interface StudyConfig {
-  /** A required json schema property. This should point to the github link for the version of the schema you would like. See examples for more information */
+  /** A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information */
   $schema: string;
   /** The metadata for the study. This is used to identify the study and version in the data file. */
   studyMetadata: StudyMetadata;
   /** The UI configuration for the study. This is used to configure the UI of the app. */
   uiConfig: UIConfig;
-  /** The components that are used in the study (baseComponents allow PartialComponents which allows for inheriting from them in components). */
+  /** The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;
+
+   * Using baseComponents:
+
+``` JSON
+"baseComponents": {
+    "my-image-component": {
+        "instructionLocation": "sidebar",
+        "nextButtonLocation": "sidebar",
+        "path": "path/to/assets/my-image.jpg",
+        "response": [
+            {
+                "id": "my-image-id",
+                "options": [
+                    {
+                        "label": "Europe",
+                        "value": "Europe"
+                    },
+                    {
+                        "label": "Japan",
+                        "value": "Japan"
+                    },
+                    {
+                        "label": "USA",
+                        "value": "USA"
+                    }
+                ],
+                "prompt": "Your Selected Answer:",
+                "type": "dropdown"
+            }
+        ],
+        "type": "image"
+    }
+}
+```
+In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a drowpdown containing three choices). Any component which contains the `"baseComponent":"my-image-component"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below:
+``` JSON
+"components": {
+    "q1": {
+        "baseComponent": "my-image-component",
+        "description": "Choosing section with largest GDP",
+        "instruction": "Which region has the largest GDP?"
+    },
+    "q2": {
+        "baseComponent": "my-image-component",
+        "description": "Choosing section with lowest GDP",
+        "instruction": "Which region has the lowest GDP?"
+    },
+    "q3": {
+        "baseComponent": "my-image-component",
+        "description": "Choosing section with highest exports of Wheat",
+        "instruction": "Which region had the most Wheat exported in 2022?"
+    }
+}
+```
+   */
   baseComponents?: Record<string, IndividualComponent | Partial<IndividualComponent>>;
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
   components: Record<string, IndividualComponent | InheritedComponent>

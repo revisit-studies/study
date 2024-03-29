@@ -6,12 +6,12 @@
   "scripts": {
     "buildDocs": "yarn typedoc",
     "serve": "vite --host=0.0.0.0 --port=8080",
-    "build": "tsc && vite build",
+    "build": "tsc && VITE_STORAGE_ENGINE=firebase vite build",
     "lint": "eslint src",
     "postinstall": "husky install",
     "generate-schema:StudyConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/StudyConfigSchema.json --type StudyConfig",
     "generate-schema:GlobalConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/GlobalConfigSchema.json --type GlobalConfig",
-    "test": "VITE_STORAGE_ENGINE=localStorage playwright test"
+    "test": "playwright test"
   },
   "lint-staged": {
     "*.{tsx,jsx,ts,js}": "yarn lint"
