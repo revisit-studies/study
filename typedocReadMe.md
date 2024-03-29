@@ -2,11 +2,11 @@
 
 Below we provide some additional information for the study configuration and its components. With this documentation, you will be able to alter your study configuration file to meet your specific use cases.
 
-We use <a href="https://typedoc.org/" target="_blank">TypeDoc</a> to generate docuemntation for each type in our code base. The documentation can be found [here](modules.html). 
+We use <a href="https://typedoc.org/" target="_blank">TypeDoc</a> to generate documentation for each type in our code base. The documentation can be found [here](modules.html). 
 
 # Study Configuration
 
-The Study Configuration file is how we describe all of the information necessary to create a study. In this configuration, we describe the metdata for the study, the configuration of the UI, the set of components, and how we can sequence them in the study. You can find the detailed documentation for the study configuration [here](/typedoc/interfaces/StudyConfig.html).
+The Study Configuration file is how we describe all of the information necessary to create a study. In this configuration, we describe the metadata for the study, the configuration of the UI, the set of components, and how we sequence them in the study. You can find the detailed documentation for the study configuration [here](/typedoc/interfaces/StudyConfig.html).
 
 ## Study Metadata
 
@@ -20,11 +20,11 @@ The UI configuration tells reVISit how the UI should be laid out, such as which 
 
 ## Study Components
 
-Study components are the building blocks for each study. There are currently 5 types of components: [Image](/typedoc/interfaces/ImageComponent.html), [Website](/typedoc/interfaces/WebsiteComponent.html), [Questionnaire](/typedoc/interfaces/QuestionnaireComponent.html), [React](/typedoc/interfaces/ReactComponent.html), and [Markdown](/typedoc/interfaces/MarkdownComponent.html). Each component extends the [BaseInvidiualComponent]((/typedoc/interfaces/BaseIndividualComponent.html)) interface. To add a component to your study (which can be thought of as a "page" of your study), you add a JSON object representing that component to the "components" object with a key which you can define how you would like. Then, the "type" key in that JSON object controls which type of component you are referring to. If you are utilizing the "baseComponents" boject of the configuration file, you will specify a "baseComponent" key rather than a "type" key. You can find more examples of each of these components within their individual documentation.
+Study components are the building blocks for each study. There are currently 5 types of components: [Image](/typedoc/interfaces/ImageComponent.html), [Website](/typedoc/interfaces/WebsiteComponent.html), [Questionnaire](/typedoc/interfaces/QuestionnaireComponent.html), [React](/typedoc/interfaces/ReactComponent.html), and [Markdown](/typedoc/interfaces/MarkdownComponent.html). Each component extends the [BaseIndividualComponent]((/typedoc/interfaces/BaseIndividualComponent.html)) interface. To add a component to your study (which can be thought of as a "page" of your study), you add a JSON object representing that component to the "components" object with a key which you can define how you would like. Then, the "type" key in that JSON object controls which type of component you are referring to. If you are utilizing the "baseComponents" object of the configuration file, you will specify a "baseComponent" key rather than a "type" key. You can find more examples of each of these components within their individual documentation.
 
 #### Collecting Responses
 
-Each component has a list of responses which represents a set of questions to ask to the user for that paritcular component. The user can describe where the question should be displayed in the UI, the type of response input (e.g. a [numerical response](/typedoc/interfaces/NumericalResponse.html), a [dropdown](/typedoc/interfaces/DropdownResponse.html), a [slider](/typedoc/interfaces/SliderResponse.html), etc.), and more. Each response interface extends the [BaseResponse](/typedoc/interfaces/BaseResponse.html) interface. For more detailed documentation on the response section, check out the [documentation](/typedoc/index.html#response).
+Each component has a list of responses which represents a set of questions to ask to the user for that particular component. The user can describe where the question should be displayed in the UI, the type of response input (e.g. a [numerical response](/typedoc/interfaces/NumericalResponse.html), a [dropdown](/typedoc/interfaces/DropdownResponse.html), a [slider](/typedoc/interfaces/SliderResponse.html), etc.), and more. Each response interface extends the [BaseResponse](/typedoc/interfaces/BaseResponse.html) interface. For more detailed documentation on the response section, check out the [documentation](/typedoc/index.html#response).
 
 
 ## Sequence
