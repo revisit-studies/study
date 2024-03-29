@@ -1,27 +1,25 @@
 import {
   Flex,
-  Header, Image, Title,
+  Grid,
+  Header,
+  Image,
+  Space,
+  Title,
 } from '@mantine/core';
-
-// eslint-disable-next-line  import/no-unresolved
-import logo from '../../assets/revisitLogoSquare.svg';
+import { PREFIX } from '../../../utils/Prefix';
 
 export default function AppHeader() {
   return (
     <Header height="70" p="md">
-      <Flex
-        mih={50}
-        gap="md"
-        justify="flex-start"
-        align="center"
-        direction="row"
-        wrap="wrap"
-      >
-        <Image maw={50} src={logo} />
-
-        <Title order={1}>reVISit Analytics Platform</Title>
-
-      </Flex>
+      <Grid mt={-7} align="center">
+        <Grid.Col span={4}>
+          <Flex align="center">
+            <Image maw={40} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
+            <Space w="md" />
+            <Title order={4}>ReVISit Analytics Platform</Title>
+          </Flex>
+        </Grid.Col>
+      </Grid>
     </Header>
   );
 }
