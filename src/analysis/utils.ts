@@ -1,3 +1,4 @@
+import { DateRangePickerValue } from '@mantine/dates';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { GlobalConfig } from '../parser/types';
 import { parseStudyConfig } from '../parser/parser';
@@ -26,7 +27,10 @@ export const isStudyCompleted = (sequence : Sequence, answers: Record<string, St
   return answers[`${step}_${idx}`] !== undefined;
 });
 
-export const isWithinRange = (answers:Record<string, StoredAnswer>, start: number, end: number) => {
-  const timeStamps = Object.values(answers).map((ans) => ans.startTime);
-  return Math.min(...timeStamps) >= start && Math.max(...timeStamps) <= end;
+export const isWithinRange = (answers: Record<string, StoredAnswer>, rangeTime: DateRangePickerValue) => {
+  const timeStamps = Object.values(answers).map((ans) => [ans.startTime, ans.endTime]).flat();
+  if (rangeTime[0] === null || rangeTime[1] === null) {
+    return false;
+  }
+  return Math.min(...timeStamps) >= rangeTime[0].getTime() && Math.max(...timeStamps) <= rangeTime[1].getTime();
 };
