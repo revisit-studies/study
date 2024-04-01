@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Grid, LoadingOverlay, Text,
+  Box, Grid, LoadingOverlay, Title,
 } from '@mantine/core';
 import { ParticipantData } from '../../storage/types';
-import SummaryPanel from './SummaryPanel';
+import { SummaryPanel } from './SummaryPanel';
 import { getConfig } from '../utils';
 import { GlobalConfig, StudyConfig } from '../../parser/types';
 import { initializeStorageEngine } from '../../storage/initialize';
@@ -44,9 +44,9 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
 
   return (
     <Box>
-      <Text mt={20} mb={20} fw={700}>Total Record: </Text>
+      <Title mb={20} order={4}>Your Studies:</Title>
       <Grid>
-        {globalConfig.configsList.map((studyId) => (
+        {globalConfig.configsList.map((studyId) => expData[studyId] && (
           <Grid.Col key={`${studyId}-panel`} md={12} xl={6}>
             <SummaryPanel studyId={studyId} data={expData[studyId]} />
           </Grid.Col>

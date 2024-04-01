@@ -1,126 +1,102 @@
 import {
-  Badge, Box, Button, Card, Center, Group, Title, Grid, Container,
+  Badge, Box, Button, Card, Center, Text, Title, Container, Flex,
 } from '@mantine/core';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { IconTable } from '@tabler/icons-react';
 import { DateRangePicker, DateRangePickerValue } from '@mantine/dates';
-import Linechart from '../components/charts/Linechart';
+import LineChart from '../components/charts/LineChart';
 import { SummaryPanelProps } from '../types';
 import { ParticipantData } from '../../storage/types';
 import { isStudyCompleted, isWithinRange } from '../utils';
 
-function SummaryPanel(props: SummaryPanelProps) {
+export function SummaryPanel(props: SummaryPanelProps) {
   const { studyId, data } = props;
-  const [rangeTime, setRangeTime] = useState<DateRangePickerValue>([null, null]);
-  const [completed, setCompleted] = useState<ParticipantData[]>([]);
-  const [inprogress, setInprogress] = useState<ParticipantData[]>([]);
+
+  const times = data.map((d) => Object.values(d.answers).map((ans) => [ans.startTime, ans.endTime]).flat()).flat();
+  const [rangeTime, setRangeTime] = useState<DateRangePickerValue>([new Date(Math.min(...times)), new Date(Math.max(...times))]);
+
+  const [completedParticipants, setCompletedParticipants] = useState<ParticipantData[]>([]);
+  const [inProgressParticipants, setInProgressParticipants] = useState<ParticipantData[]>([]);
 
   useEffect(() => {
-    if (data && data.length > 0 && data[0].sequence.components) {
-      const completedData = data.filter((d) => isWithinRange(d.answers, rangeTime[0]?.getTime() || 0, rangeTime[1]?.getTime() || Infinity)
-          && isStudyCompleted(d.sequence, d.answers));
+    if (data.length > 0 && data[0].sequence.components) {
+      const inRangeData = data.filter((d) => isWithinRange(d.answers, rangeTime));
 
-      const InprogressData = data.filter((d) => isWithinRange(d.answers, rangeTime[0]?.getTime() || 0, rangeTime[1]?.getTime() || Infinity)
-            && !isStudyCompleted(d.sequence, d.answers));
+      const completedData: ParticipantData[] = [];
+      const inProgressData: ParticipantData[] = [];
 
-      setCompleted(completedData);
-      setInprogress(InprogressData);
+      inRangeData.forEach((d) => {
+        if (isStudyCompleted(d.sequence, d.answers)) {
+          completedData.push(d);
+        } else {
+          inProgressData.push(d);
+        }
+      });
+
+      setCompletedParticipants(completedData);
+      setInProgressParticipants(inProgressData);
     }
   }, [data, rangeTime]);
 
-  const getCompletedStatsData = () => {
-    if (completed) {
-      const times:number[] = [];
-      completed.forEach((completeData) => {
-        const { answers } = completeData;
-        let endTime = 0;
-        for (const trialName in answers) {
-          if (Object.prototype.hasOwnProperty.call(answers, trialName)) {
-            endTime = Math.max(endTime, answers[trialName].endTime);
-          }
-        }
-        times.push(endTime);
-      });
-      const sortedTimes = times.sort((a, b) => a - b);
-      return sortedTimes.map((time, idx) => ({
-        time,
-        value: idx + 1,
-      }));
+  const completedStatsData = useMemo(() => {
+    if (completedParticipants.length > 0) {
+      return completedParticipants
+        .map((participant) => Math.max(
+          ...Object.values(participant.answers).map((ans) => ans.endTime).flat(),
+        ))
+        .sort((a, b) => a - b)
+        .map((time, idx) => ({
+          time,
+          value: idx + 1,
+        }));
     }
 
     return [];
-  };
+  }, [completedParticipants]);
 
   return (
     <Container>
-      {
-                data && (
-                <Card p="lg" shadow="md" withBorder>
-                  <Title mb={10} order={3}>{studyId}</Title>
+      <Card p="lg" shadow="md" withBorder>
+        <Flex align="center" mb={16}>
+          <Title order={5}>{studyId}</Title>
+          <Button leftIcon={<IconTable />} style={{ marginLeft: 'auto' }}>
+            Download Tidy Data
+          </Button>
+        </Flex>
 
-                  <Grid>
-                    <Grid.Col span={8}>
-                      <Group>
-                        <Badge size="md" color="orange">
-                          Total :
-                          {completed.length + inprogress.length}
-                        </Badge>
-                        <Badge size="md" color="green">
-                          Completed :
-                          {completed.length}
-                        </Badge>
-                        <Badge size="md" color="cyan">
-                          In Progress :
-                          {inprogress.length}
-                        </Badge>
-                      </Group>
-                    </Grid.Col>
-                    <Grid.Col span={4}>
-                      <Group>
-                        <Button
-                                    // disabled={!storageEngine?.isConnected()}
-                          leftIcon={<IconTable />}
-                          mt="1em"
-                          mr="0.5em"
-                        >
-                          Download Tidy Data
-                        </Button>
+        <DateRangePicker
+          label={(
+            <Flex direction="row" wrap="nowrap" gap="xs" align="center" mb={4}>
+              <Text>Time Filter:</Text>
+              <Badge size="sm" color="orange">
+                Total:&nbsp;
+                {inProgressParticipants.length + completedParticipants.length}
+              </Badge>
+              <Badge size="sm" color="green">
+                Completed:&nbsp;
+                {completedParticipants.length}
+              </Badge>
+              <Badge size="sm" color="cyan">
+                In Progress:&nbsp;
+                {inProgressParticipants.length}
+              </Badge>
+            </Flex>
+            )}
+          placeholder="Pick dates range"
+          value={rangeTime}
+          onChange={setRangeTime}
+        />
 
-                      </Group>
-
-                    </Grid.Col>
-
-                  </Grid>
-
-                  <Box m={10}>
-                    <DateRangePicker
-                      dropdownType="modal"
-                      label="Time Filter"
-                      placeholder="Pick dates range"
-                      clearable
-                      value={rangeTime}
-                      onChange={setRangeTime}
-                    />
-
-                  </Box>
-
-                  {getCompletedStatsData().length >= 2
-                    ? <Linechart domainH={[0, 100]} rangeH={[10, 200]} domainV={[0, 100]} rangeV={[10, 100]} data={getCompletedStatsData()} labelV="" labelH="" />
-                    : (
-                      <Box h={230} pt={20}>
-                        <Center>
-                          <Title order={5}>Not enough participants for chart</Title>
-
-                        </Center>
-                      </Box>
-                    )}
-
-                </Card>
-                )
-            }
+        {completedStatsData.length >= 2
+          ? <LineChart domainH={[0, 100]} rangeH={[10, 200]} domainV={[0, 100]} rangeV={[10, 100]} data={completedStatsData} labelV="" labelH="" />
+          : (
+            <Box h={262}>
+              <Center style={{ height: '100%' }}>
+                <Text>Not enough participants for chart</Text>
+              </Center>
+            </Box>
+          )}
+      </Card>
     </Container>
-
   );
 }
-
-export default SummaryPanel;
