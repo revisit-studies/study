@@ -1,17 +1,8 @@
 import {
-  GlobalConfig, IndividualComponent, InheritedComponent, StudyConfig,
+  IndividualComponent, InheritedComponent, StudyConfig,
 } from '../parser/types';
 import { ParticipantData } from '../storage/types';
 import { StoredAnswer } from '../store/types';
-
-export interface DashBoardProps {
-    globalConfig: GlobalConfig;
-}
-
-export interface SummaryBlockProps {
-    databaseSection: string;
-    globalConfig: GlobalConfig;
-}
 
 export interface HeaderProps {
     studyIds: string[];

@@ -2,20 +2,18 @@ import React, { useEffect, useState } from 'react';
 import {
   Box, Grid, LoadingOverlay, Text,
 } from '@mantine/core';
-import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { ParticipantData } from '../../storage/types';
-import { SummaryBlockProps } from '../types';
 import SummaryPanel from './SummaryPanel';
 import { getConfig } from '../utils';
-import { StudyConfig } from '../../parser/types';
+import { GlobalConfig, StudyConfig } from '../../parser/types';
+import { useStorageEngine } from '../../store/storageEngineHooks';
 
-export function SummaryBlock(props: SummaryBlockProps) {
+export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
   const { globalConfig } = props;
   const [loading, setLoading] = useState(false);
   const [expData, setExpData] = useState<Record<string, ParticipantData[]>>({});
   const studyIds = globalConfig.configsList;
-
-  // const storageEngine = new FirebaseStorageEngine();
+  const { storageEngine } = useStorageEngine();
 
   useEffect(() => {
     const init = async () => {
@@ -23,7 +21,6 @@ export function SummaryBlock(props: SummaryBlockProps) {
       const allData:Record<string, ParticipantData[]> = {};
 
       const fetchData = async (studyId:string) => {
-        const storageEngine = new FirebaseStorageEngine();
         const config = await getConfig(studyId, globalConfig);
         if (!config || !storageEngine) return;
         if (!storageEngine.isConnected()) await storageEngine.connect();

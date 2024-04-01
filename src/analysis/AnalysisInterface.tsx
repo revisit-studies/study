@@ -1,16 +1,12 @@
-import { AppShell } from '@mantine/core';
+import { AppShell, Container } from '@mantine/core';
 
 import { useLocation } from 'react-router-dom';
 import AppHeader from './components/interface/AppHeader';
 import AppNav from './components/interface/AppNav';
 import { GlobalConfig } from '../parser/types';
-import { Dashboard } from './dashboard/Dashboard';
+import { SummaryBlock } from './dashboard/SummaryBlock';
 
-export interface AnalysisInterfaceProps {
-    globalConfig: GlobalConfig
-}
-
-export function AnalysisInterface(props: AnalysisInterfaceProps) {
+export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   const location = useLocation();
   const page = location.pathname.split('/')[2];
 
@@ -18,7 +14,11 @@ export function AnalysisInterface(props: AnalysisInterfaceProps) {
     <AppShell>
       <AppHeader />
       <AppNav />
-      {page === 'dashboard' && <Dashboard globalConfig={props.globalConfig} />}
+      {page === 'dashboard' && (
+        <Container fluid>
+          <SummaryBlock globalConfig={props.globalConfig} />
+        </Container>
+      )}
     </AppShell>
   );
 }
