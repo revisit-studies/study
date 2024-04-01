@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Box, Grid, Text } from '@mantine/core';
-import Loading from '../components/basics/Loading';
+import {
+  Box, Grid, LoadingOverlay, Text,
+} from '@mantine/core';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { ParticipantData } from '../../storage/types';
 import { SummaryBlockProps } from '../types';
@@ -56,7 +57,7 @@ export function SummaryBlock(props: SummaryBlockProps) {
             <SummaryPanel studyId={studyID} data={expData[studyID]} />
           </Grid.Col>
         ))}
-        <Loading isLoading={loading} />
+        <LoadingOverlay visible={loading} zIndex={1000} overlayBlur={2} />
       </Grid>
     </Box>
   );

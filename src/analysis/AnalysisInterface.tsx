@@ -1,8 +1,8 @@
 import { AppShell } from '@mantine/core';
 
 import { useLocation } from 'react-router-dom';
-import AppHeader from './components/basics/AppHeader';
-import AppNav from './components/basics/AppNav';
+import AppHeader from './components/interface/AppHeader';
+import AppNav from './components/interface/AppNav';
 import { GlobalConfig } from '../parser/types';
 import { Dashboard } from './dashboard/Dashboard';
 
