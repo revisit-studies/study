@@ -12,7 +12,7 @@ const chartSettings = {
   marginBottom: 0,
 };
 
-function Linechart(props: LineChartProps) {
+function LineChart(props: LineChartProps) {
   const [ref, dms] = useChartDimensions(chartSettings);
   const pathRef = useRef<SVGPathElement>(null);
 
@@ -128,4 +128,4 @@ function Linechart(props: LineChartProps) {
   );
 }
 
-export default Linechart;
+export default LineChart;
