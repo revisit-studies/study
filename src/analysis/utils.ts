@@ -8,14 +8,16 @@ async function fetchStudyConfig(configLocation: string, configKey: string) {
   const config = await (await fetch(`/${configLocation}`)).text();
   return parseStudyConfig(config, configKey);
 }
-export const getConfig = async (studyId:string, globalConfig:GlobalConfig) => {
+export async function getConfig(studyId:string, globalConfig:GlobalConfig) {
   const configKey = globalConfig.configsList.find(
     (c) => sanitizeStringForUrl(c) === studyId,
   );
-  if (!configKey) return {};
-  const configJSON = globalConfig.configs[configKey];
-  return await fetchStudyConfig(`${configJSON.path}`, configKey);
-};
+  if (configKey) {
+    const configJSON = globalConfig.configs[configKey];
+    return await fetchStudyConfig(`${configJSON.path}`, configKey);
+  }
+  return null;
+}
 
 export const isStudyCompleted = (sequence : Sequence, answers: Record<string, StoredAnswer>) => getSequenceFlatMap(sequence).every((step, idx) => {
   if (step === 'end') {
