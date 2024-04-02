@@ -57,9 +57,9 @@ export function SummaryPanel(props: SummaryPanelProps) {
   return (
     <Container>
       <Card p="lg" shadow="md" withBorder>
-        <Flex align="center" mb={16}>
+        <Flex align="center" mb={16} justify="space-between">
           <Title order={5}>{studyId}</Title>
-          <Button leftIcon={<IconTable />} style={{ marginLeft: 'auto' }}>
+          <Button leftIcon={<IconTable />}>
             Download Tidy Data
           </Button>
         </Flex>
