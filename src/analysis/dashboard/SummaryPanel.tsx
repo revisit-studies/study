@@ -6,7 +6,6 @@ import { IconTable } from '@tabler/icons-react';
 import { DateRangePicker, DateRangePickerValue } from '@mantine/dates';
 import { VegaLite } from 'react-vega';
 import { useResizeObserver } from '@mantine/hooks';
-import { SummaryPanelProps } from '../types';
 import { ParticipantData } from '../../storage/types';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { StoredAnswer } from '../../store/types';
@@ -26,7 +25,7 @@ const isWithinRange = (answers: Record<string, StoredAnswer>, rangeTime: DateRan
   return Math.min(...timeStamps) >= rangeTime[0].getTime() && Math.max(...timeStamps) <= rangeTime[1].getTime();
 };
 
-export function SummaryPanel(props: SummaryPanelProps) {
+export function SummaryPanel(props: { studyId: string; data: ParticipantData[] }) {
   const { studyId, data } = props;
 
   const [ref, dms] = useResizeObserver();
