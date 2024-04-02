@@ -4,17 +4,18 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import { IconTable } from '@tabler/icons-react';
 import { DateRangePicker, DateRangePickerValue } from '@mantine/dates';
-import LineChart from '../components/charts/LineChart';
+import { VegaLite } from 'react-vega';
+import { useResizeObserver } from '@mantine/hooks';
 import { SummaryPanelProps } from '../types';
 import { ParticipantData } from '../../storage/types';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
-import { Sequence, StoredAnswer } from '../../store/types';
+import { StoredAnswer } from '../../store/types';
 
-const isStudyCompleted = (sequence : Sequence, answers: Record<string, StoredAnswer>) => getSequenceFlatMap(sequence).every((step, idx) => {
+const isStudyCompleted = (participant: ParticipantData) => getSequenceFlatMap(participant.sequence).every((step, idx) => {
   if (step === 'end') {
     return true;
   }
-  return answers[`${step}_${idx}`] !== undefined;
+  return participant.answers[`${step}_${idx}`] !== undefined;
 });
 
 const isWithinRange = (answers: Record<string, StoredAnswer>, rangeTime: DateRangePickerValue) => {
@@ -28,8 +29,15 @@ const isWithinRange = (answers: Record<string, StoredAnswer>, rangeTime: DateRan
 export function SummaryPanel(props: SummaryPanelProps) {
   const { studyId, data } = props;
 
-  const times = data.map((d) => Object.values(d.answers).map((ans) => [ans.startTime, ans.endTime]).flat()).flat();
-  const [rangeTime, setRangeTime] = useState<DateRangePickerValue>([new Date(Math.min(...times)), new Date(Math.max(...times))]);
+  const [ref, dms] = useResizeObserver();
+
+  const completionTimes = data
+    .filter((d) => isStudyCompleted(d))
+    .map((d) => Math.max(...Object.values(d.answers).map((ans) => ans.endTime)));
+  const [rangeTime, setRangeTime] = useState<DateRangePickerValue>([
+    new Date(new Date(Math.min(...completionTimes)).setHours(0, 0, 0, 0)),
+    new Date(new Date(Math.max(...completionTimes)).setHours(24, 0, 0, 0)),
+  ]);
 
   const [completedParticipants, setCompletedParticipants] = useState<ParticipantData[]>([]);
   const [inProgressParticipants, setInProgressParticipants] = useState<ParticipantData[]>([]);
@@ -42,7 +50,7 @@ export function SummaryPanel(props: SummaryPanelProps) {
       const inProgressData: ParticipantData[] = [];
 
       inRangeData.forEach((d) => {
-        if (isStudyCompleted(d.sequence, d.answers)) {
+        if (isStudyCompleted(d)) {
           completedData.push(d);
         } else {
           inProgressData.push(d);
@@ -56,23 +64,41 @@ export function SummaryPanel(props: SummaryPanelProps) {
 
   const completedStatsData = useMemo(() => {
     if (completedParticipants.length > 0) {
-      return completedParticipants
-        .map((participant) => Math.max(
-          ...Object.values(participant.answers).map((ans) => ans.endTime).flat(),
-        ))
-        .sort((a, b) => a - b)
-        .map((time, idx) => ({
-          time,
-          value: idx + 1,
-        }));
+      return [
+        { Date: rangeTime[0]?.getTime(), Participants: 0 },
+        ...completedParticipants
+          .map((participant) => Math.max(
+            ...Object.values(participant.answers).map((ans) => ans.endTime).flat(),
+          ))
+          .sort((a, b) => a - b)
+          .map((time, idx) => ({
+            Date: time,
+            Participants: idx,
+          })),
+        { Date: rangeTime[1]?.getTime(), Participants: completedParticipants.length },
+      ];
     }
 
     return [];
-  }, [completedParticipants]);
+  }, [completedParticipants, rangeTime]);
+
+  const spec = useMemo(() => ({
+    width: dms.width - 40 - 8, // width - card padding - vega padding
+    height: 200,
+    mark: {
+      type: 'line',
+      interpolate: 'step-before',
+    },
+    encoding: {
+      x: { field: 'Date', type: 'temporal', scale: { domain: [rangeTime[0]?.getTime(), rangeTime[1]?.getTime()] } },
+      y: { field: 'Participants', type: 'quantitative' },
+    },
+    data: { values: completedStatsData },
+  }), [dms, completedStatsData]);
 
   return (
     <Container>
-      <Card p="lg" shadow="md" withBorder>
+      <Card ref={ref} p="lg" shadow="md" withBorder>
         <Flex align="center" mb={16} justify="space-between">
           <Title order={5}>{studyId}</Title>
           <Button leftIcon={<IconTable />}>
@@ -104,9 +130,14 @@ export function SummaryPanel(props: SummaryPanelProps) {
         />
 
         {completedStatsData.length >= 2
-          ? <LineChart domainH={[0, 100]} rangeH={[10, 200]} domainV={[0, 100]} rangeV={[10, 100]} data={completedStatsData} labelV="" labelH="" />
+          ? (
+            <>
+              <Text mt={16}>Finished Participants</Text>
+              <VegaLite spec={spec} actions={false} />
+            </>
+          )
           : (
-            <Box h={262}>
+            <Box h={293.4}>
               <Center style={{ height: '100%' }}>
                 <Text>Not enough participants for chart</Text>
               </Center>
