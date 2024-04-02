@@ -1,4 +1,5 @@
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
+// eslint-disable-next-line import/no-cycle
 import { StudyConfig } from '../parser/types';
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

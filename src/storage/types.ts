@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-cycle
 import { Sequence, StoredAnswer } from '../store/types';
 
 /**
