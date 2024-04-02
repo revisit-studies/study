@@ -22,7 +22,7 @@ Below we have an example of a participants data.
     }
 ]
 ```
-Each key in answer will be labeled the same as the response component that it refers to. The sequence shows the order that the participant saw each component (since these may be different for each participant if the configuration sequence has some randomization). This answer wil contain information such as the start time, the end time, and all of the window events. See the example below.
+Each key in answer will be labeled the same as the response component that it refers to. The sequence shows the order that the participant saw each component (since these may be different for each participant if the configuration sequence has some randomization). This answer will contain information such as the start time, the end time, and all of the window events. See the example below.
 
 ```JSON
      "bar-chart-1_1": {
