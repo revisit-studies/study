@@ -27,11 +27,65 @@ export type TrialValidation = Record<
   }
 >;
 
+/**
+The StoredAnswer object is a data structure describing the participants interaction with an individual component. It is the data structure used as values of the `answers` object of [ParticipantData](/typedoc/interfaces/ParticipantData.html). The general structure for this is below:
+
+```JSON
+    {
+      "answer": {
+        "barChart": [
+          1.3
+        ]
+      },
+      "startTime": 1711641174858,
+      "endTime": 1711641178836,
+      "windowEvents": [
+        ...
+      ]
+    }
+```
+The `answer` object here uses the "id" in the [Response](/typedoc/interfaces/BaseResponse.html) list of the component in your [StudyConfiguration](/typedoc/interfaces/StudyConfig.html) as its keys. It then contains a list of the answers given. You are also given a start and end time for the participants interaction with the component. Lastly, a set of windowEvents is given. Below is an example of the windowEvents list.
+
+Each item in the window event is given a time, a position an event name, and some extra information for the event (for mouse events, this is the location).
+*/
 export interface StoredAnswer {
+  /** Object whose keys are the "id"s in the Response list of the component in the StudyConfiguration and whose value is the inputted value from the participant. */
   answer: Record<string, Record<string, unknown>>;
+  /** Time that the user began interacting with the component in epoch milliseconds. */
   startTime: number;
+  /** Time that the user ended interaction with the component in epoch milliseconds. */
   endTime: number;
   provenanceGraph?: TrrackedProvenance,
+  /** A list containing the time (in epoch milliseconds), the action (focus, input, kepress, mousedown, mouseup, mousemove, resize, scroll or visibility), and then either a coordinate pertaining to where the event took place on the screen or string related to such event. Below is an example of the windowEvents list.
+```JSON
+
+"windowEvents" :[
+  [
+    1711641174878,
+    "mousedown",
+    [ 1843, 286 ]
+  ],
+  [
+    1711641174878,
+    "focus",
+    "BUTTON"
+  ],
+  [
+    1711641174935,
+    "mouseup",
+    [ 1843, 286 ]
+  ],
+  .
+  .
+  .
+  [
+    1711641178706,
+    "mousemove",
+    [ 1868, 728 ]
+  ]
+]
+```
+   */
   windowEvents: EventType[];
 }
 
