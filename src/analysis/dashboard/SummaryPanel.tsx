@@ -82,7 +82,8 @@ export function SummaryPanel(props: SummaryPanelProps) {
     return [];
   }, [completedParticipants, rangeTime]);
 
-  const spec = useMemo(() => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const spec: any = useMemo(() => ({
     width: dms.width - 40 - 8, // width - card padding - vega padding
     height: 200,
     mark: {
