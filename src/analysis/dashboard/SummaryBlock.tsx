@@ -4,9 +4,9 @@ import {
 } from '@mantine/core';
 import { ParticipantData } from '../../storage/types';
 import { SummaryPanel } from './SummaryPanel';
-import { getConfig } from '../utils';
 import { GlobalConfig, StudyConfig } from '../../parser/types';
 import { initializeStorageEngine } from '../../storage/initialize';
+import { getStudyConfig } from '../../utils/fetchConfig';
 
 export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
   const { globalConfig } = props;
@@ -20,7 +20,7 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
 
       const fetchData = async (studyId: string) => {
         const storageEngine = await initializeStorageEngine();
-        const config = await getConfig(studyId, globalConfig);
+        const config = await getStudyConfig(studyId, globalConfig);
         if (config === null) return;
         await storageEngine.initializeStudyDb(studyId, config as StudyConfig);
         allData[studyId] = await storageEngine.getAllParticipantsData();

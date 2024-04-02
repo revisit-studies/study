@@ -7,7 +7,23 @@ import { DateRangePicker, DateRangePickerValue } from '@mantine/dates';
 import LineChart from '../components/charts/LineChart';
 import { SummaryPanelProps } from '../types';
 import { ParticipantData } from '../../storage/types';
-import { isStudyCompleted, isWithinRange } from '../utils';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+import { Sequence, StoredAnswer } from '../../store/types';
+
+const isStudyCompleted = (sequence : Sequence, answers: Record<string, StoredAnswer>) => getSequenceFlatMap(sequence).every((step, idx) => {
+  if (step === 'end') {
+    return true;
+  }
+  return answers[`${step}_${idx}`] !== undefined;
+});
+
+const isWithinRange = (answers: Record<string, StoredAnswer>, rangeTime: DateRangePickerValue) => {
+  const timeStamps = Object.values(answers).map((ans) => [ans.startTime, ans.endTime]).flat();
+  if (rangeTime[0] === null || rangeTime[1] === null) {
+    return false;
+  }
+  return Math.min(...timeStamps) >= rangeTime[0].getTime() && Math.max(...timeStamps) <= rangeTime[1].getTime();
+};
 
 export function SummaryPanel(props: SummaryPanelProps) {
   const { studyId, data } = props;

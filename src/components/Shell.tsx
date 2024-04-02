@@ -7,7 +7,6 @@ import {
   RouteObject, useRoutes, useSearchParams,
 } from 'react-router-dom';
 import { Box, Center, Loader } from '@mantine/core';
-import { parseStudyConfig } from '../parser/parser';
 import {
   GlobalConfig,
   Nullable,
@@ -26,12 +25,7 @@ import { NavigateWithParams } from '../utils/NavigateWithParams';
 import { StepRenderer } from './StepRenderer';
 import { useStorageEngine } from '../store/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
-import { PREFIX } from '../utils/Prefix';
-
-async function fetchStudyConfig(configLocation: string, configKey: string) {
-  const config = await (await fetch(`${PREFIX}${configLocation}`)).text();
-  return parseStudyConfig(config, configKey);
-}
+import { getStudyConfig } from '../utils/fetchConfig';
 
 export function Shell({ globalConfig }: {
   globalConfig: GlobalConfig;
@@ -43,16 +37,9 @@ export function Shell({ globalConfig }: {
   }
   const [activeConfig, setActiveConfig] = useState<Nullable<StudyConfig>>(null);
   useEffect(() => {
-    const configKey = globalConfig.configsList.find(
-      (c) => sanitizeStringForUrl(c) === studyId,
-    );
-
-    if (configKey) {
-      const configJSON = globalConfig.configs[configKey];
-      fetchStudyConfig(`${configJSON.path}`, configKey).then((config) => {
-        setActiveConfig(config);
-      });
-    }
+    getStudyConfig(studyId, globalConfig).then((config) => {
+      setActiveConfig(config);
+    });
   }, [globalConfig, studyId]);
 
   const [routes, setRoutes] = useState<RouteObject[]>([]);
