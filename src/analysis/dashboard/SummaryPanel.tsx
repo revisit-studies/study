@@ -34,8 +34,8 @@ export function SummaryPanel(props: { studyId: string; data: ParticipantData[] }
     .filter((d) => isStudyCompleted(d))
     .map((d) => Math.max(...Object.values(d.answers).map((ans) => ans.endTime)));
   const [rangeTime, setRangeTime] = useState<DateRangePickerValue>([
-    new Date(new Date(Math.min(...completionTimes)).setHours(0, 0, 0, 0)),
-    new Date(new Date(Math.max(...completionTimes)).setHours(24, 0, 0, 0)),
+    new Date(new Date(Math.min(...completionTimes, new Date().getTime())).setHours(0, 0, 0, 0)),
+    new Date(new Date(Math.max(...completionTimes, new Date().getTime())).setHours(24, 0, 0, 0)),
   ]);
 
   const [completedParticipants, setCompletedParticipants] = useState<ParticipantData[]>([]);
