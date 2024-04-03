@@ -5,11 +5,13 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { IconCodePlus, IconTable } from '@tabler/icons-react';
 import { DateRangePicker, DateRangePickerValue } from '@mantine/dates';
 import { VegaLite } from 'react-vega';
-import { useResizeObserver } from '@mantine/hooks';
+import { useDisclosure, useResizeObserver } from '@mantine/hooks';
 import { ParticipantData } from '../../storage/types';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { StoredAnswer } from '../../store/types';
-import { download } from '../../components/DownloadTidy';
+import { download, DownloadTidy } from '../../components/DownloadTidy';
+import { StudyConfig } from '../../parser/types';
+import { StorageEngine } from '../../storage/engines/StorageEngine';
 
 const isStudyCompleted = (participant: ParticipantData) => getSequenceFlatMap(participant.sequence).every((step, idx) => {
   if (step === 'end') {
@@ -26,8 +28,11 @@ const isWithinRange = (answers: Record<string, StoredAnswer>, rangeTime: DateRan
   return Math.min(...timeStamps) >= rangeTime[0].getTime() && Math.max(...timeStamps) <= rangeTime[1].getTime();
 };
 
-export function SummaryPanel(props: { studyId: string; data: ParticipantData[] }) {
-  const { studyId, data } = props;
+export function SummaryPanel(props: { studyId: string; data: ParticipantData[]; config: StudyConfig, storageEngine: StorageEngine }) {
+  const {
+    studyId, data, config, storageEngine,
+  } = props;
+  const [openDownload, { open, close }] = useDisclosure(false);
 
   const [ref, dms] = useResizeObserver();
 
@@ -114,6 +119,13 @@ export function SummaryPanel(props: { studyId: string; data: ParticipantData[] }
           >
             JSON
           </Button>
+
+          <Button
+            leftIcon={<IconTable />}
+            onClick={open}
+          >
+            Tidy
+          </Button>
         </Flex>
 
         <DateRangePicker
@@ -154,6 +166,13 @@ export function SummaryPanel(props: { studyId: string; data: ParticipantData[] }
             </Box>
           )}
       </Card>
+      <DownloadTidy
+        opened={openDownload}
+        close={close}
+        filename={`${studyId}_all_tidy.csv`}
+        studyConfig={config}
+        storageEngineInput={storageEngine}
+      />
     </Container>
   );
 }

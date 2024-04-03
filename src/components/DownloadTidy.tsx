@@ -104,6 +104,7 @@ type Props = {
   close: () => void;
   filename: string;
   studyConfig: StudyConfig;
+  storageEngineInput?: StorageEngine;
 };
 
 export async function downloadTidy(
@@ -136,7 +137,7 @@ export async function downloadTidy(
 }
 
 export function DownloadTidy({
-  opened, close, filename, studyConfig,
+  opened, close, filename, studyConfig, storageEngineInput,
 }: Props) {
   const [selectedProperties, setSelectedProperties] = useInputState<
     Array<Property>
@@ -149,6 +150,8 @@ export function DownloadTidy({
   const combinedProperties = useMemo(() => [...REQUIRED_PROPS, ...OPTIONAL_COMMON_PROPS], []);
 
   const { storageEngine } = useStorageEngine();
+
+  const engine = storageEngineInput || storageEngine;
 
   if (!storageEngine) return null;
 
@@ -195,7 +198,7 @@ export function DownloadTidy({
       >
         <Button
           leftIcon={<IconTable />}
-          onClick={() => downloadTidy(filename, storageEngine, studyConfig, selectedProperties)}
+          onClick={() => downloadTidy(filename, engine!, studyConfig, selectedProperties)}
         >
           Download
         </Button>
