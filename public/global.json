@@ -1,7 +1,7 @@
 {
     "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/GlobalConfigSchema.json",
     "configsList": [
-        "demo-html-demo",
+        "demo-html",
         "demo-cleveland",
         "demo-brush-interactions",
         "demo-html-input",
@@ -15,7 +15,7 @@
         "demo-image"
     ],
     "configs": {
-        "demo-html-demo": {
+        "demo-html": {
             "path": "demo-html/config.json"
         },
         "demo-cleveland": {
