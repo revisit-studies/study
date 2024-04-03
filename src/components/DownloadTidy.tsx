@@ -15,7 +15,6 @@ import { ParticipantData } from '../storage/types';
 import { useStorageEngine } from '../store/storageEngineHooks';
 import { Prettify, StudyConfig } from '../parser/types';
 import { isInheritedComponent } from '../parser/parser';
-import { StoredAnswer } from '../store/types';
 
 export const OPTIONAL_COMMON_PROPS = [
   'description',
@@ -54,15 +53,12 @@ export function download(graph: string, filename: string) {
 }
 
 function processToRow(session: ParticipantData, studyConfig: StudyConfig, properties: Property[]): TidyRow[] {
-  return Object.entries(studyConfig.components).map(([trialId, trialConfig]) => {
+  return Object.entries(session.answers).map(([trialIdentifier, trialAnswer]) => {
     // Get the whole component, including the base component if there is inheritance
+    const trialId = trialIdentifier.split('_')[0];
+    const seq = trialIdentifier.split('_')[1];
+    const trialConfig = studyConfig.components[trialId];
     const completeComponent = isInheritedComponent(trialConfig) && trialConfig.baseComponent && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents[trialConfig.baseComponent], trialConfig) : trialConfig;
-
-    // Get the answer for this trial or an empty answer if it doesn't exist
-    const trialAns = session.answers[trialId];
-    const trialAnswer: StoredAnswer = trialAns !== undefined ? trialAns : {
-      answer: {}, startTime: -1, endTime: -1, windowEvents: [],
-    };
 
     const duration = trialAnswer.endTime - trialAnswer.startTime;
 
@@ -89,7 +85,7 @@ function processToRow(session: ParticipantData, studyConfig: StudyConfig, proper
         tidyRow.correctAnswer = completeComponent.correctAnswer;
       }
       if (properties.includes('taskOrder')) {
-        // tidyRow.taskOrder = session.sequence.indexOf(trialId);
+        tidyRow.taskOrder = seq;
       }
 
       return tidyRow;
