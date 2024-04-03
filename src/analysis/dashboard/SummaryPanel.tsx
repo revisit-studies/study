@@ -2,13 +2,14 @@ import {
   Badge, Box, Button, Card, Center, Text, Title, Container, Flex,
 } from '@mantine/core';
 import React, { useEffect, useMemo, useState } from 'react';
-import { IconTable } from '@tabler/icons-react';
+import { IconCodePlus, IconTable } from '@tabler/icons-react';
 import { DateRangePicker, DateRangePickerValue } from '@mantine/dates';
 import { VegaLite } from 'react-vega';
 import { useResizeObserver } from '@mantine/hooks';
 import { ParticipantData } from '../../storage/types';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { StoredAnswer } from '../../store/types';
+import { download } from '../../components/DownloadTidy';
 
 const isStudyCompleted = (participant: ParticipantData) => getSequenceFlatMap(participant.sequence).every((step, idx) => {
   if (step === 'end') {
@@ -96,13 +97,22 @@ export function SummaryPanel(props: { studyId: string; data: ParticipantData[] }
     data: { values: completedStatsData },
   }), [dms, completedStatsData]);
 
+  const downloadTidyData = () => {
+
+  };
+
   return (
     <Container>
       <Card ref={ref} p="lg" shadow="md" withBorder>
         <Flex align="center" mb={16} justify="space-between">
           <Title order={5}>{studyId}</Title>
-          <Button leftIcon={<IconTable />}>
-            Download Tidy Data
+          <Button
+            leftIcon={<IconCodePlus />}
+            onClick={() => {
+              download(JSON.stringify(data, null, 2), `${studyId}_all.json`);
+            }}
+          >
+            JSON
           </Button>
         </Flex>
 
