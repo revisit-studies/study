@@ -4,7 +4,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { GlobalConfig, StudyConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
-import { PREFIX } from './Prefix';
+import { PREFIX } from '../utils/Prefix';
 
 const REVISIT_GITHUB_PUBLIC = 'https://github.com/revisit-studies/study/tree/main/public/';
 
