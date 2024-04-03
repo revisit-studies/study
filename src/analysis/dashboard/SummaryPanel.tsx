@@ -1,5 +1,5 @@
 import {
-  Badge, Box, Button, Card, Center, Text, Title, Container, Flex,
+  Badge, Box, Button, Card, Center, Text, Title, Container, Flex, Group,
 } from '@mantine/core';
 import React, { useEffect, useMemo, useState } from 'react';
 import { IconCodePlus, IconTable } from '@tabler/icons-react';
@@ -11,7 +11,6 @@ import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { StoredAnswer } from '../../store/types';
 import { download, DownloadTidy } from '../../components/DownloadTidy';
 import { StudyConfig } from '../../parser/types';
-import { StorageEngine } from '../../storage/engines/StorageEngine';
 
 const isStudyCompleted = (participant: ParticipantData) => getSequenceFlatMap(participant.sequence).every((step, idx) => {
   if (step === 'end') {
@@ -28,9 +27,9 @@ const isWithinRange = (answers: Record<string, StoredAnswer>, rangeTime: DateRan
   return Math.min(...timeStamps) >= rangeTime[0].getTime() && Math.max(...timeStamps) <= rangeTime[1].getTime();
 };
 
-export function SummaryPanel(props: { studyId: string; data: ParticipantData[]; config: StudyConfig, storageEngine: StorageEngine }) {
+export function SummaryPanel(props: { studyId: string; data: ParticipantData[]; config: StudyConfig }) {
   const {
-    studyId, data, config, storageEngine,
+    studyId, data, config,
   } = props;
   const [openDownload, { open, close }] = useDisclosure(false);
 
@@ -102,30 +101,32 @@ export function SummaryPanel(props: { studyId: string; data: ParticipantData[]; 
     data: { values: completedStatsData },
   }), [dms, completedStatsData]);
 
-  const downloadTidyData = () => {
-
-  };
-
   return (
     <Container>
       <Card ref={ref} p="lg" shadow="md" withBorder>
         <Flex align="center" mb={16} justify="space-between">
           <Title order={5}>{studyId}</Title>
-          <Button
-            leftIcon={<IconCodePlus />}
-            onClick={() => {
-              download(JSON.stringify(data, null, 2), `${studyId}_all.json`);
-            }}
-          >
-            JSON
-          </Button>
+          <Group>
+            <Button
+              leftIcon={<IconCodePlus />}
+              disabled={completedParticipants.length === 0}
+              onClick={() => {
+                download(JSON.stringify(data, null, 2), `${studyId}_all.json`);
+              }}
+            >
+              JSON
+            </Button>
 
-          <Button
-            leftIcon={<IconTable />}
-            onClick={open}
-          >
-            Tidy
-          </Button>
+            <Button
+              leftIcon={<IconTable />}
+              onClick={open}
+              disabled={completedParticipants.length === 0}
+            >
+              Tidy
+            </Button>
+
+          </Group>
+
         </Flex>
 
         <DateRangePicker

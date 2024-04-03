@@ -14,7 +14,6 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
   const [loading, setLoading] = useState(false);
   const [expData, setExpData] = useState<Record<string, ParticipantData[]>>({});
   const [expConfig, setExpConfig] = useState<Record<string, StudyConfig>>({});
-  const [expStorageEngine, setExpStorageEngine] = useState<Record<string, StorageEngine>>({});
   useEffect(() => {
     const init = async () => {
       setLoading(true);
@@ -38,7 +37,6 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
           await Promise.all(promises);
           setExpData(allData);
           setExpConfig(allConfig);
-          setExpStorageEngine(allStorageEngine);
         } catch (error) {
           console.error('Error fetching data:', error);
         } finally {
@@ -56,7 +54,7 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
       <Grid>
         {globalConfig.configsList.map((studyId) => expData[studyId] && (
           <Grid.Col key={`${studyId}-panel`} md={12} xl={6}>
-            <SummaryPanel studyId={studyId} data={expData[studyId]} config={expConfig[studyId]} storageEngine={expStorageEngine[studyId]} />
+            <SummaryPanel studyId={studyId} data={expData[studyId]} config={expConfig[studyId]} />
           </Grid.Col>
         ))}
         <LoadingOverlay visible={loading} zIndex={1000} overlayBlur={2} />
