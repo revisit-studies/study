@@ -1,5 +1,5 @@
 import {
-  Badge, Box, Button, Card, Center, Text, Title, Container, Flex, Group,
+  Badge, Box, Button, Card, Center, Text, Title, Container, Flex, Group, Popover,
 } from '@mantine/core';
 import React, { useEffect, useMemo, useState } from 'react';
 import { IconCodePlus, IconTable } from '@tabler/icons-react';
@@ -101,36 +101,16 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
     data: { values: completedStatsData },
   }), [dms, completedStatsData]);
 
+  const [jsonOpened, { close: closeJson, open: openJson }] = useDisclosure(false);
+  const [csvOpened, { close: closeCsv, open: openCsv }] = useDisclosure(false);
+
   return (
     <Container>
       <Card ref={ref} p="lg" shadow="md" withBorder>
         <Flex align="center" mb={16} justify="space-between">
-          <Title order={5}>{studyId}</Title>
-          <Group>
-            <Button
-              leftIcon={<IconCodePlus />}
-              disabled={allParticipants.length === 0}
-              onClick={() => {
-                download(JSON.stringify(allParticipants, null, 2), `${studyId}_all.json`);
-              }}
-            >
-              JSON
-            </Button>
-
-            <Button
-              leftIcon={<IconTable />}
-              onClick={open}
-              disabled={allParticipants.length === 0}
-            >
-              TIDY
-            </Button>
-          </Group>
-        </Flex>
-
-        <DateRangePicker
-          label={(
+          <Flex direction="column">
+            <Title order={5} mb={4}>{studyId}</Title>
             <Flex direction="row" wrap="nowrap" gap="xs" align="center" mb={4}>
-              <Text>Time Filter:</Text>
               <Badge size="sm" color="orange">
                 Total:&nbsp;
                 {inProgressParticipants.length + completedParticipants.length}
@@ -144,13 +124,54 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
                 {inProgressParticipants.length}
               </Badge>
             </Flex>
-            )}
+          </Flex>
+          <Group>
+            <Popover opened={jsonOpened}>
+              <Popover.Target>
+                <Button
+                  disabled={allParticipants.length === 0}
+                  onClick={() => {
+                    download(JSON.stringify(allParticipants, null, 2), `${studyId}_all.json`);
+                  }}
+                  onMouseEnter={openJson}
+                  onMouseLeave={closeJson}
+                  px={4}
+                >
+                  <IconCodePlus />
+                </Button>
+              </Popover.Target>
+              <Popover.Dropdown>
+                <Text>Download all participants data as JSON</Text>
+              </Popover.Dropdown>
+            </Popover>
+
+            <Popover opened={csvOpened}>
+              <Popover.Target>
+                <Button
+                  disabled={allParticipants.length === 0}
+                  onClick={open}
+                  onMouseEnter={openCsv}
+                  onMouseLeave={closeCsv}
+                  px={4}
+                >
+                  <IconTable />
+                </Button>
+              </Popover.Target>
+              <Popover.Dropdown>
+                <Text>Download all participants data as a tidy CSV</Text>
+              </Popover.Dropdown>
+            </Popover>
+          </Group>
+        </Flex>
+
+        <DateRangePicker
+          label={<Text>Time Filter:</Text>}
           placeholder="Pick dates range"
           value={rangeTime}
           onChange={setRangeTime}
         />
 
-        {completedStatsData.length >= 2
+        {completedStatsData.length > 0
           ? (
             <>
               <Text mt={16}>Finished Participants</Text>
