@@ -104,16 +104,17 @@ type Props = {
   close: () => void;
   filename: string;
   studyConfig: StudyConfig;
-  storageEngineInput?: StorageEngine;
+  data: ParticipantData[] | undefined;
 };
 
 export async function downloadTidy(
   filename: string,
   storageEngine: StorageEngine,
   studyConfig: StudyConfig,
+  data: ParticipantData[] | undefined,
   properties: Property[] = [...REQUIRED_PROPS, ...OPTIONAL_COMMON_PROPS],
 ) {
-  const allParticipantData = await storageEngine.getAllParticipantsData();
+  const allParticipantData = data || await storageEngine.getAllParticipantsData();
 
   const rows = allParticipantData
     .map((participantSession) => processToRow(participantSession, studyConfig, properties))
@@ -137,7 +138,7 @@ export async function downloadTidy(
 }
 
 export function DownloadTidy({
-  opened, close, filename, studyConfig, storageEngineInput,
+  opened, close, filename, studyConfig, data,
 }: Props) {
   const [selectedProperties, setSelectedProperties] = useInputState<
     Array<Property>
@@ -150,8 +151,6 @@ export function DownloadTidy({
   const combinedProperties = useMemo(() => [...REQUIRED_PROPS, ...OPTIONAL_COMMON_PROPS], []);
 
   const { storageEngine } = useStorageEngine();
-
-  const engine = storageEngineInput || storageEngine;
 
   if (!storageEngine) return null;
 
@@ -198,7 +197,7 @@ export function DownloadTidy({
       >
         <Button
           leftIcon={<IconTable />}
-          onClick={() => downloadTidy(filename, engine!, studyConfig, selectedProperties)}
+          onClick={() => downloadTidy(filename, storageEngine, studyConfig, data, selectedProperties)}
         >
           Download
         </Button>

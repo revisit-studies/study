@@ -98,6 +98,7 @@ export function DownloadPanel({ studyConfig }: { studyConfig: StudyConfig }) {
         close={close}
         filename={`${baseFilename}_${participantId}.csv`}
         studyConfig={studyConfig}
+        data={undefined}
       />
     </Stack>
   );

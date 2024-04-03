@@ -171,7 +171,7 @@ export function SummaryPanel(props: { studyId: string; data: ParticipantData[]; 
         close={close}
         filename={`${studyId}_all_tidy.csv`}
         studyConfig={config}
-        storageEngineInput={storageEngine}
+        data={data}
       />
     </Container>
   );
