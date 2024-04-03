@@ -24,7 +24,7 @@ function _componentBlockToSequence(
   } else if (order.order === 'latinSquare' && latinSquareObject) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     order.components = latinSquareObject[path].pop()!.map((o) => {
-      if (o.startsWith('_orderObj')) {
+      if (o.startsWith('_componentBlock')) {
         return order.components[+o.slice(9)];
       }
 
@@ -123,7 +123,7 @@ function generateLatinSquare(config: StudyConfig, path: string) {
     }
   });
 
-  const options = (locationInSequence as ComponentBlock).components.map((c: unknown, i: number) => (typeof c === 'string' ? c : `_orderObj${i}`));
+  const options = (locationInSequence as ComponentBlock).components.map((c: unknown, i: number) => (typeof c === 'string' ? c : `_componentBlock${i}`));
   const newSquare: string[][] = latinSquare<string>(options.sort(() => 0.5 - Math.random()), true);
   return newSquare;
 }
