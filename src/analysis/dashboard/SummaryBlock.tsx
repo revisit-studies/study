@@ -7,7 +7,6 @@ import { SummaryPanel } from './SummaryPanel';
 import { GlobalConfig, StudyConfig } from '../../parser/types';
 import { initializeStorageEngine } from '../../storage/initialize';
 import { getStudyConfig } from '../../utils/fetchConfig';
-import { StorageEngine } from '../../storage/engines/StorageEngine';
 
 export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
   const { globalConfig } = props;
@@ -19,7 +18,6 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
       setLoading(true);
       const allData: Record<string, ParticipantData[]> = {};
       const allConfig: Record<string, StudyConfig> = {};
-      const allStorageEngine: Record<string, StorageEngine> = {};
 
       const fetchData = async (studyId: string) => {
         const storageEngine = await initializeStorageEngine();
@@ -28,7 +26,6 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
         await storageEngine.initializeStudyDb(studyId, config as StudyConfig);
         allData[studyId] = await storageEngine.getAllParticipantsData();
         allConfig[studyId] = config;
-        allStorageEngine[studyId] = storageEngine;
       };
 
       const fetchAllData = async () => {
@@ -54,7 +51,7 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
       <Grid>
         {globalConfig.configsList.map((studyId) => expData[studyId] && (
           <Grid.Col key={`${studyId}-panel`} md={12} xl={6}>
-            <SummaryPanel studyId={studyId} data={expData[studyId]} config={expConfig[studyId]} />
+            <SummaryPanel studyId={studyId} allParticipants={expData[studyId]} config={expConfig[studyId]} />
           </Grid.Col>
         ))}
         <LoadingOverlay visible={loading} zIndex={1000} overlayBlur={2} />

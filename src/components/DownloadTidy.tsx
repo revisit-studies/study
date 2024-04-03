@@ -95,14 +95,6 @@ function processToRow(session: ParticipantData, studyConfig: StudyConfig, proper
   }).flat();
 }
 
-type Props = {
-  opened: boolean;
-  close: () => void;
-  filename: string;
-  studyConfig: StudyConfig;
-  data: ParticipantData[] | undefined;
-};
-
 export async function downloadTidy(
   filename: string,
   storageEngine: StorageEngine,
@@ -132,6 +124,14 @@ export async function downloadTidy(
 
   download(csv, filename);
 }
+
+type Props = {
+  opened: boolean;
+  close: () => void;
+  filename: string;
+  studyConfig: StudyConfig;
+  data?: ParticipantData[];
+};
 
 export function DownloadTidy({
   opened, close, filename, studyConfig, data,

@@ -27,15 +27,15 @@ const isWithinRange = (answers: Record<string, StoredAnswer>, rangeTime: DateRan
   return Math.min(...timeStamps) >= rangeTime[0].getTime() && Math.max(...timeStamps) <= rangeTime[1].getTime();
 };
 
-export function SummaryPanel(props: { studyId: string; data: ParticipantData[]; config: StudyConfig }) {
+export function SummaryPanel(props: { studyId: string; allParticipants: ParticipantData[]; config: StudyConfig }) {
   const {
-    studyId, data, config,
+    studyId, allParticipants, config,
   } = props;
   const [openDownload, { open, close }] = useDisclosure(false);
 
   const [ref, dms] = useResizeObserver();
 
-  const completionTimes = data
+  const completionTimes = allParticipants
     .filter((d) => isStudyCompleted(d))
     .map((d) => Math.max(...Object.values(d.answers).map((ans) => ans.endTime)));
   const [rangeTime, setRangeTime] = useState<DateRangePickerValue>([
@@ -47,8 +47,8 @@ export function SummaryPanel(props: { studyId: string; data: ParticipantData[]; 
   const [inProgressParticipants, setInProgressParticipants] = useState<ParticipantData[]>([]);
 
   useEffect(() => {
-    if (data.length > 0 && data[0].sequence.components) {
-      const inRangeData = data.filter((d) => isWithinRange(d.answers, rangeTime));
+    if (allParticipants.length > 0 && allParticipants[0].sequence.components) {
+      const inRangeData = allParticipants.filter((d) => isWithinRange(d.answers, rangeTime));
 
       const completedData: ParticipantData[] = [];
       const inProgressData: ParticipantData[] = [];
@@ -64,7 +64,7 @@ export function SummaryPanel(props: { studyId: string; data: ParticipantData[]; 
       setCompletedParticipants(completedData);
       setInProgressParticipants(inProgressData);
     }
-  }, [data, rangeTime]);
+  }, [allParticipants, rangeTime]);
 
   const completedStatsData = useMemo(() => {
     if (completedParticipants.length > 0) {
@@ -109,9 +109,9 @@ export function SummaryPanel(props: { studyId: string; data: ParticipantData[]; 
           <Group>
             <Button
               leftIcon={<IconCodePlus />}
-              disabled={completedParticipants.length === 0}
+              disabled={allParticipants.length === 0}
               onClick={() => {
-                download(JSON.stringify(data, null, 2), `${studyId}_all.json`);
+                download(JSON.stringify(allParticipants, null, 2), `${studyId}_all.json`);
               }}
             >
               JSON
@@ -120,13 +120,11 @@ export function SummaryPanel(props: { studyId: string; data: ParticipantData[]; 
             <Button
               leftIcon={<IconTable />}
               onClick={open}
-              disabled={completedParticipants.length === 0}
+              disabled={allParticipants.length === 0}
             >
-              Tidy
+              TIDY
             </Button>
-
           </Group>
-
         </Flex>
 
         <DateRangePicker
@@ -167,12 +165,13 @@ export function SummaryPanel(props: { studyId: string; data: ParticipantData[]; 
             </Box>
           )}
       </Card>
+
       <DownloadTidy
         opened={openDownload}
         close={close}
         filename={`${studyId}_all_tidy.csv`}
         studyConfig={config}
-        data={data}
+        data={allParticipants}
       />
     </Container>
   );
