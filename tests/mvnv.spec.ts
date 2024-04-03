@@ -26,8 +26,8 @@ test('test', async ({ page }) => {
   await page.getByRole('button', { name: 'Agree' }).click();
 
   // Check training page
-  const trianingText = await page.frameLocator('#root iframe').getByRole('heading', { name: 'Adjacency Matrix Training' });
-  await expect(trianingText).toBeVisible();
+  const trainingText = await page.frameLocator('#root iframe').getByRole('heading', { name: 'Adjacency Matrix Training' });
+  await expect(trainingText).toBeVisible();
   const trainingVideo = await page.frameLocator('#root iframe').locator('video');
   await expect(trainingVideo).toBeVisible();
   await page.getByRole('button', { name: 'Next' }).click();

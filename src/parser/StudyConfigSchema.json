@@ -545,7 +545,7 @@
             },
             "spacing": {
               "const": "random",
-              "description": "If spacing is set to random, reVISit will add interruptions randomly",
+              "description": "If spacing is set to random, reVISit will add interruptions randomly. These interruptions will not ever be displayed as the first component in the block.",
               "type": "string"
             }
           },

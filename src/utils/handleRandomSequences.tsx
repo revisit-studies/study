@@ -54,11 +54,11 @@ function _componentBlockToSequence(
       if (interruption.spacing === 'random') {
         // Generate the random locations
         const randomInterruptionLocations = new Set<number>();
-        if (interruption.numInterruptions > computedComponents.length) {
+        if (interruption.numInterruptions > computedComponents.length - 1) {
           throw new Error('Number of interruptions cannot be greater than the number of components');
         }
         while (randomInterruptionLocations.size < interruption.numInterruptions) {
-          const randomLocation = Math.floor(Math.random() * computedComponents.length);
+          const randomLocation = Math.floor(Math.random() * computedComponents.length - 1) + 1;
           randomInterruptionLocations.add(randomLocation);
         }
         const sortedRandomInterruptionLocations = Array.from(randomInterruptionLocations).sort((a, b) => a - b);
