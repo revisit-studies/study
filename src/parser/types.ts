@@ -379,7 +379,7 @@ interface RandomInterruption {
 
 export type InterruptionBlock = DeterministicInterruption | RandomInterruption;
 
-/** The ComponentBlock interface is used to define the properties of an order object. This is used to define the order of components in a study. It supports random assignment of trials using a pure random assignment and a latin square. */
+/** The IndividualComponentCondition interface is used to define a SkipCondition based on answers to a specific component. This is used to skip to a different component or block based on the response to the component. */
 export interface IndividualComponentCondition {
   /** The id of the component to check. */
   id: string;
@@ -393,6 +393,7 @@ export interface IndividualComponentCondition {
   to: string;
 }
 
+/** The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect responses in a block. This is used to skip to a different component or block based on the number of correct or incorrect responses to the block. */
 export interface ComponentBlockCondition {
   /** The check we'll perform. */
   check: 'block';
@@ -404,6 +405,7 @@ export interface ComponentBlockCondition {
   to: string;
 }
 
+/** The SkipCondition interface is used to define a SkipCondition. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. */
 export type SkipCondition = (IndividualComponentCondition | ComponentBlockCondition);
 
 /** The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a latin square. */
@@ -495,7 +497,7 @@ export interface StudyConfig {
     }
 }
 ```
-In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a drowpdown containing three choices). Any component which contains the `"baseComponent":"my-image-component"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below:
+In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `"baseComponent":"my-image-component"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below:
 ``` JSON
 "components": {
     "q1": {
