@@ -4,7 +4,7 @@
   "definitions": {
     "Answer": {
       "additionalProperties": false,
-      "description": "The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks.",
+      "description": "The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.",
       "properties": {
         "acceptableHigh": {
           "description": "The acceptable high value for the answer. This is used to define a range of acceptable answers.",
@@ -32,9 +32,6 @@
       "additionalProperties": false,
       "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.",
       "properties": {
-        "correctAnswer": {
-          "description": "The correct answer to the response. This is used in the data download and can be shown in the admin panel."
-        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -131,7 +128,7 @@
           "type": "string"
         },
         "skip": {
-          "$ref": "#/definitions/SkipCondition",
+          "$ref": "#/definitions/SkipConditions",
           "description": "The skip conditions for the block."
         }
       },
@@ -143,6 +140,7 @@
     },
     "ComponentBlockCondition": {
       "additionalProperties": false,
+      "description": "The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect responses in a block. This is used to skip to a different component or block based on the number of correct or incorrect responses to the block.",
       "properties": {
         "check": {
           "const": "block",
@@ -178,9 +176,6 @@
       "additionalProperties": false,
       "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options.",
       "properties": {
-        "correctAnswer": {
-          "description": "The correct answer to the response. This is used in the data download and can be shown in the admin panel."
-        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -242,9 +237,6 @@
       "additionalProperties": false,
       "description": "The IFrameResponse interface is used to define the properties of an iframe response. IFrameResponses render as a list, that is connected to a WebsiteComponent. When data is sent from the WebsiteComponent, it is displayed in the list.",
       "properties": {
-        "correctAnswer": {
-          "description": "The correct answer to the response. This is used in the data download and can be shown in the admin panel."
-        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -330,6 +322,10 @@
           "description": "The path to the image. This should be a relative path from the public folder.",
           "type": "string"
         },
+        "provideFeedback": {
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial.",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -375,17 +371,42 @@
         }
       ]
     },
-    "IndividualComponentCondition": {
+    "IndividualComponentAllResponsesCondition": {
       "additionalProperties": false,
-      "description": "The ComponentBlock interface is used to define the properties of an order object. This is used to define the order of components in a study. It supports random assignment of trials using a pure random assignment and a latin square.",
+      "description": "The IndividualComponentAllResponsesCondition interface is used to define a SkipCondition based on multiple answers to a specific component. This is used to skip to a different component or block based on the responses to the component.",
+      "properties": {
+        "check": {
+          "const": "responses",
+          "description": "The check we'll perform.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the component to check.",
+          "type": "string"
+        },
+        "to": {
+          "description": "The id of the component or block to skip to",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "check",
+        "to"
+      ],
+      "type": "object"
+    },
+    "IndividualComponentSingleResponseCondition": {
+      "additionalProperties": false,
+      "description": "The IndividualComponentSingleResponseCondition interface is used to define a SkipCondition based on a single answer to a specific component. This is used to skip to a different component or block based on the response to the component.",
       "properties": {
         "check": {
           "const": "response",
           "description": "The check we'll perform.",
           "type": "string"
         },
-        "id": {
-          "description": "The id of the component to check.",
+        "name": {
+          "description": "The name of the component to check.",
           "type": "string"
         },
         "responseId": {
@@ -405,7 +426,7 @@
         }
       },
       "required": [
-        "id",
+        "name",
         "check",
         "responseId",
         "value",
@@ -470,6 +491,10 @@
         "path": {
           "description": "The path to the markdown file. This should be a relative path from the public folder.",
           "type": "string"
+        },
+        "provideFeedback": {
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial.",
+          "type": "boolean"
         },
         "response": {
           "description": "The responses to the component",
@@ -562,9 +587,6 @@
       "additionalProperties": false,
       "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the preset. For example, preset: 5 will render 5 radio buttons, and preset: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.",
       "properties": {
-        "correctAnswer": {
-          "description": "The correct answer to the response. This is used in the data download and can be shown in the admin panel."
-        },
         "desc": {
           "description": "The description of the likert scale.",
           "type": "string"
@@ -631,9 +653,6 @@
       "additionalProperties": false,
       "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder.",
       "properties": {
-        "correctAnswer": {
-          "description": "The correct answer to the response. This is used in the data download and can be shown in the admin panel."
-        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -723,6 +742,10 @@
           "description": "The path to the markdown file. This should be a relative path from the public folder.",
           "type": "string"
         },
+        "provideFeedback": {
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial.",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -746,9 +769,6 @@
       "additionalProperties": false,
       "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.",
       "properties": {
-        "correctAnswer": {
-          "description": "The correct answer to the response. This is used in the data download and can be shown in the admin panel."
-        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -864,6 +884,10 @@
           "description": "The text that is displayed on the next button.",
           "type": "string"
         },
+        "provideFeedback": {
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial.",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -886,9 +910,6 @@
       "additionalProperties": false,
       "description": "The RadioResponse interface is used to define the properties of a radio response. RadioResponses render as a radio input with user specified options, and optionally left and right labels.",
       "properties": {
-        "correctAnswer": {
-          "description": "The correct answer to the response. This is used in the data download and can be shown in the admin panel."
-        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -992,6 +1013,10 @@
           "description": "The path to the react component. This should be a relative path from the src/public folder.",
           "type": "string"
         },
+        "provideFeedback": {
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial.",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -1054,9 +1079,6 @@
       "additionalProperties": false,
       "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.",
       "properties": {
-        "correctAnswer": {
-          "description": "The correct answer to the response. This is used in the data download and can be shown in the admin panel."
-        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -1106,23 +1128,27 @@
       ],
       "type": "object"
     },
-    "SkipCondition": {
-      "anyOf": [
-        {
-          "$ref": "#/definitions/IndividualComponentCondition"
-        },
-        {
-          "$ref": "#/definitions/ComponentBlockCondition"
-        }
-      ]
+    "SkipConditions": {
+      "description": "The SkipConditions interface is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block.",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/IndividualComponentSingleResponseCondition"
+          },
+          {
+            "$ref": "#/definitions/IndividualComponentAllResponsesCondition"
+          },
+          {
+            "$ref": "#/definitions/ComponentBlockCondition"
+          }
+        ]
+      },
+      "type": "array"
     },
     "SliderResponse": {
       "additionalProperties": false,
       "description": "The SliderResponse interface is used to define the properties of a slider response. SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100.",
       "properties": {
-        "correctAnswer": {
-          "description": "The correct answer to the response. This is used in the data download and can be shown in the admin panel."
-        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -1178,10 +1204,10 @@
     },
     "StudyConfig": {
       "additionalProperties": false,
-      "description": "The StudyConfig interface is used to define the properties of a study configuration. These are the hjson files that live in the public folder. In our repo, one example of this would be public/cleveland/config-cleveland.json.",
+      "description": "The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.\n\n``` JSON {  \"$schema\": \"https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json\",  \"studyMetadata\": {    ...  },  \"uiConfig\": {    ...  },  \"components\": {    ...  },  \"sequence\": {    ...  } } ``` <div class=\"info-panel\"> <div class=\"info-text\">For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually. </div> </div> <br>\n\nThe `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.",
       "properties": {
         "$schema": {
-          "description": "A required json schema property. This should point to the github link for the version of the schema you would like. See examples for more information",
+          "description": "A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information",
           "type": "string"
         },
         "baseComponents": {
@@ -1244,6 +1270,10 @@
                     "description": "The path to the markdown file. This should be a relative path from the public folder.",
                     "type": "string"
                   },
+                  "provideFeedback": {
+                    "description": "Controls whether the component should provide feedback to the participant, such as in a training trial.",
+                    "type": "boolean"
+                  },
                   "response": {
                     "description": "The responses to the component",
                     "items": {
@@ -1273,7 +1303,7 @@
               }
             ]
           },
-          "description": "The components that are used in the study (baseComponents allow PartialComponents which allows for inheriting from them in components).",
+          "description": "The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;\n\nUsing baseComponents:\n\n``` JSON \"baseComponents\": { \"my-image-component\": {   \"instructionLocation\": \"sidebar\",   \"nextButtonLocation\": \"sidebar\",   \"path\": \"path/to/assets/my-image.jpg\",   \"response\": [       {           \"id\": \"my-image-id\",           \"options\": [               {                   \"label\": \"Europe\",                   \"value\": \"Europe\"               },               {                   \"label\": \"Japan\",                   \"value\": \"Japan\"               },               {                   \"label\": \"USA\",                   \"value\": \"USA\"               }           ],           \"prompt\": \"Your Selected Answer:\",           \"type\": \"dropdown\"       }   ],   \"type\": \"image\" } } ``` In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `\"baseComponent\":\"my-image-component\"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below: ``` JSON \"components\": { \"q1\": {   \"baseComponent\": \"my-image-component\",   \"description\": \"Choosing section with largest GDP\",   \"instruction\": \"Which region has the largest GDP?\" }, \"q2\": {   \"baseComponent\": \"my-image-component\",   \"description\": \"Choosing section with lowest GDP\",   \"instruction\": \"Which region has the lowest GDP?\" }, \"q3\": {   \"baseComponent\": \"my-image-component\",   \"description\": \"Choosing section with highest exports of Wheat\",   \"instruction\": \"Which region had the most Wheat exported in 2022?\" } } ```",
           "type": "object"
         },
         "components": {
@@ -1314,7 +1344,7 @@
     },
     "StudyMetadata": {
       "additionalProperties": false,
-      "description": "The StudyMetadata is used to describe certain properties of a study. Some of this data is displayed on the landing page when running the app, such as the title and description. This data is also included in the data file that is downloaded at the end of the study, to help identify the study and version.",
+      "description": "The StudyMetadata is used to describe certain properties of a study. Some of this data is displayed on the landing page when running the app, such as the title and description. This data is also included in the data file that is downloaded at the end of the study, to help identify the study and version. Below is an example of a StudyMetadata entry in your study configuration file:\n\n```JSON \"studyMetadata\" : {  \"title\": \"My New Study\",  \"version\": \"pilot\",  \"authors\": [    \"Jane Doe\",    \"John Doe\"  ],  \"date\": \"2024-04-01\",  \"description\": \"This study is meant to test your patience.\",  \"organizations\": [    \"The reVISit Team\",    \"The Other Team\"  ] } ```",
       "properties": {
         "authors": {
           "description": "The authors of your study.",
@@ -1343,7 +1373,7 @@
           "type": "string"
         },
         "version": {
-          "description": "The version of your study, shown on the landing page and attached to participant data. This might be useful for seeing which version of the study a participant saw.",
+          "description": "The version of your study, shown on the landing page and attached to participant data. When you change a configuration file after a study has already been distributed to participants, you can change the version number so that the participants who see this new configuration file can be identified.",
           "type": "string"
         }
       },
@@ -1359,7 +1389,7 @@
     },
     "UIConfig": {
       "additionalProperties": false,
-      "description": "The UIConfig is used to configure the UI of the app. This includes the logo, contact email, and whether to show a progress bar. The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses.",
+      "description": "The UIConfig is used to configure the UI of the app. This includes the logo, contact email, and whether to show a progress bar. The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the UI Config would look in your study configuration ``` JSON uiConfig:{  \"contactEmail\": \"test@test.com\",  \"helpTextPath\": \"path/to/assets/help.md\",  \"logoPath\": \"path/to/assets/logo.jpg\",  \"withProgressBar\": true,  \"autoDownloadStudy\": true  \"autoDownloadTime\": 5000,  \"studyEndMsg\": \"Thank you for completing this study. You're the best!\",  \"sidebar\": true,  \"windowEventDebounceTime\": 500,  \"urlParticipantIdParam\": \"PROLIFIC_ID\",  \"numSequences\": 500 } ``` In the above, the `path/to/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)",
       "properties": {
         "autoDownloadStudy": {
           "description": "Controls whether the study data is automatically downloaded at the end of the study.",
@@ -1458,6 +1488,10 @@
         "path": {
           "description": "The path to the website. This should be a relative path from the public folder or could be an external website.",
           "type": "string"
+        },
+        "provideFeedback": {
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial.",
+          "type": "boolean"
         },
         "response": {
           "description": "The responses to the component",

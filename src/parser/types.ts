@@ -147,8 +147,6 @@ export interface BaseResponse {
   required: boolean;
   /** Controls the response location. These might be the same for all responses, or differ across responses. */
   location: ResponseBlockLocation;
-  /** The correct answer to the response. This is used in the data download and can be shown in the admin panel. */
-  correctAnswer?: unknown;
   /** You can provide a required value, which makes it so a participant has to answer with that value. */
   requiredValue?: unknown;
   /** You can provide a required label, which makes it so a participant has to answer with a response that matches label. */
@@ -265,7 +263,7 @@ export interface IFrameResponse extends BaseResponse {
 export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | IFrameResponse;
 
 /**
- * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks.
+ * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.
  */
 export interface Answer {
   /** The id of the answer. This is used to identify the answer in the data file. */
@@ -300,6 +298,8 @@ export interface BaseIndividualComponent {
   instructionLocation?: ResponseBlockLocation;
   /** The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess. */
   correctAnswer?: Answer[];
+  /** Controls whether the component should provide feedback to the participant, such as in a training trial. */
+  provideFeedback?: boolean;
   /** The meta data for the component. This is used to identify and provide additional information for the component in the admin panel. */
   meta?: Record<string, unknown>;
   /** The description of the component. This is used to identify and provide additional information for the component in the admin panel. */
@@ -379,10 +379,10 @@ interface RandomInterruption {
 
 export type InterruptionBlock = DeterministicInterruption | RandomInterruption;
 
-/** The IndividualComponentCondition interface is used to define a SkipCondition based on answers to a specific component. This is used to skip to a different component or block based on the response to the component. */
-export interface IndividualComponentCondition {
-  /** The id of the component to check. */
-  id: string;
+/** The IndividualComponentSingleResponseCondition interface is used to define a SkipCondition based on a single answer to a specific component. This is used to skip to a different component or block based on the response to the component. */
+export interface IndividualComponentSingleResponseCondition {
+  /** The name of the component to check. */
+  name: string;
   /** The check we'll perform. */
   check: 'response';
   /** The response id to check. */
@@ -393,35 +393,45 @@ export interface IndividualComponentCondition {
   to: string;
 }
 
-/** The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect responses in a block. This is used to skip to a different component or block based on the number of correct or incorrect responses to the block. */
+/** The IndividualComponentAllResponsesCondition interface is used to define a SkipCondition based on all answers to a specific component. This is used to skip to a different component or block based on the responses to the component. */
+export interface IndividualComponentAllResponsesCondition {
+  /** The name of the component to check. */
+  name: string;
+  /** The check we'll perform. */
+  check: 'responses';
+  /** The id of the component or block to skip to */
+  to: string;
+}
+
+/** The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on the component are checked. This is used to skip to a different component or block based on the number of correct or incorrect responses to the block. */
 export interface ComponentBlockCondition {
   /** The check we'll perform. */
   check: 'block';
   /** The condition to check. */
   condition: 'numCorrect' | 'numIncorrect';
-  /** The value to check. */
+  /** The number of correct or incorrect responses to check for. */
   value: number;
   /** The id of the component or block to skip to */
   to: string;
 }
 
-/** The SkipCondition interface is used to define a SkipCondition. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. */
-export type SkipCondition = (IndividualComponentCondition | ComponentBlockCondition);
+/** The SkipConditions interface is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. */
+export type SkipConditions = (IndividualComponentSingleResponseCondition | IndividualComponentAllResponsesCondition | ComponentBlockCondition)[];
 
 /** The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a latin square. */
 export interface ComponentBlock {
   /** The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition. */
   id?: string
   /** The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed. */
-  order: 'random' | 'latinSquare' | 'fixed'
+  order: 'random' | 'latinSquare' | 'fixed';
   /** The components that are included in the order. */
-  components: (string | ComponentBlock)[]
+  components: (string | ComponentBlock)[];
   /** The number of samples to use for the random assignments. This means you can randomize across 3 components while only showing a participant 2 at a time. */
-  numSamples?: number
+  numSamples?: number;
   /** The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks.  */
   interruptions?: InterruptionBlock[];
   /** The skip conditions for the block. */
-  skip?: SkipCondition
+  skip?: SkipConditions;
 }
 
 /** An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component). */
