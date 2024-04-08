@@ -12,7 +12,8 @@
         "demo-fairness-jnd",
         "demo-click-accuracy-test",
         "demo-image",
-        "test-randomization"
+        "test-randomization",
+        "test-skip-logic"
     ],
     "configs": {
         "demo-html": {
@@ -50,6 +51,9 @@
         },
         "test-randomization": {
             "path": "test-randomization/config.json"
+        },
+        "test-skip-logic": {
+            "path": "test-skip-logic/config.json"
         }
     }
 }
