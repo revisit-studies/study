@@ -15,8 +15,7 @@ export function GlobalInitializer() {
     }
     fn();
   }, [setStorageEngine, storageEngine]);
-
   return (
-    <GlobalConfigParser />
+    <GlobalConfigParser storageEngine={storageEngine} />
   );
 }
