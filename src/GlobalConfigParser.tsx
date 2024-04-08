@@ -6,9 +6,10 @@ import { parseGlobalConfig, parseStudyConfig } from './parser/parser';
 import { GlobalConfig, Nullable, StudyConfig } from './parser/types';
 import { AnalysisInterface } from './analysis/AnalysisInterface';
 import { PREFIX } from './utils/Prefix';
-import { ProtectedRoute, User } from './ProtectedRoute';
+import { ProtectedRoute } from './ProtectedRoute';
 import { Login } from './Login';
 import { StorageEngine } from './storage/engines/StorageEngine';
+import { AuthProvider } from './store/hooks/useAuth';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
@@ -36,9 +37,6 @@ export function GlobalConfigParser({ storageEngine } : { storageEngine:StorageEn
   const [globalConfig, setGlobalConfig] = useState<Nullable<GlobalConfig>>(null);
   const [studyConfigs, setStudyConfigs] = useState<Record<string, StudyConfig>>({});
 
-  const [isAuth, setIsAuth] = useState<boolean>(false);
-  const [user, setUser] = useState<User|undefined>(undefined);
-
   useEffect(() => {
     async function fetchData() {
       if (globalConfig) {
@@ -58,40 +56,39 @@ export function GlobalConfigParser({ storageEngine } : { storageEngine:StorageEn
 
   return globalConfig ? (
     <BrowserRouter basename={PREFIX}>
-      <Routes>
-        <Route path="/" element={<ProtectedRoute user={user} isAuth={isAuth} />}>
+      <AuthProvider>
+        <Routes>
           <Route
             path="/"
             element={(
-              <ConfigSwitcher
-                globalConfig={globalConfig}
-                studyConfigs={studyConfigs}
+              <ProtectedRoute>
+                <ConfigSwitcher
+                  globalConfig={globalConfig}
+                  studyConfigs={studyConfigs}
+                />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/:studyId/*"
+            element={<Shell globalConfig={globalConfig} />}
+          />
+
+          <Route
+            path="/analysis/:page"
+            element={<AnalysisInterface globalConfig={globalConfig} />}
+          />
+          <Route
+            path="/login"
+            element={(
+              <Login
+                storageEngine={storageEngine}
+                admins={globalConfig.adminUsers}
               />
             )}
           />
-        </Route>
-        <Route
-          path="/:studyId/*"
-          element={<Shell globalConfig={globalConfig} />}
-        />
-
-        <Route
-          path="/analysis/:page"
-          element={<AnalysisInterface globalConfig={globalConfig} />}
-        />
-        <Route
-          path="/login"
-          element={(
-            <Login
-              storageEngine={storageEngine}
-              user={user}
-              setUser={setUser}
-              isAuth={isAuth}
-              setIsAuth={setIsAuth}
-            />
-          )}
-        />
-      </Routes>
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   ) : null;
 }
