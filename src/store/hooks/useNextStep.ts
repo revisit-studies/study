@@ -11,7 +11,7 @@ import { useCurrentStep, useStudyId } from '../../routes/utils';
 
 import { deepCopy } from '../../utils/deepCopy';
 import { ValidationStatus } from '../types';
-import { useStorageEngine } from '../storageEngineHooks';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useStoredAnswer } from './useStoredAnswer';
 import { useWindowEvents } from './useWindowEvents';
 

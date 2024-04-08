@@ -3,7 +3,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { IconCodeDots, IconCodePlus, IconTable } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
 import { DownloadTidy, download } from './DownloadTidy';
-import { useStorageEngine } from '../store/storageEngineHooks';
+import { useStorageEngine } from '../storage/storageEngineHooks';
 import { StudyConfig } from '../parser/types';
 import { ParticipantData } from '../storage/types';
 

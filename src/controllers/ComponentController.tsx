@@ -12,7 +12,7 @@ import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
 import { isInheritedComponent } from '../parser/parser';
 import { IndividualComponent } from '../parser/types';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
-import { useStorageEngine } from '../store/storageEngineHooks';
+import { useStorageEngine } from '../storage/storageEngineHooks';
 import { useFlatSequence, useStoreActions, useStoreDispatch } from '../store/store';
 import { StudyEnd } from '../components/StudyEnd';
 

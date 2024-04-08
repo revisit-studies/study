@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import ReactMarkdownWrapper from './ReactMarkdownWrapper';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
-import { useStorageEngine } from '../store/storageEngineHooks';
+import { useStorageEngine } from '../storage/storageEngineHooks';
 import { useStoreSelector } from '../store/store';
 
 export function StudyEnd() {
