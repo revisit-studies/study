@@ -6,13 +6,13 @@
         "demo-brush-interactions",
         "demo-html-input",
         "demo-mvnv",
-        "demo-randomization-test",
         "demo-survey",
         "demo-VLAT-full-randomized",
         "demo-VLAT-mini-randomized",
         "demo-fairness-jnd",
         "demo-click-accuracy-test",
-        "demo-image"
+        "demo-image",
+        "test-randomization"
     ],
     "configs": {
         "demo-html": {
@@ -29,9 +29,6 @@
         },
         "demo-mvnv": {
             "path": "demo-mvnv/config.json"
-        },
-        "demo-randomization-test": {
-            "path": "demo-randomization-test/config.json"
         },
         "demo-survey": {
             "path": "demo-survey/config.json"
@@ -50,6 +47,9 @@
         },
         "demo-image": {
             "path": "demo-image/config.json"
+        },
+        "test-randomization": {
+            "path": "test-randomization/config.json"
         }
     }
 }
