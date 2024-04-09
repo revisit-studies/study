@@ -1,5 +1,10 @@
-import { useEffect } from 'react';
+import {
+  Badge, Button, Card, Text, Container, Flex, Image,
+} from '@mantine/core';
+import { useEffect, useState } from 'react';
 import { getAuth, signInWithPopup, GoogleAuthProvider } from '@firebase/auth';
+import { IconBrandGoogle } from '@tabler/icons-react';
+import { PREFIX } from './utils/Prefix';
 import { useAuth, User } from './store/hooks/useAuth';
 import { useStorageEngine } from './store/storageEngineHooks';
 
@@ -8,7 +13,8 @@ interface LoginProps {
 }
 
 export function Login({ admins }:LoginProps) {
-  const { login, logout } = useAuth();
+  const { user, login } = useAuth();
+  const [errorMessage, setErrorMessage] = useState<string|null>(null);
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
@@ -25,40 +31,54 @@ export function Login({ admins }:LoginProps) {
           // Determines Admin status
           const admin = (googleUser.email?.includes && admins.includes(googleUser.email)) ?? false;
 
-          // Logs in user
-          login({
-            name: googleUser.displayName,
-            email: googleUser.email,
-            admin,
-          });
+          if (!admin) {
+            setErrorMessage('You are not authorized as an admin on this application.');
+          } else {
+            // Logs in user
+            login({
+              name: googleUser.displayName,
+              email: googleUser.email,
+              admin,
+            });
+            setErrorMessage(null);
+          }
         }
       }).catch((error) => {
-        // Handle Errors here.
-        const errorCode = error.code;
-        const errorMessage = error.message;
-        // The email of the user's account used.
-        const email = error.customData.email;
-        // The AuthCredential type that was used.
-        const credential = GoogleAuthProvider.credentialFromError(error);
-        // ...
-        // Set authentication to false in this case.
-        logout();
+        setErrorMessage(error.message);
       });
   };
 
   const { storageEngine } = useStorageEngine();
 
   useEffect(() => {
-    if (storageEngine?.getEngine() !== 'firebase') {
+    const engine = storageEngine?.getEngine();
+    if (engine !== 'firebase' && !user) {
       // If not using firebase as storage engine, authenticate the user with a fake user with admin privileges.
       const currUser: User = {
         name: 'localName',
         admin: false,
         email: 'localEmail@example.com',
       };
-      login(currUser);
+      const admin = false;
+      if (!admin) {
+        setErrorMessage('You are not authorized as an admin on this application.');
+      } else {
+        login(currUser);
+        setErrorMessage(null);
+      }
     }
-  }, [storageEngine]);
+  }, []);
 
-  return <button type="button" onClick={signInWithGoogle}>CLICK TO LOGIN</button>;
+  return (
+    <Container>
+      <Card p="lg">
+        <Flex align="center" direction="column" justify="center">
+          <Image maw={200} mt={50} mb={100} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
+          <Text mb={20}>To access admin settings, please sign in using your Google account.</Text>
+          <Button onClick={signInWithGoogle} leftIcon={<IconBrandGoogle />} variant="filled">Sign In With Google</Button>
+          {errorMessage ? <Badge size="lg" color="red" mt={30}>{errorMessage}</Badge> : null}
+        </Flex>
+      </Card>
+    </Container>
+  );
 }
