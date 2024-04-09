@@ -24,17 +24,16 @@ export function Login({ admins }:LoginProps) {
         // This gives you a Google Access Token. You can use it to access the Google API.
         const credential = GoogleAuthProvider.credentialFromResult(result);
         if (credential !== null) {
-          const token = credential.accessToken;
           // The signed-in user info.
           const googleUser = result.user;
-          // IdP data available using getAdditionalUserInfo(result)
           // Determines Admin status
           const admin = (googleUser.email?.includes && admins.includes(googleUser.email)) ?? false;
 
+          // If not an admin, send and error message and do not log in the user.
           if (!admin) {
             setErrorMessage('You are not authorized as an admin on this application.');
           } else {
-            // Logs in user
+            // If an admin, login the user. Remove error message.
             login({
               name: googleUser.displayName,
               email: googleUser.email,
@@ -44,6 +43,7 @@ export function Login({ admins }:LoginProps) {
           }
         }
       }).catch((error) => {
+        // Issues with connecting to Firebase or logging in will be displayed to user.
         setErrorMessage(error.message);
       });
   };
@@ -52,11 +52,12 @@ export function Login({ admins }:LoginProps) {
 
   useEffect(() => {
     const engine = storageEngine?.getEngine();
+    // When the engine is defined but is not firebase, we auto-log in the user as if they were an admin.
     if (engine && engine !== 'firebase' && !user) {
       // If not using firebase as storage engine, authenticate the user with a fake user with admin privileges.
       const currUser: User = {
         name: 'localName',
-        admin: false,
+        admin: true,
         email: 'localEmail@example.com',
       };
       login(currUser);

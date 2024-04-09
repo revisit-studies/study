@@ -1,5 +1,7 @@
 import { useState } from 'react';
 
+// Constructs hooks for storing data in the browser.
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function useLocalStorage(keyName:string, defaultValue:any) {
   const [storedValue, setStoredValue] = useState(() => {

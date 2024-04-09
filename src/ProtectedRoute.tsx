@@ -6,6 +6,7 @@ interface ProtectedRouteProps {
   children: ReactNode;
 }
 
+// Wrapper component which only allows users who are authenticated and admins to access its child components.
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user } = useAuth();
 
