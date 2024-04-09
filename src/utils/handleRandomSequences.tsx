@@ -25,14 +25,14 @@ function _componentBlockToSequence(
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     order.components = latinSquareObject[path].pop()!.map((o) => {
       if (o.startsWith('_componentBlock')) {
-        return order.components[+o.slice(9)];
+        return order.components[+o.slice('_componentBlock'.length)];
       }
 
       return o;
     });
   }
 
-  let computedComponents: (string | ComponentBlock | string[])[] = order.components.slice(0, order.numSamples !== undefined ? order.numSamples : undefined).flat();
+  let computedComponents: (string | ComponentBlock | string[])[] = order.components.slice(0, order.numSamples);
 
   // If we have a break, insert it into the sequence at the correct intervals
   if (order.interruptions) {
