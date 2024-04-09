@@ -8,7 +8,6 @@ import { AnalysisInterface } from './analysis/AnalysisInterface';
 import { PREFIX } from './utils/Prefix';
 import { ProtectedRoute } from './ProtectedRoute';
 import { Login } from './Login';
-import { StorageEngine } from './storage/engines/StorageEngine';
 import { AuthProvider } from './store/hooks/useAuth';
 
 async function fetchGlobalConfigArray() {
@@ -33,7 +32,7 @@ async function fetchStudyConfigs(globalConfig: GlobalConfig) {
   return studyConfigs;
 }
 
-export function GlobalConfigParser({ storageEngine } : { storageEngine:StorageEngine|undefined }) {
+export function GlobalConfigParser() {
   const [globalConfig, setGlobalConfig] = useState<Nullable<GlobalConfig>>(null);
   const [studyConfigs, setStudyConfigs] = useState<Record<string, StudyConfig>>({});
 
@@ -73,16 +72,20 @@ export function GlobalConfigParser({ storageEngine } : { storageEngine:StorageEn
             path="/:studyId/*"
             element={<Shell globalConfig={globalConfig} />}
           />
-
           <Route
             path="/analysis/:page"
-            element={<AnalysisInterface globalConfig={globalConfig} />}
+            element={(
+              <ProtectedRoute>
+                <AnalysisInterface
+                  globalConfig={globalConfig}
+                />
+              </ProtectedRoute>
+            )}
           />
           <Route
             path="/login"
             element={(
               <Login
-                storageEngine={storageEngine}
                 admins={globalConfig.adminUsers}
               />
             )}

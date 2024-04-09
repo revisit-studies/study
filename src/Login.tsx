@@ -1,15 +1,13 @@
+import { useEffect } from 'react';
 import { getAuth, signInWithPopup, GoogleAuthProvider } from '@firebase/auth';
-import { StorageEngine } from './storage/engines/StorageEngine';
-import { useAuth } from './store/hooks/useAuth';
+import { useAuth, User } from './store/hooks/useAuth';
+import { useStorageEngine } from './store/storageEngineHooks';
 
 interface LoginProps {
-  storageEngine: StorageEngine | undefined;
   admins:string[];
 }
 
-export function Login({
-  storageEngine, admins,
-}:LoginProps) {
+export function Login({ admins }:LoginProps) {
   const { login, logout } = useAuth();
 
   const signInWithGoogle = async () => {
@@ -24,11 +22,14 @@ export function Login({
           // The signed-in user info.
           const googleUser = result.user;
           // IdP data available using getAdditionalUserInfo(result)
-          // ...
+          // Determines Admin status
+          const admin = (googleUser.email?.includes && admins.includes(googleUser.email)) ?? false;
+
+          // Logs in user
           login({
             name: googleUser.displayName,
-            admin: true,
             email: googleUser.email,
+            admin,
           });
         }
       }).catch((error) => {
@@ -44,6 +45,20 @@ export function Login({
         logout();
       });
   };
+
+  const { storageEngine } = useStorageEngine();
+
+  useEffect(() => {
+    if (storageEngine?.getEngine() !== 'firebase') {
+      // If not using firebase as storage engine, authenticate the user with a fake user with admin privileges.
+      const currUser: User = {
+        name: 'localName',
+        admin: false,
+        email: 'localEmail@example.com',
+      };
+      login(currUser);
+    }
+  }, [storageEngine]);
 
   return <button type="button" onClick={signInWithGoogle}>CLICK TO LOGIN</button>;
 }
