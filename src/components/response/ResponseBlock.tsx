@@ -42,7 +42,7 @@ export default function ResponseBlock({
   const answerValidator = useAnswerField(responses, currentStep, storedAnswer || {});
   const [checkClicked, setCheckClicked] = useState(false);
   const { iframeAnswers } = useStoreSelector((state) => state);
-  const hasCorrectAnswer = ((configInUse?.correctAnswer?.length || 0) > 0);
+  const hasCorrectAnswerFeedback = configInUse?.provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
 
   const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
 
@@ -52,6 +52,7 @@ export default function ResponseBlock({
       const answerId = iframeResponse.id;
       answerValidator.setValues({ ...answerValidator.values, [answerId]: iframeAnswers });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [iframeAnswers, responses]);
 
   useEffect(() => {
@@ -83,7 +84,7 @@ export default function ResponseBlock({
                 }}
                 response={response}
               />
-              {hasCorrectAnswer && checkClicked && (
+              {hasCorrectAnswerFeedback && checkClicked && (
                 <Text>
                   {`The correct answer is: ${configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer}`}
                 </Text>
@@ -94,7 +95,7 @@ export default function ResponseBlock({
       ))}
 
       <Group position="right" spacing="xs" mt="xl">
-        {hasCorrectAnswer && showNextBtn && (
+        {hasCorrectAnswerFeedback && showNextBtn && (
           <Button
             onClick={() => setCheckClicked(true)}
             disabled={!answerValidator.isValid()}
@@ -104,7 +105,7 @@ export default function ResponseBlock({
         )}
         {showNextBtn && (
           <NextButton
-            disabled={hasCorrectAnswer && !checkClicked}
+            disabled={hasCorrectAnswerFeedback && !checkClicked}
             setCheckClicked={setCheckClicked}
             label={configInUse.nextButtonText || 'Next'}
           />

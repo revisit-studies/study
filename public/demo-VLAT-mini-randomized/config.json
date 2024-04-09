@@ -109,7 +109,6 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "correctAnswer": "False",
                     "options": [
                         {
                             "label": "True",
@@ -124,6 +123,12 @@
                             "value": "Skip"
                         }
                     ]
+                }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "res1",
+                    "answer": "False"
                 }
             ]
         },
@@ -147,7 +152,6 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "correctAnswer": "Great Britain",
                     "options": [
                         {
                             "label": "Great Britain",
@@ -171,6 +175,12 @@
                         }
                     ]
                 }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "res2",
+                    "answer": "Great Britain"
+                }
             ]
         },
         "q3": {
@@ -193,7 +203,6 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "correctAnswer": "30 - 40km",
                     "options": [
                         {
                             "label": "50 - 70km",
@@ -217,6 +226,12 @@
                         }
                     ]
                 }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "res3",
+                    "answer": "30 - 40km"
+                }
             ]
         },
         "q4": {
@@ -239,7 +254,6 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "correctAnswer": "True",
                     "options": [
                         {
                             "label": "True",
@@ -254,6 +268,12 @@
                             "value": "Skip"
                         }
                     ]
+                }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "res4",
+                    "answer": "True"
                 }
             ]
         },
@@ -277,7 +297,6 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "correctAnswer": "17.6%",
                     "options": [
                         {
                             "label": "17.6%",
@@ -301,6 +320,12 @@
                         }
                     ]
                 }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "res5",
+                    "answer": "17.6%"
+                }
             ]
         },
         "q6": {
@@ -323,7 +348,6 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "correctAnswer": "Shanghai",
                     "options": [
                         {
                             "label": "Beijing",
@@ -347,6 +371,12 @@
                         }
                     ]
                 }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "res6",
+                    "answer": "Shanghai"
+                }
             ]
         },
         "q7": {
@@ -369,7 +399,6 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "correctAnswer": "$6.1",
                     "options": [
                         {
                             "label": "$5.2",
@@ -393,6 +422,12 @@
                         }
                     ]
                 }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "res7",
+                    "answer": "$6.1"
+                }
             ]
         },
         "q8": {
@@ -415,7 +450,6 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "correctAnswer": "$50.54",
                     "options": [
                         {
                             "label": "$50.54",
@@ -439,6 +473,12 @@
                         }
                     ]
                 }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "res8",
+                    "answer": "$50.54"
+                }
             ]
         },
         "q9": {
@@ -461,7 +501,6 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "correctAnswer": "40.51 Mbps",
                     "options": [
                         {
                             "label": "42.30 Mbps",
@@ -485,6 +524,12 @@
                         }
                     ]
                 }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "res9",
+                    "answer": "40.51 Mbps"
+                }
             ]
         },
         "q10": {
@@ -507,7 +552,6 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "correctAnswer": "$0.71",
                     "options": [
                         {
                             "label": "$0.71",
@@ -531,6 +575,12 @@
                         }
                     ]
                 }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "res10",
+                    "answer": "$0.71"
+                }
             ]
         },
         "q11": {
@@ -553,7 +603,6 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "correctAnswer": "1 to 2",
                     "options": [
                         {
                             "label": "1 to 1",
@@ -577,6 +626,12 @@
                         }
                     ]
                 }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "res11",
+                    "answer": "1 to 2"
+                }
             ]
         },
         "q12": {
@@ -599,7 +654,6 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "correctAnswer": "False",
                     "options": [
                         {
                             "label": "True",
@@ -614,6 +668,12 @@
                             "value": "Skip"
                         }
                     ]
+                }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "res12",
+                    "answer": "False"
                 }
             ]
         }

@@ -298,7 +298,7 @@ export interface BaseIndividualComponent {
   instructionLocation?: ResponseBlockLocation;
   /** The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess. */
   correctAnswer?: Answer[];
-  /** Controls whether the component should provide feedback to the participant, such as in a training trial. */
+  /** Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false. */
   provideFeedback?: boolean;
   /** The meta data for the component. This is used to identify and provide additional information for the component in the admin panel. */
   meta?: Record<string, unknown>;

@@ -281,6 +281,7 @@
                     4
                 ]
             },
+            "provideFeedback": true,
             "correctAnswer": [
                 {
                     "id": "cm-response",
@@ -296,6 +297,7 @@
                     4
                 ]
             },
+            "provideFeedback": true,
             "correctAnswer": [
                 {
                     "id": "cm-response",
@@ -311,6 +313,7 @@
                     4
                 ]
             },
+            "provideFeedback": true,
             "correctAnswer": [
                 {
                     "id": "cm-response",
@@ -326,6 +329,7 @@
                     4
                 ]
             },
+            "provideFeedback": true,
             "correctAnswer": [
                 {
                     "id": "cm-response",
