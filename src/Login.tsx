@@ -52,20 +52,15 @@ export function Login({ admins }:LoginProps) {
 
   useEffect(() => {
     const engine = storageEngine?.getEngine();
-    if (engine !== 'firebase' && !user) {
+    if (engine && engine !== 'firebase' && !user) {
       // If not using firebase as storage engine, authenticate the user with a fake user with admin privileges.
       const currUser: User = {
         name: 'localName',
         admin: false,
         email: 'localEmail@example.com',
       };
-      const admin = false;
-      if (!admin) {
-        setErrorMessage('You are not authorized as an admin on this application.');
-      } else {
-        login(currUser);
-        setErrorMessage(null);
-      }
+      login(currUser);
+      setErrorMessage(null);
     }
   }, []);
 

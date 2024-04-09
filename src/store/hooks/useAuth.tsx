@@ -2,6 +2,7 @@ import {
   createContext, useContext, useMemo, useState, ReactNode,
 } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useLocalStorage } from './useLocalStorage';
 
 export interface User {
   name?: string|null;
@@ -26,7 +27,7 @@ const AuthContext = createContext<AuthContextValue>({
 export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children } : { children: ReactNode }) {
-  const [user, setUser] = useState<User|null>(null);
+  const [user, setUser] = useLocalStorage('user', null);
   const navigate = useNavigate();
 
   const login = async (currUser: User) => {
