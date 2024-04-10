@@ -4,7 +4,7 @@ import {
   getDownloadURL, getStorage, ref, uploadBytes,
 } from 'firebase/storage';
 import {
-  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, addDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc,
+  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
@@ -392,12 +392,6 @@ export class FirebaseStorageEngine extends StorageEngine {
       return userManagementDocs[key];
     }
     return null;
-  }
-
-  async addUserManagementAdmins(adminUsersList: Array<string>) {
-    return await addDoc(collection(this.firestore, 'user-management'), {
-      adminUsersList,
-    });
   }
 
   async editUserManagementAdmins(adminUsersList: Array<string>) {

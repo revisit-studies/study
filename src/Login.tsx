@@ -66,7 +66,7 @@ export function Login({ globalConfigAdminUsers }:LoginProps) {
                 });
                 setErrorMessage(null);
                 // Add globalAdminUsers to the Firestore database
-                storageEngine?.addUserManagementAdmins(globalConfigAdminUsers);
+                storageEngine?.editUserManagementAdmins(globalConfigAdminUsers);
               }
             }
             setIsLoading(false);

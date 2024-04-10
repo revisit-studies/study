@@ -50,7 +50,5 @@ export abstract class StorageEngine {
 
   abstract getUserManagementData(key: string) : Promise<Record<string, DocumentData> | null>;
 
-  abstract addUserManagementAdmins(adminUsersList: Array<string>) : Promise<DocumentReference<DocumentData, DocumentData>>;
-
   abstract editUserManagementAdmins(adminUsersList: Array<string>) : Promise<void>;
 }
