@@ -4,7 +4,7 @@ import {
   getDownloadURL, getStorage, ref, uploadBytes,
 } from 'firebase/storage';
 import {
-  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc,
+  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, addDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
@@ -374,6 +374,36 @@ export class FirebaseStorageEngine extends StorageEngine {
     });
 
     return allAnswersPresent;
+  }
+
+  async getUserManagementData(key:string) {
+    // Get the user-management collection in Firestore
+    const userManagementCollection = collection(this.firestore, 'user-management');
+    // Grabs all user-management data and returns data based on key
+    const userManagementDocs = await getDocs(userManagementCollection)
+      .then((querySnapshot) => {
+        const docsObject:Record<string, DocumentData> = {};
+        querySnapshot.docs.forEach((queryDoc) => {
+          docsObject[queryDoc.id] = queryDoc.data();
+        });
+        return docsObject;
+      });
+    if (key in userManagementDocs) {
+      return userManagementDocs[key];
+    }
+    return null;
+  }
+
+  async addUserManagementAdmins(adminUsersList: Array<string>) {
+    return await addDoc(collection(this.firestore, 'user-management'), {
+      adminUsersList,
+    });
+  }
+
+  async editUserManagementAdmins(adminUsersList: Array<string>) {
+    return await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
+      adminUsersList,
+    });
   }
 
   private _verifyStudyDatabase(db: CollectionReference<DocumentData, DocumentData> | undefined): db is CollectionReference<DocumentData, DocumentData> {

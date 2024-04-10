@@ -10,7 +10,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user } = useAuth();
 
-  if (user && user.admin) {
+  if (user && user.isAdmin) {
     return <div>{children}</div>;
   }
   return <Navigate to="/login" />;

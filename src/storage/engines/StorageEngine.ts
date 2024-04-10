@@ -1,3 +1,4 @@
+import { DocumentData, DocumentReference } from 'firebase/firestore';
 import { StudyConfig } from '../../parser/types';
 import { Sequence, StoredAnswer } from '../../store/types';
 import { ParticipantData } from '../types';
@@ -46,4 +47,10 @@ export abstract class StorageEngine {
   abstract nextParticipant(config: StudyConfig): Promise<ParticipantData>;
 
   abstract verifyCompletion(answers: Record<string, StoredAnswer>): Promise<boolean>;
+
+  abstract getUserManagementData(key: string) : Promise<Record<string, DocumentData> | null>;
+
+  abstract addUserManagementAdmins(adminUsersList: Array<string>) : Promise<DocumentReference<DocumentData, DocumentData>>;
+
+  abstract editUserManagementAdmins(adminUsersList: Array<string>) : Promise<void>;
 }

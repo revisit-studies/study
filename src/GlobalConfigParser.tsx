@@ -86,7 +86,7 @@ export function GlobalConfigParser() {
             path="/login"
             element={(
               <Login
-                admins={globalConfig.adminUsers}
+                globalConfigAdminUsers={globalConfig.adminUsers}
               />
             )}
           />
