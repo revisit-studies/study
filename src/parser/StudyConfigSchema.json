@@ -1089,10 +1089,10 @@
     },
     "StudyConfig": {
       "additionalProperties": false,
-      "description": "The StudyConfig interface is used to define the properties of a study configuration. These are the hjson files that live in the public folder. In our repo, one example of this would be public/cleveland/config-cleveland.json.",
+      "description": "The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.\n\n``` JSON {  \"$schema\": \"https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json\",  \"studyMetadata\": {    ...  },  \"uiConfig\": {    ...  },  \"components\": {    ...  },  \"sequence\": {    ...  } } ``` <div class=\"info-panel\"> <div class=\"info-text\">For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually. </div> </div> <br>\n\nThe `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.",
       "properties": {
         "$schema": {
-          "description": "A required json schema property. This should point to the github link for the version of the schema you would like. See examples for more information",
+          "description": "A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information",
           "type": "string"
         },
         "baseComponents": {
@@ -1184,7 +1184,7 @@
               }
             ]
           },
-          "description": "The components that are used in the study (baseComponents allow PartialComponents which allows for inheriting from them in components).",
+          "description": "The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;\n\nUsing baseComponents:\n\n``` JSON \"baseComponents\": { \"my-image-component\": {   \"instructionLocation\": \"sidebar\",   \"nextButtonLocation\": \"sidebar\",   \"path\": \"path/to/assets/my-image.jpg\",   \"response\": [       {           \"id\": \"my-image-id\",           \"options\": [               {                   \"label\": \"Europe\",                   \"value\": \"Europe\"               },               {                   \"label\": \"Japan\",                   \"value\": \"Japan\"               },               {                   \"label\": \"USA\",                   \"value\": \"USA\"               }           ],           \"prompt\": \"Your Selected Answer:\",           \"type\": \"dropdown\"       }   ],   \"type\": \"image\" } } ``` In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a drowpdown containing three choices). Any component which contains the `\"baseComponent\":\"my-image-component\"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below: ``` JSON \"components\": { \"q1\": {   \"baseComponent\": \"my-image-component\",   \"description\": \"Choosing section with largest GDP\",   \"instruction\": \"Which region has the largest GDP?\" }, \"q2\": {   \"baseComponent\": \"my-image-component\",   \"description\": \"Choosing section with lowest GDP\",   \"instruction\": \"Which region has the lowest GDP?\" }, \"q3\": {   \"baseComponent\": \"my-image-component\",   \"description\": \"Choosing section with highest exports of Wheat\",   \"instruction\": \"Which region had the most Wheat exported in 2022?\" } } ```",
           "type": "object"
         },
         "components": {
@@ -1225,7 +1225,7 @@
     },
     "StudyMetadata": {
       "additionalProperties": false,
-      "description": "The StudyMetadata is used to describe certain properties of a study. Some of this data is displayed on the landing page when running the app, such as the title and description. This data is also included in the data file that is downloaded at the end of the study, to help identify the study and version.",
+      "description": "The StudyMetadata is used to describe certain properties of a study. Some of this data is displayed on the landing page when running the app, such as the title and description. This data is also included in the data file that is downloaded at the end of the study, to help identify the study and version. Below is an example of a StudyMetadata entry in your study configuration file:\n\n```JSON \"studyMetadata\" : {  \"title\": \"My New Study\",  \"version\": \"pilot\",  \"authors\": [    \"Jane Doe\",    \"John Doe\"  ],  \"date\": \"2024-04-01\",  \"description\": \"This study is meant to test your patience.\",  \"organizations\": [    \"The reVISit Team\",    \"The Other Team\"  ] } ```",
       "properties": {
         "authors": {
           "description": "The authors of your study.",
@@ -1254,7 +1254,7 @@
           "type": "string"
         },
         "version": {
-          "description": "The version of your study, shown on the landing page and attached to participant data. This might be useful for seeing which version of the study a participant saw.",
+          "description": "The version of your study, shown on the landing page and attached to participant data. When you change a configuration file after a study has already been distributed to participants, you can change the version number so that the participants who see this new configuration file can be identified.",
           "type": "string"
         }
       },
@@ -1270,7 +1270,7 @@
     },
     "UIConfig": {
       "additionalProperties": false,
-      "description": "The UIConfig is used to configure the UI of the app. This includes the logo, contact email, and whether to show a progress bar. The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses.",
+      "description": "The UIConfig is used to configure the UI of the app. This includes the logo, contact email, and whether to show a progress bar. The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the UI Config would look in your study configuration ``` JSON uiConfig:{  \"contactEmail\": \"test@test.com\",  \"helpTextPath\": \"path/to/assets/help.md\",  \"logoPath\": \"path/to/assets/logo.jpg\",  \"withProgressBar\": true,  \"autoDownloadStudy\": true  \"autoDownloadTime\": 5000,  \"studyEndMsg\": \"Thank you for completing this study. You're the best!\",  \"sidebar\": true,  \"windowEventDebounceTime\": 500,  \"urlParticipantIdParam\": \"PROLIFIC_ID\",  \"numSequences\": 500 } ``` In the above, the `path/to/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)",
       "properties": {
         "autoDownloadStudy": {
           "description": "Controls whether the study data is automatically downloaded at the end of the study.",
@@ -1327,7 +1327,7 @@
     },
     "WebsiteComponent": {
       "additionalProperties": false,
-      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder.",
+      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder.\n\n``` JSON {  \"type\": \"website\",  \"path\": \"path/to/website.html\", } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n``` JSON {  \"type\": \"website\",  \"path\": \"path/to/website.html\",  \"parameters\": {    \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]  } } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n``` HTML <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script>  Revisit.onDataReceive((data) => {    const barData = data['barData'];    ...  });\n\n Revisit.postAnswers({ answer: [userAnswer] }); </script> ```",
       "properties": {
         "correctAnswer": {
           "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
