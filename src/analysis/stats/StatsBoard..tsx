@@ -6,13 +6,15 @@ import {
   Divider,
   Grid, LoadingOverlay,
   ScrollArea,
-  Select,
   Stack, Tabs,
   Text,
   Title,
 } from '@mantine/core';
 import React, { useEffect, useState } from 'react';
-import { IconArrowDown, IconSquareCheck, IconProgressBolt } from '@tabler/icons-react';
+import {
+  IconArrowDown, IconSquareCheck, IconProgressBolt, IconArrowUp,
+} from '@tabler/icons-react';
+import { useSearchParams } from 'react-router-dom';
 import { ParticipantData } from '../../storage/types';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { GlobalConfig } from '../../parser/types';
@@ -28,19 +30,30 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
   const [activeParticipant, setActiveParticipant] = useState<string>('');
   const [activeSequence, setActiveSequence] = useState<string[]>([]);
   const [activeTrial, setActiveTrial] = useState<string>('');
-  // const [activeAnswer, setActiveAnswer] = useState<Object>({});
-
+  const [activeAnswer, setActiveAnswer] = useState<Record<string, string>>({});
+  const [searchParams] = useSearchParams();
   const { globalConfig } = props;
   const studyIds = globalConfig.configsList;
   const selectorData = studyIds.map((id) => ({ value: id, label: id }));
+
+  useEffect(() => {
+    const exp = searchParams.get('exp');
+    if (exp) {
+      setActiveExp(exp);
+    }
+  }, [searchParams]);
 
   const selectParticipant = (p:string) => {
     setActiveParticipant(p);
   };
 
   useEffect(() => {
-    // setActiveAnswer({});
+    setActiveAnswer({});
   }, [activeTrial]);
+
+  useEffect(() => {
+    // console.log(activeSequence, 'activeSequence');
+  }, []);
 
   useEffect(() => {
     // console.log(activeParticipant, 'active p');
@@ -61,7 +74,7 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
     setActiveParticipant('');
     setActiveSequence([]);
     setActiveTrial('');
-    // setActiveAnswer({});
+    setActiveAnswer({});
   };
 
   useEffect(() => {
@@ -100,26 +113,23 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
         backgroundColor: theme.colors.gray[0],
       })}
     >
-      <Box maw={300} m={10}>
-        <Select
-          label="Select an experiment"
-          placeholder="Pick one"
-          data={selectorData}
-          value={activeExp}
-          onChange={setActiveExp}
-        />
-      </Box>
-      <Divider />
+      {/* <Box maw={300} m={10}> */}
+      {/*  <Select */}
+      {/*    label="Select an experiment" */}
+      {/*    placeholder="Pick one" */}
+      {/*    data={selectorData} */}
+      {/*    value={activeExp} */}
+      {/*    onChange={setActiveExp} */}
+      {/*  /> */}
+      {/* </Box> */}
+      {/* <Divider /> */}
       {(activeExp && expData) ? (
         <Box
           mt={10}
           p={10}
-          sx={() => ({
-            backgroundColor: 'white',
-          })}
         >
           <Grid>
-            <Grid.Col span={4} maw={300}>
+            <Grid.Col span={4} p={10} maw={300} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
               <ScrollArea style={{ height: 550 }} type="scroll">
                 <Stack mb={10}>
                   <Title>
@@ -154,7 +164,7 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
                         >
                           {completed.length}
                         </Badge>
-                                              )}
+                                          )}
                       value="completed"
                       icon={(
                         <IconSquareCheck
@@ -177,7 +187,7 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
                         >
                           {inprogress.length}
                         </Badge>
-                                              )}
+                                          )}
                       value="inprogress"
                       icon={(
                         <IconProgressBolt
@@ -193,7 +203,7 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
                       <Stack m={10}>
                         <Button variant={activeParticipant === 'all' ? 'filled' : 'outline'} onClick={() => { selectParticipant('all'); }} size="xs">All Completed</Button>
                         {
-                                                    completed.map((d, idx) => <Button key={`btnSlect-${idx}`} variant={activeParticipant === d.participantId ? 'filled' : 'outline'} onClick={() => { selectParticipant(d.participantId); }} size="xs" color="green">{d.participantId}</Button>)
+                                                completed.map((d, idx) => <Button key={`btnsp-${idx}`} variant={activeParticipant === d.participantId ? 'filled' : 'outline'} onClick={() => { selectParticipant(d.participantId); }} size="xs" color="green">{d.participantId}</Button>)
 }
                       </Stack>
                     </Tabs.Panel>
@@ -202,47 +212,48 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
                       <Stack m={10}>
 
                         {
-                                                    inprogress.map((d, idx) => <Button key={`btnSlectId-${idx}`} variant={activeParticipant === d.participantId ? 'filled' : 'outline'} onClick={() => { selectParticipant(d.participantId); }} size="xs" color="yellow">{d.participantId}</Button>)
-                                                }
+                                                inprogress.map((d, idx) => <Button key={`btnSlt-${idx}`} variant={activeParticipant === d.participantId ? 'filled' : 'outline'} onClick={() => { selectParticipant(d.participantId); }} size="xs" color="yellow">{d.participantId}</Button>)
+                                            }
                       </Stack>
                     </Tabs.Panel>
 
                   </Tabs.List>
                 </Tabs>
-
               </ScrollArea>
             </Grid.Col>
-            <Grid.Col span={8}>
-              <Grid.Col span={3}>
-                <ScrollArea style={{ height: 550 }} type="scroll">
-                  {activeSequence.length > 0 && <Title order={4} mb={10}>Experiment Stages</Title>}
-                  {activeSequence.length > 0 && activeSequence.map((trialName) => (trialName === 'end' ? <Button key={`btn-${trialName}`} fullWidth mt={10} variant="outline" size="xs">{trialName}</Button>
-                    : (
-                      <Box key={`Box-${trialName}`}>
+            <Grid.Col span={3}>
+              <ScrollArea style={{ height: 550 }} type="scroll" miw={70}>
+                {activeSequence.length > 0 && <Title order={4} mb={10}>Experiment Stages</Title>}
+                {activeSequence.length > 0 && activeSequence.map((trialName) => (trialName === 'end' ? <Button key={`btn-${trialName}`} fullWidth mt={10} variant="outline" size="xs">{trialName}</Button>
+                  : (
+                    <Box key={`btn-${trialName}`}>
 
-                        <Stack sx={{ alignItems: 'center' }}>
-                          <Button
-                            variant={activeTrial === trialName ? 'filled' : 'outline'}
-                            mt={10}
-                            fullWidth
-                            size="xs"
-                            onClick={() => { setActiveTrial(trialName); }}
-                          >
-                            {trialName}
-                          </Button>
-                          <IconArrowDown size={15} display="block" />
-                        </Stack>
-                      </Box>
-                    )))}
-                </ScrollArea>
-              </Grid.Col>
-
-              <Grid.Col span={9} />
+                      <Stack sx={{ alignItems: 'center' }}>
+                        <Button
+                          variant={activeTrial === trialName ? 'filled' : 'outline'}
+                          mt={10}
+                          fullWidth
+                          size="xs"
+                          onClick={() => { setActiveTrial(trialName); }}
+                        >
+                          {trialName}
+                        </Button>
+                        <IconArrowDown size={15} display="block" />
+                      </Stack>
+                    </Box>
+                  )))}
+              </ScrollArea>
             </Grid.Col>
-
           </Grid>
         </Box>
-      ) : <Title>Please select an experiment</Title>}
+      ) : (
+        <Box ml="50%">
+          <Box ml={200}>
+            <IconArrowUp size={30} display="block" />
+          </Box>
+          <Title>Please select an experiment</Title>
+        </Box>
+      )}
       <LoadingOverlay visible={loading} zIndex={1000} overlayBlur={2} />
 
     </Container>
