@@ -22,12 +22,15 @@ interface UserWrapped{
   isAdmin:boolean
 }
 
+type verifyAdminStatusInput = User | null | LocalStorageUser;
+
 // Defines default AuthContextValue
 interface AuthContextValue {
   user: UserWrapped;
   adminVerification:boolean;
   login: (user: UserWrapped) => void;
   logout: () => void;
+  verifyAdminStatus: (firebaseUser:verifyAdminStatusInput) => Promise<boolean>;
   }
 
 // Initializes AuthContext
@@ -42,6 +45,8 @@ const AuthContext = createContext<AuthContextValue>({
   login: () => {},
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   logout: () => {},
+  verifyAdminStatus: () => Promise.resolve(false),
+
 });
 
 // Firebase auth context
@@ -82,8 +87,38 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
         isAdmin: false,
       });
     }).catch((error) => {
+      setUser({
+        user: null,
+        determiningStatus: false,
+        isAdmin: false,
+      });
       console.error(`There was an issue signing-out the user: ${error.message}`);
     });
+  };
+
+  function isFirebaseUser(input: verifyAdminStatusInput): input is User {
+    return input !== null && typeof input === 'object' && 'uid' in input;
+  }
+
+  function isLocalStorageUser(input: verifyAdminStatusInput): input is LocalStorageUser {
+    return input !== null && typeof input === 'object' && !('uid' in input);
+  }
+
+  const verifyAdminStatus = async (inputUser: verifyAdminStatusInput) => {
+    if (inputUser === null) {
+      return Promise.resolve(true);
+    } if (isFirebaseUser(inputUser)) {
+      const firebaseUser = inputUser as User;
+      if (storageEngine instanceof FirebaseStorageEngine) {
+        return await storageEngine.validateUserAdminStatus(firebaseUser, globalConfig.adminUsers);
+      }
+      return Promise.resolve(false);
+    } if (isLocalStorageUser(inputUser)) {
+      // Handle LocalStorageUser
+      return Promise.resolve(true);
+    }
+    // Handle other cases
+    return Promise.resolve(false);
   };
 
   useEffect(() => {
@@ -102,7 +137,7 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
         });
         if (firebaseUser) {
           // Reach out to firebase to validate user
-          const isUserAdmin = await storageEngine.validateUserAdminStatus(firebaseUser, globalConfig.adminUsers);
+          const isUserAdmin = await verifyAdminStatus(firebaseUser);
           setAdminVerification(true);
           const newFirebaseUser: UserWrapped = {
             user: firebaseUser,
@@ -139,6 +174,7 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
     adminVerification,
     login,
     logout,
+    verifyAdminStatus,
   }), [user]);
 
   return (
