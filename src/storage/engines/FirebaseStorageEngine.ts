@@ -65,9 +65,6 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   async connect() {
     try {
-      // const auth = getAuth();
-      // await signInAnonymously(auth);
-      // if (!auth.currentUser) throw new Error('Login failed with firebase');
       await enableNetwork(this.firestore);
 
       // Check the connection to the database
@@ -81,17 +78,28 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   async initializeStudyDb(studyId: string, config: StudyConfig) {
-    // Hash the config
-    const configHash = await hash(JSON.stringify(config));
+    try {
+      const auth = getAuth();
+      if (!auth.currentUser) {
+        await signInAnonymously(auth);
+        if (!auth.currentUser) throw new Error('Login failed with firebase');
+      }
 
-    // Create or retrieve database for study
-    this.studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
-    this.studyId = studyId;
-    const configsDoc = doc(this.studyCollection, 'configs');
-    const configsCollection = collection(configsDoc, 'configs');
-    const configDoc = doc(configsCollection, configHash);
+      // Hash the config
+      const configHash = await hash(JSON.stringify(config));
 
-    return await setDoc(configDoc, config);
+      // Create or retrieve database for study
+      this.studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
+      this.studyId = studyId;
+      const configsDoc = doc(this.studyCollection, 'configs');
+      const configsCollection = collection(configsDoc, 'configs');
+      const configDoc = doc(configsCollection, configHash);
+
+      return await setDoc(configDoc, config);
+    } catch (error) {
+      console.warn('Failed to connect to Firebase.');
+      return Promise.reject(error);
+    }
   }
 
   async initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, urlParticipantId?: string) {
