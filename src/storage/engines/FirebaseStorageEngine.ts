@@ -7,7 +7,7 @@ import {
   CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
-import { getAuth, signInAnonymously } from '@firebase/auth';
+import { getAuth, signInAnonymously, User } from '@firebase/auth';
 import localforage from 'localforage';
 import { StorageEngine } from './StorageEngine';
 import { ParticipantData } from '../types';
@@ -17,6 +17,11 @@ import {
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+
+export interface StoredUser {
+  email:string,
+  uid:string|null,
+}
 
 export class FirebaseStorageEngine extends StorageEngine {
   private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
@@ -60,9 +65,9 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   async connect() {
     try {
-      const auth = getAuth();
-      await signInAnonymously(auth);
-      if (!auth.currentUser) throw new Error('Login failed with firebase');
+      // const auth = getAuth();
+      // await signInAnonymously(auth);
+      // if (!auth.currentUser) throw new Error('Login failed with firebase');
       await enableNetwork(this.firestore);
 
       // Check the connection to the database
@@ -394,10 +399,76 @@ export class FirebaseStorageEngine extends StorageEngine {
     return null;
   }
 
-  async editUserManagementAdmins(adminUsersList: Array<string>) {
+  async editUserManagementAdmins(adminUsersList: Array<string>, currentUser: User) {
+    const firebaseAdminUsers = await this.getUserManagementData('adminUsers');
+    const newAdminUsersWithUUids: Array<StoredUser> = [];
+
+    if (firebaseAdminUsers) {
+      const firebaseAdminUsersObject: Record<string, string|null> = {};
+      firebaseAdminUsers?.adminUsersList.forEach((storedUser:StoredUser) => {
+        firebaseAdminUsersObject[storedUser.email] = storedUser.uid;
+      });
+      adminUsersList.forEach((adminUser) => {
+        let newUid:string|null;
+        if (adminUser in firebaseAdminUsersObject) {
+          const storedUid = firebaseAdminUsersObject[adminUser];
+          newUid = storedUid || (currentUser.email === adminUser ? currentUser.uid : null);
+        } else {
+          newUid = currentUser.email === adminUser ? currentUser.uid : null;
+        }
+        newAdminUsersWithUUids.push({
+          email: adminUser,
+          uid: newUid,
+        });
+      });
+    } else {
+      // Adds all initial admins on sign in of one of them.
+      let newUid:string|null;
+      adminUsersList.forEach((adminUser) => {
+        newUid = currentUser.email === adminUser ? currentUser.uid : null;
+        newAdminUsersWithUUids.push({
+          email: adminUser,
+          uid: newUid,
+        });
+      });
+    }
     return await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
-      adminUsersList,
+      adminUsersList: newAdminUsersWithUUids,
     });
+  }
+
+  // Validates if a user is an admin.
+  async validateUserAdminStatus(user: User | null, globalConfigAdminUsers: Array<string>) {
+    // There are two cases
+    // Case 1: Verify a user when there already exists a database
+    // Case 2: Verify a user when there does not exist a database
+    if (user) {
+      // Case 1: Database exists
+      const adminUsers = await this.getUserManagementData('adminUsers');
+
+      if (adminUsers && adminUsers.adminUsersList) {
+        const adminUsersObject: Record<string, string|null> = {};
+        adminUsers?.adminUsersList.forEach((storedUser:StoredUser) => {
+          adminUsersObject[storedUser.email] = storedUser.uid;
+        });
+
+        const isAdmin = user.email && (adminUsersObject[user.email] === user.uid || adminUsersObject[user.email] === null);
+        if (isAdmin) {
+          await this.editUserManagementAdmins(globalConfigAdminUsers, user);
+          return true;
+        }
+        return false;
+      // Case 2: Database does not yet exist. First opening
+      }
+      // Need to get Global config users
+      const isAdmin = (user.email?.includes && globalConfigAdminUsers.includes(user.email)) ?? false;
+      if (isAdmin) {
+        await this.editUserManagementAdmins(globalConfigAdminUsers, user);
+        return true;
+      }
+      return false;
+    }
+    return false;
   }
 
   private _verifyStudyDatabase(db: CollectionReference<DocumentData, DocumentData> | undefined): db is CollectionReference<DocumentData, DocumentData> {

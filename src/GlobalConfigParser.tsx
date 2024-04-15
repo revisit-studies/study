@@ -55,7 +55,7 @@ export function GlobalConfigParser() {
 
   return globalConfig ? (
     <BrowserRouter basename={PREFIX}>
-      <AuthProvider>
+      <AuthProvider globalConfig={globalConfig}>
         <Routes>
           <Route
             path="/"
@@ -85,9 +85,7 @@ export function GlobalConfigParser() {
           <Route
             path="/login"
             element={(
-              <Login
-                globalConfigAdminUsers={globalConfig.adminUsers}
-              />
+              <Login />
             )}
           />
         </Routes>

@@ -1,4 +1,3 @@
-import { DocumentData, DocumentReference } from 'firebase/firestore';
 import { StudyConfig } from '../../parser/types';
 import { Sequence, StoredAnswer } from '../../store/types';
 import { ParticipantData } from '../types';
