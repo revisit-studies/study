@@ -7,25 +7,9 @@ import { DateRangePicker, DateRangePickerValue } from '@mantine/dates';
 import { VegaLite } from 'react-vega';
 import { useDisclosure, useResizeObserver } from '@mantine/hooks';
 import { ParticipantData } from '../../storage/types';
-import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
-import { StoredAnswer } from '../../store/types';
 import { download, DownloadTidy } from '../../components/DownloadTidy';
 import { StudyConfig } from '../../parser/types';
-
-const isStudyCompleted = (participant: ParticipantData) => getSequenceFlatMap(participant.sequence).every((step, idx) => {
-  if (step === 'end') {
-    return true;
-  }
-  return participant.answers[`${step}_${idx}`] !== undefined;
-});
-
-const isWithinRange = (answers: Record<string, StoredAnswer>, rangeTime: DateRangePickerValue) => {
-  const timeStamps = Object.values(answers).map((ans) => [ans.startTime, ans.endTime]).flat();
-  if (rangeTime[0] === null || rangeTime[1] === null) {
-    return false;
-  }
-  return Math.min(...timeStamps) >= rangeTime[0].getTime() && Math.max(...timeStamps) <= rangeTime[1].getTime();
-};
+import { isStudyCompleted, isWithinRange } from '../utils';
 
 export function SummaryPanel(props: { studyId: string; allParticipants: ParticipantData[]; config: StudyConfig }) {
   const {
