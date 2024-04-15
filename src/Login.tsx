@@ -1,20 +1,19 @@
 import {
   Badge, Button, Card, Text, Container, Flex, Image, LoadingOverlay,
 } from '@mantine/core';
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
 import { getAuth, signInWithPopup, GoogleAuthProvider } from '@firebase/auth';
 import { IconBrandGoogle } from '@tabler/icons-react';
-import { useNavigate } from 'react-router-dom';
+import { Navigate } from 'react-router-dom';
 import { PREFIX } from './utils/Prefix';
 import { useAuth } from './store/hooks/useAuth';
 import { useStorageEngine } from './store/storageEngineHooks';
 import { FirebaseStorageEngine } from './storage/engines/FirebaseStorageEngine';
 
 export function Login() {
-  const { user } = useAuth();
+  const { user, adminVerification } = useAuth();
   const [errorMessage, setErrorMessage] = useState<string|null>(null);
   const [loading, setLoading] = useState<boolean>(false);
-  const navigate = useNavigate();
   const { storageEngine } = useStorageEngine();
 
   // Sign in with Google. Any errors are sent to the error message badge.
@@ -25,12 +24,7 @@ export function Login() {
       const auth = getAuth();
       signInWithPopup(auth, provider)
         .then(() => {
-          if (!user.determiningStatus) {
-            setLoading(false);
-            if (user.isAdmin) {
-              navigate('/');
-            }
-          }
+          setLoading(false);
         }).catch((error) => {
           setErrorMessage(error.message);
           setLoading(false);
@@ -38,16 +32,17 @@ export function Login() {
     }
   };
 
-  // Listens to the adminVerification result from the Auth Context.
   useEffect(() => {
-    if (!user.isAdmin) {
-      setErrorMessage('You are not authorized as an admin on this applicaiton.');
-    } else {
-      setErrorMessage(null);
+    if (!user.determiningStatus && !user.isAdmin && adminVerification) {
+      setErrorMessage('You are not authorized to use this application.');
     }
-  }, [user]);
+  }, [adminVerification]);
 
   // Need to add UseMemo to redirect correctly. For some reason, the determiningStatus is being set to false before it sets the user
+
+  if (!user.determiningStatus && user.isAdmin) {
+    return <Navigate to="/" />;
+  }
 
   return (
     <Container>
@@ -60,7 +55,6 @@ export function Login() {
           </>
           {errorMessage ? <Badge size="lg" color="red" mt={30}>{errorMessage}</Badge> : null}
           <LoadingOverlay visible={loading} zIndex={1000} overlayBlur={2} />
-          <LoadingOverlay overlayOpacity={1} visible={user.determiningStatus || !storageEngine?.getEngine()} />
         </Flex>
       </Card>
     </Container>

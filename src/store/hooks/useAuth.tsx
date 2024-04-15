@@ -2,7 +2,10 @@ import {
   createContext, useContext, useMemo, ReactNode,
   useEffect, useState,
 } from 'react';
-import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
+import {
+  getAuth, onAuthStateChanged, User, signOut,
+} from 'firebase/auth';
+import { LoadingOverlay } from '@mantine/core';
 import { useStorageEngine } from '../storageEngineHooks';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { GlobalConfig } from '../../parser/types';
@@ -22,6 +25,7 @@ interface UserWrapped{
 // Defines default AuthContextValue
 interface AuthContextValue {
   user: UserWrapped;
+  adminVerification:boolean;
   login: (user: UserWrapped) => void;
   logout: () => void;
   }
@@ -33,6 +37,7 @@ const AuthContext = createContext<AuthContextValue>({
     determiningStatus: false,
     isAdmin: false,
   },
+  adminVerification: false,
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   login: () => {},
   // eslint-disable-next-line @typescript-eslint/no-empty-function
@@ -52,10 +57,12 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
     },
   );
 
+  const [adminVerification, setAdminVerification] = useState<boolean>(false);
+
   const { storageEngine } = useStorageEngine();
 
   // Logs in the user (i.e. sets the user info and navigates to the root)
-  const login = async (inputUser: UserWrapped) => {
+  const login = (inputUser: UserWrapped) => {
     setUser(inputUser);
   };
 
@@ -63,8 +70,19 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
   const logout = () => {
     setUser({
       user: null,
-      determiningStatus: false,
-      isAdmin: false,
+      determiningStatus: true,
+      isAdmin: true,
+    });
+    setAdminVerification(false);
+    const auth = getAuth();
+    signOut(auth).then(() => {
+      setUser({
+        user: null,
+        determiningStatus: false,
+        isAdmin: false,
+      });
+    }).catch((error) => {
+      console.error(`There was an issue signing-out the user: ${error.message}`);
     });
   };
 
@@ -76,7 +94,7 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
     });
     if (storageEngine instanceof FirebaseStorageEngine) {
       const auth = getAuth();
-      const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         setUser({
           user: null,
           isAdmin: false,
@@ -84,19 +102,14 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
         });
         if (firebaseUser) {
           // Reach out to firebase to validate user
-          storageEngine.validateUserAdminStatus(firebaseUser, globalConfig.adminUsers)
-            .then((isUserAdmin) => {
-              if (!isUserAdmin) {
-                logout();
-              } else {
-                const newFirebaseUser: UserWrapped = {
-                  user: firebaseUser,
-                  determiningStatus: false,
-                  isAdmin: true,
-                };
-                login(newFirebaseUser);
-              }
-            });
+          const isUserAdmin = await storageEngine.validateUserAdminStatus(firebaseUser, globalConfig.adminUsers);
+          setAdminVerification(true);
+          const newFirebaseUser: UserWrapped = {
+            user: firebaseUser,
+            determiningStatus: false,
+            isAdmin: isUserAdmin,
+          };
+          login(newFirebaseUser);
         } else {
           logout();
         }
@@ -123,9 +136,14 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
 
   const value = useMemo(() => ({
     user,
+    adminVerification,
     login,
     logout,
   }), [user]);
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {user.determiningStatus ? <LoadingOverlay visible={user.determiningStatus} opacity={1} /> : children }
+    </AuthContext.Provider>
+  );
 }
