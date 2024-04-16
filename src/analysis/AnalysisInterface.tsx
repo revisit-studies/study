@@ -13,7 +13,6 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   return (
     <AppShell>
       <AppHeader studyIds={props.globalConfig.configsList} />
-      <AppNav />
       {page === 'dashboard' && (
         <Container fluid>
           <SummaryBlock globalConfig={props.globalConfig} />
