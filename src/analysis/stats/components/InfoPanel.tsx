@@ -94,6 +94,15 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
         },
       },
       {
+        mark: { type: 'tick', color: 'teal' },
+        encoding: {
+          x: {
+            field: 'v', type: 'quantitative', axis: { title: 'Duration(s)' }, scale: { domain: [timeStats.min / 1050, timeStats.max / 970] },
+          },
+        },
+      },
+
+      {
         mark: { type: 'point', filled: true, color: 'red' },
         encoding: {
           x: { v: timeStats.mean / 1000 }, // Position the red dot at the mean value
