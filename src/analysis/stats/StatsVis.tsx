@@ -8,8 +8,8 @@ import { StoredAnswer } from '../../store/types';
 import InfoPanel from './components/InfoPanel';
 import AnswerPanel from './components/AnswerPanel';
 import { ParticipantData } from '../../storage/types';
-import { StudyConfig } from '../../parser/types';
-import { flattenSequence } from '../utils';
+import { StudyConfig, IndividualComponent, InheritedComponent } from '../../parser/types';
+import { extractTrialName, flattenSequence } from '../utils';
 
 export default function StatsVis(props: { data: ParticipantData[], config: StudyConfig;}) {
   const { config, data } = props;
@@ -18,6 +18,7 @@ export default function StatsVis(props: { data: ParticipantData[], config: Study
   const [sequence, setSequence] = useState<string[]>(flattenSequence(data[0].sequence));
   const [activeTrial, setActiveTrial] = useState<string>('');
   const [activeAnswers, setActiveAnswers] = useState<Record<string, StoredAnswer>>({});
+  const [activeConfig, setActiveConfig] = useState< IndividualComponent | InheritedComponent>();
 
   useEffect(() => {
     if (activeTrial.length > 0) {
@@ -26,12 +27,11 @@ export default function StatsVis(props: { data: ParticipantData[], config: Study
         activeA[d.participantId] = d.answers[activeTrial];
       });
       setActiveAnswers(activeA);
+      const trialConfig = config.components[extractTrialName(activeTrial)];
+      setActiveConfig(trialConfig);
     }
-  }, [activeTrial, data]);
-
-  useEffect(() => {
     if (data.length > 0) setSequence(flattenSequence(data[0].sequence));
-  }, [data]);
+  }, [activeTrial, data]);
 
   const extractAnswers = () => {
     const answers: Record<string, Record<string, unknown>> = {};
@@ -64,8 +64,8 @@ export default function StatsVis(props: { data: ParticipantData[], config: Study
         </Box>
 
         <Stack align="flex-start" p={5}>
-          <InfoPanel trialName={activeTrial} data={activeAnswers} />
-          <AnswerPanel trialName={activeTrial} data={extractAnswers()} />
+          <InfoPanel config={activeConfig} trialName={activeTrial} data={activeAnswers} />
+          <AnswerPanel config={activeConfig} trialName={activeTrial} data={extractAnswers()} />
 
         </Stack>
 

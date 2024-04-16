@@ -6,6 +6,7 @@ import { VegaLite } from 'react-vega';
 import { useResizeObserver } from '@mantine/hooks';
 import { toDisplayData } from '../../utils';
 import { StoredAnswer } from '../../../store/types';
+import { IndividualComponent, InheritedComponent } from '../../../parser/types';
 
 export interface BasicStats {
   min: number;
@@ -15,8 +16,8 @@ export interface BasicStats {
   maxUser: string;
   minUser: string;
 }
-export default function InfoPanel(props: { data: Record<string, StoredAnswer>, trialName: string}) {
-  const { data, trialName } = props;
+export default function InfoPanel(props: { data: Record<string, StoredAnswer>, trialName: string, config: IndividualComponent | InheritedComponent | undefined }) {
+  const { data, trialName, config } = props;
   const [timeStats, setTimeStats] = useState<BasicStats>({
     max: 0,
     min: 0,
@@ -27,7 +28,6 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
   });
   const [ref, dms] = useResizeObserver();
 
-  const durationSpecData:{duration:number, pid:string}[] = [{ duration: 100, pid: 'test' }, { duration: 200, pid: 'test2' }];
   useEffect(() => {
     // console.log(data, 'info panel data update');
     function calculateStats() {
@@ -39,7 +39,6 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
       const durationAry:number[] = [];
       Object.entries(data).forEach(([pid, answers]) => {
         const duration = answers.endTime - answers.startTime;
-        durationSpecData.push({ duration, pid });
         sum += duration;
         durationAry.push(duration);
         if (duration > max) {
@@ -112,35 +111,51 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
   }), [dms, timeStats]);
 
   return (
-    <Container fluid p={10} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
+    <Container fluid p={10}>
       {timeStats && (
-      <Group>
-        {trialName.length > 0 && (
-        <Box>
-          <Box>
-            <Badge radius="xs" sx={{ display: 'inline' }}>Fastest:</Badge>
-            <Text span>{` ${timeStats.minUser}`}</Text>
-          </Box>
-          <Box>
-            <Badge radius="xs" sx={{ display: 'inline' }}>Slowest:</Badge>
-            <Text span>{` ${timeStats.maxUser}`}</Text>
-          </Box>
-          <Box>
-            <Badge radius="xs" sx={{ display: 'inline' }}>Mean:</Badge>
-            <Text span>{ ` ${toDisplayData(timeStats.mean)}`}</Text>
-          </Box>
-          <Box>
-            <Badge radius="xs" sx={{ display: 'inline' }}>Median:</Badge>
-            <Text span>{` ${toDisplayData(timeStats.mid)}`}</Text>
+        <Group>
+          {
+                  config && config.meta && (
+                  <Box p={5} mih={105} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
+                    {Object.entries(config.meta).map(([key, value]) => (
+                      <Box key={`box-${key}`}>
+                        <Badge color="green" radius="xs" sx={{ display: 'inline' }}>
+                          {key}
+                          :
+                        </Badge>
+                        <Text span>{` ${value}`}</Text>
+                      </Box>
+                    ))}
+                  </Box>
+                  )
+              }
+          {trialName.length > 0 && (
+          <Group sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
+            <Box mih={105} p={5}>
+              <Box>
+                <Badge radius="xs" sx={{ display: 'inline' }}>Fastest:</Badge>
+                <Text span>{` ${timeStats.minUser}`}</Text>
+              </Box>
+              <Box>
+                <Badge radius="xs" sx={{ display: 'inline' }}>Slowest:</Badge>
+                <Text span>{` ${timeStats.maxUser}`}</Text>
+              </Box>
+              <Box>
+                <Badge radius="xs" sx={{ display: 'inline' }}>Mean:</Badge>
+                <Text span>{ ` ${toDisplayData(timeStats.mean)}`}</Text>
+              </Box>
+              <Box>
+                <Badge radius="xs" sx={{ display: 'inline' }}>Median:</Badge>
+                <Text span>{` ${toDisplayData(timeStats.mid)}`}</Text>
 
-          </Box>
-        </Box>
-        )}
-        {trialName.length > 0 && <VegaLite spec={spec} actions={false} />}
+              </Box>
+            </Box>
+            <VegaLite spec={spec} actions={false} />
+          </Group>
+          )}
 
-      </Group>
+        </Group>
       )}
-
     </Container>
 
   );

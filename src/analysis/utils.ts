@@ -36,3 +36,8 @@ export function toDisplayData(milliseconds:number) {
   const seconds = ((milliseconds % (1000 * 60)) / 1000).toFixed(2);
   return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
 }
+
+export function extractTrialName(trial: string) {
+  const [name] = trial.split('_');
+  return name;
+}
