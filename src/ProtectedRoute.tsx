@@ -1,12 +1,8 @@
 import { LoadingOverlay } from '@mantine/core';
 import { ReactNode, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import {
-  User,
-} from 'firebase/auth';
 import { useAuth } from './store/hooks/useAuth';
 import { useStorageEngine } from './store/storageEngineHooks';
-import { FirebaseStorageEngine } from './storage/engines/FirebaseStorageEngine';
 
 interface ProtectedRouteProps {
   children: ReactNode;

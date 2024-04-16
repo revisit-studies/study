@@ -9,7 +9,6 @@ import { LoadingOverlay } from '@mantine/core';
 import { useStorageEngine } from '../storageEngineHooks';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { GlobalConfig } from '../../parser/types';
-import { LocalStorageEngine } from '../../storage/engines/LocalStorageEngine';
 
 interface LocalStorageUser{
   name: string,
@@ -108,65 +107,99 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
     if (inputUser === null) {
       return Promise.resolve(true);
     } if (isFirebaseUser(inputUser)) {
+      // Assert that the inputted user is the User type
       const firebaseUser = inputUser as User;
       if (storageEngine instanceof FirebaseStorageEngine) {
-        return await storageEngine.validateUserAdminStatus(firebaseUser, globalConfig.adminUsers);
+        const isAuthEnabled = await storageEngine?.getUserManagementData('authentication').then((data) => data?.isEnabled);
+        if (isAuthEnabled !== false) {
+          // Validate the user if Auth enabled
+          return await storageEngine.validateUserAdminStatus(firebaseUser, globalConfig.adminUsers);
+        }
+        // If authDisabled, allow access
+        return Promise.resolve(true);
       }
+      // If the user is Firebase but the storageEngine is not, something has gone wrong. Deny access
       return Promise.resolve(false);
     } if (isLocalStorageUser(inputUser)) {
-      // Handle LocalStorageUser
-      return Promise.resolve(true);
+      if (storageEngine) {
+        // If storageEngine defined, allow access
+        return Promise.resolve(true);
+      }
+      // If localStorageUser but no storageEngine defined, deny access.
+      return Promise.resolve(false);
     }
-    // Handle other cases
+    // Some other forms of the user input should be denied access.
     return Promise.resolve(false);
   };
 
   useEffect(() => {
+    // Set initialUser
     setUser({
       user: null,
       isAdmin: false,
       determiningStatus: true,
     });
-    if (storageEngine instanceof FirebaseStorageEngine) {
-      const auth = getAuth();
-      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        setUser({
-          user: null,
-          isAdmin: false,
-          determiningStatus: true,
-        });
-        if (firebaseUser) {
-          // Reach out to firebase to validate user
-          const isUserAdmin = await verifyAdminStatus(firebaseUser);
-          setAdminVerification(true);
-          const newFirebaseUser: UserWrapped = {
-            user: firebaseUser,
-            determiningStatus: false,
-            isAdmin: isUserAdmin,
-          };
-          login(newFirebaseUser);
-        } else {
-          logout();
-        }
+
+    // Get authentication
+    const auth = getAuth();
+
+    // Handle auth state changes for Firebase
+    const handleAuthStateChanged = async (firebaseUser: User | null) => {
+      // Reset the user
+      setUser({
+        user: null,
+        isAdmin: false,
+        determiningStatus: true,
       });
-      // Clean up subscription
-      return () => unsubscribe();
-    } if (storageEngine instanceof LocalStorageEngine) {
-      const localStorageUser: LocalStorageUser = {
-        name: 'fakeName',
-        email: 'fakeEmail@fake.com',
-      };
-      const localStorageUserWrapped: UserWrapped = {
-        user: localStorageUser,
-        determiningStatus: false,
-        isAdmin: true,
-      };
-      login(localStorageUserWrapped);
-      // Clean-up
+      if (firebaseUser) {
+        // Reach out to firebase to validate user
+        const isAdmin = await verifyAdminStatus(firebaseUser);
+        setAdminVerification(true);
+        login({
+          user: firebaseUser,
+          determiningStatus: false,
+          isAdmin,
+        });
+      } else {
+        logout();
+      }
+    };
+
+    // Determine authentication listener based on storageEngine and authEnabled variable
+    const determineAuthentication = async () => {
+      if (storageEngine instanceof FirebaseStorageEngine) {
+        const isAuthEnabled = await storageEngine?.getUserManagementData('authentication').then((data) => data?.isEnabled);
+        if (isAuthEnabled) {
+          // Define unsubscribe function for listening to authentication state changes when using Firebase with authentication
+          const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => await handleAuthStateChanged(firebaseUser));
+          return () => unsubscribe();
+        }
+        login({
+          user: {
+            name: 'fakeName',
+            email: 'fakeEmail@fake.com',
+          },
+          determiningStatus: false,
+          isAdmin: true,
+        });
+      } else if (storageEngine) {
+        login({
+          user: {
+            name: 'fakeName',
+            email: 'fakeEmail@fake.com',
+          },
+          determiningStatus: false,
+          isAdmin: true,
+        });
+      }
       return () => {};
-    }
-    // Clean-up
-    return () => {};
+    };
+
+    const cleanupPromise = determineAuthentication();
+
+    return () => {
+      cleanupPromise.then((cleanup) => cleanup());
+    };
   }, [storageEngine]);
 
   const value = useMemo(() => ({
