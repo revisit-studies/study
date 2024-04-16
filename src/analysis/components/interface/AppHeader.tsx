@@ -6,14 +6,16 @@ import {
 } from '@mantine/core';
 
 import { IconHome, IconDeviceDesktopAnalytics } from '@tabler/icons-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import React, { useState } from 'react';
 import { PREFIX } from '../../../utils/Prefix';
 
 export default function AppHeader(props:{ studyIds: string[]}) {
   const { studyIds } = props;
-  const [activeExp, setActiveExp] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const exp = searchParams.get('exp');
+  const [activeExp, setActiveExp] = useState<string | null>(exp || null);
   const page = window.location.pathname.split('/')[2];
   const selectorData = studyIds.map((id) => ({ value: id, label: id }));
 

@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Badge, Box, Container, Group, Text,
+  Badge, Box, Container, Flex, Group, Stack, Text, Title,
 } from '@mantine/core';
 import { VegaLite } from 'react-vega';
 import { useResizeObserver } from '@mantine/hooks';
@@ -112,50 +112,114 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
 
   return (
     <Container fluid p={10}>
-      {timeStats && (
-        <Group>
-          {
-                  config && config.meta && (
-                  <Box p={5} mih={105} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
-                    {Object.entries(config.meta).map(([key, value]) => (
-                      <Box key={`box-${key}`}>
-                        <Badge color="green" radius="xs" sx={{ display: 'inline' }}>
-                          {key}
-                          :
-                        </Badge>
-                        <Text span>{` ${value}`}</Text>
-                      </Box>
-                    ))}
-                  </Box>
-                  )
-              }
-          {trialName.length > 0 && (
-          <Group sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
-            <Box mih={105} p={5}>
-              <Box>
-                <Badge radius="xs" sx={{ display: 'inline' }}>Fastest:</Badge>
-                <Text span>{` ${timeStats.minUser}`}</Text>
-              </Box>
-              <Box>
-                <Badge radius="xs" sx={{ display: 'inline' }}>Slowest:</Badge>
-                <Text span>{` ${timeStats.maxUser}`}</Text>
-              </Box>
-              <Box>
-                <Badge radius="xs" sx={{ display: 'inline' }}>Mean:</Badge>
-                <Text span>{ ` ${toDisplayData(timeStats.mean)}`}</Text>
-              </Box>
-              <Box>
-                <Badge radius="xs" sx={{ display: 'inline' }}>Median:</Badge>
-                <Text span>{` ${toDisplayData(timeStats.mid)}`}</Text>
+      <Flex
+        gap="lg"
+        justify="center"
+        align="flex-start"
+        direction="row"
+        wrap="wrap"
+        ref={ref}
+      >
 
-              </Box>
+        {/* instruction and description */}
+        {(config?.description || config?.instruction) && (
+          <Stack mih={105} p={5} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
+            <Box
+              pl={5}
+              sx={{
+                width: '50%', height: 20, backgroundColor: 'orange', borderRadius: '0px 10px 10px 0px',
+              }}
+            >
+              <Title order={6}>Question Details</Title>
             </Box>
-            <VegaLite spec={spec} actions={false} />
-          </Group>
-          )}
 
-        </Group>
-      )}
+            {
+                config?.instruction
+                && (
+                <Box maw={400}>
+                  <Badge color="green" radius="xs" sx={{ display: 'inline' }}>instruction:</Badge>
+                  <Text span>{` ${config?.instruction}`}</Text>
+                </Box>
+                )
+            }
+            {
+                config?.description
+                && (
+                <Box maw={400}>
+                  <Badge color="green" radius="xs" sx={{ display: 'inline' }}>description:</Badge>
+                  <Text span>{` ${config?.description}`}</Text>
+                </Box>
+                )
+            }
+          </Stack>
+        )}
+
+        {/* meta */}
+        {
+              config && config.meta && (
+              <Box maw={300} p={5} mih={105} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
+                <Box
+                  pl={5}
+                  sx={{
+                    width: '50%', height: 20, backgroundColor: 'orange', borderRadius: '0px 10px 10px 0px',
+                  }}
+                >
+                  <Title order={6}>Meta Data</Title>
+                </Box>
+
+                {Object.entries(config.meta).map(([key, value]) => (
+                  <Box key={`BoxMeta-${key}`}>
+                    <Badge color="green" radius="xs" sx={{ display: 'inline' }}>
+                      {key}
+                      :
+                    </Badge>
+                    <Text span>{` ${value}`}</Text>
+                  </Box>
+                ))}
+              </Box>
+              )
+          }
+
+        {trialName.length > 0 && (
+          <Box p={5} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
+            <Box
+              pl={5}
+              sx={{
+                width: '50%', height: 20, backgroundColor: 'orange', borderRadius: '0px 10px 10px 0px',
+              }}
+            >
+              <Title order={6}>Time Stats</Title>
+            </Box>
+
+            <Group>
+
+              <Box mih={105} p={5}>
+                <Box>
+                  <Badge radius="xs" sx={{ display: 'inline' }}>Fastest:</Badge>
+                  <Text span>{` ${timeStats.minUser}`}</Text>
+                </Box>
+                <Box>
+                  <Badge radius="xs" sx={{ display: 'inline' }}>Slowest:</Badge>
+                  <Text span>{` ${timeStats.maxUser}`}</Text>
+                </Box>
+                <Box>
+                  <Badge radius="xs" sx={{ display: 'inline' }}>Mean:</Badge>
+                  <Text span>{ ` ${toDisplayData(timeStats.mean)}`}</Text>
+                </Box>
+                <Box>
+                  <Badge radius="xs" sx={{ display: 'inline' }}>Median:</Badge>
+                  <Text span>{` ${toDisplayData(timeStats.mid)}`}</Text>
+
+                </Box>
+              </Box>
+              <VegaLite spec={spec} actions={false} />
+            </Group>
+          </Box>
+
+        )}
+
+      </Flex>
+
     </Container>
 
   );

@@ -1,32 +1,29 @@
 import {
   Badge,
   Box,
-  Button,
   Container,
-  Divider,
-  Grid, Group, LoadingOverlay, MultiSelect,
+  Group, LoadingOverlay, MultiSelect,
   Paper,
-  ScrollArea, SelectItem,
+  SelectItem,
   Stack, Tabs,
   Text,
   Title,
 } from '@mantine/core';
 import React, { useEffect, useState } from 'react';
 import {
-  IconArrowDown, IconSquareCheck, IconProgressBolt, IconArrowUp,
+  IconSquareCheck, IconProgressBolt, IconArrowUp,
 } from '@tabler/icons-react';
 import { useSearchParams } from 'react-router-dom';
-import { VegaLite } from 'react-vega';
 import { ParticipantData } from '../../storage/types';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { GlobalConfig, StudyConfig } from '../../parser/types';
 import { getStudyConfig } from '../../utils/fetchConfig';
-import { flattenSequence, isStudyCompleted } from '../utils';
+import { isStudyCompleted } from '../utils';
 import StatsVis from './StatsVis';
 
 export function StatsBoard(props: {globalConfig : GlobalConfig}) {
   const { globalConfig } = props;
-  const studyIds = globalConfig.configsList;
+  // const studyIds = globalConfig.configsList;
   const [config, setConfig] = useState<StudyConfig>();
   const [activeExp, setActiveExp] = useState<string | null>(null);
   const [expData, setExpData] = useState<ParticipantData[]>([]);
@@ -36,8 +33,6 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
   const [dropdownData, setDropdownData] = useState<SelectItem[]>([]);
   const [activeParticipants, setActiveParticipants] = useState<string[]>([]);
   const [searchParams] = useSearchParams();
-
-  const selectorData = studyIds.map((id) => ({ value: id, label: id }));
 
   useEffect(() => {
     if (activeParticipants.includes('All')) {
@@ -192,7 +187,22 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
       )}
       <LoadingOverlay visible={loading} zIndex={1000} overlayBlur={2} />
 
-      {activeParticipants.length > 1 && config && <StatsVis config={config} data={completed.filter((d) => activeParticipants.includes(d.participantId))} />}
+      {config && (activeParticipants.length > 1 || activeParticipants.includes('All')) && (
+      <StatsVis
+        config={config}
+        data={
+        activeParticipants.includes('All')
+          ? completed
+          : completed.filter((d) => activeParticipants.includes(d.participantId))
+}
+      />
+      )}
+      {activeParticipants.length === 0 && (
+      <Title ml={200} order={4}>
+        <IconArrowUp size={30} />
+        Select 1 participant to check individual detials, select 2+ participants to check aggregated results
+      </Title>
+      )}
 
     </Container>
 

@@ -1,5 +1,5 @@
 import {
-  Box, Container, Group, Stack, Title,
+  Box, Container, Stack, Title,
 } from '@mantine/core';
 import React, { useEffect, useState } from 'react';
 import { VegaLite } from 'react-vega';
@@ -87,14 +87,22 @@ export default function AnswerPanel(props: { data: Record<string, Record<string,
   };
 
   return (
-    <Container p={10} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
+    <Container p={5} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
+      <Box
+        pl={5}
+        sx={{
+          width: '50%', height: 20, backgroundColor: 'orange', borderRadius: '0px 10px 10px 0px',
+        }}
+      >
+        <Title order={6}>Answer Stats</Title>
+      </Box>
+
       <Stack>
         <Box>
           {/* <CorrectVis correct={correctUser} incorrect={incorrectUser} trialName={trialName} /> */}
           {correctUser.length === 0 && incorrectUser.length === 0
             ? <Title order={4}> No correct answer for this question</Title>
             : <VegaLite spec={specBoxer} actions={false} />}
-
           {correctValue !== '' && <VegaLite spec={specBarChart} actions={false} />}
 
         </Box>

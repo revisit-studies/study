@@ -1,8 +1,8 @@
 import {
-  Box, Button, Center, Group, Paper, ScrollArea, Select, Stack, Title,
+  Box, Button, Center, Flex, Group, Paper, ScrollArea, Select, Stack, Title,
 } from '@mantine/core';
 import { useEffect, useState } from 'react';
-import { IconArrowDown } from '@tabler/icons-react';
+import { IconArrowDown, IconArrowLeft } from '@tabler/icons-react';
 import { StoredAnswer } from '../../store/types';
 // import { PREFIX } from '../../components/GlobalConfigParser';
 import InfoPanel from './components/InfoPanel';
@@ -72,7 +72,7 @@ export default function StatsVis(props: { data: ParticipantData[], config: Study
 
   return (
     <Paper p={10} m={10} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
-      <Group>
+      <Flex>
         <Box pr={5} sx={{ boxShadow: '3px 0 0 0 orange' }}>
           <Center><Title order={4}>Trials</Title></Center>
           <ScrollArea.Autosize maxHeight={600} mih={500} maw={200} mx="auto">
@@ -80,7 +80,7 @@ export default function StatsVis(props: { data: ParticipantData[], config: Study
             {activeParticipant === 'All'
                   && (
                   <Group mt={20}>
-                    {sequence.map((trial, idx) => <Button key={`btn-trial-${trial}`} variant={activeTrial === `${trial}` ? 'filled' : 'outline'} onClick={() => onTrialClick(trial)}>{`${trial}`}</Button>) }
+                    {sequence.map((trial, idx) => <Button key={`btn-trial-${idx}`} variant={activeTrial === `${trial}` ? 'filled' : 'outline'} onClick={() => onTrialClick(trial)}>{`${trial}`}</Button>) }
                   </Group>
                   )}
 
@@ -99,15 +99,24 @@ export default function StatsVis(props: { data: ParticipantData[], config: Study
           </ScrollArea.Autosize>
         </Box>
 
-        { activeTrial
-          && (
-          <Stack align="flex-start" p={5}>
-            <InfoPanel config={activeConfig} trialName={activeTrial} data={activeAnswers} />
-            <AnswerPanel config={activeConfig} trialName={activeTrial} data={extractAnswers()} />
-          </Stack>
+        { activeTrial.length > 0
+          ? (
+            <Stack align="flex-start" p={5}>
+              <InfoPanel config={activeConfig} trialName={activeTrial} data={activeAnswers} />
+              <AnswerPanel config={activeConfig} trialName={activeTrial} data={extractAnswers()} />
+            </Stack>
+          )
+          : (
+            <Center>
+              <Title order={2} ml={10}>
+                <IconArrowLeft size={30} />
+                {' '}
+                Please Select a trial to view the stats
+              </Title>
+            </Center>
           )}
 
-      </Group>
+      </Flex>
 
     </Paper>
   );
