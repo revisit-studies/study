@@ -3,7 +3,7 @@ import {
   useEffect, useState,
 } from 'react';
 import {
-  getAuth, onAuthStateChanged, User, signOut,
+  getAuth, onAuthStateChanged, User, signOut, Auth,
 } from 'firebase/auth';
 import { LoadingOverlay } from '@mantine/core';
 import { useStorageEngine } from '../storageEngineHooks';
@@ -141,7 +141,12 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
     });
 
     // Get authentication
-    const auth = getAuth();
+    let auth: Auth;
+    try {
+      auth = getAuth();
+    } catch (error) {
+      console.warn('No firebase store.');
+    }
 
     // Handle auth state changes for Firebase
     const handleAuthStateChanged = async (firebaseUser: User | null) => {
