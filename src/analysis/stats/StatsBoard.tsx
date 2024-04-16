@@ -16,6 +16,7 @@ import {
   IconArrowDown, IconSquareCheck, IconProgressBolt, IconArrowUp,
 } from '@tabler/icons-react';
 import { useSearchParams } from 'react-router-dom';
+import { VegaLite } from 'react-vega';
 import { ParticipantData } from '../../storage/types';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { GlobalConfig, StudyConfig } from '../../parser/types';
