@@ -1,5 +1,4 @@
 import { AppShell, Container } from '@mantine/core';
-
 import { useParams } from 'react-router-dom';
 import AppHeader from './components/interface/AppHeader';
 import { GlobalConfig } from '../parser/types';

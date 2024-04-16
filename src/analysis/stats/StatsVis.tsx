@@ -71,7 +71,7 @@ export default function StatsVis(props: { data: ParticipantData[], config: Study
   };
 
   return (
-    <Paper p={10} m={10} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
+    <Paper p={10} m={10} maw={1200} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
       <Flex>
         <Box pr={5} sx={{ boxShadow: '3px 0 0 0 orange' }}>
           <Center><Title order={4}>Trials</Title></Center>

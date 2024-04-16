@@ -16,9 +16,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
     studyId, allParticipants, config,
   } = props;
   const [openDownload, { open, close }] = useDisclosure(false);
-
   const [ref, dms] = useResizeObserver();
-
   const completionTimes = allParticipants
     .filter((d) => isStudyCompleted(d))
     .map((d) => Math.max(...Object.values(d.answers).map((ans) => ans.endTime)));

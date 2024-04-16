@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import {
-  Badge, Box, Container, Flex, Group, Stack, Text, Title,
+  Badge, Box, Card, Container, Flex, Group, Text, Title,
 } from '@mantine/core';
-import { VegaLite } from 'react-vega';
+import { VegaLite, VisualizationSpec } from 'react-vega';
 import { useResizeObserver } from '@mantine/hooks';
 import { toDisplayData } from '../../utils';
 import { StoredAnswer } from '../../../store/types';
@@ -65,9 +65,9 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
     if (data) calculateStats();
   }, [data]);
 
-  const spec = useMemo(() => ({
-    width: 300, // width - card padding - vega padding    height: 100,
-    height: 100,
+  const spec:VisualizationSpec = useMemo(() => ({
+    width: dms.width - 8, // width - card padding - vega padding
+    height: 200,
     data: {
       values: [
         {
@@ -81,30 +81,39 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
 
       ],
     },
-
     layer: [
       {
-
-        mark: { type: 'line', point: true },
+        mark: { type: 'line', point: false },
         encoding: {
           x: {
-            field: 'v', type: 'quantitative', axis: { title: 'Duration(s)' }, scale: { domain: [timeStats.min / 1050, timeStats.max / 970] },
+            field: 'v',
+            type: 'quantitative',
+            axis: { title: 'Duration(s)' },
+            scale: { domain: [timeStats.min / 1050, timeStats.max / 970] },
           },
         },
       },
       {
-        mark: { type: 'tick', color: 'teal' },
+        mark: { type: 'tick', color: 'teal', point: false },
         encoding: {
           x: {
-            field: 'v', type: 'quantitative', axis: { title: 'Duration(s)' }, scale: { domain: [timeStats.min / 1050, timeStats.max / 970] },
+            field: 'v',
+            type: 'quantitative',
+            axis: { title: 'Duration(s)' },
+            scale: { domain: [timeStats.min / 1050, timeStats.max / 970] },
           },
         },
       },
 
       {
-        mark: { type: 'point', filled: true, color: 'red' },
+        mark: {
+          type: 'point',
+          filled: true,
+          color: 'red',
+          point: false,
+        },
         encoding: {
-          x: { v: timeStats.mean / 1000 }, // Position the red dot at the mean value
+          x: { v: timeStats.mean / 1000, type: 'quantitative' }, // Position the red dot at the mean value
         },
       },
     ],
@@ -118,12 +127,11 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
         align="flex-start"
         direction="row"
         wrap="wrap"
-        ref={ref}
       >
 
         {/* instruction and description */}
         {(config?.description || config?.instruction) && (
-          <Stack mih={105} p={5} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
+          <Card ref={ref} mih={105} p={5} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
             <Box
               pl={5}
               sx={{
@@ -151,7 +159,7 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
                 </Box>
                 )
             }
-          </Stack>
+          </Card>
         )}
 
         {/* meta */}
@@ -217,10 +225,7 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
           </Box>
 
         )}
-
       </Flex>
-
     </Container>
-
   );
 }

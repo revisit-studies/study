@@ -80,12 +80,8 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
     getData();
   }, [activeExp]);
 
-  useEffect(() => {
-    // console.log(expData, 'expData');
-  }, [expData]);
-
   return (
-    <Container fluid>
+    <Container miw={800}>
       {(activeExp && expData) ? (
         <Box
           mt={10}
@@ -102,8 +98,6 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
                   Total Participants:
                   {expData.length}
                 </Text>
-                {/* <Text>Completed: {completed.length}</Text> */}
-                {/* <Text>In Progress: {inprogress.length}</Text> */}
               </Stack>
               <Tabs defaultValue="completed" orientation="vertical">
                 <Tabs.List>
@@ -125,7 +119,7 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
                         color="green"
                         size={12}
                       />
-)}
+                    )}
                   >
                     Completed
                   </Tabs.Tab>
@@ -148,7 +142,7 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
                         color="orange"
                         size={12}
                       />
-)}
+                    )}
                   >
                     In Progress
                   </Tabs.Tab>

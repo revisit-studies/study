@@ -1,16 +1,18 @@
 import {
-  Box, Container, Stack, Title,
+  Box, Card, Container, Title,
 } from '@mantine/core';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { VegaLite } from 'react-vega';
+import { useResizeObserver } from '@mantine/hooks';
 import { IndividualComponent, InheritedComponent, RadioResponse } from '../../../parser/types';
 
 export default function AnswerPanel(props: { data: Record<string, Record<string, unknown>>, trialName: string, config: IndividualComponent | InheritedComponent | undefined}) {
   const { data, config, trialName } = props;
   const [correctUser, setCorrectUser] = useState<string[]>([]);
   const [incorrectUser, setIncorrectUser] = useState<string[]>([]);
-  const [categoricalStats, setCategoricalStats] = useState<{option:string, count:number}[]>([]);
-  const [correctValue, setCorrectValue] = useState<string>('');
+  const [categoricalStats, setCategoricalStats] = useState<{option:string, count:number, correct:boolean}[]>([]);
+  const [ref, dms] = useResizeObserver();
+
   useEffect(() => {
     const responses = config?.response;
     const correct:string[] = [];
@@ -19,7 +21,6 @@ export default function AnswerPanel(props: { data: Record<string, Record<string,
       responses.forEach((response) => {
         const { id, correctAnswer } = response;
         if (correctAnswer) {
-          setCorrectValue(correctAnswer as string);
           for (const [user, answers] of Object.entries(data)) {
             const ans = answers[id];
             if (ans === correctAnswer) {
@@ -40,9 +41,10 @@ export default function AnswerPanel(props: { data: Record<string, Record<string,
               }
             }
 
-            const categoryData:{option:string, count:number}[] = (response as RadioResponse).options.map((op) => ({
+            const categoryData:{option:string, count:number, correct:boolean}[] = (response as RadioResponse).options.map((op) => ({
               option: op.value as string,
               count: map.get(op.value as string) || 0,
+              correct: op.value === correctAnswer,
             }));
             setCategoricalStats(categoryData);
           }
@@ -53,17 +55,20 @@ export default function AnswerPanel(props: { data: Record<string, Record<string,
     }
   }, [data]);
 
-  const specBoxer = {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const specBoxer = useMemo(() => ({
+    height: 50,
+    width: dms.width - 100,
     data: {
       values: [
         { result: 'correct', start: 0, end: correctUser.length / (correctUser.length + incorrectUser.length) },
-        { result: 'incorecct', start: correctUser.length / (correctUser.length + incorrectUser.length), end: 1 },
+        { result: 'incorrect', start: correctUser.length / (correctUser.length + incorrectUser.length), end: 1 },
       ],
     },
     mark: { type: 'bar', cornerRadius: 5 },
     encoding: {
       x: {
-        field: 'start', type: 'quantitative', axis: { title: 'corect VS incorrect' }, scale: { domain: [0, 1] },
+        field: 'start', type: 'quantitative', axis: { title: 'correct VS incorrect' }, scale: { domain: [0, 1] },
       },
       x2: { field: 'end' },
       color: {
@@ -72,19 +77,25 @@ export default function AnswerPanel(props: { data: Record<string, Record<string,
         scale: { range: ['lightgreen', 'pink'] },
       },
     },
-  };
+  }), [correctUser, incorrectUser, dms]);
 
-  const specBarChart = {
-    width: 300,
+  const specBarChart = useMemo(() => ({
+    width: dms.width - 50,
+    height: 200,
     data: {
       values: categoricalStats,
     },
-    mark: { type: 'bar', cornerRadiusEnd: 5 },
+    mark: { type: 'bar', point: false },
     encoding: {
       x: { field: 'option', type: 'ordinal' },
       y: { field: 'count', type: 'quantitative' },
+      color: {
+        field: 'correct',
+        type: 'nominal',
+        scale: { range: ['pink', 'lightgreen'] },
+      },
     },
-  };
+  }), [categoricalStats, dms]);
 
   return (
     <Container p={5} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
@@ -96,18 +107,15 @@ export default function AnswerPanel(props: { data: Record<string, Record<string,
       >
         <Title order={6}>Answer Stats</Title>
       </Box>
+      <Card ref={ref}>
+        {/* <CorrectVis correct={correctUser} incorrect={incorrectUser} trialName={trialName} /> */}
+        {correctUser.length === 0 && incorrectUser.length === 0
+          ? <Title order={4}> No correct answer for this question</Title>
+          : <VegaLite spec={specBoxer} actions={false} />}
+        {categoricalStats.length > 0 && <VegaLite spec={specBarChart} actions={false} />}
 
-      <Stack>
-        <Box>
-          {/* <CorrectVis correct={correctUser} incorrect={incorrectUser} trialName={trialName} /> */}
-          {correctUser.length === 0 && incorrectUser.length === 0
-            ? <Title order={4}> No correct answer for this question</Title>
-            : <VegaLite spec={specBoxer} actions={false} />}
-          {correctValue !== '' && <VegaLite spec={specBarChart} actions={false} />}
-
-        </Box>
         <Box />
-      </Stack>
+      </Card>
 
     </Container>
   );
