@@ -395,7 +395,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     // Grabs all user-management data and returns data based on key
     const userManagementDocs = await getDocs(userManagementCollection)
       .then((querySnapshot) => {
-        const docsObject:Record<string, DocumentData> = {};
+        const docsObject: Record<string, DocumentData> = {};
         querySnapshot.docs.forEach((queryDoc) => {
           docsObject[queryDoc.id] = queryDoc.data();
         });

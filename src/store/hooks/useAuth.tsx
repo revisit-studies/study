@@ -10,26 +10,26 @@ import { useStorageEngine } from '../storageEngineHooks';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { GlobalConfig } from '../../parser/types';
 
-interface LocalStorageUser{
+interface LocalStorageUser {
   name: string,
   email: string
 }
 
-interface UserWrapped{
-  user:User|LocalStorageUser|null,
-  determiningStatus:boolean,
-  isAdmin:boolean
-}
+type UserOptions = User | LocalStorageUser | null;
 
-type verifyAdminStatusInput = User | null | LocalStorageUser;
+interface UserWrapped {
+  user: UserOptions,
+  determiningStatus: boolean,
+  isAdmin: boolean
+}
 
 // Defines default AuthContextValue
 interface AuthContextValue {
   user: UserWrapped;
-  adminVerification:boolean;
-  login: (user: UserWrapped) => void;
-  logout: () => void;
-  verifyAdminStatus: (firebaseUser:verifyAdminStatusInput) => Promise<boolean>;
+  adminVerification: boolean;
+  login: (user: UserWrapped) => Promise<void>;
+  logout: () => Promise<void>;
+  verifyAdminStatus: (firebaseUser: UserOptions) => Promise<boolean>;
   }
 
 // Initializes AuthContext
@@ -110,7 +110,8 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
       // Assert that the inputted user is the User type
       const firebaseUser = inputUser as User;
       if (storageEngine instanceof FirebaseStorageEngine) {
-        const isAuthEnabled = await storageEngine?.getUserManagementData('authentication').then((data) => data?.isEnabled);
+        const authInfo = await storageEngine?.getUserManagementData('authentication');
+        const isAuthEnable = authInfo?.isEnabled;
         if (isAuthEnabled !== false) {
           // Validate the user if Auth enabled
           return await storageEngine.validateUserAdminStatus(firebaseUser, globalConfig.adminUsers);
@@ -173,7 +174,8 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
     // Determine authentication listener based on storageEngine and authEnabled variable
     const determineAuthentication = async () => {
       if (storageEngine instanceof FirebaseStorageEngine) {
-        const isAuthEnabled = await storageEngine?.getUserManagementData('authentication').then((data) => data?.isEnabled);
+        const authInfo = await storageEngine?.getUserManagementData('authentication');
+        const isAuthEnable = authInfo?.isEnabled;
         if (isAuthEnabled) {
           // Define unsubscribe function for listening to authentication state changes when using Firebase with authentication
           const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => await handleAuthStateChanged(firebaseUser));
