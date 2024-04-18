@@ -10,19 +10,20 @@ import {
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 
 import { deepCopy } from '../../utils/deepCopy';
-import { ValidationStatus } from '../types';
+import { StoredAnswer, ValidationStatus } from '../types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useStoredAnswer } from './useStoredAnswer';
 import { useWindowEvents } from './useWindowEvents';
+import { findBlockForStep } from '../../utils/getSequenceFlatMap';
+import { useStudyConfig } from './useStudyConfig';
 
 export function useNextStep() {
   const currentStep = useCurrentStep();
-  const currentComponent = useFlatSequence()[currentStep];
+  const participantSequence = useFlatSequence();
+  const currentComponent = participantSequence[currentStep];
   const identifier = `${currentComponent}_${currentStep}`;
 
-  const { trialValidation } = useStoreSelector(
-    (state) => state,
-  );
+  const { trialValidation, sequence, answers } = useStoreSelector((state) => state);
 
   const status = useStoredAnswer();
 
@@ -39,9 +40,9 @@ export function useNextStep() {
 
   const navigate = useNavigate();
 
-  const nextStep = useMemo(() => currentStep + 1, [currentStep]);
+  const studyConfig = useStudyConfig();
 
-  const computedTo = `/${useStudyId()}/${nextStep}`;
+  const studyId = useStudyId();
 
   const startTime = useMemo(() => Date.now(), []);
 
@@ -88,23 +89,99 @@ export function useNextStep() {
       storeDispatch(setIframeAnswers([]));
     }
 
-    navigate(`${computedTo}${window.location.search}`);
-  }, [
-    setIframeAnswers,
-    storageEngine,
-    storeDispatch,
-    storedAnswer,
-    trialValidation,
-    navigate,
-    startTime,
-    saveTrialAnswer,
-    computedTo,
-    windowEvents,
-    identifier,
-  ]);
+    let nextStep = currentStep + 1;
+
+    // Traverse through the sequence to find the block the current component is in
+    const blockForStep = findBlockForStep(sequence, currentStep);
+
+    // If the current component is in a block that has a skip block
+    const hasSkipBlock = blockForStep !== null && Object.hasOwn(blockForStep.currentBlock, 'skip') && blockForStep.currentBlock.skip !== undefined;
+
+    // Get the answers with the new answer added, since above is dispatching and async
+    const answersWithNewAnswer = {
+      ...answers,
+      [identifier]: {
+        answer, startTime, endTime, provenanceGraph, windowEvents: currentWindowEvents,
+      },
+    };
+
+    // Check if the skip block should be triggered
+    if (hasSkipBlock && answersWithNewAnswer && answersWithNewAnswer[identifier]) {
+      const { currentBlock, firstIndex, lastIndex } = blockForStep;
+      const skipCondition = currentBlock.skip!;
+
+      // Loop over all conditions, use `.some()` to stop early if the condition is met
+      skipCondition.some((condition) => {
+        let conditionIsTriggered = false;
+
+        const validationCandidates = Object.fromEntries(Object.entries(answersWithNewAnswer).filter(([key]) => {
+          const componentIndex = parseInt(key.slice(key.lastIndexOf('_') + 1), 10);
+          return componentIndex >= firstIndex && componentIndex <= Math.min(lastIndex, currentStep);
+        })) as unknown as StoredAnswer;
+
+        // Check if the condition is met
+        if (condition.check === 'response') {
+          // Slim down the validationCandidates to only include the skip condition's component
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const componentToCheck = Object.entries(validationCandidates).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === condition.name).filter(([_], index) => index === 0);
+
+          if (componentToCheck.length === 0) {
+            throw new Error(`Could not find component ${condition.name} in the validationCandidates`);
+          }
+
+          if (componentToCheck[0].length !== 2) {
+            throw new Error(`Component ${condition.name} has issues with its response object. It should have a length of 2, but it has a length of ${componentToCheck[0].length}`);
+          }
+
+          const responseObj = componentToCheck[0][1];
+          const response = { ...responseObj.answer, ...responseObj.answer, ...responseObj.answer };
+
+          if (response[condition.responseId] !== condition.value) {
+            conditionIsTriggered = true;
+          }
+        } else if (condition.check === 'responses') {
+          // Slim down the validationCandidates to only include the skip condition's component
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const componentsToCheck = Object.entries(validationCandidates).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === condition.name);
+
+          conditionIsTriggered = componentsToCheck.some(([componentId, responseObj]) => {
+            if (!responseObj) {
+              throw new Error(`Component ${condition.name} has issues with its response object.`);
+            }
+
+            const response = { ...responseObj.answer, ...responseObj.answer, ...responseObj.answer };
+
+            // Find the matching component in the study config
+            const foundConfigComponent = Object.entries(studyConfig.components).find(([configComponentId, configComponent]) => configComponentId === componentId.slice(0, componentId.lastIndexOf('_')));
+            const foundConfigComponentConfig = foundConfigComponent ? foundConfigComponent[1] : null;
+
+            if (!foundConfigComponentConfig) {
+              throw new Error(`Component ${condition.name} could not be found in the study components.`);
+            }
+
+            if (!foundConfigComponentConfig.correctAnswer) {
+              throw new Error(`Component ${condition.name} does not have a correct answer.`);
+            }
+
+            // Check that the response is matches the correct answer
+            return !foundConfigComponentConfig.correctAnswer.every((correctAnswerEntry) => response[correctAnswerEntry.id] === correctAnswerEntry.answer);
+          });
+        } else if (condition.check === 'block') {
+        //
+        }
+
+        if (conditionIsTriggered) {
+          nextStep = participantSequence.indexOf(condition.to);
+          return true;
+        }
+        return false;
+      });
+    }
+
+    navigate(`/${studyId}/${nextStep}${window.location.search}`);
+  }, [trialValidation, identifier, windowEvents, storedAnswer, currentStep, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setIframeAnswers, studyConfig.components, participantSequence]);
 
   return {
-    nextStep,
     isNextDisabled,
     goToNextStep,
   };

@@ -79,6 +79,7 @@ function _componentBlockToSequence(
   return {
     orderPath: path,
     components: computedComponents.flat() as Sequence['components'],
+    skip: order.skip,
   };
 }
 

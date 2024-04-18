@@ -365,15 +365,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    // Loop over the sequence and check if all answers are present
-    const allAnswersPresent = getSequenceFlatMap(participantData.sequence).every((step, idx) => {
-      if (step === 'end') {
-        return true;
-      }
-      return participantData.answers[`${step}_${idx}`] !== undefined;
-    });
-
-    return allAnswersPresent;
+    return true;
   }
 
   private _verifyStudyDatabase(db: CollectionReference<DocumentData, DocumentData> | undefined): db is CollectionReference<DocumentData, DocumentData> {

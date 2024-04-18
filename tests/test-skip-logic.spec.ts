@@ -8,7 +8,6 @@ test('test', async ({ page }) => {
   // given: q1 = Blue, q2 = Cat
   await page.getByLabel('Blue').check();
   await page.getByLabel('Cat').check();
-  await page.getByRole('button', { name: 'Check Answer' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
   // continuing component
@@ -19,7 +18,6 @@ test('test', async ({ page }) => {
   // given: q1 = Blue, q2 = Cat
   await page.getByLabel('Blue').check();
   await page.getByLabel('Cat').check();
-  await page.getByRole('button', { name: 'Check Answer' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
   // continuing component
@@ -29,14 +27,12 @@ test('test', async ({ page }) => {
   // correct: Yes
   // given: Yes
   await page.getByLabel('Yes').check();
-  await page.getByRole('button', { name: 'Check Answer' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
   // correct: q1 = any, q2 = any
   // given: q1 = Blue, q2 = Cat
   await page.getByLabel('Blue').check();
   await page.getByLabel('Cat').check();
-  await page.getByRole('button', { name: 'Check Answer' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
   // continuing component
@@ -56,7 +52,6 @@ test('test', async ({ page }) => {
   // given: q1 = Blue, q2 = Cat
   await page.getByLabel('Blue').check();
   await page.getByLabel('Cat').check();
-  await page.getByRole('button', { name: 'Check Answer' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
   // continuing component
@@ -67,7 +62,6 @@ test('test', async ({ page }) => {
   // given: q1 = Blue, q2 = Cat
   await page.getByLabel('Blue').check();
   await page.getByLabel('Cat').check();
-  await page.getByRole('button', { name: 'Check Answer' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
   // continuing component
@@ -77,7 +71,6 @@ test('test', async ({ page }) => {
   // correct: Yes
   // given: No
   await page.getByLabel('No').check();
-  await page.getByRole('button', { name: 'Check Answer' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
   // Study end
@@ -93,7 +86,6 @@ test('test', async ({ page }) => {
   // given: q1 = Blue, q2 = Cat
   await page.getByLabel('Blue').check();
   await page.getByLabel('Cat').check();
-  await page.getByRole('button', { name: 'Check Answer' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
   // continuing component
@@ -104,7 +96,6 @@ test('test', async ({ page }) => {
   // given: q1 = Blue, q2 = Dog
   await page.getByLabel('Blue').check();
   await page.getByLabel('Dog').check();
-  await page.getByRole('button', { name: 'Check Answer' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
   // Study end
@@ -120,7 +111,6 @@ test('test', async ({ page }) => {
   // given: q1 = Blue, q2 = Cat
   await page.getByLabel('Blue').check();
   await page.getByLabel('Cat').check();
-  await page.getByRole('button', { name: 'Check Answer' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
   // continuing component
@@ -131,7 +121,6 @@ test('test', async ({ page }) => {
   // given: q1 = Blue, q2 = Dog
   await page.getByLabel('Red').check();
   await page.getByLabel('Dog').check();
-  await page.getByRole('button', { name: 'Check Answer' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
   // Study end
@@ -147,7 +136,6 @@ test('test', async ({ page }) => {
   // given: q1 = Red, q2 = Cat
   await page.getByLabel('Red').check();
   await page.getByLabel('Cat').check();
-  await page.getByRole('button', { name: 'Check Answer' }).click();
   await page.getByRole('button', { name: 'Next' }).click();
 
   // Study end
