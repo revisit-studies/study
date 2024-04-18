@@ -413,7 +413,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         firebaseAdminUsersObject[storedUser.email] = storedUser.uid;
       });
       adminUsersList.forEach((adminUser) => {
-        let newUid:string|null;
+        let newUid: string | null;
         if (adminUser in firebaseAdminUsersObject) {
           const storedUid = firebaseAdminUsersObject[adminUser];
           newUid = storedUid || (currentUser.email === adminUser ? currentUser.uid : null);
@@ -427,7 +427,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       });
     } else {
       // Adds all initial admins on sign in of one of them.
-      let newUid:string|null;
+      let newUid: string | null;
       adminUsersList.forEach((adminUser) => {
         newUid = currentUser.email === adminUser ? currentUser.uid : null;
         newAdminUsersWithUUids.push({

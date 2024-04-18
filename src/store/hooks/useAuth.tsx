@@ -94,12 +94,9 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
     const auth = getAuth();
     try {
       await signOut(auth);
-    } catch (error) {
-      let message = 'Unknown error';
-      if (error instanceof Error) {
-        ({ message } = error);
-      }
-      console.error(`There was an issue signing-out the user: ${message}`);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      console.error(`There was an issue signing-out the user: ${error.message}`);
     }
     setUser(nonLoadingNullUser);
   };
@@ -120,8 +117,8 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
       const firebaseUser = inputUser;
       if (storageEngine instanceof FirebaseStorageEngine) {
         const authInfo = await storageEngine?.getUserManagementData('authentication');
-        const isAuthEnabled = authInfo?.isEnabled;
-        if (isAuthEnabled !== false) {
+        const isAuthEnabled = authInfo !== null ? authInfo.isEnabled : true;
+        if (isAuthEnabled) {
           // Validate the user if Auth enabled
           return await storageEngine.validateUserAdminStatus(firebaseUser, globalConfig.adminUsers);
         }

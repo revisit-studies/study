@@ -26,12 +26,9 @@ export function Login() {
       const auth = getAuth();
       try {
         await signInWithPopup(auth, provider);
-      } catch (error) {
-        let message = 'Unknown Error';
-        if (error instanceof Error) {
-          ({ message } = error);
-        }
-        setErrorMessage(message);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
+        setErrorMessage(error.message);
       }
       setLoading(false);
     }
