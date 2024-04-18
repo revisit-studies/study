@@ -52,7 +52,5 @@
             "path": "demo-image/config.json"
         }
     },
-    "adminUsers":[
-        "briancbollen@gmail.com"
-    ]
+    "adminUsers":[]
 }

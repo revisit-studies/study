@@ -19,8 +19,8 @@ import { StudyConfig } from '../../parser/types';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 export interface StoredUser {
-  email:string,
-  uid:string|null,
+  email: string,
+  uid: string | null,
 }
 
 export class FirebaseStorageEngine extends StorageEngine {
@@ -389,20 +389,16 @@ export class FirebaseStorageEngine extends StorageEngine {
     return allAnswersPresent;
   }
 
+  // Gets data from the user-management collection based on the inputted string
   async getUserManagementData(key:string) {
     // Get the user-management collection in Firestore
     const userManagementCollection = collection(this.firestore, 'user-management');
     // Grabs all user-management data and returns data based on key
-    const userManagementDocs = await getDocs(userManagementCollection)
-      .then((querySnapshot) => {
-        const docsObject: Record<string, DocumentData> = {};
-        querySnapshot.docs.forEach((queryDoc) => {
-          docsObject[queryDoc.id] = queryDoc.data();
-        });
-        return docsObject;
-      });
-    if (key in userManagementDocs) {
-      return userManagementDocs[key];
+    const querySnapshot = await getDocs(userManagementCollection);
+    // Converts querySnapshot data to Object
+    const docsObject = Object.fromEntries(querySnapshot.docs.map((queryDoc) => [queryDoc.id, queryDoc.data()]));
+    if (key in docsObject) {
+      return docsObject[key];
     }
     return null;
   }

@@ -13,10 +13,6 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { user, verifyAdminStatus, logout } = useAuth();
   const { storageEngine } = useStorageEngine();
 
-  if (user.determiningStatus || !storageEngine) {
-    return <LoadingOverlay overlayOpacity={0} visible={user.determiningStatus || !storageEngine?.getEngine()} />;
-  }
-
   useEffect(() => {
     const verifyUser = async () => {
       try {
@@ -35,6 +31,10 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     };
     verifyUser();
   }, [user.isAdmin]);
+
+  if (user.determiningStatus || !storageEngine) {
+    return <LoadingOverlay overlayOpacity={0} visible={user.determiningStatus || !storageEngine?.getEngine()} />;
+  }
 
   if (!user.isAdmin && !user.determiningStatus) {
     return <Navigate to="/login" />;

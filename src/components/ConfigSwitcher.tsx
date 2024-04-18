@@ -25,7 +25,7 @@ function ConfigSwitcher({ globalConfig, studyConfigs }: Props) {
     <Container size="xs" px="xs" style={{ marginTop: 100, marginBottom: 100 }}>
       {storageEngine?.getEngine() === 'firebase' ? (
         <UnstyledButton onClick={() => {
-          logout(); navigate('/login');
+          logout();
         }}
         >
           Logout

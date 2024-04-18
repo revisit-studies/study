@@ -2,7 +2,9 @@ import {
   Badge, Button, Card, Text, Container, Flex, Image, LoadingOverlay,
 } from '@mantine/core';
 import { useState, useEffect } from 'react';
-import { getAuth, signInWithPopup, GoogleAuthProvider } from '@firebase/auth';
+import {
+  getAuth, signInWithPopup, GoogleAuthProvider,
+} from '@firebase/auth';
 import { IconBrandGoogle } from '@tabler/icons-react';
 import { Navigate } from 'react-router-dom';
 import { PREFIX } from './utils/Prefix';
@@ -22,13 +24,16 @@ export function Login() {
       setLoading(true);
       const provider = new GoogleAuthProvider();
       const auth = getAuth();
-      signInWithPopup(auth, provider)
-        .then(() => {
-          setLoading(false);
-        }).catch((error) => {
-          setErrorMessage(error.message);
-          setLoading(false);
-        });
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        let message = 'Unknown Error';
+        if (error instanceof Error) {
+          ({ message } = error);
+        }
+        setErrorMessage(message);
+      }
+      setLoading(false);
     }
   };
 
@@ -37,8 +42,6 @@ export function Login() {
       setErrorMessage('You are not authorized to use this application.');
     }
   }, [adminVerification]);
-
-  // Need to add UseMemo to redirect correctly. For some reason, the determiningStatus is being set to false before it sets the user
 
   if (!user.determiningStatus && user.isAdmin) {
     return <Navigate to="/" />;
