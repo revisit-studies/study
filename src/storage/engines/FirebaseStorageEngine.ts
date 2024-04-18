@@ -465,7 +465,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       // Case 2: Database does not yet exist. First opening
       }
       // Need to get Global config users
-      const isAdmin = (user.email?.includes && globalConfigAdminUsers.includes(user.email)) ?? false;
+      const isAdmin = (globalConfigAdminUsers.length === 0 || (user.email?.includes && globalConfigAdminUsers.includes(user.email))) ?? false;
       if (isAdmin) {
         await this.editUserManagementAdmins(globalConfigAdminUsers, user);
         return true;
