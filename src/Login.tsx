@@ -13,7 +13,7 @@ import { useStorageEngine } from './store/storageEngineHooks';
 import { FirebaseStorageEngine } from './storage/engines/FirebaseStorageEngine';
 
 export function Login() {
-  const { user, adminVerification } = useAuth();
+  const { user } = useAuth();
   const [errorMessage, setErrorMessage] = useState<string|null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const { storageEngine } = useStorageEngine();
@@ -35,10 +35,10 @@ export function Login() {
   };
 
   useEffect(() => {
-    if (!user.determiningStatus && !user.isAdmin && adminVerification) {
+    if (!user.determiningStatus && !user.isAdmin && user.adminVerification) {
       setErrorMessage('You are not authorized to use this application.');
     }
-  }, [adminVerification]);
+  }, [user.adminVerification]);
 
   if (!user.determiningStatus && user.isAdmin) {
     return <Navigate to="/" />;

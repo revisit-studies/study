@@ -6,7 +6,6 @@ import {
   getAuth, onAuthStateChanged, User, signOut, Auth,
 } from 'firebase/auth';
 import { LoadingOverlay } from '@mantine/core';
-import { flattenDiagnosticMessageText } from 'typescript';
 import { useStorageEngine } from '../storageEngineHooks';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { GlobalConfig } from '../../parser/types';
@@ -21,13 +20,13 @@ type UserOptions = User | LocalStorageUser | null;
 interface UserWrapped {
   user: UserOptions,
   determiningStatus: boolean,
-  isAdmin: boolean
+  isAdmin: boolean,
+  adminVerification:boolean
 }
 
 // Defines default AuthContextValue
 interface AuthContextValue {
   user: UserWrapped;
-  adminVerification: boolean;
   logout: () => void;
   verifyAdminStatus: (firebaseUser: UserOptions) => Promise<boolean>;
   }
@@ -38,8 +37,8 @@ const AuthContext = createContext<AuthContextValue>({
     user: null,
     determiningStatus: false,
     isAdmin: false,
+    adminVerification: false,
   },
-  adminVerification: false,
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   logout: () => {},
   verifyAdminStatus: () => Promise.resolve(false),
@@ -56,6 +55,7 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
       user: null,
       determiningStatus: true,
       isAdmin: false,
+      adminVerification: false,
     },
   );
 
@@ -64,6 +64,7 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
     user: null,
     determiningStatus: true,
     isAdmin: false,
+    adminVerification: false,
   };
 
   // Default non-user when not loading
@@ -71,6 +72,7 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
     user: null,
     determiningStatus: false,
     isAdmin: false,
+    adminVerification: false,
   };
 
   // Non-auth User
@@ -81,16 +83,14 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
     },
     determiningStatus: false,
     isAdmin: true,
+    adminVerification: true,
   };
-
-  const [adminVerification, setAdminVerification] = useState<boolean>(false);
 
   const { storageEngine } = useStorageEngine();
 
   // Logs the user out by removing the user and navigating to '/login'
   const logout = async () => {
     setUser(loadingNullUser);
-    setAdminVerification(false);
     const auth = getAuth();
     try {
       await signOut(auth);
@@ -158,15 +158,16 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
         user: prevUser.user,
         isAdmin: prevUser.isAdmin,
         determiningStatus: true,
+        adminVerification: false,
       }));
       if (firebaseUser) {
         // Reach out to firebase to validate user
         const isAdmin = await verifyAdminStatus(firebaseUser);
-        setAdminVerification(true);
         setUser({
           user: firebaseUser,
           determiningStatus: false,
           isAdmin,
+          adminVerification: true,
         });
       } else {
         logout();
@@ -177,7 +178,8 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
     const determineAuthentication = async () => {
       if (storageEngine instanceof FirebaseStorageEngine) {
         const authInfo = await storageEngine?.getUserManagementData('authentication');
-        const isAuthEnabled = authInfo?.isEnabled;
+        // const isAuthEnabled = authInfo?.isEnabled;
+        const isAuthEnabled = authInfo !== null ? authInfo.isEnabled : true;
         if (isAuthEnabled) {
           // Define unsubscribe function for listening to authentication state changes when using Firebase with authentication
           const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => await handleAuthStateChanged(firebaseUser));
@@ -199,7 +201,6 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
 
   const value = useMemo(() => ({
     user,
-    adminVerification,
     logout,
     verifyAdminStatus,
   }), [user]);

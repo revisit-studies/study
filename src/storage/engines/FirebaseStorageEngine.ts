@@ -404,41 +404,44 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   async editUserManagementAdmins(adminUsersList: Array<string>, currentUser: User) {
-    const firebaseAdminUsers = await this.getUserManagementData('adminUsers');
-    const newAdminUsersWithUUids: Array<StoredUser> = [];
+    if (adminUsersList.length > 0) {
+      const firebaseAdminUsers = await this.getUserManagementData('adminUsers');
+      const newAdminUsersWithUUids: Array<StoredUser> = [];
 
-    if (firebaseAdminUsers) {
-      const firebaseAdminUsersObject: Record<string, string|null> = {};
-      firebaseAdminUsers?.adminUsersList.forEach((storedUser:StoredUser) => {
-        firebaseAdminUsersObject[storedUser.email] = storedUser.uid;
-      });
-      adminUsersList.forEach((adminUser) => {
+      if (firebaseAdminUsers) {
+        const firebaseAdminUsersObject: Record<string, string|null> = {};
+        firebaseAdminUsers?.adminUsersList.forEach((storedUser:StoredUser) => {
+          firebaseAdminUsersObject[storedUser.email] = storedUser.uid;
+        });
+        adminUsersList.forEach((adminUser) => {
+          let newUid: string | null;
+          if (adminUser in firebaseAdminUsersObject) {
+            const storedUid = firebaseAdminUsersObject[adminUser];
+            newUid = storedUid || (currentUser.email === adminUser ? currentUser.uid : null);
+          } else {
+            newUid = currentUser.email === adminUser ? currentUser.uid : null;
+          }
+          newAdminUsersWithUUids.push({
+            email: adminUser,
+            uid: newUid,
+          });
+        });
+      } else {
+        // Adds all initial admins on sign in of one of them.
         let newUid: string | null;
-        if (adminUser in firebaseAdminUsersObject) {
-          const storedUid = firebaseAdminUsersObject[adminUser];
-          newUid = storedUid || (currentUser.email === adminUser ? currentUser.uid : null);
-        } else {
+        adminUsersList.forEach((adminUser) => {
           newUid = currentUser.email === adminUser ? currentUser.uid : null;
-        }
-        newAdminUsersWithUUids.push({
-          email: adminUser,
-          uid: newUid,
+          newAdminUsersWithUUids.push({
+            email: adminUser,
+            uid: newUid,
+          });
         });
-      });
-    } else {
-      // Adds all initial admins on sign in of one of them.
-      let newUid: string | null;
-      adminUsersList.forEach((adminUser) => {
-        newUid = currentUser.email === adminUser ? currentUser.uid : null;
-        newAdminUsersWithUUids.push({
-          email: adminUser,
-          uid: newUid,
-        });
+      }
+      return await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
+        adminUsersList: newAdminUsersWithUUids,
       });
     }
-    return await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
-      adminUsersList: newAdminUsersWithUUids,
-    });
+    return null;
   }
 
   // Validates if a user is an admin.
@@ -465,7 +468,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       // Case 2: Database does not yet exist. First opening
       }
       // Need to get Global config users
-      const isAdmin = (globalConfigAdminUsers.length === 0 || (user.email?.includes && globalConfigAdminUsers.includes(user.email))) ?? false;
+      const isAdmin = (user.email?.includes && globalConfigAdminUsers.includes(user.email)) ?? false;
       if (isAdmin) {
         await this.editUserManagementAdmins(globalConfigAdminUsers, user);
         return true;
