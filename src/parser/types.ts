@@ -282,6 +282,23 @@ export interface MarkdownComponent extends BaseIndividualComponent {
 
 /**
  * The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.
+ *
+ * The path is to the location of the react component you want to render, which must be default exported from the designated file.
+ * React components should be placed in src/public/{projectName}, and the path string placed here will be a path from src/public.
+ *
+ * React components created this way have a generic prop type <StimulusParams<T>>, which has the following types.
+ * {
+ *  parameters: T;
+ *  setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
+ * }
+ *
+ * parameters is the same object passed in from the ReactComponent type.
+ * setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you dont use the default answer interface, and instead have something more unique.
+ * See the click-accuracy-test link below for an example of this.
+ *
+ * For in depth examples, see the following studies, and their associated codebases.
+ * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/blob/main/src/public/demo-click-accuracy-test/assets)
+ * https://revisit.dev/study/demo-brush-interactions (https://github.com/revisit-studies/study/tree/main/src/public/demo-brush-interactions/assets)
  */
 export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
