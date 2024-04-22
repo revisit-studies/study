@@ -9,30 +9,32 @@ function _orderObjectToSequence(
   latinSquareObject: Record<string, string[][]>,
   path: string,
 ): Sequence {
-  // eslint-disable-next-line no-plusplus
-  for (let i = 0; i < order.components.length; i++) {
-    const curr = order.components[i];
-    if (typeof curr !== 'string') {
-      order.components[i] = _orderObjectToSequence(curr, latinSquareObject, `${path}-${i}`) as unknown as OrderObject;
-    }
-  }
+  let computedComponents: (string | OrderObject | string[])[] = order.components;
 
   if (order.order === 'random') {
     const randomArr = order.components.sort(() => 0.5 - Math.random());
 
-    order.components = randomArr;
+    computedComponents = randomArr;
   } else if (order.order === 'latinSquare' && latinSquareObject) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    order.components = latinSquareObject[path].pop()!.map((o) => {
-      if (o.startsWith('_orderObj')) {
-        return order.components[+o.slice(9)];
+    computedComponents = latinSquareObject[path].pop()!.map((o) => {
+      if (o.startsWith('_componentBlock')) {
+        return order.components[+o.slice('_componentBlock'.length)];
       }
 
       return o;
     });
   }
 
-  let computedComponents: (string | OrderObject | string[])[] = order.components.slice(0, order.numSamples !== undefined ? order.numSamples : undefined).flat();
+  computedComponents = computedComponents.slice(0, order.numSamples);
+
+  for (let i = 0; i < computedComponents.length; i += 1) {
+    const curr = computedComponents[i];
+    if (typeof curr !== 'string' && !Array.isArray(curr)) {
+      const index = order.components.indexOf(curr);
+      computedComponents[i] = _orderObjectToSequence(curr, latinSquareObject, `${path}-${index}`) as unknown as OrderObject;
+    }
+  }
 
   // If we have a break, insert it into the sequence at the correct intervals
   if (order.interruptions) {

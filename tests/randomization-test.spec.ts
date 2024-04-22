@@ -122,6 +122,17 @@ test('test', async ({ page }) => {
   expect(globalOcurrences.trial9).toBe(500);
   expect(globalOcurrences.trial10).toBe(500);
 
+  expect(globalOcurrences.trial11).toBe(500);
+  expect(globalOcurrences.trial12).toBe(500);
+  expect(globalOcurrences.trial13).toBe(500);
+  expect(globalOcurrences.trial14).toBe(500);
+  expect(globalOcurrences.trial15).toBe(500);
+  expect(globalOcurrences.trial16).toBe(500);
+  expect(globalOcurrences.trial17).toBe(500);
+  expect(globalOcurrences.trial18).toBe(500);
+  expect(globalOcurrences.trial19).toBe(500);
+  expect(globalOcurrences.trial20).toBe(500);
+
   // Check to make sure that the admin panel renders with such a complex sequence
   await page.locator('#mantine-r1-target').click();
   await page.getByRole('menuitem', { name: 'Admin Mode' }).click();
