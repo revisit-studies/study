@@ -32,8 +32,8 @@ jobs:
           publish_dir: ./dist
 
       - uses: peter-evans/repository-dispatch@v2
-        name: Build documentation in revisit.dev
-        if: ${{ steps.deploy.outcome == 'success' }}
+        name: Build documentation in revisit.dev if repo is in revisit-studies
+        if: ${{ steps.deploy.outcome == 'success' && github.repository_owner == 'revisit-studies' }}
         with:
           token: ${{ secrets.PAT }}
           repository: revisit-studies/reVISit-studies.github.io

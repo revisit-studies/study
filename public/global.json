@@ -1,0 +1,55 @@
+{
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/GlobalConfigSchema.json",
+    "configsList": [
+        "demo-html",
+        "demo-cleveland",
+        "demo-brush-interactions",
+        "demo-html-input",
+        "demo-mvnv",
+        "demo-randomization-test",
+        "demo-survey",
+        "demo-VLAT-full-randomized",
+        "demo-VLAT-mini-randomized",
+        "demo-fairness-jnd",
+        "demo-click-accuracy-test",
+        "demo-image"
+    ],
+    "configs": {
+        "demo-html": {
+            "path": "demo-html/config.json"
+        },
+        "demo-cleveland": {
+            "path": "demo-cleveland/config.json"
+        },
+        "demo-brush-interactions": {
+            "path": "demo-brush-interactions/config.json"
+        },
+        "demo-html-input": {
+            "path": "demo-html-input/config.json"
+        },
+        "demo-mvnv": {
+            "path": "demo-mvnv/config.json"
+        },
+        "demo-randomization-test": {
+            "path": "demo-randomization-test/config.json"
+        },
+        "demo-survey": {
+            "path": "demo-survey/config.json"
+        },
+        "demo-VLAT-full-randomized": {
+            "path": "demo-VLAT-full-randomized/config.json"
+        },
+        "demo-VLAT-mini-randomized": {
+            "path": "demo-VLAT-mini-randomized/config.json"
+        },
+        "demo-fairness-jnd": {
+            "path": "demo-fairness-jnd/config.json"
+        },
+        "demo-click-accuracy-test": {
+            "path": "demo-click-accuracy-test/config.json"
+        },
+        "demo-image": {
+            "path": "demo-image/config.json"
+        }
+    }
+}

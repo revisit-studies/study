@@ -163,7 +163,7 @@ export class LocalStorageEngine extends StorageEngine {
     const returnArray: ParticipantData[] = [];
 
     await this.studyDatabase.iterate((value, key) => {
-      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray') {
+      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray' && key !== 'configs') {
         returnArray.push(value as ParticipantData);
       }
     });

@@ -6,12 +6,12 @@
   "scripts": {
     "buildDocs": "yarn typedoc",
     "serve": "vite --host=0.0.0.0 --port=8080",
-    "build": "tsc && vite build",
+    "build": "tsc && VITE_STORAGE_ENGINE=firebase vite build",
     "lint": "eslint src",
     "postinstall": "husky install",
     "generate-schema:StudyConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/StudyConfigSchema.json --type StudyConfig",
     "generate-schema:GlobalConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/GlobalConfigSchema.json --type GlobalConfig",
-    "test": "VITE_STORAGE_ENGINE=localStorage playwright test"
+    "test": "playwright test"
   },
   "lint-staged": {
     "*.{tsx,jsx,ts,js}": "yarn lint"
@@ -21,6 +21,7 @@
     "@firebase/app-check": "^0.8.0",
     "@firebase/auth": "^1.5.0",
     "@mantine/core": "^5.8.0",
+    "@mantine/dates": "5.8.0",
     "@mantine/form": "^6.0.7",
     "@mantine/hooks": "^5.8.0",
     "@quentinroy/latin-square": "^1.1.1",
@@ -34,6 +35,7 @@
     "ajv": "^8.12.0",
     "arquero": "^5.2.0",
     "d3": "^7.8.2",
+    "dayjs": "1.11.10",
     "eslint-config-airbnb": "^19.0.4",
     "firebase": "^10.7.0",
     "hjson": "^3.2.2",
@@ -45,12 +47,15 @@
     "react-markdown": "^8.0.5",
     "react-redux": "^8.0.5",
     "react-router-dom": "^6.10.0",
+    "react-vega": "^7.6.0",
     "rehype-raw": "^7.0.0",
     "ts-json-schema-generator": "^1.4.1",
     "typedoc": "^0.25.4",
     "typedoc-plugin-frontmatter": "^0.0.2",
     "typedoc-plugin-markdown": "^3.17.1",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "vega": "^5.28.0",
+    "vega-lite": "^5.17.0"
   },
   "devDependencies": {
     "@playwright/test": "^1.35.1",
@@ -69,6 +74,6 @@
     "husky": "^8.0.3",
     "lint-staged": "^13.2.1",
     "typescript": "^5.3.2",
-    "vite": "^5.0.12"
+    "vite": "^5.0.13"
   }
 }

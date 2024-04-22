@@ -22,7 +22,7 @@ import {
   useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,
 } from '../../store/store';
 import { useStorageEngine } from '../../store/storageEngineHooks';
-import { PREFIX } from '../Prefix';
+import { PREFIX } from '../../utils/Prefix';
 
 export default function AppHeader() {
   const { config: studyConfig } = useStoreSelector((state) => state);

@@ -4,7 +4,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { GlobalConfig, StudyConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
-import { PREFIX } from './Prefix';
+import { PREFIX } from '../utils/Prefix';
 
 const REVISIT_GITHUB_PUBLIC = 'https://github.com/revisit-studies/study/tree/main/public/';
 
@@ -24,7 +24,7 @@ function ConfigSwitcher({ globalConfig, studyConfigs }: Props) {
         mx="auto"
         mb="xl"
         radius="md"
-        src={`${PREFIX}assets/revisitLogoSquare.svg`}
+        src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`}
         alt="reVISit"
       />
       <Text>Select an experiment to launch:</Text>
