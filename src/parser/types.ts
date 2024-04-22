@@ -333,6 +333,27 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you dont use the default answer interface, and instead have something more unique.
  * See the click-accuracy-test link below for an example of this.
  *
+ * So, for example, if I had the following ReactComponent in my config
+ * ``` JSON
+ * {
+ *  type: 'react-component';
+ *  path: 'my_study/CoolComponent.tsx';
+ *  parameters: {
+ *    name: 'Zach';
+ *    age: 26;
+ *  }
+ * }
+ * ```
+ *
+ * My react component, CoolComponent.tsx, would exist in src/public/my_study, and look something like this
+ *
+ * ``` typescript
+ * export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) {
+ *    // render something
+ * }
+ * ```
+ *
+ *
  * For in depth examples, see the following studies, and their associated codebases.
  * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/blob/main/src/public/demo-click-accuracy-test/assets)
  * https://revisit.dev/study/demo-brush-interactions (https://github.com/revisit-studies/study/tree/main/src/public/demo-brush-interactions/assets)
