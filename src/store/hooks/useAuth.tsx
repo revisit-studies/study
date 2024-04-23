@@ -90,7 +90,6 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
 
   // Logs the user out by removing the user and navigating to '/login'
   const logout = async () => {
-    setUser(loadingNullUser);
     const auth = getAuth();
     try {
       await signOut(auth);
@@ -153,7 +152,7 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
 
     // Handle auth state changes for Firebase
     const handleAuthStateChanged = async (firebaseUser: User | null) => {
-      // Reset the user
+      // Reset the user. This also gets called on signOut
       setUser((prevUser) => ({
         user: prevUser.user,
         isAdmin: prevUser.isAdmin,
