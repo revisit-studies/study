@@ -95,7 +95,7 @@ export function useNextStep() {
     const blockForStep = findBlockForStep(sequence, currentStep);
 
     // If the current component is in a block that has a skip block
-    const hasSkipBlock = blockForStep !== null && Object.hasOwn(blockForStep.currentBlock, 'skip') && blockForStep.currentBlock.skip !== undefined;
+    const hasSkipBlock = blockForStep !== null && ((Object.hasOwn(blockForStep.currentBlock, 'skip') && blockForStep.currentBlock.skip !== undefined) || blockForStep.parentBlocks.length > 0);
 
     // Get the answers with the new answer added, since above is dispatching and async
     const answersWithNewAnswer = {
@@ -107,8 +107,16 @@ export function useNextStep() {
 
     // Check if the skip block should be triggered
     if (hasSkipBlock && answersWithNewAnswer && answersWithNewAnswer[identifier]) {
-      const { currentBlock, firstIndex, lastIndex } = blockForStep;
-      const skipCondition = currentBlock.skip!;
+      const {
+        currentBlock,
+        firstIndex,
+        lastIndex,
+        parentBlocks,
+      } = blockForStep;
+      const skipCondition = [
+        ...(currentBlock.skip ? currentBlock.skip.map((condition) => ({ ...condition, firstIndex, lastIndex })) : []),
+        ...parentBlocks.flatMap((block) => (block.currentBlock.skip ? block.currentBlock.skip.map((condition) => ({ ...condition, firstIndex: block.firstIndex, lastIndex: block.lastIndex })) : [])) || [],
+      ];
 
       // Loop over all conditions, use `.some()` to stop early if the condition is met
       skipCondition.some((condition) => {
@@ -116,7 +124,7 @@ export function useNextStep() {
 
         const validationCandidates = Object.fromEntries(Object.entries(answersWithNewAnswer).filter(([key]) => {
           const componentIndex = parseInt(key.slice(key.lastIndexOf('_') + 1), 10);
-          return componentIndex >= firstIndex && componentIndex <= Math.min(lastIndex, currentStep);
+          return componentIndex >= condition.firstIndex && componentIndex <= Math.min(condition.lastIndex, currentStep);
         })) as unknown as StoredAnswer;
 
         // Check if the condition is met
@@ -134,7 +142,7 @@ export function useNextStep() {
           }
 
           const responseObj = componentToCheck[0][1];
-          const response = { ...responseObj.answer, ...responseObj.answer, ...responseObj.answer };
+          const response = { ...responseObj.answer };
 
           if (response[condition.responseId] !== condition.value) {
             conditionIsTriggered = true;
@@ -149,7 +157,7 @@ export function useNextStep() {
               throw new Error(`Component ${condition.name} has issues with its response object.`);
             }
 
-            const response = { ...responseObj.answer, ...responseObj.answer, ...responseObj.answer };
+            const response = { ...responseObj.answer };
 
             // Find the matching component in the study config
             const foundConfigComponent = Object.entries(studyConfig.components).find(([configComponentId, configComponent]) => configComponentId === componentId.slice(0, componentId.lastIndexOf('_')));
@@ -167,7 +175,78 @@ export function useNextStep() {
             return !foundConfigComponentConfig.correctAnswer.every((correctAnswerEntry) => response[correctAnswerEntry.id] === correctAnswerEntry.answer);
           });
         } else if (condition.check === 'block') {
-        //
+          // If we have less than numCorrect or numIncorrect, we can't check the condition
+          if (Object.entries(validationCandidates).length < condition.value) {
+            return false;
+          }
+
+          // Check the candidates and count the number of correct and incorrect answers
+          const correctAnswers = Object.entries(validationCandidates).map(([componentName, responseObj]) => {
+            const response = { ...responseObj.answer };
+
+            // Find the matching component in the study config
+            const foundConfigComponent = Object.entries(studyConfig.components).find(([configComponentId, configComponent]) => configComponentId === componentName.slice(0, componentName.lastIndexOf('_')));
+            const foundConfigComponentConfig = foundConfigComponent ? foundConfigComponent[1] : null;
+
+            if (!foundConfigComponentConfig) {
+              throw new Error(`Component ${componentName} could not be found in the study components.`);
+            }
+
+            if (!foundConfigComponentConfig.correctAnswer) {
+              throw new Error(`Component ${componentName} does not have a correct answer.`);
+            }
+
+            // Check that the responses match the correct answer
+            return foundConfigComponentConfig.correctAnswer.every((correctAnswerEntry) => response[correctAnswerEntry.id] === correctAnswerEntry.answer);
+          });
+          const numCorrect = correctAnswers.filter((correct) => correct).length;
+          const numIncorrect = correctAnswers.length - numCorrect;
+
+          // Check if the number of correct and incorrect answers match the condition
+          if ((condition.condition === 'numCorrect' && numCorrect === condition.value) || (condition.condition === 'numIncorrect' && numIncorrect === condition.value)) {
+            conditionIsTriggered = true;
+          }
+        } else if (condition.check === 'repeatedComponent') {
+          // Slim down the validationCandidates to only include the skip condition's component
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const componentsToCheck = Object.entries(validationCandidates).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === condition.name);
+
+          // If we have less than numCorrect or numIncorrect, we can't check the condition
+          if (componentsToCheck.length < condition.value) {
+            return false;
+          }
+
+          // Check the candidates and count the number of correct and incorrect answers
+          const correctAnswers = componentsToCheck.map(([_, responseObj]) => {
+            if (!responseObj) {
+              throw new Error(`Component ${condition.name} has issues with its response object.`);
+            }
+
+            const response = { ...responseObj.answer };
+
+            // Find the matching component in the study config
+            const foundConfigComponent = Object.entries(studyConfig.components).find(([configComponentId, configComponent]) => configComponentId === condition.name);
+            const foundConfigComponentConfig = foundConfigComponent ? foundConfigComponent[1] : null;
+
+            if (!foundConfigComponentConfig) {
+              throw new Error(`Component ${condition.name} could not be found in the study components.`);
+            }
+
+            if (!foundConfigComponentConfig.correctAnswer) {
+              throw new Error(`Component ${condition.name} does not have a correct answer.`);
+            }
+
+            // Check that the responses match the correct answer
+            return foundConfigComponentConfig.correctAnswer.every((correctAnswerEntry) => response[correctAnswerEntry.id] === correctAnswerEntry.answer);
+          });
+
+          const numCorrect = correctAnswers.filter((correct) => correct).length;
+          const numIncorrect = correctAnswers.length - numCorrect;
+
+          // Check if the number of correct and incorrect answers match the condition
+          if ((condition.condition === 'numCorrect' && numCorrect === condition.value) || (condition.condition === 'numIncorrect' && numIncorrect === condition.value)) {
+            conditionIsTriggered = true;
+          }
         }
 
         if (conditionIsTriggered) {
