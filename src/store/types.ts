@@ -98,6 +98,7 @@ export interface StimulusParams<T> {
 }
 
 export interface Sequence {
+  id?: string;
   orderPath: string;
   components: (string | Sequence)[];
   skip?: SkipConditions;

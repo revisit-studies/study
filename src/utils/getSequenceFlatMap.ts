@@ -30,3 +30,28 @@ export function findBlockForStep(sequence: Sequence, step: number) {
   const toReturn = _findBlockForStep(sequence, step, 0);
   return typeof toReturn === 'number' ? null : toReturn;
 }
+
+export function _findIndexOfBlock(sequence: Sequence, to: string, distance: number): { found: boolean, distance: number } {
+  if (sequence.id === to) {
+    return { found: true, distance };
+  }
+  let componentsSeen = 0;
+  for (let i = 0; i < sequence.components.length; i += 1) {
+    const component = sequence.components[i];
+    if (typeof component === 'string') {
+      componentsSeen += 1;
+    } else {
+      const result = _findIndexOfBlock(component, to, distance + componentsSeen);
+      if (result.found) {
+        return result;
+      }
+      componentsSeen += result.distance;
+    }
+  }
+  return { found: false, distance: componentsSeen };
+}
+
+export function findIndexOfBlock(sequence: Sequence, to: string): number {
+  const toReturn = _findIndexOfBlock(sequence, to, 0);
+  return toReturn.found ? toReturn.distance : -1;
+}

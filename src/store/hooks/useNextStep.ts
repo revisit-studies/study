@@ -14,7 +14,7 @@ import { StoredAnswer, ValidationStatus } from '../types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useStoredAnswer } from './useStoredAnswer';
 import { useWindowEvents } from './useWindowEvents';
-import { findBlockForStep } from '../../utils/getSequenceFlatMap';
+import { findBlockForStep, findIndexOfBlock } from '../../utils/getSequenceFlatMap';
 import { useStudyConfig } from './useStudyConfig';
 
 export function useNextStep() {
@@ -171,7 +171,9 @@ export function useNextStep() {
         }
 
         if (conditionIsTriggered) {
-          nextStep = participantSequence.indexOf(condition.to);
+          const nextStepIndex = participantSequence.indexOf(condition.to);
+          const nextStepBlockIndex = nextStepIndex === -1 ? findIndexOfBlock(sequence, condition.to) : -1;
+          nextStep = nextStepIndex === -1 ? nextStepBlockIndex : nextStepIndex;
           return true;
         }
         return false;
