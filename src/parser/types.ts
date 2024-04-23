@@ -415,8 +415,22 @@ export interface ComponentBlockCondition {
   to: string;
 }
 
+/** The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. */
+export interface RepeatedComponentBlockCondition {
+  /** The name of the repeated component to check (e.g. attentionCheck). */
+  name: string;
+  /** The check we'll perform. */
+  check: 'repeatedComponent';
+  /** The condition to check. */
+  condition: 'numCorrect' | 'numIncorrect';
+  /** The number of correct or incorrect responses to check for. */
+  value: number;
+  /** The id of the component or block to skip to */
+  to: string;
+}
+
 /** The SkipConditions interface is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. */
-export type SkipConditions = (IndividualComponentSingleResponseCondition | IndividualComponentAllResponsesCondition | ComponentBlockCondition)[];
+export type SkipConditions = (IndividualComponentSingleResponseCondition | IndividualComponentAllResponsesCondition | ComponentBlockCondition | RepeatedComponentBlockCondition)[];
 
 /** The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a latin square. */
 export interface ComponentBlock {

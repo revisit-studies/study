@@ -140,7 +140,7 @@
     },
     "ComponentBlockCondition": {
       "additionalProperties": false,
-      "description": "The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect responses in a block. This is used to skip to a different component or block based on the number of correct or incorrect responses to the block.",
+      "description": "The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on the component are checked. This is used to skip to a different component or block based on the number of correct or incorrect responses to the block.",
       "properties": {
         "check": {
           "const": "block",
@@ -160,7 +160,7 @@
           "type": "string"
         },
         "value": {
-          "description": "The value to check.",
+          "description": "The number of correct or incorrect responses to check for.",
           "type": "number"
         }
       },
@@ -323,7 +323,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial.",
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
         },
         "response": {
@@ -373,7 +373,7 @@
     },
     "IndividualComponentAllResponsesCondition": {
       "additionalProperties": false,
-      "description": "The IndividualComponentAllResponsesCondition interface is used to define a SkipCondition based on multiple answers to a specific component. This is used to skip to a different component or block based on the responses to the component.",
+      "description": "The IndividualComponentAllResponsesCondition interface is used to define a SkipCondition based on all answers to a specific component. This is used to skip to a different component or block based on the responses to the component.",
       "properties": {
         "check": {
           "const": "responses",
@@ -493,7 +493,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial.",
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
         },
         "response": {
@@ -743,7 +743,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial.",
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
         },
         "response": {
@@ -885,7 +885,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial.",
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
         },
         "response": {
@@ -1014,7 +1014,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial.",
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
         },
         "response": {
@@ -1033,6 +1033,45 @@
         "path",
         "response",
         "type"
+      ],
+      "type": "object"
+    },
+    "RepeatedComponentBlockCondition": {
+      "additionalProperties": false,
+      "description": "The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times.",
+      "properties": {
+        "check": {
+          "const": "repeatedComponent",
+          "description": "The check we'll perform.",
+          "type": "string"
+        },
+        "condition": {
+          "description": "The condition to check.",
+          "enum": [
+            "numCorrect",
+            "numIncorrect"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the repeated component to check (e.g. attentionCheck).",
+          "type": "string"
+        },
+        "to": {
+          "description": "The id of the component or block to skip to",
+          "type": "string"
+        },
+        "value": {
+          "description": "The number of correct or incorrect responses to check for.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "check",
+        "condition",
+        "value",
+        "to"
       ],
       "type": "object"
     },
@@ -1140,6 +1179,9 @@
           },
           {
             "$ref": "#/definitions/ComponentBlockCondition"
+          },
+          {
+            "$ref": "#/definitions/RepeatedComponentBlockCondition"
           }
         ]
       },
@@ -1271,7 +1313,7 @@
                     "type": "string"
                   },
                   "provideFeedback": {
-                    "description": "Controls whether the component should provide feedback to the participant, such as in a training trial.",
+                    "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
                     "type": "boolean"
                   },
                   "response": {
@@ -1490,7 +1532,7 @@
           "type": "string"
         },
         "provideFeedback": {
-          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial.",
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
         },
         "response": {
