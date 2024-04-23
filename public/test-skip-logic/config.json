@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
+  "$schema": "file:///Users/jwilburn/projects/revisit-study/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Using Skip Logic",
     "description": "This is a test study to check the functionality of the reVISit' skip logic. This study is not meant to be used for any real data collection.",
@@ -86,6 +86,16 @@
       "type": "markdown",
       "path": "test-skip-logic/continuingComponent.md",
       "response": []
+    },
+    "targetComponent": {
+      "type": "markdown",
+      "path": "test-skip-logic/targetComponent.md",
+      "response": []
+    },
+    "targetBlockComponent": {
+      "type": "markdown",
+      "path": "test-skip-logic/targetBlockComponent.md",
+      "response": []
     }
   },
   "sequence": {
@@ -99,7 +109,7 @@
           "check": "response",
           "responseId": "q1",
           "value": "Blue",
-          "to": "end"
+          "to": "targetComponent"
         }]
       },
       "continuingComponent",
@@ -127,7 +137,87 @@
           "to": "end"
         }]
       },
-      "continuingComponent"
+      "continuingComponent",
+      {
+        "order": "fixed",
+        "components": ["trial1", "trial1", "trial1", "trial1"],
+        "interruptions": [{
+          "components": ["attentionCheck"],
+          "firstLocation": 1,
+          "spacing": 1
+        }],
+        "skip": [{
+          "name": "attentionCheck",
+          "check": "repeatedComponent",
+          "condition": "numIncorrect",
+          "value": 2,
+          "to": "targetBlock"
+        }]
+      },
+      "continuingComponent",
+      {
+        "order": "fixed",
+        "components": [
+          "continuingComponent",
+          {
+            "order": "fixed",
+            "components": ["trial1"]
+          },
+          "continuingComponent"
+        ],
+        "skip": [{
+          "name": "trial1",
+          "check": "responses",
+          "to": "end"
+        }]
+      },
+      "continuingComponent",
+      {
+        "order": "fixed",
+        "components": [
+          "trial1",
+          {
+            "order": "fixed",
+            "components": ["trial1", "trial1"]
+          },
+          "continuingComponent"
+        ],
+        "skip": [{
+          "check": "block",
+          "condition": "numIncorrect",
+          "value": 2,
+          "to": "end"
+        }]
+      },
+      "continuingComponent",
+      {
+        "order": "fixed",
+        "components": ["trial1", "trial1", "trial1"],
+        "skip":[{
+          "check": "block",
+          "condition": "numCorrect",
+          "value": 2,
+          "to": "end"
+        }]
+      },
+      "continuingComponent",
+      {
+        "order": "fixed",
+        "components": ["trial1", "trial1", "trial1"],
+        "skip":[{
+          "check": "block",
+          "condition": "numIncorrect",
+          "value": 2,
+          "to": "end"
+        }]
+      },
+      "continuingComponent",
+      {
+        "id": "targetBlock",
+        "order": "fixed",
+        "components": ["targetBlockComponent"]
+      },
+      "targetComponent"
     ]
   }
 }
