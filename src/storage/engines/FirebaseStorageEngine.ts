@@ -98,7 +98,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       return await setDoc(configDoc, config);
     } catch (error) {
       console.warn('Failed to connect to Firebase.');
-      return Promise.reject(error);
+      return error;
     }
   }
 
@@ -390,7 +390,7 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   // Gets data from the user-management collection based on the inputted string
-  async getUserManagementData(key:string) {
+  async getUserManagementData(key: string) {
     // Get the user-management collection in Firestore
     const userManagementCollection = collection(this.firestore, 'user-management');
     // Grabs all user-management data and returns data based on key
@@ -409,10 +409,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       const newAdminUsersWithUUids: Array<StoredUser> = [];
 
       if (firebaseAdminUsers) {
-        const firebaseAdminUsersObject: Record<string, string|null> = {};
-        firebaseAdminUsers?.adminUsersList.forEach((storedUser:StoredUser) => {
-          firebaseAdminUsersObject[storedUser.email] = storedUser.uid;
-        });
+        const firebaseAdminUsersObject = Object.fromEntries(firebaseAdminUsers?.adminUsersList.map((storedUser) => [storedUser.email, storedUser.uid]));
         adminUsersList.forEach((adminUser) => {
           let newUid: string | null;
           if (adminUser in firebaseAdminUsersObject) {

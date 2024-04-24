@@ -39,5 +39,5 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   if (!user.isAdmin && !user.determiningStatus) {
     return <Navigate to="/login" />;
   }
-  return <div>{children}</div>;
+  return <>{children}</>;
 }

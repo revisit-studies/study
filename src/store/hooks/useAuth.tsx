@@ -50,15 +50,6 @@ export const useAuth = () => useContext(AuthContext);
 
 // Defines the functions that are exposed in this hook.
 export function AuthProvider({ children, globalConfig } : { children: ReactNode, globalConfig: GlobalConfig }) {
-  const [user, setUser] = useState<UserWrapped>(
-    {
-      user: null,
-      determiningStatus: true,
-      isAdmin: false,
-      adminVerification: false,
-    },
-  );
-
   // Default non-user when loading
   const loadingNullUser : UserWrapped = {
     user: null,
@@ -85,6 +76,8 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
     isAdmin: true,
     adminVerification: true,
   };
+  
+  const [user, setUser] = useState(loadingNullUser);
 
   const { storageEngine } = useStorageEngine();
 
@@ -96,8 +89,9 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error(`There was an issue signing-out the user: ${error.message}`);
+    } finally {
+      setUser(nonLoadingNullUser);
     }
-    setUser(nonLoadingNullUser);
   };
 
   function isFirebaseUser(input: UserOptions): input is User {
@@ -116,7 +110,7 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
       const firebaseUser = inputUser;
       if (storageEngine instanceof FirebaseStorageEngine) {
         const authInfo = await storageEngine?.getUserManagementData('authentication');
-        const isAuthEnabled = authInfo !== null ? authInfo.isEnabled : true;
+        const isAuthEnabled = authInfo ? authInfo.isEnabled : true;
         if (isAuthEnabled) {
           // Validate the user if Auth enabled
           return await storageEngine.validateUserAdminStatus(firebaseUser, globalConfig.adminUsers);
