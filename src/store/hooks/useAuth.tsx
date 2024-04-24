@@ -110,8 +110,7 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
       const firebaseUser = inputUser;
       if (storageEngine instanceof FirebaseStorageEngine) {
         const authInfo = await storageEngine?.getUserManagementData('authentication');
-        const isAuthEnabled = authInfo ? authInfo.isEnabled : true;
-        if (isAuthEnabled) {
+        if (authInfo?.isEnabled) {
           // Validate the user if Auth enabled
           return await storageEngine.validateUserAdminStatus(firebaseUser, globalConfig.adminUsers);
         }
@@ -171,9 +170,7 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
     const determineAuthentication = async () => {
       if (storageEngine instanceof FirebaseStorageEngine) {
         const authInfo = await storageEngine?.getUserManagementData('authentication');
-        // const isAuthEnabled = authInfo?.isEnabled;
-        const isAuthEnabled = authInfo !== null ? authInfo.isEnabled : true;
-        if (isAuthEnabled) {
+        if (authInfo?.isEnabled) {
           // Define unsubscribe function for listening to authentication state changes when using Firebase with authentication
           const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => await handleAuthStateChanged(firebaseUser));
           return () => unsubscribe();
