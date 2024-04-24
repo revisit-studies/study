@@ -51,5 +51,7 @@
         "demo-image": {
             "path": "demo-image/config.json"
         }
-    }
+    },
+    "adminUsers": []
+
 }

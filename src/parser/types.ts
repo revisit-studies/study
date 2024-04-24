@@ -18,6 +18,8 @@ export interface GlobalConfig {
   };
   /** A required property that is used to generate the list of available studies in the UI. This list is displayed on the landing page when running the app. */
   configsList: string[];
+  /** A required property listing out the emails of users who require admin access. */
+  adminUsers: string[];
 }
 
 /**
