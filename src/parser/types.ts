@@ -379,7 +379,7 @@ interface RandomInterruption {
 
 export type InterruptionBlock = DeterministicInterruption | RandomInterruption;
 
-/** The IndividualComponentSingleResponseCondition interface is used to define a SkipCondition based on a single answer to a specific component. This is used to skip to a different component or block based on the response to the component. */
+/** The IndividualComponentSingleResponseCondition interface is used to define a SkipCondition based on a single answer to a specific component. If the component is repeated within the block, this condition will only check the first instance of the component once the order is flattened. */
 export interface IndividualComponentSingleResponseCondition {
   /** The name of the component to check. */
   name: string;
@@ -393,7 +393,7 @@ export interface IndividualComponentSingleResponseCondition {
   to: string;
 }
 
-/** The IndividualComponentAllResponsesCondition interface is used to define a SkipCondition based on all answers to a specific component. This is used to skip to a different component or block based on the responses to the component. */
+/** The IndividualComponentAllResponsesCondition interface is used to define a SkipCondition based on all answers to a specific component. If the component is repeated within the block, this condition will only check the first instance of the component once the order is flattened. If you need to check all instances of a repeated component, you should use the RepeatedComponentBlockCondition. */
 export interface IndividualComponentAllResponsesCondition {
   /** The name of the component to check. */
   name: string;
@@ -403,7 +403,7 @@ export interface IndividualComponentAllResponsesCondition {
   to: string;
 }
 
-/** The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on the component are checked. This is used to skip to a different component or block based on the number of correct or incorrect responses to the block. */
+/** The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on all components in the block are checked. */
 export interface ComponentBlockCondition {
   /** The check we'll perform. */
   check: 'block';
@@ -429,12 +429,12 @@ export interface RepeatedComponentBlockCondition {
   to: string;
 }
 
-/** The SkipConditions interface is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. */
+/** The SkipConditions interface is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Skip conditions work recursively, that is if you have a nested block, they parent blocks' skip conditions will be considered when computing the skip logic. */
 export type SkipConditions = (IndividualComponentSingleResponseCondition | IndividualComponentAllResponsesCondition | ComponentBlockCondition | RepeatedComponentBlockCondition)[];
 
 /** The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a latin square. */
 export interface ComponentBlock {
-  /** The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition. */
+  /** The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property. */
   id?: string
   /** The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed. */
   order: 'random' | 'latinSquare' | 'fixed';
