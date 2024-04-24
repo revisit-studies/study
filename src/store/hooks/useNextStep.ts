@@ -92,12 +92,12 @@ export function useNextStep() {
     let nextStep = currentStep + 1;
 
     // Traverse through the sequence to find the block the current component is in
-    const blockForStep = findBlockForStep(sequence, currentStep);
+    const blocksForStep = findBlockForStep(sequence, currentStep);
 
-    // If the current component is in a block that has a skip block
-    const hasSkipBlock = blockForStep !== null && ((Object.hasOwn(blockForStep.currentBlock, 'skip') && blockForStep.currentBlock.skip !== undefined) || blockForStep.parentBlocks.length > 0);
+    // If the current component is in a block that has a skip block (or is nested in a block that has a skip block), we need to check if the skip block should be triggered
+    const hasSkipBlock = blocksForStep !== null && (blocksForStep.some((block) => Object.hasOwn(block.currentBlock, 'skip') && block.currentBlock.skip !== undefined));
 
-    // Get the answers with the new answer added, since above is dispatching and async
+    // Get the answers with the new answer added, since above is dispatching and async, but we need it synchronously
     const answersWithNewAnswer = {
       ...answers,
       [identifier]: {
@@ -106,25 +106,19 @@ export function useNextStep() {
     };
 
     // Check if the skip block should be triggered
-    if (hasSkipBlock && answersWithNewAnswer && answersWithNewAnswer[identifier]) {
-      const {
-        currentBlock,
-        firstIndex,
-        lastIndex,
-        parentBlocks,
-      } = blockForStep;
-      const skipCondition = [
-        ...(currentBlock.skip ? currentBlock.skip.map((condition) => ({ ...condition, firstIndex, lastIndex })) : []),
-        ...parentBlocks.flatMap((block) => (block.currentBlock.skip ? block.currentBlock.skip.map((condition) => ({ ...condition, firstIndex: block.firstIndex, lastIndex: block.lastIndex })) : [])) || [],
+    if (hasSkipBlock && answersWithNewAnswer[identifier]) {
+      const skipConditions = [
+        ...blocksForStep.flatMap((block) => (block.currentBlock.skip ? block.currentBlock.skip.map((condition) => ({ ...condition, firstIndex: block.firstIndex, lastIndex: block.lastIndex })) : [])),
       ];
 
       // Loop over all conditions, use `.some()` to stop early if the condition is met
-      skipCondition.some((condition) => {
+      skipConditions.some((condition) => {
         let conditionIsTriggered = false;
 
+        const lastIndex = Math.min(condition.lastIndex, currentStep);
         const validationCandidates = Object.fromEntries(Object.entries(answersWithNewAnswer).filter(([key]) => {
           const componentIndex = parseInt(key.slice(key.lastIndexOf('_') + 1), 10);
-          return componentIndex >= condition.firstIndex && componentIndex <= Math.min(condition.lastIndex, currentStep);
+          return componentIndex >= condition.firstIndex && componentIndex <= lastIndex;
         })) as unknown as StoredAnswer;
 
         // Check if the condition is met

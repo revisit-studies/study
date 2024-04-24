@@ -11,18 +11,17 @@ type SkipConditionWithExtents = {
   lastIndex: number;
 };
 
-function _findBlockForStep(sequence: Sequence, step: number, distance: number): (SkipConditionWithExtents & { parentBlocks: SkipConditionWithExtents[] }) | number {
+function _findBlockForStep(sequence: Sequence, step: number, distance: number): (SkipConditionWithExtents[]) | number {
   let componentsSeen = 0;
   for (let i = 0; i < sequence.components.length; i += 1) {
     const component = sequence.components[i];
     if (typeof component === 'string') {
       if (step === distance + componentsSeen) {
-        return {
+        return [{
           currentBlock: sequence,
           firstIndex: distance,
           lastIndex: distance + sequence.components.length - 1,
-          parentBlocks: [],
-        };
+        }];
       }
       componentsSeen += 1;
     } else {
@@ -30,8 +29,8 @@ function _findBlockForStep(sequence: Sequence, step: number, distance: number): 
       if (typeof result === 'number') {
         componentsSeen += result;
       } else {
-        const newParentBlock = { currentBlock: sequence, firstIndex: distance, lastIndex: result.lastIndex };
-        return { ...result, parentBlocks: newParentBlock ? [...result.parentBlocks, newParentBlock] : result.parentBlocks };
+        const newParentBlock = { currentBlock: sequence, firstIndex: distance, lastIndex: result[0].lastIndex };
+        return [...result, newParentBlock];
       }
     }
   }
