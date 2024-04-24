@@ -55,5 +55,7 @@
         "test-skip-logic": {
             "path": "test-skip-logic/config.json"
         }
-    }
+    },
+    "adminUsers": []
+
 }
