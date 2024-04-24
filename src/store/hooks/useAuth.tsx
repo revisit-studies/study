@@ -27,7 +27,7 @@ interface UserWrapped {
 // Defines default AuthContextValue
 interface AuthContextValue {
   user: UserWrapped;
-  logout: () => void;
+  logout: () => Promise<void>;
   verifyAdminStatus: (firebaseUser: UserOptions) => Promise<boolean>;
   }
 
@@ -40,7 +40,7 @@ const AuthContext = createContext<AuthContextValue>({
     adminVerification: false,
   },
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  logout: () => {},
+  logout: async () => {},
   verifyAdminStatus: () => Promise.resolve(false),
 
 });
@@ -76,7 +76,7 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
     isAdmin: true,
     adminVerification: true,
   };
-  
+
   const [user, setUser] = useState(loadingNullUser);
 
   const { storageEngine } = useStorageEngine();

@@ -98,7 +98,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       return await setDoc(configDoc, config);
     } catch (error) {
       console.warn('Failed to connect to Firebase.');
-      return error;
+      return Promise.reject(error);
     }
   }
 
@@ -409,7 +409,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       const newAdminUsersWithUUids: Array<StoredUser> = [];
 
       if (firebaseAdminUsers) {
-        const firebaseAdminUsersObject = Object.fromEntries(firebaseAdminUsers?.adminUsersList.map((storedUser) => [storedUser.email, storedUser.uid]));
+        const firebaseAdminUsersObject = Object.fromEntries(firebaseAdminUsers?.adminUsersList.map((storedUser:StoredUser) => [storedUser.email, storedUser.uid]));
         adminUsersList.forEach((adminUser) => {
           let newUid: string | null;
           if (adminUser in firebaseAdminUsersObject) {
@@ -451,11 +451,8 @@ export class FirebaseStorageEngine extends StorageEngine {
       const adminUsers = await this.getUserManagementData('adminUsers');
 
       if (adminUsers && adminUsers.adminUsersList) {
-        const adminUsersObject: Record<string, string|null> = {};
-        adminUsers?.adminUsersList.forEach((storedUser:StoredUser) => {
-          adminUsersObject[storedUser.email] = storedUser.uid;
-        });
-
+        const adminUsersObject = Object.fromEntries(adminUsers.adminUsersList.map((storedUser:StoredUser) => [storedUser.email, storedUser.uid]));
+        // Verifies that, if the user has signed in and thus their UID is added to the Firestore, that the current UID matches the Firestore entries UID. Prevents impersonation (otherwise, users would be able to alter email to impersonate).
         const isAdmin = user.email && (adminUsersObject[user.email] === user.uid || adminUsersObject[user.email] === null);
         if (isAdmin) {
           await this.editUserManagementAdmins(globalConfigAdminUsers, user);
@@ -465,7 +462,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       // Case 2: Database does not yet exist. First opening
       }
       // Need to get Global config users
-      const isAdmin = (user.email?.includes && globalConfigAdminUsers.includes(user.email)) ?? false;
+      const isAdmin = (user.email && globalConfigAdminUsers.includes(user.email)) ?? false;
       if (isAdmin) {
         await this.editUserManagementAdmins(globalConfigAdminUsers, user);
         return true;
