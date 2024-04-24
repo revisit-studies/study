@@ -18,8 +18,8 @@ function _componentBlockToSequence(
   } else if (order.order === 'latinSquare' && latinSquareObject) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     computedComponents = latinSquareObject[path].pop()!.map((o) => {
-      if (o.startsWith('_orderObj')) {
-        return order.components[+o.slice('_orderObj'.length)];
+      if (o.startsWith('_componentBlock')) {
+        return order.components[+o.slice('_componentBlock'.length)];
       }
 
       return o;
