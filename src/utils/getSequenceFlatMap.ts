@@ -42,7 +42,7 @@ export function findBlockForStep(sequence: Sequence, step: number) {
   return typeof toReturn === 'number' ? null : toReturn;
 }
 
-export function _findIndexOfBlock(sequence: Sequence, to: string, distance: number): { found: boolean, distance: number } {
+function _findIndexOfBlock(sequence: Sequence, to: string, distance: number): { found: boolean, distance: number } {
   if (sequence.id === to) {
     return { found: true, distance };
   }
