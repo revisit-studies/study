@@ -128,7 +128,7 @@ export function useNextStep() {
     };
 
     // Check if the skip block should be triggered
-    if (hasSkipBlock && answersWithNewAnswer[identifier]) {
+    if (hasSkipBlock) {
       const skipConditions = [
         ...blocksForStep.flatMap((block) => (block.currentBlock.skip ? block.currentBlock.skip.map((condition) => ({ ...condition, firstIndex: block.firstIndex, lastIndex: block.lastIndex })) : [])),
       ];

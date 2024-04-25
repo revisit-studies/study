@@ -6,7 +6,7 @@ import {
   getAuth, onAuthStateChanged, User, signOut, Auth,
 } from 'firebase/auth';
 import { LoadingOverlay } from '@mantine/core';
-import { useStorageEngine } from '../storageEngineHooks';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { GlobalConfig } from '../../parser/types';
 

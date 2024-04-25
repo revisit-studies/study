@@ -5,7 +5,6 @@ import { ParticipantData } from '../types';
 import { Sequence, StoredAnswer } from '../../store/types';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
-import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 export class LocalStorageEngine extends StorageEngine {
   private studyDatabase: LocalForage | undefined = undefined;

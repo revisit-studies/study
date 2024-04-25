@@ -16,7 +16,7 @@ function _findBlockForStep(sequence: Sequence, step: number, distance: number): 
   for (let i = 0; i < sequence.components.length; i += 1) {
     const component = sequence.components[i];
     if (typeof component === 'string') {
-      if (step === (distance + componentsSeen) ) {
+      if (step === (distance + componentsSeen)) {
         return [{
           currentBlock: sequence,
           firstIndex: distance,

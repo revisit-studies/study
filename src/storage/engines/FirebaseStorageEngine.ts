@@ -16,7 +16,6 @@ import {
 } from '../../store/types';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
-import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 export interface StoredUser {
   email: string,
