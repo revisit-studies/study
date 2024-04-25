@@ -149,8 +149,6 @@ export interface BaseResponse {
   required: boolean;
   /** Controls the response location. These might be the same for all responses, or differ across responses. */
   location: ResponseBlockLocation;
-  /** The correct answer to the response. This is used in the data download and can be shown in the admin panel. */
-  correctAnswer?: unknown;
   /** You can provide a required value, which makes it so a participant has to answer with that value. */
   requiredValue?: unknown;
   /** You can provide a required label, which makes it so a participant has to answer with a response that matches label. */
@@ -267,7 +265,7 @@ export interface IFrameResponse extends BaseResponse {
 export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | IFrameResponse;
 
 /**
- * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks.
+ * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.
  */
 export interface Answer {
   /** The id of the answer. This is used to identify the answer in the data file. */
@@ -302,6 +300,8 @@ export interface BaseIndividualComponent {
   instructionLocation?: ResponseBlockLocation;
   /** The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess. */
   correctAnswer?: Answer[];
+  /** Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false. */
+  provideFeedback?: boolean;
   /** The meta data for the component. This is used to identify and provide additional information for the component in the admin panel. */
   meta?: Record<string, unknown>;
   /** The description of the component. This is used to identify and provide additional information for the component in the admin panel. */
@@ -381,16 +381,73 @@ interface RandomInterruption {
 
 export type InterruptionBlock = DeterministicInterruption | RandomInterruption;
 
-/** The OrderObject interface is used to define the properties of an order object. This is used to define the order of components in a study. It supports random assignment of trials using a pure random assignment and a latin square. */
-export interface OrderObject {
+/** The IndividualComponentSingleResponseCondition interface is used to define a SkipCondition based on a single answer to a specific component. If the component is repeated within the block, this condition will only check the first instance of the component once the order is flattened. */
+export interface IndividualComponentSingleResponseCondition {
+  /** The name of the component to check. */
+  name: string;
+  /** The check we'll perform. */
+  check: 'response';
+  /** The response id to check. */
+  responseId: string;
+  /** The value to check. */
+  value: string | number;
+  /** The id of the component or block to skip to */
+  to: string;
+}
+
+/** The IndividualComponentAllResponsesCondition interface is used to define a SkipCondition based on all answers to a specific component. If the component is repeated within the block, this condition will only check the first instance of the component once the order is flattened. If you need to check all instances of a repeated component, you should use the RepeatedComponentBlockCondition. */
+export interface IndividualComponentAllResponsesCondition {
+  /** The name of the component to check. */
+  name: string;
+  /** The check we'll perform. */
+  check: 'responses';
+  /** The id of the component or block to skip to */
+  to: string;
+}
+
+/** The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on all components in the block are checked. */
+export interface ComponentBlockCondition {
+  /** The check we'll perform. */
+  check: 'block';
+  /** The condition to check. */
+  condition: 'numCorrect' | 'numIncorrect';
+  /** The number of correct or incorrect responses to check for. */
+  value: number;
+  /** The id of the component or block to skip to */
+  to: string;
+}
+
+/** The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. */
+export interface RepeatedComponentBlockCondition {
+  /** The name of the repeated component to check (e.g. attentionCheck). */
+  name: string;
+  /** The check we'll perform. */
+  check: 'repeatedComponent';
+  /** The condition to check. */
+  condition: 'numCorrect' | 'numIncorrect';
+  /** The number of correct or incorrect responses to check for. */
+  value: number;
+  /** The id of the component or block to skip to */
+  to: string;
+}
+
+/** The SkipConditions interface is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Skip conditions work recursively, that is if you have a nested block, they parent blocks' skip conditions will be considered when computing the skip logic. */
+export type SkipConditions = (IndividualComponentSingleResponseCondition | IndividualComponentAllResponsesCondition | ComponentBlockCondition | RepeatedComponentBlockCondition)[];
+
+/** The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a latin square. */
+export interface ComponentBlock {
+  /** The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property. */
+  id?: string
   /** The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed. */
-  order: 'random' | 'latinSquare' | 'fixed'
+  order: 'random' | 'latinSquare' | 'fixed';
   /** The components that are included in the order. */
-  components: (string | OrderObject)[]
+  components: (string | ComponentBlock)[];
   /** The number of samples to use for the random assignments. This means you can randomize across 3 components while only showing a participant 2 at a time. */
-  numSamples?: number
+  numSamples?: number;
   /** The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks.  */
   interruptions?: InterruptionBlock[];
+  /** The skip conditions for the block. */
+  skip?: SkipConditions;
 }
 
 /** An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component). */
@@ -466,7 +523,7 @@ export interface StudyConfig {
     }
 }
 ```
-In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a drowpdown containing three choices). Any component which contains the `"baseComponent":"my-image-component"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below:
+In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `"baseComponent":"my-image-component"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below:
 ``` JSON
 "components": {
     "q1": {
@@ -491,7 +548,7 @@ In the above code snippet, we have a single base component which holds the infor
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
   components: Record<string, IndividualComponent | InheritedComponent>
   /** The order of the components in the study. This might include some randomness. */
-  sequence: OrderObject;
+  sequence: ComponentBlock;
 }
 
 /**

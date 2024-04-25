@@ -32,7 +32,7 @@
   "components": {
     "introduction": {
       "type": "markdown",
-      "path": "demo-randomization-test/assets/introduction.md",
+      "path": "test-randomization/assets/introduction.md",
       "response": [],
       "nextButtonLocation": "aboveStimulus",
       "instructionLocation": "aboveStimulus",
@@ -109,14 +109,14 @@
     },
     "break1": {
       "type": "markdown",
-      "path": "demo-randomization-test/assets/break.md",
+      "path": "test-randomization/assets/break.md",
       "response": [],
       "nextButtonLocation": "aboveStimulus",
       "instructionLocation": "aboveStimulus"
     },
     "break2": {
       "type": "markdown",
-      "path": "demo-randomization-test/assets/break.md",
+      "path": "test-randomization/assets/break.md",
       "response": [],
       "nextButtonLocation": "aboveStimulus",
       "instructionLocation": "aboveStimulus"

@@ -16,7 +16,6 @@ import {
 } from '../../store/types';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
-import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 export interface StoredUser {
   email: string,
@@ -378,15 +377,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    // Loop over the sequence and check if all answers are present
-    const allAnswersPresent = getSequenceFlatMap(participantData.sequence).every((step, idx) => {
-      if (step === 'end') {
-        return true;
-      }
-      return participantData.answers[`${step}_${idx}`] !== undefined;
-    });
-
-    return allAnswersPresent;
+    return true;
   }
 
   // Gets data from the user-management collection based on the inputted string
