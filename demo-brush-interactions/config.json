@@ -102,7 +102,6 @@
             },
             "response": [
                 {
-                    "correctAnswer": 17,
                     "id": "response",
                     "prompt": "Answer:",
                     "required": true,
@@ -110,6 +109,12 @@
                     "type": "numerical",
                     "max": 100,
                     "min": 0
+                }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "response",
+                    "answer": 17
                 }
             ]
         },
@@ -126,7 +131,6 @@
             },
             "response": [
                 {
-                    "correctAnswer": "Japan",
                     "id": "max-response",
                     "prompt": "Most Cars:",
                     "required": true,
@@ -148,7 +152,6 @@
                     ]
                 },
                 {
-                    "correctAnswer": "Europe",
                     "id": "min-response",
                     "prompt": "Least Cars:",
                     "required": true,
@@ -169,6 +172,16 @@
                         }
                     ]
                 }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "max-response",
+                    "answer": "Japan"
+                },
+                {
+                    "id": "min-response",
+                    "answer": "Europe"
+                }
             ]
         },
         "axisBrush_q1": {
@@ -185,7 +198,6 @@
             },
             "response": [
                 {
-                    "correctAnswer": 32,
                     "id": "response",
                     "prompt": "Answer:",
                     "required": true,
@@ -193,6 +205,12 @@
                     "type": "numerical",
                     "max": 100,
                     "min": 0
+                }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "response",
+                    "answer": 32
                 }
             ]
         },
@@ -210,7 +228,6 @@
             },
             "response": [
                 {
-                    "correctAnswer": "sun",
                     "id": "max-response",
                     "prompt": "Most common Weather:",
                     "required": true,
@@ -236,7 +253,6 @@
                     ]
                 },
                 {
-                    "correctAnswer": "drizzle",
                     "id": "min-response",
                     "prompt": "Least common Weather:",
                     "required": true,
@@ -261,6 +277,16 @@
                         }
                     ]
                 }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "max-response",
+                    "answer": "sun"
+                },
+                {
+                    "id": "min-response",
+                    "answer": "drizzle"
+                }
             ]
         },
         "sliderBrush_q1": {
@@ -276,7 +302,6 @@
             },
             "response": [
                 {
-                    "correctAnswer": 15,
                     "id": "response",
                     "prompt": "Answer:",
                     "required": true,
@@ -284,6 +309,12 @@
                     "type": "numerical",
                     "max": 100,
                     "min": 0
+                }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "response",
+                    "answer": 15
                 }
             ]
         },
@@ -300,7 +331,6 @@
             },
             "response": [
                 {
-                    "correctAnswer": "Gentoo",
                     "id": "max-response",
                     "prompt": "Most common Penguin:",
                     "required": true,
@@ -322,7 +352,6 @@
                     ]
                 },
                 {
-                    "correctAnswer": "Adelie",
                     "id": "min-response",
                     "prompt": "Least common Penguin:",
                     "required": true,
@@ -343,6 +372,16 @@
                         }
                     ]
                 }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "max-response",
+                    "answer": "Gentoo"
+                },
+                {
+                    "id": "min-response",
+                    "answer": "Adelie"
+                }
             ]
         },
         "paintBrush_q1": {
@@ -358,7 +397,6 @@
             },
             "response": [
                 {
-                    "correctAnswer": 28,
                     "id": "response",
                     "prompt": "Answer:",
                     "required": true,
@@ -366,6 +404,12 @@
                     "type": "numerical",
                     "max": 100,
                     "min": 0
+                }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "response",
+                    "answer": 28
                 }
             ]
         },
@@ -382,7 +426,6 @@
             },
             "response": [
                 {
-                    "correctAnswer": "Action",
                     "id": "max-response",
                     "prompt": "Most common Genre:",
                     "required": true,
@@ -408,7 +451,6 @@
                     ]
                 },
                 {
-                    "correctAnswer": "Comedy",
                     "id": "min-response",
                     "prompt": "Least common Genre:",
                     "required": true,
@@ -432,6 +474,16 @@
                             "value": "Drama"
                         }
                     ]
+                }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "max-response",
+                    "answer": "Action"
+                },
+                {
+                    "id": "min-response",
+                    "answer": "Comedy"
                 }
             ]
         },
