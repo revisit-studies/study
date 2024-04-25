@@ -1,38 +1,40 @@
 // eslint-disable-next-line import/no-unresolved
 import latinSquare from '@quentinroy/latin-square';
-import { OrderObject, StudyConfig } from '../parser/types';
+import { ComponentBlock, StudyConfig } from '../parser/types';
 import { deepCopy } from './deepCopy';
 import { Sequence } from '../store/types';
 
-function _orderObjectToSequence(
-  order: OrderObject,
+function _componentBlockToSequence(
+  order: ComponentBlock,
   latinSquareObject: Record<string, string[][]>,
   path: string,
 ): Sequence {
-  // eslint-disable-next-line no-plusplus
-  for (let i = 0; i < order.components.length; i++) {
-    const curr = order.components[i];
-    if (typeof curr !== 'string') {
-      order.components[i] = _orderObjectToSequence(curr, latinSquareObject, `${path}-${i}`) as unknown as OrderObject;
-    }
-  }
+  let computedComponents: (string | ComponentBlock | string[])[] = order.components;
 
   if (order.order === 'random') {
     const randomArr = order.components.sort(() => 0.5 - Math.random());
 
-    order.components = randomArr;
+    computedComponents = randomArr;
   } else if (order.order === 'latinSquare' && latinSquareObject) {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-    order.components = latinSquareObject[path].pop()!.map((o) => {
-      if (o.startsWith('_orderObj')) {
-        return order.components[+o.slice(9)];
+    computedComponents = latinSquareObject[path].pop()!.map((o) => {
+      if (o.startsWith('_componentBlock')) {
+        return order.components[+o.slice('_componentBlock'.length)];
       }
 
       return o;
     });
   }
 
-  let computedComponents: (string | OrderObject | string[])[] = order.components.slice(0, order.numSamples !== undefined ? order.numSamples : undefined).flat();
+  computedComponents = computedComponents.slice(0, order.numSamples);
+
+  for (let i = 0; i < computedComponents.length; i += 1) {
+    const curr = computedComponents[i];
+    if (typeof curr !== 'string' && !Array.isArray(curr)) {
+      const index = order.components.indexOf(curr);
+      computedComponents[i] = _componentBlockToSequence(curr, latinSquareObject, `${path}-${index}`) as unknown as ComponentBlock;
+    }
+  }
 
   // If we have a break, insert it into the sequence at the correct intervals
   if (order.interruptions) {
@@ -77,21 +79,23 @@ function _orderObjectToSequence(
   }
 
   return {
+    id: order.id,
     orderPath: path,
     components: computedComponents.flat() as Sequence['components'],
+    skip: order.skip,
   };
 }
 
-function orderObjectToSequence(
-  order: OrderObject,
+function componentBlockToSequence(
+  order: ComponentBlock,
   latinSquareObject: Record<string, string[][]>,
 ): Sequence {
   const orderCopy = deepCopy(order);
 
-  return _orderObjectToSequence(orderCopy, latinSquareObject, 'root');
+  return _componentBlockToSequence(orderCopy, latinSquareObject, 'root');
 }
 
-function _createRandomOrders(order: OrderObject, paths: string[], path: string, index = 0) {
+function _createRandomOrders(order: ComponentBlock, paths: string[], path: string, index = 0) {
   const newPath = path.length > 0 ? `${path}-${index}` : 'root';
   if (order.order === 'latinSquare') {
     paths.push(newPath);
@@ -104,7 +108,7 @@ function _createRandomOrders(order: OrderObject, paths: string[], path: string, 
   });
 }
 
-function createRandomOrders(order: OrderObject) {
+function createRandomOrders(order: ComponentBlock) {
   const paths: string[] = [];
   _createRandomOrders(order, paths, '', 0);
 
@@ -114,16 +118,16 @@ function createRandomOrders(order: OrderObject) {
 function generateLatinSquare(config: StudyConfig, path: string) {
   const pathArr = path.split('-');
 
-  let locationInSequence: Partial<OrderObject> | string = {};
+  let locationInSequence: Partial<ComponentBlock> | string = {};
   pathArr.forEach((p) => {
     if (p === 'root') {
       locationInSequence = config.sequence;
     } else {
-      locationInSequence = (locationInSequence as OrderObject).components[+p];
+      locationInSequence = (locationInSequence as ComponentBlock).components[+p];
     }
   });
 
-  const options = (locationInSequence as OrderObject).components.map((c: unknown, i: number) => (typeof c === 'string' ? c : `_orderObj${i}`));
+  const options = (locationInSequence as ComponentBlock).components.map((c: unknown, i: number) => (typeof c === 'string' ? c : `_componentBlock${i}`));
   const newSquare: string[][] = latinSquare<string>(options.sort(() => 0.5 - Math.random()), true);
   return newSquare;
 }
@@ -139,7 +143,7 @@ export function generateSequenceArray(config: StudyConfig): Sequence[] {
   const sequenceArray: Sequence[] = [];
   Array.from({ length: numSequences }).forEach(() => {
     // Generate a sequence
-    const sequence = orderObjectToSequence(config.sequence, latinSquareObject);
+    const sequence = componentBlockToSequence(config.sequence, latinSquareObject);
     sequence.components.push('end');
 
     // Add the sequence to the array

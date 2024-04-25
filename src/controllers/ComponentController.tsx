@@ -11,8 +11,8 @@ import { useStoredAnswer } from '../store/hooks/useStoredAnswer';
 import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
 import { isInheritedComponent } from '../parser/parser';
 import { IndividualComponent } from '../parser/types';
-import { disableBrowserBack } from '../utils/disableBrowserBack';
-import { useStorageEngine } from '../store/storageEngineHooks';
+import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
+import { useStorageEngine } from '../storage/storageEngineHooks';
 import { useFlatSequence, useStoreActions, useStoreDispatch } from '../store/store';
 import { StudyEnd } from '../components/StudyEnd';
 
@@ -28,7 +28,7 @@ export default function ComponentController() {
   const status = useStoredAnswer();
 
   // Disable browser back button from all stimuli
-  disableBrowserBack();
+  useDisableBrowserBack();
 
   // Check if we have issues connecting to the database, if so show alert modal
   const { storageEngine } = useStorageEngine();
