@@ -7,7 +7,7 @@ import { SummaryPanel } from './SummaryPanel';
 import { GlobalConfig, StudyConfig } from '../../parser/types';
 import { initializeStorageEngine } from '../../storage/initialize';
 import { getStudyConfig } from '../../utils/fetchConfig';
-import { useStorageEngine } from '../../store/storageEngineHooks';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 
 export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {

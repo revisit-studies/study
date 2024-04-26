@@ -4,7 +4,7 @@ import {
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/hooks/useAuth';
-import { useStorageEngine } from '../store/storageEngineHooks';
+import { useStorageEngine } from '../storage/storageEngineHooks';
 import { FirebaseStorageEngine } from '../storage/engines/FirebaseStorageEngine';
 
 export function AdminDashboard() {

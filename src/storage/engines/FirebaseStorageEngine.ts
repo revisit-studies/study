@@ -471,6 +471,14 @@ export class FirebaseStorageEngine extends StorageEngine {
     return !(authInfo?.isEnabled);
   }
 
+  // async addAdminUser(email: string) {
+  //   const adminUsers = await this.getUserManagementData('adminUsers');
+
+  //   if (adminUsers) {
+
+  //   }
+  // }
+
   async getAllParticipantsDataByStudy(studyId:string) {
     const currentCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
 
