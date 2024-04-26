@@ -67,7 +67,7 @@ function ConfigSwitcher({ globalConfig, studyConfigs }: Props) {
                   <>
                     <Flex align="center" direction="row">
                       <IconAlertTriangle color="red" />
-                      <Text fw="bold" ml={8}>{configName}</Text>
+                      <Text fw="bold" ml={8} color="red">{configName}</Text>
                     </Flex>
                     <ErrorLoadingConfig errors={config.errors} />
                   </>
