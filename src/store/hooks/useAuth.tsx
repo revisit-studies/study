@@ -137,10 +137,12 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
 
     // Get authentication
     let auth: Auth;
-    try {
-      auth = getAuth();
-    } catch (error) {
-      console.warn('No firebase store.');
+    if (storageEngine instanceof FirebaseStorageEngine) {
+      try {
+        auth = getAuth();
+      } catch (error) {
+        console.warn('No firebase store.');
+      }
     }
 
     // Handle auth state changes for Firebase

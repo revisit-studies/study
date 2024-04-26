@@ -7,12 +7,16 @@ import { SummaryPanel } from './SummaryPanel';
 import { GlobalConfig, StudyConfig } from '../../parser/types';
 import { initializeStorageEngine } from '../../storage/initialize';
 import { getStudyConfig } from '../../utils/fetchConfig';
+import { useStorageEngine } from '../../store/storageEngineHooks';
+import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 
 export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
   const { globalConfig } = props;
   const [loading, setLoading] = useState(false);
   const [expData, setExpData] = useState<Record<string, ParticipantData[]>>({});
   const [expConfig, setExpConfig] = useState<Record<string, StudyConfig>>({});
+  const { storageEngine } = useStorageEngine();
+
   useEffect(() => {
     const init = async () => {
       setLoading(true);
@@ -20,12 +24,18 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
       const allConfig: Record<string, StudyConfig> = {};
 
       const fetchData = async (studyId: string) => {
-        const storageEngine = await initializeStorageEngine();
-        const config = await getStudyConfig(studyId, globalConfig);
-        if (config === null) return;
-        await storageEngine.initializeStudyDb(studyId, config as StudyConfig);
-        allData[studyId] = await storageEngine.getAllParticipantsData();
-        allConfig[studyId] = config;
+        // const storageEngine = await initializeStorageEngine();
+        // const config = await getStudyConfig(studyId, globalConfig);
+        // if (config === null) return;
+        // await storageEngine.initializeStudyDb(studyId, config as StudyConfig);
+        // allData[studyId] = await storageEngine.getAllParticipantsData();
+        // allConfig[studyId] = config;
+        if (storageEngine instanceof FirebaseStorageEngine) {
+          const config = await getStudyConfig(studyId, globalConfig);
+          allData[studyId] = await storageEngine.getAllParticipantsDataByStudy(studyId);
+          if (config === null) return;
+          allConfig[studyId] = config;
+        }
       };
 
       const fetchAllData = async () => {
@@ -43,7 +53,7 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
       await fetchAllData();
     };
     init();
-  }, []);
+  }, [storageEngine]);
 
   return (
     <Box>

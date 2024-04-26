@@ -35,7 +35,6 @@ export function AdminDashboard() {
       setAuthEnabled(currentAuthEnabledValue);
     }
     setLoading(false);
-    // Get current value
   };
 
   return (
@@ -43,7 +42,7 @@ export function AdminDashboard() {
       <Card>
         <UnstyledButton
           style={{
-            position: 'absolute', top: '30px', right: '30px', color: isAuthEnabled ? 'green' : 'red',
+            color: isAuthEnabled ? 'green' : 'red',
           }}
           onClick={() => {
             handleChangeAuth();
