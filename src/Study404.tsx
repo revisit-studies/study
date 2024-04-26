@@ -12,9 +12,7 @@ export default function StudyNotFound() {
         <Title order={3}>
           <Text span c="orange">Study ID</Text>
           {' '}
-          not Found, plase check valid Study ID on your global config, or visit the
-          {' '}
-          <Anchor onClick={() => navigate('/')}>Landing Page</Anchor>
+          not Found, plase check valid Study ID on your global config, or contact the administrator.
         </Title>
       </Center>
     </Container>

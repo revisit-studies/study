@@ -51,7 +51,7 @@ export default function ComponentController() {
   }
 
   if (currentComponent === 'Notfound') {
-    return <TrialNotFound />;
+    return <TrialNotFound email={studyConfig.uiConfig.contactEmail} />;
   }
 
   const currentConfig = isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
