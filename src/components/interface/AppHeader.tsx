@@ -15,7 +15,7 @@ import {
   IconMail,
   IconSchema,
 } from '@tabler/icons-react';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useHref } from 'react-router-dom';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import {
