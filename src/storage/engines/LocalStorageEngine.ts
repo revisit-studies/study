@@ -181,7 +181,7 @@ export class LocalStorageEngine extends StorageEngine {
     return returnArray;
   }
 
-  async getAllParticipantsDataByStudy(studyId:string) {
+  async getAllParticipantsDataByStudy(studyId: string) {
     const currStudyDatabase = localforage.createInstance({
       name: studyId,
     });

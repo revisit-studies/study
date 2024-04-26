@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box, Grid, LoadingOverlay, Title,
 } from '@mantine/core';
@@ -7,7 +7,6 @@ import { SummaryPanel } from './SummaryPanel';
 import { GlobalConfig, StudyConfig } from '../../parser/types';
 import { getStudyConfig } from '../../utils/fetchConfig';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 
 export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
   const { globalConfig } = props;
@@ -45,7 +44,7 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
       await fetchAllData();
     };
     init();
-  }, [storageEngine]);
+  }, [globalConfig, storageEngine]);
 
   return (
     <Box>
