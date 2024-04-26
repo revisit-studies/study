@@ -77,7 +77,7 @@ export function Shell({ globalConfig }: {
         ip: null,
       };
 
-      fetch('https://api.ipify.org?format=json')
+      await fetch('https://api.ipify.org?format=json')
         .then((response) => response.json())
         .then((data) => {
           metadata.ip = data.ip;
