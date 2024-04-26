@@ -70,21 +70,14 @@ export function Shell({ globalConfig }: {
       const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) || undefined : undefined;
       const searchParamsObject = Object.fromEntries(searchParams.entries());
 
+      const ip = await (await fetch('https://api.ipify.org?format=json')).json();
+
       const metadata: ParticipantMetadata = {
         language: navigator.language,
         userAgent: navigator.userAgent,
-        resolution: window.screen,
-        ip: null,
+        resolution: JSON.parse(JSON.stringify(window.screen)),
+        ip: ip.ip,
       };
-
-      await fetch('https://api.ipify.org?format=json')
-        .then((response) => response.json())
-        .then((data) => {
-          metadata.ip = data.ip;
-        })
-        .catch((error) => {
-          console.error('Error fetching IP:', error);
-        });
 
       const participantSession = await storageEngine.initializeParticipantSession(searchParamsObject, activeConfig, metadata, urlParticipantId);
 
