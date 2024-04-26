@@ -17,17 +17,17 @@ async function fetchGlobalConfigArray() {
 }
 
 async function fetchStudyConfigs(globalConfig: GlobalConfig) {
-  const studyConfigs: { [key: string]: StudyConfig } = {};
+  const studyConfigs: Record<string, StudyConfig> = {};
   const urls = globalConfig.configsList.map(
     (configId) => `${PREFIX}${globalConfig.configs[configId].path}`,
   );
 
-  const res = await Promise.all(urls.map((u) => fetch(u)))
-    .then((responses) => Promise.all(responses.map((_res) => _res.text())))
-    .then((responses) => Promise.all(responses.map((_res, idx) => parseStudyConfig(_res, globalConfig.configsList[idx]))));
+  const res = await Promise.all(urls.map((u) => fetch(u)));
+  const responses = await Promise.all(res.map((_res) => _res.text()));
+  const configs = await Promise.all(responses.map((_res, idx) => parseStudyConfig(_res, globalConfig.configsList[idx])));
 
   globalConfig.configsList.forEach((configId, idx) => {
-    studyConfigs[configId] = res[idx];
+    studyConfigs[configId] = configs[idx];
   });
   return studyConfigs;
 }
