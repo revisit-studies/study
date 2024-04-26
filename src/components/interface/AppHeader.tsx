@@ -31,7 +31,7 @@ export default function AppHeader() {
   const { config: studyConfig } = useStoreSelector((state) => state);
   const flatSequence = useFlatSequence();
   const storeDispatch = useStoreDispatch();
-  const { toggleShowHelpText, toggleShowAdmin } = useStoreActions();
+  const { toggleShowHelpText, toggleStudyBrowser } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
   const currentStep = useCurrentStep();
@@ -75,7 +75,7 @@ export default function AppHeader() {
 
         <Grid.Col span={4}>
           <Group noWrap position="right">
-            {import.meta.env.VITE_REVISIT_MODE === 'public' ? <Tooltip multiline withArrow arrowSize={6} width={300} label="This is a demo version of the study, we’re not collecting any data. Navigate the study via the Study Navigitor on the right."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip> : null}
+            {import.meta.env.VITE_REVISIT_MODE === 'public' ? <Tooltip multiline withArrow arrowSize={6} width={300} label="This is a demo version of the study, we’re not collecting any data. Navigate the study via the study browser on the right."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip> : null}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"
@@ -101,9 +101,9 @@ export default function AppHeader() {
                 <Menu.Dropdown>
                   <Menu.Item
                     icon={<IconSchema size={14} />}
-                    onClick={() => storeDispatch(toggleShowAdmin())}
+                    onClick={() => storeDispatch(toggleStudyBrowser())}
                   >
-                    Sequence Navigator
+                    Study Browser
                   </Menu.Item>
 
                   <Menu.Item

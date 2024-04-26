@@ -137,6 +137,6 @@ test('test', async ({ page }) => {
   await page.locator('#mantine-r1-target').click();
   await page.getByRole('menuitem', { name: 'Admin Mode' }).click();
 
-  const sequenceHeader = await page.getByText('Study Sequence');
+  const sequenceHeader = await page.getByText('Study Browser');
   await expect(sequenceHeader).toBeVisible();
 });
