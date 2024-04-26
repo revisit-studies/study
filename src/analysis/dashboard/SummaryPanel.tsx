@@ -46,7 +46,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
       const inProgressData: ParticipantData[] = [];
 
       inRangeData.forEach((d) => {
-        if (isStudyCompleted(d)) {
+        if (d.completed) {
           completedData.push(d);
         } else {
           inProgressData.push(d);
