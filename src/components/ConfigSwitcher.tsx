@@ -76,8 +76,7 @@ function ConfigSwitcher({ globalConfig, studyConfigs }: Props) {
                   <>
                     <Text fw="bold">{config.studyMetadata.title}</Text>
                     <Text c="dimmed">
-                      Authors:
-                      {config.studyMetadata.authors}
+                      {`Authors: ${config.studyMetadata.authors}`}
                     </Text>
                     <Text c="dimmed">{config.studyMetadata.description}</Text>
                     <Text c="dimmed" ta="right" style={{ paddingRight: 5 }}>
