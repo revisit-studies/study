@@ -31,6 +31,7 @@ import { generateSequenceArray } from '../utils/handleRandomSequences';
 import { getStudyConfig } from '../utils/fetchConfig';
 import { ParticipantMetadata } from '../store/types';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
+import StudyNotFound from '../Study404';
 
 export function Shell({ globalConfig }: {
   globalConfig: GlobalConfig;
