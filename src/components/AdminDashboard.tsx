@@ -31,7 +31,8 @@ export function AdminDashboard() {
   const handleChangeAuth = async () => {
     setLoading(true);
     if (storageEngine instanceof FirebaseStorageEngine) {
-      await storageEngine?.enableDisableAuth();
+      const currentAuthEnabledValue = await storageEngine?.enableDisableAuth();
+      setAuthEnabled(currentAuthEnabledValue);
     }
     setLoading(false);
     // Get current value

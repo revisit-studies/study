@@ -474,9 +474,10 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   async enableDisableAuth() {
     const authInfo = await this.getUserManagementData('authentication');
-    return await setDoc(doc(this.firestore, 'user-management', 'authentication'), {
+    await setDoc(doc(this.firestore, 'user-management', 'authentication'), {
       isEnabled: !(authInfo?.isEnabled),
     });
+    return !(authInfo?.isEnabled);
   }
 
   private _verifyStudyDatabase(db: CollectionReference<DocumentData, DocumentData> | undefined): db is CollectionReference<DocumentData, DocumentData> {
