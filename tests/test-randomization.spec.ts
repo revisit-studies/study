@@ -3,7 +3,7 @@ import { getSequenceFlatMap } from '../src/utils/getSequenceFlatMap';
 import { ParticipantData } from '../src/storage/types';
 
 test('test', async ({ page }) => {
-  await page.goto('/demo-randomization-test');
+  await page.goto('/test-randomization');
 
   // Check for introduction page
   const introText = await page.getByText('This is a test file for the introduction of the project.');
@@ -12,7 +12,7 @@ test('test', async ({ page }) => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sequenceArray: any[] = await page.evaluate(async () => {
     let db;
-    const request = indexedDB.open('demo-randomization-test');
+    const request = indexedDB.open('test-randomization');
 
     return new Promise((resolve) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -28,7 +28,7 @@ test('test', async ({ page }) => {
 
   const currentParticipant: ParticipantData = await page.evaluate(async () => {
     let db;
-    const request = indexedDB.open('demo-randomization-test');
+    const request = indexedDB.open('test-randomization');
 
     return new Promise((resolve) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -121,6 +121,17 @@ test('test', async ({ page }) => {
   expect(globalOcurrences.trial8).toBe(500);
   expect(globalOcurrences.trial9).toBe(500);
   expect(globalOcurrences.trial10).toBe(500);
+
+  expect(globalOcurrences.trial11).toBe(500);
+  expect(globalOcurrences.trial12).toBe(500);
+  expect(globalOcurrences.trial13).toBe(500);
+  expect(globalOcurrences.trial14).toBe(500);
+  expect(globalOcurrences.trial15).toBe(500);
+  expect(globalOcurrences.trial16).toBe(500);
+  expect(globalOcurrences.trial17).toBe(500);
+  expect(globalOcurrences.trial18).toBe(500);
+  expect(globalOcurrences.trial19).toBe(500);
+  expect(globalOcurrences.trial20).toBe(500);
 
   // Check to make sure that the admin panel renders with such a complex sequence
   await page.locator('#mantine-r1-target').click();

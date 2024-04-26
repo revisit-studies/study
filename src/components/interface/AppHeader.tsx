@@ -21,7 +21,7 @@ import { useCurrentStep, useStudyId } from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,
 } from '../../store/store';
-import { useStorageEngine } from '../../store/storageEngineHooks';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { PREFIX } from '../../utils/Prefix';
 
 export default function AppHeader() {

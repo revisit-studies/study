@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { GlobalConfig, StudyConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { PREFIX } from '../utils/Prefix';
+import { useAuth } from '../store/hooks/useAuth';
+import { useStorageEngine } from '../storage/storageEngineHooks';
 
 const REVISIT_GITHUB_PUBLIC = 'https://github.com/revisit-studies/study/tree/main/public/';
 
@@ -16,9 +18,21 @@ type Props = {
 function ConfigSwitcher({ globalConfig, studyConfigs }: Props) {
   const { configsList } = globalConfig;
   const navigate = useNavigate();
+  const { logout } = useAuth();
+  const { storageEngine } = useStorageEngine();
 
   return (
     <Container size="xs" px="xs" style={{ marginTop: 100, marginBottom: 100 }}>
+      {storageEngine?.getEngine() === 'firebase' ? (
+        <UnstyledButton
+          style={{ position: 'absolute', top: '30px', right: '30px' }}
+          onClick={() => {
+            logout();
+          }}
+        >
+          Logout
+        </UnstyledButton>
+      ) : null}
       <Image
         maw={150}
         mx="auto"
@@ -47,8 +61,7 @@ function ConfigSwitcher({ globalConfig, studyConfigs }: Props) {
             <Card shadow="sm" radius="md" withBorder>
               <Text fw="bold">{config.studyMetadata.title}</Text>
               <Text c="dimmed">
-                Authors:
-                {config.studyMetadata.authors}
+                {`Authors: ${config.studyMetadata.authors}`}
               </Text>
               <Text c="dimmed">{config.studyMetadata.description}</Text>
               <Text c="dimmed" ta="right" style={{ paddingRight: 5 }}>

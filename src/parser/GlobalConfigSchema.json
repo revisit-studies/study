@@ -34,12 +34,20 @@
             "type": "string"
           },
           "type": "array"
+        },
+        "adminUsers":{
+          "description":"A required property used to list emails of those who require admin access.",
+          "items":{
+            "type":"string"
+          },
+          "type":"array"
         }
       },
       "required": [
         "$schema",
         "configs",
-        "configsList"
+        "configsList",
+        "adminUsers"
       ],
       "type": "object"
     }

@@ -6,6 +6,9 @@ import { parseGlobalConfig, parseStudyConfig } from './parser/parser';
 import { GlobalConfig, Nullable, StudyConfig } from './parser/types';
 import { AnalysisInterface } from './analysis/AnalysisInterface';
 import { PREFIX } from './utils/Prefix';
+import { ProtectedRoute } from './ProtectedRoute';
+import { Login } from './Login';
+import { AuthProvider } from './store/hooks/useAuth';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
@@ -52,26 +55,41 @@ export function GlobalConfigParser() {
 
   return globalConfig ? (
     <BrowserRouter basename={PREFIX}>
-      <Routes>
-        <Route
-          path="/"
-          element={(
-            <ConfigSwitcher
-              globalConfig={globalConfig}
-              studyConfigs={studyConfigs}
-            />
-          )}
-        />
-        <Route
-          path="/:studyId/*"
-          element={<Shell globalConfig={globalConfig} />}
-        />
-
-        <Route
-          path="/analysis/:page"
-          element={<AnalysisInterface globalConfig={globalConfig} />}
-        />
-      </Routes>
+      <AuthProvider globalConfig={globalConfig}>
+        <Routes>
+          <Route
+            path="/"
+            element={(
+              <ProtectedRoute>
+                <ConfigSwitcher
+                  globalConfig={globalConfig}
+                  studyConfigs={studyConfigs}
+                />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/:studyId/*"
+            element={<Shell globalConfig={globalConfig} />}
+          />
+          <Route
+            path="/analysis/:page"
+            element={(
+              <ProtectedRoute>
+                <AnalysisInterface
+                  globalConfig={globalConfig}
+                />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/login"
+            element={(
+              <Login />
+            )}
+          />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   ) : null;
 }
