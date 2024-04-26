@@ -24,12 +24,6 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
       const allConfig: Record<string, StudyConfig> = {};
 
       const fetchData = async (studyId: string) => {
-        // const storageEngine = await initializeStorageEngine();
-        // const config = await getStudyConfig(studyId, globalConfig);
-        // if (config === null) return;
-        // await storageEngine.initializeStudyDb(studyId, config as StudyConfig);
-        // allData[studyId] = await storageEngine.getAllParticipantsData();
-        // allConfig[studyId] = config;
         if (storageEngine instanceof FirebaseStorageEngine) {
           const config = await getStudyConfig(studyId, globalConfig);
           allData[studyId] = await storageEngine.getAllParticipantsDataByStudy(studyId);

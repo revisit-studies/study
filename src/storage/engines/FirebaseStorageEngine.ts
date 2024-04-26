@@ -481,10 +481,6 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   async getAllParticipantsDataByStudy(studyId:string) {
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
-
     const currentCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
 
     // Get all participants
