@@ -47,7 +47,7 @@ export default function AppHeader() {
   const studyId = useStudyId();
   const studyHref = useHref(`/${studyId}`);
 
-  const getNewParticipant = useCallback(() => {
+  function getNewParticipant() {
     storageEngine?.nextParticipant(studyConfig)
       .then(() => {
         window.location.href = studyHref;
@@ -55,7 +55,7 @@ export default function AppHeader() {
       .catch((err) => {
         console.error(err);
       });
-  }, [storageEngine, studyConfig, studyHref]);
+  }
 
   useEffect(() => {
     async function checkParticipantConfigHash() {
@@ -71,7 +71,7 @@ export default function AppHeader() {
     if (import.meta.env.DEV) {
       checkParticipantConfigHash();
     }
-  }, [storageEngine, getNewParticipant, studyConfig]);
+  }, [storageEngine, studyConfig]);
 
   return (
     <Header height="70" p="md">
