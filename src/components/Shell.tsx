@@ -43,13 +43,6 @@ export function Shell({ globalConfig }: {
     });
   }, [globalConfig, studyId]);
 
-  // fetch('https://api.geoapify.com/v1/ipinfo?apiKey=YOUR_API_KEY_HERE')
-  //   .then((response) => response.json())
-  //   .then((data) => {
-  //   // You can now access the location data in the "data" object
-  //     console.log(data);
-  //   });
-
   const [routes, setRoutes] = useState<RouteObject[]>([]);
   const [store, setStore] = useState<Nullable<StudyStore>>(null);
   const { storageEngine } = useStorageEngine();
