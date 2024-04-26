@@ -1,18 +1,21 @@
 import {
-  Anchor, Card, Container, Image, Text, UnstyledButton,
+  Anchor, Card, Container, Flex, Image, List, Text, UnstyledButton,
 } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
+import { IconAlertTriangle } from '@tabler/icons-react';
+import { ErrorObject } from 'ajv';
 import { GlobalConfig, StudyConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { PREFIX } from '../utils/Prefix';
 import { useAuth } from '../store/hooks/useAuth';
 import { useStorageEngine } from '../storage/storageEngineHooks';
+import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 
 const REVISIT_GITHUB_PUBLIC = 'https://github.com/revisit-studies/study/tree/main/public/';
 
 type Props = {
   globalConfig: GlobalConfig;
-  studyConfigs: {[key: string]: StudyConfig};
+  studyConfigs: {[key: string]: StudyConfig & { errors?: ErrorObject<string, Record<string, unknown>, unknown>[] }};
 };
 
 function ConfigSwitcher({ globalConfig, studyConfigs }: Props) {
@@ -59,22 +62,36 @@ function ConfigSwitcher({ globalConfig, studyConfigs }: Props) {
             style={{ width: '100%' }}
           >
             <Card shadow="sm" radius="md" withBorder>
-              <Text fw="bold">{config.studyMetadata.title}</Text>
-              <Text c="dimmed">
-                {`Authors: ${config.studyMetadata.authors}`}
-              </Text>
-              <Text c="dimmed">{config.studyMetadata.description}</Text>
-              <Text c="dimmed" ta="right" style={{ paddingRight: 5 }}>
-                <Anchor
-                  target="_blank"
-                  onClick={(e) => e.stopPropagation()}
-                  href={`${REVISIT_GITHUB_PUBLIC}${url}`}
-                >
-                  View source:
-                  {' '}
-                  {url}
-                </Anchor>
-              </Text>
+              {config.errors
+                ? (
+                  <>
+                    <Flex align="center" direction="row">
+                      <IconAlertTriangle color="red" />
+                      <Text fw="bold" ml={8} color="red">{configName}</Text>
+                    </Flex>
+                    <ErrorLoadingConfig errors={config.errors} />
+                  </>
+                )
+                : (
+                  <>
+                    <Text fw="bold">{config.studyMetadata.title}</Text>
+                    <Text c="dimmed">
+                      {`Authors: ${config.studyMetadata.authors}`}
+                    </Text>
+                    <Text c="dimmed">{config.studyMetadata.description}</Text>
+                    <Text c="dimmed" ta="right" style={{ paddingRight: 5 }}>
+                      <Anchor
+                        target="_blank"
+                        onClick={(e) => e.stopPropagation()}
+                        href={`${REVISIT_GITHUB_PUBLIC}${url}`}
+                      >
+                        View source:
+                        {' '}
+                        {url}
+                      </Anchor>
+                    </Text>
+                  </>
+                )}
             </Card>
           </UnstyledButton>
         );

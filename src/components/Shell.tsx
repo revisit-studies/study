@@ -6,7 +6,10 @@ import { Provider } from 'react-redux';
 import {
   RouteObject, useRoutes, useSearchParams,
 } from 'react-router-dom';
-import { Box, Center, Loader } from '@mantine/core';
+import {
+  Box, Center, Loader, Title,
+} from '@mantine/core';
+import { ErrorObject } from 'ajv';
 import {
   GlobalConfig,
   Nullable,
@@ -26,6 +29,7 @@ import { StepRenderer } from './StepRenderer';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
 import { getStudyConfig } from '../utils/fetchConfig';
+import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 
 export function Shell({ globalConfig }: {
   globalConfig: GlobalConfig;
@@ -35,7 +39,7 @@ export function Shell({ globalConfig }: {
   if (!studyId || !globalConfig.configsList.find((c) => sanitizeStringForUrl(c))) {
     throw new Error('Study id invalid');
   }
-  const [activeConfig, setActiveConfig] = useState<Nullable<StudyConfig>>(null);
+  const [activeConfig, setActiveConfig] = useState<Nullable<StudyConfig & { errors?: ErrorObject<string, Record<string, unknown>, unknown>[] }>>(null);
   useEffect(() => {
     getStudyConfig(studyId, globalConfig).then((config) => {
       setActiveConfig(config);
@@ -77,7 +81,12 @@ export function Shell({ globalConfig }: {
           },
           {
             path: '/:index',
-            element: <ComponentController />,
+            element: activeConfig.errors ? (
+              <>
+                <Title order={2} mb={8}>Error loading config</Title>
+                <ErrorLoadingConfig errors={activeConfig.errors} />
+              </>
+            ) : <ComponentController />,
           },
         ],
       }]);
