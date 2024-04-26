@@ -29,8 +29,9 @@ import { StepRenderer } from './StepRenderer';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
 import { getStudyConfig } from '../utils/fetchConfig';
-import StudyNotFound from '../Study404';
+import { ParticipantMetadata } from '../store/types';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
+import StudyNotFound from '../Study404';
 
 export function Shell({ globalConfig }: {
   globalConfig: GlobalConfig;
@@ -65,10 +66,20 @@ export function Shell({ globalConfig }: {
       // Get or generate participant session
       const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) || undefined : undefined;
       const searchParamsObject = Object.fromEntries(searchParams.entries());
-      const participantSession = await storageEngine.initializeParticipantSession(searchParamsObject, activeConfig, urlParticipantId);
+
+      const ip = await (await fetch('https://api.ipify.org?format=json')).json().catch((_) => '');
+
+      const metadata: ParticipantMetadata = {
+        language: navigator.language,
+        userAgent: navigator.userAgent,
+        resolution: JSON.parse(JSON.stringify(window.screen)),
+        ip: ip.ip || '',
+      };
+
+      const participantSession = await storageEngine.initializeParticipantSession(searchParamsObject, activeConfig, metadata, urlParticipantId);
 
       // Initialize the redux stores
-      const newStore = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, participantSession.answers);
+      const newStore = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, metadata, participantSession.answers);
       setStore(newStore);
 
       // Initialize the routing

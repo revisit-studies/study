@@ -1,5 +1,5 @@
 import { StudyConfig } from '../../parser/types';
-import { Sequence, StoredAnswer } from '../../store/types';
+import { ParticipantMetadata, Sequence, StoredAnswer } from '../../store/types';
 import { ParticipantData } from '../types';
 
 export abstract class StorageEngine {
@@ -25,7 +25,7 @@ export abstract class StorageEngine {
 
   abstract initializeStudyDb(studyId: string, config: StudyConfig): Promise<void>;
 
-  abstract initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, urlParticipantId?: string): Promise<ParticipantData>;
+  abstract initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, metadata: ParticipantMetadata, urlParticipantId?: string): Promise<ParticipantData>;
 
   abstract getCurrentConfigHash(): Promise<string>;
 
@@ -45,7 +45,7 @@ export abstract class StorageEngine {
 
   abstract getParticipantData(): Promise<ParticipantData | null>;
 
-  abstract nextParticipant(config: StudyConfig): Promise<ParticipantData>;
+  abstract nextParticipant(config: StudyConfig, metadata: ParticipantMetadata): Promise<ParticipantData>;
 
   abstract verifyCompletion(answers: Record<string, StoredAnswer>): Promise<boolean>;
 }
