@@ -472,6 +472,13 @@ export class FirebaseStorageEngine extends StorageEngine {
     return false;
   }
 
+  async enableDisableAuth() {
+    const authInfo = await this.getUserManagementData('authentication');
+    return await setDoc(doc(this.firestore, 'user-management', 'authentication'), {
+      isEnabled: !(authInfo?.isEnabled),
+    });
+  }
+
   private _verifyStudyDatabase(db: CollectionReference<DocumentData, DocumentData> | undefined): db is CollectionReference<DocumentData, DocumentData> {
     return db !== undefined;
   }

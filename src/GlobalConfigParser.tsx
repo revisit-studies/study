@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import ConfigSwitcher from './components/ConfigSwitcher';
 import { Shell } from './components/Shell';
+import { AdminDashboard } from './components/AdminDashboard';
 import { parseGlobalConfig, parseStudyConfig } from './parser/parser';
 import { GlobalConfig, Nullable, StudyConfig } from './parser/types';
 import { AnalysisInterface } from './analysis/AnalysisInterface';
@@ -79,6 +80,14 @@ export function GlobalConfigParser() {
                 <AnalysisInterface
                   globalConfig={globalConfig}
                 />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/admin"
+            element={(
+              <ProtectedRoute>
+                <AdminDashboard />
               </ProtectedRoute>
             )}
           />
