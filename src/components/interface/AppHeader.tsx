@@ -64,7 +64,7 @@ export default function AppHeader() {
         const _participantData = await storageEngine.getParticipantData();
 
         if (_currentConfigHash !== _participantData?.participantConfigHash) {
-          await storageEngine?.nextParticipant(studyConfig);
+          await storageEngine?.nextParticipant(studyConfig, metadata);
         }
       }
     }
