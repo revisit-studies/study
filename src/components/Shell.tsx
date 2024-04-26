@@ -70,13 +70,13 @@ export function Shell({ globalConfig }: {
       const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) || undefined : undefined;
       const searchParamsObject = Object.fromEntries(searchParams.entries());
 
-      const ip = await (await fetch('https://api.ipify.org?format=json')).json();
+      const ip = await (await fetch('https://api.ipify.org?format=json')).json().catch((_) => '');
 
       const metadata: ParticipantMetadata = {
         language: navigator.language,
         userAgent: navigator.userAgent,
         resolution: JSON.parse(JSON.stringify(window.screen)),
-        ip: ip.ip,
+        ip: ip.ip || '',
       };
 
       const participantSession = await storageEngine.initializeParticipantSession(searchParamsObject, activeConfig, metadata, urlParticipantId);
