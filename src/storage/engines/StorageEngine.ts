@@ -25,7 +25,7 @@ export abstract class StorageEngine {
 
   abstract initializeStudyDb(studyId: string, config: StudyConfig): Promise<void>;
 
-  abstract initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, metadata: ParticipantMetadata, urlParticipantId?: string,): Promise<ParticipantData>;
+  abstract initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, metadata: ParticipantMetadata, urlParticipantId?: string): Promise<ParticipantData>;
 
   abstract getCurrentParticipantId(urlParticipantId?: string): Promise<string>;
 
