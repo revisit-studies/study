@@ -471,13 +471,21 @@ export class FirebaseStorageEngine extends StorageEngine {
     return !(authInfo?.isEnabled);
   }
 
-  // async addAdminUser(email: string) {
-  //   const adminUsers = await this.getUserManagementData('adminUsers');
-
-  //   if (adminUsers) {
-
-  //   }
-  // }
+  async addAdminUser(email: string) {
+    const adminUsers = await this.getUserManagementData('adminUsers');
+    if (!adminUsers?.map((storedUser: StoredUser) => storedUser.email).includes(email)) {
+      if (adminUsers) {
+        adminUsers.push({ email, uid: null });
+        await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
+          adminUsersList: adminUsers,
+        });
+      } else {
+        await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
+          adminUsersList: [{ email, uid: null }],
+        });
+      }
+    }
+  }
 
   async getAllParticipantsDataByStudy(studyId:string) {
     const currentCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
