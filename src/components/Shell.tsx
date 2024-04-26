@@ -29,6 +29,7 @@ import { StepRenderer } from './StepRenderer';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
 import { getStudyConfig } from '../utils/fetchConfig';
+import StudyNotFound from '../Study404';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 
 export function Shell({ globalConfig }: {
@@ -36,10 +37,9 @@ export function Shell({ globalConfig }: {
 }) {
   // Pull study config
   const studyId = useStudyId();
-  if (!studyId || !globalConfig.configsList.find((c) => sanitizeStringForUrl(c))) {
-    throw new Error('Study id invalid');
-  }
   const [activeConfig, setActiveConfig] = useState<Nullable<StudyConfig & { errors?: ErrorObject<string, Record<string, unknown>, unknown>[] }>>(null);
+  const isValidStudyId = globalConfig.configsList.find((c) => sanitizeStringForUrl(c) === studyId);
+
   useEffect(() => {
     getStudyConfig(studyId, globalConfig).then((config) => {
       setActiveConfig(config);
@@ -96,18 +96,25 @@ export function Shell({ globalConfig }: {
 
   const routing = useRoutes(routes);
 
-  return !routing || !store
-    ? (
-      <Box style={{ height: '100vh' }}>
-        <Center style={{ height: '100%' }}>
-          <Loader style={{ height: '100%' }} size={60} />
-        </Center>
-      </Box>
+  const loaderOrRouting = !routing || !store ? (
+    <Box style={{ height: '100vh' }}>
+      <Center style={{ height: '100%' }}>
+        <Loader style={{ height: '100%' }} size={60} />
+      </Center>
+    </Box>
+  ) : (
+    <StudyStoreContext.Provider value={store}>
+      <Provider store={store.store}>
+        {routing}
+      </Provider>
+    </StudyStoreContext.Provider>
+  );
+
+  return (
+    isValidStudyId ? (
+      loaderOrRouting
     ) : (
-      <StudyStoreContext.Provider value={store}>
-        <Provider store={store.store}>
-          {routing}
-        </Provider>
-      </StudyStoreContext.Provider>
-    );
+      <StudyNotFound />
+    )
+  );
 }

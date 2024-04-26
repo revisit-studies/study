@@ -1,5 +1,5 @@
 import {
-  Anchor, Card, Container, Flex, Image, List, Text, UnstyledButton,
+  Anchor, Card, Container, Flex, Image, Text, UnstyledButton,
 } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 import { IconAlertTriangle } from '@tabler/icons-react';
