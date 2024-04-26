@@ -1,8 +1,7 @@
 import {
   Anchor,
-  Center, Container, Text, Title,
+  Center, Container, Title,
 } from '@mantine/core';
-import { StudyConfig } from './parser/types';
 
 export default function TrialNotFound(props:{email: string}) {
   const { email } = props;

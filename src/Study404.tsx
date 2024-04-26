@@ -1,11 +1,8 @@
 import {
-  Container, Title, Text, Center, Anchor,
+  Container, Title, Text, Center,
 } from '@mantine/core';
-import { useNavigate } from 'react-router-dom';
 
 export default function StudyNotFound() {
-  const navigate = useNavigate();
-
   return (
     <Container pt={100}>
       <Center>
