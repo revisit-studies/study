@@ -34,7 +34,6 @@ export function AdminDashboard() {
 
   const signInWithGoogle = async () => {
     if (storageEngine instanceof FirebaseStorageEngine) {
-      setLoading(true);
       const provider = new GoogleAuthProvider();
       const auth = getAuth();
       try {
@@ -42,8 +41,6 @@ export function AdminDashboard() {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
         setErrorMessage(error.message);
-      } finally {
-        setLoading(false);
       }
     }
   };
