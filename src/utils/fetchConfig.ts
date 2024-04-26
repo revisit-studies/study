@@ -8,7 +8,7 @@ export async function fetchStudyConfig(configLocation: string, configKey: string
   return parseStudyConfig(config, configKey);
 }
 
-export async function getStudyConfig(studyId:string, globalConfig:GlobalConfig) {
+export async function getStudyConfig(studyId: string, globalConfig: GlobalConfig) {
   const configKey = globalConfig.configsList.find(
     (c) => sanitizeStringForUrl(c) === studyId,
   );

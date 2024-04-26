@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { parse as hjsonParse } from 'hjson';
-import Ajv from 'ajv';
+import Ajv, { ErrorObject } from 'ajv';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
 import {
@@ -44,9 +44,6 @@ export function parseGlobalConfig(fileData: string) {
   }
   console.error('Global config parsing errors', [...(globalValidate.errors || []), ...extraValidation[1]]);
   throw Error('There was an issue validating your file global.json');
-
-  console.error('Global config parsing errors', [...(globalValidate.errors || []), ...extraValidation[1]]);
-  throw Error('There was an issue validating your file global.hjson');
 }
 
 // This function verifies the study config file satisfies conditions that are not covered by the schema
@@ -57,7 +54,7 @@ function verifyStudyConfig(data: StudyConfig) {
   return [componentsVerified, errors] as const;
 }
 
-export function parseStudyConfig(fileData: string, fileName: string) {
+export function parseStudyConfig(fileData: string, fileName: string): StudyConfig & { errors?: ErrorObject<string, Record<string, unknown>, unknown>[] } {
   const data = hjsonParse(fileData);
   const validatedData = studyValidate(data) as boolean;
   const extraValidation = verifyStudyConfig(data);
@@ -65,6 +62,8 @@ export function parseStudyConfig(fileData: string, fileName: string) {
   if (validatedData && extraValidation[0]) {
     return data as StudyConfig;
   }
-  console.error(`${fileName} parsing errors`, [...(studyValidate.errors || []), ...extraValidation[1]]);
-  throw Error(`There was an issue validating your file ${fileName}`);
+  const errors = [...(studyValidate.errors || [])];
+  console.error(`${fileName} parsing errors`, errors);
+
+  return { ...data, errors };
 }

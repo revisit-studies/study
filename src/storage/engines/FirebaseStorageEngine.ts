@@ -87,6 +87,8 @@ export class FirebaseStorageEngine extends StorageEngine {
       // Hash the config
       const configHash = await hash(JSON.stringify(config));
 
+      await this.localForage.setItem('currentConfigHash', configHash);
+
       // Create or retrieve database for study
       this.studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
       this.studyId = studyId;
@@ -148,6 +150,14 @@ export class FirebaseStorageEngine extends StorageEngine {
     await setDoc(participantDoc, participantData);
 
     return participantData;
+  }
+
+  async getCurrentConfigHash() {
+    if (!this._verifyStudyDatabase(this.studyCollection)) {
+      throw new Error('Study database not initialized');
+    }
+
+    return await this.localForage.getItem('currentConfigHash') as string;
   }
 
   async getCurrentParticipantId(urlParticipantId?: string) {
