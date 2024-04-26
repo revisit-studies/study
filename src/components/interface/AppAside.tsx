@@ -5,18 +5,18 @@ import {
 } from '@mantine/core';
 import React, { useMemo } from 'react';
 import { DownloadPanel } from '../DownloadPanel';
-import { OrderObjectWithOrderPath, StepsPanel } from './StepsPanel';
+import { ComponentBlockWithOrderPath, StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useFlatSequence, useStoreSelector } from '../../store/store';
 import { useCurrentStep } from '../../routes/utils';
 import { deepCopy } from '../../utils/deepCopy';
-import { OrderObject } from '../../parser/types';
+import { ComponentBlock } from '../../parser/types';
 
-function addPathToOrderObject(order: OrderObject | string, orderPath: string): (OrderObject & { orderPath: string }) | string {
+function addPathToComponentBlock(order: ComponentBlock | string, orderPath: string): (ComponentBlock & { orderPath: string }) | string {
   if (typeof order === 'string') {
     return order;
   }
-  return { ...order, orderPath, components: order.components.map((o, i) => addPathToOrderObject(o, `${orderPath}-${i}`)) };
+  return { ...order, orderPath, components: order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)) };
 }
 
 export default function AppAside() {
@@ -27,8 +27,8 @@ export default function AppAside() {
   const studyConfig = useStudyConfig();
 
   const fullOrder = useMemo(() => {
-    let r = deepCopy(studyConfig.sequence) as OrderObjectWithOrderPath;
-    r = addPathToOrderObject(r, 'root') as OrderObjectWithOrderPath;
+    let r = deepCopy(studyConfig.sequence) as ComponentBlockWithOrderPath;
+    r = addPathToComponentBlock(r, 'root') as ComponentBlockWithOrderPath;
     r.components.push('end');
     return r;
   }, [studyConfig.sequence]);

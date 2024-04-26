@@ -2,7 +2,7 @@ import { LoadingOverlay } from '@mantine/core';
 import { ReactNode, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from './store/hooks/useAuth';
-import { useStorageEngine } from './store/storageEngineHooks';
+import { useStorageEngine } from './storage/storageEngineHooks';
 
 interface ProtectedRouteProps {
   children: ReactNode;
