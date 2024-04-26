@@ -9,6 +9,7 @@ import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { PREFIX } from '../utils/Prefix';
 import { useAuth } from '../store/hooks/useAuth';
 import { useStorageEngine } from '../storage/storageEngineHooks';
+import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 
 const REVISIT_GITHUB_PUBLIC = 'https://github.com/revisit-studies/study/tree/main/public/';
 
@@ -68,23 +69,7 @@ function ConfigSwitcher({ globalConfig, studyConfigs }: Props) {
                       <IconAlertTriangle color="red" />
                       <Text fw="bold" ml={8}>{configName}</Text>
                     </Flex>
-                    <Text>Errors when loading config:</Text>
-                    <List>
-                      {config.errors.map((error) => (
-                        <List.Item key={error.message} c="red">
-                          You have an error at
-                          {' '}
-                          {error.instancePath || 'root'}
-                          :
-                          {' '}
-                          {error.message}
-                          {' '}
-                          -
-                          {' '}
-                          {JSON.stringify(error.params)}
-                        </List.Item>
-                      ))}
-                    </List>
+                    <ErrorLoadingConfig errors={config.errors} />
                   </>
                 )
                 : (

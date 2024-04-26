@@ -6,7 +6,9 @@ import { Provider } from 'react-redux';
 import {
   RouteObject, useRoutes, useSearchParams,
 } from 'react-router-dom';
-import { Box, Center, Loader } from '@mantine/core';
+import {
+  Box, Center, Loader, Title,
+} from '@mantine/core';
 import { ErrorObject } from 'ajv';
 import {
   GlobalConfig,
@@ -79,7 +81,12 @@ export function Shell({ globalConfig }: {
           },
           {
             path: '/:index',
-            element: activeConfig.errors ? <ErrorLoadingConfig errors={activeConfig.errors} /> : <ComponentController />,
+            element: activeConfig.errors ? (
+              <>
+                <Title order={2} mb={8}>Error loading config</Title>
+                <ErrorLoadingConfig errors={activeConfig.errors} />
+              </>
+            ) : <ComponentController />,
           },
         ],
       }]);
