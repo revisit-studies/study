@@ -24,6 +24,8 @@ export class LocalStorageEngine extends StorageEngine {
     });
     const participantConfigHash = await hash(JSON.stringify(config));
 
+    this.studyDatabase.setItem('currentConfigHash', participantConfigHash);
+
     // Add the config to the database
     const allConfigs = await this.studyDatabase.getItem('configs') as object;
     await this.studyDatabase.setItem('configs', {
@@ -62,6 +64,14 @@ export class LocalStorageEngine extends StorageEngine {
     await this.studyDatabase?.setItem(this.currentParticipantId, participantData);
 
     return participantData;
+  }
+
+  async getCurrentConfigHash() {
+    if (!this._verifyStudyDatabase(this.studyDatabase)) {
+      throw new Error('Study database not initialized');
+    }
+
+    return await this.studyDatabase.getItem('currentConfigHash') as string;
   }
 
   async getCurrentParticipantId(urlParticipantId?: string) {

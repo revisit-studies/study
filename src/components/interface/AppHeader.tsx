@@ -15,7 +15,7 @@ import {
   IconMail,
   IconSchema,
 } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useHref } from 'react-router-dom';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import {
@@ -46,7 +46,8 @@ export default function AppHeader() {
 
   const studyId = useStudyId();
   const studyHref = useHref(`/${studyId}`);
-  function getNewParticipant() {
+
+  const getNewParticipant = useCallback(() => {
     storageEngine?.nextParticipant(studyConfig)
       .then(() => {
         window.location.href = studyHref;
@@ -54,7 +55,23 @@ export default function AppHeader() {
       .catch((err) => {
         console.error(err);
       });
-  }
+  }, [storageEngine, studyConfig, studyHref]);
+
+  useEffect(() => {
+    async function checkParticipantConfigHash() {
+      if (storageEngine) {
+        const _currentConfigHash = await storageEngine.getCurrentConfigHash();
+        const _participantData = await storageEngine.getParticipantData();
+
+        if (_currentConfigHash !== _participantData?.participantConfigHash) {
+          await storageEngine?.nextParticipant(studyConfig);
+        }
+      }
+    }
+    if (import.meta.env.DEV) {
+      checkParticipantConfigHash();
+    }
+  }, [storageEngine, getNewParticipant, studyConfig]);
 
   return (
     <Header height="70" p="md">
