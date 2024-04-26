@@ -3,6 +3,9 @@ import {
 } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import {
+  getAuth, signInWithPopup, GoogleAuthProvider,
+} from '@firebase/auth';
 import { useAuth } from '../store/hooks/useAuth';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { FirebaseStorageEngine } from '../storage/engines/FirebaseStorageEngine';
@@ -13,6 +16,7 @@ export function AdminDashboard() {
 
   const [isAuthEnabled, setAuthEnabled] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string|null>(null);
 
   useEffect(() => {
     const determineAuthenticationEnabled = async () => {
@@ -28,11 +32,31 @@ export function AdminDashboard() {
     determineAuthenticationEnabled();
   }, []);
 
+  const signInWithGoogle = async () => {
+    if (storageEngine instanceof FirebaseStorageEngine) {
+      setLoading(true);
+      const provider = new GoogleAuthProvider();
+      const auth = getAuth();
+      try {
+        await signInWithPopup(auth, provider);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } catch (error: any) {
+        setErrorMessage(error.message);
+      } finally {
+        setLoading(false);
+      }
+    }
+  };
+
   const handleChangeAuth = async () => {
     setLoading(true);
     if (storageEngine instanceof FirebaseStorageEngine) {
-      const currentAuthEnabledValue = await storageEngine?.enableDisableAuth();
-      setAuthEnabled(currentAuthEnabledValue);
+      const authInfo = await storageEngine.getUserManagementData('authentication');
+      if (!authInfo?.isEnabled) {
+        await signInWithGoogle();
+      }
+      await storageEngine.changeAuth(!authInfo?.isEnabled);
+      setAuthEnabled(!authInfo?.isEnabled);
     }
     setLoading(false);
   };
