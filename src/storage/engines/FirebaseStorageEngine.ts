@@ -475,6 +475,38 @@ export class FirebaseStorageEngine extends StorageEngine {
     return false;
   }
 
+  async getAllParticipantsDataByStudy(studyId:string) {
+    const currentCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
+
+    // Get all participants
+    const participants = await getDocs(currentCollection);
+    const participantData: ParticipantData[] = [];
+
+    // Iterate over the participants and add the provenance graph
+    const participantPulls = participants.docs.map(async (participant) => {
+      // Exclude the config doc and the sequenceArray doc
+      if (participant.id === 'config' || participant.id === 'sequenceArray') return;
+
+      const participantDataItem = participant.data() as ParticipantData;
+
+      const fullProvObj = await this._getFromFirebaseStorage(participantDataItem.participantId, 'provenance');
+      const fullWindowEventsObj = await this._getFromFirebaseStorage(participantDataItem.participantId, 'windowEvents');
+
+      // Rehydrate the provenance graphs
+      participantDataItem.answers = Object.fromEntries(Object.entries(participantDataItem.answers).map(([key, value]) => {
+        if (value === undefined) return [key, value];
+        const provenanceGraph = fullProvObj[key];
+        const windowEvents = fullWindowEventsObj[key];
+        return [key, { ...value, provenanceGraph, windowEvents }];
+      }));
+      participantData.push(participantDataItem);
+    });
+
+    await Promise.all(participantPulls);
+
+    return participantData;
+  }
+
   private _verifyStudyDatabase(db: CollectionReference<DocumentData, DocumentData> | undefined): db is CollectionReference<DocumentData, DocumentData> {
     return db !== undefined;
   }

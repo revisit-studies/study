@@ -181,6 +181,22 @@ export class LocalStorageEngine extends StorageEngine {
     return returnArray;
   }
 
+  async getAllParticipantsDataByStudy(studyId: string) {
+    const currStudyDatabase = localforage.createInstance({
+      name: studyId,
+    });
+
+    const returnArray: ParticipantData[] = [];
+
+    await currStudyDatabase.iterate((value, key) => {
+      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray' && key !== 'configs') {
+        returnArray.push(value as ParticipantData);
+      }
+    });
+
+    return returnArray;
+  }
+
   async getParticipantData() {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');

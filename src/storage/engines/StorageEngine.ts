@@ -43,6 +43,8 @@ export abstract class StorageEngine {
 
   abstract getAllParticipantsData(): Promise<ParticipantData[]>;
 
+  abstract getAllParticipantsDataByStudy(studyId:string): Promise<ParticipantData[]>;
+
   abstract getParticipantData(): Promise<ParticipantData | null>;
 
   abstract nextParticipant(config: StudyConfig, metadata: ParticipantMetadata): Promise<ParticipantData>;
