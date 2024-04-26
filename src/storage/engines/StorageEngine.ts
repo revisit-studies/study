@@ -27,6 +27,8 @@ export abstract class StorageEngine {
 
   abstract initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, urlParticipantId?: string): Promise<ParticipantData>;
 
+  abstract getCurrentConfigHash(): Promise<string>;
+
   abstract getCurrentParticipantId(urlParticipantId?: string): Promise<string>;
 
   abstract clearCurrentParticipantId(): Promise<void>;
