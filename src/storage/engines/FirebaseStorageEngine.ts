@@ -12,7 +12,7 @@ import localforage from 'localforage';
 import { StorageEngine } from './StorageEngine';
 import { ParticipantData } from '../types';
 import {
-  EventType, Sequence, StoredAnswer, TrrackedProvenance,
+  EventType, ParticipantMetadata, Sequence, StoredAnswer, TrrackedProvenance,
 } from '../../store/types';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
@@ -101,7 +101,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, urlParticipantId?: string) {
+  async initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, metadata: ParticipantMetadata, urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -143,6 +143,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       sequence: await this.getSequence(),
       answers: {},
       searchParams,
+      metadata,
     };
     await setDoc(participantDoc, participantData);
 
@@ -330,7 +331,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return participant;
   }
 
-  async nextParticipant(config: StudyConfig): Promise<ParticipantData> {
+  async nextParticipant(config: StudyConfig, metadata: ParticipantMetadata): Promise<ParticipantData> {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -358,6 +359,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         sequence: await this.getSequence(),
         answers: {},
         searchParams: {},
+        metadata,
       };
       await setDoc(newParticipant, newParticipantData);
       participant = newParticipantData;

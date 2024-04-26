@@ -2,7 +2,7 @@ import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import { StorageEngine } from './StorageEngine';
 import { ParticipantData } from '../types';
-import { Sequence, StoredAnswer } from '../../store/types';
+import { ParticipantMetadata, Sequence, StoredAnswer } from '../../store/types';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
 
@@ -32,7 +32,7 @@ export class LocalStorageEngine extends StorageEngine {
     });
   }
 
-  async initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, urlParticipantId?: string) {
+  async initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, metadata: ParticipantMetadata, urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
@@ -58,6 +58,7 @@ export class LocalStorageEngine extends StorageEngine {
       sequence: await this.getSequence(),
       answers: {},
       searchParams,
+      metadata,
     };
     await this.studyDatabase?.setItem(this.currentParticipantId, participantData);
 
@@ -183,7 +184,7 @@ export class LocalStorageEngine extends StorageEngine {
     return await this.studyDatabase.getItem(participantId) as ParticipantData | null;
   }
 
-  async nextParticipant(config: StudyConfig) {
+  async nextParticipant(config: StudyConfig, metadata: ParticipantMetadata) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
@@ -206,6 +207,7 @@ export class LocalStorageEngine extends StorageEngine {
         sequence: await this.getSequence(),
         answers: {},
         searchParams: {},
+        metadata,
       };
       await this.studyDatabase.setItem(newParticipantId, newParticipant);
       participant = newParticipant;

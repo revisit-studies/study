@@ -26,6 +26,7 @@ import { StepRenderer } from './StepRenderer';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
 import { getStudyConfig } from '../utils/fetchConfig';
+import { ParticipantMetadata } from '../store/types';
 
 export function Shell({ globalConfig }: {
   globalConfig: GlobalConfig;
@@ -41,6 +42,13 @@ export function Shell({ globalConfig }: {
       setActiveConfig(config);
     });
   }, [globalConfig, studyId]);
+
+  // fetch('https://api.geoapify.com/v1/ipinfo?apiKey=YOUR_API_KEY_HERE')
+  //   .then((response) => response.json())
+  //   .then((data) => {
+  //   // You can now access the location data in the "data" object
+  //     console.log(data);
+  //   });
 
   const [routes, setRoutes] = useState<RouteObject[]>([]);
   const [store, setStore] = useState<Nullable<StudyStore>>(null);
@@ -61,10 +69,27 @@ export function Shell({ globalConfig }: {
       // Get or generate participant session
       const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) || undefined : undefined;
       const searchParamsObject = Object.fromEntries(searchParams.entries());
-      const participantSession = await storageEngine.initializeParticipantSession(searchParamsObject, activeConfig, urlParticipantId);
+
+      const metadata: ParticipantMetadata = {
+        language: navigator.language,
+        userAgent: navigator.userAgent,
+        resolution: window.screen,
+        ip: null,
+      };
+
+      fetch('https://api.ipify.org?format=json')
+        .then((response) => response.json())
+        .then((data) => {
+          metadata.ip = data.ip;
+        })
+        .catch((error) => {
+          console.error('Error fetching IP:', error);
+        });
+
+      const participantSession = await storageEngine.initializeParticipantSession(searchParamsObject, activeConfig, metadata, urlParticipantId);
 
       // Initialize the redux stores
-      const newStore = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, participantSession.answers);
+      const newStore = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, metadata, participantSession.answers);
       setStore(newStore);
 
       // Initialize the routing
