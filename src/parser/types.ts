@@ -333,10 +333,10 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * }
  *
  * parameters is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component.
- * setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you dont use the default answer interface, and instead have something more unique.
+ * setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.
  *
  * So, for example, if I had the following ReactComponent in my config
- * ``` JSON
+ * ```javascript
  * {
  *  type: 'react-component';
  *  path: 'my_study/CoolComponent.tsx';
@@ -347,7 +347,7 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * }
  * ```
  *
- * My react component, CoolComponent.tsx, would exist in src/public/my_study, and look something like this
+ * My react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this
  *
  * ``` typescript
  * export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) {
