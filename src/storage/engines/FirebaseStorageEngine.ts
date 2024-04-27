@@ -415,11 +415,13 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   async addAdminUser(email: string) {
     const adminUsers = await this.getUserManagementData('adminUsers');
-    if (adminUsers) {
-      if (!adminUsers.map((storedUser: StoredUser) => storedUser.email).includes(email)) {
-        adminUsers.push({ email, uid: null });
+    if (adminUsers?.adminUsersList) {
+      const adminList = adminUsers.adminUsersList;
+      const isInList = adminList.map((storedUser: StoredUser) => storedUser.email).includes(email);
+      if (!isInList) {
+        adminList.push({ email, uid: null });
         await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
-          adminUsersList: adminUsers,
+          adminUsersList: adminList,
         });
       }
     } else {
@@ -430,12 +432,12 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   async removeAdminUser(email:string) {
-    let adminUsers = await this.getUserManagementData('adminUsers');
-    if (adminUsers) {
-      if (adminUsers?.map((storedUser: StoredUser) => storedUser.email).includes(email)) {
-        adminUsers = adminUsers.filter((storedUser:StoredUser) => storedUser.email !== email);
+    const adminUsers = await this.getUserManagementData('adminUsers');
+    if (adminUsers?.adminUsersList) {
+      if (adminUsers.adminUsersList.map((storedUser: StoredUser) => storedUser.email).includes(email)) {
+        adminUsers.adminUsersList = adminUsers?.adminUsersList.filter((storedUser:StoredUser) => storedUser.email !== email);
         await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
-          adminUsersList: adminUsers,
+          adminUsersList: adminUsers?.adminUsersList,
         });
       }
     }
