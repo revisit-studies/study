@@ -1,6 +1,6 @@
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
-import { StorageEngine } from './StorageEngine';
+import { StorageEngine, UserWrapped } from './StorageEngine';
 import { ParticipantData } from '../types';
 import { Sequence, StoredAnswer } from '../../store/types';
 import { hash } from './utils';
@@ -225,6 +225,10 @@ export class LocalStorageEngine extends StorageEngine {
       throw new Error('Participant not initialized');
     }
 
+    return true;
+  }
+
+  async validateUser(user: UserWrapped | null) {
     return true;
   }
 

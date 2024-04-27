@@ -56,7 +56,7 @@ export function GlobalConfigParser() {
 
   return globalConfig ? (
     <BrowserRouter basename={PREFIX}>
-      <AuthProvider globalConfig={globalConfig}>
+      <AuthProvider>
         <Routes>
           <Route
             path="/"
