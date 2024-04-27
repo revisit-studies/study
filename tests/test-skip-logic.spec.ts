@@ -53,7 +53,7 @@ async function verifyStudyEnd(page) {
 }
 
 async function getNextParticipant(page) {
-  await page.locator('#mantine-r1-target').click();
+  await page.locator('.studyBrowserMenuDropdown').click();
   await page.getByRole('menuitem', { name: 'Next Participant' }).click();
 }
 

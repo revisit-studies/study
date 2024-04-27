@@ -134,7 +134,7 @@ test('test', async ({ page }) => {
   expect(globalOcurrences.trial20).toBe(500);
 
   // Check to make sure that the admin panel renders with such a complex sequence
-  await page.locator('#mantine-r1-target').click();
+  await page.locator('.studyBrowserMenuDropdown').click();
   await page.getByRole('menuitem', { name: 'Admin Mode' }).click();
 
   const sequenceHeader = await page.getByText('Study Browser');

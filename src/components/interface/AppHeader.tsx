@@ -94,7 +94,7 @@ export default function AppHeader() {
                 onChange={setMenuOpened}
               >
                 <Menu.Target>
-                  <ActionIcon size="lg">
+                  <ActionIcon size="lg" className="studyBrowserMenuDropdown">
                     <IconDotsVertical />
                   </ActionIcon>
                 </Menu.Target>
