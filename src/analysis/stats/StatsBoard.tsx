@@ -21,15 +21,15 @@ import { getStudyConfig } from '../../utils/fetchConfig';
 import { isStudyCompleted } from '../utils';
 import StatsVis from './StatsVis';
 
-export function StatsBoard(props: {globalConfig : GlobalConfig}) {
-  const { globalConfig } = props;
+export function StatsBoard(props: {globalConfig : GlobalConfig, completed: ParticipantData[], inprogress: ParticipantData[]}): JSX.Element {
+  const { globalConfig, inprogress, completed } = props;
   // const studyIds = globalConfig.configsList;
-  const [config, setConfig] = useState<StudyConfig>();
-  const [activeExp, setActiveExp] = useState<string | null>(null);
-  const [expData, setExpData] = useState<ParticipantData[]>([]);
-  const [completed, setCompleted] = useState<ParticipantData[]>([]);
-  const [inprogress, setInprogress] = useState<ParticipantData[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [studyconfig, setStudyConfig] = useState<StudyConfig>();
+  // const [activeExp, setActiveExp] = useState<string | null>(null);
+  // const [expData, setExpData] = useState<ParticipantData[]>([]);
+  // const [completed, setCompleted] = useState<ParticipantData[]>([]);
+  // const [inprogress, setInprogress] = useState<ParticipantData[]>([]);
+  // const [loading, setLoading] = useState(false);
   const [dropdownData, setDropdownData] = useState<SelectItem[]>([]);
   const [activeParticipants, setActiveParticipants] = useState<string[]>([]);
   const { studyId } = useParams();
@@ -43,9 +43,8 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
   useEffect(() => {
     const updateParams = async () => {
       if (studyId) {
-        setActiveExp(studyId);
-        const cf = await getStudyConfig(studyId, globalConfig);
-        if (cf) setConfig(cf);
+        const config = await getStudyConfig(studyId, globalConfig);
+        if (config) setStudyConfig(config);
       }
     };
     updateParams();
@@ -55,33 +54,33 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
     setActiveParticipants([]);
   };
 
-  useEffect(() => {
-    const getData = async () => {
-      setLoading(true);
-      reSetSelection();
-      const fetchData = async () => {
-        if (activeExp) {
-          const storageEngine = new FirebaseStorageEngine();
-          const cf = await getStudyConfig(activeExp, globalConfig);
-          if (!cf || !storageEngine) return;
-          await storageEngine.connect();
-          await storageEngine.initializeStudyDb(activeExp, cf);
-          const data = (await storageEngine.getAllParticipantsData());
-          setExpData(data);
-          setCompleted(data.filter((d) => isStudyCompleted(d)));
-
-          setInprogress(data.filter((d) => !isStudyCompleted(d)));
-        }
-        setLoading(false);
-      };
-      await fetchData();
-    };
-    getData();
-  }, [activeExp]);
+  // useEffect(() => {
+  //   const getData = async () => {
+  //     setLoading(true);
+  //     reSetSelection();
+  //     const fetchData = async () => {
+  //       if (activeExp) {
+  //         const storageEngine = new FirebaseStorageEngine();
+  //         const cf = await getStudyConfig(activeExp, globalConfig);
+  //         if (!cf || !storageEngine) return;
+  //         await storageEngine.connect();
+  //         await storageEngine.initializeStudyDb(activeExp, cf);
+  //         const data = (await storageEngine.getAllParticipantsData());
+  //         setExpData(data);
+  //         setCompleted(data.filter((d) => isStudyCompleted(d)));
+  //
+  //         setInprogress(data.filter((d) => !isStudyCompleted(d)));
+  //       }
+  //       setLoading(false);
+  //     };
+  //     await fetchData();
+  //   };
+  //   getData();
+  // }, [activeExp]);
 
   return (
     <Container miw={800}>
-      {(activeExp && expData) ? (
+      {(studyId && completed && inprogress) ? (
         <Box
           mt={10}
           p={10}
@@ -91,11 +90,11 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
               <Stack spacing="xs" mb={10}>
                 <Title order={3}>
                   {' '}
-                  {activeExp}
+                  {studyId}
                 </Title>
                 <Text>
                   Total Participants:
-                  {expData.length}
+                  {completed.length + inprogress.length}
                 </Text>
               </Stack>
               <Tabs defaultValue="completed" orientation="vertical">
@@ -178,11 +177,10 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
           <Title>Please select an experiment</Title>
         </Box>
       )}
-      <LoadingOverlay visible={loading} zIndex={1000} overlayBlur={2} />
 
-      {config && (activeParticipants.length > 1 || activeParticipants.includes('All')) && (
+      {studyconfig && (activeParticipants.length > 1 || activeParticipants.includes('All')) && (
       <StatsVis
-        config={config}
+        config={studyconfig}
         data={
         activeParticipants.includes('All')
           ? completed
