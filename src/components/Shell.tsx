@@ -6,9 +6,7 @@ import { Provider } from 'react-redux';
 import {
   RouteObject, useRoutes, useSearchParams,
 } from 'react-router-dom';
-import {
-  Box, Center, Loader, Title,
-} from '@mantine/core';
+import { LoadingOverlay, Title } from '@mantine/core';
 import { ErrorObject } from 'ajv';
 import {
   GlobalConfig,
@@ -108,19 +106,14 @@ export function Shell({ globalConfig }: {
 
   const routing = useRoutes(routes);
 
-  const loaderOrRouting = !routing || !store ? (
-    <Box style={{ height: '100vh' }}>
-      <Center style={{ height: '100%' }}>
-        <Loader style={{ height: '100%' }} size={60} />
-      </Center>
-    </Box>
-  ) : (
-    <StudyStoreContext.Provider value={store}>
-      <Provider store={store.store}>
-        {routing}
-      </Provider>
-    </StudyStoreContext.Provider>
-  );
+  const loaderOrRouting = !routing || !store ? <LoadingOverlay visible />
+    : (
+      <StudyStoreContext.Provider value={store}>
+        <Provider store={store.store}>
+          {routing}
+        </Provider>
+      </StudyStoreContext.Provider>
+    );
 
   return (
     isValidStudyId ? (
