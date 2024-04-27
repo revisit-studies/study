@@ -19,7 +19,7 @@ export default function IframeInput({
       </Text>
 
       <List>
-        {Array.isArray(answer.value) && (answer.value).map((item) => <List.Item key={item}>{item}</List.Item>)}
+        {Array.isArray(answer.value) ? (answer.value).map((item) => <List.Item key={item}>{item}</List.Item>) : <List.Item>{answer.value}</List.Item>}
       </List>
     </>
   );

@@ -380,6 +380,48 @@ export interface ImageComponent extends BaseIndividualComponent {
 
 /**
  * The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder.
+
+``` JSON
+  {
+    "type": "website",
+    "path": "path/to/study/assets/website.html",
+  }
+```
+
+ * To pass a data from the config to the website, you can use the `parameters` field as below:
+
+``` JSON
+  {
+    "type": "website",
+    "path": "path/to/website.html",
+    "parameters": {
+      "barData": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]
+    }
+    "response": [
+      {
+        "id": "barChart",
+        "prompt": "Your selected answer:",
+        "required": true,
+        "location": "belowStimulus",
+        "type": "iframe"
+      }
+    ],
+  }
+```
+ * In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:
+
+``` HTML
+  <script src="../../revisitUtilities/revisit-communicate.js"></script>
+  <script>
+    Revisit.onDataReceive((data) => {
+      const barData = data['barData'];
+      ...
+    });
+
+    // Call out that 'barChart' needs to match ID in 'response' object
+    Revisit.postAnswers({ barChart: userAnswer });
+  </script>
+```
  */
 export interface WebsiteComponent extends BaseIndividualComponent {
   type: 'website';

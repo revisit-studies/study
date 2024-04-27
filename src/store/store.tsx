@@ -39,7 +39,8 @@ export async function studyStoreCreator(
     showHelpText: false,
     alertModal: { show: false, message: '' },
     trialValidation: answers ? allValid : emptyValidation,
-    iframeAnswers: [] as string[],
+    iframeAnswers: {},
+    iframeProvenance: null,
     metadata,
   };
 
@@ -59,8 +60,11 @@ export async function studyStoreCreator(
       setAlertModal: (state, action: PayloadAction<{ show: boolean; message: string }>) => {
         state.alertModal = action.payload;
       },
-      setIframeAnswers: (state, action: PayloadAction<string[]>) => {
+      setIframeAnswers: (state, action: PayloadAction<Record<string, unknown>>) => {
         state.iframeAnswers = action.payload;
+      },
+      setIframeProvenance: (state, action: PayloadAction<TrrackedProvenance | null>) => {
+        state.iframeProvenance = action.payload;
       },
       updateResponseBlockValidation: (
         state,

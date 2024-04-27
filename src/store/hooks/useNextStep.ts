@@ -108,7 +108,7 @@ export function useNextStep() {
           },
         );
       }
-      storeDispatch(setIframeAnswers([]));
+      storeDispatch(setIframeAnswers({}));
     }
 
     let nextStep = currentStep + 1;
