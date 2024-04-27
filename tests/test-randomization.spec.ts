@@ -135,7 +135,7 @@ test('test', async ({ page }) => {
 
   // Check to make sure that the admin panel renders with such a complex sequence
   await page.locator('.studyBrowserMenuDropdown').click();
-  await page.getByRole('menuitem', { name: 'Admin Mode' }).click();
+  await page.getByRole('menuitem', { name: 'Study Browser' }).click();
 
   const sequenceHeader = await page.getByText('Study Browser');
   await expect(sequenceHeader).toBeVisible();
