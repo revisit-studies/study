@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { ParticipantData } from '../../storage/types';
 import { download, DownloadTidy } from '../../components/DownloadTidy';
 import { StudyConfig } from '../../parser/types';
-import { isStudyCompleted, isWithinRange } from '../utils';
+import { isWithinRange } from '../utils';
 
 export function SummaryPanel(props: { studyId: string; allParticipants: ParticipantData[]; config: StudyConfig }) {
   const {
@@ -20,7 +20,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
   const navigate = useNavigate();
   const [ref, dms] = useResizeObserver();
   const completionTimes = allParticipants
-    .filter((d) => isStudyCompleted(d))
+    .filter((d) => d.completed)
     .map((d) => Math.max(...Object.values(d.answers).map((ans) => ans.endTime)));
   const [rangeTime, setRangeTime] = useState<DateRangePickerValue>([
     new Date(new Date(Math.min(...(completionTimes.length > 0 ? completionTimes : [new Date().getTime()]))).setHours(0, 0, 0, 0)),
@@ -38,7 +38,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
       const inProgressData: ParticipantData[] = [];
 
       inRangeData.forEach((d) => {
-        if (isStudyCompleted(d)) {
+        if (d.completed) {
           completedData.push(d);
         } else {
           inProgressData.push(d);
