@@ -55,7 +55,7 @@ export function Login() {
             <Button onClick={signInWithGoogle} leftIcon={<IconBrandGoogle />} variant="filled">Sign In With Google</Button>
           </>
           {errorMessage ? <Badge size="lg" color="red" mt={30}>{errorMessage}</Badge> : null}
-          <LoadingOverlay visible={loading} zIndex={1000} overlayBlur={2} />
+          <LoadingOverlay visible={loading} />
         </Flex>
       </Card>
     </Container>
