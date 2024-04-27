@@ -14,9 +14,9 @@ jobs:
 
       - name: Run make-release.sh to modify version numbers across the repo
         run: |
-          LANG=C sed -i '' -e "s/\/reVISit-studies\/study\/main\/src/\/reVISit-studies\/study\/{{ github.event.pull_request.title }}\/src/g" src/**/*.* public/**/*.*
-          LANG=C sed -i '' -e "s/\/revisit-studies\/study\/blob\/main/\/revisit-studies\/study\/blob\/{{ github.event.pull_request.title }}/g" src/**/*.* public/**/*.*
-          LANG=C sed -i '' -e "s/\/revisit-studies\/study\/blob\/main/\/revisit-studies\/study\/tree\/{{ github.event.pull_request.title }}/g" src/**/*.* public/**/*.*
+          LANG=C sed -i "s/\/reVISit-studies\/study\/main\/src/\/reVISit-studies\/study\/${{ github.event.pull_request.title }}\/src/g" src/**/*.* public/**/*.*
+          LANG=C sed -i "s/\/revisit-studies\/study\/blob\/main/\/revisit-studies\/study\/blob\/${{ github.event.pull_request.title }}/g" src/**/*.* public/**/*.*
+          LANG=C sed -i "s/\/revisit-studies\/study\/blob\/main/\/revisit-studies\/study\/tree\/${{ github.event.pull_request.title }}/g" src/**/*.* public/**/*.*
 
       - name: Commit changes
         run: |
