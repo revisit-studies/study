@@ -39,6 +39,7 @@ export async function studyStoreCreator(
     alertModal: { show: false, message: '' },
     trialValidation: answers ? allValid : emptyValidation,
     iframeAnswers: [] as string[],
+    iframeProvenance: null,
   };
 
   const storeSlice = createSlice({
@@ -59,6 +60,9 @@ export async function studyStoreCreator(
       },
       setIframeAnswers: (state, action: PayloadAction<string[]>) => {
         state.iframeAnswers = action.payload;
+      },
+      setIframeProvenance: (state, action: PayloadAction<TrrackedProvenance | null>) => {
+        state.iframeProvenance = action.payload;
       },
       updateResponseBlockValidation: (
         state,

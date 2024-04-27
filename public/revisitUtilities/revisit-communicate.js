@@ -33,6 +33,9 @@
     postAnswers: (answers) => {
       sendMessage("ANSWERS", answers);
     },
+    postProvenance: (provenance) => {
+      sendMessage("PROVENANCE", provenance);
+    },
     postEvent: (eventName, objectId) => {
       sendMessage("EVENT", { eventName, objectId });
     },

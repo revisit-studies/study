@@ -251,9 +251,7 @@ d3.select('#freeFormAnswer').on('input', function () {
 function updateAnswer(answer, type) {
   const postAnswer = answer.map((a) => a.name);
   Revisit.postAnswers({
-    answer: postAnswer,
-    taskID: revisitTaskID,
-    location: taskLocation,
+    [revisitTaskID]: postAnswer,
   });
 
   //Update answer inside taskList;

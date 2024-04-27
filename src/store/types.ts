@@ -114,4 +114,5 @@ export interface StoreState {
   alertModal: { show: boolean, message: string };
   trialValidation: TrialValidation;
   iframeAnswers: string[];
+  iframeProvenance: TrrackedProvenance | null;
 }

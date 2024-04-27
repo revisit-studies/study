@@ -360,6 +360,15 @@ export interface ImageComponent extends BaseIndividualComponent {
     "parameters": {
       "barData": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]
     }
+    "response": [
+      {
+        "id": "barChart",
+        "prompt": "Your selected answer:",
+        "required": true,
+        "location": "belowStimulus",
+        "type": "iframe"
+      }
+    ],
   }
 ```
  * In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:
@@ -372,7 +381,7 @@ export interface ImageComponent extends BaseIndividualComponent {
       ...
     });
 
-    Revisit.postAnswers({ answer: [userAnswer] });
+    Revisit.postAnswers({ barChart: userAnswer });
   </script>
 ```
  */

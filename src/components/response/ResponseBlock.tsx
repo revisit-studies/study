@@ -14,7 +14,7 @@ import { deepCopy } from '../../utils/deepCopy';
 import { NextButton } from '../NextButton';
 import { useAnswerField } from './utils';
 import ResponseSwitcher from './ResponseSwitcher';
-import { StoredAnswer } from '../../store/types';
+import { StoredAnswer, TrrackedProvenance } from '../../store/types';
 
 type Props = {
   status?: StoredAnswer;
@@ -40,20 +40,25 @@ export default function ResponseBlock({
   const storeDispatch = useStoreDispatch();
   const { updateResponseBlockValidation } = useStoreActions();
   const answerValidator = useAnswerField(responses, currentStep, storedAnswer || {});
+  const [provenanceGraph, setProvenanceGraph] = useState<TrrackedProvenance | undefined>(undefined);
   const [checkClicked, setCheckClicked] = useState(false);
-  const { iframeAnswers } = useStoreSelector((state) => state);
+  const { iframeAnswers, iframeProvenance } = useStoreSelector((state) => state);
   const hasCorrectAnswerFeedback = configInUse?.provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
 
   const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
 
   useEffect(() => {
-    const iframeResponse = responses.find((r) => r.type === 'iframe');
-    if (iframeResponse) {
-      const answerId = iframeResponse.id;
-      answerValidator.setValues({ ...answerValidator.values, [answerId]: iframeAnswers });
+    if (iframeAnswers) {
+      answerValidator.setValues(iframeAnswers);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [iframeAnswers, responses]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [iframeAnswers]);
+
+  useEffect(() => {
+    if (iframeProvenance) {
+      setProvenanceGraph(iframeProvenance);
+    }
+  }, [iframeProvenance]);
 
   useEffect(() => {
     storeDispatch(
@@ -62,10 +67,11 @@ export default function ResponseBlock({
         identifier: `${currentComponent}_${currentStep}`,
         status: answerValidator.isValid(),
         values: deepCopy(answerValidator.values),
+        provenanceGraph,
       }),
     );
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answerValidator.values, currentComponent, currentStep, location, storeDispatch, updateResponseBlockValidation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [answerValidator.values, currentComponent, currentStep, location, storeDispatch, updateResponseBlockValidation, provenanceGraph]);
 
   return (
     <div style={style}>
