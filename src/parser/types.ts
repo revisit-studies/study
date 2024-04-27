@@ -321,6 +321,43 @@ export interface MarkdownComponent extends BaseIndividualComponent {
 
 /**
  * The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.
+ *
+ * Unlike other types of components, the path for a React component is relative to the `src/public/` folder.
+ * Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study.
+ * Your React component which you link to in the path must be default exported from its file.
+ *
+ * React components created this way have a generic prop type passed to the component on render, <StimulusParams<T>>, which has the following types.
+ * {
+ *  parameters: T;
+ *  setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
+ * }
+ *
+ * parameters is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component.
+ * setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.
+ *
+ * So, for example, if I had the following ReactComponent in my config
+ * ```javascript
+ * {
+ *  type: 'react-component';
+ *  path: 'my_study/CoolComponent.tsx';
+ *  parameters: {
+ *    name: 'Zach';
+ *    age: 26;
+ *  }
+ * }
+ * ```
+ *
+ * My react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this
+ *
+ * ``` typescript
+ * export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) {
+ *    // render something
+ * }
+ * ```
+ *
+ * For in depth examples, see the following studies, and their associated codebases.
+ * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/blob/main/src/public/demo-click-accuracy-test/assets)
+ * https://revisit.dev/study/demo-brush-interactions (https://github.com/revisit-studies/study/tree/main/src/public/demo-brush-interactions/assets)
  */
 export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
