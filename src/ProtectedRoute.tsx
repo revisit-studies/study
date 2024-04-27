@@ -17,7 +17,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     const verifyUser = async () => {
       try {
         if (user) {
-          const isAdmin = await verifyAdminStatus(user?.user);
+          const isAdmin = await verifyAdminStatus(user);
           if (!isAdmin) {
             logout();
           }
