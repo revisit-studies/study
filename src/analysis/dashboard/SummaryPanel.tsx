@@ -98,7 +98,23 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
           <Flex direction="column">
             <Title order={5} mb={4}>
               {studyId}
-              <Button variant="subtle" size="xs"><IconScanEye color="orange" onClick={() => onCheckDetail(studyId)} /></Button>
+              <Popover opened={jsonOpened}>
+                <Popover.Target>
+                  <Button
+                    variant="subtle"
+                    color="orange"
+                    onClick={() => onCheckDetail(studyId)}
+                    onMouseEnter={openJson}
+                    onMouseLeave={closeJson}
+                    px={4}
+                  >
+                    <IconScanEye />
+                  </Button>
+                </Popover.Target>
+                <Popover.Dropdown>
+                  <Text>Examine this experiment</Text>
+                </Popover.Dropdown>
+              </Popover>
             </Title>
             <Flex direction="row" wrap="nowrap" gap="xs" align="center" mb={4}>
               <Badge size="sm" color="orange">
