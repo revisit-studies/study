@@ -5,6 +5,7 @@ import AppHeader from './components/interface/AppHeader';
 import AppNav from './components/interface/AppNav';
 import { GlobalConfig } from '../parser/types';
 import { SummaryBlock } from './dashboard/SummaryBlock';
+import { GlobalSettings } from './dashboard/GlobalSettings';
 
 export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   const { page } = useParams();
@@ -13,11 +14,14 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
     <AppShell>
       <AppHeader />
       <AppNav />
-      {page === 'dashboard' && (
-        <Container fluid>
+      <Container fluid>
+        {page === 'dashboard' && (
           <SummaryBlock globalConfig={props.globalConfig} />
-        </Container>
-      )}
+        )}
+        {page === 'settings' && (
+          <GlobalSettings />
+        )}
+      </Container>
     </AppShell>
   );
 }

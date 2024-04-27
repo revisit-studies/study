@@ -6,11 +6,11 @@ import { useNavigate } from 'react-router-dom';
 import {
   getAuth, signInWithPopup, GoogleAuthProvider,
 } from '@firebase/auth';
-import { useAuth } from '../store/hooks/useAuth';
-import { useStorageEngine } from '../storage/storageEngineHooks';
-import { FirebaseStorageEngine } from '../storage/engines/FirebaseStorageEngine';
+import { useAuth } from '../../store/hooks/useAuth';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 
-export function AdminDashboard() {
+export function GlobalSettings() {
   const { user, logout } = useAuth();
   const { storageEngine } = useStorageEngine();
 
