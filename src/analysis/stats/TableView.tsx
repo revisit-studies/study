@@ -60,7 +60,7 @@ function MetaCell(props:{metaData: ParticipantMetadata}) {
 export function TableView(props: { completed: ParticipantData[], inprogress: ParticipantData[]}) {
   const { completed, inprogress } = props;
 
-  const allData = [...completed, ...inprogress];
+  const allData = [...completed.map((record) => ({ ...record, completed: true })), ...inprogress.map((record) => ({ ...record, completed: false }))];
 
   const uniqueTrials = [...new Set(completed.map((complete) => flattenSequence(complete.sequence)).flat().map((trial) => trial))];
 

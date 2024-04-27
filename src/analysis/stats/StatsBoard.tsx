@@ -54,32 +54,8 @@ export function StatsBoard(props: {globalConfig : GlobalConfig, completed: Parti
     setActiveParticipants([]);
   };
 
-  // useEffect(() => {
-  //   const getData = async () => {
-  //     setLoading(true);
-  //     reSetSelection();
-  //     const fetchData = async () => {
-  //       if (activeExp) {
-  //         const storageEngine = new FirebaseStorageEngine();
-  //         const cf = await getStudyConfig(activeExp, globalConfig);
-  //         if (!cf || !storageEngine) return;
-  //         await storageEngine.connect();
-  //         await storageEngine.initializeStudyDb(activeExp, cf);
-  //         const data = (await storageEngine.getAllParticipantsData());
-  //         setExpData(data);
-  //         setCompleted(data.filter((d) => isStudyCompleted(d)));
-  //
-  //         setInprogress(data.filter((d) => !isStudyCompleted(d)));
-  //       }
-  //       setLoading(false);
-  //     };
-  //     await fetchData();
-  //   };
-  //   getData();
-  // }, [activeExp]);
-
   return (
-    <Container miw={800}>
+    <Container fluid>
       {(studyId && completed && inprogress) ? (
         <Box
           mt={10}

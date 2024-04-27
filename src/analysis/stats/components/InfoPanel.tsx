@@ -120,10 +120,10 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
   }), [dms, timeStats]);
 
   return (
-    <Container fluid p={10}>
+    <Container p={10}>
       <Flex
         gap="lg"
-        justify="center"
+        justify="left"
         align="flex-start"
         direction="row"
         wrap="wrap"

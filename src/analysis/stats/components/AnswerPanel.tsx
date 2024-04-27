@@ -1,5 +1,5 @@
 import {
-  Box, Card, Container, Title,
+  Box, Card, Container, Flex, Title,
 } from '@mantine/core';
 import React, { useEffect, useMemo, useState } from 'react';
 import { VegaLite } from 'react-vega';
@@ -99,24 +99,31 @@ export default function AnswerPanel(props: { data: Record<string, Record<string,
 
   return (
     <Container p={5} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
-      <Box
-        pl={5}
-        sx={{
-          width: '50%', height: 20, backgroundColor: 'orange', borderRadius: '0px 10px 10px 0px',
-        }}
+      <Flex
+        gap="lg"
+        justify="left"
+        align="flex-start"
+        direction="row"
+        wrap="wrap"
       >
-        <Title order={6}>Answer Stats</Title>
-      </Box>
-      <Card ref={ref}>
-        {/* <CorrectVis correct={correctUser} incorrect={incorrectUser} trialName={trialName} /> */}
-        {correctUser.length === 0 && incorrectUser.length === 0
-          ? <Title order={4}> No correct answer for this question</Title>
-          : <VegaLite spec={specBoxer} actions={false} />}
-        {categoricalStats.length > 0 && <VegaLite spec={specBarChart} actions={false} />}
+        <Box
+          pl={5}
+          sx={{
+            width: '50%', height: 20, backgroundColor: 'orange', borderRadius: '0px 10px 10px 0px',
+          }}
+        >
+          <Title order={6}>Answer Stats</Title>
+        </Box>
+        <Card ref={ref}>
+          {/* <CorrectVis correct={correctUser} incorrect={incorrectUser} trialName={trialName} /> */}
+          {correctUser.length === 0 && incorrectUser.length === 0
+            ? <Title order={4}> No correct answer for this question</Title>
+            : <VegaLite spec={specBoxer} actions={false} />}
+          {categoricalStats.length > 0 && <VegaLite spec={specBarChart} actions={false} />}
 
-        <Box />
-      </Card>
-
+          <Box />
+        </Card>
+      </Flex>
     </Container>
   );
 }
