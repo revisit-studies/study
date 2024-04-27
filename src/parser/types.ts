@@ -381,6 +381,7 @@ export interface ImageComponent extends BaseIndividualComponent {
       ...
     });
 
+    // Call out that 'barChart' needs to match ID in 'response' object
     Revisit.postAnswers({ barChart: userAnswer });
   </script>
 ```
