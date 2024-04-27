@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-cycle
-import { Sequence, StoredAnswer } from '../store/types';
+import { ParticipantMetadata, Sequence, StoredAnswer } from '../store/types';
 
 /**
 The ParticipantData is a JSON object that contains all of the data for all of the participants in your study. It is structured as a list. Each element refers to a participants data or a configuration. While in many cases there is only one configuration per study, the study creator is allowed to change the configuration file after the study has already been completed by other participants. The data for each participant will have a "participantConfigHash" which refers to a particular configuration which is also in this list.
@@ -58,4 +58,8 @@ export interface ParticipantData {
   answers: Record<string, StoredAnswer>;
   /** Query parameters of the URL used to enter the study. */
   searchParams: Record<string, string>;
+  /** Metadata of a participants browser, resolution, language, and IP. */
+  metadata: ParticipantMetadata
+  /** Whether the participant has completed the study. */
+  completed: boolean;
 }

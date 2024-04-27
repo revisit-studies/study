@@ -72,7 +72,7 @@ export function Paintbrush(
         setIsBrushing(false);
       });
     }
-  }, [brushState.ids, data, isBrushing, isSelect, params, xScale, yScale]);
+  }, [brushPosition, brushState.ids, data, isBrushing, isSelect, params, setBrushedSpace, xScale, yScale]);
 
   return (
     <circle style={{ cursor: isBrushing ? 'pointer' : 'default' }} r={BRUSH_SIZE} fill="darkgray" opacity={0.5} cx={brushPosition[0]} cy={brushPosition[1]} />

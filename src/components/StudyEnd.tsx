@@ -4,8 +4,8 @@ import {
 import { useEffect, useState } from 'react';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import ReactMarkdownWrapper from './ReactMarkdownWrapper';
-import { disableBrowserBack } from '../utils/disableBrowserBack';
-import { useStorageEngine } from '../store/storageEngineHooks';
+import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
+import { useStorageEngine } from '../storage/storageEngineHooks';
 import { useStoreSelector } from '../store/store';
 
 export function StudyEnd() {
@@ -23,10 +23,11 @@ export function StudyEnd() {
         clearInterval(interval);
       }
     }, 1000);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Disable browser back button on study end
-  disableBrowserBack();
+  useDisableBrowserBack();
 
   return (
     <Center style={{ height: '100%' }}>

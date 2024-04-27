@@ -6,6 +6,9 @@ import { parseGlobalConfig, parseStudyConfig } from './parser/parser';
 import { GlobalConfig, Nullable, StudyConfig } from './parser/types';
 import { AnalysisInterface } from './analysis/AnalysisInterface';
 import { PREFIX } from './utils/Prefix';
+import { ProtectedRoute } from './ProtectedRoute';
+import { Login } from './Login';
+import { AuthProvider } from './store/hooks/useAuth';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
@@ -14,17 +17,17 @@ async function fetchGlobalConfigArray() {
 }
 
 async function fetchStudyConfigs(globalConfig: GlobalConfig) {
-  const studyConfigs: { [key: string]: StudyConfig } = {};
+  const studyConfigs: Record<string, StudyConfig> = {};
   const urls = globalConfig.configsList.map(
     (configId) => `${PREFIX}${globalConfig.configs[configId].path}`,
   );
 
-  const res = await Promise.all(urls.map((u) => fetch(u)))
-    .then((responses) => Promise.all(responses.map((_res) => _res.text())))
-    .then((responses) => Promise.all(responses.map((_res, idx) => parseStudyConfig(_res, globalConfig.configsList[idx]))));
+  const res = await Promise.all(urls.map((u) => fetch(u)));
+  const responses = await Promise.all(res.map((_res) => _res.text()));
+  const configs = await Promise.all(responses.map((_res, idx) => parseStudyConfig(_res, globalConfig.configsList[idx])));
 
   globalConfig.configsList.forEach((configId, idx) => {
-    studyConfigs[configId] = res[idx];
+    studyConfigs[configId] = configs[idx];
   });
   return studyConfigs;
 }
@@ -52,26 +55,41 @@ export function GlobalConfigParser() {
 
   return globalConfig ? (
     <BrowserRouter basename={PREFIX}>
-      <Routes>
-        <Route
-          path="/"
-          element={(
-            <ConfigSwitcher
-              globalConfig={globalConfig}
-              studyConfigs={studyConfigs}
-            />
-          )}
-        />
-        <Route
-          path="/:studyId/*"
-          element={<Shell globalConfig={globalConfig} />}
-        />
-
-        <Route
-          path="/analysis/:page"
-          element={<AnalysisInterface globalConfig={globalConfig} />}
-        />
-      </Routes>
+      <AuthProvider globalConfig={globalConfig}>
+        <Routes>
+          <Route
+            path="/"
+            element={(
+              <ProtectedRoute>
+                <ConfigSwitcher
+                  globalConfig={globalConfig}
+                  studyConfigs={studyConfigs}
+                />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/:studyId/*"
+            element={<Shell globalConfig={globalConfig} />}
+          />
+          <Route
+            path="/analysis/:page"
+            element={(
+              <ProtectedRoute>
+                <AnalysisInterface
+                  globalConfig={globalConfig}
+                />
+              </ProtectedRoute>
+            )}
+          />
+          <Route
+            path="/login"
+            element={(
+              <Login />
+            )}
+          />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   ) : null;
 }

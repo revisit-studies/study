@@ -7,17 +7,9 @@ import { DateRangePicker, DateRangePickerValue } from '@mantine/dates';
 import { VegaLite } from 'react-vega';
 import { useDisclosure, useResizeObserver } from '@mantine/hooks';
 import { ParticipantData } from '../../storage/types';
-import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { StoredAnswer } from '../../store/types';
 import { download, DownloadTidy } from '../../components/DownloadTidy';
 import { StudyConfig } from '../../parser/types';
-
-const isStudyCompleted = (participant: ParticipantData) => getSequenceFlatMap(participant.sequence).every((step, idx) => {
-  if (step === 'end') {
-    return true;
-  }
-  return participant.answers[`${step}_${idx}`] !== undefined;
-});
 
 const isWithinRange = (answers: Record<string, StoredAnswer>, rangeTime: DateRangePickerValue) => {
   const timeStamps = Object.values(answers).map((ans) => [ans.startTime, ans.endTime]).flat();
@@ -36,7 +28,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
   const [ref, dms] = useResizeObserver();
 
   const completionTimes = allParticipants
-    .filter((d) => isStudyCompleted(d))
+    .filter((d) => d.completed)
     .map((d) => Math.max(...Object.values(d.answers).map((ans) => ans.endTime)));
   const [rangeTime, setRangeTime] = useState<DateRangePickerValue>([
     new Date(new Date(Math.min(...(completionTimes.length > 0 ? completionTimes : [new Date().getTime()]))).setHours(0, 0, 0, 0)),
@@ -54,7 +46,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
       const inProgressData: ParticipantData[] = [];
 
       inRangeData.forEach((d) => {
-        if (isStudyCompleted(d)) {
+        if (d.completed) {
           completedData.push(d);
         } else {
           inProgressData.push(d);

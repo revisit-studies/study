@@ -7,16 +7,20 @@ import {
   CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
-import { getAuth, signInAnonymously } from '@firebase/auth';
+import { getAuth, signInAnonymously, User } from '@firebase/auth';
 import localforage from 'localforage';
 import { StorageEngine } from './StorageEngine';
 import { ParticipantData } from '../types';
 import {
-  EventType, Sequence, StoredAnswer, TrrackedProvenance,
+  EventType, ParticipantMetadata, Sequence, StoredAnswer, TrrackedProvenance,
 } from '../../store/types';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
-import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+
+export interface StoredUser {
+  email: string,
+  uid: string | null,
+}
 
 export class FirebaseStorageEngine extends StorageEngine {
   private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
@@ -60,9 +64,6 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   async connect() {
     try {
-      const auth = getAuth();
-      await signInAnonymously(auth);
-      if (!auth.currentUser) throw new Error('Login failed with firebase');
       await enableNetwork(this.firestore);
 
       // Check the connection to the database
@@ -76,20 +77,33 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   async initializeStudyDb(studyId: string, config: StudyConfig) {
-    // Hash the config
-    const configHash = await hash(JSON.stringify(config));
+    try {
+      const auth = getAuth();
+      if (!auth.currentUser) {
+        await signInAnonymously(auth);
+        if (!auth.currentUser) throw new Error('Login failed with firebase');
+      }
 
-    // Create or retrieve database for study
-    this.studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
-    this.studyId = studyId;
-    const configsDoc = doc(this.studyCollection, 'configs');
-    const configsCollection = collection(configsDoc, 'configs');
-    const configDoc = doc(configsCollection, configHash);
+      // Hash the config
+      const configHash = await hash(JSON.stringify(config));
 
-    return await setDoc(configDoc, config);
+      await this.localForage.setItem('currentConfigHash', configHash);
+
+      // Create or retrieve database for study
+      this.studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
+      this.studyId = studyId;
+      const configsDoc = doc(this.studyCollection, 'configs');
+      const configsCollection = collection(configsDoc, 'configs');
+      const configDoc = doc(configsCollection, configHash);
+
+      return await setDoc(configDoc, config);
+    } catch (error) {
+      console.warn('Failed to connect to Firebase.');
+      return Promise.reject(error);
+    }
   }
 
-  async initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, urlParticipantId?: string) {
+  async initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, metadata: ParticipantMetadata, urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -131,10 +145,20 @@ export class FirebaseStorageEngine extends StorageEngine {
       sequence: await this.getSequence(),
       answers: {},
       searchParams,
+      metadata,
+      completed: false,
     };
     await setDoc(participantDoc, participantData);
 
     return participantData;
+  }
+
+  async getCurrentConfigHash() {
+    if (!this._verifyStudyDatabase(this.studyCollection)) {
+      throw new Error('Study database not initialized');
+    }
+
+    return await this.localForage.getItem('currentConfigHash') as string;
   }
 
   async getCurrentParticipantId(urlParticipantId?: string) {
@@ -318,7 +342,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return participant;
   }
 
-  async nextParticipant(config: StudyConfig): Promise<ParticipantData> {
+  async nextParticipant(config: StudyConfig, metadata: ParticipantMetadata): Promise<ParticipantData> {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -346,6 +370,8 @@ export class FirebaseStorageEngine extends StorageEngine {
         sequence: await this.getSequence(),
         answers: {},
         searchParams: {},
+        metadata,
+        completed: false,
       };
       await setDoc(newParticipant, newParticipantData);
       participant = newParticipantData;
@@ -359,21 +385,138 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Study database not initialized');
     }
 
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+
     // Get the participantData
     const participantData = await this.getParticipantData();
     if (!participantData) {
       throw new Error('Participant not initialized');
     }
 
-    // Loop over the sequence and check if all answers are present
-    const allAnswersPresent = getSequenceFlatMap(participantData.sequence).every((step, idx) => {
-      if (step === 'end') {
+    // Check if all components have been completed
+    const participantDoc = doc(this.studyCollection, this.currentParticipantId);
+    await setDoc(participantDoc, { completed: true }, { merge: true });
+
+    participantData.completed = true;
+
+    return true;
+  }
+
+  // Gets data from the user-management collection based on the inputted string
+  async getUserManagementData(key: string) {
+    // Get the user-management collection in Firestore
+    const userManagementCollection = collection(this.firestore, 'user-management');
+    // Grabs all user-management data and returns data based on key
+    const querySnapshot = await getDocs(userManagementCollection);
+    // Converts querySnapshot data to Object
+    const docsObject = Object.fromEntries(querySnapshot.docs.map((queryDoc) => [queryDoc.id, queryDoc.data()]));
+    if (key in docsObject) {
+      return docsObject[key];
+    }
+    return null;
+  }
+
+  async editUserManagementAdmins(adminUsersList: Array<string>, currentUser: User) {
+    if (adminUsersList.length > 0) {
+      const firebaseAdminUsers = await this.getUserManagementData('adminUsers');
+      const newAdminUsersWithUUids: Array<StoredUser> = [];
+
+      if (firebaseAdminUsers) {
+        const firebaseAdminUsersObject = Object.fromEntries(firebaseAdminUsers?.adminUsersList.map((storedUser:StoredUser) => [storedUser.email, storedUser.uid]));
+        adminUsersList.forEach((adminUser) => {
+          let newUid: string | null;
+          if (adminUser in firebaseAdminUsersObject) {
+            const storedUid = firebaseAdminUsersObject[adminUser];
+            newUid = storedUid || (currentUser.email === adminUser ? currentUser.uid : null);
+          } else {
+            newUid = currentUser.email === adminUser ? currentUser.uid : null;
+          }
+          newAdminUsersWithUUids.push({
+            email: adminUser,
+            uid: newUid,
+          });
+        });
+      } else {
+        // Adds all initial admins on sign in of one of them.
+        let newUid: string | null;
+        adminUsersList.forEach((adminUser) => {
+          newUid = currentUser.email === adminUser ? currentUser.uid : null;
+          newAdminUsersWithUUids.push({
+            email: adminUser,
+            uid: newUid,
+          });
+        });
+      }
+      return await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
+        adminUsersList: newAdminUsersWithUUids,
+      });
+    }
+    return null;
+  }
+
+  // Validates if a user is an admin.
+  async validateUserAdminStatus(user: User | null, globalConfigAdminUsers: Array<string>) {
+    // There are two cases
+    // Case 1: Verify a user when there already exists a database
+    // Case 2: Verify a user when there does not exist a database
+    if (user) {
+      // Case 1: Database exists
+      const adminUsers = await this.getUserManagementData('adminUsers');
+
+      if (adminUsers && adminUsers.adminUsersList) {
+        const adminUsersObject = Object.fromEntries(adminUsers.adminUsersList.map((storedUser:StoredUser) => [storedUser.email, storedUser.uid]));
+        // Verifies that, if the user has signed in and thus their UID is added to the Firestore, that the current UID matches the Firestore entries UID. Prevents impersonation (otherwise, users would be able to alter email to impersonate).
+        const isAdmin = user.email && (adminUsersObject[user.email] === user.uid || adminUsersObject[user.email] === null);
+        if (isAdmin) {
+          await this.editUserManagementAdmins(globalConfigAdminUsers, user);
+          return true;
+        }
+        return false;
+      // Case 2: Database does not yet exist. First opening
+      }
+      // Need to get Global config users
+      const isAdmin = (user.email && globalConfigAdminUsers.includes(user.email)) ?? false;
+      if (isAdmin) {
+        await this.editUserManagementAdmins(globalConfigAdminUsers, user);
         return true;
       }
-      return participantData.answers[`${step}_${idx}`] !== undefined;
+      return false;
+    }
+    return false;
+  }
+
+  async getAllParticipantsDataByStudy(studyId:string) {
+    const currentCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
+
+    // Get all participants
+    const participants = await getDocs(currentCollection);
+    const participantData: ParticipantData[] = [];
+
+    // Iterate over the participants and add the provenance graph
+    const participantPulls = participants.docs.map(async (participant) => {
+      // Exclude the config doc and the sequenceArray doc
+      if (participant.id === 'config' || participant.id === 'sequenceArray') return;
+
+      const participantDataItem = participant.data() as ParticipantData;
+
+      const fullProvObj = await this._getFromFirebaseStorage(participantDataItem.participantId, 'provenance');
+      const fullWindowEventsObj = await this._getFromFirebaseStorage(participantDataItem.participantId, 'windowEvents');
+
+      // Rehydrate the provenance graphs
+      participantDataItem.answers = Object.fromEntries(Object.entries(participantDataItem.answers).map(([key, value]) => {
+        if (value === undefined) return [key, value];
+        const provenanceGraph = fullProvObj[key];
+        const windowEvents = fullWindowEventsObj[key];
+        return [key, { ...value, provenanceGraph, windowEvents }];
+      }));
+      participantData.push(participantDataItem);
     });
 
-    return allAnswersPresent;
+    await Promise.all(participantPulls);
+
+    return participantData;
   }
 
   private _verifyStudyDatabase(db: CollectionReference<DocumentData, DocumentData> | undefined): db is CollectionReference<DocumentData, DocumentData> {

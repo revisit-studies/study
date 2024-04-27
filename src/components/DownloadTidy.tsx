@@ -12,7 +12,7 @@ import { useCallback, useMemo } from 'react';
 import merge from 'lodash.merge';
 import { StorageEngine } from '../storage/engines/StorageEngine';
 import { ParticipantData } from '../storage/types';
-import { useStorageEngine } from '../store/storageEngineHooks';
+import { useStorageEngine } from '../storage/storageEngineHooks';
 import { Prettify, StudyConfig } from '../parser/types';
 import { isInheritedComponent } from '../parser/parser';
 

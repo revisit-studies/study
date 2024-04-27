@@ -1,6 +1,13 @@
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 // eslint-disable-next-line import/no-cycle
-import { StudyConfig } from '../parser/types';
+import { SkipConditions, StudyConfig } from '../parser/types';
+
+export interface ParticipantMetadata {
+  userAgent: string;
+  resolution: Screen;
+  language: string;
+  ip: string | null;
+}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TrrackedProvenance = ProvenanceGraph<any, any>;
@@ -51,7 +58,7 @@ Each item in the window event is given a time, a position an event name, and som
 */
 export interface StoredAnswer {
   /** Object whose keys are the "id"s in the Response list of the component in the StudyConfiguration and whose value is the inputted value from the participant. */
-  answer: Record<string, Record<string, unknown>>;
+  answer: Record<string, { id: string, value: unknown }>;
   /** Time that the user began interacting with the component in epoch milliseconds. */
   startTime: number;
   /** Time that the user ended interaction with the component in epoch milliseconds. */
@@ -98,8 +105,10 @@ export interface StimulusParams<T> {
 }
 
 export interface Sequence {
+  id?: string;
   orderPath: string;
   components: (string | Sequence)[];
+  skip?: SkipConditions;
 }
 
 export interface StoreState {
@@ -112,4 +121,5 @@ export interface StoreState {
   alertModal: { show: boolean, message: string };
   trialValidation: TrialValidation;
   iframeAnswers: string[];
+  metadata: ParticipantMetadata;
 }
