@@ -1,0 +1,27 @@
+name: Release new version
+
+on:
+  pull_request:
+    branches: [main]
+    types: [closed]
+
+jobs:
+  release:
+    if: github.event.pull_request.merged
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Run make-release.sh to modify version numbers across the repo
+        run: .github/helper_files/make-release.sh ${{ github.event.pull_request.title }}
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "jackwilburn@tutanota.com"
+          git config --local user.name "Jack Wilburn"
+          git add .
+          git commit -m "Release version ${{ github.event.pull_request.title }}"
+          git push
+
+      - name: Make a tag for the release
+        run: git tag -a ${{ github.event.pull_request.title }} -m "Release version ${{ github.event.pull_request.title }}"
