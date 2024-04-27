@@ -3,7 +3,7 @@ import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { ResponseBlockLocation, StudyConfig } from '../parser/types';
 import {
-  StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence,
+  StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata,
 } from './types';
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 
@@ -11,6 +11,7 @@ export async function studyStoreCreator(
   studyId: string,
   config: StudyConfig,
   sequence: Sequence,
+  metadata: ParticipantMetadata,
   answers: Record<string, StoredAnswer>,
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
@@ -39,6 +40,7 @@ export async function studyStoreCreator(
     alertModal: { show: false, message: '' },
     trialValidation: answers ? allValid : emptyValidation,
     iframeAnswers: [] as string[],
+    metadata,
   };
 
   const storeSlice = createSlice({

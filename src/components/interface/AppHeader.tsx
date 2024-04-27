@@ -18,7 +18,7 @@ import {
   IconMail,
   IconSchema,
 } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useHref } from 'react-router-dom';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import {
@@ -28,7 +28,7 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { PREFIX } from '../../utils/Prefix';
 
 export default function AppHeader() {
-  const { config: studyConfig } = useStoreSelector((state) => state);
+  const { config: studyConfig, metadata } = useStoreSelector((state) => state);
   const flatSequence = useFlatSequence();
   const storeDispatch = useStoreDispatch();
   const { toggleShowHelpText, toggleStudyBrowser } = useStoreActions();
@@ -46,8 +46,9 @@ export default function AppHeader() {
 
   const studyId = useStudyId();
   const studyHref = useHref(`/${studyId}`);
+
   function getNewParticipant() {
-    storageEngine?.nextParticipant(studyConfig)
+    storageEngine?.nextParticipant(studyConfig, metadata)
       .then(() => {
         window.location.href = studyHref;
       })
@@ -55,6 +56,22 @@ export default function AppHeader() {
         console.error(err);
       });
   }
+
+  useEffect(() => {
+    async function checkParticipantConfigHash() {
+      if (storageEngine) {
+        const _currentConfigHash = await storageEngine.getCurrentConfigHash();
+        const _participantData = await storageEngine.getParticipantData();
+
+        if (_currentConfigHash !== _participantData?.participantConfigHash) {
+          await storageEngine?.nextParticipant(studyConfig, metadata);
+        }
+      }
+    }
+    if (import.meta.env.DEV) {
+      checkParticipantConfigHash();
+    }
+  }, [storageEngine, studyConfig]);
 
   return (
     <Header height="70" p="md">

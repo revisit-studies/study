@@ -6,7 +6,8 @@ import { Provider } from 'react-redux';
 import {
   RouteObject, useRoutes, useSearchParams,
 } from 'react-router-dom';
-import { Box, Center, Loader } from '@mantine/core';
+import { LoadingOverlay, Title } from '@mantine/core';
+import { ErrorObject } from 'ajv';
 import {
   GlobalConfig,
   Nullable,
@@ -26,16 +27,18 @@ import { StepRenderer } from './StepRenderer';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { generateSequenceArray } from '../utils/handleRandomSequences';
 import { getStudyConfig } from '../utils/fetchConfig';
+import { ParticipantMetadata } from '../store/types';
+import { ErrorLoadingConfig } from './ErrorLoadingConfig';
+import StudyNotFound from '../Study404';
 
 export function Shell({ globalConfig }: {
   globalConfig: GlobalConfig;
 }) {
   // Pull study config
   const studyId = useStudyId();
-  if (!studyId || !globalConfig.configsList.find((c) => sanitizeStringForUrl(c))) {
-    throw new Error('Study id invalid');
-  }
-  const [activeConfig, setActiveConfig] = useState<Nullable<StudyConfig>>(null);
+  const [activeConfig, setActiveConfig] = useState<Nullable<StudyConfig & { errors?: ErrorObject<string, Record<string, unknown>, unknown>[] }>>(null);
+  const isValidStudyId = globalConfig.configsList.find((c) => sanitizeStringForUrl(c) === studyId);
+
   useEffect(() => {
     getStudyConfig(studyId, globalConfig).then((config) => {
       setActiveConfig(config);
@@ -61,10 +64,21 @@ export function Shell({ globalConfig }: {
       // Get or generate participant session
       const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) || undefined : undefined;
       const searchParamsObject = Object.fromEntries(searchParams.entries());
-      const participantSession = await storageEngine.initializeParticipantSession(searchParamsObject, activeConfig, urlParticipantId);
+
+      const ipRes = await fetch('https://api.ipify.org?format=json').catch((_) => '');
+      const ip: { ip: string } = ipRes instanceof Response ? await ipRes.json() : { ip: '' };
+
+      const metadata: ParticipantMetadata = {
+        language: navigator.language,
+        userAgent: navigator.userAgent,
+        resolution: JSON.parse(JSON.stringify(window.screen)),
+        ip: ip.ip,
+      };
+
+      const participantSession = await storageEngine.initializeParticipantSession(searchParamsObject, activeConfig, metadata, urlParticipantId);
 
       // Initialize the redux stores
-      const newStore = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, participantSession.answers);
+      const newStore = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, metadata, participantSession.answers);
       setStore(newStore);
 
       // Initialize the routing
@@ -77,7 +91,12 @@ export function Shell({ globalConfig }: {
           },
           {
             path: '/:index',
-            element: <ComponentController />,
+            element: activeConfig.errors ? (
+              <>
+                <Title order={2} mb={8}>Error loading config</Title>
+                <ErrorLoadingConfig errors={activeConfig.errors} />
+              </>
+            ) : <ComponentController />,
           },
         ],
       }]);
@@ -87,18 +106,20 @@ export function Shell({ globalConfig }: {
 
   const routing = useRoutes(routes);
 
-  return !routing || !store
-    ? (
-      <Box style={{ height: '100vh' }}>
-        <Center style={{ height: '100%' }}>
-          <Loader style={{ height: '100%' }} size={60} />
-        </Center>
-      </Box>
-    ) : (
+  const loaderOrRouting = !routing || !store ? <LoadingOverlay visible />
+    : (
       <StudyStoreContext.Provider value={store}>
         <Provider store={store.store}>
           {routing}
         </Provider>
       </StudyStoreContext.Provider>
     );
+
+  return (
+    isValidStudyId ? (
+      loaderOrRouting
+    ) : (
+      <StudyNotFound />
+    )
+  );
 }
