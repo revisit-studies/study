@@ -9,6 +9,7 @@ import { PREFIX } from './utils/Prefix';
 import { ProtectedRoute } from './ProtectedRoute';
 import { Login } from './Login';
 import { AuthProvider } from './store/hooks/useAuth';
+import { AnalysisDashboard } from './analysis/AnalysisDashboard';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
@@ -73,14 +74,28 @@ export function GlobalConfigParser() {
             element={<Shell globalConfig={globalConfig} />}
           />
           <Route
-            path="/analysis/:page"
+            path="/:studyId/*"
+            element={<Shell globalConfig={globalConfig} />}
+          />
+          <Route
+            path="/analysis/dashboard"
+            element={(
+              <ProtectedRoute>
+                <AnalysisDashboard
+                  globalConfig={globalConfig}
+                />
+              </ProtectedRoute>
+              )}
+          />
+          <Route
+            path="/analysis/stats/:studyId"
             element={(
               <ProtectedRoute>
                 <AnalysisInterface
                   globalConfig={globalConfig}
                 />
               </ProtectedRoute>
-            )}
+              )}
           />
           <Route
             path="/login"

@@ -2,31 +2,23 @@ import {
   Badge, Box, Button, Card, Center, Text, Title, Container, Flex, Group, Popover,
 } from '@mantine/core';
 import React, { useEffect, useMemo, useState } from 'react';
-import { IconCodePlus, IconTable } from '@tabler/icons-react';
+import { IconCodePlus, IconScanEye, IconTable } from '@tabler/icons-react';
 import { DateRangePicker, DateRangePickerValue } from '@mantine/dates';
 import { VegaLite } from 'react-vega';
 import { useDisclosure, useResizeObserver } from '@mantine/hooks';
+import { useNavigate } from 'react-router-dom';
 import { ParticipantData } from '../../storage/types';
-import { StoredAnswer } from '../../store/types';
 import { download, DownloadTidy } from '../../components/DownloadTidy';
 import { StudyConfig } from '../../parser/types';
-
-const isWithinRange = (answers: Record<string, StoredAnswer>, rangeTime: DateRangePickerValue) => {
-  const timeStamps = Object.values(answers).map((ans) => [ans.startTime, ans.endTime]).flat();
-  if (rangeTime[0] === null || rangeTime[1] === null) {
-    return false;
-  }
-  return Math.min(...timeStamps) >= rangeTime[0].getTime() && Math.max(...timeStamps) <= rangeTime[1].getTime();
-};
+import { isWithinRange } from '../utils';
 
 export function SummaryPanel(props: { studyId: string; allParticipants: ParticipantData[]; config: StudyConfig }) {
   const {
     studyId, allParticipants, config,
   } = props;
   const [openDownload, { open, close }] = useDisclosure(false);
-
+  const navigate = useNavigate();
   const [ref, dms] = useResizeObserver();
-
   const completionTimes = allParticipants
     .filter((d) => d.completed)
     .map((d) => Math.max(...Object.values(d.answers).map((ans) => ans.endTime)));
@@ -95,13 +87,37 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
 
   const [jsonOpened, { close: closeJson, open: openJson }] = useDisclosure(false);
   const [csvOpened, { close: closeCsv, open: openCsv }] = useDisclosure(false);
+  const [checkOpened, { close: closeCheck, open: openCheck }] = useDisclosure(false);
+
+  const onCheckDetail = (studyid:string) => {
+    navigate(`/analysis/stats/${studyid}`);
+  };
 
   return (
     <Container>
       <Card ref={ref} p="lg" shadow="md" withBorder>
         <Flex align="center" mb={16} justify="space-between">
           <Flex direction="column">
-            <Title order={5} mb={4}>{studyId}</Title>
+            <Title order={5} mb={4}>
+              {studyId}
+              <Popover opened={checkOpened}>
+                <Popover.Target>
+                  <Button
+                    variant="subtle"
+                    color="orange"
+                    onClick={() => onCheckDetail(studyId)}
+                    onMouseEnter={openCheck}
+                    onMouseLeave={closeCheck}
+                    px={4}
+                  >
+                    <IconScanEye />
+                  </Button>
+                </Popover.Target>
+                <Popover.Dropdown>
+                  <Text>Examine this experiment</Text>
+                </Popover.Dropdown>
+              </Popover>
+            </Title>
             <Flex direction="row" wrap="nowrap" gap="xs" align="center" mb={4}>
               <Badge size="sm" color="orange">
                 Total:&nbsp;
