@@ -3,7 +3,7 @@ import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { ResponseBlockLocation, StudyConfig } from '../parser/types';
 import {
-  StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence,
+  StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata,
 } from './types';
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 
@@ -11,6 +11,7 @@ export async function studyStoreCreator(
   studyId: string,
   config: StudyConfig,
   sequence: Sequence,
+  metadata: ParticipantMetadata,
   answers: Record<string, StoredAnswer>,
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
@@ -34,11 +35,13 @@ export async function studyStoreCreator(
     answers: answers || emptyAnswers,
     sequence,
     config,
-    showAdmin: false,
+    showStudyBrowser: import.meta.env.VITE_REVISIT_MODE === 'public',
     showHelpText: false,
     alertModal: { show: false, message: '' },
     trialValidation: answers ? allValid : emptyValidation,
-    iframeAnswers: [] as string[],
+    iframeAnswers: {},
+    iframeProvenance: null,
+    metadata,
   };
 
   const storeSlice = createSlice({
@@ -48,8 +51,8 @@ export async function studyStoreCreator(
       setConfig(state, payload: PayloadAction<StudyConfig>) {
         state.config = payload.payload;
       },
-      toggleShowAdmin: (state) => {
-        state.showAdmin = !state.showAdmin;
+      toggleStudyBrowser: (state) => {
+        state.showStudyBrowser = !state.showStudyBrowser;
       },
       toggleShowHelpText: (state) => {
         state.showHelpText = !state.showHelpText;
@@ -57,8 +60,11 @@ export async function studyStoreCreator(
       setAlertModal: (state, action: PayloadAction<{ show: boolean; message: string }>) => {
         state.alertModal = action.payload;
       },
-      setIframeAnswers: (state, action: PayloadAction<string[]>) => {
+      setIframeAnswers: (state, action: PayloadAction<Record<string, unknown>>) => {
         state.iframeAnswers = action.payload;
+      },
+      setIframeProvenance: (state, action: PayloadAction<TrrackedProvenance | null>) => {
+        state.iframeProvenance = action.payload;
       },
       updateResponseBlockValidation: (
         state,

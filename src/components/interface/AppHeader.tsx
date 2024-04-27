@@ -1,21 +1,24 @@
 import {
   ActionIcon,
+  Badge,
   Button,
   Flex,
   Grid,
+  Group,
   Header,
   Image,
   Menu,
   Progress,
   Space,
   Title,
+  Tooltip,
 } from '@mantine/core';
 import {
   IconDotsVertical,
   IconMail,
   IconSchema,
 } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useHref } from 'react-router-dom';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import {
@@ -25,10 +28,10 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { PREFIX } from '../../utils/Prefix';
 
 export default function AppHeader() {
-  const { config: studyConfig } = useStoreSelector((state) => state);
+  const { config: studyConfig, metadata } = useStoreSelector((state) => state);
   const flatSequence = useFlatSequence();
   const storeDispatch = useStoreDispatch();
-  const { toggleShowHelpText, toggleShowAdmin } = useStoreActions();
+  const { toggleShowHelpText, toggleStudyBrowser } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
   const currentStep = useCurrentStep();
@@ -41,13 +44,11 @@ export default function AppHeader() {
   const logoPath = studyConfig?.uiConfig.logoPath;
   const withProgressBar = studyConfig?.uiConfig.withProgressBar;
 
-  const [searchParams] = useState(new URLSearchParams(window.location.search));
-  const admin = searchParams.get('admin') || 'f';
-
   const studyId = useStudyId();
   const studyHref = useHref(`/${studyId}`);
+
   function getNewParticipant() {
-    storageEngine?.nextParticipant(studyConfig)
+    storageEngine?.nextParticipant(studyConfig, metadata)
       .then(() => {
         window.location.href = studyHref;
       })
@@ -55,6 +56,22 @@ export default function AppHeader() {
         console.error(err);
       });
   }
+
+  useEffect(() => {
+    async function checkParticipantConfigHash() {
+      if (storageEngine) {
+        const _currentConfigHash = await storageEngine.getCurrentConfigHash();
+        const _participantData = await storageEngine.getParticipantData();
+
+        if (_currentConfigHash !== _participantData?.participantConfigHash) {
+          await storageEngine?.nextParticipant(studyConfig, metadata);
+        }
+      }
+    }
+    if (import.meta.env.DEV) {
+      checkParticipantConfigHash();
+    }
+  }, [storageEngine, studyConfig]);
 
   return (
     <Header height="70" p="md">
@@ -74,7 +91,8 @@ export default function AppHeader() {
         </Grid.Col>
 
         <Grid.Col span={4}>
-          <Flex align="center" justify="flex-end">
+          <Group noWrap position="right">
+            {import.meta.env.VITE_REVISIT_MODE === 'public' ? <Tooltip multiline withArrow arrowSize={6} width={300} label="This is a demo version of the study, we’re not collecting any data. Navigate the study via the study browser on the right."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip> : null}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"
@@ -84,9 +102,7 @@ export default function AppHeader() {
               </Button>
             )}
 
-            <Space w="md" />
-
-            {(import.meta.env.DEV || admin === 't') && (
+            {(import.meta.env.DEV || import.meta.env.VITE_REVISIT_MODE === 'public') && (
               <Menu
                 shadow="md"
                 width={200}
@@ -95,16 +111,16 @@ export default function AppHeader() {
                 onChange={setMenuOpened}
               >
                 <Menu.Target>
-                  <ActionIcon size="lg">
+                  <ActionIcon size="lg" className="studyBrowserMenuDropdown">
                     <IconDotsVertical />
                   </ActionIcon>
                 </Menu.Target>
                 <Menu.Dropdown>
                   <Menu.Item
                     icon={<IconSchema size={14} />}
-                    onClick={() => storeDispatch(toggleShowAdmin())}
+                    onClick={() => storeDispatch(toggleStudyBrowser())}
                   >
-                    Admin Mode
+                    Study Browser
                   </Menu.Item>
 
                   <Menu.Item
@@ -128,7 +144,7 @@ export default function AppHeader() {
                 </Menu.Dropdown>
               </Menu>
             )}
-          </Flex>
+          </Group>
         </Grid.Col>
       </Grid>
     </Header>

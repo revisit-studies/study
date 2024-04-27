@@ -2,6 +2,13 @@ import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 // eslint-disable-next-line import/no-cycle
 import { SkipConditions, StudyConfig } from '../parser/types';
 
+export interface ParticipantMetadata {
+  userAgent: string;
+  resolution: Screen;
+  language: string;
+  ip: string | null;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type TrrackedProvenance = ProvenanceGraph<any, any>;
 
@@ -109,9 +116,11 @@ export interface StoreState {
   answers: Record<string, StoredAnswer>;
   sequence: Sequence;
   config: StudyConfig;
-  showAdmin: boolean;
+  showStudyBrowser: boolean;
   showHelpText: boolean;
   alertModal: { show: boolean, message: string };
   trialValidation: TrialValidation;
-  iframeAnswers: string[];
+  iframeAnswers: Record<string, unknown>;
+  iframeProvenance: TrrackedProvenance | null;
+  metadata: ParticipantMetadata;
 }

@@ -165,7 +165,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
 
   return (
     <AuthContext.Provider value={value}>
-      {user.determiningStatus ? <LoadingOverlay visible={user.determiningStatus} opacity={1} /> : children }
+      {user.determiningStatus ? <LoadingOverlay visible /> : children }
     </AuthContext.Provider>
   );
 }

@@ -5,10 +5,8 @@ import {
 import { ParticipantData } from '../../storage/types';
 import { SummaryPanel } from './SummaryPanel';
 import { GlobalConfig, StudyConfig } from '../../parser/types';
-import { initializeStorageEngine } from '../../storage/initialize';
 import { getStudyConfig } from '../../utils/fetchConfig';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 
 export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
   const { globalConfig } = props;
@@ -16,7 +14,6 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
   const [expData, setExpData] = useState<Record<string, ParticipantData[]>>({});
   const [expConfig, setExpConfig] = useState<Record<string, StudyConfig>>({});
   const { storageEngine } = useStorageEngine();
-
   useEffect(() => {
     const init = async () => {
       setLoading(true);
@@ -24,8 +21,8 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
       const allConfig: Record<string, StudyConfig> = {};
 
       const fetchData = async (studyId: string) => {
-        if (storageEngine instanceof FirebaseStorageEngine) {
-          const config = await getStudyConfig(studyId, globalConfig);
+        const config = await getStudyConfig(studyId, globalConfig);
+        if (storageEngine) {
           allData[studyId] = await storageEngine.getAllParticipantsDataByStudy(studyId);
           if (config === null) return;
           allConfig[studyId] = config;
@@ -47,7 +44,7 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
       await fetchAllData();
     };
     init();
-  }, [storageEngine]);
+  }, [globalConfig, storageEngine]);
 
   return (
     <Box>
@@ -58,7 +55,7 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
             <SummaryPanel studyId={studyId} allParticipants={expData[studyId]} config={expConfig[studyId]} />
           </Grid.Col>
         ))}
-        <LoadingOverlay visible={loading} zIndex={1000} overlayBlur={2} />
+        <LoadingOverlay visible={loading} />
       </Grid>
     </Box>
   );
