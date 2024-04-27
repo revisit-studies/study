@@ -87,6 +87,8 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
 
   const [jsonOpened, { close: closeJson, open: openJson }] = useDisclosure(false);
   const [csvOpened, { close: closeCsv, open: openCsv }] = useDisclosure(false);
+  const [checkOpened, { close: closeCheck, open: openCheck }] = useDisclosure(false);
+
   const onCheckDetail = (studyid:string) => {
     navigate(`/analysis/stats/${studyid}`);
   };
@@ -98,14 +100,14 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
           <Flex direction="column">
             <Title order={5} mb={4}>
               {studyId}
-              <Popover opened={jsonOpened}>
+              <Popover opened={checkOpened}>
                 <Popover.Target>
                   <Button
                     variant="subtle"
                     color="orange"
                     onClick={() => onCheckDetail(studyId)}
-                    onMouseEnter={openJson}
-                    onMouseLeave={closeJson}
+                    onMouseEnter={openCheck}
+                    onMouseLeave={closeCheck}
                     px={4}
                   >
                     <IconScanEye />
