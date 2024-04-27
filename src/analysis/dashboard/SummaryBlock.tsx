@@ -55,7 +55,7 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
             <SummaryPanel studyId={studyId} allParticipants={expData[studyId]} config={expConfig[studyId]} />
           </Grid.Col>
         ))}
-        <LoadingOverlay visible={loading} zIndex={1000} overlayBlur={2} />
+        <LoadingOverlay visible={loading} />
       </Grid>
     </Box>
   );

@@ -1,14 +1,17 @@
 import {
   ActionIcon,
+  Badge,
   Button,
   Flex,
   Grid,
+  Group,
   Header,
   Image,
   Menu,
   Progress,
   Space,
   Title,
+  Tooltip,
 } from '@mantine/core';
 import {
   IconDotsVertical,
@@ -28,7 +31,7 @@ export default function AppHeader() {
   const { config: studyConfig, metadata } = useStoreSelector((state) => state);
   const flatSequence = useFlatSequence();
   const storeDispatch = useStoreDispatch();
-  const { toggleShowHelpText, toggleShowAdmin } = useStoreActions();
+  const { toggleShowHelpText, toggleStudyBrowser } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
   const currentStep = useCurrentStep();
@@ -40,9 +43,6 @@ export default function AppHeader() {
 
   const logoPath = studyConfig?.uiConfig.logoPath;
   const withProgressBar = studyConfig?.uiConfig.withProgressBar;
-
-  const [searchParams] = useState(new URLSearchParams(window.location.search));
-  const admin = searchParams.get('admin') || 'f';
 
   const studyId = useStudyId();
   const studyHref = useHref(`/${studyId}`);
@@ -91,7 +91,8 @@ export default function AppHeader() {
         </Grid.Col>
 
         <Grid.Col span={4}>
-          <Flex align="center" justify="flex-end">
+          <Group noWrap position="right">
+            {import.meta.env.VITE_REVISIT_MODE === 'public' ? <Tooltip multiline withArrow arrowSize={6} width={300} label="This is a demo version of the study, we’re not collecting any data. Navigate the study via the study browser on the right."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip> : null}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"
@@ -101,9 +102,7 @@ export default function AppHeader() {
               </Button>
             )}
 
-            <Space w="md" />
-
-            {(import.meta.env.DEV || admin === 't') && (
+            {(import.meta.env.DEV || import.meta.env.VITE_REVISIT_MODE === 'public') && (
               <Menu
                 shadow="md"
                 width={200}
@@ -112,16 +111,16 @@ export default function AppHeader() {
                 onChange={setMenuOpened}
               >
                 <Menu.Target>
-                  <ActionIcon size="lg">
+                  <ActionIcon size="lg" className="studyBrowserMenuDropdown">
                     <IconDotsVertical />
                   </ActionIcon>
                 </Menu.Target>
                 <Menu.Dropdown>
                   <Menu.Item
                     icon={<IconSchema size={14} />}
-                    onClick={() => storeDispatch(toggleShowAdmin())}
+                    onClick={() => storeDispatch(toggleStudyBrowser())}
                   >
-                    Admin Mode
+                    Study Browser
                   </Menu.Item>
 
                   <Menu.Item
@@ -145,7 +144,7 @@ export default function AppHeader() {
                 </Menu.Dropdown>
               </Menu>
             )}
-          </Flex>
+          </Group>
         </Grid.Col>
       </Grid>
     </Header>
