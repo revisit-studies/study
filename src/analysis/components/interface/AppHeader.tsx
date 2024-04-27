@@ -1,4 +1,5 @@
 import {
+  Box,
   Button,
   Container,
   Flex, Group,
@@ -22,16 +23,19 @@ export default function AppHeader(props:{ studyIds: string[], selectedId: string
   };
 
   return (
-    <Header height={70} p="md">
-      <Group>
-        <Image maw={40} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
-        <Space w="md" />
+    <Header height={70} p="md" miw={800}>
+      <Group position="apart">
+        <Group sx={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
+          <Image maw={40} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
+          <MediaQuery smallerThan="md" styles={{ display: 'none' }}>
+            <Title span order={4}>
+              reVISit Analytics Platform /
+              {`${selectedId || 'Dashboard'}`}
+            </Title>
+          </MediaQuery>
+        </Group>
 
-        <MediaQuery smallerThan="md" styles={{ display: 'none' }}>
-          <Title span order={4}>reVISit Analytics Platform</Title>
-        </MediaQuery>
-
-        <Container fluid>
+        <Box>
           <Flex
             gap="md"
             justify="flex-end"
@@ -39,19 +43,19 @@ export default function AppHeader(props:{ studyIds: string[], selectedId: string
             direction="row"
             wrap="wrap"
           >
-            <Button
-              color="orange"
-              onClick={() => { navigate('/analysis/dashboard'); }}
-            >
-              <IconHome size={20} />
-            </Button>
+            {/* <Button */}
+            {/*  color="orange" */}
+            {/*  onClick={() => { navigate('/analysis/dashboard'); }} */}
+            {/* > */}
+            {/*  <IconHome size={20} /> */}
+            {/* </Button> */}
 
-            <Button
-              color="orange"
-              onClick={() => { navigate('/analysis/stats'); }}
-            >
-              <IconDeviceDesktopAnalytics size={20} />
-            </Button>
+            {/* <Button */}
+            {/*  color="orange" */}
+            {/*  onClick={() => { navigate('/analysis/stats'); }} */}
+            {/* > */}
+            {/*  <IconDeviceDesktopAnalytics size={20} /> */}
+            {/* </Button> */}
 
             {activeExp && (
               <Select
@@ -63,7 +67,7 @@ export default function AppHeader(props:{ studyIds: string[], selectedId: string
             )}
 
           </Flex>
-        </Container>
+        </Box>
       </Group>
 
     </Header>
