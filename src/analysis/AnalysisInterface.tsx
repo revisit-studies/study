@@ -3,12 +3,11 @@ import {
 } from '@mantine/core';
 import { useParams } from 'react-router-dom';
 import {
-  IconMessageCircle, IconPhoto, IconSettings, IconTable,
+  IconChartDonut2, IconPlayerPlay, IconTable,
 } from '@tabler/icons-react';
 import React, { useEffect, useState } from 'react';
 import AppHeader from './components/interface/AppHeader';
 import { GlobalConfig, ParticipantData } from '../parser/types';
-import { SummaryBlock } from './dashboard/SummaryBlock';
 import { StatsBoard } from './stats/StatsBoard';
 import { FirebaseStorageEngine } from '../storage/engines/FirebaseStorageEngine';
 import { getStudyConfig } from '../utils/fetchConfig';
@@ -55,8 +54,8 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
         <Tabs mt={0} defaultValue="table">
           <Tabs.List>
             <Tabs.Tab value="table" icon={<IconTable size={14} />}>Table View</Tabs.Tab>
-            <Tabs.Tab value="stats" icon={<IconMessageCircle size={14} />}>Trial Stats</Tabs.Tab>
-            <Tabs.Tab value="settings" icon={<IconSettings size={14} />}>Settings</Tabs.Tab>
+            <Tabs.Tab value="stats" icon={<IconChartDonut2 size={14} />}>Trial Stats</Tabs.Tab>
+            <Tabs.Tab value="settings" icon={<IconPlayerPlay size={14} />}>Individual Replay</Tabs.Tab>
           </Tabs.List>
           <Tabs.Panel value="table" pt="xs">
             <TableView completed={completed} inprogress={inprogress} />
