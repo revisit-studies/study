@@ -48,8 +48,10 @@ export default function ResponseBlock({
   const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
 
   useEffect(() => {
-    if (iframeAnswers) {
-      answerValidator.setValues(iframeAnswers);
+    const iframeResponse = responses.find((r) => r.type === 'iframe');
+    if (iframeAnswers && iframeResponse) {
+      const answerId = iframeResponse.id;
+      answerValidator.setValues({ ...answerValidator.values, [answerId]: iframeAnswers[answerId] });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [iframeAnswers]);

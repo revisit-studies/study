@@ -18,7 +18,7 @@ function ReactComponentController({ currentConfig }: { currentConfig: ReactCompo
   const StimulusComponent = (modules[reactPath] as ModuleNamespace).default;
 
   const storeDispatch = useStoreDispatch();
-  const { updateResponseBlockValidation } = useStoreActions();
+  const { updateResponseBlockValidation, setIframeAnswers } = useStoreActions();
   function setAnswer({ status, provenanceGraph, answers }: Parameters<StimulusParams<unknown>['setAnswer']>[0]) {
     storeDispatch(updateResponseBlockValidation({
       location: 'sidebar',
@@ -27,6 +27,8 @@ function ReactComponentController({ currentConfig }: { currentConfig: ReactCompo
       values: answers,
       provenanceGraph,
     }));
+
+    storeDispatch(setIframeAnswers(answers));
   }
 
   return (
