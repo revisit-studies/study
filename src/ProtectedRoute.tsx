@@ -33,7 +33,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
   }, [user.isAdmin]);
 
   if (user.determiningStatus || !storageEngine) {
-    return <LoadingOverlay overlayOpacity={0} visible={user.determiningStatus || !storageEngine?.getEngine()} />;
+    return <LoadingOverlay visible={user.determiningStatus || !storageEngine?.getEngine()} />;
   }
 
   if (!user.isAdmin && !user.determiningStatus) {

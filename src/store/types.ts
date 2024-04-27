@@ -116,10 +116,11 @@ export interface StoreState {
   answers: Record<string, StoredAnswer>;
   sequence: Sequence;
   config: StudyConfig;
-  showAdmin: boolean;
+  showStudyBrowser: boolean;
   showHelpText: boolean;
   alertModal: { show: boolean, message: string };
   trialValidation: TrialValidation;
-  iframeAnswers: string[];
+  iframeAnswers: Record<string, unknown>;
+  iframeProvenance: TrrackedProvenance | null;
   metadata: ParticipantMetadata;
 }

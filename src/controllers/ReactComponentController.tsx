@@ -28,9 +28,7 @@ function ReactComponentController({ currentConfig }: { currentConfig: ReactCompo
       provenanceGraph,
     }));
 
-    storeDispatch(setIframeAnswers(
-      Object.values(answers).map((value) => value),
-    ));
+    storeDispatch(setIframeAnswers(answers));
   }
 
   return (

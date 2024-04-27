@@ -33,19 +33,15 @@
     postAnswers: (answers) => {
       sendMessage("ANSWERS", answers);
     },
+    postProvenance: (provenance) => {
+      sendMessage("PROVENANCE", provenance);
+    },
     postEvent: (eventName, objectId) => {
       sendMessage("EVENT", { eventName, objectId });
     },
     // Inform Revisit that the stimuli is ready in the iframe.
     postReady: () => {
       sendMessage("READY", {
-        documentHeight: document.documentElement.scrollHeight,
-        documentWidth: document.documentElement.scrollWidth,
-      });
-    },
-    // Inform Revisit that the stimuli is ready in the iframe.
-    postReady: () => {
-      sendMessage('READY', {
         documentHeight: document.documentElement.scrollHeight,
         documentWidth: document.documentElement.scrollWidth,
       });

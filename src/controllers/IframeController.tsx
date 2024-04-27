@@ -18,7 +18,7 @@ const defaultStyle = {
 };
 
 export default function IframeController({ currentConfig }: { currentConfig: WebsiteComponent; }) {
-  const { setIframeAnswers } = useStoreActions();
+  const { setIframeAnswers, setIframeProvenance } = useStoreActions();
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
 
@@ -65,7 +65,10 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
             }
             break;
           case `${PREFIX}/ANSWERS`:
-            storeDispatch(setIframeAnswers(data.message.answer));
+            storeDispatch(setIframeAnswers(data.message));
+            break;
+          case `${PREFIX}/PROVENANCE`:
+            storeDispatch(setIframeProvenance(data.message));
             break;
           default:
             break;
@@ -76,7 +79,7 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, currentStep, dispatch, iframeId, navigate, currentConfig, sendMessage, setIframeAnswers]);
+  }, [storeDispatch, currentStep, dispatch, iframeId, navigate, currentConfig, sendMessage, setIframeAnswers, setIframeProvenance]);
 
   return (
     <div>

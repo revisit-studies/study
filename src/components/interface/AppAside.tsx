@@ -1,5 +1,7 @@
 import {
+  ActionIcon,
   Aside,
+  CloseButton,
   ScrollArea,
   Text,
 } from '@mantine/core';
@@ -7,7 +9,9 @@ import React, { useMemo } from 'react';
 import { DownloadPanel } from '../DownloadPanel';
 import { ComponentBlockWithOrderPath, StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
-import { useFlatSequence, useStoreSelector } from '../../store/store';
+import {
+  useFlatSequence, useStoreActions, useStoreDispatch, useStoreSelector,
+} from '../../store/store';
 import { useCurrentStep } from '../../routes/utils';
 import { deepCopy } from '../../utils/deepCopy';
 import { ComponentBlock } from '../../parser/types';
@@ -20,11 +24,13 @@ function addPathToComponentBlock(order: ComponentBlock | string, orderPath: stri
 }
 
 export default function AppAside() {
-  const { showAdmin, sequence } = useStoreSelector((state) => state);
+  const { showStudyBrowser, sequence } = useStoreSelector((state) => state);
+  const { toggleStudyBrowser } = useStoreActions();
 
   const currentStep = useCurrentStep();
   const currentComponent = useFlatSequence()[currentStep];
   const studyConfig = useStudyConfig();
+  const dispatch = useStoreDispatch();
 
   const fullOrder = useMemo(() => {
     let r = deepCopy(studyConfig.sequence) as ComponentBlockWithOrderPath;
@@ -33,8 +39,16 @@ export default function AppAside() {
     return r;
   }, [studyConfig.sequence]);
 
-  return showAdmin || (currentComponent === 'end' && studyConfig.uiConfig.autoDownloadStudy) ? (
+  return showStudyBrowser || (currentComponent === 'end' && studyConfig.uiConfig.autoDownloadStudy) ? (
     <Aside p="0" width={{ base: 300 }} style={{ zIndex: 0 }}>
+      <ActionIcon
+        style={{
+          position: 'absolute', right: '10px', top: '10px', zIndex: 5,
+        }}
+        onClick={() => dispatch(toggleStudyBrowser())}
+      >
+        <CloseButton />
+      </ActionIcon>
       <ScrollArea p="0">
         {currentComponent === 'end' && (
           <div
@@ -47,7 +61,7 @@ export default function AppAside() {
           </div>
         )}
         <Text size="md" p={10} weight="bold">
-          Study Sequence
+          Study Browser
         </Text>
         <StepsPanel configSequence={fullOrder} participantSequence={sequence} fullSequence={sequence} />
       </ScrollArea>
