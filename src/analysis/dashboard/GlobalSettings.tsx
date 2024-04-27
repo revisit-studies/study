@@ -15,7 +15,7 @@ import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngi
 import { StoredUser } from '../../storage/engines/StorageEngine';
 
 export function GlobalSettings() {
-  const { user, logout } = useAuth();
+  const { user, triggerAuth } = useAuth();
   const { storageEngine } = useStorageEngine();
 
   const [isAuthEnabled, setAuthEnabled] = useState<boolean>(false);
@@ -24,7 +24,9 @@ export function GlobalSettings() {
   const [errorMessage, setErrorMessage] = useState<string|null>(null);
   const [modalAddOpened, setModalAddOpened] = useState<boolean>(false);
   const [modalRemoveOpened, setModalRemoveOpened] = useState<boolean>(false);
+  const [modalEnableAuthOpened, setModalEnableAuthOpened] = useState<boolean>(false);
   const [userToRemove, setUserToRemove] = useState<string>('');
+  const [enableAuthUser, setEnableAuthUser] = useState<StoredUser|null>(null);
 
   const form = useForm({
     initialValues: {
@@ -42,7 +44,9 @@ export function GlobalSettings() {
         const authInfo = await storageEngine?.getUserManagementData('authentication');
         setAuthEnabled(authInfo?.isEnabled);
         const adminUsers = await storageEngine?.getUserManagementData('adminUsers');
-        setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser:StoredUser) => storedUser.email));
+        if (adminUsers && adminUsers.adminUsersList) {
+          setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser:StoredUser) => storedUser.email));
+        }
       } else {
         setAuthEnabled(false);
       }
@@ -61,28 +65,45 @@ export function GlobalSettings() {
       } catch (error: any) {
         setErrorMessage(error.message);
       }
+      return auth.currentUser;
     }
+    return null;
   };
 
-  const handleChangeAuth = async () => {
+  const handleEnableAuth = async () => {
     setLoading(true);
     if (storageEngine instanceof FirebaseStorageEngine) {
-      const authInfo = await storageEngine.getUserManagementData('authentication');
-      if (!authInfo?.isEnabled) {
-        await signInWithGoogle();
+      const newUser = await signInWithGoogle();
+      if (newUser && newUser.email) {
+        setEnableAuthUser({
+          email: newUser.email,
+          uid: newUser.uid,
+        });
       }
-      await storageEngine.changeAuth(!authInfo?.isEnabled);
-      const adminUsers = await storageEngine?.getUserManagementData('adminUsers');
-      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser:StoredUser) => storedUser.email));
-      setAuthEnabled(!isAuthEnabled);
+      setModalEnableAuthOpened(true);
     }
+    setLoading(false);
+  };
+
+  const confirmEnableAuth = async (rootUser: StoredUser| null) => {
+    setLoading(true);
+    if (storageEngine instanceof FirebaseStorageEngine) {
+      if (rootUser) {
+        await storageEngine.changeAuth(true);
+        await storageEngine.addAdminUser(rootUser);
+        setAuthenticatedUsers([rootUser.email]);
+        setAuthEnabled(true);
+        triggerAuth();
+      }
+    }
+    setModalEnableAuthOpened(false);
     setLoading(false);
   };
 
   const handleAddUser = async () => {
     setLoading(true);
     if (storageEngine instanceof FirebaseStorageEngine) {
-      await storageEngine.addAdminUser(form.values.email);
+      await storageEngine.addAdminUser({ email: form.values.email, uid: null });
       const adminUsers = await storageEngine.getUserManagementData('adminUsers');
       setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser:StoredUser) => storedUser.email));
     }
@@ -114,28 +135,32 @@ export function GlobalSettings() {
       <Container>
         <Card withBorder style={{ backgroundColor: '#FAFAFA' }}>
           <Title mb={20} order={3}>Authentication</Title>
-          <Flex justify="space-between">
-            <Text>Enable / Disable authentication</Text>
-            <Switch
-              checked={isAuthEnabled}
-              onLabel={<Text fz="xs">ON</Text>}
-              offLabel={<Text size="xs">OFF</Text>}
-              onChange={(event) => handleChangeAuth()}
-              color="green"
-            />
-          </Flex>
+          {isAuthEnabled
+            ? <Flex><Text>Authentication is enabled.</Text></Flex>
+            : (
+              <Flex justify="space-between">
+                <Text>Authentication is currently disabled.</Text>
+                <Button
+                  onClick={() => handleEnableAuth()}
+                  color="green"
+                >
+                  Enable Authentication
+                </Button>
+              </Flex>
+            )}
           { isAuthEnabled
             ? (
               <Flex mt={40} direction="column">
-                <Flex direction="row" justify="space-between" mb={20}>
+                <Flex style={{ borderBottom: '1px solid #dedede' }} direction="row" justify="space-between" mb={15} pb={15}>
                   <Title order={6}>Enabled Users</Title>
-                  <IconUserPlus style={{ marginTop: '2px', cursor: 'pointer' }} onClick={() => setModalAddOpened(true)} />
+                  <IconUserPlus style={{ cursor: 'pointer' }} onClick={() => setModalAddOpened(true)} />
                 </Flex>
                 { authenticatedUsers.length > 0 ? authenticatedUsers.map(
                   (storedUser:string) => (
                     <Flex key={storedUser} justify="space-between" mb={10}>
                       <Text>{storedUser}</Text>
-                      <IconTrashX style={{ cursor: 'pointer', color: 'red', width: '20px' }} onClick={() => handleRemoveUser(storedUser)} />
+                      {storedUser === user.user?.email ? <Text color="blue" size="xs">You</Text>
+                        : <IconTrashX style={{ cursor: 'pointer', color: 'red', width: '20px' }} onClick={() => handleRemoveUser(storedUser)} />}
                     </Flex>
                   ),
                 ) : null}
@@ -188,6 +213,33 @@ export function GlobalSettings() {
             Cancel
           </Button>
           <Button onClick={() => confirmRemoveUser()}>
+            Yes, I&apos;m sure.
+          </Button>
+
+        </Flex>
+      </Modal>
+      <Modal
+        opened={modalEnableAuthOpened}
+        size="md"
+        onClose={() => setModalRemoveOpened(false)}
+        title={(
+          <Text fw={700}>
+            Enable Authentication?
+          </Text>
+)}
+      >
+        <Text mt={40}>
+          User
+          {' '}
+          <b>{enableAuthUser?.email}</b>
+          {' '}
+          will be added as an administrator to this application. After enabling authentication, you&apos;ll be able to add additional users below. This action cannot be undone.
+        </Text>
+        <Flex mt={40} justify="right">
+          <Button mr={5} variant="subtle" color="red" onClick={() => setModalEnableAuthOpened(false)}>
+            Cancel
+          </Button>
+          <Button onClick={() => confirmEnableAuth(enableAuthUser)}>
             Yes, I&apos;m sure.
           </Button>
 

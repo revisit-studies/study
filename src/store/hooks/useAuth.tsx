@@ -14,6 +14,7 @@ import { UserWrapped } from '../../storage/engines/StorageEngine';
 interface AuthContextValue {
   user: UserWrapped;
   logout: () => Promise<void>;
+  triggerAuth: () => void;
   verifyAdminStatus: (inputUser: UserWrapped) => Promise<boolean>;
   }
 
@@ -27,6 +28,7 @@ const AuthContext = createContext<AuthContextValue>({
   },
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   logout: async () => {},
+  triggerAuth: () => {},
   verifyAdminStatus: () => Promise.resolve(false),
 
 });
@@ -65,7 +67,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
   };
 
   const [user, setUser] = useState(loadingNullUser);
-
+  const [enableAuthTrigger, setEnableAuthTrigger] = useState(false);
   const { storageEngine } = useStorageEngine();
 
   // Logs the user out by removing the user and navigating to '/login'
@@ -79,6 +81,10 @@ export function AuthProvider({ children } : { children: ReactNode }) {
     } finally {
       setUser(nonLoadingNullUser);
     }
+  };
+
+  const triggerAuth = () => {
+    setEnableAuthTrigger(true);
   };
 
   const verifyAdminStatus = async (inputUser: UserWrapped) => {
@@ -148,10 +154,11 @@ export function AuthProvider({ children } : { children: ReactNode }) {
     return () => {
       cleanupPromise.then((cleanup) => cleanup());
     };
-  }, [storageEngine]);
+  }, [storageEngine, enableAuthTrigger]);
 
   const value = useMemo(() => ({
     user,
+    triggerAuth,
     logout,
     verifyAdminStatus,
   }), [user]);
