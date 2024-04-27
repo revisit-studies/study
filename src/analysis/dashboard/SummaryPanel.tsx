@@ -2,10 +2,11 @@ import {
   Badge, Box, Button, Card, Center, Text, Title, Container, Flex, Group, Popover,
 } from '@mantine/core';
 import React, { useEffect, useMemo, useState } from 'react';
-import { IconCodePlus, IconTable } from '@tabler/icons-react';
+import { IconCodePlus, IconScanEye, IconTable } from '@tabler/icons-react';
 import { DateRangePicker, DateRangePickerValue } from '@mantine/dates';
 import { VegaLite } from 'react-vega';
 import { useDisclosure, useResizeObserver } from '@mantine/hooks';
+import { useNavigate } from 'react-router-dom';
 import { ParticipantData } from '../../storage/types';
 import { download, DownloadTidy } from '../../components/DownloadTidy';
 import { StudyConfig } from '../../parser/types';
@@ -16,6 +17,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
     studyId, allParticipants, config,
   } = props;
   const [openDownload, { open, close }] = useDisclosure(false);
+  const navigate = useNavigate();
   const [ref, dms] = useResizeObserver();
   const completionTimes = allParticipants
     .filter((d) => isStudyCompleted(d))
@@ -85,13 +87,19 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
 
   const [jsonOpened, { close: closeJson, open: openJson }] = useDisclosure(false);
   const [csvOpened, { close: closeCsv, open: openCsv }] = useDisclosure(false);
+  const onCheckDetail = (studyid:string) => {
+    navigate(`/analysis/stats/${studyid}`);
+  };
 
   return (
     <Container>
       <Card ref={ref} p="lg" shadow="md" withBorder>
         <Flex align="center" mb={16} justify="space-between">
           <Flex direction="column">
-            <Title order={5} mb={4}>{studyId}</Title>
+            <Title order={5} mb={4}>
+              {studyId}
+              <Button variant="subtle" size="xs"><IconScanEye color="orange" onClick={() => onCheckDetail(studyId)} /></Button>
+            </Title>
             <Flex direction="row" wrap="nowrap" gap="xs" align="center" mb={4}>
               <Badge size="sm" color="orange">
                 Total:&nbsp;

@@ -10,18 +10,15 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import React, { useState } from 'react';
 import { PREFIX } from '../../../utils/Prefix';
 
-export default function AppHeader(props:{ studyIds: string[]}) {
-  const { studyIds } = props;
+export default function AppHeader(props:{ studyIds: string[], selectedId: string | undefined}) {
+  const { studyIds, selectedId } = props;
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const exp = searchParams.get('exp');
-  const [activeExp, setActiveExp] = useState<string | null>(exp || null);
-  const page = window.location.pathname.split('/')[2];
+  const [activeExp, setActiveExp] = useState<string | undefined>(selectedId);
+  // const page = window.location.pathname.split('/')[2];
   const selectorData = studyIds.map((id) => ({ value: id, label: id }));
-
   const onExpChange = (value: string) => {
     setActiveExp(value);
-    navigate(`/analysis/stats/?exp=${value}`);
+    navigate(`/analysis/stats/${value}`);
   };
 
   return (
@@ -45,18 +42,18 @@ export default function AppHeader(props:{ studyIds: string[]}) {
             <Button
               color="orange"
               onClick={() => { navigate('/analysis/dashboard'); }}
-              variant={page === 'dashboard' ? 'filled' : 'outline'}
             >
               <IconHome size={20} />
             </Button>
+
             <Button
               color="orange"
               onClick={() => { navigate('/analysis/stats'); }}
-              variant={page === 'stats' ? 'filled' : 'outline'}
             >
               <IconDeviceDesktopAnalytics size={20} />
             </Button>
-            {page === 'stats' && (
+
+            {activeExp && (
               <Select
                 placeholder="Select an experiment"
                 data={selectorData}

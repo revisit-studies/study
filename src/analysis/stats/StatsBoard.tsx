@@ -13,7 +13,7 @@ import React, { useEffect, useState } from 'react';
 import {
   IconSquareCheck, IconProgressBolt, IconArrowUp,
 } from '@tabler/icons-react';
-import { useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { ParticipantData } from '../../storage/types';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { GlobalConfig, StudyConfig } from '../../parser/types';
@@ -32,7 +32,7 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
   const [loading, setLoading] = useState(false);
   const [dropdownData, setDropdownData] = useState<SelectItem[]>([]);
   const [activeParticipants, setActiveParticipants] = useState<string[]>([]);
-  const [searchParams] = useSearchParams();
+  const { studyId } = useParams();
 
   useEffect(() => {
     if (activeParticipants.includes('All')) {
@@ -42,15 +42,14 @@ export function StatsBoard(props: {globalConfig : GlobalConfig}) {
 
   useEffect(() => {
     const updateParams = async () => {
-      const exp = searchParams.get('exp');
-      if (exp) {
-        setActiveExp(exp);
-        const cf = await getStudyConfig(exp, globalConfig);
+      if (studyId) {
+        setActiveExp(studyId);
+        const cf = await getStudyConfig(studyId, globalConfig);
         if (cf) setConfig(cf);
       }
     };
     updateParams();
-  }, [searchParams]);
+  }, [studyId]);
 
   const reSetSelection = () => {
     setActiveParticipants([]);

@@ -5,15 +5,16 @@ import { GlobalConfig } from '../parser/types';
 import { SummaryBlock } from './dashboard/SummaryBlock';
 import { StatsBoard } from './stats/StatsBoard';
 
-export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
+export function AnalysisDashboard(props: { globalConfig: GlobalConfig; }) {
   const { studyId } = useParams();
-
   return (
     <AppShell>
       <AppHeader studyIds={props.globalConfig.configsList} selectedId={studyId} />
       <Container fluid>
-        <StatsBoard globalConfig={props.globalConfig} />
+        <SummaryBlock globalConfig={props.globalConfig} />
       </Container>
+      )
+
     </AppShell>
   );
 }
