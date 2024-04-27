@@ -35,7 +35,7 @@ export async function studyStoreCreator(
     answers: answers || emptyAnswers,
     sequence,
     config,
-    showAdmin: false,
+    showStudyBrowser: import.meta.env.VITE_REVISIT_MODE === 'public',
     showHelpText: false,
     alertModal: { show: false, message: '' },
     trialValidation: answers ? allValid : emptyValidation,
@@ -51,8 +51,8 @@ export async function studyStoreCreator(
       setConfig(state, payload: PayloadAction<StudyConfig>) {
         state.config = payload.payload;
       },
-      toggleShowAdmin: (state) => {
-        state.showAdmin = !state.showAdmin;
+      toggleStudyBrowser: (state) => {
+        state.showStudyBrowser = !state.showStudyBrowser;
       },
       toggleShowHelpText: (state) => {
         state.showHelpText = !state.showHelpText;
