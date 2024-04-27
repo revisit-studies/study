@@ -12,7 +12,7 @@ import localforage from 'localforage';
 import { StorageEngine } from './StorageEngine';
 import { ParticipantData } from '../types';
 import {
-  EventType, Sequence, StoredAnswer, TrrackedProvenance,
+  EventType, ParticipantMetadata, Sequence, StoredAnswer, TrrackedProvenance,
 } from '../../store/types';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
@@ -103,7 +103,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, urlParticipantId?: string) {
+  async initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, metadata: ParticipantMetadata, urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -145,6 +145,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       sequence: await this.getSequence(),
       answers: {},
       searchParams,
+      metadata,
     };
     await setDoc(participantDoc, participantData);
 
@@ -340,7 +341,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return participant;
   }
 
-  async nextParticipant(config: StudyConfig): Promise<ParticipantData> {
+  async nextParticipant(config: StudyConfig, metadata: ParticipantMetadata): Promise<ParticipantData> {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -368,6 +369,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         sequence: await this.getSequence(),
         answers: {},
         searchParams: {},
+        metadata,
       };
       await setDoc(newParticipant, newParticipantData);
       participant = newParticipantData;
@@ -471,6 +473,38 @@ export class FirebaseStorageEngine extends StorageEngine {
       return false;
     }
     return false;
+  }
+
+  async getAllParticipantsDataByStudy(studyId:string) {
+    const currentCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
+
+    // Get all participants
+    const participants = await getDocs(currentCollection);
+    const participantData: ParticipantData[] = [];
+
+    // Iterate over the participants and add the provenance graph
+    const participantPulls = participants.docs.map(async (participant) => {
+      // Exclude the config doc and the sequenceArray doc
+      if (participant.id === 'config' || participant.id === 'sequenceArray') return;
+
+      const participantDataItem = participant.data() as ParticipantData;
+
+      const fullProvObj = await this._getFromFirebaseStorage(participantDataItem.participantId, 'provenance');
+      const fullWindowEventsObj = await this._getFromFirebaseStorage(participantDataItem.participantId, 'windowEvents');
+
+      // Rehydrate the provenance graphs
+      participantDataItem.answers = Object.fromEntries(Object.entries(participantDataItem.answers).map(([key, value]) => {
+        if (value === undefined) return [key, value];
+        const provenanceGraph = fullProvObj[key];
+        const windowEvents = fullWindowEventsObj[key];
+        return [key, { ...value, provenanceGraph, windowEvents }];
+      }));
+      participantData.push(participantDataItem);
+    });
+
+    await Promise.all(participantPulls);
+
+    return participantData;
   }
 
   private _verifyStudyDatabase(db: CollectionReference<DocumentData, DocumentData> | undefined): db is CollectionReference<DocumentData, DocumentData> {

@@ -25,7 +25,7 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { PREFIX } from '../../utils/Prefix';
 
 export default function AppHeader() {
-  const { config: studyConfig } = useStoreSelector((state) => state);
+  const { config: studyConfig, metadata } = useStoreSelector((state) => state);
   const flatSequence = useFlatSequence();
   const storeDispatch = useStoreDispatch();
   const { toggleShowHelpText, toggleShowAdmin } = useStoreActions();
@@ -48,7 +48,7 @@ export default function AppHeader() {
   const studyHref = useHref(`/${studyId}`);
 
   function getNewParticipant() {
-    storageEngine?.nextParticipant(studyConfig)
+    storageEngine?.nextParticipant(studyConfig, metadata)
       .then(() => {
         window.location.href = studyHref;
       })
@@ -64,7 +64,7 @@ export default function AppHeader() {
         const _participantData = await storageEngine.getParticipantData();
 
         if (_currentConfigHash !== _participantData?.participantConfigHash) {
-          await storageEngine?.nextParticipant(studyConfig);
+          await storageEngine?.nextParticipant(studyConfig, metadata);
         }
       }
     }
