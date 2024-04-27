@@ -384,7 +384,7 @@ export interface ImageComponent extends BaseIndividualComponent {
 ``` JSON
   {
     "type": "website",
-    "path": "path/to/website.html",
+    "path": "path/to/study/assets/website.html",
   }
 ```
 
