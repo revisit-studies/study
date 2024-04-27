@@ -58,8 +58,8 @@ export interface ParticipantData {
   answers: Record<string, StoredAnswer>;
   /** Query parameters of the URL used to enter the study. */
   searchParams: Record<string, string>;
-  /**
-   * Metadata of a participants browser, resolution, language, and IP.
-   */
+  /** Metadata of a participants browser, resolution, language, and IP. */
   metadata: ParticipantMetadata
+  /** Whether the participant has completed the study. */
+  completed: boolean;
 }

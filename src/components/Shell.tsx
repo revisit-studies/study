@@ -6,9 +6,7 @@ import { Provider } from 'react-redux';
 import {
   RouteObject, useRoutes, useSearchParams,
 } from 'react-router-dom';
-import {
-  Box, Center, Loader, Title,
-} from '@mantine/core';
+import { LoadingOverlay, Title } from '@mantine/core';
 import { ErrorObject } from 'ajv';
 import {
   GlobalConfig,
@@ -67,13 +65,14 @@ export function Shell({ globalConfig }: {
       const urlParticipantId = activeConfig.uiConfig.urlParticipantIdParam ? searchParams.get(activeConfig.uiConfig.urlParticipantIdParam) || undefined : undefined;
       const searchParamsObject = Object.fromEntries(searchParams.entries());
 
-      const ip = await (await fetch('https://api.ipify.org?format=json')).json().catch((_) => '');
+      const ipRes = await fetch('https://api.ipify.org?format=json').catch((_) => '');
+      const ip: { ip: string } = ipRes instanceof Response ? await ipRes.json() : { ip: '' };
 
       const metadata: ParticipantMetadata = {
         language: navigator.language,
         userAgent: navigator.userAgent,
         resolution: JSON.parse(JSON.stringify(window.screen)),
-        ip: ip.ip || '',
+        ip: ip.ip,
       };
 
       const participantSession = await storageEngine.initializeParticipantSession(searchParamsObject, activeConfig, metadata, urlParticipantId);
@@ -107,19 +106,14 @@ export function Shell({ globalConfig }: {
 
   const routing = useRoutes(routes);
 
-  const loaderOrRouting = !routing || !store ? (
-    <Box style={{ height: '100vh' }}>
-      <Center style={{ height: '100%' }}>
-        <Loader style={{ height: '100%' }} size={60} />
-      </Center>
-    </Box>
-  ) : (
-    <StudyStoreContext.Provider value={store}>
-      <Provider store={store.store}>
-        {routing}
-      </Provider>
-    </StudyStoreContext.Provider>
-  );
+  const loaderOrRouting = !routing || !store ? <LoadingOverlay visible />
+    : (
+      <StudyStoreContext.Provider value={store}>
+        <Provider store={store.store}>
+          {routing}
+        </Provider>
+      </StudyStoreContext.Provider>
+    );
 
   return (
     isValidStudyId ? (

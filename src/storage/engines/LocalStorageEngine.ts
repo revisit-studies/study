@@ -61,6 +61,7 @@ export class LocalStorageEngine extends StorageEngine {
       answers: {},
       searchParams,
       metadata,
+      completed: false,
     };
     await this.studyDatabase?.setItem(this.currentParticipantId, participantData);
 
@@ -234,6 +235,7 @@ export class LocalStorageEngine extends StorageEngine {
         answers: {},
         searchParams: {},
         metadata,
+        completed: false,
       };
       await this.studyDatabase.setItem(newParticipantId, newParticipant);
       participant = newParticipant;
@@ -252,6 +254,12 @@ export class LocalStorageEngine extends StorageEngine {
     if (!participantData) {
       throw new Error('Participant not initialized');
     }
+
+    // Set the participant as completed
+    participantData.completed = true;
+
+    // Save the participantData
+    await this.studyDatabase.setItem(this.currentParticipantId as string, participantData);
 
     return true;
   }

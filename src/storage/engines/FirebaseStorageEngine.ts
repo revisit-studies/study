@@ -146,6 +146,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       answers: {},
       searchParams,
       metadata,
+      completed: false,
     };
     await setDoc(participantDoc, participantData);
 
@@ -370,6 +371,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         answers: {},
         searchParams: {},
         metadata,
+        completed: false,
       };
       await setDoc(newParticipant, newParticipantData);
       participant = newParticipantData;
@@ -383,11 +385,21 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Study database not initialized');
     }
 
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+
     // Get the participantData
     const participantData = await this.getParticipantData();
     if (!participantData) {
       throw new Error('Participant not initialized');
     }
+
+    // Check if all components have been completed
+    const participantDoc = doc(this.studyCollection, this.currentParticipantId);
+    await setDoc(participantDoc, { completed: true }, { merge: true });
+
+    participantData.completed = true;
 
     return true;
   }
