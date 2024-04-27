@@ -4,7 +4,6 @@ import {
 
 import { useForm, isEmail } from '@mantine/form';
 import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   getAuth, signInWithPopup, GoogleAuthProvider,
 } from '@firebase/auth';
@@ -21,7 +20,6 @@ export function GlobalSettings() {
   const [isAuthEnabled, setAuthEnabled] = useState<boolean>(false);
   const [authenticatedUsers, setAuthenticatedUsers] = useState<string[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-  const [errorMessage, setErrorMessage] = useState<string|null>(null);
   const [modalAddOpened, setModalAddOpened] = useState<boolean>(false);
   const [modalRemoveOpened, setModalRemoveOpened] = useState<boolean>(false);
   const [modalEnableAuthOpened, setModalEnableAuthOpened] = useState<boolean>(false);
@@ -63,7 +61,7 @@ export function GlobalSettings() {
         await signInWithPopup(auth, provider);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
-        setErrorMessage(error.message);
+        console.warn(error.message);
       }
       return auth.currentUser;
     }
@@ -139,7 +137,9 @@ export function GlobalSettings() {
             ? <Flex><Text>Authentication is enabled.</Text></Flex>
             : (
               <Flex justify="space-between">
-                <Text>Authentication is currently disabled.</Text>
+                <Box>
+                  <Text>Authentication is currently disabled.</Text>
+                </Box>
                 <Button
                   onClick={() => handleEnableAuth()}
                   color="green"
