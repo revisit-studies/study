@@ -14,9 +14,9 @@ jobs:
 
       - name: Run make-release.sh to modify version numbers across the repo
         run: |
-          LANG=C sed -i "s/\/reVISit-studies\/study\/main\/src/\/reVISit-studies\/study\/${{ github.event.pull_request.title }}\/src/g" src/**/*.* public/**/*.*
-          LANG=C sed -i "s/\/revisit-studies\/study\/blob\/main/\/revisit-studies\/study\/blob\/${{ github.event.pull_request.title }}/g" src/**/*.* public/**/*.*
-          LANG=C sed -i "s/\/revisit-studies\/study\/blob\/main/\/revisit-studies\/study\/tree\/${{ github.event.pull_request.title }}/g" src/**/*.* public/**/*.*
+          LANG=C sed -i -E "s/\/reVISit-studies\/study\/v([a-zA-Z0-9-]).*\/src/\/reVISit-studies\/study\/${{ github.event.pull_request.title }}\/src/g" src/**/*.* public/**/*.*
+          LANG=C sed -i -E "s/\/revisit-studies\/study\/blob\/v([a-zA-Z0-9-])*/\/revisit-studies\/study\/blob\/${{ github.event.pull_request.title }}/g" src/**/*.* public/**/*.*
+          LANG=C sed -i -E "s/\/revisit-studies\/study\/blob\/v([a-zA-Z0-9-])*/\/revisit-studies\/study\/tree\/${{ github.event.pull_request.title }}/g" src/**/*.* public/**/*.*
 
       - name: Commit changes
         run: |
@@ -24,7 +24,5 @@ jobs:
           git config --local user.name "Jack Wilburn"
           git add .
           git commit -m "Release version ${{ github.event.pull_request.title }}"
+          git tag -a ${{ github.event.pull_request.title }} -m "Release version ${{ github.event.pull_request.title }}"
           git push
-
-      - name: Make a tag for the release
-        run: git tag -a ${{ github.event.pull_request.title }} -m "Release version ${{ github.event.pull_request.title }}"
