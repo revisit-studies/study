@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/v1.0.0-beta2/src/parser/StudyConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/v1.0.0-beta3/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
         "title": "Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations",
         "version": "pilot",
