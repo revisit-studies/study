@@ -12,6 +12,7 @@ import { FirebaseStorageEngine } from '../storage/engines/FirebaseStorageEngine'
 import { getStudyConfig } from '../utils/fetchConfig';
 import { isStudyCompleted } from './utils';
 import { TableView } from './stats/TableView';
+import { useStorageEngine } from '../storage/storageEngineHooks';
 
 export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   const { globalConfig } = props;
@@ -20,6 +21,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   const [completed, setCompleted] = useState<ParticipantData[]>([]);
   const [inprogress, setInprogress] = useState<ParticipantData[]>([]);
   const [loading, setLoading] = useState(false);
+  const { storageEngine } = useStorageEngine();
 
   useEffect(() => {
     const getData = async () => {
@@ -27,7 +29,6 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
       // reSetSelection();
       const fetchData = async () => {
         if (studyId) {
-          const storageEngine = new FirebaseStorageEngine();
           const cf = await getStudyConfig(studyId, globalConfig);
           if (!cf || !storageEngine) return;
           await storageEngine.connect();
