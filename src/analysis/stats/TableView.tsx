@@ -3,8 +3,8 @@ import {
 } from '@mantine/core';
 import { IconCheck, IconProgress } from '@tabler/icons-react';
 import { ParticipantData, StoredAnswer } from '../../parser/types';
-import { flattenSequence } from '../utils';
 import { ParticipantMetadata } from '../../store/types';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 function TableCell(props: {cellData: StoredAnswer}) {
   const { cellData } = props;
@@ -74,7 +74,7 @@ export function TableView(props: { completed: ParticipantData[], inprogress: Par
 
   const allData = [...completed.map((record) => ({ ...record, completed: true })), ...inprogress.map((record) => ({ ...record, completed: false }))];
 
-  const uniqueTrials = [...new Set(completed.map((complete) => flattenSequence(complete.sequence)).flat().map((trial) => trial))].filter((trial) => trial !== 'end');
+  const uniqueTrials = [...new Set(...completed.map((complete) => getSequenceFlatMap(complete.sequence)))].filter((trial) => trial !== 'end');
 
   const headers = [<th key="ID">ID/Status</th>, <th key="meta">Meta</th>, ...uniqueTrials.map((trialName) => <th key={`header-${trialName}`}>{trialName}</th>)];
   const rows = allData.map((record) => (

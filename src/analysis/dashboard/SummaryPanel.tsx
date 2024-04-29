@@ -9,8 +9,15 @@ import { useDisclosure, useResizeObserver } from '@mantine/hooks';
 import { useNavigate } from 'react-router-dom';
 import { ParticipantData } from '../../storage/types';
 import { download, DownloadTidy } from '../../components/DownloadTidy';
-import { StudyConfig } from '../../parser/types';
-import { isWithinRange } from '../utils';
+import { StoredAnswer, StudyConfig } from '../../parser/types';
+
+function isWithinRange(answers: Record<string, StoredAnswer>, rangeTime: DateRangePickerValue) {
+  const timeStamps = Object.values(answers).map((ans) => [ans.startTime, ans.endTime]).flat();
+  if (rangeTime[0] === null || rangeTime[1] === null) {
+    return false;
+  }
+  return Math.min(...timeStamps) >= rangeTime[0].getTime() && Math.max(...timeStamps) <= rangeTime[1].getTime();
+}
 
 export function SummaryPanel(props: { studyId: string; allParticipants: ParticipantData[]; config: StudyConfig }) {
   const {
