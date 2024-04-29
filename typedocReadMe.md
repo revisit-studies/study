@@ -81,7 +81,7 @@ The below example illustrates a simple consent component that is based on a Mark
                 }
             ]
         }
-```JSON
+```
 
 For more detailed documentation on the response section, check out the [documentation](/typedoc/index.html#response).
 
