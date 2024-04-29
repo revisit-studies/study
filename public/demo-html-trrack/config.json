@@ -1,0 +1,81 @@
+{
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/v1.0.0-beta4/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+        "title": "HTML with Trrack library",
+        "version": "pilot",
+        "authors": [
+            "The reVISit Team"
+        ],
+        "date": "2023-04-14",
+        "description": "An example study that implements Trrack library for provenance tracking in HTML stimuli.",
+        "organizations": [
+            "University of Utah",
+            "WPI",
+            "University of Toronto"
+        ]
+    },
+    "uiConfig": {
+        "contactEmail": "test@test.com",
+        "helpTextPath": "demo-html-trrack/assets/help.md",
+        "logoPath": "revisitAssets/revisitLogoSquare.svg",
+        "withProgressBar": true,
+        "autoDownloadStudy": false,
+        "sidebar": true,
+        "windowEventDebounceTime": 200
+    },
+    "components": {
+        "introduction": {
+            "type": "markdown",
+            "path": "demo-html-trrack/assets/introduction.md",
+            "response": []
+        },
+        "countDots1": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "easy"
+            },
+            "description": "Add a total of 10 to 15 circles",
+            "instruction": "Add a total of 10 to 15 circles.",
+            "path": "demo-html-trrack/assets/dots-count.html",
+            "response": [
+                {
+                    "id": "circlesCount",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "iframe",
+                    "hidden": false
+                }
+            ]
+        },
+        "countDots2": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "easy"
+            },
+            "description": "Add a total of 5 - 10 circles",
+            "instruction": "Add a total of 5 to 15 circles. You can remove if you add more.",
+            "path": "demo-html-trrack/assets/dots-count.html",
+            "response": [
+                {
+                    "id": "circlesCount",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "iframe",
+                    "hidden": false
+                }
+            ]
+        }
+    },
+    "sequence": {
+        "order": "fixed",
+        "components": [
+            "introduction",
+            "countDots1",
+            "countDots2"
+        ]
+    }
+}

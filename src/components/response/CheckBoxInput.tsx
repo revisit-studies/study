@@ -18,8 +18,7 @@ export default function CheckBoxInput({
 
   return (
     <Checkbox.Group
-      label={<ReactMarkdownWrapper text={prompt} />}
-      withAsterisk={required}
+      label={<ReactMarkdownWrapper text={prompt} required={required} />}
       {...answer}
       error={generateErrorMessage(response, answer, options)}
       size="md"

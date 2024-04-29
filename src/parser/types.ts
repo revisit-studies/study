@@ -356,8 +356,8 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * ```
  *
  * For in depth examples, see the following studies, and their associated codebases.
- * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/blob/v1.0.0-beta2/src/public/demo-click-accuracy-test/assets)
- * https://revisit.dev/study/demo-brush-interactions (https://github.com/revisit-studies/study/tree/main/src/public/demo-brush-interactions/assets)
+ * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/blob/v1.0.0-beta4/src/public/demo-click-accuracy-test/assets)
+ * https://revisit.dev/study/demo-brush-interactions (https://github.com/revisit-studies/study/tree/1.0.0-beta4/src/public/demo-brush-interactions/assets)
  */
 export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
@@ -422,6 +422,19 @@ export interface ImageComponent extends BaseIndividualComponent {
     Revisit.postAnswers({ barChart: userAnswer });
   </script>
 ```
+
+  * If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenanceGraph` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.
+
+``` js
+    const trrack = initializeTrrack({
+        initialState,
+        registry
+    });
+
+    ...
+    Revisit.postProvenance(trrack.graph.backend);
+```
+
  */
 export interface WebsiteComponent extends BaseIndividualComponent {
   type: 'website';
@@ -537,7 +550,7 @@ export type InheritedComponent = (Partial<IndividualComponent> & { baseComponent
 
  ``` JSON
  {
-    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/v1.0.0-beta2/src/parser/StudyConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/v1.0.0-beta4/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
       ...
     },

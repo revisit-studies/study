@@ -20,10 +20,9 @@ export default function StringInput({
     <TextInput
       disabled={disabled}
       placeholder={placeholder}
-      label={<ReactMarkdownWrapper text={prompt} />}
+      label={<ReactMarkdownWrapper text={prompt} required={required} />}
       radius="md"
       size="md"
-      withAsterisk={required}
       {...answer}
         // This is necessary so the component doesnt switch from uncontrolled to controlled, which can cause issues.
       value={answer.value || ''}
