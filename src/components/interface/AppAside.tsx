@@ -1,5 +1,4 @@
 import {
-  ActionIcon,
   Aside,
   CloseButton,
   ScrollArea,
@@ -41,14 +40,12 @@ export default function AppAside() {
 
   return showStudyBrowser || (currentComponent === 'end' && studyConfig.uiConfig.autoDownloadStudy) ? (
     <Aside p="0" width={{ base: 300 }} style={{ zIndex: 0 }}>
-      <ActionIcon
+      <CloseButton
         style={{
           position: 'absolute', right: '10px', top: '10px', zIndex: 5,
         }}
         onClick={() => dispatch(toggleStudyBrowser())}
-      >
-        <CloseButton />
-      </ActionIcon>
+      />
       <ScrollArea p="0">
         {currentComponent === 'end' && (
           <div
