@@ -9,6 +9,7 @@
         "demo-survey",
         "demo-VLAT-full-randomized",
         "demo-VLAT-mini-randomized",
+        "demo-html-trrack",
         "demo-fairness-jnd",
         "demo-click-accuracy-test",
         "demo-image",
@@ -39,6 +40,9 @@
         },
         "demo-VLAT-mini-randomized": {
             "path": "demo-VLAT-mini-randomized/config.json"
+        },
+        "demo-html-trrack": {
+            "path": "demo-html-trrack/config.json"
         },
         "demo-fairness-jnd": {
             "path": "demo-fairness-jnd/config.json"

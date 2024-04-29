@@ -422,6 +422,19 @@ export interface ImageComponent extends BaseIndividualComponent {
     Revisit.postAnswers({ barChart: userAnswer });
   </script>
 ```
+
+  * If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenanceGraph` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.
+
+``` js
+    const trrack = initializeTrrack({
+        initialState,
+        registry
+    });
+
+    ...
+    Revisit.postProvenance(trrack.graph.backend);
+```
+
  */
 export interface WebsiteComponent extends BaseIndividualComponent {
   type: 'website';
