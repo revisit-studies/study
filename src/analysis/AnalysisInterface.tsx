@@ -13,11 +13,11 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
     <AppShell>
       <AppHeader />
       <AppNav />
-      {page === 'dashboard' && (
-        <Container fluid>
+      <Container fluid>
+        {page === 'dashboard' && (
           <SummaryBlock globalConfig={props.globalConfig} />
-        </Container>
-      )}
+        )}
+      </Container>
     </AppShell>
   );
 }

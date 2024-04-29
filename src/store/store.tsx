@@ -13,6 +13,7 @@ export async function studyStoreCreator(
   sequence: Sequence,
   metadata: ParticipantMetadata,
   answers: Record<string, StoredAnswer>,
+  isAdmin: boolean,
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
 
@@ -35,7 +36,7 @@ export async function studyStoreCreator(
     answers: answers || emptyAnswers,
     sequence,
     config,
-    showStudyBrowser: import.meta.env.VITE_REVISIT_MODE === 'public',
+    showStudyBrowser: import.meta.env.VITE_REVISIT_MODE === 'public' || isAdmin,
     showHelpText: false,
     alertModal: { show: false, message: '' },
     trialValidation: answers ? allValid : emptyValidation,
