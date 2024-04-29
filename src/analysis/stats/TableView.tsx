@@ -1,10 +1,14 @@
 import {
-  Box, Spoiler, Stack, Table, Title, Text,
+  Box, Spoiler, Stack, Table, Title, Text, Button,
 } from '@mantine/core';
 import { IconCheck, IconProgress } from '@tabler/icons-react';
 import { ParticipantData, StoredAnswer } from '../../parser/types';
 import { flattenSequence } from '../utils';
 import { ParticipantMetadata } from '../../store/types';
+
+const rejectParticipant = (pid:string) => {
+
+};
 
 function TableCell(props: {cellData: StoredAnswer}) {
   const { cellData } = props;
@@ -76,7 +80,11 @@ export function TableView(props: { completed: ParticipantData[], inprogress: Par
 
   const uniqueTrials = [...new Set(completed.map((complete) => flattenSequence(complete.sequence)).flat().map((trial) => trial))].filter((trial) => trial !== 'end');
 
-  const headers = [<th key="ID">ID/Status</th>, <th key="meta">Meta</th>, ...uniqueTrials.map((trialName) => <th key={`header-${trialName}`}>{trialName}</th>)];
+  const headers = [
+    <th key="ID">ID/Status</th>,
+    <th key="action">Action</th>,
+    <th key="meta">Meta</th>,
+    ...uniqueTrials.map((trialName) => <th key={`header-${trialName}`}>{trialName}</th>)];
   const rows = allData.map((record) => (
     <tr key={record.participantId}>
       <td>
@@ -84,6 +92,9 @@ export function TableView(props: { completed: ParticipantData[], inprogress: Par
           {record.participantId}
           {record.completed ? <IconCheck size={15} color="teal" /> : <IconProgress size={15} color="orange" />}
         </Box>
+      </td>
+      <td>
+        <Button onClick={() => rejectParticipant(record.participantId)}>Reject</Button>
       </td>
       {record.metadata ? <MetaCell metaData={record.metadata} /> : <td>N/A</td>}
       {uniqueTrials.map((trialName) => {

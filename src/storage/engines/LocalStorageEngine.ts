@@ -62,6 +62,7 @@ export class LocalStorageEngine extends StorageEngine {
       searchParams,
       metadata,
       completed: false,
+      rejected: false,
     };
     await this.studyDatabase?.setItem(this.currentParticipantId, participantData);
 
@@ -236,6 +237,7 @@ export class LocalStorageEngine extends StorageEngine {
         searchParams: {},
         metadata,
         completed: false,
+        rejected: false,
       };
       await this.studyDatabase.setItem(newParticipantId, newParticipant);
       participant = newParticipant;

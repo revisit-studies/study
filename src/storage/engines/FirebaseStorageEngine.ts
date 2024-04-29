@@ -142,6 +142,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       searchParams,
       metadata,
       completed: false,
+      rejected: false,
     };
     await setDoc(participantDoc, participantData);
 
@@ -377,6 +378,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         searchParams: {},
         metadata,
         completed: false,
+        rejected: false,
       };
       await setDoc(newParticipant, newParticipantData);
       participant = newParticipantData;
