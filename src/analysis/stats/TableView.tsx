@@ -71,8 +71,8 @@ function MetaCell(props:{metaData: ParticipantMetadata}) {
     </td>
   );
 }
-export function TableView(props: { completed: ParticipantData[], inprogress: ParticipantData[]}) {
-  const { completed, inprogress } = props;
+export function TableView(props: { completed: ParticipantData[], inprogress: ParticipantData[], refresh: ()=> void }) {
+  const { completed, inprogress, refresh } = props;
 
   const allData = [...completed.map((record) => ({ ...record, completed: true })), ...inprogress.map((record) => ({ ...record, completed: false }))];
 
@@ -80,8 +80,11 @@ export function TableView(props: { completed: ParticipantData[], inprogress: Par
 
   const { studyId } = useParams();
   const { storageEngine } = useStorageEngine();
-  const rejectParticipant = (participantId: string) => {
-    if (studyId) storageEngine?.rejectParticipant(studyId, participantId);
+  const rejectParticipant = async (participantId: string) => {
+    if (studyId) {
+      await storageEngine?.rejectParticipant(studyId, participantId);
+      refresh();
+    }
   };
 
   const headers = [

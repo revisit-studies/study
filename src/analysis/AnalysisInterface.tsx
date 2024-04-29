@@ -21,27 +21,28 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   const [inprogress, setInprogress] = useState<ParticipantData[]>([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const getData = async () => {
-      setLoading(true);
-      // reSetSelection();
-      const fetchData = async () => {
-        if (studyId) {
-          const storageEngine = new FirebaseStorageEngine();
-          const cf = await getStudyConfig(studyId, globalConfig);
-          if (!cf || !storageEngine) return;
-          await storageEngine.connect();
-          await storageEngine.initializeStudyDb(studyId, cf);
-          const data = (await storageEngine.getAllParticipantsData());
-          setExpData(data);
-          setCompleted(data.filter((d) => isStudyCompleted(d)));
+  const getData = async () => {
+    setLoading(true);
+    // reSetSelection();
+    const fetchData = async () => {
+      if (studyId) {
+        const storageEngine = new FirebaseStorageEngine();
+        const cf = await getStudyConfig(studyId, globalConfig);
+        if (!cf || !storageEngine) return;
+        await storageEngine.connect();
+        await storageEngine.initializeStudyDb(studyId, cf);
+        const data = (await storageEngine.getAllParticipantsData());
+        setExpData(data);
+        setCompleted(data.filter((d) => isStudyCompleted(d)));
 
-          setInprogress(data.filter((d) => !isStudyCompleted(d)));
-        }
-        setLoading(false);
-      };
-      await fetchData();
+        setInprogress(data.filter((d) => !isStudyCompleted(d)));
+      }
+      setLoading(false);
     };
+    await fetchData();
+  };
+
+  useEffect(() => {
     getData();
   }, [studyId]);
 
@@ -57,7 +58,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
             <Tabs.Tab value="settings" icon={<IconPlayerPlay size={14} />}>Individual Replay</Tabs.Tab>
           </Tabs.List>
           <Tabs.Panel value="table" pt="xs">
-            <TableView completed={completed} inprogress={inprogress} />
+            <TableView completed={completed} inprogress={inprogress} refresh={getData} />
           </Tabs.Panel>
 
           <Tabs.Panel value="stats" pt="xs">
