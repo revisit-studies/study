@@ -1,12 +1,40 @@
 # Documentation
 
-Below we provide some additional information for the study configuration and its components. With this documentation, you will be able to alter your study configuration file to meet your specific use cases.
 
-We use <a href="https://typedoc.org/" target="_blank">TypeDoc</a> to generate documentation for each type in our code base. The documentation can be found [here](modules.html). 
+To create a study with reVISit, you have to create **components** that contain the content of your study, and you have to create the **study configuration (the reVISit Spec)** that controls when and how these components are shown to participants. Here, we will introduce these at a high level and link to complete documentation where appropriate. 
 
-# Study Configuration
 
-The Study Configuration file is how we describe all of the information necessary to create a study. In this configuration, we describe the metadata for the study, the configuration of the UI, the set of components, and how we sequence them in the study. You can find the detailed documentation for the study configuration [here](/typedoc/interfaces/StudyConfig.html).
+The technical documentation can be found [here](modules.html). 
+
+# Components
+
+Componets are where study-specific content goes. ReVISit currently supports four types of components: 
+
+* **Markdown Files** contain formatted text, including links, images, embedded videos, etc. They are useful for introductions, consent forms, help pages, etc. 
+* **Images** can be used as stimuli directly. 
+* **HTML Pages** can be used to create custom stimuly, including interactive stimuli developed with JavaScript 
+* **React Components** can be used for sophisticated interactive stimuli. In comparison to HTML pages, react components simplify the communication between reVISit and the stimulus. 
+* **Survey Questions** can be used to elicit structured responses from participants.
+
+
+All of these stimuli can (and commonly are) paired with **responses**. Responses are form elements that capture the elicited responses. Survey questions are basically empty components with responses. 
+
+A component is typically defined in the spec, with the text, code, or image included from a file. The only exception are survey questions, which do not need a file.
+
+
+# The reVISit Spec
+
+The reVISit Spec enables you to define the details of your experiment as a JSON file. The reVISit Spec has five top-level concepts: 
+
+* Study Metadata – setting things like the name of the study, authors, contact e-mails
+* UI Config – parameterizing the appearance of reVISit
+* Components and BaseComponents – setting up the content of the study
+* Sequence – choosing the order and the selection of tasks participants see. 
+
+We'll expain the ideas in the next section, and link to the documentation for more details. 
+
+You can find the detailed documentation for the reVISit Spec [here](/typedoc/interfaces/StudyConfig.html).
+
 
 ## Study Metadata
 
@@ -18,15 +46,92 @@ The study metadata defines elements such as the study title, authors, and descri
 The UI configuration tells reVISit how the UI should be laid out, such as which image to use for the study logo, whether to include a sidebar, the contact email, etc. For more detailed documentation on the UI configuration, check out the [documentation](/typedoc/interfaces/UIConfig.html).
 
 
-## Study Components
+## Components
 
-Study components are the building blocks for each study. There are currently 5 types of components: [Image](/typedoc/interfaces/ImageComponent.html), [Website](/typedoc/interfaces/WebsiteComponent.html), [Questionnaire](/typedoc/interfaces/QuestionnaireComponent.html), [React](/typedoc/interfaces/ReactComponent.html), and [Markdown](/typedoc/interfaces/MarkdownComponent.html). Each component extends the [BaseIndividualComponent]((/typedoc/interfaces/BaseIndividualComponent.html)) interface. To add a component to your study (which can be thought of as a "page" of your study), you add a JSON object representing that component to the "components" object with a key which you can define how you would like. Then, the "type" key in that JSON object controls which type of component you are referring to. If you are utilizing the "baseComponents" object of the configuration file, you will specify a "baseComponent" key rather than a "type" key. You can find more examples of each of these components within their individual documentation.
+Components are the building blocks for each study. 
+There are currently 5 types of components: 
+* [Image](/typedoc/interfaces/ImageComponent.html), 
+* [Website](/typedoc/interfaces/WebsiteComponent.html), 
+* [Questionnaire](/typedoc/interfaces/QuestionnaireComponent.html), 
+* [React](/typedoc/interfaces/ReactComponent.html), and 
+* [Markdown](/typedoc/interfaces/MarkdownComponent.html).
 
-#### Collecting Responses
+Each component extends the [BaseIndividualComponent](/typedoc/interfaces/BaseIndividualComponent.html) interface. To add a component to your study (which can be thought of as a "page" of your study), you add a JSON object representing that component to the "components" object with a key which you can define how you would like. Then, the `type` key in that JSON object controls which type of component you are referring to. 
 
-Each component has a list of responses which represents a set of questions to ask to the user for that particular component. The user can describe where the question should be displayed in the UI, the type of response input (e.g. a [numerical response](/typedoc/interfaces/NumericalResponse.html), a [dropdown](/typedoc/interfaces/DropdownResponse.html), a [slider](/typedoc/interfaces/SliderResponse.html), etc.), and more. Each response interface extends the [BaseResponse](/typedoc/interfaces/BaseResponse.html) interface. For more detailed documentation on the response section, check out the [documentation](/typedoc/index.html#response).
+
+### Collecting Responses
+
+Each component has a list of responses which represents a set of questions to ask to the user for that particular component. The user can describe where the question should be displayed in the UI, the type of response input (e.g., a [numerical response](/typedoc/interfaces/NumericalResponse.html), a [dropdown](/typedoc/interfaces/DropdownResponse.html), a [slider](/typedoc/interfaces/SliderResponse.html), and more. Each response interface extends the [BaseResponse](/typedoc/interfaces/BaseResponse.html) interface. 
+
+The below example illustrates a simple consent component that is based on a Markdown file and has a response that asks for a signature: 
+
+```JSON
+  "consent": {
+            "type": "markdown",
+            "path": "demo-brush-interactions/assets/consent.md",
+            "nextButtonText": "Agree",
+            "response": [
+                {
+                    "id": "signature",
+                    "prompt": "Your signature",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "shortText",
+                    "placeholder": "Please provide your signature"
+                }
+            ]
+        }
+```JSON
+
+For more detailed documentation on the response section, check out the [documentation](/typedoc/index.html#response).
+
+## Base Components and Inheritance
+
+[Base Components](/typedoc/interfaces/StudyConfig.html#basecomponents] can be used to implement inheritance for components. This is often useful if you want to parameterize a component. For example: 
+
+* You might have a stimulus, such as an image, where you want to ask multiple different questions.  
+* You might have a generic implementation of a stimulus, such as a bar chart, and you want to pass in data to change how the stimulus appears. 
+
+In both of these cases, you can set up a component once as a `baseComponent`, including linking to the stimulus and including (partial) responses, but then later write inherited, short components that extend the base component with the specific functionality you want. 
+
+For examples of how to write a base component, refer to the [documentation](/typedoc/interfaces/StudyConfig.html#basecomponents] and to the [relevant tutorial](/tutorial/#components-inheritance-and-adding-custom-html-to-your-study).
 
 
 ## Sequence
 
-The sequence object of the study configuration defines the order of your defined components. The standard ordering is a "fixed" ordering where components are displayed in the order that they are placed in the sequence list. reVISit also supports randomization of the components (using either true randomization or a "latin square" technique). The sequence uses the [ComponentBlock](/typedoc/interfaces/ComponentBlock.html) interface. This order object takes in a list of "components" to display and will allow you to assign the order. It is designed in a nested fashion which means that an entry in your "components" list can either be the name of one of your components or another ComponentBlock. This allows the user to have several fixed pages (such as an introduction and consent form) while still randomizing the rest. You can find more detailed documentation about the sequence list [here](/typedoc/interfaces/ComponentBlock.html).
+The sequence object of the study configuration defines (a) the order particpants see your components and (b) determines which components they see. ReVISit supports sophisticated oredering strategies, interruptions and skip logic. Specificially, revisit supports: 
+
+* **Ordering Strategies:** 
+    * **Fixed** order: participants see the components the way they are defined in the sequence
+    * **Random** order: the order of the components are randomized
+    * **[Latin Square](https://en.wikipedia.org/wiki/Latin_square)**: perumte the order of stimuli but ensure that for different participants each stimuli occurs at each point in the sequnce.
+* **Sampling:**  `numSamples` draws a given number of items from a block. numSamples can be used in combination with each ordering strategy
+* **Interruptions**  can be used to insert breaks and attention checks into a block
+* **Skips** can be used to control flow based on the response to a question. 
+
+All of these can be applied on arbitrarily nested "blocks", i.e., it is designed in a nested fashion which means that an entry in the "components" list can either be the name of a components or another `ComponentBlock`. For example, the overall structure of a study can be linear (introduction, consent, tutorial, trials, survey), but within trials we can use random order:  
+
+
+```JSON
+ "sequence": {
+        "order": "fixed",
+        "components": [
+            "introduction",
+            "consent",
+            "tutorial",
+            {
+                "order": "random",
+                "components": [
+                    "paintBrush_q1",
+                    "rectangleBrush_q1",
+                    "axisBrush_q1",
+                    "sliderBrush_q1"
+                ]
+            },
+            "post-study-survey",
+            "survey"
+        ]
+    }
+```
+
+You can find more detailed documentation about the sequencing strategies [here](/typedoc/interfaces/ComponentBlock.html).
