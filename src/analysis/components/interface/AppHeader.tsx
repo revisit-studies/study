@@ -1,14 +1,12 @@
 import {
-  Box,
-  Flex, Group,
-  Header, Image, MediaQuery, Select, Space, Title,
+  Flex, Header, Image, Select, Title, Space, Grid,
 } from '@mantine/core';
 
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import React, { useState } from 'react';
 import { PREFIX } from '../../../utils/Prefix';
 
-export default function AppHeader(props:{ studyIds: string[], selectedId: string | undefined}) {
+export default function AppHeader(props: { studyIds: string[], selectedId: string | undefined}) {
   const { studyIds, selectedId } = props;
   const navigate = useNavigate();
   const [activeExp, setActiveExp] = useState<string | undefined>(selectedId);
@@ -21,39 +19,29 @@ export default function AppHeader(props:{ studyIds: string[], selectedId: string
 
   return (
     <Header height={70} p="md" miw={800}>
-      <Group position="apart">
-        <Group sx={{ cursor: 'pointer' }} onClick={() => navigate('/analysis/dashboard')}>
-          <Image maw={40} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
-          <MediaQuery smallerThan="md" styles={{ display: 'none' }}>
-            <Title span order={4}>
-              reVISit Analytics Platform /
-              {`${selectedId || 'Dashboard'}`}
-            </Title>
-          </MediaQuery>
-        </Group>
-
-        <Box>
-          <Flex
-            gap="md"
-            justify="flex-end"
-            align="center"
-            direction="row"
-            wrap="wrap"
-          >
-
-            {activeExp && (
-              <Select
-                placeholder="Select an experiment"
-                data={selectorData}
-                value={activeExp}
-                onChange={onExpChange}
-              />
-            )}
-
+      <Grid mt={-7} align="center">
+        <Grid.Col span={6}>
+          <Flex align="center" onClick={() => navigate('/analysis/dashboard')} sx={{ cursor: 'pointer' }}>
+            <Image maw={40} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
+            <Space w="md" />
+            <Title order={4}>ReVISit Analytics Platform</Title>
           </Flex>
-        </Box>
-      </Group>
+        </Grid.Col>
 
+        <Grid.Col span={6}>
+          <Flex
+            justify="flex-end"
+            direction="row"
+          >
+            <Select
+              placeholder="Select Study"
+              data={selectorData}
+              value={activeExp}
+              onChange={onExpChange}
+            />
+          </Flex>
+        </Grid.Col>
+      </Grid>
     </Header>
   );
 }
