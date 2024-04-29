@@ -1,17 +1,14 @@
 import {
-  Anchor, Card, Container, Image, Text, UnstyledButton, LoadingOverlay, Box, Title, Switch, Flex, Modal, TextInput, Button,
+  Card, Container, Text, LoadingOverlay, Box, Title, Flex, Modal, TextInput, Button, Tooltip, ActionIcon,
 } from '@mantine/core';
-
 import { useForm, isEmail } from '@mantine/form';
-import { useEffect, useState } from 'react';
-import {
-  getAuth, signInWithPopup, GoogleAuthProvider,
-} from '@firebase/auth';
+import { useEffect, useMemo, useState } from 'react';
 import { IconUserPlus, IconAt, IconTrashX } from '@tabler/icons-react';
 import { useAuth } from '../../store/hooks/useAuth';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 import { StoredUser } from '../../storage/engines/StorageEngine';
+import { signInWithGoogle } from '../../Login';
 
 export function GlobalSettings() {
   const { user, triggerAuth } = useAuth();
@@ -51,27 +48,12 @@ export function GlobalSettings() {
       setLoading(false);
     };
     determineAuthenticationEnabled();
-  }, []);
-
-  const signInWithGoogle = async () => {
-    if (storageEngine instanceof FirebaseStorageEngine) {
-      const provider = new GoogleAuthProvider();
-      const auth = getAuth();
-      try {
-        await signInWithPopup(auth, provider);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        console.warn(error.message);
-      }
-      return auth.currentUser;
-    }
-    return null;
-  };
+  }, [storageEngine]);
 
   const handleEnableAuth = async () => {
     setLoading(true);
     if (storageEngine instanceof FirebaseStorageEngine) {
-      const newUser = await signInWithGoogle();
+      const newUser = await signInWithGoogle(storageEngine, setLoading);
       if (newUser && newUser.email) {
         setEnableAuthUser({
           email: newUser.email,
@@ -128,6 +110,8 @@ export function GlobalSettings() {
     setLoading(false);
   };
 
+  const storageEngineIsFirebase = useMemo(() => storageEngine instanceof FirebaseStorageEngine, [storageEngine]);
+
   return (
     <>
       <Container>
@@ -140,12 +124,16 @@ export function GlobalSettings() {
                 <Box>
                   <Text>Authentication is currently disabled.</Text>
                 </Box>
-                <Button
-                  onClick={() => handleEnableAuth()}
-                  color="green"
-                >
-                  Enable Authentication
-                </Button>
+                <Tooltip label="You can only enable auth when using Firebase" disabled={storageEngineIsFirebase}>
+                  <Button
+                    onClick={(event) => (!storageEngineIsFirebase ? event.preventDefault() : handleEnableAuth())}
+                    color="green"
+                    data-disabled={!storageEngineIsFirebase ? true : undefined}
+                    sx={{ '&[data-disabled]': { pointerEvents: 'all' } }}
+                  >
+                    Enable Authentication
+                  </Button>
+                </Tooltip>
               </Flex>
             )}
           { isAuthEnabled
@@ -160,7 +148,7 @@ export function GlobalSettings() {
                     <Flex key={storedUser} justify="space-between" mb={10}>
                       <Text>{storedUser}</Text>
                       {storedUser === user.user?.email ? <Text color="blue" size="xs">You</Text>
-                        : <IconTrashX style={{ cursor: 'pointer', color: 'red', width: '20px' }} onClick={() => handleRemoveUser(storedUser)} />}
+                        : <ActionIcon variant="subtle" onClick={() => handleRemoveUser(storedUser)}><IconTrashX color="red" /></ActionIcon>}
                     </Flex>
                   ),
                 ) : null}
