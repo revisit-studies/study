@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/v1.0.0-beta2/src/parser/StudyConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/v1.0.0-beta4/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
         "title": "Dynamic React.js Stimuli: A Graphical Perception Experiment",
         "version": "pilot",
