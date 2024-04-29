@@ -1,5 +1,6 @@
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
+import { collection, doc, updateDoc } from 'firebase/firestore';
 import { StorageEngine, UserWrapped } from './StorageEngine';
 import { ParticipantData } from '../types';
 import { ParticipantMetadata, Sequence, StoredAnswer } from '../../store/types';
@@ -269,6 +270,10 @@ export class LocalStorageEngine extends StorageEngine {
   async validateUser(user: UserWrapped | null) {
     return true;
   }
+
+  // async rejectParticipant(studyId:string, participantId: string) {
+  //
+  // }
 
   private _verifyStudyDatabase(db: LocalForage | undefined): db is LocalForage {
     return db !== undefined;

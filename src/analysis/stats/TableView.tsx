@@ -2,13 +2,11 @@ import {
   Box, Spoiler, Stack, Table, Title, Text, Button,
 } from '@mantine/core';
 import { IconCheck, IconProgress } from '@tabler/icons-react';
+import { useParams } from 'react-router-dom';
 import { ParticipantData, StoredAnswer } from '../../parser/types';
 import { flattenSequence } from '../utils';
 import { ParticipantMetadata } from '../../store/types';
-
-const rejectParticipant = (pid:string) => {
-
-};
+import { useStorageEngine } from '../../storage/storageEngineHooks';
 
 function TableCell(props: {cellData: StoredAnswer}) {
   const { cellData } = props;
@@ -80,6 +78,12 @@ export function TableView(props: { completed: ParticipantData[], inprogress: Par
 
   const uniqueTrials = [...new Set(completed.map((complete) => flattenSequence(complete.sequence)).flat().map((trial) => trial))].filter((trial) => trial !== 'end');
 
+  const { studyId } = useParams();
+  const { storageEngine } = useStorageEngine();
+  const rejectParticipant = (participantId: string) => {
+    if (studyId) storageEngine?.rejectParticipant(studyId, participantId);
+  };
+
   const headers = [
     <th key="ID">ID/Status</th>,
     <th key="action">Action</th>,
@@ -94,7 +98,7 @@ export function TableView(props: { completed: ParticipantData[], inprogress: Par
         </Box>
       </td>
       <td>
-        <Button onClick={() => rejectParticipant(record.participantId)}>Reject</Button>
+        {record.rejected ? <Button disabled>Rejected</Button> : <Button onClick={() => rejectParticipant(record.participantId)}>Reject</Button>}
       </td>
       {record.metadata ? <MetaCell metaData={record.metadata} /> : <td>N/A</td>}
       {uniqueTrials.map((trialName) => {

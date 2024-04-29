@@ -4,7 +4,7 @@ import {
   getDownloadURL, getStorage, ref, uploadBytes,
 } from 'firebase/storage';
 import {
-  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc, where, deleteDoc,
+  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc, where, deleteDoc, updateDoc,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
@@ -512,6 +512,18 @@ export class FirebaseStorageEngine extends StorageEngine {
     await Promise.all(participantPulls);
 
     return participantData;
+  }
+
+  async rejectParticipant(studyId:string, participantId: string) {
+    const studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
+    const participantDoc = doc(studyCollection, participantId);
+    // set reject flag
+    await updateDoc(participantDoc, { rejected: true });
+    // set sequence to empty string
+    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(sequenceAssignmentDoc, 'sequenceAssignment');
+    const participantSequenceAssignmentDoc = doc(sequenceAssignmentCollection, participantId);
+    await updateDoc(participantSequenceAssignmentDoc, { participantId: '' });
   }
 
   private _verifyStudyDatabase(db: CollectionReference<DocumentData, DocumentData> | undefined): db is CollectionReference<DocumentData, DocumentData> {
