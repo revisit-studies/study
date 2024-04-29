@@ -117,7 +117,10 @@ export function GlobalConfigParser() {
           <Route
             path="/login"
             element={(
-              <Login />
+              <>
+                <AppHeader />
+                <Login />
+              </>
             )}
           />
         </Routes>
