@@ -4,7 +4,7 @@ import { SkipConditions, StudyConfig } from '../parser/types';
 
 export interface ParticipantMetadata {
   userAgent: string;
-  resolution: Screen;
+  resolution: Record<string, string | number>;
   language: string;
   ip: string | null;
 }

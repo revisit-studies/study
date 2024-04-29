@@ -71,7 +71,9 @@ export function Shell({ globalConfig }: {
       const metadata: ParticipantMetadata = {
         language: navigator.language,
         userAgent: navigator.userAgent,
-        resolution: JSON.parse(JSON.stringify(window.screen)),
+        resolution: {
+          width: window.screen.width, height: window.screen.height, availHeight: window.screen.availHeight, availWidth: window.screen.availWidth, colorDepth: window.screen.colorDepth, orientation: window.screen.orientation.type, pixelDepth: window.screen.pixelDepth,
+        },
         ip: ip.ip,
       };
 
