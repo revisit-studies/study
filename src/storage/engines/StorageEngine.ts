@@ -1,6 +1,27 @@
+import { User } from '@firebase/auth';
 import { StudyConfig } from '../../parser/types';
 import { ParticipantMetadata, Sequence, StoredAnswer } from '../../store/types';
 import { ParticipantData } from '../types';
+
+export interface StoredUser {
+  email: string,
+  uid: string | null,
+}
+
+export interface LocalStorageUser {
+  name: string,
+  email: string,
+  uid: string,
+}
+
+export type UserOptions = User | LocalStorageUser | null;
+
+export interface UserWrapped {
+  user: UserOptions,
+  determiningStatus: boolean,
+  isAdmin: boolean,
+  adminVerification:boolean
+}
 
 export abstract class StorageEngine {
   protected engine: string;
@@ -50,4 +71,6 @@ export abstract class StorageEngine {
   abstract nextParticipant(config: StudyConfig, metadata: ParticipantMetadata): Promise<ParticipantData>;
 
   abstract verifyCompletion(answers: Record<string, StoredAnswer>): Promise<boolean>;
+
+  abstract validateUser(user: UserWrapped | null): Promise<boolean>;
 }
