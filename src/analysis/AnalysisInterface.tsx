@@ -50,8 +50,8 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
     <AppShell>
       <AppHeader studyIds={props.globalConfig.configsList} selectedId={studyId} />
       <Container fluid>
-        <LoadingOverlay visible={loading} zIndex={1000} overlayBlur={2} />
-        <Tabs mt={0} defaultValue="table">
+        <LoadingOverlay visible={loading} />
+        <Tabs defaultValue="table">
           <Tabs.List>
             <Tabs.Tab value="table" icon={<IconTable size={14} />}>Table View</Tabs.Tab>
             <Tabs.Tab value="stats" icon={<IconChartDonut2 size={14} />}>Trial Stats</Tabs.Tab>

@@ -83,7 +83,7 @@ export default function AppHeader() {
           <Flex align="center">
             <Image maw={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" />
             <Space w="md" />
-            <Title order={4}>{studyConfig?.studyMetadata.title}</Title>
+            <Title order={4} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{studyConfig?.studyMetadata.title}</Title>
           </Flex>
         </Grid.Col>
 

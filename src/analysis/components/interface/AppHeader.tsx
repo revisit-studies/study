@@ -18,13 +18,13 @@ export default function AppHeader(props: { studyIds: string[], selectedId: strin
   };
 
   return (
-    <Header height={70} p="md" miw={800}>
+    <Header height={70} p="md">
       <Grid mt={-7} align="center">
         <Grid.Col span={6}>
           <Flex align="center" onClick={() => navigate('/analysis/dashboard')} sx={{ cursor: 'pointer' }}>
             <Image maw={40} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
             <Space w="md" />
-            <Title order={4}>ReVISit Analytics Platform</Title>
+            <Title order={4} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>ReVISit Analytics Platform</Title>
           </Flex>
         </Grid.Col>
 
