@@ -12,8 +12,6 @@ export function AnalysisDashboard(props: { globalConfig: GlobalConfig; }) {
       <Container fluid>
         <SummaryBlock globalConfig={props.globalConfig} />
       </Container>
-      )
-
     </AppShell>
   );
 }
