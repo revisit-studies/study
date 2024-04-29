@@ -8,27 +8,14 @@ import {
 import { LoadingOverlay } from '@mantine/core';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
-import { GlobalConfig } from '../../parser/types';
-
-interface LocalStorageUser {
-  name: string,
-  email: string
-}
-
-type UserOptions = User | LocalStorageUser | null;
-
-interface UserWrapped {
-  user: UserOptions,
-  determiningStatus: boolean,
-  isAdmin: boolean,
-  adminVerification:boolean
-}
+import { UserWrapped } from '../../storage/engines/StorageEngine';
 
 // Defines default AuthContextValue
 interface AuthContextValue {
   user: UserWrapped;
   logout: () => Promise<void>;
-  verifyAdminStatus: (firebaseUser: UserOptions) => Promise<boolean>;
+  triggerAuth: () => void;
+  verifyAdminStatus: (inputUser: UserWrapped) => Promise<boolean>;
   }
 
 // Initializes AuthContext
@@ -41,6 +28,7 @@ const AuthContext = createContext<AuthContextValue>({
   },
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   logout: async () => {},
+  triggerAuth: () => {},
   verifyAdminStatus: () => Promise.resolve(false),
 
 });
@@ -49,7 +37,7 @@ const AuthContext = createContext<AuthContextValue>({
 export const useAuth = () => useContext(AuthContext);
 
 // Defines the functions that are exposed in this hook.
-export function AuthProvider({ children, globalConfig } : { children: ReactNode, globalConfig: GlobalConfig }) {
+export function AuthProvider({ children } : { children: ReactNode }) {
   // Default non-user when loading
   const loadingNullUser : UserWrapped = {
     user: null,
@@ -71,6 +59,7 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
     user: {
       name: 'fakeName',
       email: 'fakeEmail@fake.com',
+      uid: 'fakeUid',
     },
     determiningStatus: false,
     isAdmin: true,
@@ -78,7 +67,7 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
   };
 
   const [user, setUser] = useState(loadingNullUser);
-
+  const [enableAuthTrigger, setEnableAuthTrigger] = useState(false);
   const { storageEngine } = useStorageEngine();
 
   // Logs the user out by removing the user and navigating to '/login'
@@ -94,40 +83,14 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
     }
   };
 
-  function isFirebaseUser(input: UserOptions): input is User {
-    return input !== null && typeof input === 'object' && 'uid' in input;
-  }
+  const triggerAuth = () => {
+    setEnableAuthTrigger(true);
+  };
 
-  function isLocalStorageUser(input: UserOptions): input is LocalStorageUser {
-    return input !== null && typeof input === 'object' && !('uid' in input);
-  }
-
-  const verifyAdminStatus = async (inputUser: UserOptions) => {
-    if (inputUser === null) {
-      return true;
-    } if (isFirebaseUser(inputUser)) {
-      // Assert that the inputted user is the User type
-      const firebaseUser = inputUser;
-      if (storageEngine instanceof FirebaseStorageEngine) {
-        const authInfo = await storageEngine?.getUserManagementData('authentication');
-        if (authInfo?.isEnabled) {
-          // Validate the user if Auth enabled
-          return await storageEngine.validateUserAdminStatus(firebaseUser, globalConfig.adminUsers);
-        }
-        // If authDisabled, allow access
-        return true;
-      }
-      // If the user is Firebase but the storageEngine is not, something has gone wrong. Deny access
-      return false;
-    } if (isLocalStorageUser(inputUser)) {
-      if (storageEngine) {
-        // If storageEngine defined, allow access
-        return true;
-      }
-      // If localStorageUser but no storageEngine defined, deny access.
-      return false;
+  const verifyAdminStatus = async (inputUser: UserWrapped) => {
+    if (storageEngine) {
+      return await storageEngine.validateUser(inputUser);
     }
-    // Some other forms of the user input should be denied access.
     return false;
   };
 
@@ -137,10 +100,12 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
 
     // Get authentication
     let auth: Auth;
-    try {
-      auth = getAuth();
-    } catch (error) {
-      console.warn('No firebase store.');
+    if (storageEngine instanceof FirebaseStorageEngine) {
+      try {
+        auth = getAuth();
+      } catch (error) {
+        console.warn('No firebase store.');
+      }
     }
 
     // Handle auth state changes for Firebase
@@ -154,13 +119,15 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
       }));
       if (firebaseUser) {
         // Reach out to firebase to validate user
-        const isAdmin = await verifyAdminStatus(firebaseUser);
-        setUser({
+        const currUser: UserWrapped = {
           user: firebaseUser,
           determiningStatus: false,
-          isAdmin,
+          isAdmin: false,
           adminVerification: true,
-        });
+        };
+        const isAdmin = await verifyAdminStatus(currUser);
+        currUser.isAdmin = !!isAdmin;
+        setUser(currUser);
       } else {
         logout();
       }
@@ -187,10 +154,11 @@ export function AuthProvider({ children, globalConfig } : { children: ReactNode,
     return () => {
       cleanupPromise.then((cleanup) => cleanup());
     };
-  }, [storageEngine]);
+  }, [storageEngine, enableAuthTrigger]);
 
   const value = useMemo(() => ({
     user,
+    triggerAuth,
     logout,
     verifyAdminStatus,
   }), [user]);

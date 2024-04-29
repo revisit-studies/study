@@ -10,6 +10,7 @@ import { ProtectedRoute } from './ProtectedRoute';
 import { Login } from './Login';
 import { AuthProvider } from './store/hooks/useAuth';
 import { AnalysisDashboard } from './analysis/AnalysisDashboard';
+import { GlobalSettings } from './analysis/dashboard/GlobalSettings';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
@@ -56,7 +57,7 @@ export function GlobalConfigParser() {
 
   return globalConfig ? (
     <BrowserRouter basename={PREFIX}>
-      <AuthProvider globalConfig={globalConfig}>
+      <AuthProvider>
         <Routes>
           <Route
             path="/"
@@ -96,6 +97,14 @@ export function GlobalConfigParser() {
                 />
               </ProtectedRoute>
               )}
+          />
+          <Route
+            path="/settings"
+            element={(
+              <ProtectedRoute>
+                <GlobalSettings />
+              </ProtectedRoute>
+            )}
           />
           <Route
             path="/login"

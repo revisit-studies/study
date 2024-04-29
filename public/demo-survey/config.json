@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/v1.0.0-beta2/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
         "title": "Question Types and Form Elements Demo",
         "version": "pilot",
