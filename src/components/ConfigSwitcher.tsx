@@ -10,6 +10,7 @@ import { PREFIX } from '../utils/Prefix';
 import { useAuth } from '../store/hooks/useAuth';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
+import AppHeader from '../analysis/components/interface/AppHeader';
 
 const REVISIT_GITHUB_PUBLIC = 'https://github.com/revisit-studies/study/tree/main/public/';
 
@@ -26,16 +27,6 @@ function ConfigSwitcher({ globalConfig, studyConfigs }: Props) {
 
   return (
     <Container size="xs" px="xs" style={{ marginTop: 100, marginBottom: 100 }}>
-      {storageEngine?.getEngine() === 'firebase' ? (
-        <UnstyledButton
-          style={{ position: 'absolute', top: '30px', right: '30px' }}
-          onClick={() => {
-            logout();
-          }}
-        >
-          Logout
-        </UnstyledButton>
-      ) : null}
       <Image
         maw={150}
         mx="auto"

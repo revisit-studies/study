@@ -8,7 +8,6 @@ export function AnalysisDashboard(props: { globalConfig: GlobalConfig; }) {
   const { studyId } = useParams();
   return (
     <AppShell>
-      <AppHeader studyIds={props.globalConfig.configsList} selectedId={studyId} />
       <Container fluid>
         <SummaryBlock globalConfig={props.globalConfig} />
       </Container>

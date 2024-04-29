@@ -12,6 +12,7 @@ import { AuthProvider } from './store/hooks/useAuth';
 import { AnalysisDashboard } from './analysis/AnalysisDashboard';
 import { GlobalSettings } from './analysis/dashboard/GlobalSettings';
 import { NavigateWithParams } from './utils/NavigateWithParams';
+import AppHeader from './analysis/components/interface/AppHeader';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
@@ -63,12 +64,13 @@ export function GlobalConfigParser() {
           <Route
             path="/"
             element={(
-              <ProtectedRoute>
+              <>
+                <AppHeader studyIds={globalConfig.configsList} selectedId={undefined} />
                 <ConfigSwitcher
                   globalConfig={globalConfig}
                   studyConfigs={studyConfigs}
                 />
-              </ProtectedRoute>
+              </>
             )}
           />
           <Route
@@ -79,6 +81,7 @@ export function GlobalConfigParser() {
             path="/analysis/dashboard"
             element={(
               <ProtectedRoute>
+                <AppHeader studyIds={globalConfig.configsList} selectedId={undefined} />
                 <AnalysisDashboard
                   globalConfig={globalConfig}
                 />
