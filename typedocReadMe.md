@@ -8,11 +8,11 @@ The technical documentation can be found [here](modules.html).
 
 # Components
 
-Componets are where study-specific content goes. ReVISit currently supports four types of components: 
+Components are where study-specific content goes. ReVISit currently supports four types of components: 
 
 * **Markdown Files** contain formatted text, including links, images, embedded videos, etc. They are useful for introductions, consent forms, help pages, etc. 
 * **Images** can be used as stimuli directly. 
-* **HTML Pages** can be used to create custom stimuly, including interactive stimuli developed with JavaScript 
+* **HTML Pages** can be used to create custom stimuli, including interactive stimuli developed with JavaScript 
 * **React Components** can be used for sophisticated interactive stimuli. In comparison to HTML pages, react components simplify the communication between reVISit and the stimulus. 
 * **Survey Questions** can be used to elicit structured responses from participants.
 
@@ -31,7 +31,7 @@ The reVISit Spec enables you to define the details of your experiment as a JSON 
 * Components and BaseComponents – setting up the content of the study
 * Sequence – choosing the order and the selection of tasks participants see. 
 
-We'll expain the ideas in the next section, and link to the documentation for more details. 
+We'll explain the ideas in the next section, and link to the documentation for more details. 
 
 You can find the detailed documentation for the reVISit Spec [here](/typedoc/interfaces/StudyConfig.html).
 
@@ -87,24 +87,24 @@ For more detailed documentation on the response section, check out the [document
 
 ## Base Components and Inheritance
 
-[Base Components](/typedoc/interfaces/StudyConfig.html#basecomponents] can be used to implement inheritance for components. This is often useful if you want to parameterize a component. For example: 
+[Base Components](/typedoc/interfaces/StudyConfig.html#basecomponents) can be used to implement inheritance for components. This is often useful if you want to parameterize a component. For example: 
 
 * You might have a stimulus, such as an image, where you want to ask multiple different questions.  
 * You might have a generic implementation of a stimulus, such as a bar chart, and you want to pass in data to change how the stimulus appears. 
 
 In both of these cases, you can set up a component once as a `baseComponent`, including linking to the stimulus and including (partial) responses, but then later write inherited, short components that extend the base component with the specific functionality you want. 
 
-For examples of how to write a base component, refer to the [documentation](/typedoc/interfaces/StudyConfig.html#basecomponents] and to the [relevant tutorial](/tutorial/#components-inheritance-and-adding-custom-html-to-your-study).
+For examples of how to write a base component, refer to the [documentation](/typedoc/interfaces/StudyConfig.html#basecomponents) and to the [relevant tutorial](/tutorial/#components-inheritance-and-adding-custom-html-to-your-study).
 
 
 ## Sequence
 
-The sequence object of the study configuration defines (a) the order particpants see your components and (b) determines which components they see. ReVISit supports sophisticated oredering strategies, interruptions and skip logic. Specificially, revisit supports: 
+The sequence object of the study configuration defines (a) the order participants see your components and (b) determines which components they see. ReVISit supports sophisticated ordering strategies, interruptions and skip logic. Specifically, revisit supports: 
 
 * **Ordering Strategies:** 
     * **Fixed** order: participants see the components the way they are defined in the sequence
     * **Random** order: the order of the components are randomized
-    * **[Latin Square](https://en.wikipedia.org/wiki/Latin_square)**: perumte the order of stimuli but ensure that for different participants each stimuli occurs at each point in the sequnce.
+    * **[Latin Square](https://en.wikipedia.org/wiki/Latin_square)**: permute the order of stimuli but ensure that for different participants each stimuli occurs at each point in the sequence.
 * **Sampling:**  `numSamples` draws a given number of items from a block. numSamples can be used in combination with each ordering strategy
 * **Interruptions**  can be used to insert breaks and attention checks into a block
 * **Skips** can be used to control flow based on the response to a question. 
