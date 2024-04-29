@@ -16,7 +16,7 @@
     },
     "uiConfig": {
         "contactEmail": "test@test.com",
-        "helpTextPath": "demo-trrack-html/assets/help.md",
+        "helpTextPath": "demo-html-trrack/assets/help.md",
         "logoPath": "revisitAssets/revisitLogoSquare.svg",
         "withProgressBar": true,
         "autoDownloadStudy": false,
@@ -26,7 +26,7 @@
     "components": {
         "introduction": {
             "type": "markdown",
-            "path": "demo-trrack-html/assets/introduction.md",
+            "path": "demo-html-trrack/assets/introduction.md",
             "response": []
         },
         "countDots1": {
@@ -37,7 +37,7 @@
             },
             "description": "Add a total of 10 to 15 circles",
             "instruction": "Add a total of 10 to 15 circles.",
-            "path": "demo-trrack-html/assets/dots-count.html",
+            "path": "demo-html-trrack/assets/dots-count.html",
             "response": [
                 {
                     "id": "circlesCount",
@@ -57,7 +57,7 @@
             },
             "description": "Add a total of 5 - 10 circles",
             "instruction": "Add a total of 5 to 15 circles. You can remove if you add more.",
-            "path": "demo-trrack-html/assets/dots-count.html",
+            "path": "demo-html-trrack/assets/dots-count.html",
             "response": [
                 {
                     "id": "circlesCount",
