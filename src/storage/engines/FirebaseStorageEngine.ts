@@ -4,7 +4,7 @@ import {
   getDownloadURL, getStorage, ref, uploadBytes,
 } from 'firebase/storage';
 import {
-  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc,
+  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc, where, deleteDoc,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
@@ -254,7 +254,17 @@ export class FirebaseStorageEngine extends StorageEngine {
     const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
     const sequenceAssignmentCollection = collection(sequenceAssignmentDoc, 'sequenceAssignment');
     const participantSequenceAssignmentDoc = doc(sequenceAssignmentCollection, this.currentParticipantId);
-    await setDoc(participantSequenceAssignmentDoc, { participantId: this.currentParticipantId, timestamp: serverTimestamp() });
+
+    const rejectedQuery = query(sequenceAssignmentCollection, where('participantId', '==', ''));
+    const rejectedDocs = await getDocs(rejectedQuery);
+    if (rejectedDocs.docs.length > 0) {
+      const firstReject = rejectedDocs.docs[0];
+      const firstRejectTime = firstReject.data().timestamp;
+      await setDoc(participantSequenceAssignmentDoc, { participantId: this.currentParticipantId, timestamp: firstRejectTime });
+      await deleteDoc(firstReject.ref);
+    } else {
+      await setDoc(participantSequenceAssignmentDoc, { participantId: this.currentParticipantId, timestamp: serverTimestamp() });
+    }
 
     // Query all the intents to get a sequence and find our position in the queue
     const intentsQuery = query(sequenceAssignmentCollection, orderBy('timestamp', 'asc'));
