@@ -21,8 +21,7 @@ export default function RadioInput({
   return (
     <Radio.Group
       name={`radioInput${response.id}`}
-      label={<ReactMarkdownWrapper text={prompt} />}
-      withAsterisk={required}
+      label={<ReactMarkdownWrapper text={prompt} required={required} />}
       size="md"
       key={response.id}
       {...answer}
