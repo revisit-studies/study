@@ -11,29 +11,33 @@ import { PREFIX } from './utils/Prefix';
 import { useAuth } from './store/hooks/useAuth';
 import { useStorageEngine } from './storage/storageEngineHooks';
 import { FirebaseStorageEngine } from './storage/engines/FirebaseStorageEngine';
+import { StorageEngine } from './storage/engines/StorageEngine';
+
+export async function signInWithGoogle(storageEngine: StorageEngine | undefined, setLoading: (val: boolean) => void, setErrorMessage?: (val: string) => void) {
+  if (storageEngine instanceof FirebaseStorageEngine) {
+    setLoading(true);
+    const provider = new GoogleAuthProvider();
+    const auth = getAuth();
+    try {
+      await signInWithPopup(auth, provider);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      if (setErrorMessage) {
+        setErrorMessage(error.message);
+      }
+    } finally {
+      setLoading(false);
+    }
+    return auth.currentUser;
+  }
+  return null;
+}
 
 export function Login() {
   const { user } = useAuth();
   const [errorMessage, setErrorMessage] = useState<string|null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const { storageEngine } = useStorageEngine();
-
-  // Sign in with Google. Any errors are sent to the error message badge.
-  const signInWithGoogle = async () => {
-    if (storageEngine instanceof FirebaseStorageEngine) {
-      setLoading(true);
-      const provider = new GoogleAuthProvider();
-      const auth = getAuth();
-      try {
-        await signInWithPopup(auth, provider);
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      } catch (error: any) {
-        setErrorMessage(error.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-  };
 
   useEffect(() => {
     if (!user.determiningStatus && !user.isAdmin && user.adminVerification) {
@@ -52,7 +56,7 @@ export function Login() {
           <Image maw={200} mt={50} mb={100} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
           <>
             <Text mb={20}>To access admin settings, please sign in using your Google account.</Text>
-            <Button onClick={signInWithGoogle} leftIcon={<IconBrandGoogle />} variant="filled">Sign In With Google</Button>
+            <Button onClick={() => signInWithGoogle(storageEngine, setLoading, setErrorMessage)} leftIcon={<IconBrandGoogle />} variant="filled">Sign In With Google</Button>
           </>
           {errorMessage ? <Badge size="lg" color="red" mt={30}>{errorMessage}</Badge> : null}
           <LoadingOverlay visible={loading} />

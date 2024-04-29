@@ -7,20 +7,15 @@ import {
   CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
-import { getAuth, signInAnonymously, User } from '@firebase/auth';
+import { getAuth, signInAnonymously } from '@firebase/auth';
 import localforage from 'localforage';
-import { StorageEngine } from './StorageEngine';
+import { StorageEngine, UserWrapped, StoredUser } from './StorageEngine';
 import { ParticipantData } from '../types';
 import {
   EventType, ParticipantMetadata, Sequence, StoredAnswer, TrrackedProvenance,
 } from '../../store/types';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
-
-export interface StoredUser {
-  email: string,
-  uid: string | null,
-}
 
 export class FirebaseStorageEngine extends StorageEngine {
   private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
@@ -418,73 +413,61 @@ export class FirebaseStorageEngine extends StorageEngine {
     return null;
   }
 
-  async editUserManagementAdmins(adminUsersList: Array<string>, currentUser: User) {
-    if (adminUsersList.length > 0) {
-      const firebaseAdminUsers = await this.getUserManagementData('adminUsers');
-      const newAdminUsersWithUUids: Array<StoredUser> = [];
-
-      if (firebaseAdminUsers) {
-        const firebaseAdminUsersObject = Object.fromEntries(firebaseAdminUsers?.adminUsersList.map((storedUser:StoredUser) => [storedUser.email, storedUser.uid]));
-        adminUsersList.forEach((adminUser) => {
-          let newUid: string | null;
-          if (adminUser in firebaseAdminUsersObject) {
-            const storedUid = firebaseAdminUsersObject[adminUser];
-            newUid = storedUid || (currentUser.email === adminUser ? currentUser.uid : null);
-          } else {
-            newUid = currentUser.email === adminUser ? currentUser.uid : null;
-          }
-          newAdminUsersWithUUids.push({
-            email: adminUser,
-            uid: newUid,
-          });
-        });
-      } else {
-        // Adds all initial admins on sign in of one of them.
-        let newUid: string | null;
-        adminUsersList.forEach((adminUser) => {
-          newUid = currentUser.email === adminUser ? currentUser.uid : null;
-          newAdminUsersWithUUids.push({
-            email: adminUser,
-            uid: newUid,
-          });
-        });
-      }
-      return await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
-        adminUsersList: newAdminUsersWithUUids,
-      });
-    }
-    return null;
-  }
-
-  // Validates if a user is an admin.
-  async validateUserAdminStatus(user: User | null, globalConfigAdminUsers: Array<string>) {
-    // There are two cases
-    // Case 1: Verify a user when there already exists a database
-    // Case 2: Verify a user when there does not exist a database
-    if (user) {
+  async validateUser(user: UserWrapped | null) {
+    if (user?.user) {
       // Case 1: Database exists
-      const adminUsers = await this.getUserManagementData('adminUsers');
-
-      if (adminUsers && adminUsers.adminUsersList) {
-        const adminUsersObject = Object.fromEntries(adminUsers.adminUsersList.map((storedUser:StoredUser) => [storedUser.email, storedUser.uid]));
-        // Verifies that, if the user has signed in and thus their UID is added to the Firestore, that the current UID matches the Firestore entries UID. Prevents impersonation (otherwise, users would be able to alter email to impersonate).
-        const isAdmin = user.email && (adminUsersObject[user.email] === user.uid || adminUsersObject[user.email] === null);
-        if (isAdmin) {
-          await this.editUserManagementAdmins(globalConfigAdminUsers, user);
-          return true;
+      const authInfo = await this.getUserManagementData('authentication');
+      if (authInfo?.isEnabled) {
+        const adminUsers = await this.getUserManagementData('adminUsers');
+        if (adminUsers && adminUsers.adminUsersList) {
+          const adminUsersObject = Object.fromEntries(adminUsers.adminUsersList.map((storedUser:StoredUser) => [storedUser.email, storedUser.uid]));
+          // Verifies that, if the user has signed in and thus their UID is added to the Firestore, that the current UID matches the Firestore entries UID. Prevents impersonation (otherwise, users would be able to alter email to impersonate).
+          const isAdmin = user.user.email && (adminUsersObject[user.user.email] === user.user.uid || adminUsersObject[user.user.email] === null);
+          if (isAdmin) {
+            return true;
+          }
+          return false;
         }
-        return false;
-      // Case 2: Database does not yet exist. First opening
       }
-      // Need to get Global config users
-      const isAdmin = (user.email && globalConfigAdminUsers.includes(user.email)) ?? false;
-      if (isAdmin) {
-        await this.editUserManagementAdmins(globalConfigAdminUsers, user);
-        return true;
-      }
-      return false;
+      return true;
     }
     return false;
+  }
+
+  async changeAuth(bool:boolean) {
+    await setDoc(doc(this.firestore, 'user-management', 'authentication'), {
+      isEnabled: bool,
+    });
+  }
+
+  async addAdminUser(user: StoredUser) {
+    const adminUsers = await this.getUserManagementData('adminUsers');
+    if (adminUsers?.adminUsersList) {
+      const adminList = adminUsers.adminUsersList;
+      const isInList = adminList.find((storedUser: StoredUser) => storedUser.email === user.email);
+      if (!isInList) {
+        adminList.push({ email: user.email, uid: user.uid });
+        await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
+          adminUsersList: adminList,
+        });
+      }
+    } else {
+      await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
+        adminUsersList: [{ email: user.email, uid: user.uid }],
+      });
+    }
+  }
+
+  async removeAdminUser(email:string) {
+    const adminUsers = await this.getUserManagementData('adminUsers');
+    if (adminUsers?.adminUsersList && adminUsers.adminUsersList.length > 1) {
+      if (adminUsers.adminUsersList.find((storedUser: StoredUser) => storedUser.email === email)) {
+        adminUsers.adminUsersList = adminUsers?.adminUsersList.filter((storedUser:StoredUser) => storedUser.email !== email);
+        await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
+          adminUsersList: adminUsers?.adminUsersList,
+        });
+      }
+    }
   }
 
   async getAllParticipantsDataByStudy(studyId:string) {
