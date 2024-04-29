@@ -21,8 +21,7 @@ export default function SliderInput({
   const errorMessage = generateErrorMessage(response, answer);
   return (
     <Input.Wrapper
-      withAsterisk={required}
-      label={<ReactMarkdownWrapper text={prompt} />}
+      label={<ReactMarkdownWrapper text={prompt} required={required} />}
       error={errorMessage}
       size="md"
     >
