@@ -74,7 +74,7 @@ export function TableView(props: { completed: ParticipantData[], inprogress: Par
 
   const allData = [...completed.map((record) => ({ ...record, completed: true })), ...inprogress.map((record) => ({ ...record, completed: false }))];
 
-  const uniqueTrials = [...new Set(completed.map((complete) => flattenSequence(complete.sequence)).flat().map((trial) => trial))];
+  const uniqueTrials = [...new Set(completed.map((complete) => flattenSequence(complete.sequence)).flat().map((trial) => trial))].filter((trial) => trial !== 'end');
 
   const headers = [<th key="ID">ID/Status</th>, <th key="meta">Meta</th>, ...uniqueTrials.map((trialName) => <th key={`header-${trialName}`}>{trialName}</th>)];
   const rows = allData.map((record) => (
