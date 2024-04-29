@@ -190,7 +190,7 @@ export class LocalStorageEngine extends StorageEngine {
     const returnArray: ParticipantData[] = [];
 
     await currStudyDatabase.iterate((value, key) => {
-      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray' && key !== 'configs') {
+      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray' && key !== 'configs' && key !== 'currentConfigHash') {
         returnArray.push(value as ParticipantData);
       }
     });
