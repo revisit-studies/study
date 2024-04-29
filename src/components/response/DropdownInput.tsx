@@ -21,10 +21,9 @@ export default function DropdownInput({
   return (
     <Select
       disabled={disabled}
-      label={<ReactMarkdownWrapper text={prompt} />}
+      label={<ReactMarkdownWrapper text={prompt} required={required} />}
       placeholder={placeholder}
       data={options as SelectItem[]}
-      withAsterisk={required}
       radius="md"
       size="md"
       {...answer}

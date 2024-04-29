@@ -21,8 +21,7 @@ export default function NumericInput({
     <NumberInput
       disabled={disabled}
       placeholder={placeholder}
-      label={<ReactMarkdownWrapper text={prompt} />}
-      withAsterisk={required}
+      label={<ReactMarkdownWrapper text={prompt} required={required} />}
       radius="md"
       size="md"
       min={min}
