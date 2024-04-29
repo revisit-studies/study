@@ -10,7 +10,6 @@ export default function AppHeader(props: { studyIds: string[], selectedId: strin
   const { studyIds, selectedId } = props;
   const navigate = useNavigate();
   const [activeExp, setActiveExp] = useState<string | undefined>(selectedId);
-  // const page = window.location.pathname.split('/')[2];
   const selectorData = studyIds.map((id) => ({ value: id, label: id }));
   const onExpChange = (value: string) => {
     setActiveExp(value);

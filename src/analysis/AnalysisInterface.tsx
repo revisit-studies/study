@@ -65,7 +65,6 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
             Settings tab content
           </Tabs.Panel>
         </Tabs>
-
       </Container>
     </AppShell>
   );

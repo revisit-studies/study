@@ -26,6 +26,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
   const [openDownload, { open, close }] = useDisclosure(false);
   const navigate = useNavigate();
   const [ref, dms] = useResizeObserver();
+
   const completionTimes = allParticipants
     .filter((d) => d.completed)
     .map((d) => Math.max(...Object.values(d.answers).map((ans) => ans.endTime)));
@@ -34,28 +35,9 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
     new Date(new Date(Math.max(...(completionTimes.length > 0 ? completionTimes : [new Date().getTime()]))).setHours(24, 0, 0, 0)),
   ]);
 
-  const [completedParticipants, setCompletedParticipants] = useState<ParticipantData[]>([]);
-  const [inProgressParticipants, setInProgressParticipants] = useState<ParticipantData[]>([]);
+  const completedParticipants = useMemo(() => allParticipants.filter((d) => d.completed && isWithinRange(d.answers, rangeTime)), [allParticipants, rangeTime]);
 
-  useEffect(() => {
-    if (allParticipants.length > 0 && allParticipants[0].sequence.components) {
-      const inRangeData = allParticipants.filter((d) => isWithinRange(d.answers, rangeTime));
-
-      const completedData: ParticipantData[] = [];
-      const inProgressData: ParticipantData[] = [];
-
-      inRangeData.forEach((d) => {
-        if (d.completed) {
-          completedData.push(d);
-        } else {
-          inProgressData.push(d);
-        }
-      });
-
-      setCompletedParticipants(completedData);
-      setInProgressParticipants(inProgressData);
-    }
-  }, [allParticipants, rangeTime]);
+  const inProgressParticipants = useMemo(() => allParticipants.filter((d) => !d.completed && isWithinRange(d.answers, rangeTime)), [allParticipants, rangeTime]);
 
   const completedStatsData = useMemo(() => {
     if (completedParticipants.length > 0) {
@@ -90,7 +72,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
       y: { field: 'Participants', type: 'quantitative' },
     },
     data: { values: completedStatsData },
-  }), [dms, completedStatsData]);
+  }), [dms.width, rangeTime, completedStatsData]);
 
   const [jsonOpened, { close: closeJson, open: openJson }] = useDisclosure(false);
   const [csvOpened, { close: closeCsv, open: openCsv }] = useDisclosure(false);
