@@ -1,6 +1,6 @@
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
-import { StorageEngine } from './StorageEngine';
+import { StorageEngine, UserWrapped } from './StorageEngine';
 import { ParticipantData } from '../types';
 import { ParticipantMetadata, Sequence, StoredAnswer } from '../../store/types';
 import { hash } from './utils';
@@ -174,7 +174,7 @@ export class LocalStorageEngine extends StorageEngine {
     const returnArray: ParticipantData[] = [];
 
     await this.studyDatabase.iterate((value, key) => {
-      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray' && key !== 'configs') {
+      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray' && key !== 'configs' && key !== 'currentConfigHash') {
         returnArray.push(value as ParticipantData);
       }
     });
@@ -190,7 +190,7 @@ export class LocalStorageEngine extends StorageEngine {
     const returnArray: ParticipantData[] = [];
 
     await currStudyDatabase.iterate((value, key) => {
-      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray' && key !== 'configs') {
+      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray' && key !== 'configs' && key !== 'currentConfigHash') {
         returnArray.push(value as ParticipantData);
       }
     });
@@ -261,6 +261,10 @@ export class LocalStorageEngine extends StorageEngine {
     // Save the participantData
     await this.studyDatabase.setItem(this.currentParticipantId as string, participantData);
 
+    return true;
+  }
+
+  async validateUser(user: UserWrapped | null) {
     return true;
   }
 
