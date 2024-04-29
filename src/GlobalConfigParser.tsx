@@ -90,7 +90,7 @@ export function GlobalConfigParser() {
             element={<NavigateWithParams to="/analysis/dashboard" />}
           />
           <Route
-            path="/analysis/stats/:studyId"
+            path="/analysis/stats/:studyId/:tab"
             element={(
               <ProtectedRoute>
                 <AnalysisInterface
@@ -98,6 +98,10 @@ export function GlobalConfigParser() {
                 />
               </ProtectedRoute>
             )}
+          />
+          <Route
+            path="/analysis/stats/:studyId"
+            element={<NavigateWithParams to="./table" replace />}
           />
           <Route
             path="/settings"
