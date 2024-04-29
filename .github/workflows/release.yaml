@@ -14,9 +14,9 @@ jobs:
 
       - name: Run make-release.sh to modify version numbers across the repo
         run: |
-          LANG=C sed -i -E "s/\/reVISit-studies\/study\/v([a-zA-Z0-9-]).*\/src/\/reVISit-studies\/study\/${{ github.event.pull_request.title }}\/src/g" src/**/*.* public/**/*.*
-          LANG=C sed -i -E "s/\/revisit-studies\/study\/blob\/v([a-zA-Z0-9-])*/\/revisit-studies\/study\/blob\/${{ github.event.pull_request.title }}/g" src/**/*.* public/**/*.*
-          LANG=C sed -i -E "s/\/revisit-studies\/study\/blob\/v([a-zA-Z0-9-])*/\/revisit-studies\/study\/tree\/${{ github.event.pull_request.title }}/g" src/**/*.* public/**/*.*
+          LANG=C sed -i -E "s/\/reVISit-studies\/study\/v.*\/src/\/reVISit-studies\/study\/123\/src/g" src/**/*.* public/**/*.*
+          LANG=C sed -i -E "s/\/revisit-studies\/study\/blob\/v.*/\/revisit-studies\/study\/blob\/${{ github.event.pull_request.title }}/g" src/**/*.* public/**/*.*
+          LANG=C sed -i -E "s/\/revisit-studies\/study\/blob\/v.*/\/revisit-studies\/study\/tree\/${{ github.event.pull_request.title }}/g" src/**/*.* public/**/*.*
 
       - name: Commit changes
         run: |
