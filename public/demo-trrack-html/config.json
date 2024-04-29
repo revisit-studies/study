@@ -1,0 +1,81 @@
+{
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+        "title": "HTML with Trrack library",
+        "version": "pilot",
+        "authors": [
+            "The reVISit Team"
+        ],
+        "date": "2023-04-14",
+        "description": "",
+        "organizations": [
+            "University of Utah",
+            "WPI",
+            "University of Toronto"
+        ]
+    },
+    "uiConfig": {
+        "contactEmail": "test@test.com",
+        "helpTextPath": "demo-trrack-html/assets/help.md",
+        "logoPath": "revisitAssets/revisitLogoSquare.svg",
+        "withProgressBar": true,
+        "autoDownloadStudy": false,
+        "sidebar": true,
+        "windowEventDebounceTime": 200
+    },
+    "components": {
+        "introduction": {
+            "type": "markdown",
+            "path": "demo-trrack-html/assets/introduction.md",
+            "response": []
+        },
+        "countDots1": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "easy"
+            },
+            "description": "Add a total of 10 to 15 circles",
+            "instruction": "Add a total of 10 to 15 circles.",
+            "path": "demo-trrack-html/assets/dots-count.html",
+            "response": [
+                {
+                    "id": "circlesCount",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "iframe",
+                    "hidden": false
+                }
+            ]
+        },
+        "countDots2": {
+            "type": "website",
+            "nextButtonLocation": "sidebar",
+            "meta": {
+                "difficulty": "easy"
+            },
+            "description": "Add a total of 5 - 10 circles",
+            "instruction": "Add a total of 5 to 15 circles. You can remove if you add more.",
+            "path": "demo-trrack-html/assets/dots-count.html",
+            "response": [
+                {
+                    "id": "circlesCount",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "iframe",
+                    "hidden": false
+                }
+            ]
+        }
+    },
+    "sequence": {
+        "order": "fixed",
+        "components": [
+            "introduction",
+            "countDots1",
+            "countDots2"
+        ]
+    }
+}
