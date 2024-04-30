@@ -36,7 +36,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
     getData();
   }, [globalConfig, storageEngine, studyId]);
 
-  const [completed, inprogress] = useMemo(() => {
+  const [completed, inProgress] = useMemo(() => {
     const comp = expData.filter((d) => d.completed);
     const prog = expData.filter((d) => !d.completed);
     return [comp, prog];
@@ -45,16 +45,16 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   return (
     <AppShell>
       <AppHeader studyIds={props.globalConfig.configsList} selectedId={studyId} />
-      <Container fluid>
+      <Container fluid style={{ height: '100%' }}>
         <LoadingOverlay visible={loading} />
-        <Tabs variant="outline" value={tab} onTabChange={(value) => navigate(`./../${value}`)}>
+        <Tabs variant="outline" value={tab} onTabChange={(value) => navigate(`./../${value}`)} style={{ height: '100%' }}>
           <Tabs.List>
             <Tabs.Tab value="table" icon={<IconTable size={16} />}>Table View</Tabs.Tab>
             <Tabs.Tab value="stats" icon={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
             <Tabs.Tab value="settings" icon={<IconPlayerPlay size={16} />}>Individual Replay</Tabs.Tab>
           </Tabs.List>
-          <Tabs.Panel value="table" pt="xs">
-            <TableView completed={completed} inprogress={inprogress} />
+          <Tabs.Panel value="table" pt="xs" style={{ height: 'calc(100% - 38px - 10px)', width: '100%', overflow: 'scroll' }}>
+            <TableView completed={completed} inProgress={inProgress} />
           </Tabs.Panel>
 
           <Tabs.Panel value="stats" pt="xs">
