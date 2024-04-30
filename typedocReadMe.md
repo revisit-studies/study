@@ -8,7 +8,7 @@ The technical documentation can be found [here](modules.html).
 
 # Components
 
-Components are where study-specific content goes. ReVISit currently supports four types of components: 
+Components are where study-specific content goes. ReVISit currently supports five types of components: 
 
 * **Markdown Files** contain formatted text, including links, images, embedded videos, etc. They are useful for introductions, consent forms, help pages, etc. 
 * **Images** can be used as stimuli directly. 
@@ -17,9 +17,9 @@ Components are where study-specific content goes. ReVISit currently supports fou
 * **Survey Questions** can be used to elicit structured responses from participants.
 
 
-All of these stimuli can (and commonly are) paired with **responses**. Responses are form elements that capture the elicited responses. Survey questions are basically empty components with responses. 
+All of these stimuli can be (and commonly are) paired with **responses**. Responses are form elements that capture the elicited responses. Survey questions are basically empty components with responses. 
 
-A component is typically defined in the spec, with the text, code, or image included from a file. The only exception are survey questions, which do not need a file.
+A component is typically defined in the spec, with the text, code, or image included from a file/URL. The only exception are survey questions, which do not need a file/URL.
 
 
 # The reVISit Spec
@@ -105,9 +105,9 @@ The sequence object of the study configuration defines (a) the order participant
     * **Fixed** order: participants see the components the way they are defined in the sequence
     * **Random** order: the order of the components are randomized
     * **[Latin Square](https://en.wikipedia.org/wiki/Latin_square)**: permute the order of stimuli but ensure that for a set of participants, each component occurs at each index an equal amount of times throughout the sequence (e.g. if there are 100 participants and 10 components, each component is seen at each index 10 times).
-* **Sampling:**  `numSamples` draws a given number of items from a block. numSamples can be used in combination with each ordering strategy
+* **Sampling:**  `numSamples` draws a given number of items from a block. numSamples can be used in combination with each ordering strategy (while preserving ordering guarantees)
 * **Interruptions**  can be used to insert breaks and attention checks into a block
-* **Skips** can be used to control flow based on the response to a question. 
+* **Skips** can be used to control flow based on the response to a question or a component block. 
 
 All of these can be applied on arbitrarily nested "blocks", i.e., it is designed in a nested fashion which means that an entry in the "components" list can either be the name of a components or another `ComponentBlock`. For example, the overall structure of a study can be linear (introduction, consent, tutorial, trials, survey), but within trials we can use random order:  
 
