@@ -56,12 +56,11 @@ There are currently 5 types of components:
 * [React](/typedoc/interfaces/ReactComponent.html), and 
 * [Markdown](/typedoc/interfaces/MarkdownComponent.html).
 
-Each component has a list of responses which represents a set of questions to ask to the user for that particular component. The user can describe where the question should be displayed in the UI, the instruction for the response, and the type of response input (e.g., a [numerical response](/typedoc/interfaces/NumericalResponse.html), a [dropdown](/typedoc/interfaces/DropdownResponse.html), a [slider](/typedoc/interfaces/SliderResponse.html), etc). Each response interface extends the [BaseResponse](/typedoc/interfaces/BaseResponse.html) interface.
-
+Each component extends the [BaseIndividualComponent](/typedoc/interfaces/BaseIndividualComponent.html) interface. To add a component to your study (which can be thought of as a "page" of your study), you add a JSON object representing that component to the "components" object with a key which you can define how you would like. Then, the `type` key in that JSON object controls which type of component you are referring to. 
 
 ### Collecting Responses
 
-Each component has a list of responses which represents a set of questions to ask to the user for that particular component. The user can describe where the question should be displayed in the UI, the type of response input (e.g., a [numerical response](/typedoc/interfaces/NumericalResponse.html), a [dropdown](/typedoc/interfaces/DropdownResponse.html), a [slider](/typedoc/interfaces/SliderResponse.html), and more. Each response interface extends the [BaseResponse](/typedoc/interfaces/BaseResponse.html) interface. 
+Each component has a list of responses which represents a set of questions to ask to the user for that particular component. The user can describe where the question should be displayed in the UI, the instruction for the response, and the type of response input (e.g., a [numerical response](/typedoc/interfaces/NumericalResponse.html), a [dropdown](/typedoc/interfaces/DropdownResponse.html), a [slider](/typedoc/interfaces/SliderResponse.html), etc). Each response interface extends the [BaseResponse](/typedoc/interfaces/BaseResponse.html) interface.
 
 The below example illustrates a simple consent component that is based on a Markdown file and has a response that asks for a signature: 
 
