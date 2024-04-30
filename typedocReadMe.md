@@ -104,7 +104,7 @@ The sequence object of the study configuration defines (a) the order participant
 * **Ordering Strategies:** 
     * **Fixed** order: participants see the components the way they are defined in the sequence
     * **Random** order: the order of the components are randomized
-    * **[Latin Square](https://en.wikipedia.org/wiki/Latin_square)**: permute the order of stimuli but ensure that for different participants each stimuli occurs at each point in the sequence.
+    * **[Latin Square](https://en.wikipedia.org/wiki/Latin_square)**: permute the order of stimuli but ensure that for a set of participants, each component occurs at each index an equal amount of times throughout the sequence (e.g. if there are 100 participants and 10 components, each component is seen at each index 10 times).
 * **Sampling:**  `numSamples` draws a given number of items from a block. numSamples can be used in combination with each ordering strategy
 * **Interruptions**  can be used to insert breaks and attention checks into a block
 * **Skips** can be used to control flow based on the response to a question. 
