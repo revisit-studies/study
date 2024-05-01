@@ -517,13 +517,20 @@ export class FirebaseStorageEngine extends StorageEngine {
   async rejectParticipant(studyId:string, participantId: string) {
     const studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
     const participantDoc = doc(studyCollection, participantId);
-    // set reject flag
-    await updateDoc(participantDoc, { rejected: true });
-    // set sequence to empty string
-    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
-    const sequenceAssignmentCollection = collection(sequenceAssignmentDoc, 'sequenceAssignment');
-    const participantSequenceAssignmentDoc = doc(sequenceAssignmentCollection, participantId);
-    await updateDoc(participantSequenceAssignmentDoc, { participantId: '' });
+
+    try {
+      // set reject flag
+      await updateDoc(participantDoc, { rejected: true });
+      // set sequence assignment to empty string, keep the timestamp
+      const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
+      const sequenceAssignmentCollection = collection(sequenceAssignmentDoc, 'sequenceAssignment');
+      const participantSequenceAssignmentDoc = doc(sequenceAssignmentCollection, participantId);
+      await updateDoc(participantSequenceAssignmentDoc, { participantId: '' });
+      return true;
+    } catch {
+      console.warn('Failed to reject the participant.');
+      return false;
+    }
   }
 
   private _verifyStudyDatabase(db: CollectionReference<DocumentData, DocumentData> | undefined): db is CollectionReference<DocumentData, DocumentData> {

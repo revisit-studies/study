@@ -271,9 +271,9 @@ export class LocalStorageEngine extends StorageEngine {
     return true;
   }
 
-  // async rejectParticipant(studyId:string, participantId: string) {
-  //
-  // }
+  async rejectParticipant(studyId:string, participantId: string) {
+    return false;
+  }
 
   private _verifyStudyDatabase(db: LocalForage | undefined): db is LocalForage {
     return db !== undefined;
