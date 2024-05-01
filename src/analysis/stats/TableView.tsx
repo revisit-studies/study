@@ -122,15 +122,13 @@ export function TableView({ completed, inProgress, studyConfig }: { completed: P
           </>
         ));
       })}
-      <td>
-        <DurationCell cellData={{
-          startTime: Math.min(...Object.values(record.answers).map((a) => a.startTime)),
-          endTime: Math.max(...Object.values(record.answers).map((a) => a.endTime)),
-          answer: {},
-          windowEvents: [],
-        }}
-        />
-      </td>
+      <DurationCell cellData={{
+        startTime: Math.min(...Object.values(record.answers).map((a) => a.startTime)),
+        endTime: Math.max(...Object.values(record.answers).map((a) => a.endTime)),
+        answer: {},
+        windowEvents: [],
+      }}
+      />
     </tr>
   ));
 
