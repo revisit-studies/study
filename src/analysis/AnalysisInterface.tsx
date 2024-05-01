@@ -7,7 +7,7 @@ import {
 } from '@tabler/icons-react';
 import React, { useEffect, useMemo, useState } from 'react';
 import AppHeader from './components/interface/AppHeader';
-import { GlobalConfig, ParticipantData } from '../parser/types';
+import { GlobalConfig, ParticipantData, StudyConfig } from '../parser/types';
 import { getStudyConfig } from '../utils/fetchConfig';
 import { TableView } from './stats/TableView';
 import { useStorageEngine } from '../storage/storageEngineHooks';
@@ -16,6 +16,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   const { globalConfig } = props;
   const { studyId } = useParams();
   const [expData, setExpData] = useState<ParticipantData[]>([]);
+  const [studyConfig, setStudyConfig] = useState<StudyConfig | undefined>(undefined);
   const [loading, setLoading] = useState(false);
   const { storageEngine } = useStorageEngine();
   const navigate = useNavigate();
@@ -30,6 +31,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
         await storageEngine.initializeStudyDb(studyId, cf);
         const data = (await storageEngine.getAllParticipantsData());
         setExpData(data);
+        setStudyConfig(cf);
       }
       setLoading(false);
     };
@@ -54,7 +56,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
             <Tabs.Tab value="settings" icon={<IconPlayerPlay size={16} />}>Individual Replay</Tabs.Tab>
           </Tabs.List>
           <Tabs.Panel value="table" pt="xs" style={{ height: 'calc(100% - 38px - 10px)', width: '100%', overflow: 'scroll' }}>
-            <TableView completed={completed} inProgress={inProgress} />
+            {studyConfig && <TableView completed={completed} inProgress={inProgress} studyConfig={studyConfig} />}
           </Tabs.Panel>
 
           <Tabs.Panel value="stats" pt="xs">
