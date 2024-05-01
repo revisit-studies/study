@@ -112,8 +112,8 @@ export function TableView({ completed, inProgress, studyConfig }: { completed: P
           });
         return (trialData !== null && trialData.length >= trial.timesSeenInBlock + 1 ? (
           <>
-            <AnswerCell key={`cell-${record.participantId}-${trial.componentName}-${trial.timesSeenInBlock}`} cellData={trialData[0][1]} />
-            <DurationCell key={`cell-${record.participantId}-${trial.componentName}-${trial.timesSeenInBlock}-duration`} cellData={trialData[0][1]} />
+            <AnswerCell key={`cell-${record.participantId}-${trial.componentName}-${trial.timesSeenInBlock}`} cellData={trialData[trial.timesSeenInBlock][1]} />
+            <DurationCell key={`cell-${record.participantId}-${trial.componentName}-${trial.timesSeenInBlock}-duration`} cellData={trialData[trial.timesSeenInBlock][1]} />
           </>
         ) : (
           <>
