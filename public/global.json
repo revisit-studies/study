@@ -14,8 +14,7 @@
         "demo-click-accuracy-test",
         "demo-image",
         "test-randomization",
-        "test-skip-logic",
-        "demo-VLAT-mini-latin"
+        "test-skip-logic"
     ],
     "configs": {
         "demo-html": {
@@ -59,9 +58,6 @@
         },
         "test-skip-logic": {
             "path": "test-skip-logic/config.json"
-        },
-        "demo-VLAT-mini-latin": {
-            "path": "demo-VLAT-mini-latin/config.json"
         }
     },
     "adminUsers": []
