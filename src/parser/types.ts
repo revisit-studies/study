@@ -326,12 +326,13 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study.
  * Your React component which you link to in the path must be default exported from its file.
  *
- * React components created this way have a generic prop type passed to the component on render, <StimulusParams<T>>, which has the following types.
+ * React components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.
+ * ```typescript
  * {
  *  parameters: T;
  *  setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
  * }
- *
+ * ```
  * parameters is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component.
  * setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.
  *
@@ -552,11 +553,11 @@ export type InheritedComponent = (Partial<IndividualComponent> & { baseComponent
     }
 }
 ```
-<div class="info-panel">
-  <div class="info-text">For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually.
-  </div>
-</div>
-<br>
+
+:::info
+For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually.
+:::
+<br/>
 
 The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.
  */
