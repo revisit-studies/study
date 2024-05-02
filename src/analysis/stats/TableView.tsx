@@ -3,6 +3,7 @@ import {
   Flex,
 } from '@mantine/core';
 import { IconCheck, IconProgress } from '@tabler/icons-react';
+import React from 'react';
 import { ParticipantData, StoredAnswer, StudyConfig } from '../../parser/types';
 import { ParticipantMetadata } from '../../store/types';
 import { configSequenceToUniqueTrials, findBlockForStep } from '../../utils/getSequenceFlatMap';
@@ -105,29 +106,31 @@ export function TableView({ completed, inProgress, studyConfig }: { completed: P
             const bIndex = parseInt(b[0].slice(b[0].lastIndexOf('_') + 1), 10);
             return aIndex - bIndex;
           })
-          .filter(([trialId, answer]) => {
+          .filter(([trialId]) => {
             const trialName = trialId.slice(0, trialId.lastIndexOf('_'));
             const trialIndex = parseInt(trialId.slice(trialId.lastIndexOf('_') + 1), 10);
             return trialName === trial.componentName && trialIndex <= sequenceBlock[0].lastIndex && trialIndex >= sequenceBlock[0].firstIndex;
           });
         return (trialData !== null && trialData.length >= trial.timesSeenInBlock + 1 ? (
-          <>
-            <AnswerCell key={`cell-${record.participantId}-${trial.componentName}-${trial.timesSeenInBlock}`} cellData={trialData[trial.timesSeenInBlock][1]} />
-            <DurationCell key={`cell-${record.participantId}-${trial.componentName}-${trial.timesSeenInBlock}-duration`} cellData={trialData[trial.timesSeenInBlock][1]} />
-          </>
+          <React.Fragment key={`cellgroup-${record.participantId}-${trial.componentName}-${trial.timesSeenInBlock}`}>
+            <AnswerCell cellData={trialData[trial.timesSeenInBlock][1]} />
+            <DurationCell cellData={trialData[trial.timesSeenInBlock][1]} />
+          </React.Fragment>
         ) : (
-          <>
-            <td key={`cell-${record.participantId}-${trial.componentName}`}>N/A</td>
-            <td key={`cell-${record.participantId}-${trial.componentName}-duration`}>N/A</td>
-          </>
+          <React.Fragment key={`cellgroup-${record.participantId}-${trial.componentName}-${trial.timesSeenInBlock}`}>
+            <td>N/A</td>
+            <td>N/A</td>
+          </React.Fragment>
         ));
       })}
-      <DurationCell cellData={{
-        startTime: Math.min(...Object.values(record.answers).map((a) => a.startTime)),
-        endTime: Math.max(...Object.values(record.answers).map((a) => a.endTime)),
-        answer: {},
-        windowEvents: [],
-      }}
+      <DurationCell
+        cellData={{
+          startTime: Math.min(...Object.values(record.answers).map((a) => a.startTime)),
+          endTime: Math.max(...Object.values(record.answers).map((a) => a.endTime)),
+          answer: {},
+          windowEvents: [],
+        }}
+        key={`cell-${record.participantId}-total-duration`}
       />
     </tr>
   ));
