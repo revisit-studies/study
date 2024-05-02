@@ -7,10 +7,7 @@ import { ErrorObject } from 'ajv';
 import { GlobalConfig, StudyConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { PREFIX } from '../utils/Prefix';
-import { useAuth } from '../store/hooks/useAuth';
-import { useStorageEngine } from '../storage/storageEngineHooks';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
-import AppHeader from '../analysis/components/interface/AppHeader';
 
 const REVISIT_GITHUB_PUBLIC = 'https://github.com/revisit-studies/study/tree/main/public/';
 
@@ -22,11 +19,9 @@ type Props = {
 function ConfigSwitcher({ globalConfig, studyConfigs }: Props) {
   const { configsList } = globalConfig;
   const navigate = useNavigate();
-  const { logout } = useAuth();
-  const { storageEngine } = useStorageEngine();
 
   return (
-    <Container size="xs" px="xs" style={{ marginTop: 100, marginBottom: 100 }}>
+    <Container size="xs" px="xs" style={{ marginTop: 60, marginBottom: 60 }}>
       <Image
         maw={150}
         mx="auto"

@@ -3,7 +3,7 @@ import {
   Box,
 } from '@mantine/core';
 
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { IconSettings, IconFileLambda, IconChartBar } from '@tabler/icons-react';
 
 import React, { useState } from 'react';
@@ -11,25 +11,23 @@ import { PREFIX } from '../../../utils/Prefix';
 import { useAuth } from '../../../store/hooks/useAuth';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 
-export default function AppHeader(props: { studyIds: string[], selectedId: string | undefined}) {
-  const { studyIds, selectedId } = props;
+export default function AppHeader({ studyIds }: { studyIds: string[] }) {
   const navigate = useNavigate();
-  const [activeExp, setActiveExp] = useState<string | undefined>(selectedId);
+  const { studyId } = useParams();
+  const location = useLocation();
 
   const selectorData = studyIds.map((id) => ({ value: id, label: id }));
-  const onExpChange = (value: string) => {
-    setActiveExp(value);
-    navigate(`/analysis/stats/${value}`);
-  };
   const { storageEngine } = useStorageEngine();
   const { user, logout } = useAuth();
   const [navOpen, setNavOpen] = useState<boolean>(false);
 
+  const inAnalysis = location.pathname.includes('analysis');
+
   interface MenuItem {
-    'name':string,
-    'leftIcon':JSX.Element|null,
-    'href':string,
-    'needAdmin':boolean
+    'name': string,
+    'leftIcon': JSX.Element|null,
+    'href': string,
+    'needAdmin': boolean
   }
   const menuItemsNav: MenuItem[] = [
     {
@@ -56,10 +54,12 @@ export default function AppHeader(props: { studyIds: string[], selectedId: strin
     <Header height={70} p="md">
       <Grid mt={-7} align="center">
         <Grid.Col span={6}>
-          <Flex align="center" onClick={() => navigate('/analysis/dashboard')} sx={{ cursor: 'pointer' }}>
+          <Flex align="center" onClick={() => (inAnalysis ? navigate('/analysis/dashboard') : navigate('/'))} sx={{ cursor: 'pointer' }}>
             <Image maw={40} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
             <Space w="md" />
-            <Title order={4} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>ReVISit Analytics Platform</Title>
+            <Title order={4} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {inAnalysis ? 'ReVISit Analytics Platform' : 'ReVISit Studies'}
+            </Title>
           </Flex>
         </Grid.Col>
 
@@ -68,23 +68,26 @@ export default function AppHeader(props: { studyIds: string[], selectedId: strin
             justify="flex-end"
             direction="row"
           >
+            {inAnalysis && (
             <Select
               placeholder="Select Study"
               data={selectorData}
-              value={activeExp}
-              onChange={onExpChange}
+              value={studyId}
+              onChange={(value) => navigate(`/analysis/stats/${value}`)}
+              mr={16}
             />
-            <Burger opened={navOpen} onClick={() => setNavOpen(true)} />
+            )}
+
+            <Burger opened={false} onClick={() => setNavOpen(true)} style={{ visibility: navOpen ? 'hidden' : undefined }} />
             <Drawer
               opened={navOpen}
               onClose={() => setNavOpen(false)}
               position="right"
               withCloseButton={false}
-              size="sm"
             >
               <Flex direction="column" mt={20}>
                 <Text ml={15} mb={20} fw={700} size="lg">Navigation</Text>
-                {menuItemsNav.map((menuItem:MenuItem) => {
+                {menuItemsNav.map((menuItem: MenuItem) => {
                   if (menuItem.needAdmin) {
                     if (user.isAdmin) {
                       return (
@@ -93,7 +96,7 @@ export default function AppHeader(props: { studyIds: string[], selectedId: strin
                           leftIcon={menuItem.leftIcon}
                           variant="default"
                           style={{ border: 'none', display: 'flex', justifyContent: 'flex-start' }}
-                          onClick={() => navigate(menuItem.href)}
+                          onClick={() => { navigate(menuItem.href); setNavOpen(false); }}
                         >
                           {menuItem.name}
                         </Button>
@@ -106,7 +109,7 @@ export default function AppHeader(props: { studyIds: string[], selectedId: strin
                       leftIcon={menuItem.leftIcon}
                       variant="default"
                       style={{ border: 'none', display: 'flex', justifyContent: 'flex-start' }}
-                      onClick={() => navigate(menuItem.href)}
+                      onClick={() => { navigate(menuItem.href); setNavOpen(false); }}
                     >
                       {menuItem.name}
                     </Button>
@@ -132,7 +135,7 @@ export default function AppHeader(props: { studyIds: string[], selectedId: strin
                           size="sm"
                           ml={10}
                           style={{ cursor: 'pointer' }}
-                          onClick={() => navigate('/login')}
+                          onClick={() => { navigate('/login'); setNavOpen(false); }}
                         >
                           Login
                         </Text>
