@@ -101,7 +101,7 @@ export default function AppHeader({ studyIds }: { studyIds: string[] }) {
                           {menuItem.name}
                         </Button>
                       );
-                    }
+                    } return null;
                   }
                   return (
                     <Button
@@ -119,7 +119,7 @@ export default function AppHeader({ studyIds }: { studyIds: string[] }) {
                   <Divider my="sm" />
                   {/* eslint-disable-next-line no-nested-ternary */}
                   { storageEngine?.getEngine() === 'firebase'
-                    ? user.user
+                    ? user.isAdmin
                       ? (
                         <Text
                           size="sm"
