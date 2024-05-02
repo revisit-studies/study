@@ -1,16 +1,14 @@
 import { AppShell, Container } from '@mantine/core';
-import { useParams } from 'react-router-dom';
-import AppHeader from './components/interface/AppHeader';
 import { GlobalConfig } from '../parser/types';
 import { SummaryBlock } from './dashboard/SummaryBlock';
+import AppHeader from './components/interface/AppHeader';
 
-export function AnalysisDashboard(props: { globalConfig: GlobalConfig; }) {
-  const { studyId } = useParams();
+export function AnalysisDashboard({ globalConfig }: { globalConfig: GlobalConfig; }) {
   return (
     <AppShell>
-      <AppHeader studyIds={props.globalConfig.configsList} selectedId={studyId} />
+      <AppHeader studyIds={globalConfig.configsList} />
       <Container fluid>
-        <SummaryBlock globalConfig={props.globalConfig} />
+        <SummaryBlock globalConfig={globalConfig} />
       </Container>
     </AppShell>
   );

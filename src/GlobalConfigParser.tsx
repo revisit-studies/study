@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { AppShell } from '@mantine/core';
 import ConfigSwitcher from './components/ConfigSwitcher';
 import { Shell } from './components/Shell';
 import { parseGlobalConfig, parseStudyConfig } from './parser/parser';
@@ -12,6 +13,7 @@ import { AuthProvider } from './store/hooks/useAuth';
 import { AnalysisDashboard } from './analysis/AnalysisDashboard';
 import { GlobalSettings } from './analysis/dashboard/GlobalSettings';
 import { NavigateWithParams } from './utils/NavigateWithParams';
+import AppHeader from './analysis/components/interface/AppHeader';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
@@ -63,12 +65,13 @@ export function GlobalConfigParser() {
           <Route
             path="/"
             element={(
-              <ProtectedRoute>
+              <>
+                <AppHeader studyIds={globalConfig.configsList} />
                 <ConfigSwitcher
                   globalConfig={globalConfig}
                   studyConfigs={studyConfigs}
                 />
-              </ProtectedRoute>
+              </>
             )}
           />
           <Route
@@ -107,14 +110,20 @@ export function GlobalConfigParser() {
             path="/settings"
             element={(
               <ProtectedRoute>
-                <GlobalSettings />
+                <AppShell>
+                  <AppHeader studyIds={globalConfig.configsList} />
+                  <GlobalSettings />
+                </AppShell>
               </ProtectedRoute>
             )}
           />
           <Route
             path="/login"
             element={(
-              <Login />
+              <>
+                <AppHeader studyIds={globalConfig.configsList} />
+                <Login />
+              </>
             )}
           />
         </Routes>

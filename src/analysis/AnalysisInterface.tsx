@@ -46,7 +46,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
 
   return (
     <AppShell>
-      <AppHeader studyIds={props.globalConfig.configsList} selectedId={studyId} />
+      <AppHeader studyIds={props.globalConfig.configsList} />
       <Container fluid style={{ height: '100%' }}>
         <LoadingOverlay visible={loading} />
         <Tabs variant="outline" value={tab} onTabChange={(value) => navigate(`./../${value}`)} style={{ height: '100%' }}>
