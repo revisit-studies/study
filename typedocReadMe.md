@@ -33,7 +33,7 @@ The reVISit Spec enables you to define the details of your experiment as a JSON 
 
 We'll explain the ideas in the next section, and link to the documentation for more details. 
 
-You can find the detailed documentation for the reVISit Spec [here](nterfaces/StudyConfig).
+You can find the detailed documentation for the reVISit Spec [here](interfaces/StudyConfig).
 
 
 ## Study Metadata
