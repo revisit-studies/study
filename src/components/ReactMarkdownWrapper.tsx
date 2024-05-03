@@ -6,8 +6,9 @@ import {
 } from '@mantine/core';
 import { ReactNode } from 'react';
 import rehypeRaw from 'rehype-raw';
+import { IconAsterisk } from '@tabler/icons-react';
 
-export default function ReactMarkdownWrapper({ text }: { text: string; }) {
+export default function ReactMarkdownWrapper({ text, required }: { text: string; required?: boolean }) {
   const components = {
     img: ({ node, ...props }: { node: unknown; }) => <Image {...props} />,
     p: ({ node, ...props }: { node: unknown; }) => <Text {...props} pb={8} />,
@@ -22,10 +23,12 @@ export default function ReactMarkdownWrapper({ text }: { text: string; }) {
     ol: ({ node, ...props }: { node: unknown; children: ReactNode; }) => <List type="ordered" withPadding {...props} pb={8} />,
   };
 
+  const asteriskIcon = ('<span style="color: #fa5252">*</span>');
+
   return (
-    <div style={{ display: 'inherit' }}>
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      <ReactMarkdown components={components} rehypePlugins={[rehypeRaw] as any}>{text}</ReactMarkdown>
-    </div>
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    <ReactMarkdown components={components} rehypePlugins={[rehypeRaw] as any}>
+      {text + (required ? ` ${asteriskIcon}` : '')}
+    </ReactMarkdown>
   );
 }

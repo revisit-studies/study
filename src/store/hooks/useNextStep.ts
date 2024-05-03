@@ -24,7 +24,7 @@ function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: st
   const componentName = componentId.slice(0, componentId.lastIndexOf('_'));
 
   // Find the matching component in the study config
-  const foundConfigComponent = Object.entries(studyConfig.components).find(([configComponentId, configComponent]) => configComponentId === componentName);
+  const foundConfigComponent = Object.entries(studyConfig.components).find(([configComponentId]) => configComponentId === componentName);
   const foundConfigComponentConfig = foundConfigComponent ? foundConfigComponent[1] : null;
 
   if (!foundConfigComponentConfig) {
@@ -32,7 +32,7 @@ function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: st
   }
 
   if (!foundConfigComponentConfig.correctAnswer) {
-    throw new Error(`Component ${componentName} does not have a correct answer.`);
+    return true;
   }
 
   // Check that the response is matches the correct answer
@@ -137,10 +137,9 @@ export function useNextStep() {
       skipConditions.some((condition) => {
         let conditionIsTriggered = false;
 
-        const lastIndex = Math.min(condition.lastIndex, currentStep);
         const validationCandidates = Object.fromEntries(Object.entries(answersWithNewAnswer).filter(([key]) => {
           const componentIndex = parseInt(key.slice(key.lastIndexOf('_') + 1), 10);
-          return componentIndex >= condition.firstIndex && componentIndex <= lastIndex;
+          return componentIndex >= condition.firstIndex && componentIndex <= currentStep;
         })) as unknown as StoredAnswer;
 
         // Slim down the validationCandidates to only include the skip condition's component

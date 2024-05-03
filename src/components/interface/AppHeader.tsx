@@ -26,6 +26,7 @@ import {
 } from '../../store/store';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { PREFIX } from '../../utils/Prefix';
+import { useAuth } from '../../store/hooks/useAuth';
 
 export default function AppHeader() {
   const { config: studyConfig, metadata } = useStoreSelector((state) => state);
@@ -35,6 +36,8 @@ export default function AppHeader() {
   const { storageEngine } = useStorageEngine();
 
   const currentStep = useCurrentStep();
+
+  const auth = useAuth();
 
   const progressBarMax = flatSequence.length - 1;
   const progressPercent = (currentStep / progressBarMax) * 100;
@@ -80,7 +83,7 @@ export default function AppHeader() {
           <Flex align="center">
             <Image maw={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" />
             <Space w="md" />
-            <Title order={4}>{studyConfig?.studyMetadata.title}</Title>
+            <Title order={4} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{studyConfig?.studyMetadata.title}</Title>
           </Flex>
         </Grid.Col>
 
@@ -102,7 +105,7 @@ export default function AppHeader() {
               </Button>
             )}
 
-            {(import.meta.env.DEV || import.meta.env.VITE_REVISIT_MODE === 'public') && (
+            {(import.meta.env.DEV || import.meta.env.VITE_REVISIT_MODE === 'public' || auth.user.isAdmin) && (
               <Menu
                 shadow="md"
                 width={200}

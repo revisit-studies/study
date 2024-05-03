@@ -10,6 +10,13 @@
           "description": "A required json schema property. This should point to the github link for the version of the schema you would like. See examples for more information",
           "type": "string"
         },
+        "adminUsers": {
+          "description": "A required property listing out the emails of users who require admin access.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "configs": {
           "additionalProperties": {
             "additionalProperties": false,
@@ -34,13 +41,6 @@
             "type": "string"
           },
           "type": "array"
-        },
-        "adminUsers":{
-          "description":"A required property used to list emails of those who require admin access.",
-          "items":{
-            "type":"string"
-          },
-          "type":"array"
         }
       },
       "required": [
