@@ -64,7 +64,7 @@ Each component has a list of responses which represents a set of questions to as
 
 The below example illustrates a simple consent component that is based on a Markdown file and has a response that asks for a signature: 
 
-```JSON
+```js
   "consent": {
             "type": "markdown",
             "path": "demo-brush-interactions/assets/consent.md",
@@ -111,7 +111,7 @@ The sequence object of the study configuration defines (a) the order participant
 All of these can be applied on arbitrarily nested "blocks", i.e., it is designed in a nested fashion which means that an entry in the "components" list can either be the name of a components or another `ComponentBlock`. For example, the overall structure of a study can be linear (introduction, consent, tutorial, trials, survey), but within trials we can use random order:  
 
 
-```JSON
+```js
  "sequence": {
         "order": "fixed",
         "components": [
