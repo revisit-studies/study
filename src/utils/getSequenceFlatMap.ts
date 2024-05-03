@@ -11,21 +11,28 @@ type SkipConditionWithExtents = {
   lastIndex: number;
 };
 
-function _findBlockForStep(sequence: Sequence, step: number, distance: number): (SkipConditionWithExtents[]) | number {
+function _findBlockForStep(sequence: Sequence, pathOrStep: string | number, distance: number): (SkipConditionWithExtents[]) | number {
   let componentsSeen = 0;
   for (let i = 0; i < sequence.components.length; i += 1) {
     const component = sequence.components[i];
     if (typeof component === 'string') {
-      if (step === (distance + componentsSeen)) {
+      if (typeof pathOrStep === 'number' && pathOrStep === (distance + componentsSeen)) {
         return [{
           currentBlock: sequence,
           firstIndex: distance,
-          lastIndex: distance + sequence.components.length - 1,
+          lastIndex: distance + getSequenceFlatMap(sequence).length - 1,
+        }];
+      }
+      if (typeof pathOrStep === 'string' && sequence.orderPath === pathOrStep) {
+        return [{
+          currentBlock: sequence,
+          firstIndex: distance,
+          lastIndex: distance + getSequenceFlatMap(sequence).length - 1,
         }];
       }
       componentsSeen += 1;
     } else {
-      const result = _findBlockForStep(component, step, distance + componentsSeen);
+      const result = _findBlockForStep(component, pathOrStep, distance + componentsSeen);
       if (typeof result === 'number') {
         componentsSeen += result;
       } else {
@@ -37,8 +44,8 @@ function _findBlockForStep(sequence: Sequence, step: number, distance: number): 
   return componentsSeen;
 }
 
-export function findBlockForStep(sequence: Sequence, step: number) {
-  const toReturn = _findBlockForStep(sequence, step, 0);
+export function findBlockForStep(sequence: Sequence, pathOrStep: string | number) {
+  const toReturn = _findBlockForStep(sequence, pathOrStep, 0);
   return typeof toReturn === 'number' ? null : toReturn;
 }
 
@@ -65,4 +72,18 @@ function _findIndexOfBlock(sequence: Sequence, to: string, distance: number): { 
 export function findIndexOfBlock(sequence: Sequence, to: string): number {
   const toReturn = _findIndexOfBlock(sequence, to, 0);
   return toReturn.found ? toReturn.distance : -1;
+}
+
+export function configSequenceToUniqueTrials(sequence: ComponentBlock, orderPath = 'root'): { componentName: string, orderPath: string, timesSeenInBlock: number }[] {
+  const result: { componentName: string, orderPath: string, timesSeenInBlock: number }[] = [];
+  const componentsSeen: Record<string, number> = {};
+  sequence.components.forEach((component, index) => {
+    if (typeof component === 'string') {
+      result.push({ componentName: component, orderPath, timesSeenInBlock: componentsSeen[component] || 0 });
+      componentsSeen[component] = componentsSeen[component] ? componentsSeen[component] + 1 : 1;
+    } else {
+      result.push(...configSequenceToUniqueTrials(component, `${orderPath}-${index}`));
+    }
+  });
+  return result;
 }

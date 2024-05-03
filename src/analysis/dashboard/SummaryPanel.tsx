@@ -1,16 +1,23 @@
 import {
   Badge, Box, Button, Card, Center, Text, Title, Container, Flex, Group, Popover,
 } from '@mantine/core';
-import React, { useEffect, useMemo, useState } from 'react';
-import { IconCodePlus, IconScanEye, IconTable } from '@tabler/icons-react';
+import React, { useMemo, useState } from 'react';
+import { IconDatabaseExport, IconChartHistogram, IconTableExport } from '@tabler/icons-react';
 import { DateRangePicker, DateRangePickerValue } from '@mantine/dates';
 import { VegaLite } from 'react-vega';
 import { useDisclosure, useResizeObserver } from '@mantine/hooks';
 import { useNavigate } from 'react-router-dom';
 import { ParticipantData } from '../../storage/types';
 import { download, DownloadTidy } from '../../components/DownloadTidy';
-import { StudyConfig } from '../../parser/types';
-import { isWithinRange } from '../utils';
+import { StoredAnswer, StudyConfig } from '../../parser/types';
+
+function isWithinRange(answers: Record<string, StoredAnswer>, rangeTime: DateRangePickerValue) {
+  const timeStamps = Object.values(answers).map((ans) => [ans.startTime, ans.endTime]).flat();
+  if (rangeTime[0] === null || rangeTime[1] === null) {
+    return false;
+  }
+  return Math.min(...timeStamps) >= rangeTime[0].getTime() && Math.max(...timeStamps) <= rangeTime[1].getTime();
+}
 
 export function SummaryPanel(props: { studyId: string; allParticipants: ParticipantData[]; config: StudyConfig }) {
   const {
@@ -19,6 +26,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
   const [openDownload, { open, close }] = useDisclosure(false);
   const navigate = useNavigate();
   const [ref, dms] = useResizeObserver();
+
   const completionTimes = allParticipants
     .filter((d) => d.completed)
     .map((d) => Math.max(...Object.values(d.answers).map((ans) => ans.endTime)));
@@ -27,28 +35,9 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
     new Date(new Date(Math.max(...(completionTimes.length > 0 ? completionTimes : [new Date().getTime()]))).setHours(24, 0, 0, 0)),
   ]);
 
-  const [completedParticipants, setCompletedParticipants] = useState<ParticipantData[]>([]);
-  const [inProgressParticipants, setInProgressParticipants] = useState<ParticipantData[]>([]);
+  const completedParticipants = useMemo(() => allParticipants.filter((d) => d.completed && isWithinRange(d.answers, rangeTime)), [allParticipants, rangeTime]);
 
-  useEffect(() => {
-    if (allParticipants.length > 0 && allParticipants[0].sequence.components) {
-      const inRangeData = allParticipants.filter((d) => isWithinRange(d.answers, rangeTime));
-
-      const completedData: ParticipantData[] = [];
-      const inProgressData: ParticipantData[] = [];
-
-      inRangeData.forEach((d) => {
-        if (d.completed) {
-          completedData.push(d);
-        } else {
-          inProgressData.push(d);
-        }
-      });
-
-      setCompletedParticipants(completedData);
-      setInProgressParticipants(inProgressData);
-    }
-  }, [allParticipants, rangeTime]);
+  const inProgressParticipants = useMemo(() => allParticipants.filter((d) => !d.completed && isWithinRange(d.answers, rangeTime)), [allParticipants, rangeTime]);
 
   const completedStatsData = useMemo(() => {
     if (completedParticipants.length > 0) {
@@ -83,41 +72,18 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
       y: { field: 'Participants', type: 'quantitative' },
     },
     data: { values: completedStatsData },
-  }), [dms, completedStatsData]);
+  }), [dms.width, rangeTime, completedStatsData]);
 
   const [jsonOpened, { close: closeJson, open: openJson }] = useDisclosure(false);
   const [csvOpened, { close: closeCsv, open: openCsv }] = useDisclosure(false);
   const [checkOpened, { close: closeCheck, open: openCheck }] = useDisclosure(false);
-
-  const onCheckDetail = (studyid:string) => {
-    navigate(`/analysis/stats/${studyid}`);
-  };
 
   return (
     <Container>
       <Card ref={ref} p="lg" shadow="md" withBorder>
         <Flex align="center" mb={16} justify="space-between">
           <Flex direction="column">
-            <Title order={5} mb={4}>
-              {studyId}
-              <Popover opened={checkOpened}>
-                <Popover.Target>
-                  <Button
-                    variant="subtle"
-                    color="orange"
-                    onClick={() => onCheckDetail(studyId)}
-                    onMouseEnter={openCheck}
-                    onMouseLeave={closeCheck}
-                    px={4}
-                  >
-                    <IconScanEye />
-                  </Button>
-                </Popover.Target>
-                <Popover.Dropdown>
-                  <Text>Examine this experiment</Text>
-                </Popover.Dropdown>
-              </Popover>
-            </Title>
+            <Title order={5} mb={4}>{studyId}</Title>
             <Flex direction="row" wrap="nowrap" gap="xs" align="center" mb={4}>
               <Badge size="sm" color="orange">
                 Total:&nbsp;
@@ -137,6 +103,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
             <Popover opened={jsonOpened}>
               <Popover.Target>
                 <Button
+                  variant="light"
                   disabled={allParticipants.length === 0}
                   onClick={() => {
                     download(JSON.stringify(allParticipants, null, 2), `${studyId}_all.json`);
@@ -145,7 +112,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
                   onMouseLeave={closeJson}
                   px={4}
                 >
-                  <IconCodePlus />
+                  <IconDatabaseExport />
                 </Button>
               </Popover.Target>
               <Popover.Dropdown>
@@ -156,17 +123,34 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
             <Popover opened={csvOpened}>
               <Popover.Target>
                 <Button
+                  variant="light"
                   disabled={allParticipants.length === 0}
                   onClick={open}
                   onMouseEnter={openCsv}
                   onMouseLeave={closeCsv}
                   px={4}
                 >
-                  <IconTable />
+                  <IconTableExport />
                 </Button>
               </Popover.Target>
               <Popover.Dropdown>
                 <Text>Download all participants data as a tidy CSV</Text>
+              </Popover.Dropdown>
+            </Popover>
+
+            <Popover opened={checkOpened}>
+              <Popover.Target>
+                <Button
+                  onClick={() => navigate(`/analysis/stats/${studyId}`)}
+                  onMouseEnter={openCheck}
+                  onMouseLeave={closeCheck}
+                  px={4}
+                >
+                  <IconChartHistogram />
+                </Button>
+              </Popover.Target>
+              <Popover.Dropdown>
+                <Text>Analyze study data</Text>
               </Popover.Dropdown>
             </Popover>
           </Group>

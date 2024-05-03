@@ -1,59 +1,151 @@
 import {
+  Flex, Header, Image, Select, Title, Space, Grid, Drawer, Text, Burger, Button, Divider,
   Box,
-  Flex, Group,
-  Header, Image, MediaQuery, Select, Space, Title,
 } from '@mantine/core';
 
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { IconSettings, IconFileLambda, IconChartBar } from '@tabler/icons-react';
+
 import React, { useState } from 'react';
 import { PREFIX } from '../../../utils/Prefix';
+import { useAuth } from '../../../store/hooks/useAuth';
+import { useStorageEngine } from '../../../storage/storageEngineHooks';
 
-export default function AppHeader(props:{ studyIds: string[], selectedId: string | undefined}) {
-  const { studyIds, selectedId } = props;
+export default function AppHeader({ studyIds }: { studyIds: string[] }) {
   const navigate = useNavigate();
-  const [activeExp, setActiveExp] = useState<string | undefined>(selectedId);
-  // const page = window.location.pathname.split('/')[2];
+  const { studyId } = useParams();
+  const location = useLocation();
+
   const selectorData = studyIds.map((id) => ({ value: id, label: id }));
-  const onExpChange = (value: string) => {
-    setActiveExp(value);
-    navigate(`/analysis/stats/${value}`);
-  };
+  const { storageEngine } = useStorageEngine();
+  const { user, logout } = useAuth();
+  const [navOpen, setNavOpen] = useState<boolean>(false);
+
+  const inAnalysis = location.pathname.includes('analysis');
+
+  interface MenuItem {
+    'name': string,
+    'leftIcon': JSX.Element|null,
+    'href': string,
+    'needAdmin': boolean
+  }
+  const menuItemsNav: MenuItem[] = [
+    {
+      name: 'Studies',
+      leftIcon: <IconFileLambda />,
+      href: '/',
+      needAdmin: false,
+    },
+    {
+      name: 'Analysis',
+      leftIcon: <IconChartBar />,
+      href: '/analysis/dashboard',
+      needAdmin: true,
+    },
+    {
+      name: 'Settings',
+      leftIcon: <IconSettings />,
+      href: '/settings',
+      needAdmin: true,
+    },
+  ];
 
   return (
-    <Header height={70} p="md" miw={800}>
-      <Group position="apart">
-        <Group sx={{ cursor: 'pointer' }} onClick={() => navigate('/analysis/dashboard')}>
-          <Image maw={40} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
-          <MediaQuery smallerThan="md" styles={{ display: 'none' }}>
-            <Title span order={4}>
-              reVISit Analytics Platform /
-              {`${selectedId || 'Dashboard'}`}
+    <Header height={70} p="md">
+      <Grid mt={-7} align="center">
+        <Grid.Col span={6}>
+          <Flex align="center" onClick={() => (inAnalysis ? navigate('/analysis/dashboard') : navigate('/'))} sx={{ cursor: 'pointer' }}>
+            <Image maw={40} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
+            <Space w="md" />
+            <Title order={4} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {inAnalysis ? 'ReVISit Analytics Platform' : 'ReVISit Studies'}
             </Title>
-          </MediaQuery>
-        </Group>
+          </Flex>
+        </Grid.Col>
 
-        <Box>
+        <Grid.Col span={6}>
           <Flex
-            gap="md"
             justify="flex-end"
-            align="center"
             direction="row"
-            wrap="wrap"
           >
-
-            {activeExp && (
-              <Select
-                placeholder="Select an experiment"
-                data={selectorData}
-                value={activeExp}
-                onChange={onExpChange}
-              />
+            {inAnalysis && (
+            <Select
+              placeholder="Select Study"
+              data={selectorData}
+              value={studyId}
+              onChange={(value) => navigate(`/analysis/stats/${value}`)}
+              mr={16}
+            />
             )}
 
+            <Burger opened={false} onClick={() => setNavOpen(true)} style={{ visibility: navOpen ? 'hidden' : undefined }} />
+            <Drawer
+              opened={navOpen}
+              onClose={() => setNavOpen(false)}
+              position="right"
+              withCloseButton={false}
+            >
+              <Flex direction="column" mt={20}>
+                <Text ml={15} mb={20} fw={700} size="lg">Navigation</Text>
+                {menuItemsNav.map((menuItem: MenuItem) => {
+                  if (menuItem.needAdmin) {
+                    if (user.isAdmin) {
+                      return (
+                        <Button
+                          key={`menu-item-${menuItem.name}`}
+                          leftIcon={menuItem.leftIcon}
+                          variant="default"
+                          style={{ border: 'none', display: 'flex', justifyContent: 'flex-start' }}
+                          onClick={() => { navigate(menuItem.href); setNavOpen(false); }}
+                        >
+                          {menuItem.name}
+                        </Button>
+                      );
+                    } return null;
+                  }
+                  return (
+                    <Button
+                      key={`menu-item-${menuItem.name}`}
+                      leftIcon={menuItem.leftIcon}
+                      variant="default"
+                      style={{ border: 'none', display: 'flex', justifyContent: 'flex-start' }}
+                      onClick={() => { navigate(menuItem.href); setNavOpen(false); }}
+                    >
+                      {menuItem.name}
+                    </Button>
+                  );
+                })}
+                <Box ml={10}>
+                  <Divider my="sm" />
+                  {/* eslint-disable-next-line no-nested-ternary */}
+                  { storageEngine?.getEngine() === 'firebase'
+                    ? user.isAdmin
+                      ? (
+                        <Text
+                          size="sm"
+                          ml={10}
+                          style={{ cursor: 'pointer' }}
+                          onClick={logout}
+                        >
+                          Logout
+                        </Text>
+                      )
+                      : (
+                        <Text
+                          size="sm"
+                          ml={10}
+                          style={{ cursor: 'pointer' }}
+                          onClick={() => { navigate('/login'); setNavOpen(false); }}
+                        >
+                          Login
+                        </Text>
+                      ) : null}
+                </Box>
+              </Flex>
+            </Drawer>
           </Flex>
-        </Box>
-      </Group>
-
+        </Grid.Col>
+      </Grid>
     </Header>
   );
 }

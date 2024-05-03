@@ -1,41 +1,43 @@
 import {
-  Box, Spoiler, Stack, Table, Title, Text, Button,
+  Box, Spoiler, Stack, Table, Text,
+  Flex,
+  Button,
 } from '@mantine/core';
 import { IconCheck, IconProgress } from '@tabler/icons-react';
+import React from 'react';
 import { useParams } from 'react-router-dom';
-import { ParticipantData, StoredAnswer } from '../../parser/types';
-import { flattenSequence } from '../utils';
+import { ParticipantData, StoredAnswer, StudyConfig } from '../../parser/types';
 import { ParticipantMetadata } from '../../store/types';
+import { configSequenceToUniqueTrials, findBlockForStep } from '../../utils/getSequenceFlatMap';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 
-function TableCell(props: {cellData: StoredAnswer}) {
-  const { cellData } = props;
-  const duration = (cellData.endTime - cellData.startTime) / 1000;
+function AnswerCell({ cellData }: { cellData: StoredAnswer }) {
   return (
     <td>
       <Stack miw={100}>
-        <Box>
-          <Text fw={700} span>Duration:</Text>
-          {duration.toFixed(1)}
-          {' '}
-          s
-        </Box>
         {Object.entries(cellData.answer).map(([key, storedAnswer]) => (
           <Box key={`cell-${key}`}>
-            <Text fw={500} span>
-              <Text fw={700} span>
-                {' '}
-                {`${key}: `}
-              </Text>
-
+            <Text fw={700} span>
+              {' '}
+              {`${key}: `}
             </Text>
             <Text span>
               {`${storedAnswer}`}
             </Text>
-
           </Box>
         ))}
       </Stack>
+    </td>
+  );
+}
+
+function DurationCell({ cellData }: { cellData: StoredAnswer }) {
+  const duration = (cellData.endTime - cellData.startTime) / 1000;
+  return (
+    <td>
+      {duration.toFixed(1)}
+      {' '}
+      s
     </td>
   );
 }
@@ -71,15 +73,34 @@ function MetaCell(props:{metaData: ParticipantMetadata}) {
     </td>
   );
 }
-export function TableView(props: { completed: ParticipantData[], inprogress: ParticipantData[], refresh: ()=> void }) {
-  const { completed, inprogress, refresh } = props;
+export function TableView({
+  completed,
+  inProgress,
+  studyConfig,
+  refresh,
+}: {
+  completed: ParticipantData[];
+  inProgress: ParticipantData[];
+  studyConfig: StudyConfig;
+  refresh: ()=> void;
+}) {
+  const uniqueTrials = configSequenceToUniqueTrials(studyConfig.sequence);
+  const headers = [
+    <th key="ID">ID/Status</th>,
+    <th key="meta">Meta</th>,
+    ...uniqueTrials.flatMap((trial) => [
+      <th key={`header-${trial.componentName}-${trial.timesSeenInBlock}`}>{trial.componentName}</th>,
+      <th key={`header-${trial.componentName}-${trial.timesSeenInBlock}-duration`}>
+        {trial.componentName}
+        {' '}
+        Duration
+      </th>,
+    ]),
+    <th key="total-duration">Total Duration</th>,
+  ];
 
-  const allData = [...completed.map((record) => ({ ...record, completed: true })), ...inprogress.map((record) => ({ ...record, completed: false }))];
-
-  const uniqueTrials = [...new Set(completed.map((complete) => flattenSequence(complete.sequence)).flat().map((trial) => trial))].filter((trial) => trial !== 'end');
-
-  const { studyId } = useParams();
   const { storageEngine } = useStorageEngine();
+  const { studyId } = useParams();
   const rejectParticipant = async (participantId: string) => {
     if (studyId) {
       await storageEngine?.rejectParticipant(studyId, participantId);
@@ -87,37 +108,70 @@ export function TableView(props: { completed: ParticipantData[], inprogress: Par
     }
   };
 
-  const headers = [
-    <th key="ID">ID/Status</th>,
-    <th key="action">Action</th>,
-    <th key="meta">Meta</th>,
-    ...uniqueTrials.map((trialName) => <th key={`header-${trialName}`}>{trialName}</th>)];
-  const rows = allData.map((record) => (
+  const rows = [...completed, ...inProgress].map((record) => (
     <tr key={record.participantId}>
       <td>
         <Box sx={{ display: 'block', whiteSpace: 'nowrap' }}>
           {record.participantId}
-          {record.completed ? <IconCheck size={15} color="teal" /> : <IconProgress size={15} color="orange" />}
+          {'  '}
+          {record.completed
+            ? <IconCheck size={16} color="teal" style={{ marginBottom: -3 }} />
+            : <IconProgress size={16} color="orange" style={{ marginBottom: -3 }} />}
         </Box>
       </td>
       <td>
         {record.rejected ? <Button disabled>Rejected</Button> : <Button onClick={() => rejectParticipant(record.participantId)}>Reject</Button>}
       </td>
       {record.metadata ? <MetaCell metaData={record.metadata} /> : <td>N/A</td>}
-      {uniqueTrials.map((trialName) => {
-        const userAnswerKey = Object.keys(record.answers).filter((key) => key.includes(trialName))[0];
-        return userAnswerKey ? <TableCell cellData={record.answers[userAnswerKey]} /> : <td>N/A</td>;
+      {uniqueTrials.map((trial) => {
+        const sequenceBlock = findBlockForStep(record.sequence, trial.orderPath);
+        const trialData = sequenceBlock && Object.entries(record.answers)
+          .sort((a, b) => {
+            const aIndex = parseInt(a[0].slice(a[0].lastIndexOf('_') + 1), 10);
+            const bIndex = parseInt(b[0].slice(b[0].lastIndexOf('_') + 1), 10);
+            return aIndex - bIndex;
+          })
+          .filter(([trialId]) => {
+            const trialName = trialId.slice(0, trialId.lastIndexOf('_'));
+            const trialIndex = parseInt(trialId.slice(trialId.lastIndexOf('_') + 1), 10);
+            return trialName === trial.componentName && trialIndex <= sequenceBlock[0].lastIndex && trialIndex >= sequenceBlock[0].firstIndex;
+          });
+        return (trialData !== null && trialData.length >= trial.timesSeenInBlock + 1 ? (
+          <React.Fragment key={`cellgroup-${record.participantId}-${trial.componentName}-${trial.timesSeenInBlock}`}>
+            <AnswerCell cellData={trialData[trial.timesSeenInBlock][1]} />
+            <DurationCell cellData={trialData[trial.timesSeenInBlock][1]} />
+          </React.Fragment>
+        ) : (
+          <React.Fragment key={`cellgroup-${record.participantId}-${trial.componentName}-${trial.timesSeenInBlock}`}>
+            <td>N/A</td>
+            <td>N/A</td>
+          </React.Fragment>
+        ));
       })}
+      <DurationCell
+        cellData={{
+          startTime: Math.min(...Object.values(record.answers).map((a) => a.startTime)),
+          endTime: Math.max(...Object.values(record.answers).map((a) => a.endTime)),
+          answer: {},
+          windowEvents: [],
+        }}
+        key={`cell-${record.participantId}-total-duration`}
+      />
     </tr>
   ));
+
   return (
-    completed.length > 0 || inprogress.length > 0 ? (
+    [...completed, ...inProgress].length > 0 ? (
       <Table>
         <thead>
           <tr>{headers}</tr>
         </thead>
         <tbody>{rows}</tbody>
       </Table>
-    ) : <Title>No participant</Title>
+    ) : (
+      <Flex justify="center" align="center" style={{ height: '100%' }}>
+        <Text>No data available</Text>
+      </Flex>
+    )
   );
 }
