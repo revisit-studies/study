@@ -424,6 +424,17 @@ export class FirebaseStorageEngine extends StorageEngine {
           // Verifies that, if the user has signed in and thus their UID is added to the Firestore, that the current UID matches the Firestore entries UID. Prevents impersonation (otherwise, users would be able to alter email to impersonate).
           const isAdmin = user.user.email && (adminUsersObject[user.user.email] === user.user.uid || adminUsersObject[user.user.email] === null);
           if (isAdmin) {
+            // Add UID to user in collection if not existent.
+            if (user.user.email && adminUsersObject[user.user.email] === null) {
+              for (let i = 0; i < adminUsers.adminUsersList.length; i += 1) {
+                if (adminUsers.adminUsersList[i].email === user.user.email) {
+                  adminUsers.adminUsersList[i].uid = user.user.uid;
+                }
+              }
+              await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
+                adminUsersList: adminUsers.adminUsersList,
+              });
+            }
             return true;
           }
           return false;
