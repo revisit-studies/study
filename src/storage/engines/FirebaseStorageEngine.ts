@@ -440,7 +440,7 @@ export class FirebaseStorageEngine extends StorageEngine {
             if (user.user.email && adminUsersObject[user.user.email] === null) {
               const adminUser = adminUsers.adminUsersList.find((u) => u.user.email === user.user.email);
               if (adminUser) {
-                adminUser.user.uid = user.user.uid
+                adminUser.user.uid = user.user.uid;
               }
               await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
                 adminUsersList: adminUsers.adminUsersList,

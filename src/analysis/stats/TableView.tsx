@@ -87,7 +87,9 @@ export function TableView({
   const uniqueTrials = configSequenceToUniqueTrials(studyConfig.sequence);
   const headers = [
     <th key="ID">ID/Status</th>,
+    <th key="action">Action</th>,
     <th key="meta">Meta</th>,
+
     ...uniqueTrials.flatMap((trial) => [
       <th key={`header-${trial.componentName}-${trial.timesSeenInBlock}`}>{trial.componentName}</th>,
       <th key={`header-${trial.componentName}-${trial.timesSeenInBlock}-duration`}>
