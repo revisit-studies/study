@@ -4,7 +4,7 @@
 To create a study with reVISit, you have to create **components** that contain the content of your study, and you have to create the **study configuration (the reVISit Spec)** that controls when and how these components are shown to participants. Here, we will introduce these at a high level and link to complete documentation where appropriate. 
 
 
-The technical documentation can be found [here](modules.html). 
+The technical documentation can be found [here](modules). 
 
 # Components
 
@@ -33,38 +33,38 @@ The reVISit Spec enables you to define the details of your experiment as a JSON 
 
 We'll explain the ideas in the next section, and link to the documentation for more details. 
 
-You can find the detailed documentation for the reVISit Spec [here](/typedoc/interfaces/StudyConfig.html).
+You can find the detailed documentation for the reVISit Spec [here](interfaces/StudyConfig).
 
 
 ## Study Metadata
 
-The study metadata defines elements such as the study title, authors, and description. The title and description are shown on the landing page when you have multiple studies. The other fields are hidden to the user, but are saved to the database with participant tracking information. This allows you to see which version of the study a participant took. For more detailed documentation on the study metadata, check out the [documentation](/typedoc/interfaces/StudyMetadata.html).
+The study metadata defines elements such as the study title, authors, and description. The title and description are shown on the landing page when you have multiple studies. The other fields are hidden to the user, but are saved to the database with participant tracking information. This allows you to see which version of the study a participant took. For more detailed documentation on the study metadata, check out the [documentation](interfaces/StudyMetadata).
 
 
 ## UI Configuration
 
-The UI configuration tells reVISit how the UI should be laid out, such as which image to use for the study logo, whether to include a sidebar, the contact email, etc. For more detailed documentation on the UI configuration, check out the [documentation](/typedoc/interfaces/UIConfig.html).
+The UI configuration tells reVISit how the UI should be laid out, such as which image to use for the study logo, whether to include a sidebar, the contact email, etc. For more detailed documentation on the UI configuration, check out the [documentation](interfaces/UIConfig).
 
 
 ## Components
 
 Components are the building blocks for each study. 
 There are currently 5 types of components: 
-* [Image](/typedoc/interfaces/ImageComponent.html), 
-* [Website](/typedoc/interfaces/WebsiteComponent.html), 
-* [Questionnaire](/typedoc/interfaces/QuestionnaireComponent.html), 
-* [React](/typedoc/interfaces/ReactComponent.html), and 
-* [Markdown](/typedoc/interfaces/MarkdownComponent.html).
+* [Image](interfaces/ImageComponent), 
+* [Website](interfaces/WebsiteComponent), 
+* [Questionnaire](interfaces/QuestionnaireComponent), 
+* [React](interfaces/ReactComponent), and 
+* [Markdown](interfaces/MarkdownComponent).
 
-Each component extends the [BaseIndividualComponent](/typedoc/interfaces/BaseIndividualComponent.html) interface. To add a component to your study (which can be thought of as a "page" of your study), you add a JSON object representing that component to the "components" object with a key which you can define how you would like. Then, the `type` key in that JSON object controls which type of component you are referring to. 
+Each component extends the [BaseIndividualComponent](interfaces/BaseIndividualComponent) interface. To add a component to your study (which can be thought of as a "page" of your study), you add a JSON object representing that component to the "components" object with a key which you can define how you would like. Then, the `type` key in that JSON object controls which type of component you are referring to. 
 
 ### Collecting Responses
 
-Each component has a list of responses which represents a set of questions to ask to the user for that particular component. The user can describe where the question should be displayed in the UI, the instruction for the response, and the type of response input (e.g., a [numerical response](/typedoc/interfaces/NumericalResponse.html), a [dropdown](/typedoc/interfaces/DropdownResponse.html), a [slider](/typedoc/interfaces/SliderResponse.html), etc). Each response interface extends the [BaseResponse](/typedoc/interfaces/BaseResponse.html) interface.
+Each component has a list of responses which represents a set of questions to ask to the user for that particular component. The user can describe where the question should be displayed in the UI, the instruction for the response, and the type of response input (e.g., a [numerical response](interfaces/NumericalResponse), a [dropdown](interfaces/DropdownResponse), a [slider](interfaces/SliderResponse), etc). Each response interface extends the [BaseResponse](interfaces/BaseResponse) interface.
 
 The below example illustrates a simple consent component that is based on a Markdown file and has a response that asks for a signature: 
 
-```JSON
+```js
   "consent": {
             "type": "markdown",
             "path": "demo-brush-interactions/assets/consent.md",
@@ -82,18 +82,18 @@ The below example illustrates a simple consent component that is based on a Mark
         }
 ```
 
-For more detailed documentation on the response section, check out the [documentation](/typedoc/index.html#response).
+For more detailed documentation on the response section, check out the [documentation](interfaces/BaseResponse).
 
 ## Base Components and Inheritance
 
-[Base Components](/typedoc/interfaces/StudyConfig.html#basecomponents) can be used to implement inheritance for components. This is often useful if you want to parameterize a component. For example: 
+[Base Components](interfaces/StudyConfig#basecomponents) can be used to implement inheritance for components. This is often useful if you want to parameterize a component. For example: 
 
 * You might have a stimulus, such as an image, where you want to ask multiple different questions.  
 * You might have a generic implementation of a stimulus, such as a bar chart, and you want to pass in data to change how the stimulus appears. 
 
 In both of these cases, you can set up a component once as a `baseComponent`, including linking to the stimulus and including (partial) responses, but then later write inherited, short components that extend the base component with the specific functionality you want. 
 
-For examples of how to write a base component, refer to the [documentation](/typedoc/interfaces/StudyConfig.html#basecomponents) and to the [relevant tutorial](/tutorial/#components-inheritance-and-adding-custom-html-to-your-study).
+For examples of how to write a base component, refer to the [documentation](interfaces/StudyConfig#basecomponents) and to the [relevant tutorial](../getting-started/tutorial-questionnaire#adding-custom-html).
 
 
 ## Sequence
@@ -111,7 +111,7 @@ The sequence object of the study configuration defines (a) the order participant
 All of these can be applied on arbitrarily nested "blocks", i.e., it is designed in a nested fashion which means that an entry in the "components" list can either be the name of a components or another `ComponentBlock`. For example, the overall structure of a study can be linear (introduction, consent, tutorial, trials, survey), but within trials we can use random order:  
 
 
-```JSON
+```js
  "sequence": {
         "order": "fixed",
         "components": [
@@ -133,4 +133,4 @@ All of these can be applied on arbitrarily nested "blocks", i.e., it is designed
     }
 ```
 
-You can find more detailed documentation about the sequencing strategies [here](/typedoc/interfaces/ComponentBlock.html).
+You can find more detailed documentation about the sequencing strategies [here](interfaces/ComponentBlock).
