@@ -10,10 +10,15 @@
     "name": "Modules",
     "githubPages": false,
     "readme": "typedocReadMe.md",
-    "entryDocument": "index.md",
+    "entryFileName": "index.md",
     "hideBreadcrumbs": true,
     "frontmatterGlobals": {
       "sidebar_position": 1,
       "displayed_sidebar": "docs"
-    }
+    },
+    "textContentMappings": {
+        "title.memberPage": "{name}"
+    },
+    "hidePageHeader": true,
+    "propertiesFormat": "table"
 }
