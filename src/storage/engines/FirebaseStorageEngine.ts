@@ -1,7 +1,11 @@
 import { parse as hjsonParse } from 'hjson';
 import { initializeApp } from 'firebase/app';
 import {
-  getDownloadURL, getStorage, ref, uploadBytes,
+  deleteObject,
+  getDownloadURL,
+  getStorage,
+  ref,
+  uploadBytes,
 } from 'firebase/storage';
 import {
   CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc, where, deleteDoc, updateDoc,
@@ -79,10 +83,9 @@ export class FirebaseStorageEngine extends StorageEngine {
         if (!auth.currentUser) throw new Error('Login failed with firebase');
       }
 
+      const currentConfigHash = await this.getCurrentConfigHash();
       // Hash the config
       const configHash = await hash(JSON.stringify(config));
-
-      await this.localForage.setItem('currentConfigHash', configHash);
 
       // Create or retrieve database for study
       this.studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
@@ -90,6 +93,14 @@ export class FirebaseStorageEngine extends StorageEngine {
       const configsDoc = doc(this.studyCollection, 'configs');
       const configsCollection = collection(configsDoc, 'configs');
       const configDoc = doc(configsCollection, configHash);
+
+      // Clear sequence array and current participant data if the config has changed
+      if (currentConfigHash && currentConfigHash !== configHash) {
+        this._deleteFromFirebaseStorage('', 'sequenceArray');
+        await this.clearCurrentParticipantId();
+      }
+
+      await this.localForage.setItem('currentConfigHash', configHash);
 
       return await setDoc(configDoc, config);
     } catch (error) {
@@ -150,10 +161,6 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   async getCurrentConfigHash() {
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
-
     return await this.localForage.getItem('currentConfigHash') as string;
   }
 
@@ -438,7 +445,7 @@ export class FirebaseStorageEngine extends StorageEngine {
           if (isAdmin) {
             // Add UID to user in collection if not existent.
             if (user.user.email && adminUsersObject[user.user.email] === null) {
-              const adminUser = adminUsers.adminUsersList.find((u) => u.user.email === user.user.email);
+              const adminUser = adminUsers.adminUsersList.find((u: StoredUser) => u.email === user.user!.email);
               if (adminUser) {
                 adminUser.user.uid = user.user.uid;
               }
@@ -574,5 +581,11 @@ export class FirebaseStorageEngine extends StorageEngine {
       });
       await uploadBytes(storageRef, blob);
     }
+  }
+
+  private async _deleteFromFirebaseStorage<T extends 'sequenceArray'>(prefix: string, type: T) {
+    const storage = getStorage();
+    const storageRef = ref(storage, `${this.studyId}/${prefix}_${type}`);
+    await deleteObject(storageRef);
   }
 }
