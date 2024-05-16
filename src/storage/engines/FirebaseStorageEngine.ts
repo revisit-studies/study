@@ -83,7 +83,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         if (!auth.currentUser) throw new Error('Login failed with firebase');
       }
 
-      const currentConfighHash = await this.getCurrentConfigHash();
+      const currentConfigHash = await this.getCurrentConfigHash();
       // Hash the config
       const configHash = await hash(JSON.stringify(config));
 
@@ -95,7 +95,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       const configDoc = doc(configsCollection, configHash);
 
       // Clear sequence array and current participant data if the config has changed
-      if (currentConfighHash !== configHash) {
+      if (currentConfigHash && currentConfigHash !== configHash) {
         this._deleteFromFirebaseStorage('', 'sequenceArray');
         await this.clearCurrentParticipantId();
       }

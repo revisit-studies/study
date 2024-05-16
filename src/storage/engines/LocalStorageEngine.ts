@@ -22,11 +22,11 @@ export class LocalStorageEngine extends StorageEngine {
     this.studyDatabase = await localforage.createInstance({
       name: studyId,
     });
-    const currentConfighHash = await this.getCurrentConfigHash();
+    const currentConfigHash = await this.getCurrentConfigHash();
     const participantConfigHash = await hash(JSON.stringify(config));
 
     // Clear sequence array and current participant data if the config has changed
-    if (currentConfighHash !== participantConfigHash) {
+    if (currentConfigHash && currentConfigHash !== participantConfigHash) {
       await this.studyDatabase.removeItem('sequenceArray');
       await this.clearCurrentParticipantId();
     }
