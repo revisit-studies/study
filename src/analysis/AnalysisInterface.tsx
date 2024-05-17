@@ -5,7 +5,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   IconChartDonut2, IconPlayerPlay, IconTable,
 } from '@tabler/icons-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback, useEffect, useMemo, useState,
+} from 'react';
 import AppHeader from './components/interface/AppHeader';
 import { GlobalConfig, ParticipantData, StudyConfig } from '../parser/types';
 import { getStudyConfig } from '../utils/fetchConfig';
@@ -22,7 +24,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   const navigate = useNavigate();
   const { tab } = useParams();
 
-  const getData = async () => {
+  const getData = useCallback(async () => {
     setLoading(true);
     if (studyId) {
       const cf = await getStudyConfig(studyId, globalConfig);
@@ -33,11 +35,11 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
       setStudyConfig(cf);
       setLoading(false);
     }
-  };
+  }, [globalConfig, storageEngine, studyId]);
 
   useEffect(() => {
     getData();
-  }, [globalConfig, storageEngine, studyId]);
+  }, [globalConfig, storageEngine, studyId, getData]);
 
   const [completed, inProgress] = useMemo(() => {
     const comp = expData.filter((d) => d.completed);
