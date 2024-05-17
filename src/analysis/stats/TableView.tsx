@@ -4,11 +4,13 @@ import {
   Checkbox,
   Button,
   Tooltip,
-  Collapse,
   LoadingOverlay,
+  Group,
+  Select,
 } from '@mantine/core';
 import {
   IconCheck, IconProgress,
+  IconSearch,
   IconX,
 } from '@tabler/icons-react';
 import React, { useState } from 'react';
@@ -109,7 +111,7 @@ export function TableView({
         Are you sure you want to reject the selected participants? This action is
         {' '}
         <Text span fw={700} td="underline" inherit>irreversible</Text>
-        , and will return the participants&apos; sequences to the beginning of the sequenceArray.
+        , and will return the participants&apos; sequences to the beginning of the sequence array.
       </Text>
     ),
     labels: { confirm: 'Reject Participants', cancel: 'Cancel' },
@@ -141,14 +143,8 @@ export function TableView({
   const uniqueTrials = configSequenceToUniqueTrials(studyConfig.sequence);
   const headers = [
     <th key="action"><Flex justify="center"><Checkbox mb={-4} checked={checked.length === [...completed, ...inProgress].length} onChange={() => handleSelect('all')} /></Flex></th>,
-    <th key="ID">
-      <Flex justify="space-between" h={23}>
-        ID/Status
-        <Collapse in={checked.length !== 0}>
-          <Button disabled={checked.length === 0} onClick={openModal} color="red" size="xs" compact>Reject Participants</Button>
-        </Collapse>
-      </Flex>
-    </th>,
+    <th key="ID">ID</th>,
+    <th key="status">Status</th>,
     <th key="meta">Meta</th>,
     ...uniqueTrials.flatMap((trial) => [
       <th key={`header-${trial.componentName}-${trial.timesSeenInBlock}`}>{trial.componentName}</th>,
@@ -171,15 +167,16 @@ export function TableView({
       <td>
         <Box sx={{ display: 'block', whiteSpace: 'nowrap' }}>
           {record.participantId}
-          {'  '}
-          {
+        </Box>
+      </td>
+      <td>
+        {
           // eslint-disable-next-line no-nested-ternary
           record.rejected ? <Tooltip label="Rejected"><IconX size={16} color="red" style={{ marginBottom: -3 }} /></Tooltip>
             : record.completed
               ? <Tooltip label="Completed"><IconCheck size={16} color="teal" style={{ marginBottom: -3 }} /></Tooltip>
               : <Tooltip label="In Progress"><IconProgress size={16} color="orange" style={{ marginBottom: -3 }} /></Tooltip>
-}
-        </Box>
+        }
       </td>
       {record.metadata ? <MetaCell metaData={record.metadata} /> : <td>N/A</td>}
       {uniqueTrials.map((trial) => {
@@ -223,6 +220,22 @@ export function TableView({
     [...completed, ...inProgress].length > 0 ? (
       <>
         <LoadingOverlay visible={loading} overlayBlur={2} />
+        <Flex justify="space-between" mb={8} p={8}>
+          <Group>
+            <Select
+              w={350}
+              variant="filled"
+              placeholder="Search for a participant ID"
+              data={[...completed, ...inProgress].map((record) => ({ value: record.participantId, label: record.participantId }))}
+              searchable
+              icon={<IconSearch size={14} />}
+              onChange={(value) => value && handleSelect(value)}
+            />
+          </Group>
+          <Group>
+            <Button disabled={checked.length === 0} onClick={openModal} color="red" size="xs">Reject Participants</Button>
+          </Group>
+        </Flex>
         <Table striped>
           <thead>
             <tr>{headers}</tr>
