@@ -24,6 +24,7 @@
     "@mantine/dates": "5.8.0",
     "@mantine/form": "^6.0.7",
     "@mantine/hooks": "^5.8.0",
+    "@mantine/modals": "^5.8.0",
     "@quentinroy/latin-square": "^1.1.1",
     "@reduxjs/toolkit": "^1.9.3",
     "@swc/helpers": "^0.4.14",
