@@ -551,7 +551,7 @@ export type InheritedComponent = (Partial<IndividualComponent> & { baseComponent
 
  ```js
  {
-    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/v1.0.0-beta5/src/parser/StudyConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/v1.0.0-beta8/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
       ...
     },
