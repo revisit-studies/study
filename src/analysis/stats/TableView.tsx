@@ -142,7 +142,11 @@ export function TableView({
   }
   const uniqueTrials = configSequenceToUniqueTrials(studyConfig.sequence);
   const headers = [
-    <th key="action"><Flex justify="center"><Checkbox mb={-4} checked={checked.length === [...completed, ...inProgress].length} onChange={() => handleSelect('all')} /></Flex></th>,
+    <th key="action">
+      <Flex justify="center">
+        <Checkbox mb={-4} checked={checked.length === [...completed, ...inProgress].length} onChange={() => handleSelect('all')} />
+      </Flex>
+    </th>,
     <th key="ID">ID</th>,
     <th key="status">Status</th>,
     <th key="meta">Meta</th>,
@@ -164,10 +168,8 @@ export function TableView({
           <Checkbox mb={-4} checked={checked.includes(record.participantId)} onChange={() => handleSelect(record.participantId)} />
         </Flex>
       </td>
-      <td>
-        <Box sx={{ display: 'block', whiteSpace: 'nowrap' }}>
-          {record.participantId}
-        </Box>
+      <td style={{ whiteSpace: 'nowrap' }}>
+        {record.participantId}
       </td>
       <td>
         {
