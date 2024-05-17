@@ -268,8 +268,8 @@ export class FirebaseStorageEngine extends StorageEngine {
     if (rejectedDocs.docs.length > 0) {
       const firstReject = rejectedDocs.docs[0];
       const firstRejectTime = firstReject.data().timestamp;
-      await setDoc(participantSequenceAssignmentDoc, { participantId: this.currentParticipantId, timestamp: firstRejectTime });
       await deleteDoc(firstReject.ref);
+      await setDoc(participantSequenceAssignmentDoc, { participantId: this.currentParticipantId, timestamp: firstRejectTime });
     } else {
       await setDoc(participantSequenceAssignmentDoc, { participantId: this.currentParticipantId, timestamp: serverTimestamp() });
     }
