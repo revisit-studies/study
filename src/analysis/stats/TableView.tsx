@@ -1,11 +1,19 @@
 import {
   Box, Spoiler, Stack, Table, Text,
   Flex,
+  Checkbox,
   Button,
+  Tooltip,
+  Collapse,
+  LoadingOverlay,
 } from '@mantine/core';
-import { IconCheck, IconProgress } from '@tabler/icons-react';
-import React from 'react';
+import {
+  IconCheck, IconProgress,
+  IconX,
+} from '@tabler/icons-react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { openConfirmModal } from '@mantine/modals';
 import { ParticipantData, StoredAnswer, StudyConfig } from '../../parser/types';
 import { ParticipantMetadata } from '../../store/types';
 import { configSequenceToUniqueTrials, findBlockForStep } from '../../utils/getSequenceFlatMap';
@@ -84,12 +92,64 @@ export function TableView({
   studyConfig: StudyConfig;
   refresh: ()=> void;
 }) {
+  const { storageEngine } = useStorageEngine();
+  const { studyId } = useParams();
+  const rejectParticipant = async (participantId: string) => {
+    if (storageEngine && studyId) {
+      await storageEngine.rejectParticipant(studyId, participantId);
+      refresh();
+    }
+  };
+  const [checked, setChecked] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const openModal = () => openConfirmModal({
+    title: 'Confirm rejecting participants',
+    children: (
+      <Text size="sm">
+        Are you sure you want to reject the selected participants? This action is
+        {' '}
+        <Text span fw={700} td="underline" inherit>irreversible</Text>
+        , and will return the participants&apos; sequences to the beginning of the sequenceArray.
+      </Text>
+    ),
+    labels: { confirm: 'Reject Participants', cancel: 'Cancel' },
+    confirmProps: { color: 'red' },
+    onCancel: () => {},
+    onConfirm: async () => {
+      setLoading(true);
+      const promises = checked.map(async (participantId) => await rejectParticipant(participantId));
+      await Promise.all(promises);
+      setChecked([]);
+      refresh();
+      setLoading(false);
+    },
+  });
+
+  function handleSelect(value: string) {
+    if (value === 'all') {
+      if (checked.length === [...completed, ...inProgress].length) {
+        setChecked([]);
+      } else {
+        setChecked([...completed, ...inProgress].map((record) => record.participantId));
+      }
+    } else if (!checked.includes(value)) {
+      setChecked([...checked, value]);
+    } else {
+      setChecked(checked.filter((item) => item !== value));
+    }
+  }
   const uniqueTrials = configSequenceToUniqueTrials(studyConfig.sequence);
   const headers = [
-    <th key="ID">ID/Status</th>,
-    <th key="action">Action</th>,
+    <th key="action"><Flex justify="center"><Checkbox mb={-4} checked={checked.length === [...completed, ...inProgress].length} onChange={() => handleSelect('all')} /></Flex></th>,
+    <th key="ID">
+      <Flex justify="space-between" h={23}>
+        ID/Status
+        <Collapse in={checked.length !== 0}>
+          <Button disabled={checked.length === 0} onClick={openModal} color="red" size="xs" compact>Reject Participants</Button>
+        </Collapse>
+      </Flex>
+    </th>,
     <th key="meta">Meta</th>,
-
     ...uniqueTrials.flatMap((trial) => [
       <th key={`header-${trial.componentName}-${trial.timesSeenInBlock}`}>{trial.componentName}</th>,
       <th key={`header-${trial.componentName}-${trial.timesSeenInBlock}-duration`}>
@@ -101,28 +161,25 @@ export function TableView({
     <th key="total-duration">Total Duration</th>,
   ];
 
-  const { storageEngine } = useStorageEngine();
-  const { studyId } = useParams();
-  const rejectParticipant = async (participantId: string) => {
-    if (studyId) {
-      await storageEngine?.rejectParticipant(studyId, participantId);
-      refresh();
-    }
-  };
-
   const rows = [...completed, ...inProgress].map((record) => (
     <tr key={record.participantId}>
+      <td>
+        <Flex justify="center">
+          <Checkbox mb={-4} checked={checked.includes(record.participantId)} onChange={() => handleSelect(record.participantId)} />
+        </Flex>
+      </td>
       <td>
         <Box sx={{ display: 'block', whiteSpace: 'nowrap' }}>
           {record.participantId}
           {'  '}
-          {record.completed
-            ? <IconCheck size={16} color="teal" style={{ marginBottom: -3 }} />
-            : <IconProgress size={16} color="orange" style={{ marginBottom: -3 }} />}
+          {
+          // eslint-disable-next-line no-nested-ternary
+          record.rejected ? <Tooltip label="Rejected"><IconX size={16} color="red" style={{ marginBottom: -3 }} /></Tooltip>
+            : record.completed
+              ? <Tooltip label="Completed"><IconCheck size={16} color="teal" style={{ marginBottom: -3 }} /></Tooltip>
+              : <Tooltip label="In Progress"><IconProgress size={16} color="orange" style={{ marginBottom: -3 }} /></Tooltip>
+}
         </Box>
-      </td>
-      <td>
-        {record.rejected ? <Button disabled>Rejected</Button> : <Button onClick={() => rejectParticipant(record.participantId)}>Reject</Button>}
       </td>
       {record.metadata ? <MetaCell metaData={record.metadata} /> : <td>N/A</td>}
       {uniqueTrials.map((trial) => {
@@ -164,12 +221,15 @@ export function TableView({
 
   return (
     [...completed, ...inProgress].length > 0 ? (
-      <Table>
-        <thead>
-          <tr>{headers}</tr>
-        </thead>
-        <tbody>{rows}</tbody>
-      </Table>
+      <>
+        <LoadingOverlay visible={loading} overlayBlur={2} />
+        <Table striped>
+          <thead>
+            <tr>{headers}</tr>
+          </thead>
+          <tbody>{rows}</tbody>
+        </Table>
+      </>
     ) : (
       <Flex justify="center" align="center" style={{ height: '100%' }}>
         <Text>No data available</Text>
