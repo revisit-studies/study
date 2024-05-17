@@ -10,7 +10,7 @@
   },
   "uiConfig": {
     "contactEmail": "test@test.com",
-    "helpTextPath": "demo-html-input/help.md",
+    "helpTextPath": "demo-html-input/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -59,6 +59,6 @@
   },
   "sequence": {
     "order": "fixed",
-    "components": ["introduction", "bar-chart-1","bar-chart-2"]
+    "components": ["introduction", "bar-chart-1", "bar-chart-2"]
   }
 }

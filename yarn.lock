@@ -835,6 +835,13 @@
   resolved "https://registry.npmjs.org/@mantine/hooks/-/hooks-5.8.0.tgz"
   integrity sha512-838TKK0jTvU9sy7OcbDYc2P9fXyyca4HQxKRP2kRJnsnL6ZAHWFlFosGIcN97FiWh+8uQA7jCoD8jyrUjrFDXg==
 
+"@mantine/modals@^5.8.0":
+  version "5.10.5"
+  resolved "https://registry.yarnpkg.com/@mantine/modals/-/modals-5.10.5.tgz#a2d74b7e64c6118f1a67d667fe2745ad6ceb70cf"
+  integrity sha512-q3BCqAxulcIZCL48vUrwSaXDhxDng/2daVky8K1mTPYNlcm9iN1mqVTUC4uFWhn4b2UmPu4UdbNePEgLuhK4Mw==
+  dependencies:
+    "@mantine/utils" "5.10.5"
+
 "@mantine/styles@5.10.5":
   version "5.10.5"
   resolved "https://registry.npmjs.org/@mantine/styles/-/styles-5.10.5.tgz"
