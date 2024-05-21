@@ -2,18 +2,20 @@ import {
   Box,
   Button,
   Flex,
+  Group,
   Modal,
   MultiSelect,
+  Space,
+  Table,
   Text,
 } from '@mantine/core';
-import { useInputState } from '@mantine/hooks';
-import { IconTable } from '@tabler/icons-react';
-import { useCallback, useMemo } from 'react';
+import { IconLayoutColumns, IconTableExport } from '@tabler/icons-react';
+import { useCallback, useMemo, useState } from 'react';
 import merge from 'lodash.merge';
-import { StorageEngine } from '../storage/engines/StorageEngine';
 import { ParticipantData } from '../storage/types';
-import { useStorageEngine } from '../storage/storageEngineHooks';
-import { Prettify, StudyConfig } from '../parser/types';
+import {
+  Answer, IndividualComponent, Prettify, StudyConfig,
+} from '../parser/types';
 import { isInheritedComponent } from '../parser/parser';
 
 export const OPTIONAL_COMMON_PROPS = [
@@ -24,12 +26,13 @@ export const OPTIONAL_COMMON_PROPS = [
   'startTime',
   'endTime',
   'duration',
-  'taskOrder',
+  'meta',
 ] as const;
 
 export const REQUIRED_PROPS = [
   'participantId',
   'trialId',
+  'trialOrder',
   'responseId',
 ] as const;
 
@@ -52,24 +55,24 @@ export function download(graph: string, filename: string) {
   downloadAnchorNode.remove();
 }
 
-function processToRow(session: ParticipantData, studyConfig: StudyConfig, properties: Property[]): TidyRow[] {
-  return Object.entries(session.answers).map(([trialIdentifier, trialAnswer]) => {
+function participantDataToRows(participant: ParticipantData, studyConfig: StudyConfig, properties: Property[]): TidyRow[] {
+  return Object.entries(participant.answers).map(([trialIdentifier, trialAnswer]) => {
     // Get the whole component, including the base component if there is inheritance
-    const trialId = trialIdentifier.split('_')[0];
-    const seq = trialIdentifier.split('_')[1];
+    const trialId = trialIdentifier.split('_').slice(0, -1).join('_');
+    const trialOrder = parseInt(`${trialIdentifier.split('_').at(-1)}`, 10);
     const trialConfig = studyConfig.components[trialId];
-    const completeComponent = isInheritedComponent(trialConfig) && trialConfig.baseComponent && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents[trialConfig.baseComponent], trialConfig) : trialConfig;
+    const completeComponent: IndividualComponent = isInheritedComponent(trialConfig) && trialConfig.baseComponent && studyConfig.baseComponents
+      ? merge({}, studyConfig.baseComponents[trialConfig.baseComponent], trialConfig)
+      : trialConfig;
 
     const duration = trialAnswer.endTime - trialAnswer.startTime;
 
     const rows = Object.entries(trialAnswer.answer).map(([key, value]) => {
       const tidyRow: TidyRow = {
-        participantId: session.participantId,
+        participantId: participant.participantId,
         trialId,
+        trialOrder,
         responseId: key,
-        startTime: new Date(trialAnswer.startTime).toUTCString(),
-        endTime: new Date(trialAnswer.endTime).toUTCString(),
-        duration,
       };
 
       if (properties.includes('description')) {
@@ -82,10 +85,20 @@ function processToRow(session: ParticipantData, studyConfig: StudyConfig, proper
         tidyRow.answer = value;
       }
       if (properties.includes('correctAnswer')) {
-        tidyRow.correctAnswer = completeComponent.correctAnswer;
+        const correctAnswer = (completeComponent.correctAnswer as Answer[])?.find((ans) => ans.id === key)?.answer;
+        tidyRow.correctAnswer = typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer;
       }
-      if (properties.includes('taskOrder')) {
-        tidyRow.taskOrder = seq;
+      if (properties.includes('startTime')) {
+        tidyRow.startTime = new Date(trialAnswer.startTime).toISOString();
+      }
+      if (properties.includes('endTime')) {
+        tidyRow.endTime = new Date(trialAnswer.endTime).toISOString();
+      }
+      if (properties.includes('duration')) {
+        tidyRow.duration = duration;
+      }
+      if (properties.includes('meta')) {
+        tidyRow.meta = JSON.stringify(completeComponent.meta, null, 2);
       }
 
       return tidyRow;
@@ -95,112 +108,125 @@ function processToRow(session: ParticipantData, studyConfig: StudyConfig, proper
   }).flat();
 }
 
-export async function downloadTidy(
-  filename: string,
-  storageEngine: StorageEngine,
-  studyConfig: StudyConfig,
-  data: ParticipantData[] | undefined,
-  properties: Property[] = [...REQUIRED_PROPS, ...OPTIONAL_COMMON_PROPS],
-) {
-  const allParticipantData = data || await storageEngine.getAllParticipantsData();
-
-  const rows = allParticipantData
-    .map((participantSession) => processToRow(participantSession, studyConfig, properties))
-    .flat();
-
-  const escapeDoubleQuotes = (s: string) => s.replace(/"/g, '""');
-
-  const csvRows = rows.map((row) => properties
-    .map((header) => {
-      if (row === null) {
-        return '';
-      } if (typeof row[header] === 'string') {
-        return `"${escapeDoubleQuotes(row[header])}"`;
-      }
-      return JSON.stringify(row[header]);
-    })
-    .join(','));
-  const csv = [properties.join(','), ...csvRows].join('\n');
-
-  download(csv, filename);
-}
-
-type Props = {
+export function DownloadTidy({
+  opened,
+  close,
+  filename,
+  studyConfig,
+  data,
+}: {
   opened: boolean;
   close: () => void;
   filename: string;
   studyConfig: StudyConfig;
-  data?: ParticipantData[];
-};
+  data: ParticipantData[];
+}) {
+  const [selectedProperties, setSelectedProperties] = useState<Array<OptionalProperty>>([...OPTIONAL_COMMON_PROPS].filter((prop) => prop !== 'meta'));
 
-export function DownloadTidy({
-  opened, close, filename, studyConfig, data,
-}: Props) {
-  const [selectedProperties, setSelectedProperties] = useInputState<
-    Array<Property>
-  >([...REQUIRED_PROPS, ...OPTIONAL_COMMON_PROPS]);
+  const tableData = useMemo(() => {
+    const combinedProperties = [...REQUIRED_PROPS, ...selectedProperties];
 
-  const setSelected = useCallback((values: Property[]) => {
-    if (REQUIRED_PROPS.every((rp) => values.includes(rp))) setSelectedProperties(values);
-  }, [setSelectedProperties]);
+    const header = combinedProperties;
+    const rows = data
+      .map((participant) => participantDataToRows(participant, studyConfig, combinedProperties))
+      .flat()
+      .sort((a, b) => (a !== b ? a.participantId.localeCompare(b.participantId) : a.trialOrder - b.trialOrder));
 
-  const combinedProperties = useMemo(() => [...REQUIRED_PROPS, ...OPTIONAL_COMMON_PROPS], []);
+    return { header, rows };
+  }, [data, selectedProperties, studyConfig]);
 
-  const { storageEngine } = useStorageEngine();
+  const downloadTidy = useCallback(() => {
+    const csv = [
+      tableData.header.join(','),
+      ...tableData.rows.map((row) => tableData.header.map((header) => row[header]).join(',')),
+    ].join('\n');
+    download(csv, filename);
+  }, [filename, tableData.header, tableData.rows]);
 
-  if (!storageEngine) return null;
+  const caption = useMemo(() => {
+    const numRowsShown = tableData.rows.length > 5 ? 5 : tableData.rows.length;
+    const plural = numRowsShown === 1 ? '' : 's';
+    return `This is a preview of the first ${plural ? numRowsShown : ''} row${plural} of the CSV. The full CSV contains ${tableData.rows.length} row${plural}.`;
+  }, [tableData.rows]);
 
   return (
     <Modal
       opened={opened}
-      size="lg"
+      size="90%"
       onClose={close}
-      title={<Text size="xl">Download Tidy CSV</Text>}
+      title="Tidy CSV Exporter"
       centered
-      radius="md"
-      padding="xl"
+      withCloseButton={false}
     >
-      <Box>
-        <MultiSelect
-          searchable
-          limit={30}
-          nothingFound="Property not found"
-          data={combinedProperties}
-          value={selectedProperties}
-          onChange={setSelected}
-          label={(
-            <Text fw="bold" size="lg">
-              Select properties to include in tidy csv:
-            </Text>
-          )}
-          placeholder="Select atleast one property"
-        />
+      <MultiSelect
+        searchable
+        nothingFound="Property not found"
+        data={[...OPTIONAL_COMMON_PROPS]}
+        value={selectedProperties}
+        onChange={(values: OptionalProperty[]) => setSelectedProperties(values)}
+        label="Included optional columns:"
+        icon={<IconLayoutColumns />}
+        variant="filled"
+      />
+
+      <Space h="md" />
+
+      <Box mih={300} style={{ width: '100%', overflow: 'scroll' }}>
+        <Table striped captionSide="bottom" withBorder>
+          <thead>
+            <tr>
+              {tableData.header.map((header) => (
+                <th
+                  key={header}
+                  style={{
+                    whiteSpace: 'nowrap',
+                    minWidth: ['description', 'instruction', 'participantId'].includes(header) ? 200 : undefined,
+                  }}
+                >
+                  {header}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {tableData.rows.slice(0, 5).map((row, index) => (
+              <tr key={index}>
+                {tableData.header.map((header) => (
+                  <td
+                    key={`${index}-${header}`}
+                    style={{
+                      whiteSpace: ['description', 'instruction', 'participantId'].includes(header) ? 'normal' : 'nowrap',
+                    }}
+                  >
+                    {row[header]}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </Table>
       </Box>
 
-      <Flex
-        mt="xl"
-        direction={{
-          base: 'column',
-          sm: 'row',
-        }}
-        gap={{
-          base: 'sm',
-          sm: 'lg',
-        }}
-        justify={{
-          sm: 'space-around',
-        }}
-      >
+      <Space h="sm" />
+
+      <Flex justify="center" fz="sm" c="dimmed">
+        <Text>{caption}</Text>
+      </Flex>
+
+      <Space h="md" />
+
+      <Group position="right">
+        <Button onClick={close} color="dark" variant="subtle">
+          Close
+        </Button>
         <Button
-          leftIcon={<IconTable />}
-          onClick={() => downloadTidy(filename, storageEngine, studyConfig, data, selectedProperties)}
+          leftIcon={<IconTableExport />}
+          onClick={() => downloadTidy()}
+          data-autofocus
         >
           Download
         </Button>
-        <Button onClick={close} color="red">
-          Close
-        </Button>
-      </Flex>
+      </Group>
     </Modal>
   );
 }
