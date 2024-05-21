@@ -162,11 +162,6 @@ export function Scatter({
     return () => null;
   }, [brushState.hasBrush, brushType, brushXRef, brushYRef, height, ref, setBrushedSpace, setFilteredTable, width, xMax, xMin, xScale, yMax, yMin, yScale]);
 
-  // useEffect(() => {
-  //   if (brushType === 'Slider Selection' && xScale && yScale) {
-  //   }
-  // }, [brushType, setBrushedSpace, xMax, xMin, xScale, yMax, yMin, yScale]);
-
   const brushedSet = useMemo(() => (brushedPoints.length === 0 ? null : new Set(brushedPoints)), [brushedPoints]);
 
   const circles = useMemo(() => {
