@@ -1,15 +1,17 @@
 import {
   Center, Flex, Loader, Space, Text,
 } from '@mantine/core';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import ReactMarkdownWrapper from './ReactMarkdownWrapper';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { useStoreSelector } from '../store/store';
+import { ParticipantData } from '../storage/types';
+import { download } from './DownloadTidy';
 
 export function StudyEnd() {
-  const config = useStudyConfig();
+  const studyConfig = useStudyConfig();
   const { storageEngine } = useStorageEngine();
   const { answers } = useStoreSelector((state) => state);
 
@@ -29,14 +31,61 @@ export function StudyEnd() {
   // Disable browser back button on study end
   useDisableBrowserBack();
 
+  const [participantData, setParticipantData] = useState<ParticipantData | null>();
+  const [participantId, setParticipantId] = useState('');
+  const baseFilename = studyConfig.studyMetadata.title.replace(' ', '_');
+  useEffect(() => {
+    async function fetchParticipantId() {
+      if (storageEngine) {
+        const _participantId = await storageEngine.getCurrentParticipantId();
+        const _participantData = await storageEngine.getParticipantData();
+
+        setParticipantId(_participantId);
+        setParticipantData(_participantData);
+      }
+    }
+    fetchParticipantId();
+  }, [storageEngine]);
+  const downloadParticipant = useCallback(async () => {
+    download(JSON.stringify(participantData, null, 2), `${baseFilename}_${participantId}.json`);
+  }, [baseFilename, participantData, participantId]);
+
+  const autoDownload = studyConfig.uiConfig.autoDownloadStudy || false;
+  const autoDownloadDelay = autoDownload
+    ? studyConfig.uiConfig.autoDownloadTime || -1
+    : -1;
+
+  const [delayCounter, setDelayCounter] = useState(
+    Math.floor(autoDownloadDelay / 1000),
+  );
+
+  useEffect(() => {
+    if (completed) {
+      const interval = setInterval(() => {
+        setDelayCounter((c) => c - 1);
+      }, 1000);
+
+      if (delayCounter <= 0) {
+        if (autoDownload) {
+          downloadParticipant();
+        }
+        clearInterval(interval);
+        return () => clearInterval(interval);
+      }
+
+      return () => clearInterval(interval);
+    }
+    return () => {};
+  }, [autoDownload, completed, delayCounter, downloadParticipant]);
+
   return (
     <Center style={{ height: '100%' }}>
       <Flex direction="column">
         {completed
           ? (
             <Text size="xl" display="block">
-              {config.uiConfig.studyEndMsg
-                ? <ReactMarkdownWrapper text={config.uiConfig.studyEndMsg} />
+              {studyConfig.uiConfig.studyEndMsg
+                ? <ReactMarkdownWrapper text={studyConfig.uiConfig.studyEndMsg} />
                 : 'Thank you for completing the study. You may close this window now.'}
             </Text>
           )
