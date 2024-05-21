@@ -5,7 +5,6 @@ import {
   Text,
 } from '@mantine/core';
 import React, { useMemo } from 'react';
-import { DownloadPanel } from '../DownloadPanel';
 import { ComponentBlockWithOrderPath, StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import {
@@ -47,16 +46,6 @@ export default function AppAside() {
         onClick={() => dispatch(toggleStudyBrowser())}
       />
       <ScrollArea p="0">
-        {currentComponent === 'end' && (
-          <div
-            style={{ padding: 10, paddingBottom: 15, borderBottom: '1px solid #e9ecef' }}
-          >
-            <Text size="md" p={10} weight="bold">
-              Download
-            </Text>
-            <DownloadPanel studyConfig={studyConfig} />
-          </div>
-        )}
         <Text size="md" p={10} weight="bold">
           Study Browser
         </Text>
