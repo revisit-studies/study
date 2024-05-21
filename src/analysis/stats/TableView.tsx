@@ -116,6 +116,7 @@ export function TableView({
     ),
     labels: { confirm: 'Reject Participants', cancel: 'Cancel' },
     confirmProps: { color: 'red' },
+    cancelProps: { variant: 'subtle', color: 'dark' },
     onCancel: () => {},
     onConfirm: async () => {
       setLoading(true);
@@ -238,7 +239,7 @@ export function TableView({
             <Button disabled={checked.length === 0} onClick={openModal} color="red" size="xs">Reject Participants</Button>
           </Group>
         </Flex>
-        <Table striped>
+        <Table striped withBorder>
           <thead>
             <tr>{headers}</tr>
           </thead>
