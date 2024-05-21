@@ -179,6 +179,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
           )}
       </Card>
 
+      {openDownload && (
       <DownloadTidy
         opened={openDownload}
         close={close}
@@ -186,6 +187,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
         studyConfig={config}
         data={allParticipants}
       />
+      )}
     </Container>
   );
 }
