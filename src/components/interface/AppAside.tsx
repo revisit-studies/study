@@ -1,12 +1,10 @@
 import {
-  ActionIcon,
   Aside,
   CloseButton,
   ScrollArea,
   Text,
 } from '@mantine/core';
 import React, { useMemo } from 'react';
-import { DownloadPanel } from '../DownloadPanel';
 import { ComponentBlockWithOrderPath, StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import {
@@ -41,25 +39,13 @@ export default function AppAside() {
 
   return showStudyBrowser || (currentComponent === 'end' && studyConfig.uiConfig.autoDownloadStudy) ? (
     <Aside p="0" width={{ base: 300 }} style={{ zIndex: 0 }}>
-      <ActionIcon
+      <CloseButton
         style={{
           position: 'absolute', right: '10px', top: '10px', zIndex: 5,
         }}
         onClick={() => dispatch(toggleStudyBrowser())}
-      >
-        <CloseButton />
-      </ActionIcon>
+      />
       <ScrollArea p="0">
-        {currentComponent === 'end' && (
-          <div
-            style={{ padding: 10, paddingBottom: 15, borderBottom: '1px solid #e9ecef' }}
-          >
-            <Text size="md" p={10} weight="bold">
-              Download
-            </Text>
-            <DownloadPanel studyConfig={studyConfig} />
-          </div>
-        )}
         <Text size="md" p={10} weight="bold">
           Study Browser
         </Text>

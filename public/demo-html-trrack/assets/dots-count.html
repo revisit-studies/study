@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Trrack Demo</title>
+    <script src="https://d3js.org/d3.v7.js"></script>
+
+</head>
+
+<body>
+    <div class="container">
+        <div class="btns" style="margin-bottom: 2rem;">
+            <button id="undo">Undo</button>
+            <button id="redo">Redo</button>
+        </div>
+        <div class="non-btns">
+            <div id="dots">
+                <div>
+                    <button id="add">Add</button>
+                    <button id="rem">Remove</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script src="../../revisitUtilities/revisit-communicate.js"></script>
+
+<script type="module">
+    import { Registry, initializeTrrack } from 'https://cdn.jsdelivr.net/npm/@trrack/core@1.3.0/+esm'
+
+    // Task id should match the task's answer id in the config file
+    const taskId = 'circlesCount';
+
+    function dots(initialDots) {
+        const height = 50;
+        const radius = 10;
+        const width = 500;
+        const offset = 3;
+        const svg = d3
+            .select("#dots")
+            .append("svg")
+            .attr("height", height)
+            .attr("width", width)
+            .style("margin-top", "1em")
+            .append("g")
+            .attr("transform", `translate(${radius}, 0)`);
+
+        function update(dots) {
+            svg.attr("width", width);
+
+            svg
+                .selectAll("circle")
+                .data(dots)
+                .join(
+                    (enter) =>
+                        enter
+                            .append("circle")
+                            .attr("cx", width + 10)
+                            .attr("r", radius)
+                            .attr("fill", "#F4989C")
+                            .attr("cy", height / 2)
+                            .call((enter) =>
+                                enter.transition().attr("cx", (d) => d * (radius * 2 + offset))
+                            ),
+                    (update) => update,
+                    (exit) =>
+                        exit
+                            .transition()
+                            .attr("cx", width + 20)
+                            .remove()
+                );
+        }
+
+        update(initialDots);
+        return {
+            update
+        };
+    }
+
+    // Initial state has one dot.
+    const initialState = {
+        dots: [1]
+    };
+
+    // Create our action registry
+    const registry = Registry.create();
+
+    // Register a state action to update the dots.
+    const updateDots = registry.register(
+        "update-dots",
+        (state, task) => {
+            if (task === "add") {
+                const lastCount = state.dots[state.dots.length - 1] || 0;
+                state.dots.push(lastCount + 1);
+            } else {
+                state.dots.pop();
+            }
+        }
+    );
+
+
+    // Initialize Trrack
+    const trrack = initializeTrrack({
+        initialState,
+        registry
+    });
+
+    // Render the dots on screen using state from trrack
+    const dotActions = dots(trrack.getState().dots);
+
+    // Register a listener to update the dot chart based on trrack updates.
+    trrack.currentChange(() => {
+        const dots = trrack.getState().dots;
+        dotActions.update(dots);
+        Revisit.postAnswers({
+            [taskId]: dots.length
+        });
+        Revisit.postProvenance(trrack.graph.backend);
+    });
+
+    // Bind button to update dots
+    document.getElementById("add").onclick = () =>
+        trrack.apply("Add Dot", updateDots("add"));
+
+    document.getElementById("rem").onclick = () =>
+        trrack.apply("Remove Dot", updateDots("remove"));
+
+    // Bind undo/redo
+    document.getElementById("undo").onclick = () => trrack.undo();
+    document.getElementById("redo").onclick = () => trrack.redo();
+
+</script>
+
+</html>

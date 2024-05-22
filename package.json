@@ -24,6 +24,7 @@
     "@mantine/dates": "5.8.0",
     "@mantine/form": "^6.0.7",
     "@mantine/hooks": "^5.8.0",
+    "@mantine/modals": "^5.8.0",
     "@quentinroy/latin-square": "^1.1.1",
     "@reduxjs/toolkit": "^1.9.3",
     "@swc/helpers": "^0.4.14",
@@ -52,7 +53,7 @@
     "ts-json-schema-generator": "^1.4.1",
     "typedoc": "^0.25.4",
     "typedoc-plugin-frontmatter": "^0.0.2",
-    "typedoc-plugin-markdown": "^3.17.1",
+    "typedoc-plugin-markdown": "^4.0.1",
     "uuid": "^9.0.1",
     "vega": "^5.28.0",
     "vega-lite": "^5.17.0"

@@ -7,8 +7,6 @@ import { ErrorObject } from 'ajv';
 import { GlobalConfig, StudyConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { PREFIX } from '../utils/Prefix';
-import { useAuth } from '../store/hooks/useAuth';
-import { useStorageEngine } from '../storage/storageEngineHooks';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 
 const REVISIT_GITHUB_PUBLIC = 'https://github.com/revisit-studies/study/tree/main/public/';
@@ -21,21 +19,9 @@ type Props = {
 function ConfigSwitcher({ globalConfig, studyConfigs }: Props) {
   const { configsList } = globalConfig;
   const navigate = useNavigate();
-  const { logout } = useAuth();
-  const { storageEngine } = useStorageEngine();
 
   return (
-    <Container size="xs" px="xs" style={{ marginTop: 100, marginBottom: 100 }}>
-      {storageEngine?.getEngine() === 'firebase' ? (
-        <UnstyledButton
-          style={{ position: 'absolute', top: '30px', right: '30px' }}
-          onClick={() => {
-            logout();
-          }}
-        >
-          Logout
-        </UnstyledButton>
-      ) : null}
+    <Container size="xs" px="xs" style={{ marginTop: 60, marginBottom: 60 }}>
       <Image
         maw={150}
         mx="auto"

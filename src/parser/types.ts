@@ -27,7 +27,7 @@ export interface GlobalConfig {
  * Some of this data is displayed on the landing page when running the app, such as the title and description.
  * This data is also included in the data file that is downloaded at the end of the study, to help identify the study and version. Below is an example of a StudyMetadata entry in your study configuration file:
 
- ```JSON
+ ```js
  "studyMetadata" : {
     "title": "My New Study",
     "version": "pilot",
@@ -63,7 +63,7 @@ export interface StudyMetadata {
  * The UIConfig is used to configure the UI of the app.
  * This includes the logo, contact email, and whether to show a progress bar.
  * The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the UI Config would look in your study configuration
-``` JSON
+```js
   uiConfig:{
     "contactEmail": "test@test.com",
     "helpTextPath": "path/to/assets/help.md",
@@ -311,7 +311,15 @@ export interface BaseIndividualComponent {
 }
 
 /**
- * The MarkdownComponent interface is used to define the properties of a markdown component. The components can be used to render many different things, such as consent forms, instructions, and debriefs. Additionally, you can use the markdown component to render images, videos, and other media, with supporting text.
+ * The MarkdownComponent interface is used to define the properties of a markdown component. The components can be used to render many different things, such as consent forms, instructions, and debriefs. Additionally, you can use the markdown component to render images, videos, and other media, with supporting text. Markdown components can have responses (e.g. in a consent form), or no responses (e.g. in a help text file). Here's an example with no responses for a simple help text file:
+ *
+ * ```js
+ * {
+ *   "type": "markdown",
+ *   "path": "<study-name>/assets/help.md",
+ *   "response": []
+ * }
+ * ```
  */
 export interface MarkdownComponent extends BaseIndividualComponent {
   type: 'markdown';
@@ -326,17 +334,18 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study.
  * Your React component which you link to in the path must be default exported from its file.
  *
- * React components created this way have a generic prop type passed to the component on render, <StimulusParams<T>>, which has the following types.
+ * React components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.
+ * ```ts
  * {
  *  parameters: T;
  *  setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
  * }
- *
+ * ```
  * parameters is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component.
  * setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.
  *
  * So, for example, if I had the following ReactComponent in my config
- * ```javascript
+ * ```js
  * {
  *  type: 'react-component';
  *  path: 'my_study/CoolComponent.tsx';
@@ -349,15 +358,15 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  *
  * My react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this
  *
- * ``` typescript
+ * ```ts
  * export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) {
  *    // render something
  * }
  * ```
  *
  * For in depth examples, see the following studies, and their associated codebases.
- * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/blob/main/src/public/demo-click-accuracy-test/assets)
- * https://revisit.dev/study/demo-brush-interactions (https://github.com/revisit-studies/study/tree/main/src/public/demo-brush-interactions/assets)
+ * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v1.0.0-beta10/src/public/demo-click-accuracy-test/assets)
+ * https://revisit.dev/study/demo-brush-interactions (https://github.com/revisit-studies/study/tree/v1.0.0-beta10/src/public/demo-brush-interactions/assets)
  */
 export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
@@ -381,7 +390,7 @@ export interface ImageComponent extends BaseIndividualComponent {
 /**
  * The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder.
 
-``` JSON
+```js
   {
     "type": "website",
     "path": "path/to/study/assets/website.html",
@@ -390,7 +399,7 @@ export interface ImageComponent extends BaseIndividualComponent {
 
  * To pass a data from the config to the website, you can use the `parameters` field as below:
 
-``` JSON
+```js
   {
     "type": "website",
     "path": "path/to/website.html",
@@ -410,7 +419,7 @@ export interface ImageComponent extends BaseIndividualComponent {
 ```
  * In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:
 
-``` HTML
+```html
   <script src="../../revisitUtilities/revisit-communicate.js"></script>
   <script>
     Revisit.onDataReceive((data) => {
@@ -422,6 +431,19 @@ export interface ImageComponent extends BaseIndividualComponent {
     Revisit.postAnswers({ barChart: userAnswer });
   </script>
 ```
+
+  * If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenanceGraph` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.
+
+```js
+    const trrack = initializeTrrack({
+        initialState,
+        registry
+    });
+
+    ...
+    Revisit.postProvenance(trrack.graph.backend);
+```
+
  */
 export interface WebsiteComponent extends BaseIndividualComponent {
   type: 'website';
@@ -432,7 +454,41 @@ export interface WebsiteComponent extends BaseIndividualComponent {
 }
 
 /**
- * The QuestionnaireComponent interface is used to define the properties of a questionnaire component. A QuestionnaireComponent is used to render questions with different response types. The response types are also defined with these documentation. The main use case of this component type is to ask participants questions, without using markdown, websites, images, etc.
+ * A QuestionnaireComponent is used to render simple questions that require a response. The main use case of this component type is to ask participants questions when you don't need to render a stimulus. Please note, that even though we're not using a stimulus, the responses still require a `location`. For example this could be used to collect demographic information from a participant using the following snippet:
+ *
+ * ```js
+  {
+    "type": "questionnaire",
+    "response": [
+      {
+        "id": "gender",
+        "prompt": "Gender:",
+        "required": true,
+        "location": "belowStimulus",
+        "type": "checkbox",
+        "options": [
+          {
+            "label": "Man",
+            "value": "Man"
+          },
+          {
+            "label": "Woman",
+            "value": "Woman"
+          },
+          {
+            "label": "Genderqueer",
+            "value": "Genderqueer"
+          },
+          {
+            "label": "Third-gender",
+            "value": "Third-gender"
+          },
+          ... etc.
+        ]
+      }
+    ]
+  }
+```
  */
 export interface QuestionnaireComponent extends BaseIndividualComponent {
   type: 'questionnaire';
@@ -535,9 +591,9 @@ export type InheritedComponent = (Partial<IndividualComponent> & { baseComponent
 /**
  * The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.
 
- ``` JSON
+ ```js
  {
-    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta10/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
       ...
     },
@@ -552,11 +608,11 @@ export type InheritedComponent = (Partial<IndividualComponent> & { baseComponent
     }
 }
 ```
-<div class="info-panel">
-  <div class="info-text">For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually.
-  </div>
-</div>
-<br>
+
+:::info
+For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually.
+:::
+<br/>
 
 The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.
  */
@@ -571,7 +627,7 @@ export interface StudyConfig {
 
    * Using baseComponents:
 
-``` JSON
+```js
 "baseComponents": {
     "my-image-component": {
         "instructionLocation": "sidebar",
@@ -603,7 +659,7 @@ export interface StudyConfig {
 }
 ```
 In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `"baseComponent":"my-image-component"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below:
-``` JSON
+```js
 "components": {
     "q1": {
         "baseComponent": "my-image-component",

@@ -30,6 +30,7 @@ import { getStudyConfig } from '../utils/fetchConfig';
 import { ParticipantMetadata } from '../store/types';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import StudyNotFound from '../Study404';
+import { useAuth } from '../store/hooks/useAuth';
 
 export function Shell({ globalConfig }: {
   globalConfig: GlobalConfig;
@@ -38,6 +39,8 @@ export function Shell({ globalConfig }: {
   const studyId = useStudyId();
   const [activeConfig, setActiveConfig] = useState<Nullable<StudyConfig & { errors?: ErrorObject<string, Record<string, unknown>, unknown>[] }>>(null);
   const isValidStudyId = globalConfig.configsList.find((c) => sanitizeStringForUrl(c) === studyId);
+
+  const auth = useAuth();
 
   useEffect(() => {
     getStudyConfig(studyId, globalConfig).then((config) => {
@@ -71,14 +74,16 @@ export function Shell({ globalConfig }: {
       const metadata: ParticipantMetadata = {
         language: navigator.language,
         userAgent: navigator.userAgent,
-        resolution: JSON.parse(JSON.stringify(window.screen)),
+        resolution: {
+          width: window.screen.width, height: window.screen.height, availHeight: window.screen.availHeight, availWidth: window.screen.availWidth, colorDepth: window.screen.colorDepth, orientation: window.screen.orientation.type, pixelDepth: window.screen.pixelDepth,
+        },
         ip: ip.ip,
       };
 
       const participantSession = await storageEngine.initializeParticipantSession(searchParamsObject, activeConfig, metadata, urlParticipantId);
 
       // Initialize the redux stores
-      const newStore = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, metadata, participantSession.answers);
+      const newStore = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, metadata, participantSession.answers, auth.user.isAdmin);
       setStore(newStore);
 
       // Initialize the routing
@@ -102,7 +107,7 @@ export function Shell({ globalConfig }: {
       }]);
     }
     initializeUserStoreRouting();
-  }, [storageEngine, activeConfig, studyId, searchParams]);
+  }, [storageEngine, activeConfig, studyId, searchParams, auth.user.isAdmin]);
 
   const routing = useRoutes(routes);
 
