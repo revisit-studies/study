@@ -2,9 +2,7 @@ import {
   Badge, Box, Button, Card, Center, Text, Title, Container, Flex, Group, Popover,
 } from '@mantine/core';
 import React, { useMemo, useState } from 'react';
-import {
-  IconDatabaseExport, IconChartHistogram, IconTableExport, IconScanEye,
-} from '@tabler/icons-react';
+import { IconDatabaseExport, IconChartHistogram, IconTableExport } from '@tabler/icons-react';
 import { DateRangePicker, DateRangePickerValue } from '@mantine/dates';
 import { VegaLite } from 'react-vega';
 import { useDisclosure, useResizeObserver } from '@mantine/hooks';
@@ -28,6 +26,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
   const [openDownload, { open, close }] = useDisclosure(false);
   const navigate = useNavigate();
   const [ref, dms] = useResizeObserver();
+
   const completionTimes = allParticipants
     .filter((d) => d.completed)
     .map((d) => Math.max(...Object.values(d.answers).map((ans) => ans.endTime)));
@@ -84,26 +83,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
       <Card ref={ref} p="lg" shadow="md" withBorder>
         <Flex align="center" mb={16} justify="space-between">
           <Flex direction="column">
-            <Title order={5} mb={4}>
-              {studyId}
-              <Popover opened={checkOpened}>
-                <Popover.Target>
-                  <Button
-                    variant="subtle"
-                    color="orange"
-                    onClick={() => onCheckDetail(studyId)}
-                    onMouseEnter={openCheck}
-                    onMouseLeave={closeCheck}
-                    px={4}
-                  >
-                    <IconScanEye />
-                  </Button>
-                </Popover.Target>
-                <Popover.Dropdown>
-                  <Text>Examine this experiment</Text>
-                </Popover.Dropdown>
-              </Popover>
-            </Title>
+            <Title order={5} mb={4}>{studyId}</Title>
             <Flex direction="row" wrap="nowrap" gap="xs" align="center" mb={4}>
               <Badge size="sm" color="orange">
                 Total:&nbsp;
