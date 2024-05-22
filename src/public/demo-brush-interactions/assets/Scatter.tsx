@@ -149,6 +149,10 @@ export function Scatter({
       };
     }
     if (brushType === 'Slider Selection') {
+      if (!brushState.hasBrush) {
+        setBrushedSpace([[xScale(xMin), yScale(yMax)], [xScale(xMax), yScale(yMin)]], xScale, yScale, null);
+      }
+
       return () => setBrushedSpace([[xScale(xMin), yScale(yMax)], [xScale(xMax), yScale(yMin)]], xScale, yScale, 'clear');
     }
     if (brushType === 'Paintbrush Selection') {
@@ -157,12 +161,6 @@ export function Scatter({
 
     return () => null;
   }, [brushState.hasBrush, brushType, brushXRef, brushYRef, height, ref, setBrushedSpace, setFilteredTable, width, xMax, xMin, xScale, yMax, yMin, yScale]);
-
-  useEffect(() => {
-    if (brushType === 'Slider Selection' && xScale && yScale) {
-      setBrushedSpace([[xScale(xMin), yScale(yMax)], [xScale(xMax), yScale(yMin)]], xScale, yScale, null);
-    }
-  }, [brushType, setBrushedSpace, xMax, xMin, xScale, yMax, yMin, yScale]);
 
   const brushedSet = useMemo(() => (brushedPoints.length === 0 ? null : new Set(brushedPoints)), [brushedPoints]);
 

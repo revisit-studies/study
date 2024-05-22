@@ -311,7 +311,15 @@ export interface BaseIndividualComponent {
 }
 
 /**
- * The MarkdownComponent interface is used to define the properties of a markdown component. The components can be used to render many different things, such as consent forms, instructions, and debriefs. Additionally, you can use the markdown component to render images, videos, and other media, with supporting text.
+ * The MarkdownComponent interface is used to define the properties of a markdown component. The components can be used to render many different things, such as consent forms, instructions, and debriefs. Additionally, you can use the markdown component to render images, videos, and other media, with supporting text. Markdown components can have responses (e.g. in a consent form), or no responses (e.g. in a help text file). Here's an example with no responses for a simple help text file:
+ *
+ * ```js
+ * {
+ *   "type": "markdown",
+ *   "path": "<study-name>/assets/help.md",
+ *   "response": []
+ * }
+ * ```
  */
 export interface MarkdownComponent extends BaseIndividualComponent {
   type: 'markdown';
@@ -446,7 +454,41 @@ export interface WebsiteComponent extends BaseIndividualComponent {
 }
 
 /**
- * The QuestionnaireComponent interface is used to define the properties of a questionnaire component. A QuestionnaireComponent is used to render questions with different response types. The response types are also defined with these documentation. The main use case of this component type is to ask participants questions, without using markdown, websites, images, etc.
+ * A QuestionnaireComponent is used to render simple questions that require a response. The main use case of this component type is to ask participants questions when you don't need to render a stimulus. Please note, that even though we're not using a stimulus, the responses still require a `location`. For example this could be used to collect demographic information from a participant using the following snippet:
+ *
+ * ```js
+  {
+    "type": "questionnaire",
+    "response": [
+      {
+        "id": "gender",
+        "prompt": "Gender:",
+        "required": true,
+        "location": "belowStimulus",
+        "type": "checkbox",
+        "options": [
+          {
+            "label": "Man",
+            "value": "Man"
+          },
+          {
+            "label": "Woman",
+            "value": "Woman"
+          },
+          {
+            "label": "Genderqueer",
+            "value": "Genderqueer"
+          },
+          {
+            "label": "Third-gender",
+            "value": "Third-gender"
+          },
+          ... etc.
+        ]
+      }
+    ]
+  }
+```
  */
 export interface QuestionnaireComponent extends BaseIndividualComponent {
   type: 'questionnaire';
