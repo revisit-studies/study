@@ -18,7 +18,17 @@ import { ParticipantData } from '../../storage/types';
 import { StudyConfig } from '../../parser/types';
 import StatsVis from './StatsVis';
 
-export function StatsBoard({ studyConfig, inprogress, completed }: {studyConfig: StudyConfig, completed: ParticipantData[], inprogress: ParticipantData[]}): JSX.Element {
+export function StatsBoard({
+  studyConfig,
+  inprogress,
+  completed,
+  rejected,
+}: {
+studyConfig: StudyConfig;
+completed: ParticipantData[];
+inprogress: ParticipantData[];
+rejected: ParticipantData[];
+}) {
   const [dropdownData, setDropdownData] = useState<SelectItem[]>([]);
   const [activeParticipants, setActiveParticipants] = useState<string[]>([]);
   const { studyId } = useParams();
@@ -132,11 +142,9 @@ export function StatsBoard({ studyConfig, inprogress, completed }: {studyConfig:
       {studyConfig && (activeParticipants.length > 1 || activeParticipants.includes('All')) && (
       <StatsVis
         config={studyConfig}
-        data={
-        activeParticipants.includes('All')
+        data={activeParticipants.includes('All')
           ? completed
-          : completed.filter((d) => activeParticipants.includes(d.participantId))
-}
+          : completed.filter((d) => activeParticipants.includes(d.participantId))}
       />
       )}
       {activeParticipants.length === 0 && (

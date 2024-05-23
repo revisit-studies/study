@@ -13,7 +13,7 @@ import {
   IconSearch,
   IconX,
 } from '@tabler/icons-react';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { openConfirmModal } from '@mantine/modals';
 import { ParticipantData, StoredAnswer, StudyConfig } from '../../parser/types';
@@ -86,11 +86,13 @@ function MetaCell(props:{metaData: ParticipantMetadata}) {
 export function TableView({
   completed,
   inProgress,
+  rejected,
   studyConfig,
   refresh,
 }: {
   completed: ParticipantData[];
   inProgress: ParticipantData[];
+  rejected: ParticipantData[];
   studyConfig: StudyConfig;
   refresh: ()=> void;
 }) {
@@ -128,12 +130,14 @@ export function TableView({
     },
   });
 
+  const allParticipants = useMemo(() => [...completed, ...inProgress, ...rejected], [completed, inProgress, rejected]);
+
   function handleSelect(value: string) {
     if (value === 'all') {
-      if (checked.length === [...completed, ...inProgress].length) {
+      if (checked.length === allParticipants.length) {
         setChecked([]);
       } else {
-        setChecked([...completed, ...inProgress].map((record) => record.participantId));
+        setChecked(allParticipants.map((record) => record.participantId));
       }
     } else if (!checked.includes(value)) {
       setChecked([...checked, value]);
@@ -145,7 +149,7 @@ export function TableView({
   const headers = [
     <th key="action">
       <Flex justify="center">
-        <Checkbox mb={-4} checked={checked.length === [...completed, ...inProgress].length} onChange={() => handleSelect('all')} />
+        <Checkbox mb={-4} checked={checked.length === allParticipants.length} onChange={() => handleSelect('all')} />
       </Flex>
     </th>,
     <th key="ID">ID</th>,
@@ -162,7 +166,7 @@ export function TableView({
     <th key="total-duration">Total Duration</th>,
   ];
 
-  const rows = [...completed, ...inProgress].map((record) => (
+  const rows = allParticipants.map((record) => (
     <tr key={record.participantId}>
       <td>
         <Flex justify="center">
@@ -220,7 +224,7 @@ export function TableView({
   ));
 
   return (
-    [...completed, ...inProgress].length > 0 ? (
+    allParticipants.length > 0 ? (
       <>
         <LoadingOverlay visible={loading} overlayBlur={2} />
         <Flex justify="space-between" mb={8} p={8}>
@@ -229,7 +233,7 @@ export function TableView({
               w={350}
               variant="filled"
               placeholder="Search for a participant ID"
-              data={[...completed, ...inProgress].map((record) => ({ value: record.participantId, label: record.participantId }))}
+              data={allParticipants.map((record) => ({ value: record.participantId, label: record.participantId }))}
               searchable
               icon={<IconSearch size={14} />}
               onChange={(value) => value && handleSelect(value)}
@@ -239,12 +243,14 @@ export function TableView({
             <Button disabled={checked.length === 0} onClick={openModal} color="red" size="xs">Reject Participants</Button>
           </Group>
         </Flex>
-        <Table striped withBorder>
-          <thead>
-            <tr>{headers}</tr>
-          </thead>
-          <tbody>{rows}</tbody>
-        </Table>
+        <Box style={{ width: '100%', overflowX: 'scroll' }}>
+          <Table striped withBorder>
+            <thead>
+              <tr>{headers}</tr>
+            </thead>
+            <tbody>{rows}</tbody>
+          </Table>
+        </Box>
       </>
     ) : (
       <Flex justify="center" align="center" style={{ height: '100%' }}>
