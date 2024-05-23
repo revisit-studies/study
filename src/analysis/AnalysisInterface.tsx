@@ -13,6 +13,7 @@ import { GlobalConfig, ParticipantData, StudyConfig } from '../parser/types';
 import { getStudyConfig } from '../utils/fetchConfig';
 import { TableView } from './stats/TableView';
 import { useStorageEngine } from '../storage/storageEngineHooks';
+import { StatsBoard } from './stats/StatsBoard';
 
 export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   const { globalConfig } = props;
@@ -63,7 +64,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
           </Tabs.Panel>
 
           <Tabs.Panel value="stats" pt="xs">
-            statsboard
+            {studyConfig && <StatsBoard studyConfig={studyConfig} completed={completed} inprogress={inProgress} />}
           </Tabs.Panel>
 
           <Tabs.Panel value="settings" pt="xs">

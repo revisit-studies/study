@@ -2,7 +2,7 @@ import {
   Badge,
   Box,
   Container,
-  Group, LoadingOverlay, MultiSelect,
+  Group, MultiSelect,
   Paper,
   SelectItem,
   Stack, Tabs,
@@ -13,23 +13,12 @@ import React, { useEffect, useState } from 'react';
 import {
   IconSquareCheck, IconProgressBolt, IconArrowUp,
 } from '@tabler/icons-react';
-import { useParams, useSearchParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { ParticipantData } from '../../storage/types';
-import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
-import { GlobalConfig, StudyConfig } from '../../parser/types';
-import { getStudyConfig } from '../../utils/fetchConfig';
-import { isStudyCompleted } from '../utils';
+import { StudyConfig } from '../../parser/types';
 import StatsVis from './StatsVis';
 
-export function StatsBoard(props: {globalConfig : GlobalConfig, completed: ParticipantData[], inprogress: ParticipantData[]}): JSX.Element {
-  const { globalConfig, inprogress, completed } = props;
-  // const studyIds = globalConfig.configsList;
-  const [studyconfig, setStudyConfig] = useState<StudyConfig>();
-  // const [activeExp, setActiveExp] = useState<string | null>(null);
-  // const [expData, setExpData] = useState<ParticipantData[]>([]);
-  // const [completed, setCompleted] = useState<ParticipantData[]>([]);
-  // const [inprogress, setInprogress] = useState<ParticipantData[]>([]);
-  // const [loading, setLoading] = useState(false);
+export function StatsBoard({ studyConfig, inprogress, completed }: {studyConfig: StudyConfig, completed: ParticipantData[], inprogress: ParticipantData[]}): JSX.Element {
   const [dropdownData, setDropdownData] = useState<SelectItem[]>([]);
   const [activeParticipants, setActiveParticipants] = useState<string[]>([]);
   const { studyId } = useParams();
@@ -39,20 +28,6 @@ export function StatsBoard(props: {globalConfig : GlobalConfig, completed: Parti
       setDropdownData([{ label: 'All', value: 'All' }, ...completed.map((d) => ({ value: d.participantId, label: d.participantId, disabled: true }))]);
     } else setDropdownData([{ label: 'All', value: 'All' }, ...completed.map((d) => ({ value: d.participantId, label: d.participantId }))]);
   }, [completed, activeParticipants]);
-
-  useEffect(() => {
-    const updateParams = async () => {
-      if (studyId) {
-        const config = await getStudyConfig(studyId, globalConfig);
-        if (config) setStudyConfig(config);
-      }
-    };
-    updateParams();
-  }, [studyId]);
-
-  const reSetSelection = () => {
-    setActiveParticipants([]);
-  };
 
   return (
     <Container fluid>
@@ -154,9 +129,9 @@ export function StatsBoard(props: {globalConfig : GlobalConfig, completed: Parti
         </Box>
       )}
 
-      {studyconfig && (activeParticipants.length > 1 || activeParticipants.includes('All')) && (
+      {studyConfig && (activeParticipants.length > 1 || activeParticipants.includes('All')) && (
       <StatsVis
-        config={studyconfig}
+        config={studyConfig}
         data={
         activeParticipants.includes('All')
           ? completed
