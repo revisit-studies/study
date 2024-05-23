@@ -158,7 +158,7 @@ export function TableView({
     ...uniqueTrials.flatMap((trial) => [
       <th key={`header-${trial.componentName}-${trial.timesSeenInBlock}`}>{trial.componentName}</th>,
       <th key={`header-${trial.componentName}-${trial.timesSeenInBlock}-duration`}>
-        {trial.componentName}
+        <span style={{ whiteSpace: 'nowrap' }}>{trial.componentName}</span>
         {' '}
         Duration
       </th>,
