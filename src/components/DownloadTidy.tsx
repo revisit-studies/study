@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Box,
   Button,
   Flex,
@@ -9,7 +10,7 @@ import {
   Table,
   Text,
 } from '@mantine/core';
-import { IconLayoutColumns, IconTableExport } from '@tabler/icons-react';
+import { IconLayoutColumns, IconTableExport, IconX } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 import merge from 'lodash.merge';
 import { ParticipantData } from '../storage/types';
@@ -183,7 +184,14 @@ export function DownloadTidy({
                     minWidth: ['description', 'instruction', 'participantId'].includes(header) ? 200 : undefined,
                   }}
                 >
-                  {header}
+                  <Flex direction="row" justify="space-between" align="center">
+                    {header}
+                    {!REQUIRED_PROPS.includes(header as never) && (
+                    <ActionIcon onClick={() => setSelectedProperties(selectedProperties.filter((prop) => prop !== header))} style={{ marginBottom: -3, marginLeft: 8 }}>
+                      <IconX size={16} />
+                    </ActionIcon>
+                    )}
+                  </Flex>
                 </th>
               ))}
             </tr>
