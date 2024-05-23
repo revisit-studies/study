@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Box,
   Button,
   Flex,
@@ -9,7 +10,7 @@ import {
   Table,
   Text,
 } from '@mantine/core';
-import { IconLayoutColumns, IconTableExport } from '@tabler/icons-react';
+import { IconLayoutColumns, IconTableExport, IconX } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 import merge from 'lodash.merge';
 import { ParticipantData } from '../storage/types';
@@ -17,8 +18,11 @@ import {
   Answer, IndividualComponent, Prettify, StudyConfig,
 } from '../parser/types';
 import { isInheritedComponent } from '../parser/parser';
+import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 
 export const OPTIONAL_COMMON_PROPS = [
+  'status',
+  'percentComplete',
   'description',
   'instruction',
   'answer',
@@ -56,6 +60,7 @@ export function download(graph: string, filename: string) {
 }
 
 function participantDataToRows(participant: ParticipantData, studyConfig: StudyConfig, properties: Property[]): TidyRow[] {
+  const percentComplete = ((Object.entries(participant.answers).length / (getSequenceFlatMap(participant.sequence).length - 1)) * 100).toFixed(2);
   return Object.entries(participant.answers).map(([trialIdentifier, trialAnswer]) => {
     // Get the whole component, including the base component if there is inheritance
     const trialId = trialIdentifier.split('_').slice(0, -1).join('_');
@@ -75,6 +80,13 @@ function participantDataToRows(participant: ParticipantData, studyConfig: StudyC
         responseId: key,
       };
 
+      if (properties.includes('status')) {
+        // eslint-disable-next-line no-nested-ternary
+        tidyRow.status = participant.rejected ? 'rejected' : (participant.completed ? 'completed' : 'in progress');
+      }
+      if (properties.includes('percentComplete')) {
+        tidyRow.percentComplete = percentComplete;
+      }
       if (properties.includes('description')) {
         tidyRow.description = completeComponent.description;
       }
@@ -183,7 +195,14 @@ export function DownloadTidy({
                     minWidth: ['description', 'instruction', 'participantId'].includes(header) ? 200 : undefined,
                   }}
                 >
-                  {header}
+                  <Flex direction="row" justify="space-between" align="center">
+                    {header}
+                    {!REQUIRED_PROPS.includes(header as never) && (
+                    <ActionIcon onClick={() => setSelectedProperties(selectedProperties.filter((prop) => prop !== header))} style={{ marginBottom: -3, marginLeft: 8 }}>
+                      <IconX size={16} />
+                    </ActionIcon>
+                    )}
+                  </Flex>
                 </th>
               ))}
             </tr>
