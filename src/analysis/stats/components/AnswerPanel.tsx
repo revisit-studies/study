@@ -2,12 +2,11 @@ import {
   Box, Card, Container, Flex, Title,
 } from '@mantine/core';
 import React, { useEffect, useMemo, useState } from 'react';
-import { VegaLite } from 'react-vega';
+import { VegaLite, VisualizationSpec } from 'react-vega';
 import { useResizeObserver } from '@mantine/hooks';
 import { IndividualComponent, InheritedComponent, RadioResponse } from '../../../parser/types';
 
-export default function AnswerPanel(props: { data: Record<string, Record<string, unknown>>, trialName: string, config: IndividualComponent | InheritedComponent | undefined}) {
-  const { data, config, trialName } = props;
+export default function AnswerPanel({ data, config }: { data: Record<string, Record<string, unknown>>, config: IndividualComponent | InheritedComponent | undefined}) {
   const [correctUser, setCorrectUser] = useState<string[]>([]);
   const [incorrectUser, setIncorrectUser] = useState<string[]>([]);
   const [categoricalStats, setCategoricalStats] = useState<{option:string, count:number, correct:boolean}[]>([]);
@@ -19,7 +18,8 @@ export default function AnswerPanel(props: { data: Record<string, Record<string,
     const incorrect:string[] = [];
     if (responses) {
       responses.forEach((response) => {
-        const { id, correctAnswer } = response;
+        const { correctAnswer } = config;
+        const { id } = response;
         if (correctAnswer) {
           for (const [user, answers] of Object.entries(data)) {
             const ans = answers[id];
@@ -44,7 +44,7 @@ export default function AnswerPanel(props: { data: Record<string, Record<string,
             const categoryData:{option:string, count:number, correct:boolean}[] = (response as RadioResponse).options.map((op) => ({
               option: op.value as string,
               count: map.get(op.value as string) || 0,
-              correct: op.value === correctAnswer,
+              correct: op.value === correctAnswer.find((ans) => ans.id === id)?.answer,
             }));
             setCategoricalStats(categoryData);
           }
@@ -118,8 +118,8 @@ export default function AnswerPanel(props: { data: Record<string, Record<string,
           {/* <CorrectVis correct={correctUser} incorrect={incorrectUser} trialName={trialName} /> */}
           {correctUser.length === 0 && incorrectUser.length === 0
             ? <Title order={4}> No correct answer for this question</Title>
-            : <VegaLite spec={specBoxer} actions={false} />}
-          {categoricalStats.length > 0 && <VegaLite spec={specBarChart} actions={false} />}
+            : <VegaLite spec={specBoxer as unknown as VisualizationSpec} actions={false} />}
+          {categoricalStats.length > 0 && <VegaLite spec={specBarChart as unknown as VisualizationSpec} actions={false} />}
 
           <Box />
         </Card>
