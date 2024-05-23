@@ -1,12 +1,5 @@
 import {
-  Box, Spoiler, Stack, Table, Text,
-  Flex,
-  Checkbox,
-  Button,
-  Tooltip,
-  LoadingOverlay,
-  Group,
-  Select,
+  Box, Spoiler, Stack, Table, Text, Flex, Checkbox, Button, Tooltip, LoadingOverlay, Group, Select, Space,
 } from '@mantine/core';
 import {
   IconCheck, IconProgress,
@@ -253,9 +246,12 @@ export function TableView({
         </Box>
       </>
     ) : (
-      <Flex justify="center" align="center" style={{ height: '100%' }}>
-        <Text>No data available</Text>
-      </Flex>
+      <>
+        <Space h="xl" />
+        <Flex justify="center" align="center">
+          <Text>No data available</Text>
+        </Flex>
+      </>
     )
   );
 }
