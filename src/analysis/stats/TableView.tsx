@@ -18,7 +18,7 @@ import { useParams } from 'react-router-dom';
 import { openConfirmModal } from '@mantine/modals';
 import { ParticipantData, StoredAnswer, StudyConfig } from '../../parser/types';
 import { ParticipantMetadata } from '../../store/types';
-import { configSequenceToUniqueTrials, findBlockForStep } from '../../utils/getSequenceFlatMap';
+import { configSequenceToUniqueTrials, findBlockForStep, getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 
 function AnswerCell({ cellData }: { cellData: StoredAnswer }) {
@@ -173,13 +173,21 @@ export function TableView({
         {record.participantId}
       </td>
       <td>
-        {
+        <Flex direction="row" align="center">
+          {
           // eslint-disable-next-line no-nested-ternary
           record.rejected ? <Tooltip label="Rejected"><IconX size={16} color="red" style={{ marginBottom: -3 }} /></Tooltip>
             : record.completed
               ? <Tooltip label="Completed"><IconCheck size={16} color="teal" style={{ marginBottom: -3 }} /></Tooltip>
               : <Tooltip label="In Progress"><IconProgress size={16} color="orange" style={{ marginBottom: -3 }} /></Tooltip>
         }
+          {!record.completed && !record.rejected && (
+          <Text size="sm" mb={-1} ml={4}>
+            {Object.entries(record.answers).length / (getSequenceFlatMap(record.sequence).length - 1)}
+            %
+          </Text>
+          )}
+        </Flex>
       </td>
       {record.metadata ? <MetaCell metaData={record.metadata} /> : <td>N/A</td>}
       {uniqueTrials.map((trial) => {
