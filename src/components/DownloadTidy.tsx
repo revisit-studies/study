@@ -20,6 +20,7 @@ import {
 import { isInheritedComponent } from '../parser/parser';
 
 export const OPTIONAL_COMMON_PROPS = [
+  'status',
   'description',
   'instruction',
   'answer',
@@ -76,6 +77,10 @@ function participantDataToRows(participant: ParticipantData, studyConfig: StudyC
         responseId: key,
       };
 
+      if (properties.includes('status')) {
+        // eslint-disable-next-line no-nested-ternary
+        tidyRow.status = participant.rejected ? 'rejected' : (participant.completed ? 'completed' : 'in progress');
+      }
       if (properties.includes('description')) {
         tidyRow.description = completeComponent.description;
       }
