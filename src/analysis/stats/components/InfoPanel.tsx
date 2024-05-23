@@ -4,9 +4,14 @@ import {
 } from '@mantine/core';
 import { VegaLite, VisualizationSpec } from 'react-vega';
 import { useResizeObserver } from '@mantine/hooks';
-import { toDisplayData } from '../../utils';
 import { StoredAnswer } from '../../../store/types';
 import { IndividualComponent, InheritedComponent } from '../../../parser/types';
+
+function toDisplayData(milliseconds:number) {
+  const minutes = Math.floor(milliseconds / (1000 * 60));
+  const seconds = ((milliseconds % (1000 * 60)) / 1000).toFixed(2);
+  return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
+}
 
 export interface BasicStats {
   min: number;

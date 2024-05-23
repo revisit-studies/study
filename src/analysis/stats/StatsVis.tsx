@@ -9,7 +9,7 @@ import InfoPanel from './components/InfoPanel';
 import AnswerPanel from './components/AnswerPanel';
 import { ParticipantData } from '../../storage/types';
 import { StudyConfig, IndividualComponent, InheritedComponent } from '../../parser/types';
-import { extractTrialName, flattenSequence } from '../utils';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 export default function StatsVis(props: { data: ParticipantData[], config: StudyConfig;}) {
   const { config, data } = props;
@@ -23,7 +23,7 @@ export default function StatsVis(props: { data: ParticipantData[], config: Study
   const getAllTrials = () => {
     const allTrials = new Set();
     data.forEach((d) => {
-      const trials = flattenSequence(d.sequence).map((trial) => extractTrialName(trial));
+      const trials = getSequenceFlatMap(d.sequence);
       trials.forEach((trial) => allTrials.add(trial));
     });
     return Array.from(allTrials);
@@ -32,7 +32,7 @@ export default function StatsVis(props: { data: ParticipantData[], config: Study
   const oneActiveParticipantChange = (value: string) => {
     setActiveParticipant(value);
     if (value === 'All') setSequence(getAllTrials() as string[]);
-    else setSequence(flattenSequence(data.filter((d) => d.participantId === value)[0].sequence));
+    else setSequence(getSequenceFlatMap(data.filter((d) => d.participantId === value)[0].sequence));
   };
 
   useEffect(() => {
@@ -43,7 +43,8 @@ export default function StatsVis(props: { data: ParticipantData[], config: Study
       // get answers
       data.forEach((d) => {
         Object.entries(d.answers).forEach(([key, value]) => {
-          if (extractTrialName(key) === activeTrial) {
+          const trialName = key.split('_').slice(0, -1).join('_');
+          if (trialName === activeTrial) {
             activeanswers[d.participantId] = value;
           }
         });
