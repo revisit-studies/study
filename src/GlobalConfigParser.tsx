@@ -11,10 +11,10 @@ import { PREFIX } from './utils/Prefix';
 import { ProtectedRoute } from './ProtectedRoute';
 import { Login } from './Login';
 import { AuthProvider } from './store/hooks/useAuth';
-import { AnalysisDashboard } from './analysis/AnalysisDashboard';
-import { GlobalSettings } from './analysis/dashboard/GlobalSettings';
+import { AnalysisDashboard } from './analysis/dashboard/AnalysisDashboard';
+import { GlobalSettings } from './components/settings/GlobalSettings';
 import { NavigateWithParams } from './utils/NavigateWithParams';
-import AppHeader from './analysis/components/interface/AppHeader';
+import AppHeader from './analysis/interface/AppHeader';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);

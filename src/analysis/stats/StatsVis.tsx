@@ -1,12 +1,11 @@
 import {
   Box, Button, Center, Flex, Group, Paper, ScrollArea, Select, Stack, Title,
 } from '@mantine/core';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { IconArrowDown, IconArrowLeft } from '@tabler/icons-react';
 import { StoredAnswer } from '../../store/types';
-// import { PREFIX } from '../../components/GlobalConfigParser';
-import InfoPanel from './components/InfoPanel';
-import AnswerPanel from './components/AnswerPanel';
+import InfoPanel from './InfoPanel';
+import AnswerPanel from './AnswerPanel';
 import { ParticipantData } from '../../storage/types';
 import { StudyConfig, IndividualComponent, InheritedComponent } from '../../parser/types';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
@@ -20,20 +19,20 @@ export default function StatsVis(props: { data: ParticipantData[], config: Study
   const [activeAnswers, setActiveAnswers] = useState<Record<string, StoredAnswer>>({});
   const [activeConfig, setActiveConfig] = useState< IndividualComponent | InheritedComponent>();
 
-  const getAllTrials = () => {
+  const getAllTrials = useCallback(() => {
     const allTrials = new Set();
     data.forEach((d) => {
       const trials = getSequenceFlatMap(d.sequence);
       trials.forEach((trial) => allTrials.add(trial));
     });
     return Array.from(allTrials);
-  };
+  }, [data]);
 
-  const oneActiveParticipantChange = (value: string) => {
+  const oneActiveParticipantChange = useCallback((value: string) => {
     setActiveParticipant(value);
     if (value === 'All') setSequence(getAllTrials() as string[]);
     else setSequence(getSequenceFlatMap(data.filter((d) => d.participantId === value)[0].sequence));
-  };
+  }, [data, getAllTrials]);
 
   useEffect(() => {
     setParticipantsList(['All', ...data.map((d) => d.participantId)]);
@@ -56,7 +55,7 @@ export default function StatsVis(props: { data: ParticipantData[], config: Study
       setActiveConfig(trialConfig);
     }
     if (data.length > 0) oneActiveParticipantChange('All');
-  }, [activeTrial, data]);
+  }, [activeTrial, config.components, data, oneActiveParticipantChange]);
 
   const extractAnswers = () => {
     const answers: Record<string, Record<string, unknown>> = {};
@@ -104,7 +103,7 @@ export default function StatsVis(props: { data: ParticipantData[], config: Study
           ? (
             <Stack align="flex-start" p={5}>
               <InfoPanel config={activeConfig} trialName={activeTrial} data={activeAnswers} />
-              <AnswerPanel config={activeConfig} trialName={activeTrial} data={extractAnswers()} />
+              <AnswerPanel config={activeConfig} data={extractAnswers()} />
             </Stack>
           )
           : (

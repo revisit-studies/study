@@ -8,10 +8,10 @@ import {
 import React, {
   useCallback, useEffect, useMemo, useState,
 } from 'react';
-import AppHeader from './components/interface/AppHeader';
+import AppHeader from './interface/AppHeader';
 import { GlobalConfig, ParticipantData, StudyConfig } from '../parser/types';
 import { getStudyConfig } from '../utils/fetchConfig';
-import { TableView } from './stats/TableView';
+import { TableView } from './table/TableView';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { StatsBoard } from './stats/StatsBoard';
 
@@ -57,7 +57,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
           <Tabs.List>
             <Tabs.Tab value="table" icon={<IconTable size={16} />}>Table View</Tabs.Tab>
             <Tabs.Tab value="stats" icon={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
-            <Tabs.Tab value="settings" icon={<IconPlayerPlay size={16} />}>Individual Replay</Tabs.Tab>
+            <Tabs.Tab value="participant" icon={<IconPlayerPlay size={16} />}>Individual Replay</Tabs.Tab>
           </Tabs.List>
           <Tabs.Panel value="table" pt="xs" style={{ height: 'calc(100% - 38px - 10px)', width: '100%', overflow: 'scroll' }}>
             {studyConfig && <TableView completed={completed} inProgress={inProgress} studyConfig={studyConfig} refresh={getData} />}
@@ -67,8 +67,8 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
             {studyConfig && <StatsBoard studyConfig={studyConfig} completed={completed} inprogress={inProgress} />}
           </Tabs.Panel>
 
-          <Tabs.Panel value="settings" pt="xs">
-            Settings tab content
+          <Tabs.Panel value="participant" pt="xs">
+            Participant content
           </Tabs.Panel>
         </Tabs>
       </Container>
