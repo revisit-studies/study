@@ -43,10 +43,10 @@ rejected: ParticipantData[];
             <Checkbox value="rejected" label="Rejected" />
           </Checkbox.Group>
         </Flex>
-        {(participantsToVisualize.length > 1) ? (
+        {(participantsToVisualize.length > 0) ? (
           <StatsVis
             config={studyConfig}
-            data={completed}
+            data={participantsToVisualize}
           />
         ) : (
           <>

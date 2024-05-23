@@ -10,8 +10,7 @@ import { ParticipantData } from '../../storage/types';
 import { StudyConfig, IndividualComponent, InheritedComponent } from '../../parser/types';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
-export default function StatsVis(props: { data: ParticipantData[], config: StudyConfig;}) {
-  const { config, data } = props;
+export default function StatsVis({ config, data }: { data: ParticipantData[], config: StudyConfig }) {
   const [sequence, setSequence] = useState<string[]>([]);
   const [participantsList, setParticipantsList] = useState<string[]>(['All']);
   const [activeParticipant, setActiveParticipant] = useState<string | null>(null);
@@ -71,53 +70,47 @@ export default function StatsVis(props: { data: ParticipantData[], config: Study
   };
 
   return (
-    <Paper p={10} m={10} maw={1200} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
-      <Flex>
-        <Box pr={5} sx={{ boxShadow: '3px 0 0 0 orange' }}>
-          <Center><Title order={4}>Trials</Title></Center>
-          <ScrollArea.Autosize maxHeight={600} mih={500} maw={200} mx="auto">
-            <Select data={participantsList} defaultValue="All" onChange={oneActiveParticipantChange} />
-            {activeParticipant === 'All'
-                  && (
-                  <Group mt={20}>
-                    {sequence.map((trial, idx) => <Button key={`btn-trial-${idx}`} variant={activeTrial === `${trial}` ? 'filled' : 'outline'} onClick={() => onTrialClick(trial)}>{`${trial}`}</Button>) }
-                  </Group>
-                  )}
-
-            {activeParticipant !== 'All'
-                  && (
-                  <Stack mt={20} spacing="xs" align="center">
-                    {sequence.map((trial, idx) => (
-                      <>
-                        <Button variant={activeTrial === `${trial}_${idx}` ? 'filled' : 'outline'}>{`${trial}_${idx}`}</Button>
-                        <IconArrowDown size={15} />
-                      </>
-                    ))}
-                  </Stack>
-                  )}
-
-          </ScrollArea.Autosize>
-        </Box>
-
-        { activeTrial.length > 0
-          ? (
-            <Stack align="flex-start" p={5}>
-              <InfoPanel config={activeConfig} trialName={activeTrial} data={activeAnswers} />
-              <AnswerPanel config={activeConfig} data={extractAnswers()} />
-            </Stack>
-          )
-          : (
-            <Center>
-              <Title order={2} ml={10}>
-                <IconArrowLeft size={30} />
-                {' '}
-                Please Select a trial to view the stats
-              </Title>
-            </Center>
+    <Flex>
+      <Box pr={5} sx={{ boxShadow: '3px 0 0 0 orange' }}>
+        <Center><Title order={4}>Trials</Title></Center>
+        <ScrollArea.Autosize maxHeight={600} mih={500} maw={200} mx="auto">
+          <Select data={participantsList} defaultValue="All" onChange={oneActiveParticipantChange} />
+          {activeParticipant === 'All' && (
+            <Group mt={20}>
+              {sequence.map((trial, idx) => <Button key={`btn-trial-${idx}`} variant={activeTrial === `${trial}` ? 'filled' : 'outline'} onClick={() => onTrialClick(trial)}>{`${trial}`}</Button>) }
+            </Group>
           )}
 
-      </Flex>
+          {activeParticipant !== 'All' && (
+            <Stack mt={20} spacing="xs" align="center">
+              {sequence.map((trial, idx) => (
+                <>
+                  <Button variant={activeTrial === `${trial}_${idx}` ? 'filled' : 'outline'}>{`${trial}_${idx}`}</Button>
+                  <IconArrowDown size={15} />
+                </>
+              ))}
+            </Stack>
+          )}
 
-    </Paper>
+        </ScrollArea.Autosize>
+      </Box>
+
+      { activeTrial.length > 0
+        ? (
+          <Stack align="flex-start" p={5}>
+            <InfoPanel config={activeConfig} trialName={activeTrial} data={activeAnswers} />
+            <AnswerPanel config={activeConfig} data={extractAnswers()} />
+          </Stack>
+        )
+        : (
+          <Center>
+            <Title order={2} ml={10}>
+              <IconArrowLeft size={30} />
+              {' '}
+              Please Select a trial to view the stats
+            </Title>
+          </Center>
+        )}
+    </Flex>
   );
 }
