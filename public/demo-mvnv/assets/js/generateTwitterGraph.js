@@ -286,7 +286,6 @@
   });
     
   // Inform revisit that the stimuli is loaded.
-  console.log(window)
   Revisit.postReady();
   // saveToFile(bareBonesGraph,'layoutGraph.json')
   
