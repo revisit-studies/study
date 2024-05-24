@@ -28,19 +28,16 @@ export default function RadioInput({
         // This overrides the answers error. Which..is bad?
       error={generateErrorMessage(response, answer, options)}
     >
-      {leftLabel ? <Text>{leftLabel}</Text> : null}
-      <Group mt="xs">
-        {options.map((radio) => (
-          <Radio
-            disabled={disabled}
-            value={radio.value}
-            label={radio.label}
-            key={radio.label}
-          />
-        ))}
-      </Group>
-      <Text>{rightLabel}</Text>
-
+      {leftLabel ? <Text mt={-7}>{leftLabel}</Text> : null}
+      {options.map((radio) => (
+        <Radio
+          disabled={disabled}
+          value={radio.value}
+          label={radio.label}
+          key={radio.label}
+        />
+      ))}
+      <Text mt={-7}>{rightLabel}</Text>
     </Radio.Group>
   );
 }
