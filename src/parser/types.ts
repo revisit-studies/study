@@ -508,7 +508,50 @@ export interface QuestionnaireComponent extends BaseIndividualComponent {
 
 export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent;
 
-interface DeterministicInterruption {
+/** The DeterministicInterruption interface is used to define an interruption that will be shown at a specific location in the block.
+ *
+ * For example, if you want to show an interruption after the second component in the block, you would set firstLocation to 2. If you want to show an interruption after every 3 components, you would set spacing to 3. If you want to show an interruption after the second component and then every 3 components, you would set firstLocation to 2 and spacing to 3.
+ *
+ * The components property is an array of the components that will be inserted at the location specified by firstLocation and spacing. These components should reference components in the StudyConfig.components section of the config.
+ *
+ * Here's an example of how to use the DeterministicInterruption:
+ *
+ * ```js
+ * {
+ *   "order": "fixed",
+ *   "components": [
+ *     "component1",
+ *     "component2",
+ *     "component3",
+ *     "component4",
+ *     "component5",
+ *     "component6"
+ *   ],
+ *   "interruptions": [
+ *     {
+ *       "firstLocation": 2,
+ *       "spacing": 3,
+ *       "components": [
+ *         "interruption1",
+ *         "interruption2"
+ *       ]
+ *     }
+ *   ]
+ * }
+ * ```
+ *
+ * The resulting sequence array could be:
+ *
+ * ```js
+ * [
+ *   ["component1", "component2", "interruption1", "component3", "component4", "component5", "interruption2", "component6"],
+ *   ["component1", "component2", "interruption1", "component3", "component4", "component5", "interruption2", "component6"],
+ *   ["component1", "component2", "interruption1", "component3", "component4", "component5", "interruption2", "component6"],
+ *   ...
+ * ]
+ * ```
+*/
+export interface DeterministicInterruption {
   /** The Location of the first instance of the interruption. If this is set to 2, the interruption will be shown after the second component (inserted at index 2). */
   firstLocation: number;
   /** The number of components between breaks. */
@@ -517,7 +560,50 @@ interface DeterministicInterruption {
   components: (string)[]
 }
 
-interface RandomInterruption {
+/** The RandomInterruption interface is used to define an interruption that will be shown randomly in the block.
+ *
+ * For example, if you want to show a single interruption randomly in the block, you would set spacing to random and numInterruptions to 1. If you want to show 3 interruptions randomly in the block, you would set spacing to random and numInterruptions to 3.
+ *
+ * The components property is an array of the components that will be inserted randomly in the block. These components should reference components in the StudyConfig.components section of the config.
+ *
+ * Here's an example of how to use the RandomInterruption:
+ *
+ * ```js
+ * {
+ *   "order": "fixed",
+ *   "components": [
+ *     "component1",
+ *     "component2",
+ *     "component3",
+ *     "component4",
+ *     "component5",
+ *     "component6"
+ *   ],
+ *   "interruptions": [
+ *     {
+ *       "spacing": "random",
+ *       "numInterruptions": 3,
+ *       "components": [
+ *         "interruption1",
+ *         "interruption2"
+ *       ]
+ *     }
+ *   ]
+ * }
+ * ```
+ *
+ * The resulting sequence array could be:
+ *
+ * ```js
+ * [
+ *   ["component1", "interruption1", "interruption2", "component2", "component3", "component4", "component5", "component6"],
+ *   ["component1", "component2", "component3", "interruption1", "interruption2", "component4", "component5", "component6"],
+ *   ["component1", "component2", "component3", "component4", "component5", "interruption1", "interruption2", "component6"],
+ *   ...
+ * ]
+ * ```
+*/
+export interface RandomInterruption {
   /** If spacing is set to random, reVISit will add interruptions randomly. These interruptions will not ever be displayed as the first component in the block. */
   spacing: 'random';
   /** The number of times the interruption will be randomly added */
@@ -526,6 +612,7 @@ interface RandomInterruption {
   components: (string)[];
 }
 
+/**  The InterruptionBlock interface is used to define interruptions in a block. These can be used for breaks or attention checks. Interruptions can be deterministic or random. */
 export type InterruptionBlock = DeterministicInterruption | RandomInterruption;
 
 /** The IndividualComponentSingleResponseCondition interface is used to define a SkipCondition based on a single answer to a specific component. If the component is repeated within the block, this condition will only check the first instance of the component once the order is flattened. */
@@ -581,7 +668,106 @@ export interface RepeatedComponentBlockCondition {
 /** The SkipConditions interface is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Skip conditions work recursively, that is if you have a nested block, they parent blocks' skip conditions will be considered when computing the skip logic. */
 export type SkipConditions = (IndividualComponentSingleResponseCondition | IndividualComponentAllResponsesCondition | ComponentBlockCondition | RepeatedComponentBlockCondition)[];
 
-/** The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a latin square. */
+/** The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).
+ *
+ * The pure random assignment is a random assignment with no guarantees. For example, it's possible, though unlikely, that one component would show up in the first position 10 times in a row. Here's a snippet that shows how to use the random order:
+ *
+ * ```js
+ * {
+ *   "order": "random",
+ *   "components": [
+ *     "component1",
+ *     "component2",
+ *     "component3"
+ *   ]
+ * }
+ *
+ * This snippet would produce a random order of the components in the sequence array. For example, the resulting sequence array could be :
+ *
+ * ```js
+ * [
+ *   ["component2", "component3", "component1"],
+ *   ["component1", "component3", "component2"],
+ *   ["component3", "component1", "component2"],
+ *   ...
+ * ]
+ * ```
+ *
+ * The latin square assignment is a random assignment with some guarantees. It ensures that each component is shown an equal number of times in each position. Here's a snippet that shows how to use the latin square order:
+ *
+ * ```js
+ * {
+ *   "order": "latinSquare",
+ *   "components": [
+ *     "component1",
+ *     "component2",
+ *     "component3"
+ *  ]
+ * }
+ * ```
+ *
+ * This snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:
+ *
+ * ```js
+ * [
+ *   ["component1", "component2", "component3"],
+ *   ["component2", "component3", "component1"],
+ *   ["component3", "component1", "component2"],
+ *   ...
+ * ]
+ * ```
+ *
+ * The fixed assignment is a fixed assignment of components. This is used when you want to show the components in a specific order. Here's a snippet that shows how to use the fixed order:
+ *
+ * ```js
+ * {
+ *   "order": "fixed",
+ *   "components": [
+ *     "component1",
+ *     "component2",
+ *     "component3"
+ *  ]
+ * }
+ * ```
+ *
+ * This snippet would produce a fixed order of the components in the sequence array. The resulting sequence array would be:
+ *
+ * ```js
+ * [
+ *   ["component1", "component2", "component3"],
+ *   ["component1", "component2", "component3"],
+ *   ["component1", "component2", "component3"],
+ *   ...
+ * ]
+ * ```
+ *
+ * In addition to the order property, the ComponentBlock interface also includes the numSamples property. This is used to reduce the number of components shown to a participant. This property respects the order property and the guarantees provided by the order property. For example, if you have 3 components in the components array and you set numSamples to 2, you would randomize across the 3 components while only showing a participant 2 Here's a snippet that shows how to use the numSamples property:
+ *
+ * ```js
+ * {
+ *   "order": "latinSquare",
+ *   "components": [
+ *     "component1",
+ *     "component2",
+ *     "component3"
+ *  ],
+ *  "numSamples": 2
+ * }
+ * ```
+ *
+ * This snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:
+ *
+ * ```js
+ * [
+ *   ["component1", "component2"],
+ *   ["component2", "component3"],
+ *   ["component3", "component1"],
+ *   ...
+ * ]
+ * ```
+ *
+ * The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../type-aliases/InterruptionBlock) for more specific information.
+*/
 export interface ComponentBlock {
   /** The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property. */
   id?: string
