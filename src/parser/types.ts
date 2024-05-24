@@ -14,6 +14,8 @@ export interface GlobalConfig {
     [key: string]: {
       /** The path to the study config file. This should be a relative path from the public folder. */
       path: string;
+      /** Indicates whether the study is a test study. This is used to hide the study from the landing page. */
+      test?: boolean;
     };
   };
   /** A required property that is used to generate the list of available studies in the UI. This list is displayed on the landing page when running the app. */

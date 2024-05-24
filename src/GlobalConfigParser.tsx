@@ -24,9 +24,9 @@ async function fetchGlobalConfigArray() {
 
 async function fetchStudyConfigs(globalConfig: GlobalConfig) {
   const studyConfigs: Record<string, StudyConfig> = {};
-  const urls = globalConfig.configsList.map(
-    (configId) => `${PREFIX}${globalConfig.configs[configId].path}`,
-  );
+  const urls = globalConfig.configsList
+    .filter((configId) => (import.meta.env.VITE_CI === 'true' ? true : !globalConfig.configs[configId].test))
+    .map((configId) => `${PREFIX}${globalConfig.configs[configId].path}`);
 
   const res = await Promise.all(urls.map((u) => fetch(u)));
   const responses = await Promise.all(res.map((_res) => _res.text()));
