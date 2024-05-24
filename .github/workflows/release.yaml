@@ -16,8 +16,8 @@ jobs:
 
       - name: Run make-release.sh to modify version numbers across the repo
         run: |
-          LANG=C sed -i -E "s/\/re[Vv][Ii][Ss]it-studies\/study\/v.*\/src/\/revisit-studies\/study\/${{ github.event.pull_request.title }}\/src/g" src/**/*.* public/**/*.*
-          LANG=C sed -i -E "s/\/re[Vv][Ii][Ss]it-studies\/study\/tree\/v[^\/]*\/([^\s]*)/\/revisit-studies\/study\/tree\/${{ github.event.pull_request.title }}\/\1/g" src/**/*.* public/**/*.*
+          LANG=C sed -i -E "s/\/re[Vv][Ii][Ss]it-studies\/study\/v.*\/src/\/revisit-studies\/study\/${{ github.event.pull_request.title }}\/src/g" src/**/*.* src/*.* public/**/*.* public/*.*
+          LANG=C sed -i -E "s/\/re[Vv][Ii][Ss]it-studies\/study\/tree\/v[^\/]*\/([^\s]*)/\/revisit-studies\/study\/tree\/${{ github.event.pull_request.title }}\/\1/g" src/**/*.* src/*.* public/**/*.* public/*.*
 
       - name: Commit changes
         run: |
