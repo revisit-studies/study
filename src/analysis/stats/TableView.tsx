@@ -181,9 +181,9 @@ export function TableView({
               ? <Tooltip label="Completed"><IconCheck size={16} color="teal" style={{ marginBottom: -3 }} /></Tooltip>
               : <Tooltip label="In Progress"><IconProgress size={16} color="orange" style={{ marginBottom: -3 }} /></Tooltip>
         }
-          {!record.completed && !record.rejected && (
+          {(!record.completed) && (
           <Text size="sm" mb={-1} ml={4}>
-            {Object.entries(record.answers).length / (getSequenceFlatMap(record.sequence).length - 1)}
+            {(Object.entries(record.answers).length / (getSequenceFlatMap(record.sequence).length - 1)) * 100}
             %
           </Text>
           )}
