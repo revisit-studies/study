@@ -25,6 +25,10 @@
               "path": {
                 "description": "The path to the study config file. This should be a relative path from the public folder.",
                 "type": "string"
+              },
+              "test": {
+                "description": "Indicates whether the study is a test study. This is used to hide the study from the landing page.",
+                "type": "boolean"
               }
             },
             "required": [

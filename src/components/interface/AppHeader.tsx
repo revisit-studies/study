@@ -18,7 +18,7 @@ import {
   IconMail,
   IconSchema,
 } from '@tabler/icons-react';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useHref } from 'react-router-dom';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import {
@@ -60,6 +60,16 @@ export default function AppHeader() {
       });
   }
 
+  const titleRef = useRef<HTMLHeadingElement | null>(null);
+  const [isTruncated, setIsTruncated] = useState(false);
+
+  useEffect(() => {
+    const element = titleRef.current;
+    if (element) {
+      setIsTruncated(element.scrollWidth > element.offsetWidth);
+    }
+  }, [studyConfig]);
+
   return (
     <Header height="70" p="md">
       <Grid mt={-7} align="center">
@@ -67,7 +77,14 @@ export default function AppHeader() {
           <Flex align="center">
             <Image maw={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" />
             <Space w="md" />
-            <Title order={4} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{studyConfig?.studyMetadata.title}</Title>
+            <Title
+              ref={titleRef}
+              order={4}
+              style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+              title={isTruncated ? studyConfig?.studyMetadata.title : undefined}
+            >
+              {studyConfig?.studyMetadata.title}
+            </Title>
           </Flex>
         </Grid.Col>
 

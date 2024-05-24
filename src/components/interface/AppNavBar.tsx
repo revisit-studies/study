@@ -57,7 +57,7 @@ export default function AppNavBar() {
       )}
 
       {trialHasSideBarResponses && (
-        <Navbar.Section p="xl">
+        <Navbar.Section p="sm">
           <ResponseBlock
             key={`${currentComponent}-sidebar-response-block`}
             status={status}

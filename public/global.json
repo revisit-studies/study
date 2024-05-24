@@ -54,10 +54,12 @@
             "path": "demo-image/config.json"
         },
         "test-randomization": {
-            "path": "test-randomization/config.json"
+            "path": "test-randomization/config.json",
+            "test": true
         },
         "test-skip-logic": {
-            "path": "test-skip-logic/config.json"
+            "path": "test-skip-logic/config.json",
+            "test": true
         }
     },
     "adminUsers": []

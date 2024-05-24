@@ -25,16 +25,7 @@ jobs:
 
       - uses: peaceiris/actions-gh-pages@v3
         name: Deploy
-        id: deploy
         if: ${{ github.ref == 'refs/heads/main' }}
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
-
-      - uses: peter-evans/repository-dispatch@v2
-        name: Build documentation in revisit.dev if repo is in revisit-studies
-        if: ${{ steps.deploy.outcome == 'success' && github.repository_owner == 'revisit-studies' }}
-        with:
-          token: ${{ secrets.PAT }}
-          repository: revisit-studies/reVISit-studies.github.io
-          event-type: study_repo_publish
