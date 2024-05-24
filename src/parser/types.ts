@@ -68,8 +68,8 @@ export interface StudyMetadata {
 ```js
   uiConfig:{
     "contactEmail": "test@test.com",
-    "helpTextPath": "path/to/assets/help.md",
-    "logoPath": "path/to/assets/logo.jpg",
+    "helpTextPath": "<study-name>/assets/help.md",
+    "logoPath": "<study-name>/assets/logo.jpg",
     "withProgressBar": true,
     "autoDownloadStudy": true
     "autoDownloadTime": 5000,
@@ -405,7 +405,7 @@ export interface ImageComponent extends BaseIndividualComponent {
 ```js
   {
     "type": "website",
-    "path": "path/to/study/assets/website.html",
+    "path": "<study-name>/assets/website.html",
   }
 ```
 
@@ -414,7 +414,7 @@ export interface ImageComponent extends BaseIndividualComponent {
 ```js
   {
     "type": "website",
-    "path": "path/to/website.html",
+    "path": "<study-name>/website.html",
     "parameters": {
       "barData": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]
     }
@@ -644,7 +644,7 @@ export interface StudyConfig {
     "my-image-component": {
         "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
-        "path": "path/to/assets/my-image.jpg",
+        "path": "<study-name>/assets/my-image.jpg",
         "response": [
             {
                 "id": "my-image-id",
