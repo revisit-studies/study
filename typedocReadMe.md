@@ -4,7 +4,7 @@
 To create a study with reVISit, you have to create **components** that contain the content of your study, and you have to create the **study configuration (the reVISit Spec)** that controls when and how these components are shown to participants. Here, we will introduce these at a high level and link to complete documentation where appropriate. 
 
 
-The technical documentation can be found [here](modules). 
+The technical documentation can be found [here](globals). 
 
 # Components
 
