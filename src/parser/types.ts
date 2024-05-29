@@ -622,9 +622,9 @@ export interface DeterministicInterruption {
  *
  * ```js
  * [
- *   ["component1", "interruption1", "interruption2", "component2", "component3", "component4", "component5", "component6"],
- *   ["component1", "component2", "component3", "interruption1", "interruption2", "component4", "component5", "component6"],
- *   ["component1", "component2", "component3", "component4", "component5", "interruption1", "interruption2", "component6"],
+ *   ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "component5", "interruption1", "interruption2", "component6],
+ *   ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "interruption1", "interruption2", "component5", "component6],
+ *   ["component1", "component2" "interruption1", "interruption2", "component3", "interruption1", "interruption2", "component4", "component5", "interruption1", "interruption2", "component6],
  *   ...
  * ]
  * ```
