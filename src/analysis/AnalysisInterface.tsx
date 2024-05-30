@@ -3,7 +3,7 @@ import {
 } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  IconChartDonut2, IconPlayerPlay, IconTable,
+  IconChartDonut2, IconPlayerPlay, IconTable, IconSettings,
 } from '@tabler/icons-react';
 import React, {
   useCallback, useEffect, useMemo, useState,
@@ -13,6 +13,7 @@ import { GlobalConfig, ParticipantData, StudyConfig } from '../parser/types';
 import { getStudyConfig } from '../utils/fetchConfig';
 import { TableView } from './stats/TableView';
 import { useStorageEngine } from '../storage/storageEngineHooks';
+import { DataManagementBoard } from './management/DataManagementBoard';
 
 export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   const { globalConfig } = props;
@@ -56,7 +57,8 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
           <Tabs.List>
             <Tabs.Tab value="table" icon={<IconTable size={16} />}>Table View</Tabs.Tab>
             <Tabs.Tab value="stats" icon={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
-            <Tabs.Tab value="settings" icon={<IconPlayerPlay size={16} />}>Individual Replay</Tabs.Tab>
+            <Tabs.Tab value="replay" icon={<IconPlayerPlay size={16} />}>Individual Replay</Tabs.Tab>
+            <Tabs.Tab value="settings" icon={<IconSettings size={16} />}>Manage</Tabs.Tab>
           </Tabs.List>
           <Tabs.Panel value="table" pt="xs" style={{ height: 'calc(100% - 38px - 10px)', width: '100%', overflow: 'scroll' }}>
             {studyConfig && <TableView completed={completed} inProgress={inProgress} studyConfig={studyConfig} refresh={getData} />}
@@ -65,9 +67,11 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
           <Tabs.Panel value="stats" pt="xs">
             statsboard
           </Tabs.Panel>
-
+          <Tabs.Panel value="replay" pt="xs">
+            Replay Tab Content
+          </Tabs.Panel>
           <Tabs.Panel value="settings" pt="xs">
-            Settings tab content
+            {studyConfig && studyId && <DataManagementBoard studyConfig={studyConfig} studyId={studyId} />}
           </Tabs.Panel>
         </Tabs>
       </Container>
