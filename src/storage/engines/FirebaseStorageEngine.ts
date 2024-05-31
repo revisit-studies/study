@@ -8,7 +8,7 @@ import {
   uploadBytes,
 } from 'firebase/storage';
 import {
-  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc, where, deleteDoc, updateDoc,
+  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc, where, deleteDoc, updateDoc, writeBatch,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
@@ -553,6 +553,30 @@ export class FirebaseStorageEngine extends StorageEngine {
     } catch {
       console.warn('Failed to reject the participant.');
     }
+  }
+
+  async copyCollection(studyId:string) {
+    const today = new Date();
+    const month = today.getMonth() + 1;
+    const year = today.getFullYear();
+    const date = today.getDate();
+    const currentDate = year + month + date;
+
+    const sourceCollectionName = `${this.firestore}${studyId}`;
+    const targetCollectionName = `archive-${currentDate}-${this.firestore}${studyId}`;
+
+    const sourceCollectionRef = collection(this.firestore, sourceCollectionName);
+    const sourceSnapshot = await getDocs(sourceCollectionRef);
+
+    const batch = writeBatch(this.firestore);
+
+    sourceSnapshot.forEach((docSnapshot) => {
+      const newDocRef = doc(this.firestore, targetCollectionName);
+      batch.set(newDocRef, docSnapshot.data());
+    });
+
+    await batch.commit();
+    console.warn(`Copied all documents from ${sourceCollectionName} to ${targetCollectionName}`);
   }
 
   private _verifyStudyDatabase(db: CollectionReference<DocumentData, DocumentData> | undefined): db is CollectionReference<DocumentData, DocumentData> {
