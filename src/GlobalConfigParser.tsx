@@ -30,7 +30,7 @@ async function fetchStudyConfigs(globalConfig: GlobalConfig) {
 
   const res = await Promise.all(urls.map((u) => fetch(u)));
   const responses = await Promise.all(res.map((_res) => _res.text()));
-  const configs = await Promise.all(responses.map((_res, idx) => parseStudyConfig(_res, globalConfig.configsList[idx])));
+  const configs = await Promise.all(responses.map((_res) => parseStudyConfig(_res)));
 
   globalConfig.configsList.forEach((configId, idx) => {
     studyConfigs[configId] = configs[idx];

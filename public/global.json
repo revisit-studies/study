@@ -14,7 +14,8 @@
         "demo-click-accuracy-test",
         "demo-image",
         "test-randomization",
-        "test-skip-logic"
+        "test-skip-logic",
+        "test-parser-errors"
     ],
     "configs": {
         "demo-html": {
@@ -59,6 +60,10 @@
         },
         "test-skip-logic": {
             "path": "test-skip-logic/config.json",
+            "test": true
+        },
+        "test-parser-errors": {
+            "path": "test-parser-errors/config.json",
             "test": true
         }
     },

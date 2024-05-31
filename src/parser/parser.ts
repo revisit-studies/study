@@ -6,6 +6,7 @@ import globalSchema from './GlobalConfigSchema.json';
 import {
   GlobalConfig, IndividualComponent, InheritedComponent, StudyConfig,
 } from './types';
+import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 
 const ajv1 = new Ajv();
 ajv1.addSchema(globalSchema);
@@ -47,23 +48,49 @@ export function parseGlobalConfig(fileData: string) {
 }
 
 // This function verifies the study config file satisfies conditions that are not covered by the schema
-function verifyStudyConfig(data: StudyConfig) {
-  const errors: { message: string }[] = [];
-  const componentsVerified = Object.values(data.components).every((component) => (isInheritedComponent(component) ? !!data.baseComponents?.[component.baseComponent] : true));
+function verifyStudyConfig(studyConfig: StudyConfig) {
+  const errors: { message: string, instancePath: string, params: { 'action': string } }[] = [];
 
-  return [componentsVerified, errors] as const;
+  // Verify components are well defined
+  Object.entries(studyConfig.components)
+    .forEach(([componentName, component]) => {
+      // Verify baseComponent is defined in baseComponents object
+      if (isInheritedComponent(component) && !studyConfig.baseComponents?.[component.baseComponent]) {
+        errors.push({
+          message: `Base component \`${component.baseComponent}\` is not defined in baseComponents object`,
+          instancePath: `/components/${componentName}`,
+          params: { action: 'add the base component to the baseComponents object' },
+        });
+      }
+    });
+
+  // Verify sequence is well defined
+  getSequenceFlatMap(studyConfig.sequence).forEach((component) => {
+    // Verify component is defined in components object
+    if (!studyConfig.components[component]) {
+      errors.push({
+        message: studyConfig.baseComponents?.[component]
+          ? `Component \`${component}\` is a base component and cannot be used in the sequence`
+          : `Component \`${component}\` is not defined in components object`,
+        instancePath: '/sequence/',
+        params: { action: 'add the component to the components object' },
+      });
+    }
+  });
+
+  return errors;
 }
 
-export function parseStudyConfig(fileData: string, fileName: string): StudyConfig & { errors?: ErrorObject<string, Record<string, unknown>, unknown>[] } {
+export function parseStudyConfig(fileData: string): StudyConfig & { errors?: ErrorObject<string, Record<string, unknown>, unknown>[] } {
   const data = hjsonParse(fileData);
   const validatedData = studyValidate(data) as boolean;
-  const extraValidation = verifyStudyConfig(data);
+  const parserErrors = verifyStudyConfig(data);
 
-  if (validatedData && extraValidation[0]) {
+  const errors = [...(studyValidate.errors || []), ...parserErrors];
+
+  if (errors.length === 0 && validatedData) {
     return data as StudyConfig;
   }
-  const errors = [...(studyValidate.errors || [])];
-  console.error(`${fileName} parsing errors`, errors);
 
   return { ...data, errors };
 }

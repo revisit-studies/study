@@ -3,9 +3,9 @@ import { GlobalConfig } from '../parser/types';
 import { parseStudyConfig } from '../parser/parser';
 import { PREFIX } from './Prefix';
 
-export async function fetchStudyConfig(configLocation: string, configKey: string) {
+export async function fetchStudyConfig(configLocation: string) {
   const config = await (await fetch(`${PREFIX}${configLocation}`)).text();
-  return parseStudyConfig(config, configKey);
+  return parseStudyConfig(config);
 }
 
 export async function getStudyConfig(studyId: string, globalConfig: GlobalConfig) {
@@ -14,7 +14,7 @@ export async function getStudyConfig(studyId: string, globalConfig: GlobalConfig
   );
   if (configKey) {
     const configJSON = globalConfig.configs[configKey];
-    return await fetchStudyConfig(`${configJSON.path}`, configKey);
+    return await fetchStudyConfig(`${configJSON.path}`);
   }
   return null;
 }
