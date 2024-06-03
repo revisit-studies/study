@@ -54,11 +54,6 @@
                 }
             ]
         },
-        "prolificCode": {
-            "type": "markdown",
-            "path": "demo-VLAT-mini-randomized/assets/prolific-code.md",
-            "response": []
-        },
         "survey": {
             "type": "markdown",
             "path": "demo-VLAT-mini-randomized/assets/survey.md",
