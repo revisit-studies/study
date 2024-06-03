@@ -1,4 +1,4 @@
-import { Group, Radio, Text } from '@mantine/core';
+import { Radio, Text } from '@mantine/core';
 import { RadioResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';

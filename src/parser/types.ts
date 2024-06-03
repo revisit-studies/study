@@ -1,5 +1,3 @@
-import { ErrorObject } from 'ajv';
-
 // eslint-disable-next-line import/no-cycle
 export type { ParticipantData } from '../storage/types';
 export type { StoredAnswer, Sequence } from '../store/types';
