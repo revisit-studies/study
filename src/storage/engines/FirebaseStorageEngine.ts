@@ -7,9 +7,10 @@ import {
   ref,
   uploadBytes,
   listAll,
+  FirebaseStorage,
 } from 'firebase/storage';
 import {
-  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc, where, deleteDoc, updateDoc, writeBatch,
+  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc, where, deleteDoc, updateDoc,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
@@ -31,6 +32,8 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   private studyCollection: CollectionReference<DocumentData, DocumentData> | undefined = undefined;
 
+  private storage: FirebaseStorage;
+
   private studyId = '';
 
   // localForage instance for storing currentParticipantId
@@ -46,6 +49,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     const firebaseConfig = hjsonParse(import.meta.env.VITE_FIREBASE_CONFIG);
     const firebaseApp = initializeApp(firebaseConfig);
     this.firestore = initializeFirestore(firebaseApp, {});
+    this.storage = getStorage();
 
     // Check if we're in dev, if so use a debug token
     if (import.meta.env.DEV) {
@@ -654,8 +658,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   async _deleteDirectory(directoryPath:string) {
     try {
-      const storage = getStorage();
-      const directoryRef = ref(storage, directoryPath);
+      const directoryRef = ref(this.storage, directoryPath);
       const directorySnapshot = await listAll(directoryRef);
 
       const deletePromises = directorySnapshot.items.map((fileRef) => deleteObject(fileRef));
@@ -669,8 +672,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   async _copyDirectory(sourceDir: string, targetDir:string) {
     try {
-      const storage = getStorage();
-      const sourceDirRef = ref(storage, sourceDir);
+      const sourceDirRef = ref(this.storage, sourceDir);
       const sourceDirSnapshot = await listAll(sourceDirRef);
 
       const copyPromises = sourceDirSnapshot.items.map((fileRef) => {
@@ -686,9 +688,8 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   async _copyFile(sourceFilePath:string, targetFilePath:string) {
     try {
-      const storage = getStorage();
-      const sourceFileRef = ref(storage, sourceFilePath);
-      const targetFileRef = ref(storage, targetFilePath);
+      const sourceFileRef = ref(this.storage, sourceFilePath);
+      const targetFileRef = ref(this.storage, targetFilePath);
 
       const sourceFileURL = await getDownloadURL(sourceFileRef);
       const response = await fetch(sourceFileURL);
@@ -703,8 +704,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   async _directoryExists(directoryPath:string) {
     try {
-      const storage = getStorage();
-      const directoryRef = ref(storage, directoryPath);
+      const directoryRef = ref(this.storage, directoryPath);
       const directorySnapshot = await listAll(directoryRef);
       return directorySnapshot.items.length > 0;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -723,8 +723,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   // Firebase storage helpers
   private async _getFromFirebaseStorage<T extends 'provenance' | 'windowEvents' | 'sequenceArray'>(prefix: string, type: T) {
-    const storage = getStorage();
-    const storageRef = ref(storage, `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`);
+    const storageRef = ref(this.storage, `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`);
 
     let storageObj: Record<string, T extends 'provenance' ? TrrackedProvenance : T extends 'windowEvents' ? EventType[] : Sequence[]> = {};
     try {
@@ -741,8 +740,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   private async _pushToFirebaseStorage<T extends 'provenance' | 'windowEvents' | 'sequenceArray'>(prefix: string, type: T, objectToUpload: Record<string, T extends 'provenance' ? TrrackedProvenance : T extends 'windowEvents' ? EventType[] : Sequence[]> = {}) {
     if (Object.keys(objectToUpload).length > 0) {
-      const storage = getStorage();
-      const storageRef = ref(storage, `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`);
+      const storageRef = ref(this.storage, `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`);
       const blob = new Blob([JSON.stringify(objectToUpload)], {
         type: 'application/json',
       });
@@ -751,8 +749,7 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   private async _deleteFromFirebaseStorage<T extends 'sequenceArray'>(prefix: string, type: T) {
-    const storage = getStorage();
-    const storageRef = ref(storage, `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`);
+    const storageRef = ref(this.storage, `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`);
     await deleteObject(storageRef);
   }
 }
