@@ -95,10 +95,10 @@ export function Shell({ globalConfig }: {
           },
           {
             path: '/:index',
-            element: activeConfig.errors ? (
+            element: activeConfig.errors.length > 0 ? (
               <>
                 <Title order={2} mb={8}>Error loading config</Title>
-                <ErrorLoadingConfig errors={activeConfig.errors} />
+                <ErrorLoadingConfig issues={activeConfig.errors} type="error" />
               </>
             ) : <ComponentController />,
           },
