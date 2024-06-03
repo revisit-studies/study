@@ -160,7 +160,7 @@ function verifyStudyConfig(studyConfig: StudyConfig) {
   return errors;
 }
 
-export function parseStudyConfig(fileData: string): StudyConfig & { errors?: ErrorObject<string, Record<string, unknown>, unknown>[] } {
+export function parseStudyConfig(fileData: string): ParsedStudyConfig {
   const data = hjsonParse(fileData);
   const validatedData = studyValidate(data) as boolean;
   const parserErrors = verifyStudyConfig(data);

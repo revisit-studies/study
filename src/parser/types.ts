@@ -1,3 +1,5 @@
+import { ErrorObject } from 'ajv';
+
 // eslint-disable-next-line import/no-cycle
 export type { ParticipantData } from '../storage/types';
 export type { StoredAnswer, Sequence } from '../store/types';
@@ -1018,6 +1020,12 @@ In the above code snippet, we have a single base component which holds the infor
   /** The order of the components in the study. This might include some randomness. */
   sequence: ComponentBlock;
 }
+
+/**
+ * @ignore
+ * Helper type to write the study config with with errors key
+ */
+export type ParsedStudyConfig = StudyConfig & { errors?: ErrorObject<string, Record<string, unknown>, unknown>[] }
 
 /**
  * @ignore

@@ -8,11 +8,10 @@ import {
   RouteObject, useRoutes, useSearchParams,
 } from 'react-router-dom';
 import { LoadingOverlay, Title } from '@mantine/core';
-import { ErrorObject } from 'ajv';
 import {
   GlobalConfig,
   Nullable,
-  StudyConfig,
+  ParsedStudyConfig,
 } from '../parser/types';
 import { useStudyId } from '../routes/utils';
 import {
@@ -20,7 +19,6 @@ import {
   StudyStore,
   studyStoreCreator,
 } from '../store/store';
-import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 
 import ComponentController from '../controllers/ComponentController';
 import { NavigateWithParams } from '../utils/NavigateWithParams';
@@ -38,9 +36,7 @@ export function Shell({ globalConfig }: {
 }) {
   // Pull study config
   const studyId = useStudyId();
-  const [activeConfig, setActiveConfig] = useState<
-    Nullable<StudyConfig & { errors?: ErrorObject<string, Record<string, unknown>, unknown>[] }>
-  >(null);
+  const [activeConfig, setActiveConfig] = useState<ParsedStudyConfig | null>(null);
   const isValidStudyId = globalConfig.configsList.includes(studyId);
 
   const auth = useAuth();

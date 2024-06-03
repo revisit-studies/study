@@ -3,20 +3,20 @@ import {
 } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 import { IconAlertTriangle } from '@tabler/icons-react';
-import { ErrorObject } from 'ajv';
-import { GlobalConfig, StudyConfig } from '../parser/types';
+import { GlobalConfig, ParsedStudyConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { PREFIX } from '../utils/Prefix';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 
 const REVISIT_GITHUB_PUBLIC = 'https://github.com/revisit-studies/study/tree/main/public/';
 
-type Props = {
+function ConfigSwitcher({
+  globalConfig,
+  studyConfigs,
+}: {
   globalConfig: GlobalConfig;
-  studyConfigs: {[key: string]: StudyConfig & { errors?: ErrorObject<string, Record<string, unknown>, unknown>[] }};
-};
-
-function ConfigSwitcher({ globalConfig, studyConfigs }: Props) {
+  studyConfigs: Record<string, ParsedStudyConfig | null>;
+}) {
   const { configsList } = globalConfig;
   const navigate = useNavigate();
 
