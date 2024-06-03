@@ -59,7 +59,7 @@
     "vega-lite": "^5.17.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.35.1",
+    "@playwright/test": "^1.44.0",
     "@types/d3": "^7.4.0",
     "@types/react": "^18.0.24",
     "@types/react-dom": "^18.0.8",
