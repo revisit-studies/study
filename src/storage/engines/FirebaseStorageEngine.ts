@@ -556,7 +556,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async archiveStudyData(studyId:string, deleteData:boolean) {
+  async createSnapshot(studyId:string, deleteData:boolean) {
     const sourceDirectoryName = `${this.collectionPrefix}${studyId}`;
 
     if (!await this._directoryExists(sourceDirectoryName)) {
@@ -574,7 +574,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
     const formattedDate = `${year}${month}${date}${hours}${minutes}${seconds}`;
 
-    const targetDirectoryName = `${this.collectionPrefix}${studyId}-archive-${formattedDate}`;
+    const targetDirectoryName = `${this.collectionPrefix}${studyId}-snapshot-${formattedDate}`;
 
     await this._copyDirectory(sourceDirectoryName, targetDirectoryName);
     await this._addDirectoryNameToMetadata(targetDirectoryName);
@@ -585,12 +585,12 @@ export class FirebaseStorageEngine extends StorageEngine {
     return true;
   }
 
-  async removeArchive(directoryName:string) {
+  async removeSnapshot(directoryName:string) {
     await this._deleteDirectory(directoryName);
     await this._removeDirectoryNameFromMetadata(directoryName);
   }
 
-  async getArchives(studyId:string) {
+  async getSnapshots(studyId:string) {
     try {
       const metadataDoc = doc(this.firestore, 'metadata', 'collections');
       const metadataSnapshot = await getDoc(metadataDoc);
@@ -598,7 +598,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       if (metadataSnapshot.exists()) {
         const collections = metadataSnapshot.data();
         const matchingCollections = Object.keys(collections)
-          .filter((directoryName) => directoryName.startsWith(`${this.collectionPrefix}${studyId}-archive`));
+          .filter((directoryName) => directoryName.startsWith(`${this.collectionPrefix}${studyId}-snapshot`));
         return matchingCollections;
       }
       return [];
@@ -608,14 +608,14 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async restoreArchive(studyId:string, archivedDirectoryName:string) {
+  async restoreSnapshot(studyId:string, snapshotDirectoryName:string) {
     const originalDirectoryName = `${this.collectionPrefix}${studyId}`;
-    // Archive current collection
-    await this.archiveStudyData(studyId, true);
+    // Snapshot current collection
+    await this.createSnapshot(studyId, true);
 
-    await this._copyDirectory(archivedDirectoryName, originalDirectoryName);
-    await this._deleteDirectory(archivedDirectoryName);
-    await this._removeDirectoryNameFromMetadata(archivedDirectoryName);
+    await this._copyDirectory(snapshotDirectoryName, originalDirectoryName);
+    await this._deleteDirectory(snapshotDirectoryName);
+    await this._removeDirectoryNameFromMetadata(snapshotDirectoryName);
   }
 
   // Function to add collection name to metadata

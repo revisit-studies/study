@@ -7,75 +7,75 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 
 export function DataManagementBoard({ studyId }:{ studyId:string}) {
-  const [modalDeleteOpened, setModalDeleteOpened] = useState<boolean>(false);
   const [modalArchiveOpened, setModalArchiveOpened] = useState<boolean>(false);
+  const [modalCreateSnapshotOpened, setModalCreateSnapshotOpened] = useState<boolean>(false);
   const [modalRestoreOpened, setModalRestoreOpened] = useState<boolean>(false);
-  const [modalDeleteArchiveOpened, setModalDeleteArchiveOpened] = useState<boolean>(false);
+  const [modalDeleteSnapshotOpened, setModalDeleteSnapshotOpened] = useState<boolean>(false);
 
-  const [currentArchive, setCurrentArchive] = useState<string>('');
+  const [currentSnapshot, setCurrentSnapshot] = useState<string>('');
 
-  const [archivedDatasets, setArchivedDatasets] = useState<string[]>([]);
+  const [snapshots, setSnapshots] = useState<string[]>([]);
 
   const [deleteValue, setDeleteValue] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
-  const [archiveListLoading, setArchiveListLoading] = useState<boolean>(false);
+  const [snapshotListLoading, setSnapshotListLoading] = useState<boolean>(false);
 
-  const [archiveActionFlag, setArchiveActionFlag] = useState<boolean>(false);
+  const [snapshotActionFlag, setSnapshotActionFlag] = useState<boolean>(false);
 
   const { storageEngine } = useStorageEngine();
 
   // Used to fetch archived datasets
   useEffect(() => {
     async function fetchData() {
-      setArchiveListLoading(true);
+      setSnapshotListLoading(true);
       if (storageEngine instanceof FirebaseStorageEngine) {
-        const currArchivedCollections = await storageEngine.getArchives(studyId);
-        setArchivedDatasets(currArchivedCollections);
+        const currArchivedCollections = await storageEngine.getSnapshots(studyId);
+        setSnapshots(currArchivedCollections);
       }
-      setArchiveListLoading(false);
+      setSnapshotListLoading(false);
     }
     fetchData();
-  }, [archiveActionFlag]);
+  }, [snapshotActionFlag]);
+
+  const handleCreateSnapshot = async () => {
+    setLoading(true);
+    if (storageEngine instanceof FirebaseStorageEngine) {
+      await storageEngine.createSnapshot(studyId, false);
+      setModalCreateSnapshotOpened(false);
+    }
+    setSnapshotActionFlag((prev) => !prev);
+    setLoading(false);
+  };
 
   const handleArchiveData = async () => {
     setLoading(true);
+    setDeleteValue('');
     if (storageEngine instanceof FirebaseStorageEngine) {
-      await storageEngine.archiveStudyData(studyId, false);
+      await storageEngine.createSnapshot(studyId, true);
       setModalArchiveOpened(false);
     }
-    setArchiveActionFlag((prev) => !prev);
+    setSnapshotActionFlag((prev) => !prev);
     setLoading(false);
   };
 
-  const handleArchiveAndDeleteData = async () => {
+  const handleDeleteSnapshot = async () => {
     setLoading(true);
     setDeleteValue('');
     if (storageEngine instanceof FirebaseStorageEngine) {
-      await storageEngine.archiveStudyData(studyId, true);
-      setModalDeleteOpened(false);
+      await storageEngine.removeSnapshot(currentSnapshot);
+      setModalDeleteSnapshotOpened(false);
     }
-    setArchiveActionFlag((prev) => !prev);
+    setSnapshotActionFlag((prev) => !prev);
     setLoading(false);
   };
 
-  const handleDeleteArchive = async () => {
-    setLoading(true);
-    setDeleteValue('');
-    if (storageEngine instanceof FirebaseStorageEngine) {
-      await storageEngine.removeArchive(currentArchive);
-      setModalDeleteArchiveOpened(false);
-    }
-    setArchiveActionFlag((prev) => !prev);
-    setLoading(false);
-  };
-
-  const handleRestoreArchive = async () => {
+  const handleRestoreSnapshot = async () => {
     setLoading(true);
     if (storageEngine instanceof FirebaseStorageEngine) {
-      await storageEngine.restoreArchive(studyId, currentArchive);
+      await storageEngine.restoreSnapshot(studyId, currentSnapshot);
       setModalRestoreOpened(false);
     }
-    setArchiveActionFlag((prev) => !prev);
+    setSnapshotActionFlag((prev) => !prev);
     setLoading(false);
   };
 
@@ -102,53 +102,53 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
               <Button
                 color="red"
                 sx={{ '&[data-disabled]': { pointerEvents: 'all' } }}
-                onClick={() => setModalArchiveOpened(true)}
+                onClick={() => setModalCreateSnapshotOpened(true)}
               >
-                Archive Only
+                Snapshot Data
               </Button>
             </Tooltip>
           </Flex>
           <Flex justify="space-between" align="center">
             <Box style={{ width: '70%' }}>
-              <Title order={4}>Archive and delete study data</Title>
+              <Title order={4}>Take a snapshot and delete data</Title>
               <Text>
-                This wil create an archived dataset of the
+                This wil create a snapshot of the current
                 <span style={{ fontWeight: 'bold' }}>{studyId}</span>
                 {' '}
-                data. It will then remove this data from the current dataset. Archived datasets can be restored at any time.
+                data. It will then remove this data from the current dataset. The current data can be restored to a snapshot at any time.
               </Text>
             </Box>
-            <Tooltip label="Archive and Delete study data">
+            <Tooltip label="Snapshot and Delete Data">
               <Button
                 color="red"
                 sx={{ '&[data-disabled]': { pointerEvents: 'all' } }}
-                onClick={() => setModalDeleteOpened(true)}
+                onClick={() => setModalArchiveOpened(true)}
               >
-                Archive and Delete
+                Snapshot and Delete
               </Button>
             </Tooltip>
           </Flex>
           <Flex mt={40} direction="column">
             <Flex style={{ borderBottom: '1px solid #dedede' }} direction="row" justify="space-between" mb={15} pb={15}>
-              <Title order={4}>Archived Datasets</Title>
+              <Title order={4}>Snapshots</Title>
             </Flex>
             <div style={{ position: 'relative' }}>
-              <LoadingOverlay visible={archiveListLoading} />
-              { archivedDatasets.length > 0 ? archivedDatasets.map(
+              <LoadingOverlay visible={snapshotListLoading} />
+              { snapshots.length > 0 ? snapshots.map(
                 (datasetName:string) => (
                   <Flex key={datasetName} justify="space-between" mb={10}>
                     <Text>{datasetName}</Text>
                     <Flex direction="row" gap={10}>
                       <Tooltip label="Restore Archive">
-                        <ActionIcon variant="subtle" onClick={() => { setModalRestoreOpened(true); setCurrentArchive(datasetName); }}><IconRefresh color="green" /></ActionIcon>
+                        <ActionIcon variant="subtle" onClick={() => { setModalRestoreOpened(true); setCurrentSnapshot(datasetName); }}><IconRefresh color="green" /></ActionIcon>
                       </Tooltip>
                       <Tooltip label="Delete Archive">
-                        <ActionIcon variant="subtle" onClick={() => { setModalDeleteArchiveOpened(true); setCurrentArchive(datasetName); }}><IconTrashX color="red" /></ActionIcon>
+                        <ActionIcon variant="subtle" onClick={() => { setModalDeleteSnapshotOpened(true); setCurrentSnapshot(datasetName); }}><IconTrashX color="red" /></ActionIcon>
                       </Tooltip>
                     </Flex>
                   </Flex>
                 ),
-              ) : <Text>No archived datasets.</Text>}
+              ) : <Text>No snapshots.</Text>}
             </div>
           </Flex>
 
@@ -156,8 +156,8 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
       </Container>
 
       <Modal
-        opened={modalDeleteOpened}
-        onClose={() => { setModalDeleteOpened(false); setDeleteValue(''); }}
+        opened={modalArchiveOpened}
+        onClose={() => { setModalArchiveOpened(false); setDeleteValue(''); }}
         title="Archive and Delete. This will create a separate archive of the dataset and then delete the existing data from this collection."
       >
         <Box>
@@ -168,29 +168,29 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
             onChange={(event) => setDeleteValue(event.target.value)}
           />
           <Flex mt={30} justify="right">
-            <Button mr={5} variant="subtle" color="red" onClick={() => { setModalDeleteOpened(false); setDeleteValue(''); }}>
+            <Button mr={5} variant="subtle" color="red" onClick={() => { setModalArchiveOpened(false); setDeleteValue(''); }}>
               Cancel
             </Button>
-            <Button onClick={() => handleArchiveAndDeleteData()} disabled={deleteValue !== studyId}>
-              Archive and Delete
+            <Button onClick={() => handleArchiveData()} disabled={deleteValue !== studyId}>
+              Archive Data
             </Button>
           </Flex>
         </Box>
       </Modal>
 
       <Modal
-        opened={modalArchiveOpened}
-        onClose={() => setModalArchiveOpened(false)}
+        opened={modalCreateSnapshotOpened}
+        onClose={() => setModalCreateSnapshotOpened(false)}
         title={<Title order={4}>Archive Current Data</Title>}
       >
         <Box>
           <Text mb={30}>This will create an archive of the current study data and remove the current study data. An archive can be restored at any time.</Text>
           <Flex mt={30} justify="right">
-            <Button mr={5} variant="subtle" color="red" onClick={() => setModalArchiveOpened(false)}>
+            <Button mr={5} variant="subtle" color="red" onClick={() => setModalCreateSnapshotOpened(false)}>
               Cancel
             </Button>
-            <Button onClick={() => handleArchiveData()}>
-              Archive
+            <Button onClick={() => handleCreateSnapshot()}>
+              Take a Snapshot
             </Button>
           </Flex>
         </Box>
@@ -207,7 +207,7 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
             <Button mr={5} variant="subtle" color="red" onClick={() => setModalRestoreOpened(false)}>
               Cancel
             </Button>
-            <Button onClick={() => handleRestoreArchive()}>
+            <Button onClick={() => handleRestoreSnapshot()}>
               Restore
             </Button>
           </Flex>
@@ -215,9 +215,9 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
       </Modal>
 
       <Modal
-        opened={modalDeleteArchiveOpened}
-        onClose={() => { setModalDeleteArchiveOpened(false); setDeleteValue(''); }}
-        title={<Title order={4}>Delete Archive</Title>}
+        opened={modalDeleteSnapshotOpened}
+        onClose={() => { setModalDeleteSnapshotOpened(false); setDeleteValue(''); }}
+        title={<Title order={4}>Delete Snapshot</Title>}
       >
         <Box>
           <Text mb={30}>This will permanently remove this archive.</Text>
@@ -227,10 +227,10 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
             onChange={(event) => setDeleteValue(event.target.value)}
           />
           <Flex mt={30} justify="right">
-            <Button mr={5} variant="subtle" color="red" onClick={() => { setModalDeleteArchiveOpened(false); setDeleteValue(''); }}>
+            <Button mr={5} variant="subtle" color="red" onClick={() => { setModalDeleteSnapshotOpened(false); setDeleteValue(''); }}>
               Cancel
             </Button>
-            <Button onClick={() => handleDeleteArchive()} disabled={deleteValue !== 'delete'}>
+            <Button onClick={() => handleDeleteSnapshot()} disabled={deleteValue !== 'delete'}>
               Delete Archive
             </Button>
           </Flex>
