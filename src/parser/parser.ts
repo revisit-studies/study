@@ -47,6 +47,74 @@ export function parseGlobalConfig(fileData: string) {
   throw Error('There was an issue validating your file global.json');
 }
 
+// Recursive function to verify that the skip.to component exists after the block it is used in
+// When we encounter a skip block, add the skip.to component to the skipTargets array
+// When we then encounter a component that is in the skipTargets array, remove it from the array
+// Return the array of skipTargets at the end of the sequence
+function verifyStudySkip(
+  sequence: StudyConfig['sequence'],
+  skipTargets: string[],
+  errors: { message: string, instancePath: string, params: { 'action': string } }[] = [],
+) {
+  // Base case: empty sequence
+  if (sequence.components.length === 0) {
+    // Push an error for an empty components array
+    errors.push({
+      message: 'Sequence has an empty components array',
+      instancePath: '/sequence/',
+      params: { action: 'remove empty components block' },
+    });
+    return;
+  }
+
+  // If the block has an ID, remove it from the skipTargets array
+  if (sequence.id) {
+    // Use splice to remove all instances of the id from the array in place
+    const idxToRemove = skipTargets
+      .map((target, idx) => {
+        if (target === sequence.id) {
+          return idx;
+        }
+        return null;
+      });
+    idxToRemove.forEach((idx) => {
+      if (idx !== null) {
+        skipTargets.splice(idx, 1);
+      }
+    });
+  }
+
+  // Recursive case: sequence has at least one component
+  sequence.components.forEach((component) => {
+    if (typeof component === 'string') {
+      // If the component is a string, check if it is in the skipTargets array
+      if (skipTargets.includes(component)) {
+        // Use splice to remove the target from the array in place
+        const idxToRemove = skipTargets
+          .map((target, idx) => {
+            if (target === component) {
+              return idx;
+            }
+            return null;
+          });
+        idxToRemove.forEach((idx) => {
+          if (idx !== null) {
+            skipTargets.splice(idx, 1);
+          }
+        });
+      }
+    } else {
+      // Recursive case: component is a block
+      verifyStudySkip(component, skipTargets, errors);
+    }
+  });
+
+  // If this block has a skip, add the skip.to component to the skipTargets array
+  if (sequence.skip) {
+    skipTargets.push(...sequence.skip.map((skip) => skip.to).filter((target) => target !== 'end'));
+  }
+}
+
 // This function verifies the study config file satisfies conditions that are not covered by the schema
 function verifyStudyConfig(studyConfig: StudyConfig) {
   const errors: { message: string, instancePath: string, params: { 'action': string } }[] = [];
@@ -76,6 +144,17 @@ function verifyStudyConfig(studyConfig: StudyConfig) {
         params: { action: 'add the component to the components object' },
       });
     }
+  });
+
+  // Verify skip blocks are well defined
+  const missingSkipTargets: string[] = [];
+  verifyStudySkip(studyConfig.sequence, missingSkipTargets);
+  missingSkipTargets.forEach((skipTarget) => {
+    errors.push({
+      message: `Skip target \`${skipTarget}\` does not occur after the skip block it is used in`,
+      instancePath: '/sequence/',
+      params: { action: 'add the target to the sequence after the skip block' },
+    });
   });
 
   return errors;
