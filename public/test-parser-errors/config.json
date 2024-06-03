@@ -66,7 +66,7 @@
       {
         "order": "fixed",
         "components": [
-          "nestedMissingComponent"
+          "md2"
         ],
         "skip": [{
           "check": "block",
