@@ -29,8 +29,8 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
     async function fetchData() {
       setSnapshotListLoading(true);
       if (storageEngine instanceof FirebaseStorageEngine) {
-        const currArchivedCollections = await storageEngine.getSnapshots(studyId);
-        setSnapshots(currArchivedCollections);
+        const currSnapshots = await storageEngine.getSnapshots(studyId);
+        setSnapshots(currSnapshots);
       }
       setSnapshotListLoading(false);
     }
@@ -87,35 +87,41 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
           <Title mb={30} order={2}>Data Management</Title>
           <Flex mb={50} justify="space-between" align="center">
             <Box style={{ width: '70%' }}>
-              <Title order={4}>Archive and study data</Title>
+              <Title order={4}>Create a Snapshot</Title>
               <Text>
-                This wil create an archived dataset of the
-                <span style={{ fontWeight: 'bold' }}>{studyId}</span>
+                This wil create a snapshot of the current
+                <span style={{ fontWeight: 'bold' }}>
+                  {' '}
+                  {studyId}
+                </span>
                 {' '}
                 data. It will
-                <span style={{ fontStyle: 'italic', fontWeight: 'bold' }}>not</span>
+                <span style={{ fontStyle: 'italic', fontWeight: 'bold' }}> not</span>
                 {' '}
-                remove this data from the current dataset.
+                remove this data from the current dataset. The current study data can be restored to a snapshot at any time.
               </Text>
             </Box>
-            <Tooltip label="Archive and Delete study data">
+            <Tooltip label="Create a snapshot">
               <Button
                 color="red"
                 sx={{ '&[data-disabled]': { pointerEvents: 'all' } }}
                 onClick={() => setModalCreateSnapshotOpened(true)}
               >
-                Snapshot Data
+                Create a Snapshot
               </Button>
             </Tooltip>
           </Flex>
           <Flex justify="space-between" align="center">
             <Box style={{ width: '70%' }}>
-              <Title order={4}>Take a snapshot and delete data</Title>
+              <Title order={4}>Archive Data</Title>
               <Text>
                 This wil create a snapshot of the current
-                <span style={{ fontWeight: 'bold' }}>{studyId}</span>
-                {' '}
-                data. It will then remove this data from the current dataset. The current data can be restored to a snapshot at any time.
+                <span style={{ fontWeight: 'bold' }}>
+                  {' '}
+                  {studyId}
+                  {' '}
+                </span>
+                data. It will then remove this data from the current dataset. The current study data can be restored to a snapshot at any time.
               </Text>
             </Box>
             <Tooltip label="Snapshot and Delete Data">
@@ -124,7 +130,7 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
                 sx={{ '&[data-disabled]': { pointerEvents: 'all' } }}
                 onClick={() => setModalArchiveOpened(true)}
               >
-                Snapshot and Delete
+                Archive Data
               </Button>
             </Tooltip>
           </Flex>
@@ -139,10 +145,10 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
                   <Flex key={datasetName} justify="space-between" mb={10}>
                     <Text>{datasetName}</Text>
                     <Flex direction="row" gap={10}>
-                      <Tooltip label="Restore Archive">
+                      <Tooltip label="Restore Snapshot">
                         <ActionIcon variant="subtle" onClick={() => { setModalRestoreOpened(true); setCurrentSnapshot(datasetName); }}><IconRefresh color="green" /></ActionIcon>
                       </Tooltip>
-                      <Tooltip label="Delete Archive">
+                      <Tooltip label="Delete Snapshot">
                         <ActionIcon variant="subtle" onClick={() => { setModalDeleteSnapshotOpened(true); setCurrentSnapshot(datasetName); }}><IconTrashX color="red" /></ActionIcon>
                       </Tooltip>
                     </Flex>
@@ -158,10 +164,10 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
       <Modal
         opened={modalArchiveOpened}
         onClose={() => { setModalArchiveOpened(false); setDeleteValue(''); }}
-        title="Archive and Delete. This will create a separate archive of the dataset and then delete the existing data from this collection."
+        title={<Title order={4}>Archive Data</Title>}
       >
         <Box>
-          <Text mb={30}>This will create and archive and then delete all of the current study data.</Text>
+          <Text mb={30}>This will create a snapshot of the current dataset and then delete the current dataset.</Text>
           <TextInput
             label="To delete this data, please enter the name of the study."
             placeholder={studyId}
@@ -181,16 +187,16 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
       <Modal
         opened={modalCreateSnapshotOpened}
         onClose={() => setModalCreateSnapshotOpened(false)}
-        title={<Title order={4}>Archive Current Data</Title>}
+        title={<Title order={4}>Create A Snapshot</Title>}
       >
         <Box>
-          <Text mb={30}>This will create an archive of the current study data and remove the current study data. An archive can be restored at any time.</Text>
+          <Text mb={30}>This will create a snapshot of the current dataset. The current study data can be restored to a snapshot at any time.</Text>
           <Flex mt={30} justify="right">
             <Button mr={5} variant="subtle" color="red" onClick={() => setModalCreateSnapshotOpened(false)}>
               Cancel
             </Button>
             <Button onClick={() => handleCreateSnapshot()}>
-              Take a Snapshot
+              Create a Snapshot
             </Button>
           </Flex>
         </Box>
@@ -199,10 +205,10 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
       <Modal
         opened={modalRestoreOpened}
         onClose={() => setModalRestoreOpened(false)}
-        title={<Title order={4}>Restore Archive</Title>}
+        title={<Title order={4}>Restore Snapshot</Title>}
       >
         <Box>
-          <Text mb={30}>This will archive the current study data into a new archive and then copy the this archive back into the current study data. This archive will then be removed.</Text>
+          <Text mb={30}>This will create a snapshot of the current study data into a new snapshot and then copy the this snapshot back into the current study data. This snapshot will then be removed.</Text>
           <Flex mt={30} justify="right">
             <Button mr={5} variant="subtle" color="red" onClick={() => setModalRestoreOpened(false)}>
               Cancel
@@ -220,9 +226,9 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
         title={<Title order={4}>Delete Snapshot</Title>}
       >
         <Box>
-          <Text mb={30}>This will permanently remove this archive.</Text>
+          <Text mb={30}>This will permanently remove this snapshot.</Text>
           <TextInput
-            label="To delete this archive, please 'delete' in the box below."
+            label="To delete this snapshot, please 'delete' in the box below."
             placeholder="delete"
             onChange={(event) => setDeleteValue(event.target.value)}
           />
@@ -231,7 +237,7 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
               Cancel
             </Button>
             <Button onClick={() => handleDeleteSnapshot()} disabled={deleteValue !== 'delete'}>
-              Delete Archive
+              Delete Snapshot
             </Button>
           </Flex>
         </Box>
