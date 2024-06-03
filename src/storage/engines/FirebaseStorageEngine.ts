@@ -6,6 +6,7 @@ import {
   getStorage,
   ref,
   uploadBytes,
+  listAll,
 } from 'firebase/storage';
 import {
   CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc, where, deleteDoc, updateDoc, writeBatch,
@@ -555,28 +556,165 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async copyCollection(studyId:string) {
+  async archiveStudyData(studyId:string, deleteData:boolean) {
+    const sourceDirectoryName = `${this.collectionPrefix}${studyId}`;
+
+    if (!await this._directoryExists(sourceDirectoryName)) {
+      console.warn(`Source directory ${sourceDirectoryName} does not exist.`);
+      return false;
+    }
+
     const today = new Date();
-    const month = today.getMonth() + 1;
-    const year = today.getFullYear();
-    const date = today.getDate();
-    const currentDate = year + month + date;
+    const year = today.getUTCFullYear();
+    const month = (today.getUTCMonth() + 1).toString().padStart(2, '0');
+    const date = today.getUTCDate().toString().padStart(2, '0');
+    const hours = today.getUTCHours().toString().padStart(2, '0');
+    const minutes = today.getUTCMinutes().toString().padStart(2, '0');
+    const seconds = today.getUTCSeconds().toString().padStart(2, '0');
 
-    const sourceCollectionName = `${this.firestore}${studyId}`;
-    const targetCollectionName = `archive-${currentDate}-${this.firestore}${studyId}`;
+    const formattedDate = `${year}${month}${date}${hours}${minutes}${seconds}`;
 
-    const sourceCollectionRef = collection(this.firestore, sourceCollectionName);
-    const sourceSnapshot = await getDocs(sourceCollectionRef);
+    const targetDirectoryName = `${this.collectionPrefix}${studyId}-archive-${formattedDate}`;
 
-    const batch = writeBatch(this.firestore);
+    await this._copyDirectory(sourceDirectoryName, targetDirectoryName);
+    await this._addDirectoryNameToMetadata(targetDirectoryName);
 
-    sourceSnapshot.forEach((docSnapshot) => {
-      const newDocRef = doc(this.firestore, targetCollectionName);
-      batch.set(newDocRef, docSnapshot.data());
-    });
+    if (deleteData) {
+      await this._deleteDirectory(sourceDirectoryName);
+    }
+    return true;
+  }
 
-    await batch.commit();
-    console.warn(`Copied all documents from ${sourceCollectionName} to ${targetCollectionName}`);
+  async removeArchive(directoryName:string) {
+    await this._deleteDirectory(directoryName);
+    await this._removeDirectoryNameFromMetadata(directoryName);
+  }
+
+  async getArchives(studyId:string) {
+    try {
+      const metadataDoc = doc(this.firestore, 'metadata', 'collections');
+      const metadataSnapshot = await getDoc(metadataDoc);
+
+      if (metadataSnapshot.exists()) {
+        const collections = metadataSnapshot.data();
+        const matchingCollections = Object.keys(collections)
+          .filter((directoryName) => directoryName.startsWith(`${this.collectionPrefix}${studyId}-archive`));
+        return matchingCollections;
+      }
+      return [];
+    } catch (error) {
+      console.error('Error listing collections with prefix:', error);
+      throw error;
+    }
+  }
+
+  async restoreArchive(studyId:string, archivedDirectoryName:string) {
+    const originalDirectoryName = `${this.collectionPrefix}${studyId}`;
+    // Archive current collection
+    await this.archiveStudyData(studyId, true);
+
+    await this._copyDirectory(archivedDirectoryName, originalDirectoryName);
+    await this._deleteDirectory(archivedDirectoryName);
+    await this._removeDirectoryNameFromMetadata(archivedDirectoryName);
+  }
+
+  // Function to add collection name to metadata
+  async _addDirectoryNameToMetadata(directoryName:string) {
+    try {
+      const metadataDoc = doc(this.firestore, 'metadata', 'collections');
+      await setDoc(metadataDoc, { [directoryName]: true }, { merge: true });
+      console.warn(`Added ${directoryName} to metadata.`);
+    } catch (error) {
+      console.error('Error adding collection to metadata:', error);
+    }
+  }
+
+  async _removeDirectoryNameFromMetadata(directoryName:string) {
+    try {
+      const metadataDoc = doc(this.firestore, 'metadata', 'collections');
+      const metadataSnapshot = await getDoc(metadataDoc);
+
+      if (metadataSnapshot.exists()) {
+        const metadata = metadataSnapshot.data();
+        if (metadata[directoryName]) {
+          delete metadata[directoryName];
+          await setDoc(metadataDoc, metadata);
+          console.warn(`Removed ${directoryName} from metadata.`);
+        } else {
+          console.warn(`${directoryName} does not exist in metadata.`);
+        }
+      } else {
+        console.warn('No metadata found.');
+      }
+    } catch (error) {
+      console.error('Error removing collection from metadata:', error);
+      throw error;
+    }
+  }
+
+  async _deleteDirectory(directoryPath:string) {
+    try {
+      const storage = getStorage();
+      const directoryRef = ref(storage, directoryPath);
+      const directorySnapshot = await listAll(directoryRef);
+
+      const deletePromises = directorySnapshot.items.map((fileRef) => deleteObject(fileRef));
+      await Promise.all(deletePromises);
+
+      console.warn(`Deleted all files in directory ${directoryPath}.`);
+    } catch (error) {
+      console.error('Error deleting files in directory:', error);
+    }
+  }
+
+  async _copyDirectory(sourceDir: string, targetDir:string) {
+    try {
+      const storage = getStorage();
+      const sourceDirRef = ref(storage, sourceDir);
+      const sourceDirSnapshot = await listAll(sourceDirRef);
+
+      const copyPromises = sourceDirSnapshot.items.map((fileRef) => {
+        const sourceFilePath = fileRef.fullPath;
+        const targetFilePath = sourceFilePath.replace(sourceDir, targetDir);
+        return this._copyFile(sourceFilePath, targetFilePath);
+      });
+      await Promise.all(copyPromises);
+    } catch (error) {
+      console.error('Error copying file:', error);
+    }
+  }
+
+  async _copyFile(sourceFilePath:string, targetFilePath:string) {
+    try {
+      const storage = getStorage();
+      const sourceFileRef = ref(storage, sourceFilePath);
+      const targetFileRef = ref(storage, targetFilePath);
+
+      const sourceFileURL = await getDownloadURL(sourceFileRef);
+      const response = await fetch(sourceFileURL);
+      const blob = await response.blob();
+
+      await uploadBytes(targetFileRef, blob);
+      console.warn(`Copied file from ${sourceFilePath} to ${targetFilePath}`);
+    } catch (error) {
+      console.error('Error copying file:', error);
+    }
+  }
+
+  async _directoryExists(directoryPath:string) {
+    try {
+      const storage = getStorage();
+      const directoryRef = ref(storage, directoryPath);
+      const directorySnapshot = await listAll(directoryRef);
+      return directorySnapshot.items.length > 0;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      if (error.code === 'storage/object-not-found') {
+        return false;
+      }
+      console.error('Error checking if directory exists:', error);
+      throw error;
+    }
   }
 
   private _verifyStudyDatabase(db: CollectionReference<DocumentData, DocumentData> | undefined): db is CollectionReference<DocumentData, DocumentData> {
@@ -586,7 +724,7 @@ export class FirebaseStorageEngine extends StorageEngine {
   // Firebase storage helpers
   private async _getFromFirebaseStorage<T extends 'provenance' | 'windowEvents' | 'sequenceArray'>(prefix: string, type: T) {
     const storage = getStorage();
-    const storageRef = ref(storage, `${this.studyId}/${prefix}_${type}`);
+    const storageRef = ref(storage, `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`);
 
     let storageObj: Record<string, T extends 'provenance' ? TrrackedProvenance : T extends 'windowEvents' ? EventType[] : Sequence[]> = {};
     try {
@@ -595,7 +733,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       const fullProvStr = await response.text();
       storageObj = JSON.parse(fullProvStr);
     } catch {
-      console.warn(`${prefix} does not have ${type} for ${this.studyId}.`);
+      console.warn(`${prefix} does not have ${type} for ${this.collectionPrefix}${this.studyId}.`);
     }
 
     return storageObj;
@@ -604,7 +742,7 @@ export class FirebaseStorageEngine extends StorageEngine {
   private async _pushToFirebaseStorage<T extends 'provenance' | 'windowEvents' | 'sequenceArray'>(prefix: string, type: T, objectToUpload: Record<string, T extends 'provenance' ? TrrackedProvenance : T extends 'windowEvents' ? EventType[] : Sequence[]> = {}) {
     if (Object.keys(objectToUpload).length > 0) {
       const storage = getStorage();
-      const storageRef = ref(storage, `${this.studyId}/${prefix}_${type}`);
+      const storageRef = ref(storage, `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`);
       const blob = new Blob([JSON.stringify(objectToUpload)], {
         type: 'application/json',
       });
@@ -614,7 +752,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   private async _deleteFromFirebaseStorage<T extends 'sequenceArray'>(prefix: string, type: T) {
     const storage = getStorage();
-    const storageRef = ref(storage, `${this.studyId}/${prefix}_${type}`);
+    const storageRef = ref(storage, `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`);
     await deleteObject(storageRef);
   }
 }

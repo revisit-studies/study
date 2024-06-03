@@ -71,7 +71,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
             Replay Tab Content
           </Tabs.Panel>
           <Tabs.Panel value="settings" pt="xs">
-            {studyConfig && studyId && <DataManagementBoard studyConfig={studyConfig} studyId={studyId} />}
+            {studyId && <DataManagementBoard studyId={studyId} />}
           </Tabs.Panel>
         </Tabs>
       </Container>
