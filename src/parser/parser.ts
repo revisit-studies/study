@@ -1,12 +1,12 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { parse as hjsonParse } from 'hjson';
-import Ajv, { ErrorObject } from 'ajv';
+import Ajv from 'ajv';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
 import {
-  GlobalConfig, IndividualComponent, InheritedComponent, StudyConfig,
+  GlobalConfig, IndividualComponent, InheritedComponent, ParsedStudyConfig, StudyConfig,
 } from './types';
-import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
+import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 
 const ajv1 = new Ajv();
 ajv1.addSchema(globalSchema);
@@ -117,7 +117,8 @@ function verifyStudySkip(
 
 // This function verifies the study config file satisfies conditions that are not covered by the schema
 function verifyStudyConfig(studyConfig: StudyConfig) {
-  const errors: { message: string, instancePath: string, params: { 'action': string } }[] = [];
+  const errors: ParsedStudyConfig['errors'] = [];
+  const warnings: ParsedStudyConfig['warnings'] = [];
 
   // Verify components are well defined
   Object.entries(studyConfig.components)
@@ -132,8 +133,10 @@ function verifyStudyConfig(studyConfig: StudyConfig) {
       }
     });
 
+  const usedComponents = getSequenceFlatMapWithInterruptions(studyConfig.sequence);
+
   // Verify sequence is well defined
-  getSequenceFlatMap(studyConfig.sequence).forEach((component) => {
+  usedComponents.forEach((component) => {
     // Verify component is defined in components object
     if (!studyConfig.components[component]) {
       errors.push({
@@ -146,6 +149,17 @@ function verifyStudyConfig(studyConfig: StudyConfig) {
     }
   });
 
+  // Warnings for components that are defined but not used in the sequence
+  Object.keys(studyConfig.components)
+    .filter((componentName) => !usedComponents.includes(componentName))
+    .forEach((componentName) => {
+      warnings.push({
+        message: `Component \`${componentName}\` is defined in components object but not used in the sequence`,
+        instancePath: '/components/',
+        params: { action: 'remove the component from the components object or add it to the sequence' },
+      });
+    });
+
   // Verify skip blocks are well defined
   const missingSkipTargets: string[] = [];
   verifyStudySkip(studyConfig.sequence, missingSkipTargets);
@@ -157,19 +171,24 @@ function verifyStudyConfig(studyConfig: StudyConfig) {
     });
   });
 
-  return errors;
+  return { errors, warnings };
 }
 
 export function parseStudyConfig(fileData: string): ParsedStudyConfig {
   const data = hjsonParse(fileData);
   const validatedData = studyValidate(data) as boolean;
-  const parserErrors = verifyStudyConfig(data);
 
-  const errors = [...(studyValidate.errors || []), ...parserErrors];
+  let errors: Required<ParsedStudyConfig>['errors'] = [];
+  let warnings: Required<ParsedStudyConfig>['warnings'] = [];
 
-  if (errors.length === 0 && validatedData) {
-    return data as StudyConfig;
+  // We can only run our custom validator if the schema validation passes
+  if (validatedData) {
+    const { errors: parserErrors, warnings: parserWarnings } = verifyStudyConfig(data);
+    errors = [...(studyValidate.errors || []), ...parserErrors];
+    warnings = parserWarnings;
+  } else {
+    errors = studyValidate.errors || [];
   }
 
-  return { ...data, errors };
+  return { ...data, errors, warnings };
 }

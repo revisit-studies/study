@@ -48,14 +48,14 @@ function ConfigSwitcher({
             style={{ width: '100%' }}
           >
             <Card shadow="sm" radius="md" withBorder>
-              {config.errors
+              {config.errors.length > 0
                 ? (
                   <>
                     <Flex align="center" direction="row">
                       <IconAlertTriangle color="red" />
                       <Text fw="bold" ml={8} color="red">{configName}</Text>
                     </Flex>
-                    <ErrorLoadingConfig errors={config.errors} />
+                    <ErrorLoadingConfig issues={config.errors} type="error" />
                   </>
                 )
                 : (
@@ -78,6 +78,16 @@ function ConfigSwitcher({
                     </Text>
                   </>
                 )}
+
+              {config.warnings.length > 0 && (
+                <>
+                  <Flex align="center" direction="row">
+                    <IconAlertTriangle color="orange" />
+                    <Text fw="bold" ml={8} color="orange">Warnings</Text>
+                  </Flex>
+                  <ErrorLoadingConfig issues={config.warnings} type="warning" />
+                </>
+              )}
             </Card>
           </UnstyledButton>
         );
