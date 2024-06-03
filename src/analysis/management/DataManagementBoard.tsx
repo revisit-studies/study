@@ -17,19 +17,25 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
   const [archivedDatasets, setArchivedDatasets] = useState<string[]>([]);
 
   const [deleteValue, setDeleteValue] = useState<string>('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [archiveListLoading, setArchiveListLoading] = useState<boolean>(false);
+
+  const [archiveActionFlag, setArchiveActionFlag] = useState<boolean>(false);
+
   const { storageEngine } = useStorageEngine();
 
   // Used to fetch archived datasets
   useEffect(() => {
     async function fetchData() {
+      setArchiveListLoading(true);
       if (storageEngine instanceof FirebaseStorageEngine) {
         const currArchivedCollections = await storageEngine.getArchives(studyId);
         setArchivedDatasets(currArchivedCollections);
       }
+      setArchiveListLoading(false);
     }
     fetchData();
-  }, []);
+  }, [archiveActionFlag]);
 
   const handleArchiveData = async () => {
     setLoading(true);
@@ -37,6 +43,7 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
       await storageEngine.archiveStudyData(studyId, false);
       setModalArchiveOpened(false);
     }
+    setArchiveActionFlag((prev) => !prev);
     setLoading(false);
   };
 
@@ -47,6 +54,7 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
       await storageEngine.archiveStudyData(studyId, true);
       setModalDeleteOpened(false);
     }
+    setArchiveActionFlag((prev) => !prev);
     setLoading(false);
   };
 
@@ -57,6 +65,7 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
       await storageEngine.removeArchive(currentArchive);
       setModalDeleteArchiveOpened(false);
     }
+    setArchiveActionFlag((prev) => !prev);
     setLoading(false);
   };
 
@@ -66,6 +75,7 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
       await storageEngine.restoreArchive(studyId, currentArchive);
       setModalRestoreOpened(false);
     }
+    setArchiveActionFlag((prev) => !prev);
     setLoading(false);
   };
 
@@ -122,21 +132,24 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
             <Flex style={{ borderBottom: '1px solid #dedede' }} direction="row" justify="space-between" mb={15} pb={15}>
               <Title order={4}>Archived Datasets</Title>
             </Flex>
-            { archivedDatasets.length > 0 ? archivedDatasets.map(
-              (datasetName:string) => (
-                <Flex key={datasetName} justify="space-between" mb={10}>
-                  <Text>{datasetName}</Text>
-                  <Flex direction="row" gap={10}>
-                    <Tooltip label="Restore Archive">
-                      <ActionIcon variant="subtle" onClick={() => { setModalRestoreOpened(true); setCurrentArchive(datasetName); }}><IconRefresh color="green" /></ActionIcon>
-                    </Tooltip>
-                    <Tooltip label="Delete Archive">
-                      <ActionIcon variant="subtle" onClick={() => { setModalDeleteArchiveOpened(true); setCurrentArchive(datasetName); }}><IconTrashX color="red" /></ActionIcon>
-                    </Tooltip>
+            <div style={{ position: 'relative' }}>
+              <LoadingOverlay visible={archiveListLoading} />
+              { archivedDatasets.length > 0 ? archivedDatasets.map(
+                (datasetName:string) => (
+                  <Flex key={datasetName} justify="space-between" mb={10}>
+                    <Text>{datasetName}</Text>
+                    <Flex direction="row" gap={10}>
+                      <Tooltip label="Restore Archive">
+                        <ActionIcon variant="subtle" onClick={() => { setModalRestoreOpened(true); setCurrentArchive(datasetName); }}><IconRefresh color="green" /></ActionIcon>
+                      </Tooltip>
+                      <Tooltip label="Delete Archive">
+                        <ActionIcon variant="subtle" onClick={() => { setModalDeleteArchiveOpened(true); setCurrentArchive(datasetName); }}><IconTrashX color="red" /></ActionIcon>
+                      </Tooltip>
+                    </Flex>
                   </Flex>
-                </Flex>
-              ),
-            ) : <Text>No archived datasets.</Text>}
+                ),
+              ) : <Text>No archived datasets.</Text>}
+            </div>
           </Flex>
 
         </Card>
