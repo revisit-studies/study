@@ -183,7 +183,7 @@ export function TableView({
         }
           {(!record.completed) && (
           <Text size="sm" mb={-1} ml={4}>
-            {(Object.entries(record.answers).length / (getSequenceFlatMap(record.sequence).length - 1)) * 100}
+            {((Object.entries(record.answers).filter(([id, entry]) => entry.endTime !== undefined).length / (getSequenceFlatMap(record.sequence).length - 1)) * 100).toFixed(2)}
             %
           </Text>
           )}
