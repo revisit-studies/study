@@ -96,7 +96,12 @@ export function useNextStep() {
       // Update database
       if (storageEngine) {
         storageEngine.saveAnswers(
-          answers,
+          {
+            ...answers,
+            [identifier]: {
+              answer, startTime, endTime, provenanceGraph, windowEvents: currentWindowEvents,
+            },
+          },
         );
       }
       storeDispatch(setIframeAnswers({}));
