@@ -112,7 +112,11 @@ export class FirebaseStorageEngine extends StorageEngine {
 
       // Clear sequence array and current participant data if the config has changed
       if (currentConfigHash && currentConfigHash !== configHash) {
-        await this._deleteFromFirebaseStorage('', 'sequenceArray');
+        try {
+          await this._deleteFromFirebaseStorage('', 'sequenceArray');
+        } catch (error) {
+          // pass, if this happens, we didn't have a sequence array yet
+        }
         await this.clearCurrentParticipantId();
       }
 
