@@ -82,7 +82,7 @@ export function useNextStep() {
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
 
-    if (Object.keys(storedAnswer.answer).length === 0) {
+    if (!storedAnswer.endTime) {
       storeDispatch(
         saveTrialAnswer({
           identifier,
