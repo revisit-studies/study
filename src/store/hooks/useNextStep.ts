@@ -47,8 +47,6 @@ export function useNextStep() {
 
   const { trialValidation, sequence, answers } = useStoreSelector((state) => state);
 
-  const status = useStoredAnswer();
-
   const storeDispatch = useStoreDispatch();
   const { saveTrialAnswer, setIframeAnswers } = useStoreActions();
   const { storageEngine } = useStorageEngine();
@@ -58,7 +56,7 @@ export function useNextStep() {
   // Status of the next button. If false, the next button should be disabled
   const isNextDisabled = !areResponsesValid;
 
-  const storedAnswer = status?.answer;
+  const storedAnswer = useStoredAnswer();
 
   const navigate = useNavigate();
 
@@ -84,7 +82,7 @@ export function useNextStep() {
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
 
-    if (Object.keys(storedAnswer || {}).length === 0) {
+    if (Object.keys(storedAnswer.answer).length === 0) {
       storeDispatch(
         saveTrialAnswer({
           identifier,
@@ -97,15 +95,8 @@ export function useNextStep() {
       );
       // Update database
       if (storageEngine) {
-        storageEngine.saveAnswer(
-          identifier,
-          {
-            answer,
-            startTime,
-            endTime,
-            provenanceGraph,
-            windowEvents: currentWindowEvents,
-          },
+        storageEngine.saveAnswers(
+          answers,
         );
       }
       storeDispatch(setIframeAnswers({}));
