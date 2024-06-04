@@ -175,20 +175,27 @@ function verifyStudyConfig(studyConfig: StudyConfig) {
 }
 
 export function parseStudyConfig(fileData: string): ParsedStudyConfig {
-  const data = hjsonParse(fileData);
-  const validatedData = studyValidate(data) as boolean;
+  let validatedData = false;
+  let data: StudyConfig | undefined;
+
+  try {
+    data = hjsonParse(fileData);
+    validatedData = studyValidate(data) as boolean;
+  } catch {
+    validatedData = false;
+  }
 
   let errors: Required<ParsedStudyConfig>['errors'] = [];
   let warnings: Required<ParsedStudyConfig>['warnings'] = [];
 
   // We can only run our custom validator if the schema validation passes
   if (validatedData) {
-    const { errors: parserErrors, warnings: parserWarnings } = verifyStudyConfig(data);
+    const { errors: parserErrors, warnings: parserWarnings } = verifyStudyConfig(data!);
     errors = [...(studyValidate.errors || []), ...parserErrors];
     warnings = parserWarnings;
   } else {
-    errors = studyValidate.errors || [];
+    errors = studyValidate.errors || [{ message: 'There was an issue validating your config file', instancePath: 'root', params: { action: 'fix the errors in your file or make sure the global config references the right file path' } }];
   }
 
-  return { ...data, errors, warnings };
+  return { ...data as StudyConfig, errors, warnings };
 }
