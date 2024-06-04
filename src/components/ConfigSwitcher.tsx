@@ -51,9 +51,10 @@ function ConfigSwitcher({
               {config.errors.length > 0
                 ? (
                   <>
+                    <Text fw="bold">{configName}</Text>
                     <Flex align="center" direction="row">
                       <IconAlertTriangle color="red" />
-                      <Text fw="bold" ml={8} color="red">{configName}</Text>
+                      <Text fw="bold" ml={8} color="red">Errors</Text>
                     </Flex>
                     <ErrorLoadingConfig issues={config.errors} type="error" />
                   </>
