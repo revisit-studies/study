@@ -26,10 +26,15 @@ import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
 
 type FirebaseStorageObjectType = 'sequenceArray' | 'participantData' | 'config';
-type FirebaseStorageObject<T extends FirebaseStorageObjectType> = T extends 'sequenceArray' ? Sequence[]
-  : T extends 'participantData' ? ParticipantData
-  : T extends 'config' ? StudyConfig
+type FirebaseStorageObject<T extends FirebaseStorageObjectType> = T extends 'sequenceArray' ? (Sequence[] | object)
+  : T extends 'participantData' ? (ParticipantData | object)
+  : T extends 'config' ? (StudyConfig | object)
   : never;
+
+function isParticipantData(obj: unknown): obj is ParticipantData {
+  const potentialParticipantData = obj as ParticipantData;
+  return potentialParticipantData.participantId !== undefined;
+}
 
 export class FirebaseStorageEngine extends StorageEngine {
   private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
@@ -134,7 +139,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     // Check if the participant has already been initialized
     const participant = await this._getFromFirebaseStorage(`participants/${this.currentParticipantId}`, 'participantData');
 
-    if (participant) {
+    if (isParticipantData(participant)) {
       // Participant already initialized
       this.participantData = participant;
       return participant;
@@ -225,7 +230,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
     const sequenceArrayDocData = await this._getFromFirebaseStorage('', 'sequenceArray');
 
-    return sequenceArrayDocData;
+    return Array.isArray(sequenceArrayDocData) ? sequenceArrayDocData : null;
   }
 
   async getSequence() {
@@ -288,7 +293,9 @@ export class FirebaseStorageEngine extends StorageEngine {
     const participantPulls = participants.items.map(async (participant) => {
       const participantData = await this._getFromFirebaseStorageByRef(participant, 'participantData');
 
-      participantsData.push(participantData);
+      if (isParticipantData(participantData)) {
+        participantsData.push(participantData);
+      }
     });
 
     await Promise.all(participantPulls);
@@ -305,7 +312,9 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    return await this._getFromFirebaseStorage(`participants/${this.currentParticipantId}`, 'participantData');
+    const participantData = await this._getFromFirebaseStorage(`participants/${this.currentParticipantId}`, 'participantData');
+
+    return isParticipantData(participantData) ? participantData : null;
   }
 
   async nextParticipant(config: StudyConfig, metadata: ParticipantMetadata): Promise<ParticipantData> {
@@ -449,7 +458,9 @@ export class FirebaseStorageEngine extends StorageEngine {
     const participantPulls = participants.items.map(async (participant) => {
       const participantData = await this._getFromFirebaseStorageByRef(participant, 'participantData');
 
-      participantsData.push(participantData);
+      if (isParticipantData(participantData)) {
+        participantsData.push(participantData);
+      }
     });
 
     await Promise.all(participantPulls);
@@ -464,7 +475,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
     try {
       // If the user doesn't exist or is already rejected, return
-      if (!participant || participant.rejected) {
+      if (!participant || !isParticipantData(participant) || participant.rejected) {
         return;
       }
 
