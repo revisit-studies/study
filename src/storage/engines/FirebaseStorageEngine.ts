@@ -449,7 +449,7 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   async getAllParticipantsDataByStudy(studyId: string) {
-    const currentStorageRef = ref(this.storage, `${this.collectionPrefix}${studyId}`);
+    const currentStorageRef = ref(this.storage, `${this.collectionPrefix}${studyId}/participants`);
 
     // Get all participants
     const participants = await listAll(currentStorageRef);
