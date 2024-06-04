@@ -7,20 +7,34 @@ import {
   ref,
   uploadBytes,
   listAll,
+  FirebaseStorage,
+  StorageReference,
 } from 'firebase/storage';
 import {
-  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc, where, deleteDoc, updateDoc, writeBatch,
+  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc, where, deleteDoc, updateDoc,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
 import localforage from 'localforage';
+import { v4 as uuidv4 } from 'uuid';
 import { StorageEngine, UserWrapped, StoredUser } from './StorageEngine';
 import { ParticipantData } from '../types';
 import {
-  EventType, ParticipantMetadata, Sequence, StoredAnswer, TrrackedProvenance,
+  ParticipantMetadata, Sequence, StoredAnswer,
 } from '../../store/types';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
+
+type FirebaseStorageObjectType = 'sequenceArray' | 'participantData' | 'config';
+type FirebaseStorageObject<T extends FirebaseStorageObjectType> = T extends 'sequenceArray' ? (Sequence[] | object)
+  : T extends 'participantData' ? (ParticipantData | object)
+  : T extends 'config' ? (StudyConfig | object)
+  : never;
+
+function isParticipantData(obj: unknown): obj is ParticipantData {
+  const potentialParticipantData = obj as ParticipantData;
+  return potentialParticipantData.participantId !== undefined;
+}
 
 export class FirebaseStorageEngine extends StorageEngine {
   private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
@@ -31,14 +45,14 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   private studyCollection: CollectionReference<DocumentData, DocumentData> | undefined = undefined;
 
+  private storage: FirebaseStorage;
+
   private studyId = '';
 
   // localForage instance for storing currentParticipantId
   private localForage = localforage.createInstance({ name: 'currentParticipantId' });
 
-  private localProvenanceCopy: Record<string, TrrackedProvenance> = {};
-
-  private localWindowEvents: Record<string, EventType[]> = {};
+  private participantData: ParticipantData | null = null;
 
   constructor() {
     super('firebase');
@@ -46,6 +60,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     const firebaseConfig = hjsonParse(import.meta.env.VITE_FIREBASE_CONFIG);
     const firebaseApp = initializeApp(firebaseConfig);
     this.firestore = initializeFirestore(firebaseApp, {});
+    this.storage = getStorage();
 
     // Check if we're in dev, if so use a debug token
     if (import.meta.env.DEV) {
@@ -91,19 +106,23 @@ export class FirebaseStorageEngine extends StorageEngine {
       // Create or retrieve database for study
       this.studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
       this.studyId = studyId;
-      const configsDoc = doc(this.studyCollection, 'configs');
-      const configsCollection = collection(configsDoc, 'configs');
-      const configDoc = doc(configsCollection, configHash);
+
+      // Push the config ref in storage
+      await this._pushToFirebaseStorage(`configs/${configHash}`, 'config', config);
 
       // Clear sequence array and current participant data if the config has changed
       if (currentConfigHash && currentConfigHash !== configHash) {
-        this._deleteFromFirebaseStorage('', 'sequenceArray');
+        try {
+          await this._deleteFromFirebaseStorage('', 'sequenceArray');
+        } catch (error) {
+          // pass, if this happens, we didn't have a sequence array yet
+        }
         await this.clearCurrentParticipantId();
       }
 
       await this.localForage.setItem('currentConfigHash', configHash);
 
-      return await setDoc(configDoc, config);
+      return Promise.resolve();
     } catch (error) {
       console.warn('Failed to connect to Firebase.');
       return Promise.reject(error);
@@ -122,31 +141,16 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
 
     // Check if the participant has already been initialized
-    const participantDoc = doc(this.studyCollection, this.currentParticipantId);
-    const participant = (await getDoc(participantDoc)).data() as ParticipantData | null;
+    const participant = await this._getFromFirebaseStorage(`participants/${this.currentParticipantId}`, 'participantData');
 
-    // Restore localProvenanceCopy
-    this.localProvenanceCopy = await this._getFromFirebaseStorage(this.currentParticipantId, 'provenance');
-
-    // Restore localWindowEvents
-    this.localWindowEvents = await this._getFromFirebaseStorage(this.currentParticipantId, 'windowEvents');
-    Object.entries(this.localWindowEvents).forEach(([step, events]) => {
-      if (participant === null) return;
-
-      if (events === undefined || events.length === 0) {
-        participant.answers[step].windowEvents = [];
-      } else {
-        participant.answers[step].windowEvents = events;
-      }
-    });
-
-    if (participant) {
+    if (isParticipantData(participant)) {
       // Participant already initialized
+      this.participantData = participant;
       return participant;
     }
     // Initialize participant
     const participantConfigHash = await hash(JSON.stringify(config));
-    const participantData: ParticipantData = {
+    this.participantData = {
       participantId: this.currentParticipantId,
       participantConfigHash,
       sequence: await this.getSequence(),
@@ -156,9 +160,9 @@ export class FirebaseStorageEngine extends StorageEngine {
       completed: false,
       rejected: false,
     };
-    await setDoc(participantDoc, participantData);
+    await this._pushToFirebaseStorage(`participants/${this.currentParticipantId}`, 'participantData', this.participantData);
 
-    return participantData;
+    return this.participantData;
   }
 
   async getCurrentConfigHash() {
@@ -184,8 +188,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
 
     // Generate new participant id
-    const participantDoc = doc(this.studyCollection);
-    this.currentParticipantId = participantDoc.id;
+    this.currentParticipantId = uuidv4();
 
     // Set currentParticipantId in localForage
     await this.localForage.setItem('currentParticipantId', this.currentParticipantId);
@@ -197,33 +200,23 @@ export class FirebaseStorageEngine extends StorageEngine {
     return await this.localForage.removeItem('currentParticipantId');
   }
 
-  async saveAnswer(identifier: string, answer: StoredAnswer) {
+  async saveAnswers(answers: Record<string, StoredAnswer>) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
 
-    if (!this.currentParticipantId) {
+    if (!this.currentParticipantId || this.participantData === null) {
       throw new Error('Participant not initialized');
     }
 
-    // Get the participant doc
-    const participantDoc = doc(this.studyCollection, this.currentParticipantId);
-
-    const answerToSave = {
-      answer: answer.answer,
-      startTime: answer.startTime,
-      endTime: answer.endTime,
+    // Update the local copy of the participant data
+    this.participantData = {
+      ...this.participantData,
+      answers,
     };
 
-    await setDoc(participantDoc, { answers: { [identifier]: answerToSave } }, { merge: true });
-
-    if (answer.provenanceGraph) {
-      this.localProvenanceCopy[identifier] = answer.provenanceGraph;
-      await this._pushToFirebaseStorage(this.currentParticipantId, 'provenance', this.localProvenanceCopy);
-    }
-
-    this.localWindowEvents[identifier] = answer.windowEvents;
-    await this._pushToFirebaseStorage(this.currentParticipantId, 'windowEvents', this.localWindowEvents);
+    // Push the updated participant data to Firebase
+    await this._pushToFirebaseStorage(`participants/${this.currentParticipantId}`, 'participantData', this.participantData);
   }
 
   async setSequenceArray(latinSquare: Sequence[]) {
@@ -231,7 +224,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Study database not initialized');
     }
 
-    this._pushToFirebaseStorage('', 'sequenceArray', { sequenceArray: latinSquare });
+    await this._pushToFirebaseStorage('', 'sequenceArray', latinSquare);
   }
 
   async getSequenceArray() {
@@ -241,7 +234,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
     const sequenceArrayDocData = await this._getFromFirebaseStorage('', 'sequenceArray');
 
-    return sequenceArrayDocData.sequenceArray;
+    return Array.isArray(sequenceArrayDocData) ? sequenceArrayDocData : null;
   }
 
   async getSequence() {
@@ -297,32 +290,21 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
 
     // Get all participants
-    const participants = await getDocs(this.studyCollection);
-    const participantData: ParticipantData[] = [];
+    const participantRefs = ref(this.storage, `${this.collectionPrefix}${this.studyId}/participants`);
+    const participants = await listAll(participantRefs);
+    const participantsData: ParticipantData[] = [];
 
-    // Iterate over the participants and add the provenance graph
-    const participantPulls = participants.docs.map(async (participant) => {
-      // Exclude the config doc and the sequenceArray doc
-      if (participant.id === 'config' || participant.id === 'sequenceArray') return;
+    const participantPulls = participants.items.map(async (participant) => {
+      const participantData = await this._getFromFirebaseStorageByRef(participant, 'participantData');
 
-      const participantDataItem = participant.data() as ParticipantData;
-
-      const fullProvObj = await this._getFromFirebaseStorage(participantDataItem.participantId, 'provenance');
-      const fullWindowEventsObj = await this._getFromFirebaseStorage(participantDataItem.participantId, 'windowEvents');
-
-      // Rehydrate the provenance graphs
-      participantDataItem.answers = Object.fromEntries(Object.entries(participantDataItem.answers).map(([key, value]) => {
-        if (value === undefined) return [key, value];
-        const provenanceGraph = fullProvObj[key];
-        const windowEvents = fullWindowEventsObj[key];
-        return [key, { ...value, provenanceGraph, windowEvents }];
-      }));
-      participantData.push(participantDataItem);
+      if (isParticipantData(participantData)) {
+        participantsData.push(participantData);
+      }
     });
 
     await Promise.all(participantPulls);
 
-    return participantData;
+    return participantsData;
   }
 
   async getParticipantData() {
@@ -330,30 +312,13 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Study database not initialized');
     }
 
-    // Ensure we have currentParticipantId
-    await this.getCurrentParticipantId();
-
-    // Get participant data
-    let participant: ParticipantData | null = null;
-    if (this.currentParticipantId !== null) {
-      const participantDoc = doc(this.studyCollection, this.currentParticipantId);
-      participant = (await getDoc(participantDoc)).data() as ParticipantData | null;
-
-      // Get provenance data
-      if (participant !== null) {
-        const fullProvObj = await this._getFromFirebaseStorage(this.currentParticipantId, 'provenance');
-        const fullWindowEventsObj = await this._getFromFirebaseStorage(this.currentParticipantId, 'windowEvents');
-
-        // Iterate over the participant answers and add the provenance graph
-        Object.entries(participant.answers).forEach(([step, answer]) => {
-          if (answer === undefined) return;
-          answer.provenanceGraph = fullProvObj[step];
-          answer.windowEvents = fullWindowEventsObj[step];
-        });
-      }
+    if (this.currentParticipantId === null) {
+      throw new Error('Participant not initialized');
     }
 
-    return participant;
+    const participantData = await this._getFromFirebaseStorage(`participants/${this.currentParticipantId}`, 'participantData');
+
+    return isParticipantData(participantData) ? participantData : null;
   }
 
   async nextParticipant(config: StudyConfig, metadata: ParticipantMetadata): Promise<ParticipantData> {
@@ -362,37 +327,27 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
 
     // Generate a new participant id
-    const newParticipant = doc(this.studyCollection);
-    const newParticipantId = newParticipant.id;
+    const newParticipantId = uuidv4();
 
     // Set current participant id
     await this.localForage.setItem('currentParticipantId', newParticipantId);
     this.currentParticipantId = newParticipantId;
 
-    // Get participant data
-    let participant: ParticipantData | null = null;
-    if (this.currentParticipantId !== null) {
-      participant = (await getDoc(newParticipant)).data() as ParticipantData | null;
-    }
+    const participantConfigHash = await hash(JSON.stringify(config));
+    // Generate a new participant
+    const newParticipantData: ParticipantData = {
+      participantId: newParticipantId,
+      participantConfigHash,
+      sequence: await this.getSequence(),
+      answers: {},
+      searchParams: {},
+      metadata,
+      completed: false,
+      rejected: false,
+    };
+    await this._pushToFirebaseStorage(`participants/${newParticipantId}`, 'participantData', newParticipantData);
 
-    if (!participant) {
-      const participantConfigHash = await hash(JSON.stringify(config));
-      // Generate a new participant
-      const newParticipantData: ParticipantData = {
-        participantId: newParticipantId,
-        participantConfigHash,
-        sequence: await this.getSequence(),
-        answers: {},
-        searchParams: {},
-        metadata,
-        completed: false,
-        rejected: false,
-      };
-      await setDoc(newParticipant, newParticipantData);
-      participant = newParticipantData;
-    }
-
-    return participant;
+    return newParticipantData;
   }
 
   async verifyCompletion() {
@@ -405,16 +360,13 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
 
     // Get the participantData
-    const participantData = await this.getParticipantData();
-    if (!participantData) {
+    await this.getParticipantData();
+    if (!this.participantData) {
       throw new Error('Participant not initialized');
     }
 
-    // Check if all components have been completed
-    const participantDoc = doc(this.studyCollection, this.currentParticipantId);
-    await setDoc(participantDoc, { completed: true }, { merge: true });
-
-    participantData.completed = true;
+    this.participantData.completed = true;
+    await this._pushToFirebaseStorage(`participants/${this.currentParticipantId}`, 'participantData', this.participantData);
 
     return true;
   }
@@ -464,7 +416,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return false;
   }
 
-  async changeAuth(bool:boolean) {
+  async changeAuth(bool: boolean) {
     await setDoc(doc(this.firestore, 'user-management', 'authentication'), {
       isEnabled: bool,
     });
@@ -488,7 +440,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async removeAdminUser(email:string) {
+  async removeAdminUser(email: string) {
     const adminUsers = await this.getUserManagementData('adminUsers');
     if (adminUsers?.adminUsersList && adminUsers.adminUsersList.length > 1) {
       if (adminUsers.adminUsersList.find((storedUser: StoredUser) => storedUser.email === email)) {
@@ -500,51 +452,40 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async getAllParticipantsDataByStudy(studyId:string) {
-    const currentCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
+  async getAllParticipantsDataByStudy(studyId: string) {
+    const currentStorageRef = ref(this.storage, `${this.collectionPrefix}${studyId}/participants`);
 
     // Get all participants
-    const participants = await getDocs(currentCollection);
-    const participantData: ParticipantData[] = [];
+    const participants = await listAll(currentStorageRef);
+    const participantsData: ParticipantData[] = [];
 
-    // Iterate over the participants and add the provenance graph
-    const participantPulls = participants.docs.map(async (participant) => {
-      // Exclude the config doc and the sequenceArray doc
-      if (participant.id === 'config' || participant.id === 'sequenceArray') return;
+    const participantPulls = participants.items.map(async (participant) => {
+      const participantData = await this._getFromFirebaseStorageByRef(participant, 'participantData');
 
-      const participantDataItem = participant.data() as ParticipantData;
-
-      const fullProvObj = await this._getFromFirebaseStorage(participantDataItem.participantId, 'provenance');
-      const fullWindowEventsObj = await this._getFromFirebaseStorage(participantDataItem.participantId, 'windowEvents');
-
-      // Rehydrate the provenance graphs
-      participantDataItem.answers = Object.fromEntries(Object.entries(participantDataItem.answers).map(([key, value]) => {
-        if (value === undefined) return [key, value];
-        const provenanceGraph = fullProvObj[key];
-        const windowEvents = fullWindowEventsObj[key];
-        return [key, { ...value, provenanceGraph, windowEvents }];
-      }));
-      participantData.push(participantDataItem);
+      if (isParticipantData(participantData)) {
+        participantsData.push(participantData);
+      }
     });
 
     await Promise.all(participantPulls);
 
-    return participantData;
+    return participantsData;
   }
 
-  async rejectParticipant(studyId:string, participantId: string) {
+  async rejectParticipant(studyId: string, participantId: string) {
     const studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
-    const participantDoc = doc(studyCollection, participantId);
-    const participant = (await getDoc(participantDoc)).data() as ParticipantData | null;
+    const participantRef = ref(this.storage, `${this.collectionPrefix}${studyId}/participants/${participantId}`);
+    const participant = await this._getFromFirebaseStorageByRef(participantRef, 'participantData');
 
     try {
       // If the user doesn't exist or is already rejected, return
-      if (!participant || participant.rejected) {
+      if (!participant || !isParticipantData(participant) || participant.rejected) {
         return;
       }
 
       // set reject flag
-      await updateDoc(participantDoc, { rejected: true });
+      participant.rejected = true;
+      await this._pushToFirebaseStorageByRef(participantRef, 'participantData', participant);
 
       // set sequence assignment to empty string, keep the timestamp
       const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
@@ -654,8 +595,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   async _deleteDirectory(directoryPath:string) {
     try {
-      const storage = getStorage();
-      const directoryRef = ref(storage, directoryPath);
+      const directoryRef = ref(this.storage, directoryPath);
       const directorySnapshot = await listAll(directoryRef);
 
       const deletePromises = directorySnapshot.items.map((fileRef) => deleteObject(fileRef));
@@ -667,10 +607,9 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async _copyDirectory(sourceDir: string, targetDir:string) {
+  async _copyDirectory(sourceDir: string, targetDir: string) {
     try {
-      const storage = getStorage();
-      const sourceDirRef = ref(storage, sourceDir);
+      const sourceDirRef = ref(this.storage, sourceDir);
       const sourceDirSnapshot = await listAll(sourceDirRef);
 
       const copyPromises = sourceDirSnapshot.items.map((fileRef) => {
@@ -684,11 +623,10 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async _copyFile(sourceFilePath:string, targetFilePath:string) {
+  async _copyFile(sourceFilePath: string, targetFilePath: string) {
     try {
-      const storage = getStorage();
-      const sourceFileRef = ref(storage, sourceFilePath);
-      const targetFileRef = ref(storage, targetFilePath);
+      const sourceFileRef = ref(this.storage, sourceFilePath);
+      const targetFileRef = ref(this.storage, targetFilePath);
 
       const sourceFileURL = await getDownloadURL(sourceFileRef);
       const response = await fetch(sourceFileURL);
@@ -703,8 +641,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   async _directoryExists(directoryPath:string) {
     try {
-      const storage = getStorage();
-      const directoryRef = ref(storage, directoryPath);
+      const directoryRef = ref(this.storage, directoryPath);
       const directorySnapshot = await listAll(directoryRef);
       return directorySnapshot.items.length > 0;
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -722,11 +659,10 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   // Firebase storage helpers
-  private async _getFromFirebaseStorage<T extends 'provenance' | 'windowEvents' | 'sequenceArray'>(prefix: string, type: T) {
-    const storage = getStorage();
-    const storageRef = ref(storage, `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`);
+  private async _getFromFirebaseStorage<T extends FirebaseStorageObjectType>(prefix: string, type: T) {
+    const storageRef = ref(this.storage, `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`);
 
-    let storageObj: Record<string, T extends 'provenance' ? TrrackedProvenance : T extends 'windowEvents' ? EventType[] : Sequence[]> = {};
+    let storageObj: FirebaseStorageObject<T> = {} as FirebaseStorageObject<T>;
     try {
       const url = await getDownloadURL(storageRef);
       const response = await fetch(url);
@@ -739,10 +675,32 @@ export class FirebaseStorageEngine extends StorageEngine {
     return storageObj;
   }
 
-  private async _pushToFirebaseStorage<T extends 'provenance' | 'windowEvents' | 'sequenceArray'>(prefix: string, type: T, objectToUpload: Record<string, T extends 'provenance' ? TrrackedProvenance : T extends 'windowEvents' ? EventType[] : Sequence[]> = {}) {
+  private async _getFromFirebaseStorageByRef<T extends FirebaseStorageObjectType>(storageRef: StorageReference, type: T) {
+    let storageObj: FirebaseStorageObject<T> = {} as FirebaseStorageObject<T>;
+    try {
+      const url = await getDownloadURL(storageRef);
+      const response = await fetch(url);
+      const fullProvStr = await response.text();
+      storageObj = JSON.parse(fullProvStr);
+    } catch {
+      console.warn(`${storageRef} with type ${type} not found.`);
+    }
+
+    return storageObj;
+  }
+
+  private async _pushToFirebaseStorage<T extends FirebaseStorageObjectType>(prefix: string, type: T, objectToUpload: FirebaseStorageObject<T>) {
     if (Object.keys(objectToUpload).length > 0) {
-      const storage = getStorage();
-      const storageRef = ref(storage, `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`);
+      const storageRef = ref(this.storage, `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`);
+      const blob = new Blob([JSON.stringify(objectToUpload)], {
+        type: 'application/json',
+      });
+      await uploadBytes(storageRef, blob);
+    }
+  }
+
+  private async _pushToFirebaseStorageByRef<T extends FirebaseStorageObjectType>(storageRef: StorageReference, type: T, objectToUpload: FirebaseStorageObject<T>) {
+    if (Object.keys(objectToUpload).length > 0) {
       const blob = new Blob([JSON.stringify(objectToUpload)], {
         type: 'application/json',
       });
@@ -751,8 +709,7 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   private async _deleteFromFirebaseStorage<T extends 'sequenceArray'>(prefix: string, type: T) {
-    const storage = getStorage();
-    const storageRef = ref(storage, `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`);
+    const storageRef = ref(this.storage, `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`);
     await deleteObject(storageRef);
   }
 }
