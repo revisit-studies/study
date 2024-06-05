@@ -80,7 +80,7 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
   const openCreateSnapshotModal = () => openConfirmModal({
     title: 'Create a Snapshot',
     children: (
-      <Text mb={30}>This will create a snapshot of the current dataset. The current study data can be restored to a snapshot at any time.</Text>
+      <Text mb={30}>This will create a snapshot of the live database. The current study data can be restored to a snapshot at any time.</Text>
     ),
     labels: { confirm: 'Create', cancel: 'Cancel' },
     // confirmProps: { color: 'blue' },
@@ -111,16 +111,16 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
             <Box style={{ width: '70%' }}>
               <Title order={4}>Create a Snapshot</Title>
               <Text>
-                This wil create a snapshot of the current
+                This wil create a snapshot of the live
                 <span style={{ fontWeight: 'bold' }}>
                   {' '}
                   {studyId}
                 </span>
                 {' '}
-                data. It will
+                database. It will
                 <span style={{ fontStyle: 'italic', fontWeight: 'bold' }}> not</span>
                 {' '}
-                remove this data from the current dataset. The current study data can be restored to a snapshot at any time.
+                remove this data from the live database. The current study data can be restored from a snapshot at any time.
               </Text>
             </Box>
             <Tooltip label="Create a snapshot">
@@ -135,13 +135,13 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
             <Box style={{ width: '70%' }}>
               <Title order={4}>Archive Data</Title>
               <Text>
-                This wil create a snapshot of the current
+                This wil create a snapshot of the live
                 <span style={{ fontWeight: 'bold' }}>
                   {' '}
                   {studyId}
                   {' '}
                 </span>
-                data. It will then remove this data from the current dataset. The current study data can be restored to a snapshot at any time.
+                database. It will then remove this data from the live database. The current study data can be restored from a snapshot at any time.
               </Text>
             </Box>
             <Tooltip label="Snapshot and Delete Data">
@@ -161,7 +161,7 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
             <div style={{ position: 'relative' }}>
               <LoadingOverlay visible={snapshotListLoading} />
               { snapshots.length > 0 ? snapshots.map(
-                (datasetName:string) => (
+                (datasetName: string) => (
                   <Flex key={datasetName} justify="space-between" mb={10}>
                     <Text>{datasetName}</Text>
                     <Flex direction="row" gap={10}>
@@ -187,9 +187,9 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
         title={<Title order={4}>Archive Data</Title>}
       >
         <Box>
-          <Text mb={30}>This will create a snapshot of the current dataset and then delete the current dataset.</Text>
+          <Text mb={30}>This will create a snapshot of the live database and clear all data out of the live database.</Text>
           <TextInput
-            label="To delete this data, please enter the name of the study."
+            label="To archive this data, please enter the name of the study."
             placeholder={studyId}
             onChange={(event) => setDeleteValue(event.target.value)}
           />
@@ -212,15 +212,15 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
         <Box>
           <Text mb={30}>This will permanently remove this snapshot.</Text>
           <TextInput
-            label="To delete this snapshot, please 'delete' in the box below."
-            placeholder="delete"
+            label="To delete this snapshot, please enter the name of the study."
+            placeholder={studyId}
             onChange={(event) => setDeleteValue(event.target.value)}
           />
           <Flex mt={30} justify="right">
             <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalDeleteSnapshotOpened(false); setDeleteValue(''); }}>
               Cancel
             </Button>
-            <Button color="red" onClick={() => handleDeleteSnapshot()} disabled={deleteValue !== 'delete'}>
+            <Button color="red" onClick={() => handleDeleteSnapshot()} disabled={deleteValue !== studyId}>
               Delete Snapshot
             </Button>
           </Flex>
