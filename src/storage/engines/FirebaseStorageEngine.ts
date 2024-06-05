@@ -499,7 +499,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async createSnapshot(studyId:string, deleteData:boolean) {
+  async createSnapshot(studyId: string, deleteData: boolean) {
     const sourceName = `${this.collectionPrefix}${studyId}`;
 
     if (!await this._directoryExists(sourceName)) {
@@ -515,7 +515,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     const minutes = today.getUTCMinutes().toString().padStart(2, '0');
     const seconds = today.getUTCSeconds().toString().padStart(2, '0');
 
-    const formattedDate = `${year}${month}${date}${hours}${minutes}${seconds}`;
+    const formattedDate = `${year}-${month}-${date}T${hours}:${minutes}:${seconds}`;
 
     const targetName = `${this.collectionPrefix}${studyId}-snapshot-${formattedDate}`;
 
@@ -551,7 +551,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         const collections = metadataSnapshot.data();
         const matchingCollections = Object.keys(collections)
           .filter((directoryName) => directoryName.startsWith(`${this.collectionPrefix}${studyId}-snapshot`));
-        return matchingCollections;
+        return matchingCollections.sort().reverse();
       }
       return [];
     } catch (error) {
