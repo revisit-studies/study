@@ -3,13 +3,12 @@ import {
 } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { IconTrashX, IconRefresh } from '@tabler/icons-react';
+import { openConfirmModal } from '@mantine/modals';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
 
-export function DataManagementBoard({ studyId }:{ studyId:string}) {
+export function DataManagementBoard({ studyId, refresh }: { studyId: string, refresh: () => Promise<void> }) {
   const [modalArchiveOpened, setModalArchiveOpened] = useState<boolean>(false);
-  const [modalCreateSnapshotOpened, setModalCreateSnapshotOpened] = useState<boolean>(false);
-  const [modalRestoreOpened, setModalRestoreOpened] = useState<boolean>(false);
   const [modalDeleteSnapshotOpened, setModalDeleteSnapshotOpened] = useState<boolean>(false);
 
   const [currentSnapshot, setCurrentSnapshot] = useState<string>('');
@@ -41,7 +40,6 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
     setLoading(true);
     if (storageEngine instanceof FirebaseStorageEngine) {
       await storageEngine.createSnapshot(studyId, false);
-      setModalCreateSnapshotOpened(false);
     }
     setSnapshotActionFlag((prev) => !prev);
     setLoading(false);
@@ -51,8 +49,8 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
     setLoading(true);
     setDeleteValue('');
     if (storageEngine instanceof FirebaseStorageEngine) {
-      await storageEngine.createSnapshot(studyId, true);
       setModalArchiveOpened(false);
+      await storageEngine.createSnapshot(studyId, true);
     }
     setSnapshotActionFlag((prev) => !prev);
     setLoading(false);
@@ -62,8 +60,8 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
     setLoading(true);
     setDeleteValue('');
     if (storageEngine instanceof FirebaseStorageEngine) {
-      await storageEngine.removeSnapshot(currentSnapshot);
       setModalDeleteSnapshotOpened(false);
+      await storageEngine.removeSnapshot(currentSnapshot);
     }
     setSnapshotActionFlag((prev) => !prev);
     setLoading(false);
@@ -73,11 +71,35 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
     setLoading(true);
     if (storageEngine instanceof FirebaseStorageEngine) {
       await storageEngine.restoreSnapshot(studyId, currentSnapshot);
-      setModalRestoreOpened(false);
     }
+    await refresh();
     setSnapshotActionFlag((prev) => !prev);
     setLoading(false);
   };
+
+  const openCreateSnapshotModal = () => openConfirmModal({
+    title: 'Create a Snapshot',
+    children: (
+      <Text mb={30}>This will create a snapshot of the current dataset. The current study data can be restored to a snapshot at any time.</Text>
+    ),
+    labels: { confirm: 'Create', cancel: 'Cancel' },
+    // confirmProps: { color: 'blue' },
+    cancelProps: { variant: 'subtle', color: 'dark' },
+    onCancel: () => {},
+    onConfirm: () => handleCreateSnapshot(),
+  });
+
+  const openRestoreSnapshotModal = () => openConfirmModal({
+    title: 'Restore Snapshot',
+    children: (
+      <Text mb={30}>This will create a snapshot of the current study data into a new snapshot and then copy the this snapshot back into the current study data. This snapshot will then be removed.</Text>
+    ),
+    labels: { confirm: 'Restore', cancel: 'Cancel' },
+    confirmProps: { color: 'red' },
+    cancelProps: { variant: 'subtle', color: 'dark' },
+    onCancel: () => {},
+    onConfirm: () => handleRestoreSnapshot(),
+  });
 
   return (
     <>
@@ -103,9 +125,7 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
             </Box>
             <Tooltip label="Create a snapshot">
               <Button
-                color="red"
-                sx={{ '&[data-disabled]': { pointerEvents: 'all' } }}
-                onClick={() => setModalCreateSnapshotOpened(true)}
+                onClick={openCreateSnapshotModal}
               >
                 Create a Snapshot
               </Button>
@@ -146,7 +166,7 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
                     <Text>{datasetName}</Text>
                     <Flex direction="row" gap={10}>
                       <Tooltip label="Restore Snapshot">
-                        <ActionIcon variant="subtle" onClick={() => { setModalRestoreOpened(true); setCurrentSnapshot(datasetName); }}><IconRefresh color="green" /></ActionIcon>
+                        <ActionIcon variant="subtle" onClick={() => { openRestoreSnapshotModal(); setCurrentSnapshot(datasetName); }}><IconRefresh color="green" /></ActionIcon>
                       </Tooltip>
                       <Tooltip label="Delete Snapshot">
                         <ActionIcon variant="subtle" onClick={() => { setModalDeleteSnapshotOpened(true); setCurrentSnapshot(datasetName); }}><IconTrashX color="red" /></ActionIcon>
@@ -174,47 +194,11 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
             onChange={(event) => setDeleteValue(event.target.value)}
           />
           <Flex mt={30} justify="right">
-            <Button mr={5} variant="subtle" color="red" onClick={() => { setModalArchiveOpened(false); setDeleteValue(''); }}>
+            <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalArchiveOpened(false); setDeleteValue(''); }}>
               Cancel
             </Button>
-            <Button onClick={() => handleArchiveData()} disabled={deleteValue !== studyId}>
+            <Button color="red" onClick={() => handleArchiveData()} disabled={deleteValue !== studyId}>
               Archive Data
-            </Button>
-          </Flex>
-        </Box>
-      </Modal>
-
-      <Modal
-        opened={modalCreateSnapshotOpened}
-        onClose={() => setModalCreateSnapshotOpened(false)}
-        title={<Title order={4}>Create A Snapshot</Title>}
-      >
-        <Box>
-          <Text mb={30}>This will create a snapshot of the current dataset. The current study data can be restored to a snapshot at any time.</Text>
-          <Flex mt={30} justify="right">
-            <Button mr={5} variant="subtle" color="red" onClick={() => setModalCreateSnapshotOpened(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => handleCreateSnapshot()}>
-              Create a Snapshot
-            </Button>
-          </Flex>
-        </Box>
-      </Modal>
-
-      <Modal
-        opened={modalRestoreOpened}
-        onClose={() => setModalRestoreOpened(false)}
-        title={<Title order={4}>Restore Snapshot</Title>}
-      >
-        <Box>
-          <Text mb={30}>This will create a snapshot of the current study data into a new snapshot and then copy the this snapshot back into the current study data. This snapshot will then be removed.</Text>
-          <Flex mt={30} justify="right">
-            <Button mr={5} variant="subtle" color="red" onClick={() => setModalRestoreOpened(false)}>
-              Cancel
-            </Button>
-            <Button onClick={() => handleRestoreSnapshot()}>
-              Restore
             </Button>
           </Flex>
         </Box>
@@ -233,16 +217,15 @@ export function DataManagementBoard({ studyId }:{ studyId:string}) {
             onChange={(event) => setDeleteValue(event.target.value)}
           />
           <Flex mt={30} justify="right">
-            <Button mr={5} variant="subtle" color="red" onClick={() => { setModalDeleteSnapshotOpened(false); setDeleteValue(''); }}>
+            <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalDeleteSnapshotOpened(false); setDeleteValue(''); }}>
               Cancel
             </Button>
-            <Button onClick={() => handleDeleteSnapshot()} disabled={deleteValue !== 'delete'}>
+            <Button color="red" onClick={() => handleDeleteSnapshot()} disabled={deleteValue !== 'delete'}>
               Delete Snapshot
             </Button>
           </Flex>
         </Box>
       </Modal>
-
     </>
   );
 }
