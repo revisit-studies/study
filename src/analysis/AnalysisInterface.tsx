@@ -59,7 +59,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
             <Tabs.Tab value="table" icon={<IconTable size={16} />}>Table View</Tabs.Tab>
             <Tabs.Tab value="stats" icon={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
             <Tabs.Tab value="replay" icon={<IconPlayerPlay size={16} />}>Individual Replay</Tabs.Tab>
-            { import.meta.env.VITE_REVISIT_MODE !== 'public' && storageEngine instanceof FirebaseStorageEngine ? <Tabs.Tab value="settings" icon={<IconSettings size={16} />}>Manage</Tabs.Tab> : null}
+            { import.meta.env.VITE_REVISIT_MODE !== 'public' && storageEngine instanceof FirebaseStorageEngine ? <Tabs.Tab value="manage" icon={<IconSettings size={16} />}>Manage</Tabs.Tab> : null}
           </Tabs.List>
           <Tabs.Panel value="table" pt="xs" style={{ height: 'calc(100% - 38px - 10px)', width: '100%', overflow: 'scroll' }}>
             {studyConfig && <TableView completed={completed} inProgress={inProgress} studyConfig={studyConfig} refresh={getData} />}
@@ -71,8 +71,8 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
           <Tabs.Panel value="replay" pt="xs">
             Replay Tab Content
           </Tabs.Panel>
-          <Tabs.Panel value="settings" pt="xs">
-            {studyId && import.meta.env.VITE_REVISIT_MODE !== 'public' && storageEngine instanceof FirebaseStorageEngine && <DataManagementBoard studyId={studyId} />}
+          <Tabs.Panel value="manage" pt="xs">
+            {studyId && import.meta.env.VITE_REVISIT_MODE !== 'public' && storageEngine instanceof FirebaseStorageEngine && <DataManagementBoard studyId={studyId} refresh={getData} />}
           </Tabs.Panel>
         </Tabs>
       </Container>
