@@ -535,6 +535,8 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   async removeSnapshot(targetName:string) {
+    await this._deleteDirectory(`${targetName}/configs`);
+    await this._deleteDirectory(`${targetName}/participants`);
     await this._deleteDirectory(targetName);
     await this._deleteCollection(targetName);
     await this._removeNameFromMetadata(targetName);
