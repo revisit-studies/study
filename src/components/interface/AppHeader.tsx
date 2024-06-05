@@ -40,7 +40,7 @@ export default function AppHeader() {
   const auth = useAuth();
 
   const progressBarMax = flatSequence.length - 1;
-  const progressPercent = (currentStep / progressBarMax) * 100;
+  const progressPercent = typeof currentStep === 'number' ? (currentStep / progressBarMax) * 100 : 0;
 
   const [menuOpened, setMenuOpened] = useState(false);
 

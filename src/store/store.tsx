@@ -139,6 +139,10 @@ export const useStoreSelector: TypedUseSelectorHook<StoreState> = useSelector;
 
 export function useAreResponsesValid(id: string) {
   return useStoreSelector((state) => {
+    if (id.includes('reviewer-')) {
+      return true;
+    }
+
     const valid = Object.values(state.trialValidation[id]).every((x) => {
       if (typeof x === 'object' && 'valid' in x) {
         return x.valid;

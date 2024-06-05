@@ -110,7 +110,8 @@ function StepItem({
   const task = step in studyConfig.components && studyConfig.components[step];
 
   const stepIndex = subSequence && subSequence.components.slice(startIndex).includes(step) ? findTaskIndexInSequence(fullSequence, step, startIndex, subSequence.orderPath) : -1;
-  const active = currentStep === stepIndex;
+
+  const active = participantView ? currentStep === stepIndex : currentStep === `reviewer-${step}`;
 
   return (
     <Popover position="left" withArrow arrowSize={10} shadow="md" opened={opened} offset={20}>
@@ -131,7 +132,7 @@ function StepItem({
                 {active ? <strong>{step}</strong> : step}
               </div>
             )}
-            onClick={() => navigate(`/${studyId}/${stepIndex}`)}
+            onClick={() => (participantView ? navigate(`/${studyId}/${stepIndex}`) : navigate(`/${studyId}/reviewer-${step}`))}
             disabled={disabled}
           />
         </div>
@@ -224,6 +225,12 @@ export function StepsPanel({
                   opacity: sequenceStepsLength > 0 ? 1 : 0.5,
                 }}
               >
+                <Text display="inline">
+                  {step.order}
+                </Text>
+                {step.order === 'random' || step.order === 'latinSquare' ? (
+                  <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
+                ) : null}
                 {participantView && (
                 <Badge ml={5}>
                   {sequenceStepsLength}
@@ -236,12 +243,6 @@ export function StepsPanel({
                   {participantSubSequence?.components.filter((s) => typeof s === 'string' && step.interruptions?.flatMap((i) => i.components).includes(s)).length || 0}
                 </Badge>
                 )}
-                <Text c="dimmed" display="inline" mr={5} ml={5}>
-                  {step.order}
-                </Text>
-                {step.order === 'random' || step.order === 'latinSquare' ? (
-                  <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
-                ) : null}
               </div>
             )}
             defaultOpened
