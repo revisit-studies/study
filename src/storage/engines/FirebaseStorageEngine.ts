@@ -11,7 +11,7 @@ import {
   StorageReference,
 } from 'firebase/storage';
 import {
-  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc, where, deleteDoc, updateDoc,
+  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc, where, deleteDoc, updateDoc, writeBatch, DocumentReference,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
@@ -254,6 +254,8 @@ export class FirebaseStorageEngine extends StorageEngine {
 
     // Note intent to get a sequence in the sequenceAssignment collection
     const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
+    // Initializes document
+    await setDoc(sequenceAssignmentDoc, {});
     const sequenceAssignmentCollection = collection(sequenceAssignmentDoc, 'sequenceAssignment');
     const participantSequenceAssignmentDoc = doc(sequenceAssignmentCollection, this.currentParticipantId);
 
@@ -498,10 +500,10 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   async createSnapshot(studyId:string, deleteData:boolean) {
-    const sourceDirectoryName = `${this.collectionPrefix}${studyId}`;
+    const sourceName = `${this.collectionPrefix}${studyId}`;
 
-    if (!await this._directoryExists(sourceDirectoryName)) {
-      console.warn(`Source directory ${sourceDirectoryName} does not exist.`);
+    if (!await this._directoryExists(sourceName)) {
+      console.warn(`Source directory ${sourceName} does not exist.`);
       return false;
     }
 
@@ -515,20 +517,27 @@ export class FirebaseStorageEngine extends StorageEngine {
 
     const formattedDate = `${year}${month}${date}${hours}${minutes}${seconds}`;
 
-    const targetDirectoryName = `${this.collectionPrefix}${studyId}-snapshot-${formattedDate}`;
+    const targetName = `${this.collectionPrefix}${studyId}-snapshot-${formattedDate}`;
 
-    await this._copyDirectory(sourceDirectoryName, targetDirectoryName);
-    await this._addDirectoryNameToMetadata(targetDirectoryName);
+    await this._copyDirectory(`${sourceName}/configs`, `${targetName}/configs`);
+    await this._copyDirectory(`${sourceName}/participants`, `${targetName}/participants`);
+    await this._copyDirectory(sourceName, targetName);
+    await this._copySequenceAssignmentCollection(sourceName, targetName);
+    await this._addDirectoryNameToMetadata(targetName);
 
     if (deleteData) {
-      await this._deleteDirectory(sourceDirectoryName);
+      await this._deleteDirectory(`${sourceName}/configs`);
+      await this._deleteDirectory(`${sourceName}/participants`);
+      await this._deleteDirectory(sourceName);
+      await this._deleteCollection(sourceName);
     }
     return true;
   }
 
-  async removeSnapshot(directoryName:string) {
-    await this._deleteDirectory(directoryName);
-    await this._removeDirectoryNameFromMetadata(directoryName);
+  async removeSnapshot(targetName:string) {
+    await this._deleteDirectory(targetName);
+    await this._deleteCollection(targetName);
+    await this._removeNameFromMetadata(targetName);
   }
 
   async getSnapshots(studyId:string) {
@@ -549,14 +558,21 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async restoreSnapshot(studyId:string, snapshotDirectoryName:string) {
-    const originalDirectoryName = `${this.collectionPrefix}${studyId}`;
+  async restoreSnapshot(studyId:string, snapshotName:string) {
+    const originalName = `${this.collectionPrefix}${studyId}`;
     // Snapshot current collection
     await this.createSnapshot(studyId, true);
 
-    await this._copyDirectory(snapshotDirectoryName, originalDirectoryName);
-    await this._deleteDirectory(snapshotDirectoryName);
-    await this._removeDirectoryNameFromMetadata(snapshotDirectoryName);
+    await this._copyDirectory(`${snapshotName}/configs`, `${originalName}/configs`);
+    await this._copyDirectory(`${snapshotName}/participants`, `${originalName}/participants`);
+    await this._copyDirectory(snapshotName, originalName);
+    await this._copySequenceAssignmentCollection(snapshotName, originalName);
+
+    await this._deleteDirectory(`${snapshotName}/configs`);
+    await this._deleteDirectory(`${snapshotName}/participants`);
+    await this._deleteDirectory(snapshotName);
+    await this._deleteCollection(snapshotName);
+    await this._removeNameFromMetadata(snapshotName);
   }
 
   // Function to add collection name to metadata
@@ -570,7 +586,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async _removeDirectoryNameFromMetadata(directoryName:string) {
+  async _removeNameFromMetadata(directoryName:string) {
     try {
       const metadataDoc = doc(this.firestore, 'metadata', 'collections');
       const metadataSnapshot = await getDoc(metadataDoc);
@@ -637,6 +653,45 @@ export class FirebaseStorageEngine extends StorageEngine {
     } catch (error) {
       console.error('Error copying file:', error);
     }
+  }
+
+  async _copySequenceAssignmentCollection(sourceCollectionName:string, targetCollectionName:string) {
+    const sourceCollectionRef = collection(this.firestore, sourceCollectionName);
+    const sourceSequenceAssignmentDocRef = doc(sourceCollectionRef, 'sequenceAssignment');
+    const sourceSequenceAssignmentCollectionRef = collection(sourceSequenceAssignmentDocRef, 'sequenceAssignment');
+
+    const targetCollectionRef = collection(this.firestore, targetCollectionName);
+    const targetSequenceAssignmentDocRef = doc(targetCollectionRef, 'sequenceAssignment');
+    await setDoc(targetSequenceAssignmentDocRef, {});
+    const targetSequenceAssignmentCollectionRef = collection(targetSequenceAssignmentDocRef, 'sequenceAssignment');
+
+    const sourceSnapshot = await getDocs(sourceSequenceAssignmentCollectionRef);
+
+    const batch = writeBatch(this.firestore);
+
+    sourceSnapshot.docs.forEach((docSnapshot) => {
+      const targetDocRef = doc(targetSequenceAssignmentCollectionRef, docSnapshot.id);
+
+      batch.set(targetDocRef, docSnapshot.data());
+    });
+
+    await batch.commit();
+  }
+
+  async _deleteCollection(sourceCollectionName:string) {
+    const sourceCollectionRef = collection(this.firestore, sourceCollectionName);
+    const sourceSequenceAssignmentDocRef = doc(sourceCollectionRef, 'sequenceAssignment');
+    const sourceSequenceAssignmentCollectionRef = collection(sourceSequenceAssignmentDocRef, 'sequenceAssignment');
+
+    const collectionSnapshot = await getDocs(sourceSequenceAssignmentCollectionRef);
+
+    const batch = writeBatch(this.firestore);
+    collectionSnapshot.forEach((docSnapshot) => {
+      const docRef = doc(sourceSequenceAssignmentCollectionRef, docSnapshot.id);
+      batch.delete(docRef);
+    });
+
+    await batch.commit();
   }
 
   async _directoryExists(directoryPath:string) {
