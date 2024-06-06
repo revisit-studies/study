@@ -5,7 +5,9 @@ import { useNavigate, useParams } from 'react-router-dom';
 import {
   IconChartDonut2, IconPlayerPlay, IconTable,
 } from '@tabler/icons-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {
+  useCallback, useEffect, useMemo, useState,
+} from 'react';
 import AppHeader from './components/interface/AppHeader';
 import { GlobalConfig, ParticipantData, StudyConfig } from '../parser/types';
 import { getStudyConfig } from '../utils/fetchConfig';
@@ -22,21 +24,22 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   const navigate = useNavigate();
   const { tab } = useParams();
 
-  useEffect(() => {
-    const getData = async () => {
-      setLoading(true);
-      if (studyId) {
-        const cf = await getStudyConfig(studyId, globalConfig);
-        if (!cf || !storageEngine) return;
-        await storageEngine.initializeStudyDb(studyId, cf);
-        const data = (await storageEngine.getAllParticipantsData());
-        setExpData(data);
-        setStudyConfig(cf);
-      }
+  const getData = useCallback(async () => {
+    setLoading(true);
+    if (studyId) {
+      const cf = await getStudyConfig(studyId, globalConfig);
+      if (!cf || !storageEngine) return;
+      await storageEngine.initializeStudyDb(studyId, cf);
+      const data = (await storageEngine.getAllParticipantsData());
+      setExpData(data);
+      setStudyConfig(cf);
       setLoading(false);
-    };
-    getData();
+    }
   }, [globalConfig, storageEngine, studyId]);
+
+  useEffect(() => {
+    getData();
+  }, [globalConfig, storageEngine, studyId, getData]);
 
   const [completed, inProgress] = useMemo(() => {
     const comp = expData.filter((d) => d.completed);
@@ -56,7 +59,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
             <Tabs.Tab value="settings" icon={<IconPlayerPlay size={16} />}>Individual Replay</Tabs.Tab>
           </Tabs.List>
           <Tabs.Panel value="table" pt="xs" style={{ height: 'calc(100% - 38px - 10px)', width: '100%', overflow: 'scroll' }}>
-            {studyConfig && <TableView completed={completed} inProgress={inProgress} studyConfig={studyConfig} />}
+            {studyConfig && <TableView completed={completed} inProgress={inProgress} studyConfig={studyConfig} refresh={getData} />}
           </Tabs.Panel>
 
           <Tabs.Panel value="stats" pt="xs">

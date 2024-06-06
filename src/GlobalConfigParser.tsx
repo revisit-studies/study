@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { AppShell } from '@mantine/core';
+import { ModalsProvider } from '@mantine/modals';
 import ConfigSwitcher from './components/ConfigSwitcher';
 import { Shell } from './components/Shell';
 import { parseGlobalConfig, parseStudyConfig } from './parser/parser';
@@ -61,72 +62,74 @@ export function GlobalConfigParser() {
   return globalConfig ? (
     <BrowserRouter basename={PREFIX}>
       <AuthProvider>
-        <Routes>
-          <Route
-            path="/"
-            element={(
-              <>
-                <AppHeader studyIds={globalConfig.configsList} />
-                <ConfigSwitcher
-                  globalConfig={globalConfig}
-                  studyConfigs={studyConfigs}
-                />
-              </>
-            )}
-          />
-          <Route
-            path="/:studyId/*"
-            element={<Shell globalConfig={globalConfig} />}
-          />
-          <Route
-            path="/analysis/dashboard"
-            element={(
-              <ProtectedRoute>
-                <AnalysisDashboard
-                  globalConfig={globalConfig}
-                />
-              </ProtectedRoute>
-              )}
-          />
-          <Route
-            path="/analysis"
-            element={<NavigateWithParams to="/analysis/dashboard" />}
-          />
-          <Route
-            path="/analysis/stats/:studyId/:tab"
-            element={(
-              <ProtectedRoute>
-                <AnalysisInterface
-                  globalConfig={globalConfig}
-                />
-              </ProtectedRoute>
-            )}
-          />
-          <Route
-            path="/analysis/stats/:studyId"
-            element={<NavigateWithParams to="./table" replace />}
-          />
-          <Route
-            path="/settings"
-            element={(
-              <ProtectedRoute>
-                <AppShell>
+        <ModalsProvider>
+          <Routes>
+            <Route
+              path="/"
+              element={(
+                <>
                   <AppHeader studyIds={globalConfig.configsList} />
-                  <GlobalSettings />
-                </AppShell>
-              </ProtectedRoute>
+                  <ConfigSwitcher
+                    globalConfig={globalConfig}
+                    studyConfigs={studyConfigs}
+                  />
+                </>
             )}
-          />
-          <Route
-            path="/login"
-            element={(
-              <>
-                <AppHeader studyIds={globalConfig.configsList} />
-                <Login />
-              </>
+            />
+            <Route
+              path="/:studyId/*"
+              element={<Shell globalConfig={globalConfig} />}
+            />
+            <Route
+              path="/analysis/dashboard"
+              element={(
+                <ProtectedRoute>
+                  <AnalysisDashboard
+                    globalConfig={globalConfig}
+                  />
+                </ProtectedRoute>
+              )}
+            />
+            <Route
+              path="/analysis"
+              element={<NavigateWithParams to="/analysis/dashboard" />}
+            />
+            <Route
+              path="/analysis/stats/:studyId/:tab"
+              element={(
+                <ProtectedRoute>
+                  <AnalysisInterface
+                    globalConfig={globalConfig}
+                  />
+                </ProtectedRoute>
             )}
-          />
-        </Routes>
+            />
+            <Route
+              path="/analysis/stats/:studyId"
+              element={<NavigateWithParams to="./table" replace />}
+            />
+            <Route
+              path="/settings"
+              element={(
+                <ProtectedRoute>
+                  <AppShell>
+                    <AppHeader studyIds={globalConfig.configsList} />
+                    <GlobalSettings />
+                  </AppShell>
+                </ProtectedRoute>
+            )}
+            />
+            <Route
+              path="/login"
+              element={(
+                <>
+                  <AppHeader studyIds={globalConfig.configsList} />
+                  <Login />
+                </>
+            )}
+            />
+          </Routes>
+        </ModalsProvider>
       </AuthProvider>
     </BrowserRouter>
   ) : null;

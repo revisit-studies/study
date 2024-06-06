@@ -73,4 +73,6 @@ export abstract class StorageEngine {
   abstract verifyCompletion(answers: Record<string, StoredAnswer>): Promise<boolean>;
 
   abstract validateUser(user: UserWrapped | null): Promise<boolean>;
+
+  abstract rejectParticipant(studyId: string, participantID: string): Promise<void>;
 }

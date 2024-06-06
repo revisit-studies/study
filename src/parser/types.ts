@@ -311,7 +311,15 @@ export interface BaseIndividualComponent {
 }
 
 /**
- * The MarkdownComponent interface is used to define the properties of a markdown component. The components can be used to render many different things, such as consent forms, instructions, and debriefs. Additionally, you can use the markdown component to render images, videos, and other media, with supporting text.
+ * The MarkdownComponent interface is used to define the properties of a markdown component. The components can be used to render many different things, such as consent forms, instructions, and debriefs. Additionally, you can use the markdown component to render images, videos, and other media, with supporting text. Markdown components can have responses (e.g. in a consent form), or no responses (e.g. in a help text file). Here's an example with no responses for a simple help text file:
+ *
+ * ```js
+ * {
+ *   "type": "markdown",
+ *   "path": "<study-name>/assets/help.md",
+ *   "response": []
+ * }
+ * ```
  */
 export interface MarkdownComponent extends BaseIndividualComponent {
   type: 'markdown';
@@ -357,8 +365,8 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * ```
  *
  * For in depth examples, see the following studies, and their associated codebases.
- * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v1.0.0-beta5
- * https://revisit.dev/study/demo-brush-interactions (https://github.com/revisit-studies/study/tree/1.0.0-beta4/src/public/demo-brush-interactions/assets)
+ * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v1.0.0-beta11/src/public/demo-click-accuracy-test/assets)
+ * https://revisit.dev/study/demo-brush-interactions (https://github.com/revisit-studies/study/tree/v1.0.0-beta11/src/public/demo-brush-interactions/assets)
  */
 export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
@@ -446,7 +454,41 @@ export interface WebsiteComponent extends BaseIndividualComponent {
 }
 
 /**
- * The QuestionnaireComponent interface is used to define the properties of a questionnaire component. A QuestionnaireComponent is used to render questions with different response types. The response types are also defined with these documentation. The main use case of this component type is to ask participants questions, without using markdown, websites, images, etc.
+ * A QuestionnaireComponent is used to render simple questions that require a response. The main use case of this component type is to ask participants questions when you don't need to render a stimulus. Please note, that even though we're not using a stimulus, the responses still require a `location`. For example this could be used to collect demographic information from a participant using the following snippet:
+ *
+ * ```js
+  {
+    "type": "questionnaire",
+    "response": [
+      {
+        "id": "gender",
+        "prompt": "Gender:",
+        "required": true,
+        "location": "belowStimulus",
+        "type": "checkbox",
+        "options": [
+          {
+            "label": "Man",
+            "value": "Man"
+          },
+          {
+            "label": "Woman",
+            "value": "Woman"
+          },
+          {
+            "label": "Genderqueer",
+            "value": "Genderqueer"
+          },
+          {
+            "label": "Third-gender",
+            "value": "Third-gender"
+          },
+          ... etc.
+        ]
+      }
+    ]
+  }
+```
  */
 export interface QuestionnaireComponent extends BaseIndividualComponent {
   type: 'questionnaire';
@@ -551,7 +593,7 @@ export type InheritedComponent = (Partial<IndividualComponent> & { baseComponent
 
  ```js
  {
-    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/v1.0.0-beta5/src/parser/StudyConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta11/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
       ...
     },
