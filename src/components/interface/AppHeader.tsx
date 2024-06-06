@@ -110,7 +110,7 @@ export default function AppHeader() {
               <Menu
                 shadow="md"
                 width={200}
-                zIndex={1}
+                withinPortal
                 opened={menuOpened}
                 onChange={setMenuOpened}
               >
