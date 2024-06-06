@@ -1,7 +1,7 @@
 import {
   Card, Container, Text, LoadingOverlay, Box, Title, Flex, Modal, TextInput, Button, Tooltip, ActionIcon, Space,
 } from '@mantine/core';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { IconTrashX, IconRefresh } from '@tabler/icons-react';
 import { openConfirmModal } from '@mantine/modals';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
@@ -20,30 +20,30 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
   const [loading, setLoading] = useState<boolean>(false);
   const [snapshotListLoading, setSnapshotListLoading] = useState<boolean>(false);
 
-  const [snapshotActionFlag, setSnapshotActionFlag] = useState<boolean>(false);
-
   const { storageEngine } = useStorageEngine();
 
   // Used to fetch archived datasets
-  useEffect(() => {
-    async function fetchData() {
-      setSnapshotListLoading(true);
-      if (storageEngine instanceof FirebaseStorageEngine) {
-        const currSnapshots = await storageEngine.getSnapshots(studyId);
-        setSnapshots(currSnapshots);
-      }
-      setSnapshotListLoading(false);
+  const refreshSnapshots = useCallback(async () => {
+    setSnapshotListLoading(true);
+    if (storageEngine instanceof FirebaseStorageEngine) {
+      const currSnapshots = await storageEngine.getSnapshots(studyId);
+      setSnapshots(currSnapshots);
     }
-    fetchData();
-  }, [snapshotActionFlag, storageEngine, studyId]);
+    setSnapshotListLoading(false);
+  }, [storageEngine, studyId]);
+
+  useEffect(() => {
+    refreshSnapshots();
+  }, [refreshSnapshots]);
 
   const handleCreateSnapshot = async () => {
     setLoading(true);
     if (storageEngine instanceof FirebaseStorageEngine) {
       await storageEngine.createSnapshot(studyId, false);
     }
-    setSnapshotActionFlag((prev) => !prev);
+    refreshSnapshots();
     setLoading(false);
+    await refresh();
   };
 
   const handleArchiveData = async () => {
@@ -53,8 +53,9 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
       setModalArchiveOpened(false);
       await storageEngine.createSnapshot(studyId, true);
     }
-    setSnapshotActionFlag((prev) => !prev);
+    refreshSnapshots();
     setLoading(false);
+    await refresh();
   };
 
   const handleRestoreSnapshot = async (snapshot: string) => {
@@ -62,9 +63,9 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
     if (storageEngine instanceof FirebaseStorageEngine) {
       await storageEngine.restoreSnapshot(studyId, snapshot);
     }
-    await refresh();
-    setSnapshotActionFlag((prev) => !prev);
+    refreshSnapshots();
     setLoading(false);
+    await refresh();
   };
 
   const handleDeleteSnapshot = async () => {
@@ -74,8 +75,9 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
       setModalDeleteSnapshotOpened(false);
       await storageEngine.removeSnapshotOrLive(currentSnapshot, true);
     }
-    setSnapshotActionFlag((prev) => !prev);
+    refreshSnapshots();
     setLoading(false);
+    await refresh();
   };
 
   const handleDeleteLive = async () => {
@@ -85,8 +87,9 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
       setModalDeleteLiveOpened(false);
       await storageEngine.removeSnapshotOrLive(studyId, true);
     }
-    setSnapshotActionFlag((prev) => !prev);
+    refreshSnapshots();
     setLoading(false);
+    await refresh();
   };
 
   const openCreateSnapshotModal = () => openConfirmModal({
