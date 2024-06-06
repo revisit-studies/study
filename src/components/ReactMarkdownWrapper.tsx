@@ -10,7 +10,7 @@ import { IconAsterisk } from '@tabler/icons-react';
 
 export default function ReactMarkdownWrapper({ text, required }: { text: string; required?: boolean }) {
   const components = {
-    img: ({ node, ...props }: { node: unknown; }) => <Image {...props} />,
+    img: ({ node, ...props }: { node: unknown; height?: string | number, width?: string | number }) => <Image {...props} h={props.height} w={props.width} />,
     p: ({ node, ...props }: { node: unknown; }) => <Text {...props} pb={8} />,
     h1: ({ node, ...props }: { node: unknown; }) => <Title order={1} {...props} pb={12} />,
     h2: ({ node, ...props }: { node: unknown; }) => <Title order={2} {...props} pb={12} />,
