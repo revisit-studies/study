@@ -129,7 +129,7 @@ export function GlobalSettings() {
                     onClick={(event) => (!storageEngineIsFirebase ? event.preventDefault() : handleEnableAuth())}
                     color="green"
                     data-disabled={!storageEngineIsFirebase ? true : undefined}
-                    sx={{ '&[data-disabled]': { pointerEvents: 'all' } }}
+                    style={{ '&[data-disabled]': { pointerEvents: 'all' } }}
                   >
                     Enable Authentication
                   </Button>
@@ -164,7 +164,7 @@ export function GlobalSettings() {
       >
         <Box component="form" onSubmit={(form.onSubmit(() => handleAddUser()))}>
           <TextInput
-            icon={<IconAt />}
+            leftSection={<IconAt />}
             placeholder="User Gmail Account"
             {...form.getInputProps('email')}
           />

@@ -1,8 +1,8 @@
 import {
-  Aside,
   CloseButton,
   ScrollArea,
   Text,
+  AppShell,
 } from '@mantine/core';
 import React, { useMemo } from 'react';
 import { ComponentBlockWithOrderPath, StepsPanel } from './StepsPanel';
@@ -38,22 +38,22 @@ export default function AppAside() {
   }, [studyConfig.sequence]);
 
   return showStudyBrowser || (currentComponent === 'end' && studyConfig.uiConfig.autoDownloadStudy) ? (
-    <Aside p="0" width={{ base: 300 }} style={{ zIndex: 0 }}>
-      <Aside.Section>
+    <AppShell.Aside style={{ zIndex: 0 }}>
+      <AppShell.Section>
         <CloseButton
           style={{
             position: 'absolute', right: '10px', top: '10px', zIndex: 5,
           }}
           onClick={() => dispatch(toggleStudyBrowser())}
         />
-        <Text size="md" p={10} weight="bold">
+        <Text size="md" p={10} style={{ weight: 'bold' }}>
           Study Browser
         </Text>
-      </Aside.Section>
+      </AppShell.Section>
 
-      <Aside.Section grow component={ScrollArea}>
+      <AppShell.Section grow component={ScrollArea}>
         <StepsPanel configSequence={fullOrder} participantSequence={sequence} fullSequence={sequence} />
-      </Aside.Section>
-    </Aside>
+      </AppShell.Section>
+    </AppShell.Aside>
   ) : null;
 }

@@ -16,7 +16,7 @@ export function AlertModal() {
   useEffect(() => setOpened(alertModal.show), [alertModal.show]);
 
   return (
-    <Modal opened={opened} centered size="lg" withCloseButton={false} styles={{ modal: { padding: '0 !important' } }} onClose={close}>
+    <Modal opened={opened} centered size="lg" withCloseButton={false} onClose={close}>
       <Alert
         color="red"
         radius="xs"

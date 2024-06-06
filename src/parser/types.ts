@@ -117,11 +117,23 @@ export interface UIConfig {
  * The label is the text that is displayed to the user, and the value is the value that is stored in the data file.
  * The Option interface is used in the Response interface.
  */
-export interface Option {
+export interface NumberOption {
   /** The label displayed to participants. */
   label: string;
   /** The value stored in the participant's data. */
-  value: string | number;
+  value: number;
+}
+
+/**
+ * The Option interface is used to define the options for a dropdown, slider, radio, or checkbox response.
+ * The label is the text that is displayed to the user, and the value is the value that is stored in the data file.
+ * The Option interface is used in the Response interface.
+ */
+export interface StringOption {
+  /** The label displayed to participants. */
+  label: string;
+  /** The value stored in the participant's data. */
+  value: string;
 }
 
 /**
@@ -222,7 +234,7 @@ export interface DropdownResponse extends BaseResponse {
   /** The placeholder text that is displayed in the input. */
   placeholder?: string;
   /** The options that are displayed in the dropdown. */
-  options: Option[];
+  options: StringOption[];
 }
 
 /**
@@ -232,7 +244,7 @@ export interface DropdownResponse extends BaseResponse {
 export interface SliderResponse extends BaseResponse {
   type: 'slider';
   /** This define the steps in the slider and the extent of the slider. */
-  options: Option[];
+  options: NumberOption[];
 }
 
 /**
@@ -241,7 +253,7 @@ export interface SliderResponse extends BaseResponse {
  */
 export interface RadioResponse extends BaseResponse {
   type: 'radio';
-  options: Option[];
+  options: StringOption[];
   leftLabel?: string;
   rightLabel?: string;
 }
@@ -253,7 +265,7 @@ export interface RadioResponse extends BaseResponse {
 export interface CheckboxResponse extends BaseResponse {
   type: 'checkbox';
   /** The options that are displayed as checkboxes. */
-  options: Option[];
+  options: StringOption[];
 }
 
 /**

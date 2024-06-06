@@ -1,4 +1,4 @@
-import { Select, SelectItem } from '@mantine/core';
+import { Select } from '@mantine/core';
 import { DropdownResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
@@ -23,7 +23,7 @@ export default function DropdownInput({
       disabled={disabled}
       label={<ReactMarkdownWrapper text={prompt} required={required} />}
       placeholder={placeholder}
-      data={options as SelectItem[]}
+      data={options}
       radius="md"
       size="md"
       {...answer}

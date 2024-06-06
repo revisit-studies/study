@@ -57,7 +57,7 @@ function MetaCell(props:{metaData: ParticipantMetadata}) {
   return (
     <td>
       <Spoiler w={200} hideLabel="hide" maxHeight={50} showLabel="more">
-        <Stack spacing="xs">
+        <Stack gap="xs">
           <Box>
             IP:
             {' '}
@@ -230,7 +230,7 @@ export function TableView({
   return (
     [...completed, ...inProgress].length > 0 ? (
       <>
-        <LoadingOverlay visible={loading} overlayBlur={2} />
+        <LoadingOverlay visible={loading} overlayProps={{ blur: 2 }} />
         <Flex justify="space-between" mb={8} p={8}>
           <Group>
             <Select
@@ -239,7 +239,7 @@ export function TableView({
               placeholder="Search for a participant ID"
               data={[...completed, ...inProgress].map((record) => ({ value: record.participantId, label: record.participantId }))}
               searchable
-              icon={<IconSearch size={14} />}
+              leftSection={<IconSearch size={14} />}
               onChange={(value) => value && handleSelect(value)}
             />
           </Group>
@@ -247,7 +247,7 @@ export function TableView({
             <Button disabled={checked.length === 0} onClick={openModal} color="red" size="xs">Reject Participants</Button>
           </Group>
         </Flex>
-        <Table striped withBorder>
+        <Table striped withTableBorder>
           <thead>
             <tr>{headers}</tr>
           </thead>

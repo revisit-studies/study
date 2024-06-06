@@ -56,7 +56,7 @@ export function Login() {
           <Image maw={200} mt={50} mb={100} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
           <>
             <Text mb={20}>To access admin settings, please sign in using your Google account.</Text>
-            <Button onClick={() => signInWithGoogle(storageEngine, setLoading, setErrorMessage)} leftIcon={<IconBrandGoogle />} variant="filled">Sign In With Google</Button>
+            <Button onClick={() => signInWithGoogle(storageEngine, setLoading, setErrorMessage)} leftSection={<IconBrandGoogle />} variant="filled">Sign In With Google</Button>
           </>
           {errorMessage ? <Badge size="lg" color="red" mt={30}>{errorMessage}</Badge> : null}
           <LoadingOverlay visible={loading} />

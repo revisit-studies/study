@@ -3,7 +3,7 @@ import {
 } from '@mantine/core';
 import React, { useMemo, useState } from 'react';
 import { IconDatabaseExport, IconChartHistogram, IconTableExport } from '@tabler/icons-react';
-import { DateRangePicker, DateRangePickerValue } from '@mantine/dates';
+import { DatePicker } from '@mantine/dates';
 import { VegaLite } from 'react-vega';
 import { useDisclosure, useResizeObserver } from '@mantine/hooks';
 import { useNavigate } from 'react-router-dom';
@@ -11,7 +11,7 @@ import { ParticipantData } from '../../storage/types';
 import { download, DownloadTidy } from '../../components/DownloadTidy';
 import { StoredAnswer, StudyConfig } from '../../parser/types';
 
-function isWithinRange(answers: Record<string, StoredAnswer>, rangeTime: DateRangePickerValue) {
+function isWithinRange(answers: Record<string, StoredAnswer>, rangeTime: [Date | null, Date | null]) {
   const timeStamps = Object.values(answers).map((ans) => [ans.startTime, ans.endTime]).flat();
   if (rangeTime[0] === null || rangeTime[1] === null) {
     return false;
@@ -30,7 +30,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
   const completionTimes = allParticipants
     .filter((d) => d.completed)
     .map((d) => Math.max(...Object.values(d.answers).map((ans) => ans.endTime)));
-  const [rangeTime, setRangeTime] = useState<DateRangePickerValue>([
+  const [rangeTime, setRangeTime] = useState<[Date | null, Date | null]>([
     new Date(new Date(Math.min(...(completionTimes.length > 0 ? completionTimes : [new Date().getTime()]))).setHours(0, 0, 0, 0)),
     new Date(new Date(Math.max(...(completionTimes.length > 0 ? completionTimes : [new Date().getTime()]))).setHours(24, 0, 0, 0)),
   ]);
@@ -156,9 +156,8 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
           </Group>
         </Flex>
 
-        <DateRangePicker
-          label={<Text>Time Filter:</Text>}
-          placeholder="Pick dates range"
+        <DatePicker
+          type="range"
           value={rangeTime}
           onChange={setRangeTime}
         />

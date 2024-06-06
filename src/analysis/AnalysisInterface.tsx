@@ -48,15 +48,15 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   }, [expData]);
 
   return (
-    <AppShell>
+    <>
       <AppHeader studyIds={props.globalConfig.configsList} />
       <Container fluid style={{ height: '100%' }}>
         <LoadingOverlay visible={loading} />
-        <Tabs variant="outline" value={tab} onTabChange={(value) => navigate(`./../${value}`)} style={{ height: '100%' }}>
+        <Tabs variant="outline" value={tab} onChange={(value) => navigate(`./../${value}`)} style={{ height: '100%' }}>
           <Tabs.List>
-            <Tabs.Tab value="table" icon={<IconTable size={16} />}>Table View</Tabs.Tab>
-            <Tabs.Tab value="stats" icon={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
-            <Tabs.Tab value="settings" icon={<IconPlayerPlay size={16} />}>Individual Replay</Tabs.Tab>
+            <Tabs.Tab value="table" leftSection={<IconTable size={16} />}>Table View</Tabs.Tab>
+            <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
+            <Tabs.Tab value="settings" leftSection={<IconPlayerPlay size={16} />}>Individual Replay</Tabs.Tab>
           </Tabs.List>
           <Tabs.Panel value="table" pt="xs" style={{ height: 'calc(100% - 38px - 10px)', width: '100%', overflow: 'scroll' }}>
             {studyConfig && <TableView completed={completed} inProgress={inProgress} studyConfig={studyConfig} refresh={getData} />}
@@ -71,6 +71,6 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
           </Tabs.Panel>
         </Tabs>
       </Container>
-    </AppShell>
+    </>
   );
 }

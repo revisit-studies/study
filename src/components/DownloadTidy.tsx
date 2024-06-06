@@ -185,19 +185,19 @@ export function DownloadTidy({
     >
       <MultiSelect
         searchable
-        nothingFound="Property not found"
+        nothingFoundMessage="Property not found"
         data={[...OPTIONAL_COMMON_PROPS]}
         value={selectedProperties}
-        onChange={(values: OptionalProperty[]) => setSelectedProperties(values)}
+        onChange={(values: string[]) => setSelectedProperties(values as OptionalProperty[])}
         label="Included optional columns:"
-        icon={<IconLayoutColumns />}
+        leftSection={<IconLayoutColumns />}
         variant="filled"
       />
 
       <Space h="md" />
 
       <Box mih={300} style={{ width: '100%', overflow: 'scroll' }}>
-        <Table striped captionSide="bottom" withBorder>
+        <Table striped captionSide="bottom" withTableBorder>
           <thead>
             <tr>
               {tableData.header.map((header) => (
@@ -247,12 +247,12 @@ export function DownloadTidy({
 
       <Space h="md" />
 
-      <Group position="right">
+      <Group justify="right">
         <Button onClick={close} color="dark" variant="subtle">
           Close
         </Button>
         <Button
-          leftIcon={<IconTableExport />}
+          leftSection={<IconTableExport />}
           onClick={() => downloadTidy()}
           data-autofocus
         >

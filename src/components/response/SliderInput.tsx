@@ -28,7 +28,7 @@ export default function SliderInput({
       <Slider
         disabled={disabled}
         labelAlwaysOn
-        sx={{ marginTop: '5px', marginBottom: '30px' }}
+        style={{ marginTop: '5px', marginBottom: '30px' }}
         marks={options as SliderProps['marks']}
         {...answer}
         styles={(theme) => ({

@@ -12,7 +12,7 @@ export default function TrialNotFound(props:{email: string}) {
         <Title order={3}>
           Trial not found, please contact the administrator at
           {' '}
-          <Anchor span c="blue" href={`mailto:${email}`}>
+          <Anchor c="blue" href={`mailto:${email}`}>
             {email}
             {' '}
           </Anchor>

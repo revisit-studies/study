@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { AppShell } from '@mantine/core';
 import { useStorageEngine } from './storage/storageEngineHooks';
 import { GlobalConfigParser } from './GlobalConfigParser';
 import { initializeStorageEngine } from './storage/initialize';
@@ -17,6 +18,8 @@ export function GlobalInitializer() {
   }, [setStorageEngine, storageEngine]);
 
   return (
-    <GlobalConfigParser />
+    <AppShell padding="md" header={{ height: 70 }} navbar={{ width: 300, breakpoint: 'xs' }} aside={{ width: 200, breakpoint: 'xs' }}>
+      <GlobalConfigParser />
+    </AppShell>
   );
 }

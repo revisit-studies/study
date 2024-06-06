@@ -191,7 +191,7 @@ export function Scatter({
       <Group>
         <Button
           ml={60}
-          compact
+          size="compact-sm"
           style={{ width: '130px' }}
           disabled={brushedPoints.length === 0}
           onClick={() => {
@@ -214,7 +214,7 @@ export function Scatter({
             />
           ) : null}
       </Group>
-      <Group style={{ width: '100%', height: '100%' }} noWrap>
+      <Group style={{ width: '100%', height: '100%' }} wrap="nowrap">
 
         <svg id="scatterSvgBrushStudy" ref={ref} style={{ height: '500px', width: params.brushType === 'Axis Selection' ? '800px' : '530px', fontFamily: 'BlinkMacSystemFont, -apple-system, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", "Helvetica", "Arial", sans-serif' }}>
 
@@ -241,8 +241,8 @@ export function Scatter({
         </svg>
         {brushType === 'Slider Selection' && xScale && yScale
           ? (
-            <Stack style={{ flexGrow: 1 }} spacing={50}>
-              <Stack spacing={0}>
+            <Stack style={{ flexGrow: 1 }} gap={50}>
+              <Stack gap={0}>
                 <Text>{params.x}</Text>
                 <RangeSlider
                   minRange={1}
@@ -263,7 +263,7 @@ export function Scatter({
                   value={[xScale.invert(brushState.x1), xScale.invert(brushState.x2)] as any}
                 />
               </Stack>
-              <Stack spacing={0}>
+              <Stack gap={0}>
                 <Text>{params.y}</Text>
                 <RangeSlider
                   minRange={1}

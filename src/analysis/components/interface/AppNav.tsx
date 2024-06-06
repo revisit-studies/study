@@ -1,5 +1,6 @@
 import {
-  Navbar, NavLink, Text,
+  AppShell,
+  NavLink, Text,
 } from '@mantine/core';
 import {
   IconZoomQuestion, IconLayoutDashboard, IconChevronRight, IconBrowserPlus,
@@ -11,30 +12,30 @@ export default function AppNav() {
   const { page } = useParams();
 
   return (
-    <Navbar width={{ base: 300 }} style={{ zIndex: 0 }}>
-      <Navbar.Section p="xl">
+    <AppShell.Navbar style={{ zIndex: 0 }}>
+      <AppShell.Section p="xl">
         <NavLink
           active={page === 'dashboard'}
           onClick={() => navigate('/analysis/dashboard')}
           label={<Text fz="lg">Dashboard</Text>}
-          icon={<IconLayoutDashboard color="#4287f5" />}
+          leftSection={<IconLayoutDashboard color="#4287f5" />}
           rightSection={<IconChevronRight size="0.8rem" stroke={1.5} />}
         />
         <NavLink
           active={page === 'browser'}
           onClick={() => navigate('/analysis/browser')}
           label={<Text fz="lg">Browser</Text>}
-          icon={<IconBrowserPlus color="#4287f5" />}
+          leftSection={<IconBrowserPlus color="#4287f5" />}
           rightSection={<IconChevronRight size="0.8rem" stroke={1.5} />}
         />
         <NavLink
           active={page === 'about'}
           onClick={() => navigate('/analysis/about')}
           label={<Text fz="lg">About</Text>}
-          icon={<IconZoomQuestion color="#4287f5" />}
+          leftSection={<IconZoomQuestion color="#4287f5" />}
           rightSection={<IconChevronRight size="0.8rem" stroke={1.5} />}
         />
-      </Navbar.Section>
-    </Navbar>
+      </AppShell.Section>
+    </AppShell.Navbar>
   );
 }
