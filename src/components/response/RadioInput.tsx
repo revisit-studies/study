@@ -20,24 +20,26 @@ export default function RadioInput({
 
   return (
     <Radio.Group
+      my="md"
       name={`radioInput${response.id}`}
       label={<ReactMarkdownWrapper text={prompt} required={required} />}
-      size="md"
       key={response.id}
       {...answer}
         // This overrides the answers error. Which..is bad?
       error={generateErrorMessage(response, answer, options)}
     >
-      {leftLabel ? <Text mt={-7}>{leftLabel}</Text> : null}
-      {options.map((radio) => (
-        <Radio
-          disabled={disabled}
-          value={radio.value}
-          label={radio.label}
-          key={radio.label}
-        />
-      ))}
-      <Text mt={-7}>{rightLabel}</Text>
+      <Group gap="lg" mt="lg">
+        {leftLabel ? <Text style={{ textAlign: 'center' }}>{leftLabel}</Text> : null}
+        {options.map((radio) => (
+          <Radio
+            disabled={disabled}
+            value={radio.value}
+            label={radio.label}
+            key={radio.label}
+          />
+        ))}
+        <Text>{rightLabel}</Text>
+      </Group>
     </Radio.Group>
   );
 }

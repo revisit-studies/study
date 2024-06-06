@@ -23,14 +23,16 @@ export default function CheckBoxInput({
       error={generateErrorMessage(response, answer, options)}
       size="md"
     >
-      {options.map((option) => (
-        <Checkbox
-          key={option.value}
-          disabled={disabled}
-          value={option.value}
-          label={option.label}
-        />
-      ))}
+      <Group mt="lg">
+        {options.map((option) => (
+          <Checkbox
+            key={option.value}
+            disabled={disabled}
+            value={option.value}
+            label={option.label}
+          />
+        ))}
+      </Group>
     </Checkbox.Group>
   );
 }
