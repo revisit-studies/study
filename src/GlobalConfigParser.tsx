@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { ModalsProvider } from '@mantine/modals';
+import { AppShell } from '@mantine/core';
 import ConfigSwitcher from './components/ConfigSwitcher';
 import { Shell } from './components/Shell';
 import { parseGlobalConfig, parseStudyConfig } from './parser/parser';
@@ -112,7 +113,9 @@ export function GlobalConfigParser() {
               element={(
                 <ProtectedRoute>
                   <AppHeader studyIds={globalConfig.configsList} />
-                  <GlobalSettings />
+                  <AppShell.Main>
+                    <GlobalSettings />
+                  </AppShell.Main>
                 </ProtectedRoute>
             )}
             />
@@ -121,7 +124,9 @@ export function GlobalConfigParser() {
               element={(
                 <>
                   <AppHeader studyIds={globalConfig.configsList} />
-                  <Login />
+                  <AppShell.Main>
+                    <Login />
+                  </AppShell.Main>
                 </>
             )}
             />

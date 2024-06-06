@@ -3,7 +3,7 @@ import {
 } from '@mantine/core';
 import React, { useMemo, useState } from 'react';
 import { IconDatabaseExport, IconChartHistogram, IconTableExport } from '@tabler/icons-react';
-import { DatePicker } from '@mantine/dates';
+import { DatePickerInput } from '@mantine/dates';
 import { VegaLite } from 'react-vega';
 import { useDisclosure, useResizeObserver } from '@mantine/hooks';
 import { useNavigate } from 'react-router-dom';
@@ -156,8 +156,10 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
           </Group>
         </Flex>
 
-        <DatePicker
+        <DatePickerInput
           type="range"
+          label="Time Filter"
+          placeholder="Select a date range"
           value={rangeTime}
           onChange={setRangeTime}
         />
