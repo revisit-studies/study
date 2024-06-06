@@ -1,0 +1,109 @@
+{
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+        "title": "Basic Questionnaire Study",
+        "version": "pilot",
+        "authors": [
+            "The reVISit Team"
+        ],
+        "date": "2024-03-19",
+        "description": "A simple questionnaire study",
+        "organizations": [
+            "University of Utah"
+        ]
+    },
+    "uiConfig": {
+        "contactEmail": "test@test.com",
+        "helpTextPath": "basic-questionnaire-study/assets/help.md",
+        "logoPath": "revisitAssets/revisitLogoSquare.svg",
+        "withProgressBar": true,
+        "autoDownloadStudy": false,
+        "sidebar": true
+    },
+    "components": {
+        "introduction": {
+            "type": "markdown",
+            "path": "basic-questionnaire-study/assets/introduction.md",
+            "response": []
+        },
+        "first-question-set": {
+            "type": "questionnaire",
+            "response": [
+                {
+                    "id": "q1",
+                    "prompt": "What is your first name?",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "longText",
+                    "placeholder": "Please enter your first name"
+                },
+                {
+                    "id": "q2",
+                    "prompt": "What is your favorite color?",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your favorite color",
+                    "options": [
+                        {
+                            "label": "Red",
+                            "value": "red"
+                        },
+                        {
+                            "label": "Blue",
+                            "value": "blue"
+                        },
+                        {
+                            "label": "My favorite color is not shown here.",
+                            "value": "notShown"
+                        }
+                    ]
+                }
+            ]
+        },
+        "Visual-Only-Q1": {
+            "description": "Content: Visual Only",
+            "instruction": "What does the Visualization describe?",
+            "type": "image",
+            "path": "basic-questionnaire-study/assets/VO.png",
+            "style": {
+                "width": "800px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+                {
+                    "id": "voq1",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "longText",
+                    "placeholder": "Please enter your answer here"
+                }
+            ]
+        },
+        "second-question-set": {
+            "type": "questionnaire",
+            "response": [
+                {
+                    "id": "q1",
+                    "prompt": "What would you rate your satisfaction of this survey? 0 being very un-enjoyable, 5 being very enjoyable.",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "numerical",
+                    "min": 0,
+                    "max": 5
+                }
+            ]
+        }
+       
+    },
+    "sequence": {
+        "order": "fixed",
+        "components": [
+            "introduction",
+            "first-question-set",
+            "Visual-Only-Q1",
+            "second-question-set"
+        ]
+    }
+}
