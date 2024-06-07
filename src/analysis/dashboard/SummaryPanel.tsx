@@ -150,7 +150,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
                 </Button>
               </Popover.Target>
               <Popover.Dropdown>
-                <Text>Analyze study data</Text>
+                <Text>Analyze and manage study data</Text>
               </Popover.Dropdown>
             </Popover>
           </Group>

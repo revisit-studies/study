@@ -1,20 +1,26 @@
 import { useEffect, useState } from 'react';
 import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
 import { MarkdownComponent } from '../parser/types';
-import { PREFIX } from '../utils/Prefix';
+import { getStaticAssetByPath } from '../utils/getStaticAsset';
+import ResourceNotFound from '../ResourceNotFound';
 
 export default function MarkdownController({ currentConfig }: { currentConfig: MarkdownComponent; }) {
-  const [importedText, setImportedText] = useState<string | null>(null);
+  const [importedText, setImportedText] = useState<string>('');
 
+  const [loading, setLoading] = useState(true);
   useEffect(() => {
-    fetch(`${PREFIX}${currentConfig.path}`)
-      .then((response) => response.text())
-      .then((text) => setImportedText(text));
-  }, [currentConfig]);
+    async function fetchImage() {
+      const asset = await getStaticAssetByPath(currentConfig.path);
+      if (asset !== undefined) {
+        setImportedText(asset);
+      }
+      setLoading(false);
+    }
 
-  if (importedText === null) return null;
+    fetchImage();
+  }, [currentConfig.path]);
 
-  return (
-    <ReactMarkdownWrapper text={importedText} />
-  );
+  return loading || importedText
+    ? <ReactMarkdownWrapper text={importedText} />
+    : <ResourceNotFound path={currentConfig.path} />;
 }

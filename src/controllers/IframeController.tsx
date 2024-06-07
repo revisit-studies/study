@@ -3,8 +3,8 @@ import {
 } from 'react';
 import { useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import { useCurrentStep } from '../routes/utils';
-import { useStoreDispatch, useStoreActions, useFlatSequence } from '../store/store';
+import { useCurrentComponent } from '../routes/utils';
+import { useStoreDispatch, useStoreActions } from '../store/store';
 import { WebsiteComponent } from '../parser/types';
 import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 
@@ -14,7 +14,6 @@ const defaultStyle = {
   minHeight: '500px',
   width: '100%',
   border: 0,
-  marginTop: '-50px',
 };
 
 export default function IframeController({ currentConfig }: { currentConfig: WebsiteComponent; }) {
@@ -30,8 +29,7 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
   );
 
   // navigation
-  const currentStep = useCurrentStep();
-  const currentComponent = useFlatSequence()[currentStep];
+  const currentComponent = useCurrentComponent();
   const navigate = useNavigate();
 
   const sendMessage = useCallback(
@@ -79,15 +77,13 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, currentStep, dispatch, iframeId, navigate, currentConfig, sendMessage, setIframeAnswers, setIframeProvenance]);
+  }, [storeDispatch, dispatch, iframeId, navigate, currentConfig, sendMessage, setIframeAnswers, setIframeProvenance]);
 
   return (
-    <div>
-      <iframe
-        ref={ref}
-        src={`${BASE_PREFIX}${currentConfig.path}?trialid=${currentComponent}&id=${iframeId}`}
-        style={defaultStyle}
-      />
-    </div>
+    <iframe
+      ref={ref}
+      src={`${BASE_PREFIX}${currentConfig.path}?trialid=${currentComponent}&id=${iframeId}`}
+      style={defaultStyle}
+    />
   );
 }

@@ -25,8 +25,11 @@ export const OPTIONAL_COMMON_PROPS = [
   'percentComplete',
   'description',
   'instruction',
+  'responsePrompt',
   'answer',
   'correctAnswer',
+  'responseMin',
+  'responseMax',
   'startTime',
   'endTime',
   'duration',
@@ -60,7 +63,7 @@ export function download(graph: string, filename: string) {
 }
 
 function participantDataToRows(participant: ParticipantData, studyConfig: StudyConfig, properties: Property[]): TidyRow[] {
-  const percentComplete = ((Object.entries(participant.answers).length / (getSequenceFlatMap(participant.sequence).length - 1)) * 100).toFixed(2);
+  const percentComplete = ((Object.entries(participant.answers).filter(([id, entry]) => entry.endTime !== undefined).length / (getSequenceFlatMap(participant.sequence).length - 1)) * 100).toFixed(2);
   return Object.entries(participant.answers).map(([trialIdentifier, trialAnswer]) => {
     // Get the whole component, including the base component if there is inheritance
     const trialId = trialIdentifier.split('_').slice(0, -1).join('_');
@@ -80,6 +83,7 @@ function participantDataToRows(participant: ParticipantData, studyConfig: StudyC
         responseId: key,
       };
 
+      const response = completeComponent.response.find((resp) => resp.id === key);
       if (properties.includes('status')) {
         // eslint-disable-next-line no-nested-ternary
         tidyRow.status = participant.rejected ? 'rejected' : (participant.completed ? 'completed' : 'in progress');
@@ -93,12 +97,21 @@ function participantDataToRows(participant: ParticipantData, studyConfig: StudyC
       if (properties.includes('instruction')) {
         tidyRow.instruction = completeComponent.instruction;
       }
+      if (properties.includes('responsePrompt')) {
+        tidyRow.responsePrompt = response?.prompt;
+      }
       if (properties.includes('answer')) {
         tidyRow.answer = value;
       }
       if (properties.includes('correctAnswer')) {
         const correctAnswer = (completeComponent.correctAnswer as Answer[])?.find((ans) => ans.id === key)?.answer;
         tidyRow.correctAnswer = typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer;
+      }
+      if (properties.includes('responseMin')) {
+        tidyRow.responseMin = response?.type === 'numerical' ? response.min : undefined;
+      }
+      if (properties.includes('responseMax')) {
+        tidyRow.responseMax = response?.type === 'numerical' ? response.max : undefined;
       }
       if (properties.includes('startTime')) {
         tidyRow.startTime = new Date(trialAnswer.startTime).toISOString();

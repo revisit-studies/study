@@ -5,6 +5,13 @@ export function getSequenceFlatMap<T extends Sequence | ComponentBlock>(sequence
   return sequence.components.flatMap((component) => (typeof component === 'string' ? component : getSequenceFlatMap(component)));
 }
 
+export function getSequenceFlatMapWithInterruptions(sequence: ComponentBlock): string[] {
+  return [
+    ...sequence.components.flatMap((component) => (typeof component === 'string' ? component : getSequenceFlatMapWithInterruptions(component))),
+    ...sequence.interruptions?.flatMap((interruption) => interruption.components) || [],
+  ];
+}
+
 type SkipConditionWithExtents = {
   currentBlock: Sequence;
   firstIndex: number;
