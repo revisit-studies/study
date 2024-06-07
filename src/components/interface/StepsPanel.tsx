@@ -91,13 +91,15 @@ function StepItem({
   startIndex,
   interruption,
   subSequence,
+  participantView,
 }: {
   step: string;
   disabled: boolean;
   fullSequence: Sequence;
   startIndex: number;
-  interruption: boolean,
+  interruption: boolean;
   subSequence?: Sequence;
+  participantView: boolean;
 }) {
   const studyId = useStudyId();
   const navigate = useNavigate();
@@ -108,7 +110,8 @@ function StepItem({
   const task = step in studyConfig.components && studyConfig.components[step];
 
   const stepIndex = subSequence && subSequence.components.slice(startIndex).includes(step) ? findTaskIndexInSequence(fullSequence, step, startIndex, subSequence.orderPath) : -1;
-  const active = currentStep === stepIndex;
+
+  const active = participantView ? currentStep === stepIndex : currentStep === `reviewer-${step}`;
 
   return (
     <Popover position="left" withArrow arrowSize={10} shadow="md" opened={opened} offset={20}>
@@ -129,7 +132,7 @@ function StepItem({
                 {active ? <strong>{step}</strong> : step}
               </div>
             )}
-            onClick={() => navigate(`/${studyId}/${stepIndex}`)}
+            onClick={() => (participantView ? navigate(`/${studyId}/${stepIndex}`) : navigate(`/${studyId}/reviewer-${step}`))}
             disabled={disabled}
           />
         </div>
@@ -167,31 +170,42 @@ export function StepsPanel({
   configSequence,
   fullSequence,
   participantSequence,
+  participantView,
 }: {
-  configSequence: ComponentBlockWithOrderPath,
-  fullSequence: Sequence,
-  participantSequence?: Sequence,
+  configSequence: ComponentBlockWithOrderPath;
+  fullSequence: Sequence;
+  participantSequence?: Sequence;
+  participantView: boolean;
 }) {
   // If the participantSequence is provided, reorder the components
   let components = deepCopy(configSequence.components);
-  if (participantSequence) {
+  if (participantSequence && participantView) {
     const reorderedComponents = reorderComponents(deepCopy(configSequence.components), deepCopy(participantSequence.components));
     components = reorderedComponents;
   }
 
+  if (!participantView) {
+    // Add interruptions to the sequence
+    components = [
+      ...(configSequence.interruptions?.flatMap((interruption) => interruption.components) || []),
+      ...components,
+    ];
+  }
+
   return (
-    <div>
+    <>
       {components.map((step, idx) => {
         if (typeof step === 'string') {
           return (
             <StepItem
               key={idx}
               step={step}
-              disabled={participantSequence?.components[idx] !== step}
+              disabled={participantView && participantSequence?.components[idx] !== step}
               fullSequence={fullSequence}
               startIndex={idx}
               interruption={(configSequence.interruptions && (configSequence.interruptions.findIndex((i) => i.components.includes(step)) > -1)) || false}
               subSequence={participantSequence}
+              participantView={participantView}
             />
           );
         }
@@ -211,23 +225,24 @@ export function StepsPanel({
                   opacity: sequenceStepsLength > 0 ? 1 : 0.5,
                 }}
               >
-                Group:
-                <Badge ml={5}>
-                  {sequenceStepsLength}
-                  /
-                  {orderSteps.length}
-                </Badge>
-                {step.interruptions && (
-                <Badge ml={5} color="orange">
-                  {participantSubSequence?.components.filter((s) => typeof s === 'string' && step.interruptions?.flatMap((i) => i.components).includes(s)).length || 0}
-                </Badge>
-                )}
-                <Text c="dimmed" display="inline" mr={5} ml={5}>
+                <Text display="inline">
                   {step.order}
                 </Text>
                 {step.order === 'random' || step.order === 'latinSquare' ? (
                   <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
                 ) : null}
+                {participantView && (
+                <Badge ml={5}>
+                  {sequenceStepsLength}
+                  /
+                  {orderSteps.length}
+                </Badge>
+                )}
+                {participantView && step.interruptions && (
+                <Badge ml={5} color="orange">
+                  {participantSubSequence?.components.filter((s) => typeof s === 'string' && step.interruptions?.flatMap((i) => i.components).includes(s)).length || 0}
+                </Badge>
+                )}
               </div>
             )}
             defaultOpened
@@ -240,11 +255,11 @@ export function StepsPanel({
             }}
           >
             <div style={{ borderLeft: '1px solid #e9ecef' }}>
-              <StepsPanel configSequence={step} participantSequence={participantSubSequence} fullSequence={fullSequence} />
+              <StepsPanel configSequence={step} participantSequence={participantSubSequence} fullSequence={fullSequence} participantView={participantView} />
             </div>
           </NavLink>
         );
       })}
-    </div>
+    </>
   );
 }

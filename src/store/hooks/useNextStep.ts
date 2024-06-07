@@ -7,7 +7,7 @@ import {
   useAreResponsesValid,
   useFlatSequence,
 } from '../store';
-import { useCurrentStep, useStudyId } from '../../routes/utils';
+import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
 
 import { deepCopy } from '../../utils/deepCopy';
 import { StoredAnswer, ValidationStatus } from '../types';
@@ -42,7 +42,7 @@ function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: st
 export function useNextStep() {
   const currentStep = useCurrentStep();
   const participantSequence = useFlatSequence();
-  const currentComponent = participantSequence[currentStep];
+  const currentComponent = useCurrentComponent();
   const identifier = `${currentComponent}_${currentStep}`;
 
   const { trialValidation, sequence, answers } = useStoreSelector((state) => state);
@@ -54,7 +54,7 @@ export function useNextStep() {
   const areResponsesValid = useAreResponsesValid(identifier);
 
   // Status of the next button. If false, the next button should be disabled
-  const isNextDisabled = !areResponsesValid;
+  const isNextDisabled = typeof currentStep !== 'number' || !areResponsesValid;
 
   const storedAnswer = useStoredAnswer();
 
@@ -68,6 +68,9 @@ export function useNextStep() {
 
   const windowEvents = useWindowEvents();
   const goToNextStep = useCallback(() => {
+    if (typeof currentStep !== 'number') {
+      return;
+    }
     // Get answer from across the 3 response blocks and the provenance graph
     const trialValidationCopy = deepCopy(trialValidation[identifier]);
     const answer = Object.values(trialValidationCopy).reduce((acc, curr) => {
