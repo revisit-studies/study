@@ -17,6 +17,7 @@ import {
   IconDotsVertical,
   IconMail,
   IconSchema,
+  IconUserPlus,
 } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
 import { useHref } from 'react-router-dom';
@@ -140,7 +141,7 @@ export default function AppHeader() {
                   </Menu.Item>
 
                   <Menu.Item
-                    icon={<IconSchema size={14} />}
+                    icon={<IconUserPlus size={14} />}
                     onClick={() => getNewParticipant()}
                   >
                     Next Participant
