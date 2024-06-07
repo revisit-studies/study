@@ -15,7 +15,7 @@ import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { useFlatSequence, useStoreActions, useStoreDispatch } from '../store/store';
 import { StudyEnd } from '../components/StudyEnd';
-import TrialNotFound from '../Trial404';
+import ResourceNotFound from '../ResourceNotFound';
 
 // current active stimuli presented to the user
 export default function ComponentController() {
@@ -51,7 +51,7 @@ export default function ComponentController() {
   }
 
   if (currentComponent === 'Notfound') {
-    return <TrialNotFound email={studyConfig.uiConfig.contactEmail} />;
+    return <ResourceNotFound email={studyConfig.uiConfig.contactEmail} />;
   }
 
   const currentConfig = isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;

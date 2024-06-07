@@ -1,4 +1,5 @@
 import {
+  ReactNode,
   useEffect,
   useState,
 } from 'react';
@@ -7,11 +8,10 @@ import {
   RouteObject, useRoutes, useSearchParams,
 } from 'react-router-dom';
 import { LoadingOverlay, Title } from '@mantine/core';
-import { ErrorObject } from 'ajv';
 import {
   GlobalConfig,
   Nullable,
-  StudyConfig,
+  ParsedStudyConfig,
 } from '../parser/types';
 import { useStudyId } from '../routes/utils';
 import {
@@ -19,7 +19,6 @@ import {
   StudyStore,
   studyStoreCreator,
 } from '../store/store';
-import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 
 import ComponentController from '../controllers/ComponentController';
 import { NavigateWithParams } from '../utils/NavigateWithParams';
@@ -29,7 +28,7 @@ import { generateSequenceArray } from '../utils/handleRandomSequences';
 import { getStudyConfig } from '../utils/fetchConfig';
 import { ParticipantMetadata } from '../store/types';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
-import StudyNotFound from '../Study404';
+import ResourceNotFound from '../ResourceNotFound';
 import { useAuth } from '../store/hooks/useAuth';
 
 export function Shell({ globalConfig }: {
@@ -37,8 +36,8 @@ export function Shell({ globalConfig }: {
 }) {
   // Pull study config
   const studyId = useStudyId();
-  const [activeConfig, setActiveConfig] = useState<Nullable<StudyConfig & { errors?: ErrorObject<string, Record<string, unknown>, unknown>[] }>>(null);
-  const isValidStudyId = globalConfig.configsList.find((c) => sanitizeStringForUrl(c) === studyId);
+  const [activeConfig, setActiveConfig] = useState<ParsedStudyConfig | null>(null);
+  const isValidStudyId = globalConfig.configsList.includes(studyId);
 
   const auth = useAuth();
 
@@ -96,10 +95,10 @@ export function Shell({ globalConfig }: {
           },
           {
             path: '/:index',
-            element: activeConfig.errors ? (
+            element: activeConfig.errors.length > 0 ? (
               <>
                 <Title order={2} mb={8}>Error loading config</Title>
-                <ErrorLoadingConfig errors={activeConfig.errors} />
+                <ErrorLoadingConfig issues={activeConfig.errors} type="error" />
               </>
             ) : <ComponentController />,
           },
@@ -111,20 +110,24 @@ export function Shell({ globalConfig }: {
 
   const routing = useRoutes(routes);
 
-  const loaderOrRouting = !routing || !store ? <LoadingOverlay visible />
-    : (
-      <StudyStoreContext.Provider value={store}>
-        <Provider store={store.store}>
-          {routing}
-        </Provider>
-      </StudyStoreContext.Provider>
-    );
+  let toRender: ReactNode = null;
 
-  return (
-    isValidStudyId ? (
-      loaderOrRouting
-    ) : (
-      <StudyNotFound />
-    )
-  );
+  // Definitely a 404
+  if (!isValidStudyId) {
+    toRender = <ResourceNotFound />;
+  } else if (routes.length === 0) {
+    toRender = <LoadingOverlay visible />;
+  } else {
+    // If routing is null, we didn't match any routes
+    toRender = routing && store
+      ? (
+        <StudyStoreContext.Provider value={store}>
+          <Provider store={store.store}>
+            {routing}
+          </Provider>
+        </StudyStoreContext.Provider>
+      )
+      : <ResourceNotFound />;
+  }
+  return toRender;
 }

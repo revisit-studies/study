@@ -1,12 +1,15 @@
-import { ErrorObject } from 'ajv';
 import ReactMarkdownWrapper from './ReactMarkdownWrapper';
+import { ParsedStudyConfig } from '../parser/types';
 
-export function ErrorLoadingConfig({ errors }: {errors: ErrorObject<string, Record<string, unknown>, unknown>[]}) {
+export function ErrorLoadingConfig({ issues, type }: { issues: ParsedStudyConfig['errors'], type: 'error' | 'warning'}) {
   const text = `
-      There was an issue loading the study config. Please check the following errors:  
+    ${type === 'error'
+    ? 'There was an issue loading the study config. Please check the following issues:'
+    : 'There were some warnings while loading the study config. Please check the following warnings:'}
 
-      ${errors.map((error) => `- You have an error at ${error.instancePath || 'root'}: ${error.message} - ${JSON.stringify(error.params)}  `).join('\n')}
-    `.replace(/\n\s+/g, '\n');
+    ${issues.map((error) => `- You have an error at ${error.instancePath || 'root'}: ${error.message} - ${JSON.stringify(error.params)}  `).join('\n')}
+  `.replace(/\n\s+/g, '\n');
+
   return (
     <ReactMarkdownWrapper text={text} />
   );

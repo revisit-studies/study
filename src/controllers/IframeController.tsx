@@ -14,7 +14,6 @@ const defaultStyle = {
   minHeight: '500px',
   width: '100%',
   border: 0,
-  marginTop: '-50px',
 };
 
 export default function IframeController({ currentConfig }: { currentConfig: WebsiteComponent; }) {
@@ -82,12 +81,10 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
   }, [storeDispatch, currentStep, dispatch, iframeId, navigate, currentConfig, sendMessage, setIframeAnswers, setIframeProvenance]);
 
   return (
-    <div>
-      <iframe
-        ref={ref}
-        src={`${BASE_PREFIX}${currentConfig.path}?trialid=${currentComponent}&id=${iframeId}`}
-        style={defaultStyle}
-      />
-    </div>
+    <iframe
+      ref={ref}
+      src={`${BASE_PREFIX}${currentConfig.path}?trialid=${currentComponent}&id=${iframeId}`}
+      style={defaultStyle}
+    />
   );
 }
