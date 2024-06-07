@@ -20,15 +20,14 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
   const [loading, setLoading] = useState<boolean>(false);
   const [snapshotListLoading, setSnapshotListLoading] = useState<boolean>(false);
 
-  const { storageEngine } = useStorageEngine();
+  const { storageEngine: storageEngineBadType } = useStorageEngine();
+  const storageEngine = storageEngineBadType as FirebaseStorageEngine; // We're guaranteed to have a FirebaseStorageEngine here
 
   // Used to fetch archived datasets
   const refreshSnapshots = useCallback(async () => {
     setSnapshotListLoading(true);
-    if (storageEngine instanceof FirebaseStorageEngine) {
-      const currSnapshots = await storageEngine.getSnapshots(studyId);
-      setSnapshots(currSnapshots);
-    }
+    const currSnapshots = await storageEngine.getSnapshots(studyId);
+    setSnapshots(currSnapshots);
     setSnapshotListLoading(false);
   }, [storageEngine, studyId]);
 
@@ -38,9 +37,7 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
 
   const handleCreateSnapshot = async () => {
     setLoading(true);
-    if (storageEngine instanceof FirebaseStorageEngine) {
-      await storageEngine.createSnapshot(studyId, false);
-    }
+    await storageEngine.createSnapshot(studyId, false);
     refreshSnapshots();
     setLoading(false);
     await refresh();
@@ -49,10 +46,8 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
   const handleArchiveData = async () => {
     setLoading(true);
     setDeleteValue('');
-    if (storageEngine instanceof FirebaseStorageEngine) {
-      setModalArchiveOpened(false);
-      await storageEngine.createSnapshot(studyId, true);
-    }
+    setModalArchiveOpened(false);
+    await storageEngine.createSnapshot(studyId, true);
     refreshSnapshots();
     setLoading(false);
     await refresh();
@@ -60,9 +55,7 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
 
   const handleRestoreSnapshot = async (snapshot: string) => {
     setLoading(true);
-    if (storageEngine instanceof FirebaseStorageEngine) {
-      await storageEngine.restoreSnapshot(studyId, snapshot);
-    }
+    await storageEngine.restoreSnapshot(studyId, snapshot);
     refreshSnapshots();
     setLoading(false);
     await refresh();
@@ -71,10 +64,8 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
   const handleDeleteSnapshot = async () => {
     setLoading(true);
     setDeleteValue('');
-    if (storageEngine instanceof FirebaseStorageEngine) {
-      setModalDeleteSnapshotOpened(false);
-      await storageEngine.removeSnapshotOrLive(currentSnapshot, true);
-    }
+    setModalDeleteSnapshotOpened(false);
+    await storageEngine.removeSnapshotOrLive(currentSnapshot, true);
     refreshSnapshots();
     setLoading(false);
     await refresh();
@@ -83,10 +74,8 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
   const handleDeleteLive = async () => {
     setLoading(true);
     setDeleteValue('');
-    if (storageEngine instanceof FirebaseStorageEngine) {
-      setModalDeleteLiveOpened(false);
-      await storageEngine.removeSnapshotOrLive(studyId, true);
-    }
+    setModalDeleteLiveOpened(false);
+    await storageEngine.removeSnapshotOrLive(studyId, true);
     refreshSnapshots();
     setLoading(false);
     await refresh();
