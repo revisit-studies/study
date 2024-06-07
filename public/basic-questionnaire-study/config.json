@@ -7,7 +7,7 @@
             "The reVISit Team"
         ],
         "date": "2024-03-19",
-        "description": "A simple questionnaire study",
+        "description": "A sample questionnaire study",
         "organizations": [
             "University of Utah"
         ]
@@ -21,76 +21,215 @@
         "sidebar": true
     },
     "components": {
-        "introduction": {
+        "Introduction": {
             "type": "markdown",
             "path": "basic-questionnaire-study/assets/introduction.md",
             "response": []
         },
-        "first-question-set": {
-            "type": "questionnaire",
-            "response": [
-                {
-                    "id": "q1",
-                    "prompt": "What is your first name?",
-                    "required": true,
-                    "location": "aboveStimulus",
-                    "type": "longText",
-                    "placeholder": "Please enter your first name"
-                },
-                {
-                    "id": "q2",
-                    "prompt": "What is your favorite color?",
-                    "required": true,
-                    "location": "aboveStimulus",
-                    "type": "dropdown",
-                    "placeholder": "Please choose your favorite color",
-                    "options": [
-                        {
-                            "label": "Red",
-                            "value": "red"
-                        },
-                        {
-                            "label": "Blue",
-                            "value": "blue"
-                        },
-                        {
-                            "label": "My favorite color is not shown here.",
-                            "value": "notShown"
-                        }
-                    ]
-                }
-            ]
-        },
         "Visual-Only-Q1": {
             "description": "Content: Visual Only",
-            "instruction": "What does the Visualization describe?",
+            "instruction": "Basic Understanding of the Visualization",
             "type": "image",
             "path": "basic-questionnaire-study/assets/VO.png",
             "style": {
-                "width": "800px"
+                "width": "600px",
+                "height": "800px"
             },
             "nextButtonLocation": "sidebar",
             "response": [
                 {
                     "id": "voq1",
-                    "prompt": "Answer:",
+                    "prompt": "1. What does the Visualization describe?",
                     "required": true,
                     "location": "sidebar",
                     "type": "longText",
                     "placeholder": "Please enter your answer here"
+                },
+                {
+                    "id": "voq2",
+                    "prompt": "2. How many sets are shown in the upset plot?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "shortText",
+                    "placeholder": "Please enter your answer here"
+                },
+                {
+                    "id": "voq3",
+                    "prompt": "3. How many intersections are seen in the UpSet plot?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "shortText",
+                    "placeholder": "Please enter your answer here"
+                },
+                {
+                    "id": "voq4",
+                    "prompt": "4. What is the largest intersection? (e.g., set_A and set_B)",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "shortText",
+                    "placeholder": "Please enter your answer here"
+                },
+                {
+                    "id": "voq5",
+                    "prompt": "5. What is the largest set size?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "shortText",
+                    "placeholder": "Please enter your answer here"
+                },
+                {
+                    "id": "voq6",
+                    "prompt": "6. What is the largest intersection size?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "shortText",
+                    "placeholder": "Please enter your answer here"
+                },
+                {
+                    "id": "voq7",
+                    "prompt": "7. How are intersections ordered?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Ascending",
+                            "value": "1"
+                        },
+                        {
+                            "label": "Descending",
+                            "value": "2"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq8",
+                    "prompt": "8. What characterizes the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "It is only of a single set.",
+                            "value": "Independent set"
+                        },
+                        {
+                            "label": "It is the intersection of 2-3 sets.",
+                            "value": "Low set"
+                        },
+                        {
+                            "label": "It is the intersection of many sets.",
+                            "value": "Medium / High order set"
+                        }
+                        
+                    ]
+                },
+                {
+                    "id": "voq9",
+                    "prompt": "9. How do the set sizes diverge??",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Roughly equal (all the set sizes look similar).",
+                            "value": "Identical"
+                        },
+                        {
+                            "label": "Diverging a bit (the sizes of the largest set and the smallest set don't differ largely).",
+                            "value": "Diverging a bit"
+                        },
+                        {
+                            "label": "Diverging a lot (the sizes of the largest set and the smallest set differ largely).",
+                            "value": "Diverging a lot"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq10",
+                    "prompt": "10. Is the largest set present in the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq11",
+                    "prompt": "11. Is the smallest set present in the smallest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq12",
+                    "prompt": "12. Is the all-set intersection (intersection having all the visible sets) present? ",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                    ]
                 }
-            ]
+            ]  
+                
         },
-        "second-question-set": {
-            "type": "questionnaire",
+        "Visual-Only-Q2": {
+            "description": "Content: Visual Only",
+            "instruction": "Rate the content",
+            "type": "image",
+            "path": "basic-questionnaire-study/assets/VO.png",
+            "style": {
+                "width": "600px",
+                "height": "800px"
+            },
+            "nextButtonLocation": "sidebar",
             "response": [
                 {
-                    "id": "q1",
-                    "prompt": "What would you rate your satisfaction of this survey? 0 being very un-enjoyable, 5 being very enjoyable.",
+                    "id": "voq1",
+                    "prompt": "On a scale of 1 to 5, how well did you understand the information presented? (1 = not at all, 5 = Completely)",
                     "required": true,
-                    "location": "aboveStimulus",
+                    "location": "sidebar",
                     "type": "numerical",
-                    "min": 0,
+                    "placeholder": "Please choose your answer",
+                    "min": 1,
+                    "max": 5
+                },
+                {
+                    "id": "voq1",
+                    "prompt": "On a scale of 1 to 5, how effective was the chart at conveying information? (1 = Not at all effective, 5 = Extremely effective)",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please choose your answer",
+                    "min": 1,
                     "max": 5
                 }
             ]
@@ -100,10 +239,9 @@
     "sequence": {
         "order": "fixed",
         "components": [
-            "introduction",
-            "first-question-set",
+            "Introduction",
             "Visual-Only-Q1",
-            "second-question-set"
+            "Visual-Only-Q2"
         ]
     }
 }
