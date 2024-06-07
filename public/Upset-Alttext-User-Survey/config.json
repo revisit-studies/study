@@ -1,7 +1,7 @@
 {
     "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
-        "title": "Basic Questionnaire Study",
+        "title": "Upset Alttext User Survey",
         "version": "pilot",
         "authors": [
             "The reVISit Team"
@@ -14,7 +14,7 @@
     },
     "uiConfig": {
         "contactEmail": "test@test.com",
-        "helpTextPath": "basic-questionnaire-study/assets/help.md",
+        "helpTextPath": "Upset-Alttext-User-Survey/assets/help.md",
         "logoPath": "revisitAssets/revisitLogoSquare.svg",
         "withProgressBar": true,
         "autoDownloadStudy": false,
@@ -23,14 +23,14 @@
     "components": {
         "Introduction": {
             "type": "markdown",
-            "path": "basic-questionnaire-study/assets/introduction.md",
+            "path": "Upset-Alttext-User-Survey/assets/introduction.md",
             "response": []
         },
         "Visual-Only-Q1": {
             "description": "Content: Visual Only",
             "instruction": "Basic Understanding of the Visualization",
             "type": "image",
-            "path": "basic-questionnaire-study/assets/VO.png",
+            "path": "Upset-Alttext-User-Survey/assets/VO.png",
             "style": {
                 "width": "600px",
                 "height": "800px"
@@ -205,7 +205,7 @@
             "description": "Content: Visual Only",
             "instruction": "Rate the content",
             "type": "image",
-            "path": "basic-questionnaire-study/assets/VO.png",
+            "path": "Upset-Alttext-User-Survey/assets/VO.png",
             "style": {
                 "width": "600px",
                 "height": "800px"
@@ -218,17 +218,17 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "numerical",
-                    "placeholder": "Please choose your answer",
+                    "placeholder": "Please rate your answer",
                     "min": 1,
                     "max": 5
                 },
                 {
-                    "id": "voq1",
+                    "id": "voq2",
                     "prompt": "On a scale of 1 to 5, how effective was the chart at conveying information? (1 = Not at all effective, 5 = Extremely effective)",
                     "required": true,
                     "location": "sidebar",
                     "type": "numerical",
-                    "placeholder": "Please choose your answer",
+                    "placeholder": "Please rate your answer",
                     "min": 1,
                     "max": 5
                 }
