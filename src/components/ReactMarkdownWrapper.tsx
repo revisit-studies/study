@@ -6,7 +6,6 @@ import {
 } from '@mantine/core';
 import { ReactNode } from 'react';
 import rehypeRaw from 'rehype-raw';
-import { IconAsterisk } from '@tabler/icons-react';
 
 export default function ReactMarkdownWrapper({ text, required }: { text: string; required?: boolean }) {
   const components = {

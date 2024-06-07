@@ -89,7 +89,7 @@ test('test', async ({ page }) => {
   await page.getByPlaceholder('Enter your preference').click();
   await page.getByRole('option', { name: 'Bar', exact: true }).click();
   await page.getByPlaceholder('Enter your age here, range from 0 - 100').fill('25');
-  await page.getByLabel('5').check();
+  await page.getByLabel('5', { exact: true }).check();
   await page.getByPlaceholder('Enter your comments here').fill('Test Test');
   await page.getByRole('button', { name: 'Next' }).click();
 
