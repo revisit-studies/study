@@ -7,7 +7,7 @@ import {
   useAreResponsesValid,
   useFlatSequence,
 } from '../store';
-import { useCurrentStep, useStudyId } from '../../routes/utils';
+import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
 
 import { deepCopy } from '../../utils/deepCopy';
 import { StoredAnswer, ValidationStatus } from '../types';
@@ -42,12 +42,10 @@ function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: st
 export function useNextStep() {
   const currentStep = useCurrentStep();
   const participantSequence = useFlatSequence();
-  const currentComponent = participantSequence[currentStep];
+  const currentComponent = useCurrentComponent();
   const identifier = `${currentComponent}_${currentStep}`;
 
   const { trialValidation, sequence, answers } = useStoreSelector((state) => state);
-
-  const status = useStoredAnswer();
 
   const storeDispatch = useStoreDispatch();
   const { saveTrialAnswer, setIframeAnswers } = useStoreActions();
@@ -56,9 +54,9 @@ export function useNextStep() {
   const areResponsesValid = useAreResponsesValid(identifier);
 
   // Status of the next button. If false, the next button should be disabled
-  const isNextDisabled = !areResponsesValid;
+  const isNextDisabled = typeof currentStep !== 'number' || !areResponsesValid;
 
-  const storedAnswer = status?.answer;
+  const storedAnswer = useStoredAnswer();
 
   const navigate = useNavigate();
 
@@ -70,6 +68,9 @@ export function useNextStep() {
 
   const windowEvents = useWindowEvents();
   const goToNextStep = useCallback(() => {
+    if (typeof currentStep !== 'number') {
+      return;
+    }
     // Get answer from across the 3 response blocks and the provenance graph
     const trialValidationCopy = deepCopy(trialValidation[identifier]);
     const answer = Object.values(trialValidationCopy).reduce((acc, curr) => {
@@ -84,7 +85,7 @@ export function useNextStep() {
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
 
-    if (Object.keys(storedAnswer || {}).length === 0) {
+    if (!storedAnswer.endTime) {
       storeDispatch(
         saveTrialAnswer({
           identifier,
@@ -97,14 +98,12 @@ export function useNextStep() {
       );
       // Update database
       if (storageEngine) {
-        storageEngine.saveAnswer(
-          identifier,
+        storageEngine.saveAnswers(
           {
-            answer,
-            startTime,
-            endTime,
-            provenanceGraph,
-            windowEvents: currentWindowEvents,
+            ...answers,
+            [identifier]: {
+              answer, startTime, endTime, provenanceGraph, windowEvents: currentWindowEvents,
+            },
           },
         );
       }

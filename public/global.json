@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta11/src/parser/GlobalConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/GlobalConfigSchema.json",
     "configsList": [
         "Upset-Alttext-User-Survey",
         "demo-html",
@@ -15,7 +15,8 @@
         "demo-click-accuracy-test",
         "demo-image",
         "test-randomization",
-        "test-skip-logic"
+        "test-skip-logic",
+        "test-parser-errors"
     ],
     "configs": {
         "Upset-Alttext-User-Survey": {
@@ -58,10 +59,16 @@
             "path": "demo-image/config.json"
         },
         "test-randomization": {
-            "path": "test-randomization/config.json"
+            "path": "test-randomization/config.json",
+            "test": true
         },
         "test-skip-logic": {
-            "path": "test-skip-logic/config.json"
+            "path": "test-skip-logic/config.json",
+            "test": true
+        },
+        "test-parser-errors": {
+            "path": "test-parser-errors/config.json",
+            "test": true
         }
     },
     "adminUsers": []

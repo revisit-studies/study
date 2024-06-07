@@ -92,14 +92,14 @@ export function TableView({
   completed: ParticipantData[];
   inProgress: ParticipantData[];
   studyConfig: StudyConfig;
-  refresh: ()=> void;
+  refresh: () => Promise<void>;
 }) {
   const { storageEngine } = useStorageEngine();
   const { studyId } = useParams();
   const rejectParticipant = async (participantId: string) => {
     if (storageEngine && studyId) {
       await storageEngine.rejectParticipant(studyId, participantId);
-      refresh();
+      await refresh();
     }
   };
   const [checked, setChecked] = useState<string[]>([]);
@@ -123,7 +123,7 @@ export function TableView({
       const promises = checked.map(async (participantId) => await rejectParticipant(participantId));
       await Promise.all(promises);
       setChecked([]);
-      refresh();
+      await refresh();
       setLoading(false);
     },
   });
@@ -183,7 +183,7 @@ export function TableView({
         }
           {(!record.completed) && (
           <Text size="sm" mb={-1} ml={4}>
-            {(Object.entries(record.answers).length / (getSequenceFlatMap(record.sequence).length - 1)) * 100}
+            {((Object.entries(record.answers).filter(([id, entry]) => entry.endTime !== undefined).length / (getSequenceFlatMap(record.sequence).length - 1)) * 100).toFixed(2)}
             %
           </Text>
           )}
