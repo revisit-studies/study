@@ -393,8 +393,8 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * ```
  *
  * For in depth examples, see the following studies, and their associated codebases.
- * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v1.0.0-beta10/src/public/demo-click-accuracy-test/assets)
- * https://revisit.dev/study/demo-brush-interactions (https://github.com/revisit-studies/study/tree/v1.0.0-beta10/src/public/demo-brush-interactions/assets)
+ * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v1.0.0-beta11/src/public/demo-click-accuracy-test/assets)
+ * https://revisit.dev/study/demo-brush-interactions (https://github.com/revisit-studies/study/tree/v1.0.0-beta11/src/public/demo-brush-interactions/assets)
  */
 export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
@@ -926,7 +926,7 @@ export type InheritedComponent = (Partial<IndividualComponent> & { baseComponent
 
  ```js
  {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta10/src/parser/StudyConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta11/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
       ...
     },
