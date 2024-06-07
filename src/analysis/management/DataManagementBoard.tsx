@@ -109,28 +109,27 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
     <>
       <LoadingOverlay visible={loading} />
       <Container>
-        <Card withBorder style={{ backgroundColor: '#FAFAFA', justifySelf: 'left' }}>
-          <Title mb="lg" order={3}>Data Management</Title>
+        <Card withBorder style={{ backgroundColor: '#FAFAFA' }}>
+          <Title mb="lg" order={4}>Data Management</Title>
+
           <Flex justify="space-between" align="center">
             <Box style={{ width: '70%' }}>
               <Title order={5}>Create a Snapshot</Title>
               <Text>
                 This will create a snapshot of the live
-                <span style={{ fontWeight: 'bold' }}>
-                  {' '}
-                  {studyId}
-                </span>
+                {' '}
+                <Text span fw={700}>{studyId}</Text>
                 {' '}
                 database. It will
-                <span style={{ fontStyle: 'italic', fontWeight: 'bold' }}> not</span>
+                {' '}
+                <Text span fw={700} fs="italic">not</Text>
                 {' '}
                 remove this data from the live database. The current study data can be restored from a snapshot at any time.
               </Text>
             </Box>
+
             <Tooltip label="Create a snapshot">
-              <Button
-                onClick={openCreateSnapshotModal}
-              >
+              <Button onClick={openCreateSnapshotModal}>
                 Snapshot
               </Button>
             </Tooltip>
@@ -143,20 +142,15 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
               <Title order={5}>Archive Data</Title>
               <Text>
                 This will create a snapshot of the live
-                <span style={{ fontWeight: 'bold' }}>
-                  {' '}
-                  {studyId}
-                  {' '}
-                </span>
+                {' '}
+                <Text span fw={700}>{studyId}</Text>
+                {' '}
                 database. It will then remove this data from the live database. The current study data can be restored from a snapshot at any time.
               </Text>
             </Box>
+
             <Tooltip label="Snapshot and Delete Data">
-              <Button
-                color="red"
-                sx={{ '&[data-disabled]': { pointerEvents: 'all' } }}
-                onClick={() => setModalArchiveOpened(true)}
-              >
+              <Button color="red" onClick={() => setModalArchiveOpened(true)}>
                 Archive
               </Button>
             </Tooltip>
@@ -169,47 +163,60 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
               <Title order={5}>Delete Data</Title>
               <Text>
                 This will delete the live
-                <span style={{ fontWeight: 'bold' }}>
-                  {' '}
-                  {studyId}
-                  {' '}
-                </span>
+                {' '}
+                <Text span fw={700}>{studyId}</Text>
+                {' '}
                 database. Since this does not create a snapshot the data will be permanently deleted and cannot be restored.
               </Text>
             </Box>
+
             <Tooltip label="Delete Data">
-              <Button
-                color="red"
-                sx={{ '&[data-disabled]': { pointerEvents: 'all' } }}
-                onClick={() => setModalDeleteLiveOpened(true)}
-              >
+              <Button color="red" onClick={() => setModalDeleteLiveOpened(true)}>
                 Delete
               </Button>
             </Tooltip>
           </Flex>
 
-          <Flex mt={40} direction="column">
-            <Flex style={{ borderBottom: '1px solid #dedede' }} direction="row" justify="space-between" mb={15} pb={15}>
+          <Space h="xl" />
+
+          <Flex direction="column">
+            <Flex style={{ borderBottom: '1px solid #dedede' }} direction="row" justify="space-between" mb="xs" pb="sm">
               <Title order={5}>Snapshots</Title>
             </Flex>
-            <div style={{ position: 'relative' }}>
+
+            {/* Position relative keeps the loading overlay only on the list */}
+            <Box style={{ position: 'relative' }}>
               <LoadingOverlay visible={snapshotListLoading} />
-              { snapshots.length > 0 ? snapshots.map(
-                (datasetName: string) => (
-                  <Flex key={datasetName} justify="space-between" mb={10}>
-                    <Text>{datasetName}</Text>
-                    <Flex direction="row" gap={10}>
-                      <Tooltip label="Restore Snapshot">
-                        <ActionIcon color="blue" variant="subtle" onClick={() => { openRestoreSnapshotModal(datasetName); }}><IconRefresh /></ActionIcon>
-                      </Tooltip>
-                      <Tooltip label="Delete Snapshot">
-                        <ActionIcon color="red" variant="subtle" onClick={() => { setModalDeleteSnapshotOpened(true); setCurrentSnapshot(datasetName); }}><IconTrashX /></ActionIcon>
-                      </Tooltip>
+              { snapshots.length > 0
+                ? snapshots.map(
+                  (datasetName: string) => (
+                    <Flex key={datasetName} justify="space-between" mb="xs">
+                      <Text>{datasetName}</Text>
+                      <Flex direction="row" gap="xs">
+                        <Tooltip label="Restore Snapshot">
+                          <ActionIcon
+                            color="blue"
+                            variant="subtle"
+                            onClick={() => { openRestoreSnapshotModal(datasetName); }}
+                          >
+                            <IconRefresh />
+                          </ActionIcon>
+                        </Tooltip>
+                        <Tooltip label="Delete Snapshot">
+                          <ActionIcon
+                            color="red"
+                            variant="subtle"
+                            onClick={() => { setModalDeleteSnapshotOpened(true); setCurrentSnapshot(datasetName); }}
+                          >
+                            <IconTrashX />
+                          </ActionIcon>
+                        </Tooltip>
+                      </Flex>
                     </Flex>
-                  </Flex>
-                ),
-              ) : <Text>No snapshots.</Text>}
-            </div>
+                  ),
+                )
+                : <Text>No snapshots.</Text>}
+            </Box>
           </Flex>
 
         </Card>
@@ -220,22 +227,22 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
         onClose={() => { setModalArchiveOpened(false); setDeleteValue(''); }}
         title={<Text>Archive Data</Text>}
       >
-        <Box>
-          <Text mb={30}>This will create a snapshot of the live database and remove the data from the live database.</Text>
-          <TextInput
-            label="To archive this data, please enter the name of the study."
-            placeholder={studyId}
-            onChange={(event) => setDeleteValue(event.target.value)}
-          />
-          <Flex mt={30} justify="right">
-            <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalArchiveOpened(false); setDeleteValue(''); }}>
-              Cancel
-            </Button>
-            <Button color="red" onClick={() => handleArchiveData()} disabled={deleteValue !== studyId}>
-              Archive
-            </Button>
-          </Flex>
-        </Box>
+        <Text mb="sm">This will create a snapshot of the live database and remove the data from the live database.</Text>
+
+        <TextInput
+          label="To archive this data, please enter the name of the study."
+          placeholder={studyId}
+          onChange={(event) => setDeleteValue(event.target.value)}
+        />
+
+        <Flex mt="sm" justify="right">
+          <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalArchiveOpened(false); setDeleteValue(''); }}>
+            Cancel
+          </Button>
+          <Button color="red" onClick={handleArchiveData} disabled={deleteValue !== studyId}>
+            Archive
+          </Button>
+        </Flex>
       </Modal>
 
       <Modal
@@ -243,27 +250,27 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
         onClose={() => { setModalDeleteSnapshotOpened(false); setDeleteValue(''); }}
         title={<Text>Delete Snapshot</Text>}
       >
-        <Box>
-          <Text mb={30}>
-            This will permanently remove this snapshot. This action is
-            {' '}
-            <Text span fw={700}>irreversible</Text>
-            .
-          </Text>
-          <TextInput
-            label="To delete this snapshot, please enter the name of the study."
-            placeholder={studyId}
-            onChange={(event) => setDeleteValue(event.target.value)}
-          />
-          <Flex mt={30} justify="right">
-            <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalDeleteSnapshotOpened(false); setDeleteValue(''); }}>
-              Cancel
-            </Button>
-            <Button color="red" onClick={() => handleDeleteSnapshot()} disabled={deleteValue !== studyId}>
-              Delete
-            </Button>
-          </Flex>
-        </Box>
+        <Text mb="sm">
+          This will permanently remove this snapshot. This action is
+          {' '}
+          <Text span fw={700}>irreversible</Text>
+          .
+        </Text>
+
+        <TextInput
+          label="To delete this snapshot, please enter the name of the study."
+          placeholder={studyId}
+          onChange={(event) => setDeleteValue(event.target.value)}
+        />
+
+        <Flex mt="sm" justify="right">
+          <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalDeleteSnapshotOpened(false); setDeleteValue(''); }}>
+            Cancel
+          </Button>
+          <Button color="red" onClick={handleDeleteSnapshot} disabled={deleteValue !== studyId}>
+            Delete
+          </Button>
+        </Flex>
       </Modal>
 
       <Modal
@@ -271,33 +278,31 @@ export function DataManagementBoard({ studyId, refresh }: { studyId: string, ref
         onClose={() => { setModalDeleteLiveOpened(false); setDeleteValue(''); }}
         title={<Text>Delete Live Data</Text>}
       >
-        <Box>
-          <Text mb={30}>
-            This will permanently delete the live
-            <span style={{ fontWeight: 'bold' }}>
-              {' '}
-              {studyId}
-              {' '}
-            </span>
-            data. This action is
-            {' '}
-            <Text span fw={700}>irreversible</Text>
-            . Please consider using archive data to create a snapshot of the live data before deleting.
-          </Text>
-          <TextInput
-            label="To delete this live data, please enter the name of the study."
-            placeholder={studyId}
-            onChange={(event) => setDeleteValue(event.target.value)}
-          />
-          <Flex mt={30} justify="right">
-            <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalDeleteLiveOpened(false); setDeleteValue(''); }}>
-              Cancel
-            </Button>
-            <Button color="red" onClick={() => handleDeleteLive()} disabled={deleteValue !== studyId}>
-              Delete
-            </Button>
-          </Flex>
-        </Box>
+        <Text mb="sm">
+          This will permanently delete the live
+          {' '}
+          <Text span fw={700}>{studyId}</Text>
+          {' '}
+          data. This action is
+          {' '}
+          <Text span fw={700}>irreversible</Text>
+          . Please consider using archive data to create a snapshot of the live data before deleting.
+        </Text>
+
+        <TextInput
+          label="To delete this live data, please enter the name of the study."
+          placeholder={studyId}
+          onChange={(event) => setDeleteValue(event.target.value)}
+        />
+
+        <Flex mt="sm" justify="right">
+          <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalDeleteLiveOpened(false); setDeleteValue(''); }}>
+            Cancel
+          </Button>
+          <Button color="red" onClick={handleDeleteLive} disabled={deleteValue !== studyId}>
+            Delete
+          </Button>
+        </Flex>
       </Modal>
     </>
   );
