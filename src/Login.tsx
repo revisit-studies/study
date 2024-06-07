@@ -3,7 +3,7 @@ import {
 } from '@mantine/core';
 import { useState, useEffect } from 'react';
 import {
-  getAuth, signInWithPopup, GoogleAuthProvider,
+  getAuth, signInWithPopup, GoogleAuthProvider, browserPopupRedirectResolver,
 } from '@firebase/auth';
 import { IconBrandGoogle } from '@tabler/icons-react';
 import { Navigate } from 'react-router-dom';
@@ -19,7 +19,7 @@ export async function signInWithGoogle(storageEngine: StorageEngine | undefined,
     const provider = new GoogleAuthProvider();
     const auth = getAuth();
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithPopup(auth, provider, browserPopupRedirectResolver);
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       if (setErrorMessage) {

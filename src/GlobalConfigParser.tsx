@@ -4,8 +4,8 @@ import { ModalsProvider } from '@mantine/modals';
 import { AppShell } from '@mantine/core';
 import ConfigSwitcher from './components/ConfigSwitcher';
 import { Shell } from './components/Shell';
-import { parseGlobalConfig, parseStudyConfig } from './parser/parser';
-import { GlobalConfig, Nullable, StudyConfig } from './parser/types';
+import { parseGlobalConfig } from './parser/parser';
+import { GlobalConfig, Nullable, ParsedStudyConfig } from './parser/types';
 import { AnalysisInterface } from './analysis/AnalysisInterface';
 import { PREFIX } from './utils/Prefix';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -15,6 +15,7 @@ import { AnalysisDashboard } from './analysis/AnalysisDashboard';
 import { GlobalSettings } from './analysis/dashboard/GlobalSettings';
 import { NavigateWithParams } from './utils/NavigateWithParams';
 import AppHeader from './analysis/components/interface/AppHeader';
+import { fetchStudyConfigs } from './utils/fetchConfig';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
@@ -22,25 +23,9 @@ async function fetchGlobalConfigArray() {
   return parseGlobalConfig(configs);
 }
 
-async function fetchStudyConfigs(globalConfig: GlobalConfig) {
-  const studyConfigs: Record<string, StudyConfig> = {};
-  const urls = globalConfig.configsList
-    .filter((configId) => (import.meta.env.VITE_CI === 'true' ? true : !globalConfig.configs[configId].test))
-    .map((configId) => `${PREFIX}${globalConfig.configs[configId].path}`);
-
-  const res = await Promise.all(urls.map((u) => fetch(u)));
-  const responses = await Promise.all(res.map((_res) => _res.text()));
-  const configs = await Promise.all(responses.map((_res, idx) => parseStudyConfig(_res, globalConfig.configsList[idx])));
-
-  globalConfig.configsList.forEach((configId, idx) => {
-    studyConfigs[configId] = configs[idx];
-  });
-  return studyConfigs;
-}
-
 export function GlobalConfigParser() {
   const [globalConfig, setGlobalConfig] = useState<Nullable<GlobalConfig>>(null);
-  const [studyConfigs, setStudyConfigs] = useState<Record<string, StudyConfig>>({});
+  const [studyConfigs, setStudyConfigs] = useState<Record<string, ParsedStudyConfig | null>>({});
 
   useEffect(() => {
     async function fetchData() {

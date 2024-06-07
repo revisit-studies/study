@@ -3,20 +3,20 @@ import {
 } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 import { IconAlertTriangle } from '@tabler/icons-react';
-import { ErrorObject } from 'ajv';
-import { GlobalConfig, StudyConfig } from '../parser/types';
+import { GlobalConfig, ParsedStudyConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { PREFIX } from '../utils/Prefix';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 
 const REVISIT_GITHUB_PUBLIC = 'https://github.com/revisit-studies/study/tree/main/public/';
 
-type Props = {
+function ConfigSwitcher({
+  globalConfig,
+  studyConfigs,
+}: {
   globalConfig: GlobalConfig;
-  studyConfigs: {[key: string]: StudyConfig & { errors?: ErrorObject<string, Record<string, unknown>, unknown>[] }};
-};
-
-function ConfigSwitcher({ globalConfig, studyConfigs }: Props) {
+  studyConfigs: Record<string, ParsedStudyConfig | null>;
+}) {
   const { configsList } = globalConfig;
   const navigate = useNavigate();
 
@@ -49,14 +49,15 @@ function ConfigSwitcher({ globalConfig, studyConfigs }: Props) {
               style={{ width: '100%' }}
             >
               <Card shadow="sm" radius="md" withBorder>
-                {config.errors
+                {config.errors.length > 0
                   ? (
                     <>
+                      <Text fw="bold">{configName}</Text>
                       <Flex align="center" direction="row">
                         <IconAlertTriangle color="red" />
-                        <Text fw="bold" ml={8} color="red">{configName}</Text>
+                        <Text fw="bold" ml={8} color="red">Errors</Text>
                       </Flex>
-                      <ErrorLoadingConfig errors={config.errors} />
+                      <ErrorLoadingConfig issues={config.errors} type="error" />
                     </>
                   )
                   : (
@@ -79,6 +80,16 @@ function ConfigSwitcher({ globalConfig, studyConfigs }: Props) {
                       </Text>
                     </>
                   )}
+
+                {config.warnings.length > 0 && (
+                <>
+                  <Flex align="center" direction="row">
+                    <IconAlertTriangle color="orange" />
+                    <Text fw="bold" ml={8} color="orange">Warnings</Text>
+                  </Flex>
+                  <ErrorLoadingConfig issues={config.warnings} type="warning" />
+                </>
+                )}
               </Card>
             </UnstyledButton>
           );

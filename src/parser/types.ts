@@ -1033,6 +1033,15 @@ In the above code snippet, we have a single base component which holds the infor
 
 /**
  * @ignore
+ * Helper type to write the study config with with errors key
+ */
+export type ParsedStudyConfig = StudyConfig & {
+  errors: { instancePath: string, message?: string, params: object }[]
+  warnings: { instancePath: string, message?: string, params: object }[]
+}
+
+/**
+ * @ignore
  * Helper type to avoid writing Type | undefined | null
  */
 export type Nullable<T> = T | undefined | null;
