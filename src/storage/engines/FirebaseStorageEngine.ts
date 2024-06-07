@@ -11,7 +11,7 @@ import {
   StorageReference,
 } from 'firebase/storage';
 import {
-  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc, where, deleteDoc, updateDoc, writeBatch, DocumentReference,
+  CollectionReference, DocumentData, Firestore, collection, doc, enableNetwork, getDoc, getDocs, initializeFirestore, orderBy, query, serverTimestamp, setDoc, where, deleteDoc, updateDoc, writeBatch,
 } from 'firebase/firestore';
 import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
@@ -522,7 +522,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     await this._copyDirectory(`${sourceName}/configs`, `${targetName}/configs`);
     await this._copyDirectory(`${sourceName}/participants`, `${targetName}/participants`);
     await this._copyDirectory(sourceName, targetName);
-    await this._copySequenceAssignmentCollection(sourceName, targetName);
+    await this._copyCollection(sourceName, targetName);
     await this._addDirectoryNameToMetadata(targetName);
 
     if (deleteData) {
@@ -533,6 +533,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   async removeSnapshotOrLive(targetName: string, includeMetadata: boolean) {
     const targetNameWithPrefix = targetName.startsWith(this.collectionPrefix) ? targetName : `${this.collectionPrefix}${targetName}`;
+
     await this._deleteDirectory(`${targetNameWithPrefix}/configs`);
     await this._deleteDirectory(`${targetNameWithPrefix}/participants`);
     await this._deleteDirectory(targetNameWithPrefix);
@@ -569,7 +570,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     await this._copyDirectory(`${snapshotName}/configs`, `${originalName}/configs`);
     await this._copyDirectory(`${snapshotName}/participants`, `${originalName}/participants`);
     await this._copyDirectory(snapshotName, originalName);
-    await this._copySequenceAssignmentCollection(snapshotName, originalName);
+    await this._copyCollection(snapshotName, originalName);
   }
 
   // Function to add collection name to metadata
@@ -577,7 +578,6 @@ export class FirebaseStorageEngine extends StorageEngine {
     try {
       const metadataDoc = doc(this.firestore, 'metadata', 'collections');
       await setDoc(metadataDoc, { [directoryName]: true }, { merge: true });
-      console.warn(`Added ${directoryName} to metadata.`);
     } catch (error) {
       console.error('Error adding collection to metadata:', error);
     }
@@ -593,7 +593,6 @@ export class FirebaseStorageEngine extends StorageEngine {
         if (metadata[directoryName]) {
           delete metadata[directoryName];
           await setDoc(metadataDoc, metadata);
-          console.warn(`Removed ${directoryName} from metadata.`);
         } else {
           console.warn(`${directoryName} does not exist in metadata.`);
         }
@@ -613,8 +612,6 @@ export class FirebaseStorageEngine extends StorageEngine {
 
       const deletePromises = directorySnapshot.items.map((fileRef) => deleteObject(fileRef));
       await Promise.all(deletePromises);
-
-      console.warn(`Deleted all files in directory ${directoryPath}.`);
     } catch (error) {
       console.error('Error deleting files in directory:', error);
     }
@@ -646,13 +643,12 @@ export class FirebaseStorageEngine extends StorageEngine {
       const blob = await response.blob();
 
       await uploadBytes(targetFileRef, blob);
-      console.warn(`Copied file from ${sourceFilePath} to ${targetFilePath}`);
     } catch (error) {
       console.error('Error copying file:', error);
     }
   }
 
-  async _copySequenceAssignmentCollection(sourceCollectionName: string, targetCollectionName: string) {
+  async _copyCollection(sourceCollectionName: string, targetCollectionName: string) {
     const sourceCollectionRef = collection(this.firestore, sourceCollectionName);
     const sourceSequenceAssignmentDocRef = doc(sourceCollectionRef, 'sequenceAssignment');
     const sourceSequenceAssignmentCollectionRef = collection(sourceSequenceAssignmentDocRef, 'sequenceAssignment');
