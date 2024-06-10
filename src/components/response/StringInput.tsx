@@ -1,26 +1,33 @@
-import { TextInput } from '@mantine/core';
+import { Box, Flex, TextInput } from '@mantine/core';
 import { ShortTextResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
-
-type inputProps = {
-  response: ShortTextResponse;
-  disabled: boolean;
-  answer: { value?: string };
-};
 
 export default function StringInput({
   response,
   disabled,
   answer,
-}: inputProps) {
+  index,
+  enumerateQuestions,
+}: {
+  response: ShortTextResponse;
+  disabled: boolean;
+  answer: { value?: string };
+  index: number;
+  enumerateQuestions: boolean;
+}) {
   const { placeholder, prompt, required } = response;
 
   return (
     <TextInput
       disabled={disabled}
       placeholder={placeholder}
-      label={<ReactMarkdownWrapper text={prompt} required={required} />}
+      label={(
+        <Flex direction="row" wrap="nowrap" gap={4}>
+          {enumerateQuestions && <Box style={{ minWidth: 'fit-content' }}>{`${index}. `}</Box>}
+          <ReactMarkdownWrapper text={prompt} required={required} />
+        </Flex>
+      )}
       radius="md"
       size="md"
       {...answer}

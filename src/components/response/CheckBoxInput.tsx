@@ -1,24 +1,31 @@
-import { Checkbox } from '@mantine/core';
+import { Box, Checkbox, Flex } from '@mantine/core';
 import { CheckboxResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
-
-type inputProps = {
-  response: CheckboxResponse;
-  disabled: boolean;
-  answer: object;
-};
 
 export default function CheckBoxInput({
   response,
   disabled,
   answer,
-}: inputProps) {
+  index,
+  enumerateQuestions,
+}: {
+  response: CheckboxResponse;
+  disabled: boolean;
+  answer: object;
+  index: number;
+  enumerateQuestions: boolean;
+}) {
   const { prompt, required, options } = response;
 
   return (
     <Checkbox.Group
-      label={<ReactMarkdownWrapper text={prompt} required={required} />}
+      label={(
+        <Flex direction="row" wrap="nowrap" gap={4}>
+          {enumerateQuestions && <Box style={{ minWidth: 'fit-content' }}>{`${index}. `}</Box>}
+          <ReactMarkdownWrapper text={prompt} required={required} />
+        </Flex>
+      )}
       {...answer}
       error={generateErrorMessage(response, answer, options)}
       size="md"

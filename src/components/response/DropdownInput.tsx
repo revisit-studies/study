@@ -1,19 +1,23 @@
-import { Select, SelectItem } from '@mantine/core';
+import {
+  Box, Flex, Select, SelectItem,
+} from '@mantine/core';
 import { DropdownResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
-
-type inputProps = {
-  response: DropdownResponse;
-  disabled: boolean;
-  answer: object;
-};
 
 export default function DropdownInput({
   response,
   disabled,
   answer,
-}: inputProps) {
+  index,
+  enumerateQuestions,
+}: {
+  response: DropdownResponse;
+  disabled: boolean;
+  answer: object;
+  index: number;
+  enumerateQuestions: boolean;
+}) {
   const {
     placeholder, prompt, required, options,
   } = response;
@@ -21,7 +25,12 @@ export default function DropdownInput({
   return (
     <Select
       disabled={disabled}
-      label={<ReactMarkdownWrapper text={prompt} required={required} />}
+      label={(
+        <Flex direction="row" wrap="nowrap" gap={4}>
+          {enumerateQuestions && <Box style={{ minWidth: 'fit-content' }}>{`${index}. `}</Box>}
+          <ReactMarkdownWrapper text={prompt} required={required} />
+        </Flex>
+      )}
       placeholder={placeholder}
       data={options as SelectItem[]}
       radius="md"

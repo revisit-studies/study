@@ -110,6 +110,10 @@ export interface UIConfig {
    * The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000.
    */
   numSequences?: number;
+  /**
+   * Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar.
+   */
+  enumerateQuestions?: boolean;
 }
 
 /**

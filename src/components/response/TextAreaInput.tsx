@@ -1,26 +1,33 @@
-import { Textarea } from '@mantine/core';
+import { Box, Flex, Textarea } from '@mantine/core';
 import { LongTextResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
-
-type inputProps = {
-  response: LongTextResponse;
-  disabled: boolean;
-  answer: { value?: string };
-};
 
 export default function TextAreaInput({
   response,
   disabled,
   answer,
-}: inputProps) {
+  index,
+  enumerateQuestions,
+}: {
+  response: LongTextResponse;
+  disabled: boolean;
+  answer: { value?: string };
+  index: number;
+  enumerateQuestions: boolean;
+}) {
   const { placeholder, prompt, required } = response;
 
   return (
     <Textarea
       disabled={disabled}
       placeholder={placeholder}
-      label={<ReactMarkdownWrapper text={prompt} required={required} />}
+      label={(
+        <Flex direction="row" wrap="nowrap" gap={4}>
+          {enumerateQuestions && <Box style={{ minWidth: 'fit-content' }}>{`${index}. `}</Box>}
+          <ReactMarkdownWrapper text={prompt} required={required} />
+        </Flex>
+      )}
       radius="md"
       size="md"
       {...answer}

@@ -1454,6 +1454,10 @@
           "description": "The email address that used during the study if a participant clicks contact.",
           "type": "string"
         },
+        "enumerateQuestions": {
+          "description": "Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar.",
+          "type": "boolean"
+        },
         "helpTextPath": {
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported.",
           "type": "string"

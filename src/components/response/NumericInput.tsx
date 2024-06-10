@@ -1,18 +1,21 @@
-import { NumberInput } from '@mantine/core';
+import { Box, Flex, NumberInput } from '@mantine/core';
 import { NumericalResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 
-type inputProps = {
-  response: NumericalResponse;
-  disabled: boolean;
-  answer: object;
-};
 export default function NumericInput({
   response,
   disabled,
   answer,
-}: inputProps) {
+  index,
+  enumerateQuestions,
+}: {
+  response: NumericalResponse;
+  disabled: boolean;
+  answer: object;
+  index: number;
+  enumerateQuestions: boolean;
+}) {
   const {
     prompt, required, min, max, placeholder,
   } = response;
@@ -21,7 +24,12 @@ export default function NumericInput({
     <NumberInput
       disabled={disabled}
       placeholder={placeholder}
-      label={<ReactMarkdownWrapper text={prompt} required={required} />}
+      label={(
+        <Flex direction="row" wrap="nowrap" gap={4}>
+          {enumerateQuestions && <Box style={{ minWidth: 'fit-content' }}>{`${index}. `}</Box>}
+          <ReactMarkdownWrapper text={prompt} required={required} />
+        </Flex>
+      )}
       radius="md"
       size="md"
       min={min}
