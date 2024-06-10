@@ -1,16 +1,18 @@
 import {
   CloseButton,
   ScrollArea,
+  Switch,
   Text,
   AppShell,
 } from '@mantine/core';
 import React, { useMemo } from 'react';
+import { useColorScheme } from '@mantine/hooks';
 import { ComponentBlockWithOrderPath, StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import {
-  useFlatSequence, useStoreActions, useStoreDispatch, useStoreSelector,
+  useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../../store/store';
-import { useCurrentStep } from '../../routes/utils';
+import { useCurrentComponent } from '../../routes/utils';
 import { deepCopy } from '../../utils/deepCopy';
 import { ComponentBlock } from '../../parser/types';
 
@@ -25,10 +27,13 @@ export default function AppAside() {
   const { showStudyBrowser, sequence } = useStoreSelector((state) => state);
   const { toggleStudyBrowser } = useStoreActions();
 
-  const currentStep = useCurrentStep();
-  const currentComponent = useFlatSequence()[currentStep];
+  const currentComponent = useCurrentComponent();
   const studyConfig = useStudyConfig();
   const dispatch = useStoreDispatch();
+
+  const colorScheme = useColorScheme();
+
+  const [participantView, setParticipantView] = React.useState(true);
 
   const fullOrder = useMemo(() => {
     let r = deepCopy(studyConfig.sequence) as ComponentBlockWithOrderPath;
@@ -39,20 +44,29 @@ export default function AppAside() {
 
   return showStudyBrowser || (currentComponent === 'end' && studyConfig.uiConfig.autoDownloadStudy) ? (
     <AppShell.Aside style={{ zIndex: 0 }}>
-      <AppShell.Section>
+      <AppShell.Section style={(theme) => ({ borderBottom: `1px solid ${colorScheme === 'dark' ? theme.colors.dark[4] : theme.colors.gray[2]}` })}>
         <CloseButton
           style={{
             position: 'absolute', right: '10px', top: '10px', zIndex: 5,
           }}
           onClick={() => dispatch(toggleStudyBrowser())}
         />
-        <Text size="md" p={10} style={{ weight: 'bold' }}>
+        <Text size="md" p="sm" pb={2} style={{ weight: 'bold' }}>
           Study Browser
         </Text>
+        <Switch
+          checked={participantView}
+          onChange={(event) => setParticipantView(event.currentTarget.checked)}
+          size="xs"
+          pt={0}
+          pb="sm"
+          label="Participant View"
+        />
+
       </AppShell.Section>
 
-      <AppShell.Section grow component={ScrollArea}>
-        <StepsPanel configSequence={fullOrder} participantSequence={sequence} fullSequence={sequence} />
+      <AppShell.Section grow component={ScrollArea} p="xs">
+        <StepsPanel configSequence={fullOrder} participantSequence={sequence} fullSequence={sequence} participantView={participantView} />
       </AppShell.Section>
     </AppShell.Aside>
   ) : null;

@@ -17,6 +17,7 @@ import {
   IconDotsVertical,
   IconMail,
   IconSchema,
+  IconUserPlus,
 } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
 import { useHref } from 'react-router-dom';
@@ -40,7 +41,7 @@ export default function AppHeader() {
   const auth = useAuth();
 
   const progressBarMax = flatSequence.length - 1;
-  const progressPercent = (currentStep / progressBarMax) * 100;
+  const progressPercent = typeof currentStep === 'number' ? (currentStep / progressBarMax) * 100 : 0;
 
   const [menuOpened, setMenuOpened] = useState(false);
 
@@ -140,7 +141,7 @@ export default function AppHeader() {
                   </Menu.Item>
 
                   <Menu.Item
-                    leftSection={<IconSchema size={14} />}
+                    leftSection={<IconUserPlus size={14} />}
                     onClick={() => getNewParticipant()}
                   >
                     Next Participant

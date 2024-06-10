@@ -2,9 +2,9 @@ import { Suspense } from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
 import { ReactComponent } from '../parser/types';
 import { StimulusParams } from '../store/types';
-import { useStoreDispatch, useStoreActions, useFlatSequence } from '../store/store';
-import { useCurrentStep } from '../routes/utils';
 import ResourceNotFound from '../ResourceNotFound';
+import { useStoreDispatch, useStoreActions } from '../store/store';
+import { useCurrentComponent, useCurrentStep } from '../routes/utils';
 
 const modules = import.meta.glob(
   '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
@@ -13,7 +13,7 @@ const modules = import.meta.glob(
 
 function ReactComponentController({ currentConfig }: { currentConfig: ReactComponent; }) {
   const currentStep = useCurrentStep();
-  const currentComponent = useFlatSequence()[currentStep];
+  const currentComponent = useCurrentComponent();
 
   const reactPath = `../public/${currentConfig.path}`;
   const StimulusComponent = reactPath in modules ? (modules[reactPath] as ModuleNamespace).default : null;

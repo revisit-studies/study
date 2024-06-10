@@ -6,14 +6,14 @@ import ImageController from './ImageController';
 import ReactComponentController from './ReactComponentController';
 import MarkdownController from './MarkdownController';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
-import { useCurrentStep } from '../routes/utils';
+import { useCurrentComponent, useCurrentStep } from '../routes/utils';
 import { useStoredAnswer } from '../store/hooks/useStoredAnswer';
 import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
 import { isInheritedComponent } from '../parser/parser';
 import { IndividualComponent } from '../parser/types';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
-import { useFlatSequence, useStoreActions, useStoreDispatch } from '../store/store';
+import { useStoreActions, useStoreDispatch } from '../store/store';
 import { StudyEnd } from '../components/StudyEnd';
 import ResourceNotFound from '../ResourceNotFound';
 
@@ -22,7 +22,7 @@ export default function ComponentController() {
   // Get the config for the current step
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
-  const currentComponent = useFlatSequence()[currentStep] || 'Notfound';
+  const currentComponent = useCurrentComponent() || 'Notfound';
   const stepConfig = studyConfig.components[currentComponent];
 
   // If we have a trial, use that config to render the right component else use the step
@@ -36,7 +36,7 @@ export default function ComponentController() {
   const storeDispatch = useStoreDispatch();
   const { setAlertModal } = useStoreActions();
   useEffect(() => {
-    if (storageEngine?.getEngine() !== import.meta.env.VITE_STORAGE_ENGINE) {
+    if (storageEngine?.getEngine() !== import.meta.env.VITE_STORAGE_ENGINE && import.meta.env.VITE_REVISIT_MODE !== 'public') {
       storeDispatch(setAlertModal({
         show: true,
         message: `There was an issue connecting to the ${import.meta.env.VITE_STORAGE_ENGINE} database. This could be caused by a network issue or your adblocker. If you are using an adblocker, please disable it for this website and refresh.`,

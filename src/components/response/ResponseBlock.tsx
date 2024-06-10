@@ -5,9 +5,9 @@ import {
   IndividualComponent,
   ResponseBlockLocation,
 } from '../../parser/types';
-import { useCurrentStep } from '../../routes/utils';
+import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
 import {
-  useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,
+  useStoreDispatch, useStoreSelector, useStoreActions,
 } from '../../store/store';
 
 import { deepCopy } from '../../utils/deepCopy';
@@ -30,7 +30,7 @@ export default function ResponseBlock({
   style,
 }: Props) {
   const currentStep = useCurrentStep();
-  const currentComponent = useFlatSequence()[currentStep];
+  const currentComponent = useCurrentComponent();
   const storedAnswer = status?.answer;
 
   const configInUse = config as IndividualComponent;
