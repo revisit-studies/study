@@ -20,7 +20,12 @@ export default function SliderInput({
   index: number;
   enumerateQuestions: boolean;
 }) {
-  const { prompt, required, options } = response;
+  const {
+    prompt,
+    required,
+    options,
+    secondaryText,
+  } = response;
 
   const errorMessage = generateErrorMessage(response, answer);
   return (
@@ -31,6 +36,7 @@ export default function SliderInput({
           <ReactMarkdownWrapper text={prompt} required={required} />
         </Flex>
       )}
+      description={secondaryText}
       error={errorMessage}
       size="md"
     >

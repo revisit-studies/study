@@ -17,7 +17,12 @@ export default function NumericInput({
   enumerateQuestions: boolean;
 }) {
   const {
-    prompt, required, min, max, placeholder,
+    prompt,
+    required,
+    min,
+    max,
+    placeholder,
+    secondaryText,
   } = response;
 
   return (
@@ -30,6 +35,7 @@ export default function NumericInput({
           <ReactMarkdownWrapper text={prompt} required={required} />
         </Flex>
       )}
+      description={secondaryText}
       radius="md"
       size="md"
       min={min}

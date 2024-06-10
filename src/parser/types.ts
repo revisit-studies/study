@@ -151,6 +151,8 @@ export interface BaseResponse {
   id: string;
   /** The prompt that is displayed to the participant. You can use markdown here to render images, links, etc. */
   prompt: string;
+  /** The secondary text that is displayed to the participant under the prompt. This does not accept markdown. */
+  secondaryText?: string;
   /** Controls whether the response is required to be answered. */
   required: boolean;
   /** Controls the response location. These might be the same for all responses, or differ across responses. */

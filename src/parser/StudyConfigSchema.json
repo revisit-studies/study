@@ -70,6 +70,10 @@
         "requiredValue": {
           "description": "You can provide a required value, which makes it so a participant has to answer with that value."
         },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
         "type": {
           "const": "checkbox",
           "type": "string"
@@ -245,6 +249,10 @@
         "requiredValue": {
           "description": "You can provide a required value, which makes it so a participant has to answer with that value."
         },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
         "type": {
           "const": "dropdown",
           "type": "string"
@@ -294,6 +302,10 @@
         },
         "requiredValue": {
           "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
         },
         "type": {
           "const": "iframe",
@@ -615,6 +627,10 @@
           "description": "The right label of the likert scale. E.g Strongly Agree",
           "type": "string"
         },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
         "type": {
           "const": "likert",
           "type": "string"
@@ -668,6 +684,10 @@
         },
         "requiredValue": {
           "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
         },
         "type": {
           "const": "longText",
@@ -792,6 +812,10 @@
         },
         "requiredValue": {
           "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
         },
         "type": {
           "const": "numerical",
@@ -932,6 +956,10 @@
           "description": "You can provide a required value, which makes it so a participant has to answer with that value."
         },
         "rightLabel": {
+          "type": "string"
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
         "type": {
@@ -1162,6 +1190,10 @@
         "requiredValue": {
           "description": "You can provide a required value, which makes it so a participant has to answer with that value."
         },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
         "type": {
           "const": "shortText",
           "type": "string"
@@ -1237,6 +1269,10 @@
         },
         "requiredValue": {
           "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
         },
         "type": {
           "const": "slider",

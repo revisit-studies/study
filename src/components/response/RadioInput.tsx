@@ -19,7 +19,12 @@ export default function RadioInput({
   enumerateQuestions: boolean;
 }) {
   const {
-    prompt, required, options, leftLabel, rightLabel,
+    prompt,
+    required,
+    options,
+    leftLabel,
+    rightLabel,
+    secondaryText,
   } = response;
 
   return (
@@ -31,6 +36,7 @@ export default function RadioInput({
           <ReactMarkdownWrapper text={prompt} required={required} />
         </Flex>
       )}
+      description={secondaryText}
       size="md"
       key={response.id}
       {...answer}

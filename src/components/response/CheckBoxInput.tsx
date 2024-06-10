@@ -16,7 +16,12 @@ export default function CheckBoxInput({
   index: number;
   enumerateQuestions: boolean;
 }) {
-  const { prompt, required, options } = response;
+  const {
+    prompt,
+    required,
+    options,
+    secondaryText,
+  } = response;
 
   return (
     <Checkbox.Group
@@ -26,6 +31,7 @@ export default function CheckBoxInput({
           <ReactMarkdownWrapper text={prompt} required={required} />
         </Flex>
       )}
+      description={secondaryText}
       {...answer}
       error={generateErrorMessage(response, answer, options)}
       size="md"

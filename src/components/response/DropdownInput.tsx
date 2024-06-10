@@ -19,7 +19,11 @@ export default function DropdownInput({
   enumerateQuestions: boolean;
 }) {
   const {
-    placeholder, prompt, required, options,
+    placeholder,
+    prompt,
+    required,
+    options,
+    secondaryText,
   } = response;
 
   return (
@@ -31,6 +35,7 @@ export default function DropdownInput({
           <ReactMarkdownWrapper text={prompt} required={required} />
         </Flex>
       )}
+      description={secondaryText}
       placeholder={placeholder}
       data={options as SelectItem[]}
       radius="md"

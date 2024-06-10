@@ -1,4 +1,6 @@
-import { List, Text } from '@mantine/core';
+import {
+  Box, Flex, Input, List, Text,
+} from '@mantine/core';
 import { IFrameResponse } from '../../parser/types';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 
@@ -13,18 +15,23 @@ export default function IframeInput({
   index: number;
   enumerateQuestions: boolean;
 }) {
-  const { prompt, required } = response;
+  const { prompt, required, secondaryText } = response;
 
   return (
-    <>
-      <>
-        {enumerateQuestions ? `${index}. ` : ''}
-        <ReactMarkdownWrapper text={prompt} required={required} />
-      </>
+    <Input.Wrapper
+      label={(
+        <Flex direction="row" wrap="nowrap" gap={4}>
+          {enumerateQuestions && <Box style={{ minWidth: 'fit-content' }}>{`${index}. `}</Box>}
+          <ReactMarkdownWrapper text={prompt} required={required} />
+        </Flex>
+      )}
+      description={secondaryText}
+      size="md"
+    >
 
       <List>
         {Array.isArray(answer.value) ? (answer.value).map((item) => <List.Item key={item}>{item}</List.Item>) : <List.Item>{answer.value}</List.Item>}
       </List>
-    </>
+    </Input.Wrapper>
   );
 }

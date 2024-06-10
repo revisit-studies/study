@@ -16,7 +16,12 @@ export default function TextAreaInput({
   index: number;
   enumerateQuestions: boolean;
 }) {
-  const { placeholder, prompt, required } = response;
+  const {
+    placeholder,
+    prompt,
+    required,
+    secondaryText,
+  } = response;
 
   return (
     <Textarea
@@ -28,6 +33,7 @@ export default function TextAreaInput({
           <ReactMarkdownWrapper text={prompt} required={required} />
         </Flex>
       )}
+      description={secondaryText}
       radius="md"
       size="md"
       {...answer}
