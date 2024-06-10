@@ -1510,6 +1510,10 @@
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "The width of the left sidebar. Defaults to 300.",
+          "type": "number"
+        },
         "studyEndMsg": {
           "description": "The message to display when the study ends.",
           "type": "string"
