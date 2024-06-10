@@ -2,17 +2,18 @@ import React from 'react';
 import { Stack, Text } from '@mantine/core';
 
 interface SourceProps {
-  source: { id: string; text: string } | null;
+  sourceList: { id: string; text: string }[];
+  activeSourceId: string | null;
 }
 
-function Source({ source }: SourceProps) {
+function Source({ sourceList, activeSourceId }: SourceProps) {
   return (
     <Stack>
-      {source ? (
-        <Text>{source.text}</Text>
-      ) : (
-        <Text>Select a source to view its content.</Text>
-      )}
+      {sourceList.map((source) => (
+        <Text key={source.id} bg={source.id === activeSourceId ? 'blue.1' : 'transparent'} px={5}>
+          {source.text}
+        </Text>
+      ))}
     </Stack>
   );
 }

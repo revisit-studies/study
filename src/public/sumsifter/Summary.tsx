@@ -1,9 +1,8 @@
-import React from 'react';
-import { Stack, Text } from '@mantine/core';
+import { Badge, Stack, Text } from '@mantine/core';
 
 interface SummaryProps {
   sentences: { text: string; sources: string[] }[];
-  onSourceClick: (sourceId: string) => void;
+  onSourceClick: (sourceId: string | null) => void;
 }
 
 function Summary({ sentences, onSourceClick }: SummaryProps) {
@@ -15,20 +14,22 @@ function Summary({ sentences, onSourceClick }: SummaryProps) {
           {' '}
           {sentence.sources.length > 0 && (
             <span>
-              [
               {sentence.sources.map((src, idx) => (
-                <a key={idx} href="#" onClick={() => onSourceClick(src)}>
+                <Badge
+                  key={idx}
+                  onMouseEnter={() => onSourceClick(src)}
+                  onMouseLeave={() => onSourceClick(null)}
+                  style={{ cursor: 'pointer' }}
+                >
                   {src}
-                </a>
+                </Badge>
               )).reduce((prev, curr) => (
                 <>
                   {prev}
-                  ,
                   {' '}
                   {curr}
                 </>
               ))}
-              ]
             </span>
           )}
         </Text>
