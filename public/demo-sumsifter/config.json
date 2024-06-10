@@ -1,0 +1,248 @@
+{
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+        "title": "Let's go SumShifter",
+        "version": "pilot",
+        "authors": [
+            "The SCADS Team"
+        ],
+        "date": "2024-06-10",
+        "description": "A study comparing summary methods and interaction.",
+        "organizations": [
+            "WPI"
+        ]
+    },
+    "uiConfig": {
+        "contactEmail": "ltharri2@ncsu.edu",
+        "helpTextPath": "demo-brush-interactions/assets/tutorial.md",
+        "logoPath": "revisitAssets/revisitLogoSquare.svg",
+        "withProgressBar": true,
+        "autoDownloadStudy": false,
+        "sidebar": true,
+        "studyEndMsg": "**Thank you for completing the study. You have made SCADS proud!**"
+    },
+    "baseComponents": {
+        "scatterPlot": {
+            "description": "A scatterplot and accompanying bar chart.",
+            "type": "react-component",
+            "path": "demo-brush-interactions/assets/BrushPlot.tsx",
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar",
+            "response": []
+        }
+    },
+    "components": {
+        "introduction": {
+            "type": "markdown",
+            "path": "demo-brush-interactions/assets/introduction.md",
+            "response": [
+                {
+                    "id": "prolificId",
+                    "prompt": "Please enter your Prolific ID",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "shortText",
+                    "placeholder": "Prolific ID",
+                    "paramCapture": "PROLIFIC_PID"
+                }
+            ]
+        },
+        "consent": {
+            "type": "markdown",
+            "path": "demo-brush-interactions/assets/consent.md",
+            "nextButtonText": "Agree",
+            "response": [
+                {
+                    "id": "signature",
+                    "prompt": "Your signature",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "shortText",
+                    "placeholder": "Please provide your signature"
+                },
+                {
+                    "id": "accept",
+                    "prompt": "Do you consent to the study and wish to continue?",
+                    "required": true,
+                    "requiredValue": "yes",
+                    "location": "belowStimulus",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Decline",
+                            "value": "no"
+                        },
+                        {
+                            "label": "Accept",
+                            "value": "yes"
+                        }
+                    ]
+                }
+            ]
+        },
+        "tutorial": {
+            "type": "markdown",
+            "path": "demo-brush-interactions/assets/tutorial.md",
+            "nextButtonText": "",
+            "response": []
+        },
+        "rectangleBrush_q1": {
+            "baseComponent": "scatterPlot",
+            "instruction": "How many cars from Japan have a Miles Per Gallon value greater than 35?",
+            "parameters": {
+                "dataset": "cars",
+                "x": "Miles per Gallon",
+                "y": "Weight (lbs)",
+                "category": "Origin",
+                "ids": "id",
+                "brushType": "Rectangular Selection"
+            },
+            "response": [
+                {
+                    "id": "response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "response",
+                    "answer": 17
+                }
+            ]
+        },
+        "sumshift1": {
+            "baseComponent": "scatterPlot",
+            "instruction": "How many sumshifts are going on?",
+            "parameters": {
+                "dataset": "cars",
+                "x": "Miles per Gallon",
+                "y": "Weight (lbs)",
+                "category": "Origin",
+                "ids": "id",
+                "brushType": "Rectangular Selection"
+            },
+            "response": [
+                {
+                    "id": "response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "max": 100,
+                    "min": 0
+                }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "response",
+                    "answer": 42
+                }
+            ]
+        },
+        "post-study-survey": {
+            "type": "questionnaire",
+            "response": [
+                {
+                    "id": "q1",
+                    "prompt": "How useful did you find the rectangular selection method? ",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "likert",
+                    "preset": 7,
+                    "rightLabel": "Like",
+                    "leftLabel": "Dislike"
+                },
+                {
+                    "id": "q2",
+                    "prompt": "How useful did you find the axis-aligned selection? ",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "likert",
+                    "preset": 7,
+                    "rightLabel": "Like",
+                    "leftLabel": "Dislike"
+                },
+                {
+                    "id": "q3",
+                    "prompt": "How useful did you find the paint-brush selection?",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "likert",
+                    "preset": 7,
+                    "rightLabel": "Like",
+                    "leftLabel": "Dislike"
+                },
+                {
+                    "id": "q4",
+                    "prompt": "How useful did you find the slider selection?",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "likert",
+                    "preset": 7,
+                    "rightLabel": "Like",
+                    "leftLabel": "Dislike"
+                },
+                {
+                    "id": "q5",
+                    "prompt": "Please provide any comments about the different methods",
+                    "required": false,
+                    "location": "aboveStimulus",
+                    "type": "longText",
+                    "placeholder": "Enter your comments here"
+                }
+            ]
+        },
+        "survey": {
+            "type": "markdown",
+            "path": "demo-VLAT-mini-randomized/assets/survey.md",
+            "response": [
+                {
+                    "id": "surveyExperience",
+                    "prompt": "Did you experience any problems with our tool?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "longText",
+                    "placeholder": "Enter your answer here."
+                },
+                {
+                    "id": "surveyRenderIssues",
+                    "prompt": "Did anything not render or display properly?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "longText",
+                    "placeholder": "Enter your answer here"
+                },
+                {
+                    "id": "surveyOtherIssues",
+                    "prompt": "Any other issues or anything you would like to tell us?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "longText",
+                    "placeholder": "Enter your answer here"
+                }
+            ]
+        }
+    },
+    "sequence": {
+        "order": "fixed",
+        "components": [
+            "introduction",
+            "consent",
+            "tutorial",
+            {
+                "order": "random",
+                "components": [
+                    "rectangleBrush_q1",
+                    "sumshift1"
+                ]
+            },
+            "post-study-survey",
+            "survey"
+        ]
+    }
+}
