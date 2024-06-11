@@ -28,7 +28,7 @@ export default function CheckBoxInput({
       label={(
         <Flex direction="row" wrap="nowrap" gap={4}>
           {enumerateQuestions && <Box style={{ minWidth: 'fit-content' }}>{`${index}. `}</Box>}
-          <Box style={{ display: 'block' }}>
+          <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
             <ReactMarkdownWrapper text={prompt} required={required} />
           </Box>
         </Flex>

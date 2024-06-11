@@ -32,7 +32,9 @@ export default function NumericInput({
       label={(
         <Flex direction="row" wrap="nowrap" gap={4}>
           {enumerateQuestions && <Box style={{ minWidth: 'fit-content' }}>{`${index}. `}</Box>}
-          <ReactMarkdownWrapper text={prompt} required={required} />
+          <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
+            <ReactMarkdownWrapper text={prompt} required={required} />
+          </Box>
         </Flex>
       )}
       description={secondaryText}
