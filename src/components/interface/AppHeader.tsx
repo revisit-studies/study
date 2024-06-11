@@ -67,7 +67,7 @@ export default function AppHeader() {
       <Grid mt={-7} align="center">
         <Grid.Col span={4}>
           <Flex align="center">
-            <Image maw={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" />
+            <Image w={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" />
             <Space w="md" />
             <Title
               ref={titleRef}
@@ -107,7 +107,7 @@ export default function AppHeader() {
                 onChange={setMenuOpened}
               >
                 <Menu.Target>
-                  <ActionIcon size="lg" className="studyBrowserMenuDropdown">
+                  <ActionIcon size="lg" className="studyBrowserMenuDropdown" variant="subtle" color="gray">
                     <IconDotsVertical />
                   </ActionIcon>
                 </Menu.Target>

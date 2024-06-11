@@ -92,9 +92,16 @@ export function StepRenderer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const sidebarWidth = studyConfig.uiConfig.sidebarWidth ?? 300;
+
   return (
     <WindowEventsContext.Provider value={windowEvents}>
-      <AppShell padding="md" header={{ height: 70 }} navbar={{ width: 300, breakpoint: 'xs', collapsed: { desktop: !studyConfig.uiConfig.sidebar, mobile: !studyConfig.uiConfig.sidebar } }} aside={{ width: 300, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}>
+      <AppShell
+        padding="md"
+        header={{ height: 70 }}
+        navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !studyConfig.uiConfig.sidebar, mobile: !studyConfig.uiConfig.sidebar } }}
+        aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
+      >
         <AppNavBar />
         <AppAside />
         <AppHeader />

@@ -33,7 +33,7 @@ function addPathToComponentBlock(order: ComponentBlock | string, orderPath: stri
 // eslint-disable-next-line react/display-name
 function InfoHover({ text }: { text: string }) {
   return (
-    <Tooltip label={text} multiline width={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom">
+    <Tooltip label={text} multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom">
       <IconInfoCircle size={16} style={{ marginBottom: -3, marginLeft: 4 }} />
     </Tooltip>
   );
@@ -62,15 +62,15 @@ export default function AppAside() {
   const [activeTab, setActiveTab] = useState<string | null>('participant');
 
   return showStudyBrowser || (currentComponent === 'end' && studyConfig.uiConfig.autoDownloadStudy) ? (
-    <AppShell.Aside p="0" width={{ base: 360 }} style={{ zIndex: 0 }}>
+    <AppShell.Aside p="0" style={{ zIndex: 0 }}>
       <AppShell.Section>
         <Flex direction="row" p="sm" justify="space-between" pb="xs">
-          <Text size="md" weight="bold" pt={3}>
+          <Text size="md" fw={700} pt={3}>
             Study Browser
           </Text>
           <Button
             variant="light"
-            leftIcon={<IconUserPlus size={14} />}
+            leftSection={<IconUserPlus size={14} />}
             onClick={() => getNewParticipant(storageEngine, studyConfig, metadata, studyHref)}
             size="xs"
           >
@@ -84,7 +84,7 @@ export default function AppAside() {
       </AppShell.Section>
 
       <AppShell.Section grow component={ScrollArea} p="xs" pt={0}>
-        <Tabs value={activeTab} onTabChange={setActiveTab}>
+        <Tabs value={activeTab} onChange={setActiveTab}>
           <Box style={{
             position: 'sticky',
             top: 0,
