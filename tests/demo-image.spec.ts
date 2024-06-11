@@ -11,7 +11,7 @@ test('test', async ({ page }) => {
   await expect(introText).toBeVisible();
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check the page contains the question
   const question1Text = await page.getByText('Will you issue blankets to the alpacas?');
@@ -23,7 +23,7 @@ test('test', async ({ page }) => {
 
   // Select a response and click next
   await page.getByLabel('Yes').check();
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check the page contains the question
   const question2Text = await page.getByText('Will you issue blankets to the alpacas?');
@@ -35,7 +35,7 @@ test('test', async ({ page }) => {
 
   // Select a response and click next
   await page.getByLabel('No').check();
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check the page contains the question
   const question3Text = await page.getByText('Will you issue blankets to the alpacas?');
@@ -47,7 +47,7 @@ test('test', async ({ page }) => {
 
   // Select a response and click next
   await page.getByLabel('Yes').check();
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check that the end of study text renders
   const endText = await page.getByText('Please wait while your answers are uploaded.');

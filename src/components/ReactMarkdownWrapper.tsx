@@ -22,12 +22,12 @@ export default function ReactMarkdownWrapper({ text, required }: { text: string;
     ol: ({ node, ...props }: { node: unknown; children: ReactNode; }) => <List type="ordered" withPadding {...props} pb={8} />,
   };
 
-  const asteriskIcon = ('<span style="color: #fa5252">*</span>');
+  const asteriskIcon = ('<span style="color: #fa5252; margin-left: 4px">*</span>');
 
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <ReactMarkdown components={components} rehypePlugins={[rehypeRaw] as any}>
-      {text + (required ? ` ${asteriskIcon}` : '')}
+      {text + (required ? `${asteriskIcon}` : '')}
     </ReactMarkdown>
   );
 }

@@ -18,6 +18,8 @@ export default function AppNavBar() {
   const currentComponent = useCurrentComponent();
   const stepConfig = studyConfig.components[currentComponent];
 
+  const sidebarWidth = useMemo(() => studyConfig.uiConfig.sidebarWidth ?? 300, [studyConfig.uiConfig.sidebarWidth]);
+
   const currentConfig = useMemo(() => {
     if (stepConfig) {
       return isInheritedComponent(stepConfig) && studyConfig.baseComponents
@@ -39,7 +41,7 @@ export default function AppNavBar() {
     || currentConfig?.instructionLocation === undefined;
 
   return trialHasSideBar && currentConfig ? (
-    <AppShell.Navbar bg="gray.1" display="block" style={{ zIndex: 0, overflowY: 'scroll' }}>
+    <AppShell.Navbar bg="gray.1" display="block" width={{ base: sidebarWidth }} style={{ zIndex: 0, overflowY: 'scroll' }}>
       {instructionInSideBar && instruction !== '' && (
         <AppShell.Section
           bg="gray.3"

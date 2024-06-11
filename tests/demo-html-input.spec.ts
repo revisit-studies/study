@@ -11,7 +11,7 @@ test('test', async ({ page }) => {
   await expect(introText).toBeVisible();
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check the page contains the question
   const questionText = await page.getByText('Click on the largest bar');
@@ -29,7 +29,7 @@ test('test', async ({ page }) => {
   await expect(responseValue).toBeVisible();
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check the page contains the question
   const questionText2 = await page.getByText('Click on the smallest bar');
@@ -47,7 +47,7 @@ test('test', async ({ page }) => {
   await expect(responseValue2).toBeVisible();
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check that the end of study text renders
   const endText = await page.getByText('Please wait while your answers are uploaded.');
