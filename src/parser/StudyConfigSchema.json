@@ -578,7 +578,7 @@
     },
     "LikertResponse": {
       "additionalProperties": false,
-      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the preset. For example, preset: 5 will render 5 radio buttons, and preset: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.",
+      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.",
       "properties": {
         "desc": {
           "description": "The description of the likert scale.",
@@ -600,13 +600,13 @@
           "$ref": "#/definitions/ResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses."
         },
+        "numItems": {
+          "description": "The number of options to render.",
+          "type": "number"
+        },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
           "type": "string"
-        },
-        "preset": {
-          "description": "The number of options to render.",
-          "type": "number"
         },
         "prompt": {
           "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
@@ -639,7 +639,7 @@
       "required": [
         "id",
         "location",
-        "preset",
+        "numItems",
         "prompt",
         "required",
         "type"

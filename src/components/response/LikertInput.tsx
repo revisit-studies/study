@@ -14,11 +14,11 @@ export default function LikertInput({
   index: number;
   enumerateQuestions: boolean;
 }) {
-  const { preset } = response;
+  const { numItems } = response;
 
   const options = [];
 
-  for (let i = 1; i <= +preset; i += 1) {
+  for (let i = 1; i <= +numItems; i += 1) {
     options.push({ label: `${i}`, value: `${i}` });
   }
 

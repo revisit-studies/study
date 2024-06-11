@@ -205,14 +205,14 @@ export interface LongTextResponse extends BaseResponse {
 
 /**
  * The LikertResponse interface is used to define the properties of a likert response.
- * LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the preset. For example, preset: 5 will render 5 radio buttons, and preset: 7 will render 7 radio buttons.
+ * LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons.
  * LikertResponses can also have a description, and left and right labels.
  * The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.
  */
 export interface LikertResponse extends BaseResponse {
   type: 'likert';
   /** The number of options to render. */
-  preset: number;
+  numItems: number;
   /** The description of the likert scale. */
   desc?: string;
   /** The left label of the likert scale. E.g Strongly Disagree */
