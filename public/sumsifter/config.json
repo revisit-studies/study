@@ -125,7 +125,7 @@
         },
         "sumsift1": {
             "baseComponent": "summarySource",
-            "instruction": "How many sumsifts are going on?",
+            "instruction": "Please review the summary on the left. You may click source links to highlight relevant passages in the source document on the right. Your task is to determine if the summary is accurate and complete. If you believe the summary is accurate and complete, or if you believe the summary is inaccurate or incomplete, please provide feedback in the text box below.",
             "parameters": {
                 "dataset": "cars",
                 "x": "Miles per Gallon",
@@ -140,15 +140,7 @@
                     "prompt": "Answer:",
                     "required": true,
                     "location": "sidebar",
-                    "type": "numerical",
-                    "max": 100,
-                    "min": 0
-                }
-            ],
-            "correctAnswer": [
-                {
-                    "id": "response",
-                    "answer": 42
+                    "type": "longText"
                 }
             ]
         },
