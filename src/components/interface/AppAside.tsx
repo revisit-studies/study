@@ -6,7 +6,6 @@ import {
   AppShell,
 } from '@mantine/core';
 import React, { useMemo } from 'react';
-import { useColorScheme } from '@mantine/hooks';
 import { ComponentBlockWithOrderPath, StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import {
@@ -31,8 +30,6 @@ export default function AppAside() {
   const studyConfig = useStudyConfig();
   const dispatch = useStoreDispatch();
 
-  const colorScheme = useColorScheme();
-
   const [participantView, setParticipantView] = React.useState(true);
 
   const fullOrder = useMemo(() => {
@@ -44,7 +41,7 @@ export default function AppAside() {
 
   return showStudyBrowser || (currentComponent === 'end' && studyConfig.uiConfig.autoDownloadStudy) ? (
     <AppShell.Aside style={{ zIndex: 0 }}>
-      <AppShell.Section style={(theme) => ({ borderBottom: `1px solid ${colorScheme === 'dark' ? theme.colors.dark[4] : theme.colors.gray[2]}` })}>
+      <AppShell.Section style={(theme) => ({ borderBottom: '1px solid --mantine-color-gray-2' })}>
         <CloseButton
           style={{
             position: 'absolute', right: '10px', top: '10px', zIndex: 5,
