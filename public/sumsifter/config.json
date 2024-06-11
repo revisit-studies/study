@@ -127,7 +127,8 @@
             "baseComponent": "summarySource",
             "instruction": "Please review the summary on the left. You may click source links to highlight relevant passages in the source document on the right. Your task is to determine if the summary is accurate and complete. If you believe the summary is accurate and complete, or if you believe the summary is inaccurate or incomplete, please provide feedback in the text box below.",
             "parameters": {
-                "dataset": "cars",
+                "datasetSource": "source1",
+                "datasetSummary": "summary1",
                 "x": "Miles per Gallon",
                 "y": "Weight (lbs)",
                 "category": "Origin",

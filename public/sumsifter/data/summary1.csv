@@ -1,0 +1,11 @@
+id,text,sources
+1,"The SCADS 2024 Grand Challenge focuses on creating Tailored Daily Reports (TLDRs) for knowledge workers in the Intelligence Community.","S5,S7"
+2,"TLDRs aim to combine classified and unclassified materials in various formats, tailored to individual interests and responsibilities.","S7,S9"
+3,"The project involves automatic summarization using both extractive and abstractive methods.","S12,S14"
+4,"Retrieval-Augmented Generation (RAG) enhances multi-document summarization and minimizes hallucinations.","S18,S20"
+5,"Temporal elements ensure summaries are up-to-date.","S25,S27"
+6,"Recommendation systems will personalize content based on user feedback and mitigate bias.","S32,S35"
+7,"These systems will leverage Large Language Models (LLMs), knowledge graphs (KGs), and multi-modal data.","S37,S40"
+8,"Ensuring explainability and transparency is crucial for user trust and effective use.","S45,S47"
+9,"Human-Computer Interaction (HCI) research will model the analytic ecosystem to understand workflows and information needs.","S50,S52"
+10,"Personalization of TLDR presentations will be based on analytic workflows, cognitive load, and other factors.","S57,S59"
