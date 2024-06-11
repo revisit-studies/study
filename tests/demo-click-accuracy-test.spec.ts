@@ -7,7 +7,7 @@ test('test', async ({ page }) => {
   // Check for introduction page
   const introText = await page.getByRole('heading', { name: 'Introduction' });
   await expect(introText).toBeVisible();
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check click accuracy test
   const questionText = await page.getByText('Task:');
@@ -21,7 +21,7 @@ test('test', async ({ page }) => {
   const oneAnswer = await page.getByRole('listitem');
   await expect(await oneAnswer.count()).toEqual(1);
 
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check that the thank you message is displayed
   await page.getByText('Please wait while your answers are uploaded.').click();
