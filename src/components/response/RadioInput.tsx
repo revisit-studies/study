@@ -1,27 +1,44 @@
-import { Radio, Text } from '@mantine/core';
+import {
+  Box, Flex, Radio, Text,
+} from '@mantine/core';
 import { RadioResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
-
-type inputProps = {
-  response: RadioResponse;
-  disabled: boolean;
-  answer: object;
-};
 
 export default function RadioInput({
   response,
   disabled,
   answer,
-}: inputProps) {
+  index,
+  enumerateQuestions,
+}: {
+  response: RadioResponse;
+  disabled: boolean;
+  answer: object;
+  index: number;
+  enumerateQuestions: boolean;
+}) {
   const {
-    prompt, required, options, leftLabel, rightLabel,
+    prompt,
+    required,
+    options,
+    leftLabel,
+    rightLabel,
+    secondaryText,
   } = response;
 
   return (
     <Radio.Group
       name={`radioInput${response.id}`}
-      label={<ReactMarkdownWrapper text={prompt} required={required} />}
+      label={(
+        <Flex direction="row" wrap="nowrap" gap={4}>
+          {enumerateQuestions && <Box style={{ minWidth: 'fit-content' }}>{`${index}. `}</Box>}
+          <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
+            <ReactMarkdownWrapper text={prompt} required={required} />
+          </Box>
+        </Flex>
+      )}
+      description={secondaryText}
       size="md"
       key={response.id}
       {...answer}

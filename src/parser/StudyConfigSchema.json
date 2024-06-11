@@ -70,6 +70,10 @@
         "requiredValue": {
           "description": "You can provide a required value, which makes it so a participant has to answer with that value."
         },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
         "type": {
           "const": "checkbox",
           "type": "string"
@@ -245,6 +249,10 @@
         "requiredValue": {
           "description": "You can provide a required value, which makes it so a participant has to answer with that value."
         },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
         "type": {
           "const": "dropdown",
           "type": "string"
@@ -294,6 +302,10 @@
         },
         "requiredValue": {
           "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
         },
         "type": {
           "const": "iframe",
@@ -615,6 +627,10 @@
           "description": "The right label of the likert scale. E.g Strongly Agree",
           "type": "string"
         },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
         "type": {
           "const": "likert",
           "type": "string"
@@ -668,6 +684,10 @@
         },
         "requiredValue": {
           "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
         },
         "type": {
           "const": "longText",
@@ -792,6 +812,10 @@
         },
         "requiredValue": {
           "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
         },
         "type": {
           "const": "numerical",
@@ -932,6 +956,10 @@
           "description": "You can provide a required value, which makes it so a participant has to answer with that value."
         },
         "rightLabel": {
+          "type": "string"
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
         "type": {
@@ -1162,6 +1190,10 @@
         "requiredValue": {
           "description": "You can provide a required value, which makes it so a participant has to answer with that value."
         },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
         "type": {
           "const": "shortText",
           "type": "string"
@@ -1237,6 +1269,10 @@
         },
         "requiredValue": {
           "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
         },
         "type": {
           "const": "slider",
@@ -1454,6 +1490,10 @@
           "description": "The email address that used during the study if a participant clicks contact.",
           "type": "string"
         },
+        "enumerateQuestions": {
+          "description": "Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar.",
+          "type": "boolean"
+        },
         "helpTextPath": {
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported.",
           "type": "string"
@@ -1469,6 +1509,10 @@
         "sidebar": {
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question.",
           "type": "boolean"
+        },
+        "sidebarWidth": {
+          "description": "The width of the left sidebar. Defaults to 300.",
+          "type": "number"
         },
         "studyEndMsg": {
           "description": "The message to display when the study ends.",

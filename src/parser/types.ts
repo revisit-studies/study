@@ -100,6 +100,8 @@ export interface UIConfig {
   studyEndMsg?: string;
   /** Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. */
   sidebar: boolean;
+  /** The width of the left sidebar. Defaults to 300. */
+  sidebarWidth?: number;
   /** Debounce time in milliseconds for automatically tracked window events. Defaults to 100. E.g 100 here means 1000ms / 100ms = 10 times a second, 200 here means 1000ms / 200ms = 5 times per second  */
   windowEventDebounceTime?: number;
   /**
@@ -110,6 +112,10 @@ export interface UIConfig {
    * The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000.
    */
   numSequences?: number;
+  /**
+   * Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar.
+   */
+  enumerateQuestions?: boolean;
 }
 
 /**
@@ -147,6 +153,8 @@ export interface BaseResponse {
   id: string;
   /** The prompt that is displayed to the participant. You can use markdown here to render images, links, etc. */
   prompt: string;
+  /** The secondary text that is displayed to the participant under the prompt. This does not accept markdown. */
+  secondaryText?: string;
   /** Controls whether the response is required to be answered. */
   required: boolean;
   /** Controls the response location. These might be the same for all responses, or differ across responses. */

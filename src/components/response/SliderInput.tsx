@@ -1,27 +1,44 @@
 import {
+  Box,
+  Flex,
   Input, Slider, SliderProps,
 } from '@mantine/core';
 import { SliderResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 
-type inputProps = {
-  response: SliderResponse;
-  disabled: boolean;
-  answer: object;
-};
-
 export default function SliderInput({
   response,
   disabled,
   answer,
-}: inputProps) {
-  const { prompt, required, options } = response;
+  index,
+  enumerateQuestions,
+}: {
+  response: SliderResponse;
+  disabled: boolean;
+  answer: object;
+  index: number;
+  enumerateQuestions: boolean;
+}) {
+  const {
+    prompt,
+    required,
+    options,
+    secondaryText,
+  } = response;
 
   const errorMessage = generateErrorMessage(response, answer);
   return (
     <Input.Wrapper
-      label={<ReactMarkdownWrapper text={prompt} required={required} />}
+      label={(
+        <Flex direction="row" wrap="nowrap" gap={4}>
+          {enumerateQuestions && <Box style={{ minWidth: 'fit-content' }}>{`${index}. `}</Box>}
+          <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
+            <ReactMarkdownWrapper text={prompt} required={required} />
+          </Box>
+        </Flex>
+      )}
+      description={secondaryText}
       error={errorMessage}
       size="md"
     >

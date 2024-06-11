@@ -1,17 +1,19 @@
 import { LikertResponse, RadioResponse } from '../../parser/types';
 import RadioInput from './RadioInput';
 
-type inputProps = {
-  response: LikertResponse;
-  disabled: boolean;
-  answer: object;
-};
-
 export default function LikertInput({
   response,
   disabled,
   answer,
-}: inputProps) {
+  index,
+  enumerateQuestions,
+}: {
+  response: LikertResponse;
+  disabled: boolean;
+  answer: object;
+  index: number;
+  enumerateQuestions: boolean;
+}) {
   const { preset } = response;
 
   const options = [];
@@ -31,6 +33,8 @@ export default function LikertInput({
       disabled={disabled}
       response={radioResponse}
       answer={answer}
+      index={index}
+      enumerateQuestions={enumerateQuestions}
     />
   );
 }

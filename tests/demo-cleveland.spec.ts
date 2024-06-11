@@ -12,7 +12,7 @@ test('test', async ({ page }) => {
   await expect(introText).toBeVisible();
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check the page contains consent form
   const consent = await page.getByRole('heading', { name: 'Consent' });
@@ -31,7 +31,7 @@ test('test', async ({ page }) => {
   await expect(trainingImg).toBeVisible();
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check for each practice question
   const questionArray = new Array(4).fill(null).map((val, idx) => idx);
@@ -58,7 +58,7 @@ test('test', async ({ page }) => {
     await expect(correctAnswer).toBeVisible();
 
     // Click on the next button
-    await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
   }
 
   // Check that the next question does not have a check answer button
@@ -82,7 +82,7 @@ test('test', async ({ page }) => {
     await page.getByPlaceholder('0-100').fill('66');
 
     // Click on the next button
-    await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
   }
 
   // Check for the post study survey and fill it out
@@ -91,7 +91,7 @@ test('test', async ({ page }) => {
   await page.getByPlaceholder('Enter your age here, range from 0 - 100').fill('25');
   await page.getByLabel('5').check();
   await page.getByPlaceholder('Enter your comments here').fill('Test Test');
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check that the end of study text renders
   const endText = await page.getByText('Please wait while your answers are uploaded.');
