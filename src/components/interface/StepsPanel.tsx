@@ -250,8 +250,6 @@ export function StepsPanel({
             style={{
               lineHeight: '32px',
               height: '32px',
-              position: 'sticky',
-              backgroundColor: '#fff',
             }}
           >
             <div style={{ borderLeft: '1px solid #e9ecef' }}>

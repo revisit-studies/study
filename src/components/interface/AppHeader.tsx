@@ -28,6 +28,7 @@ import {
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { PREFIX } from '../../utils/Prefix';
 import { useAuth } from '../../store/hooks/useAuth';
+import { getNewParticipant } from '../../utils/nextParticipant';
 
 export default function AppHeader() {
   const { config: studyConfig, metadata } = useStoreSelector((state) => state);
@@ -50,16 +51,6 @@ export default function AppHeader() {
 
   const studyId = useStudyId();
   const studyHref = useHref(`/${studyId}`);
-
-  function getNewParticipant() {
-    storageEngine?.nextParticipant(studyConfig, metadata)
-      .then(() => {
-        window.location.href = studyHref;
-      })
-      .catch((err) => {
-        console.error(err);
-      });
-  }
 
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const [isTruncated, setIsTruncated] = useState(false);
@@ -142,7 +133,7 @@ export default function AppHeader() {
 
                   <Menu.Item
                     icon={<IconUserPlus size={14} />}
-                    onClick={() => getNewParticipant()}
+                    onClick={() => getNewParticipant(storageEngine, studyConfig, metadata, studyHref)}
                   >
                     Next Participant
                   </Menu.Item>
