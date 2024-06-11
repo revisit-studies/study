@@ -1,0 +1,18 @@
+id,text
+S10,The Summer Conference on Applied Data Science (SCADS) is an annual eight-week summer research program held at the Laboratory for Analytic Sciences (LAS) that is focused on the research and development of Artificial Intelligence (AI) to assist US Intelligence Community (IC) data analysts.
+S11,SCADS identifies a multi-year Grand Challenge to focus the research toward solving a current mission challenge.
+S13,Grand Challenge: Generate tailored daily reports for knowledge workers that capture information relevant to their individual objectives and interests.
+S14,The SCADS grand challenge is intended to be a multi-year unifying research goal of creating Tailored Daily Reports (TLDRs) for individual knowledge workers within the IC.
+S16,In 2024 we continue working toward creating TLDRs and directed research efforts will fall under the broad areas of Automatic Summarization Recommendation Systems and Human-Machine Interaction.
+S17,Each of these areas will also include a special emphasis on explainability and contextualization as well as knowledge representation and dataset creation and curation.
+S18,Efforts will also include development projects that are aimed at bringing together the different areas into a demonstration application to model how the individual research projects come together to support a TLDR.
+S27,While summarization for SCADS is primarily concerned with text research in multi-modal summarization techniques is also encouraged.
+S188,The eventual TLDR will need to summarize not just articles but also input from a variety of modalities.
+S189,Two modalities of interest are audio and video content.
+S46,Develop summaries of documents personalized to a user’s interests employing abstractive extractive and/or hybrid methods.
+S78,How can Retrieval Augment Generation (RAG) be applied to achieve multi-document summarization and synthesis for a TLDR?
+S100,The data sources that analysts rely upon to generate reporting are constantly changing.
+S43,For all automatically created summaries it will be important to provide context for where the information contained in the summary originated.
+S44,This might be in the form of references citations or other methods enabling users to move from the summary to the underlying source data.
+S206,Image data whether from video stills photographs or drawings is also a candidate for multi-modal summarization methods.
+S539,How effective is reinforcement learning (RL) for personalized content recommendation in the TLDR application?
