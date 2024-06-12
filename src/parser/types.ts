@@ -67,7 +67,7 @@ export interface StudyMetadata {
  * The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the UI Config would look in your study configuration
 ```js
   uiConfig:{
-    "contactEmail": "test@test.com",
+    "contactEmail": "contact@revisit.dev",
     "helpTextPath": "<study-name>/assets/help.md",
     "logoPath": "<study-name>/assets/logo.jpg",
     "withProgressBar": true,
