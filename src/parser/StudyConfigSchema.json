@@ -47,7 +47,7 @@
         "options": {
           "description": "The options that are displayed as checkboxes.",
           "items": {
-            "$ref": "#/definitions/Option"
+            "$ref": "#/definitions/StringOption"
           },
           "type": "array"
         },
@@ -222,7 +222,7 @@
         "options": {
           "description": "The options that are displayed in the dropdown.",
           "items": {
-            "$ref": "#/definitions/Option"
+            "$ref": "#/definitions/StringOption"
           },
           "type": "array"
         },
@@ -528,8 +528,25 @@
           "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
         },
         "path": {
-          "description": "The path to the markdown file. This should be a relative path from the public folder.",
-          "type": "string"
+          "anyOf": [
+            {
+              "description": "The path to the markdown file. This should be a relative path from the public folder.",
+              "type": "string"
+            },
+            {
+              "description": "The path to the react component. This should be a relative path from the src/public folder.",
+              "type": "string"
+            },
+            {
+              "description": "The path to the image. This should be a relative path from the public folder.",
+              "type": "string"
+            },
+            {
+              "description": "The path to the website. This should be a relative path from the public folder or could be an external website.",
+              "type": "string"
+            }
+          ],
+          "description": "The path to the markdown file. This should be a relative path from the public folder."
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
@@ -766,6 +783,25 @@
       ],
       "type": "object"
     },
+    "NumberOption": {
+      "additionalProperties": false,
+      "description": "The Option interface is used to define the options for a dropdown, slider, radio, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file. The Option interface is used in the Response interface.",
+      "properties": {
+        "label": {
+          "description": "The label displayed to participants.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value stored in the participant's data.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "type": "object"
+    },
     "NumericalResponse": {
       "additionalProperties": false,
       "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.",
@@ -828,28 +864,6 @@
         "prompt",
         "required",
         "type"
-      ],
-      "type": "object"
-    },
-    "Option": {
-      "additionalProperties": false,
-      "description": "The Option interface is used to define the options for a dropdown, slider, radio, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file. The Option interface is used in the Response interface.",
-      "properties": {
-        "label": {
-          "description": "The label displayed to participants.",
-          "type": "string"
-        },
-        "value": {
-          "description": "The value stored in the participant's data.",
-          "type": [
-            "string",
-            "number"
-          ]
-        }
-      },
-      "required": [
-        "label",
-        "value"
       ],
       "type": "object"
     },
@@ -932,7 +946,7 @@
         },
         "options": {
           "items": {
-            "$ref": "#/definitions/Option"
+            "$ref": "#/definitions/StringOption"
           },
           "type": "array"
         },
@@ -1247,7 +1261,7 @@
         "options": {
           "description": "This define the steps in the slider and the extent of the slider.",
           "items": {
-            "$ref": "#/definitions/Option"
+            "$ref": "#/definitions/NumberOption"
           },
           "type": "array"
         },
@@ -1286,6 +1300,25 @@
         "prompt",
         "required",
         "type"
+      ],
+      "type": "object"
+    },
+    "StringOption": {
+      "additionalProperties": false,
+      "description": "The Option interface is used to define the options for a dropdown, slider, radio, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file. The Option interface is used in the Response interface.",
+      "properties": {
+        "label": {
+          "description": "The label displayed to participants.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value stored in the participant's data.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "value"
       ],
       "type": "object"
     },
@@ -1354,8 +1387,25 @@
                     "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
                   },
                   "path": {
-                    "description": "The path to the markdown file. This should be a relative path from the public folder.",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "description": "The path to the markdown file. This should be a relative path from the public folder.",
+                        "type": "string"
+                      },
+                      {
+                        "description": "The path to the react component. This should be a relative path from the src/public folder.",
+                        "type": "string"
+                      },
+                      {
+                        "description": "The path to the image. This should be a relative path from the public folder.",
+                        "type": "string"
+                      },
+                      {
+                        "description": "The path to the website. This should be a relative path from the public folder or could be an external website.",
+                        "type": "string"
+                      }
+                    ],
+                    "description": "The path to the markdown file. This should be a relative path from the public folder."
                   },
                   "provideFeedback": {
                     "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
