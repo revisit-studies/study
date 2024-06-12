@@ -64,7 +64,8 @@ function ConfigSwitcher({
                     <>
                       <Text fw="bold">{config.studyMetadata.title}</Text>
                       <Text c="dimmed">
-                        {`Authors: ${config.studyMetadata.authors}`}
+                        <Text span fw={500}>Authors: </Text>
+                        {config.studyMetadata.authors}
                       </Text>
                       <Text c="dimmed">{config.studyMetadata.description}</Text>
                       <Text c="dimmed" ta="right" style={{ paddingRight: 5 }}>
