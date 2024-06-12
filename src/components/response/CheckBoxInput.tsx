@@ -38,6 +38,7 @@ export default function CheckBoxInput({
       description={secondaryText}
       {...answer}
       error={generateErrorMessage(response, answer, options)}
+      style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
       <Group mt="xs">
         {options.map((option) => (

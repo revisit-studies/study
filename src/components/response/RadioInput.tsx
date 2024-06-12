@@ -43,6 +43,7 @@ export default function RadioInput({
       {...answer}
         // This overrides the answers error. Which..is bad?
       error={generateErrorMessage(response, answer, options)}
+      style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
       <Group mt="xs">
         {leftLabel ? <Text style={{ textAlign: 'center' }}>{leftLabel}</Text> : null}
