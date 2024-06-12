@@ -1,5 +1,5 @@
 import {
-  Alert, Box, Button, Modal, Text,
+  Alert, Box, Button, Group, Modal, Text,
 } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';
@@ -20,7 +20,6 @@ export function AlertModal() {
       <Alert
         color="red"
         radius="xs"
-        p="lg"
         title="Alert"
         icon={<IconAlertCircle />}
         onClose={close}
@@ -30,9 +29,9 @@ export function AlertModal() {
           {alertModal.message}
         </Text>
 
-        <Box style={{ float: 'right' }} color="red">
-          <Button onClick={close} color="red" variant="filled">Continue Study</Button>
-        </Box>
+        <Group w="100%" justify="end">
+          <Button onClick={close} color="red" variant="filled" m="xs">Continue Study</Button>
+        </Group>
       </Alert>
     </Modal>
   );
