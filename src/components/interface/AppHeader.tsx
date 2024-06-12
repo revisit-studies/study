@@ -88,7 +88,7 @@ export default function AppHeader() {
 
         <Grid.Col span={4}>
           <Group wrap="nowrap" justify="right">
-            {import.meta.env.VITE_REVISIT_MODE === 'public' ? <Tooltip multiline withArrow arrowSize={6} style={{ width: '300px' }} label="This is a demo version of the study, we’re not collecting any data. Navigate the study via the study browser on the right."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip> : null}
+            {import.meta.env.VITE_REVISIT_MODE === 'public' ? <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data. Navigate the study via the study browser on the right."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip> : null}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"
