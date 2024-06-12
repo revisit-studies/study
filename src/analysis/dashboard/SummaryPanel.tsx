@@ -77,7 +77,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
 
   return (
     <Container>
-      <Card ref={ref} p="lg" shadow="md" withBorder>
+      <Card ref={ref} padding="lg" shadow="md" withBorder>
         <Flex align="center" mb={16} justify="space-between">
           <Flex direction="column">
             <Title order={5} mb={4}>{studyId}</Title>

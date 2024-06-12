@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import {
   getAuth, signInWithPopup, GoogleAuthProvider, browserPopupRedirectResolver,
 } from '@firebase/auth';
-import { IconBrandGoogle } from '@tabler/icons-react';
+import { IconBrandGoogleFilled } from '@tabler/icons-react';
 import { Navigate } from 'react-router-dom';
 import { PREFIX } from './utils/Prefix';
 import { useAuth } from './store/hooks/useAuth';
@@ -51,12 +51,12 @@ export function Login() {
 
   return (
     <Container>
-      <Card p="lg">
+      <Card padding="lg">
         <Flex align="center" direction="column" justify="center">
           <Image maw={200} mt={50} mb={100} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
           <>
             <Text mb={20}>To access admin settings, please sign in using your Google account.</Text>
-            <Button onClick={() => signInWithGoogle(storageEngine, setLoading, setErrorMessage)} leftSection={<IconBrandGoogle />} variant="filled">Sign In With Google</Button>
+            <Button onClick={() => signInWithGoogle(storageEngine, setLoading, setErrorMessage)} leftSection={<IconBrandGoogleFilled />} variant="filled">Sign In With Google</Button>
           </>
           {errorMessage ? <Badge size="lg" color="red" mt={30}>{errorMessage}</Badge> : null}
           <LoadingOverlay visible={loading} />
