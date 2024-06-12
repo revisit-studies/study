@@ -20,6 +20,7 @@ import { ParticipantData, StoredAnswer, StudyConfig } from '../../parser/types';
 import { ParticipantMetadata } from '../../store/types';
 import { configSequenceToUniqueTrials, findBlockForStep, getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { DownloadButtons } from '../../components/downloader/DownloadButtons';
 
 function AnswerCell({ cellData }: { cellData: StoredAnswer }) {
   return (
@@ -244,6 +245,7 @@ export function TableView({
             />
           </Group>
           <Group>
+            <DownloadButtons allParticipants={[...completed, ...inProgress]} config={studyConfig} />
             <Button disabled={checked.length === 0} onClick={openModal} color="red" size="xs">Reject Participants</Button>
           </Group>
         </Flex>

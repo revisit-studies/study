@@ -13,12 +13,12 @@ import {
 import { IconLayoutColumns, IconTableExport, IconX } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 import merge from 'lodash.merge';
-import { ParticipantData } from '../storage/types';
+import { ParticipantData } from '../../storage/types';
 import {
   Answer, IndividualComponent, Prettify, StudyConfig,
-} from '../parser/types';
-import { isInheritedComponent } from '../parser/parser';
-import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
+} from '../../parser/types';
+import { isInheritedComponent } from '../../parser/parser';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 export const OPTIONAL_COMMON_PROPS = [
   'status',

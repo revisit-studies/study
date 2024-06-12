@@ -2,14 +2,14 @@ import {
   Badge, Box, Button, Card, Center, Text, Title, Container, Flex, Group, Popover,
 } from '@mantine/core';
 import React, { useMemo, useState } from 'react';
-import { IconDatabaseExport, IconChartHistogram, IconTableExport } from '@tabler/icons-react';
+import { IconChartHistogram } from '@tabler/icons-react';
 import { DatePickerInput } from '@mantine/dates';
 import { VegaLite } from 'react-vega';
 import { useDisclosure, useResizeObserver } from '@mantine/hooks';
 import { useNavigate } from 'react-router-dom';
 import { ParticipantData } from '../../storage/types';
-import { download, DownloadTidy } from '../../components/DownloadTidy';
 import { StoredAnswer, StudyConfig } from '../../parser/types';
+import { DownloadButtons } from '../../components/downloader/DownloadButtons';
 
 function isWithinRange(answers: Record<string, StoredAnswer>, rangeTime: [Date | null, Date | null]) {
   const timeStamps = Object.values(answers).map((ans) => [ans.startTime, ans.endTime]).flat();
@@ -23,7 +23,6 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
   const {
     studyId, allParticipants, config,
   } = props;
-  const [openDownload, { open, close }] = useDisclosure(false);
   const navigate = useNavigate();
   const [ref, dms] = useResizeObserver();
 
@@ -74,8 +73,6 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
     data: { values: completedStatsData },
   }), [dms.width, rangeTime, completedStatsData]);
 
-  const [jsonOpened, { close: closeJson, open: openJson }] = useDisclosure(false);
-  const [csvOpened, { close: closeCsv, open: openCsv }] = useDisclosure(false);
   const [checkOpened, { close: closeCheck, open: openCheck }] = useDisclosure(false);
 
   return (
@@ -100,43 +97,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
             </Flex>
           </Flex>
           <Group>
-            <Popover opened={jsonOpened}>
-              <Popover.Target>
-                <Button
-                  variant="light"
-                  disabled={allParticipants.length === 0}
-                  onClick={() => {
-                    download(JSON.stringify(allParticipants, null, 2), `${studyId}_all.json`);
-                  }}
-                  onMouseEnter={openJson}
-                  onMouseLeave={closeJson}
-                  px={4}
-                >
-                  <IconDatabaseExport />
-                </Button>
-              </Popover.Target>
-              <Popover.Dropdown>
-                <Text>Download all participants data as JSON</Text>
-              </Popover.Dropdown>
-            </Popover>
-
-            <Popover opened={csvOpened}>
-              <Popover.Target>
-                <Button
-                  variant="light"
-                  disabled={allParticipants.length === 0}
-                  onClick={open}
-                  onMouseEnter={openCsv}
-                  onMouseLeave={closeCsv}
-                  px={4}
-                >
-                  <IconTableExport />
-                </Button>
-              </Popover.Target>
-              <Popover.Dropdown>
-                <Text>Download all participants data as a tidy CSV</Text>
-              </Popover.Dropdown>
-            </Popover>
+            <DownloadButtons allParticipants={allParticipants} config={config} />
 
             <Popover opened={checkOpened}>
               <Popover.Target>
@@ -179,16 +140,6 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
             </Box>
           )}
       </Card>
-
-      {openDownload && (
-      <DownloadTidy
-        opened={openDownload}
-        close={close}
-        filename={`${studyId}_all_tidy.csv`}
-        studyConfig={config}
-        data={allParticipants}
-      />
-      )}
     </Container>
   );
 }
