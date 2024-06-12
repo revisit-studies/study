@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Route, Routes, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { ModalsProvider } from '@mantine/modals';
 import { AppShell } from '@mantine/core';
 import ConfigSwitcher from './components/ConfigSwitcher';
@@ -58,99 +58,85 @@ export function GlobalConfigParser() {
     fn();
   }, [setStorageEngine, storageEngine]);
 
-  const location = useLocation();
-  const hasSidebar = useMemo(() => (
-    !location.pathname.includes('/analysis/')
-    && location.pathname !== '/'
-    && location.pathname !== '/login'
-    && location.pathname !== '/settings'
-  ), [location]);
-  const hasAside = useMemo(() => (
-    !location.pathname.includes('/analysis/')
-    && location.pathname !== '/'
-    && location.pathname !== '/login'
-    && location.pathname !== '/settings'
-  ), [location]);
-
   return globalConfig ? (
-    <AuthProvider>
-      <ModalsProvider>
-        <AppShell
-          padding="md"
-          header={{ height: 70 }}
-          navbar={{ width: hasSidebar ? 300 : 0, breakpoint: 'xs' }}
-          aside={{ width: hasAside ? 200 : 0, breakpoint: 'xs' }}
-        >
-          <Routes>
-            <Route
-              path="/"
-              element={(
-                <>
-                  <AppHeader studyIds={globalConfig.configsList} />
-                  <ConfigSwitcher
-                    globalConfig={globalConfig}
-                    studyConfigs={studyConfigs}
-                  />
-                </>
+    <BrowserRouter basename={PREFIX}>
+      <AuthProvider>
+        <ModalsProvider>
+          <AppShell
+            padding="md"
+            header={{ height: 70 }}
+          >
+            <Routes>
+              <Route
+                path="/"
+                element={(
+                  <>
+                    <AppHeader studyIds={globalConfig.configsList} />
+                    <ConfigSwitcher
+                      globalConfig={globalConfig}
+                      studyConfigs={studyConfigs}
+                    />
+                  </>
             )}
-            />
-            <Route
-              path="/:studyId/*"
-              element={<Shell globalConfig={globalConfig} />}
-            />
-            <Route
-              path="/analysis/dashboard"
-              element={(
-                <ProtectedRoute>
-                  <AnalysisDashboard
-                    globalConfig={globalConfig}
-                  />
-                </ProtectedRoute>
+              />
+              <Route
+                path="/:studyId/*"
+                element={<Shell globalConfig={globalConfig} />}
+              />
+              <Route
+                path="/analysis/dashboard"
+                element={(
+                  <ProtectedRoute>
+                    <AnalysisDashboard
+                      globalConfig={globalConfig}
+                    />
+                  </ProtectedRoute>
               )}
-            />
-            <Route
-              path="/analysis"
-              element={<NavigateWithParams to="/analysis/dashboard" />}
-            />
-            <Route
-              path="/analysis/stats/:studyId/:tab"
-              element={(
-                <ProtectedRoute>
-                  <AnalysisInterface
-                    globalConfig={globalConfig}
-                  />
-                </ProtectedRoute>
+              />
+              <Route
+                path="/analysis"
+                element={<NavigateWithParams to="/analysis/dashboard" />}
+              />
+              <Route
+                path="/analysis/stats/:studyId/:tab"
+                element={(
+                  <ProtectedRoute>
+                    <AnalysisInterface
+                      globalConfig={globalConfig}
+                    />
+                  </ProtectedRoute>
             )}
-            />
-            <Route
-              path="/analysis/stats/:studyId"
-              element={<NavigateWithParams to="./table" replace />}
-            />
-            <Route
-              path="/settings"
-              element={(
-                <ProtectedRoute>
-                  <AppHeader studyIds={globalConfig.configsList} />
-                  <AppShell.Main>
-                    <GlobalSettings />
-                  </AppShell.Main>
-                </ProtectedRoute>
+              />
+              <Route
+                path="/analysis/stats/:studyId"
+                element={<NavigateWithParams to="./table" replace />}
+              />
+              <Route
+                path="/settings"
+                element={(
+                  <ProtectedRoute>
+                    <AppHeader studyIds={globalConfig.configsList} />
+                    <AppShell.Main>
+                      <GlobalSettings />
+                    </AppShell.Main>
+                  </ProtectedRoute>
             )}
-            />
-            <Route
-              path="/login"
-              element={(
-                <>
-                  <AppHeader studyIds={globalConfig.configsList} />
-                  <AppShell.Main>
-                    <Login />
-                  </AppShell.Main>
-                </>
+              />
+              <Route
+                path="/login"
+                element={(
+                  <>
+                    <AppHeader studyIds={globalConfig.configsList} />
+                    <AppShell.Main>
+                      <Login />
+                    </AppShell.Main>
+                  </>
             )}
-            />
-          </Routes>
-        </AppShell>
-      </ModalsProvider>
-    </AuthProvider>
+              />
+            </Routes>
+          </AppShell>
+        </ModalsProvider>
+      </AuthProvider>
+    </BrowserRouter>
   ) : null;
 }
