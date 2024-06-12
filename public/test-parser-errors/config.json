@@ -15,7 +15,7 @@
     ]
   },
   "uiConfig": {
-    "contactEmail": "test@test.com",
+    "contactEmail": "contact@revisit.dev",
     "helpTextPath": "",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
