@@ -42,7 +42,7 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "options": {
           "description": "The options that are displayed as checkboxes.",
@@ -81,7 +81,6 @@
       },
       "required": [
         "id",
-        "location",
         "options",
         "prompt",
         "required",
@@ -217,7 +216,7 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "options": {
           "description": "The options that are displayed in the dropdown.",
@@ -260,7 +259,6 @@
       },
       "required": [
         "id",
-        "location",
         "options",
         "prompt",
         "required",
@@ -282,7 +280,7 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
@@ -314,7 +312,6 @@
       },
       "required": [
         "id",
-        "location",
         "prompt",
         "required",
         "type"
@@ -598,7 +595,7 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "numItems": {
           "description": "The number of options to render.",
@@ -638,7 +635,6 @@
       },
       "required": [
         "id",
-        "location",
         "numItems",
         "prompt",
         "required",
@@ -660,7 +656,7 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
@@ -696,7 +692,6 @@
       },
       "required": [
         "id",
-        "location",
         "prompt",
         "required",
         "type"
@@ -780,7 +775,7 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "max": {
           "description": "The maximum value that is accepted in the input.",
@@ -824,7 +819,6 @@
       },
       "required": [
         "id",
-        "location",
         "prompt",
         "required",
         "type"
@@ -928,7 +922,7 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "options": {
           "items": {
@@ -969,7 +963,6 @@
       },
       "required": [
         "id",
-        "location",
         "options",
         "prompt",
         "required",
@@ -1165,7 +1158,7 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
@@ -1201,7 +1194,6 @@
       },
       "required": [
         "id",
-        "location",
         "prompt",
         "required",
         "type"
@@ -1242,7 +1234,7 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "options": {
           "description": "This define the steps in the slider and the extent of the slider.",
@@ -1281,7 +1273,6 @@
       },
       "required": [
         "id",
-        "location",
         "options",
         "prompt",
         "required",

@@ -157,8 +157,8 @@ export interface BaseResponse {
   secondaryText?: string;
   /** Controls whether the response is required to be answered. */
   required: boolean;
-  /** Controls the response location. These might be the same for all responses, or differ across responses. */
-  location: ResponseBlockLocation;
+  /** Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus` */
+  location?: ResponseBlockLocation;
   /** You can provide a required value, which makes it so a participant has to answer with that value. */
   requiredValue?: unknown;
   /** You can provide a required label, which makes it so a participant has to answer with a response that matches label. */
