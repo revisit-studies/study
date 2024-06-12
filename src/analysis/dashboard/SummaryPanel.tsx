@@ -28,14 +28,14 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
 
   const completionTimes = allParticipants
     .filter((d) => d.completed)
-    .map((d) => Math.max(...Object.values(d.answers).map((ans) => ans.endTime)));
+    .map((d) => Math.max(...Object.values(d.answers).map((ans) => ans.endTime).filter((time) => time !== undefined)))
+    .filter((d) => Number.isFinite(d));
   const [rangeTime, setRangeTime] = useState<[Date | null, Date | null]>([
     new Date(new Date(Math.min(...(completionTimes.length > 0 ? completionTimes : [new Date().getTime()]))).setHours(0, 0, 0, 0)),
     new Date(new Date(Math.max(...(completionTimes.length > 0 ? completionTimes : [new Date().getTime()]))).setHours(24, 0, 0, 0)),
   ]);
 
   const completedParticipants = useMemo(() => allParticipants.filter((d) => d.completed && isWithinRange(d.answers, rangeTime)), [allParticipants, rangeTime]);
-
   const inProgressParticipants = useMemo(() => allParticipants.filter((d) => !d.completed && isWithinRange(d.answers, rangeTime)), [allParticipants, rangeTime]);
 
   const completedStatsData = useMemo(() => {
@@ -97,7 +97,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
             </Flex>
           </Flex>
           <Group>
-            <DownloadButtons allParticipants={allParticipants} config={config} />
+            <DownloadButtons allParticipants={allParticipants} studyId={studyId} config={config} />
 
             <Popover opened={checkOpened}>
               <Popover.Target>
