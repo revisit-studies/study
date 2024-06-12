@@ -43,7 +43,7 @@ export default function ResponseSwitcher({
   }, [disabled, response.paramCapture, searchParams]);
 
   return (
-    <Box style={{ margin: 10, padding: 5 }}>
+    <Box mb="md">
       {response.type === 'numerical' && (
       <NumericInput
         response={response}
