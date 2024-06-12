@@ -128,7 +128,7 @@ function StepItem({
             label={(
               <Box>
                 {interruption && <IconBrain size={16} style={{ marginRight: 4, marginBottom: -2 }} color="orange" />}
-                {active ? <Text size="14px" span fw="700">{step}</Text> : <Text size="14px">{step}</Text>}
+                {active ? <Text size="sm" span fw="700">{step}</Text> : <Text size="sm">{step}</Text>}
               </Box>
             )}
             onClick={() => (participantView ? navigate(`/${studyId}/${stepIndex}`) : navigate(`/${studyId}/reviewer-${step}`))}
@@ -223,7 +223,7 @@ export function StepsPanel({
                   opacity: sequenceStepsLength > 0 ? 1 : 0.5,
                 }}
               >
-                <Text size="14px" display="inline">
+                <Text size="sm" display="inline">
                   {step.order}
                 </Text>
                 {step.order === 'random' || step.order === 'latinSquare' ? (
