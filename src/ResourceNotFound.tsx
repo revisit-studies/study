@@ -34,7 +34,7 @@ export default function ResourceNotFound({ email, path }: { email?: string, path
               <>
                 at
                 {' '}
-                <Anchor span c="blue" href={`mailto:${email}`}>
+                <Anchor c="blue" href={`mailto:${email}`}>
                   {email}
                   {' '}
                 </Anchor>

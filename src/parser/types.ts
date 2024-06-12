@@ -123,11 +123,23 @@ export interface UIConfig {
  * The label is the text that is displayed to the user, and the value is the value that is stored in the data file.
  * The Option interface is used in the Response interface.
  */
-export interface Option {
+export interface NumberOption {
   /** The label displayed to participants. */
   label: string;
   /** The value stored in the participant's data. */
-  value: string | number;
+  value: number;
+}
+
+/**
+ * The Option interface is used to define the options for a dropdown, slider, radio, or checkbox response.
+ * The label is the text that is displayed to the user, and the value is the value that is stored in the data file.
+ * The Option interface is used in the Response interface.
+ */
+export interface StringOption {
+  /** The label displayed to participants. */
+  label: string;
+  /** The value stored in the participant's data. */
+  value: string;
 }
 
 /**
@@ -174,7 +186,7 @@ export interface BaseResponse {
  * NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.
  *
  * Example:
- * ```JS
+ * ```js
 {
     "id": "q-numerical",
     "prompt": "Numerical example",
@@ -201,7 +213,7 @@ export interface NumericalResponse extends BaseResponse {
  * The ShortTextResponse interface is used to define the properties of a short text response.
  * ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.
  *
- * ```JS
+ * ```js
 {
     "id": "q-short-text",
     "prompt": "Short text example",
@@ -222,7 +234,7 @@ export interface ShortTextResponse extends BaseResponse {
 /**
  * The LongTextResponse interface is used to define the properties of a long text response.
  * LongTextResponses render as a text area that accepts any text and can optionally have a placeholder.
- * ```JS
+ * ```js
 {
     "id": "q-name",
     "prompt": "What is your first name?",
@@ -248,7 +260,7 @@ export interface LongTextResponse extends BaseResponse {
  *
  * Example for a five-point Likerts Scale:
  *
- * ```JS
+ * ```js
  {
       "id": "q-satisfaction",
       "prompt": "Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).",
@@ -278,7 +290,7 @@ export interface LikertResponse extends BaseResponse {
  * DropdownResponses render as a select input with user specified options.
  *
  * Example:
- * ```JS
+ * ```js
  {
     "id": "q-color",
     "prompt": "What is your favorite color?",
@@ -306,7 +318,7 @@ export interface DropdownResponse extends BaseResponse {
   /** The placeholder text that is displayed in the input. */
   placeholder?: string;
   /** The options that are displayed in the dropdown. */
-  options: Option[];
+  options: StringOption[];
 }
 
 /**
@@ -314,7 +326,7 @@ export interface DropdownResponse extends BaseResponse {
  * SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100.
  *
  * Example:
- * ```JS
+ * ```js
 {
     "id": "q-slider",
     "prompt": "How are you feeling?",
@@ -342,7 +354,7 @@ export interface DropdownResponse extends BaseResponse {
 export interface SliderResponse extends BaseResponse {
   type: 'slider';
   /** This define the steps in the slider and the extent of the slider as an array of objects that have a label and a value:
- * ```JS
+ * ```js
 {
   "label": "Bad",
   "value": 0
@@ -350,7 +362,7 @@ export interface SliderResponse extends BaseResponse {
  * ```
    *
    */
-  options: Option[];
+  options: NumberOption[];
 }
 
 /**
@@ -358,7 +370,7 @@ export interface SliderResponse extends BaseResponse {
  * RadioResponses render as a radio input with user specified options, and optionally left and right labels.
  *
  * Example:
- * ```JS
+ * ```js
 {
   "id": "q-radio",
   "prompt": "Radio button example",
@@ -381,7 +393,7 @@ export interface SliderResponse extends BaseResponse {
  */
 export interface RadioResponse extends BaseResponse {
   type: 'radio';
-  options: Option[];
+  options: StringOption[];
   leftLabel?: string;
   rightLabel?: string;
 }
@@ -390,7 +402,7 @@ export interface RadioResponse extends BaseResponse {
  * The CheckboxResponse interface is used to define the properties of a checkbox response.
  * CheckboxResponses render as a checkbox input with user specified options.
  *
- * ```JS
+ * ```js
 {
     "id": "q7",
     "prompt": "Checkbox example (not required)",
@@ -417,14 +429,14 @@ export interface CheckboxResponse extends BaseResponse {
   type: 'checkbox';
   /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields
    *
-   ```JS
+   ```js
   {
     "label": "Option 1",
     "value": "opt-1"
   }
    *
   */
-  options: Option[];
+  options: StringOption[];
 }
 
 /**

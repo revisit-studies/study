@@ -1,5 +1,5 @@
 import {
-  Box, Flex, Radio, Text,
+  Box, Flex, Group, Radio, Text,
 } from '@mantine/core';
 import { RadioResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
@@ -39,22 +39,24 @@ export default function RadioInput({
         </Flex>
       )}
       description={secondaryText}
-      size="md"
       key={response.id}
       {...answer}
         // This overrides the answers error. Which..is bad?
       error={generateErrorMessage(response, answer, options)}
+      style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
-      {leftLabel ? <Text mt={-7}>{leftLabel}</Text> : null}
-      {options.map((radio) => (
-        <Radio
-          disabled={disabled}
-          value={radio.value}
-          label={radio.label}
-          key={radio.label}
-        />
-      ))}
-      <Text mt={-7}>{rightLabel}</Text>
+      <Group mt="xs">
+        {leftLabel ? <Text style={{ textAlign: 'center' }}>{leftLabel}</Text> : null}
+        {options.map((radio) => (
+          <Radio
+            disabled={disabled}
+            value={radio.value}
+            label={radio.label}
+            key={radio.label}
+          />
+        ))}
+        <Text>{rightLabel}</Text>
+      </Group>
     </Radio.Group>
   );
 }

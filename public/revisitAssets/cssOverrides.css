@@ -1,15 +1,7 @@
-.no-last-child-bottom-padding > div:last-child,
-.no-last-child-bottom-padding > a:last-child,
-.no-last-child-bottom-padding > p:last-child,
-.no-last-child-bottom-padding > h1:last-child,
-.no-last-child-bottom-padding > h2:last-child,
-.no-last-child-bottom-padding > h3:last-child,
-.no-last-child-bottom-padding > h4:last-child,
-.no-last-child-bottom-padding > h5:last-child,
-.no-last-child-bottom-padding > h6:last-child,
-.no-last-child-bottom-padding > ul:last-child,
-.no-last-child-bottom-padding > ol:last-child,
-.no-last-child-bottom-padding > img:last-child
-{
-  padding-bottom: 0;
+.no-last-child-bottom-padding > *:last-child {
+  padding-bottom: 0 !important;
+}
+
+.no-last-child-bottom-padding {
+  font-weight: 500;
 }

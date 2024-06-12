@@ -1,4 +1,6 @@
-import { Box, Checkbox, Flex } from '@mantine/core';
+import {
+  Box, Checkbox, Flex, Group,
+} from '@mantine/core';
 import { CheckboxResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
@@ -36,16 +38,18 @@ export default function CheckBoxInput({
       description={secondaryText}
       {...answer}
       error={generateErrorMessage(response, answer, options)}
-      size="md"
+      style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
-      {options.map((option) => (
-        <Checkbox
-          key={option.value}
-          disabled={disabled}
-          value={option.value}
-          label={option.label}
-        />
-      ))}
+      <Group mt="xs">
+        {options.map((option) => (
+          <Checkbox
+            key={option.value}
+            disabled={disabled}
+            value={option.value}
+            label={option.label}
+          />
+        ))}
+      </Group>
     </Checkbox.Group>
   );
 }

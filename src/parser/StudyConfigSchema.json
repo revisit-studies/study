@@ -30,7 +30,7 @@
     },
     "CheckboxResponse": {
       "additionalProperties": false,
-      "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.\n\n```JS {  \"id\": \"q7\",  \"prompt\": \"Checkbox example (not required)\",  \"required\": false,  \"location\": \"aboveStimulus\",  \"type\": \"checkbox\",  \"options\": [      {          \"label\": \"Option 1\",          \"value\": \"opt-1\"      },      {          \"label\": \"Option 2\",          \"value\": \"opt-2\"      },      {          \"label\": \"Option 3\",          \"value\": \"opt-3\"      }  ] }",
+      "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.\n\n```js {  \"id\": \"q7\",  \"prompt\": \"Checkbox example (not required)\",  \"required\": false,  \"location\": \"aboveStimulus\",  \"type\": \"checkbox\",  \"options\": [      {          \"label\": \"Option 1\",          \"value\": \"opt-1\"      },      {          \"label\": \"Option 2\",          \"value\": \"opt-2\"      },      {          \"label\": \"Option 3\",          \"value\": \"opt-3\"      }  ] }",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -45,9 +45,9 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses."
         },
         "options": {
-          "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields\n\n```JS { \"label\": \"Option 1\", \"value\": \"opt-1\" }",
+          "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields\n\n```js { \"label\": \"Option 1\", \"value\": \"opt-1\" }",
           "items": {
-            "$ref": "#/definitions/Option"
+            "$ref": "#/definitions/StringOption"
           },
           "type": "array"
         },
@@ -205,7 +205,7 @@
     },
     "DropdownResponse": {
       "additionalProperties": false,
-      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options.\n\nExample: ```JS {  \"id\": \"q-color\",  \"prompt\": \"What is your favorite color?\",  \"required\": true,  \"location\": \"aboveStimulus\",  \"type\": \"dropdown\",  \"placeholder\": \"Please choose your favorite color\",  \"options\": [      {          \"label\": \"Red\",          \"value\": \"red\"      },      {          \"label\": \"Blue\",          \"value\": \"blue\"      }  ] } ```",
+      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options.\n\nExample: ```js {  \"id\": \"q-color\",  \"prompt\": \"What is your favorite color?\",  \"required\": true,  \"location\": \"aboveStimulus\",  \"type\": \"dropdown\",  \"placeholder\": \"Please choose your favorite color\",  \"options\": [      {          \"label\": \"Red\",          \"value\": \"red\"      },      {          \"label\": \"Blue\",          \"value\": \"blue\"      }  ] } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -222,7 +222,7 @@
         "options": {
           "description": "The options that are displayed in the dropdown.",
           "items": {
-            "$ref": "#/definitions/Option"
+            "$ref": "#/definitions/StringOption"
           },
           "type": "array"
         },
@@ -528,8 +528,25 @@
           "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
         },
         "path": {
-          "description": "The path to the markdown file. This should be a relative path from the public folder.",
-          "type": "string"
+          "anyOf": [
+            {
+              "description": "The path to the markdown file. This should be a relative path from the public folder.",
+              "type": "string"
+            },
+            {
+              "description": "The path to the react component. This should be a relative path from the src/public folder.",
+              "type": "string"
+            },
+            {
+              "description": "The path to the image. This should be a relative path from the public folder.",
+              "type": "string"
+            },
+            {
+              "description": "The path to the website. This should be a relative path from the public folder or could be an external website.",
+              "type": "string"
+            }
+          ],
+          "description": "The path to the markdown file. This should be a relative path from the public folder."
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
@@ -578,7 +595,7 @@
     },
     "LikertResponse": {
       "additionalProperties": false,
-      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the preset. For example, preset: 5 will render 5 radio buttons, and preset: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likerts Scale:\n\n```JS {    \"id\": \"q-satisfaction\",    \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\",    \"required\": true,    \"location\": \"aboveStimulus\",    \"type\": \"likert\",    \"leftLabel\": \"Not Enjoyable\",    \"rightLabel\": \"Very Enjoyable\",    \"preset\": 5 } ```",
+      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the preset. For example, preset: 5 will render 5 radio buttons, and preset: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likerts Scale:\n\n```js {    \"id\": \"q-satisfaction\",    \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\",    \"required\": true,    \"location\": \"aboveStimulus\",    \"type\": \"likert\",    \"leftLabel\": \"Not Enjoyable\",    \"rightLabel\": \"Very Enjoyable\",    \"preset\": 5 } ```",
       "properties": {
         "desc": {
           "description": "The description of the likert scale.",
@@ -648,7 +665,7 @@
     },
     "LongTextResponse": {
       "additionalProperties": false,
-      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```JS {  \"id\": \"q-name\",  \"prompt\": \"What is your first name?\",  \"required\": true,  \"location\": \"aboveStimulus\",  \"type\": \"longText\",  \"placeholder\": \"Please enter your first name\" } ```",
+      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```js {  \"id\": \"q-name\",  \"prompt\": \"What is your first name?\",  \"required\": true,  \"location\": \"aboveStimulus\",  \"type\": \"longText\",  \"placeholder\": \"Please enter your first name\" } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -766,9 +783,28 @@
       ],
       "type": "object"
     },
+    "NumberOption": {
+      "additionalProperties": false,
+      "description": "The Option interface is used to define the options for a dropdown, slider, radio, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file. The Option interface is used in the Response interface.",
+      "properties": {
+        "label": {
+          "description": "The label displayed to participants.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value stored in the participant's data.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "type": "object"
+    },
     "NumericalResponse": {
       "additionalProperties": false,
-      "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.\n\nExample: ```JS {  \"id\": \"q-numerical\",  \"prompt\": \"Numerical example\",  \"required\": true,  \"location\": \"aboveStimulus\",  \"type\": \"numerical\",  \"placeholder\": \"Enter your age, range from 0 - 120\",  \"max\": 120,  \"min\": 0 } ```",
+      "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.\n\nExample: ```js {  \"id\": \"q-numerical\",  \"prompt\": \"Numerical example\",  \"required\": true,  \"location\": \"aboveStimulus\",  \"type\": \"numerical\",  \"placeholder\": \"Enter your age, range from 0 - 120\",  \"max\": 120,  \"min\": 0 } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -828,28 +864,6 @@
         "prompt",
         "required",
         "type"
-      ],
-      "type": "object"
-    },
-    "Option": {
-      "additionalProperties": false,
-      "description": "The Option interface is used to define the options for a dropdown, slider, radio, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file. The Option interface is used in the Response interface.",
-      "properties": {
-        "label": {
-          "description": "The label displayed to participants.",
-          "type": "string"
-        },
-        "value": {
-          "description": "The value stored in the participant's data.",
-          "type": [
-            "string",
-            "number"
-          ]
-        }
-      },
-      "required": [
-        "label",
-        "value"
       ],
       "type": "object"
     },
@@ -913,7 +927,7 @@
     },
     "RadioResponse": {
       "additionalProperties": false,
-      "description": "The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection. RadioResponses render as a radio input with user specified options, and optionally left and right labels.\n\nExample: ```JS { \"id\": \"q-radio\", \"prompt\": \"Radio button example\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"radio\", \"options\": [  {    \"label\": \"Option 1\",    \"value\": \"opt-1\"  },  {    \"label\": \"Option 2\",    \"value\": \"opt-2\"  } ] } ```",
+      "description": "The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection. RadioResponses render as a radio input with user specified options, and optionally left and right labels.\n\nExample: ```js { \"id\": \"q-radio\", \"prompt\": \"Radio button example\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"radio\", \"options\": [  {    \"label\": \"Option 1\",    \"value\": \"opt-1\"  },  {    \"label\": \"Option 2\",    \"value\": \"opt-2\"  } ] } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -932,7 +946,7 @@
         },
         "options": {
           "items": {
-            "$ref": "#/definitions/Option"
+            "$ref": "#/definitions/StringOption"
           },
           "type": "array"
         },
@@ -1153,7 +1167,7 @@
     },
     "ShortTextResponse": {
       "additionalProperties": false,
-      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.\n\n```JS {  \"id\": \"q-short-text\",  \"prompt\": \"Short text example\",  \"required\": true,  \"location\": \"aboveStimulus\",  \"type\": \"shortText\",  \"placeholder\": \"Enter your answer here\" } ```",
+      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.\n\n```js {  \"id\": \"q-short-text\",  \"prompt\": \"Short text example\",  \"required\": true,  \"location\": \"aboveStimulus\",  \"type\": \"shortText\",  \"placeholder\": \"Enter your answer here\" } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -1230,7 +1244,7 @@
     },
     "SliderResponse": {
       "additionalProperties": false,
-      "description": "The SliderResponse interface is used to define the properties of a slider response. SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100.\n\nExample: ```JS {  \"id\": \"q-slider\",  \"prompt\": \"How are you feeling?\",  \"location\": \"aboveStimulus\",  \"required\": true,  \"type\": \"slider\",  \"options\": [      {          \"label\": \"Bad\",          \"value\": 0      },      {          \"label\": \"OK\",          \"value\": 50      },      {          \"label\": \"Good\",          \"value\": 100      }  ] } ```",
+      "description": "The SliderResponse interface is used to define the properties of a slider response. SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100.\n\nExample: ```js {  \"id\": \"q-slider\",  \"prompt\": \"How are you feeling?\",  \"location\": \"aboveStimulus\",  \"required\": true,  \"type\": \"slider\",  \"options\": [      {          \"label\": \"Bad\",          \"value\": 0      },      {          \"label\": \"OK\",          \"value\": 50      },      {          \"label\": \"Good\",          \"value\": 100      }  ] } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -1245,9 +1259,9 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses."
         },
         "options": {
-          "description": "This define the steps in the slider and the extent of the slider as an array of objects that have a label and a value: ```JS { \"label\": \"Bad\", \"value\": 0 } ```",
+          "description": "This define the steps in the slider and the extent of the slider as an array of objects that have a label and a value: ```js { \"label\": \"Bad\", \"value\": 0 } ```",
           "items": {
-            "$ref": "#/definitions/Option"
+            "$ref": "#/definitions/NumberOption"
           },
           "type": "array"
         },
@@ -1286,6 +1300,25 @@
         "prompt",
         "required",
         "type"
+      ],
+      "type": "object"
+    },
+    "StringOption": {
+      "additionalProperties": false,
+      "description": "The Option interface is used to define the options for a dropdown, slider, radio, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file. The Option interface is used in the Response interface.",
+      "properties": {
+        "label": {
+          "description": "The label displayed to participants.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value stored in the participant's data.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "value"
       ],
       "type": "object"
     },
@@ -1354,8 +1387,25 @@
                     "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
                   },
                   "path": {
-                    "description": "The path to the markdown file. This should be a relative path from the public folder.",
-                    "type": "string"
+                    "anyOf": [
+                      {
+                        "description": "The path to the markdown file. This should be a relative path from the public folder.",
+                        "type": "string"
+                      },
+                      {
+                        "description": "The path to the react component. This should be a relative path from the src/public folder.",
+                        "type": "string"
+                      },
+                      {
+                        "description": "The path to the image. This should be a relative path from the public folder.",
+                        "type": "string"
+                      },
+                      {
+                        "description": "The path to the website. This should be a relative path from the public folder or could be an external website.",
+                        "type": "string"
+                      }
+                    ],
+                    "description": "The path to the markdown file. This should be a relative path from the public folder."
                   },
                   "provideFeedback": {
                     "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
