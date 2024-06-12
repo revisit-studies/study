@@ -12,7 +12,7 @@ export default function AppNav() {
   const { page } = useParams();
 
   return (
-    <AppShell.Navbar style={{ zIndex: 0 }}>
+    <AppShell.Navbar>
       <AppShell.Section p="xl">
         <NavLink
           active={page === 'dashboard'}

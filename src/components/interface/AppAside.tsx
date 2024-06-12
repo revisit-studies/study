@@ -62,7 +62,7 @@ export default function AppAside() {
   const [activeTab, setActiveTab] = useState<string | null>('participant');
 
   return showStudyBrowser || (currentComponent === 'end' && studyConfig.uiConfig.autoDownloadStudy) ? (
-    <AppShell.Aside p="0" style={{ zIndex: 0 }}>
+    <AppShell.Aside p="0">
       <AppShell.Section>
         <Flex direction="row" p="sm" justify="space-between" pb="xs">
           <Text size="md" fw={700} pt={3}>
