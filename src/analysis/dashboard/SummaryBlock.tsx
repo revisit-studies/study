@@ -51,7 +51,7 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
       <Title mb={20} order={4}>Your Studies:</Title>
       <Grid>
         {globalConfig.configsList.map((studyId) => expData[studyId] && (
-          <Grid.Col key={`${studyId}-panel`} md={12} xl={6}>
+          <Grid.Col key={`${studyId}-panel`} span={{ md: 12, xl: 6 }}>
             <SummaryPanel studyId={studyId} allParticipants={expData[studyId]} config={expConfig[studyId]} />
           </Grid.Col>
         ))}

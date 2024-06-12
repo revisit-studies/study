@@ -34,9 +34,9 @@ export function YAxisBar({
       <g transform={`translate(${horizontalPosition - labelSpacing - 40}, ${yScale.range()[1]}) rotate(-90)`}>
         <foreignObject width={Math.abs(yScale.range()[1] - yScale.range()[0])} height={20}>
           <Center>
-            <Group spacing={3}>
+            <Group gap={3}>
 
-              <Text size={compact ? 10 : 14} style={{ color: '#878E95' }}>
+              <Text size={compact ? '10px' : '14px'} style={{ color: '#878E95' }}>
                 {label}
               </Text>
             </Group>
@@ -61,8 +61,8 @@ export function YAxisBar({
             }}
           >
             <foreignObject width={labelSpacing} height={20}>
-              <Group style={{ width: '100%', height: '100%' }} position="right">
-                <Text sx={{ textOverflow: 'ellipsis', overflow: 'hidden' }} size={10}>
+              <Group style={{ width: '100%', height: '100%' }} justify="right">
+                <Text style={{ textOverflow: 'ellipsis', overflow: 'hidden' }} size="10px">
                   {value}
                 </Text>
               </Group>

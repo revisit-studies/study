@@ -8,7 +8,7 @@ import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { useStoreSelector } from '../store/store';
 import { ParticipantData } from '../storage/types';
-import { download } from './DownloadTidy';
+import { download } from './downloader/DownloadTidy';
 
 export function StudyEnd() {
   const studyConfig = useStudyConfig();

@@ -103,7 +103,7 @@ export default function ResponseBlock({
         </React.Fragment>
       ))}
 
-      <Group position="right" spacing="xs" mt="xl">
+      <Group justify="right" gap="xs">
         {hasCorrectAnswerFeedback && showNextBtn && (
           <Button
             onClick={() => setCheckClicked(true)}

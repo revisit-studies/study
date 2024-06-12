@@ -1,5 +1,5 @@
 import {
-  Box, Flex, Select, SelectItem,
+  Box, Flex, Select,
 } from '@mantine/core';
 import { DropdownResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
@@ -39,7 +39,7 @@ export default function DropdownInput({
       )}
       description={secondaryText}
       placeholder={placeholder}
-      data={options as SelectItem[]}
+      data={options}
       radius="md"
       size="md"
       {...answer}
