@@ -11,7 +11,7 @@ import React, {
 import AppHeader from './components/interface/AppHeader';
 import { GlobalConfig, ParticipantData, StudyConfig } from '../parser/types';
 import { getStudyConfig } from '../utils/fetchConfig';
-import { TableView } from './stats/TableView';
+import { TableView } from './table/TableView';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { DataManagementBoard } from './management/DataManagementBoard';
 import { FirebaseStorageEngine } from '../storage/engines/FirebaseStorageEngine';
