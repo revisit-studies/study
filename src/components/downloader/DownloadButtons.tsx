@@ -6,14 +6,11 @@ import { useDisclosure } from '@mantine/hooks';
 import { DownloadTidy, download } from './DownloadTidy';
 import { ParticipantData } from '../../storage/types';
 import { StudyConfig } from '../../parser/types';
-import { useStudyId } from '../../routes/utils';
 
-export function DownloadButtons({ allParticipants, config }: { allParticipants: ParticipantData[]; config: StudyConfig }) {
+export function DownloadButtons({ allParticipants, studyId, config }: { allParticipants: ParticipantData[]; studyId: string; config: StudyConfig }) {
   const [jsonOpened, { close: closeJson, open: openJson }] = useDisclosure(false);
   const [csvOpened, { close: closeCsv, open: openCsv }] = useDisclosure(false);
   const [openDownload, { open, close }] = useDisclosure(false);
-
-  const studyId = useStudyId();
 
   return (
     <>

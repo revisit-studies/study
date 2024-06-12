@@ -198,10 +198,10 @@ export function DownloadTidy({
 
       <Box mih={300} style={{ width: '100%', overflow: 'scroll' }}>
         <Table striped captionSide="bottom" withTableBorder>
-          <thead>
-            <tr>
+          <Table.Thead>
+            <Table.Tr>
               {tableData.header.map((header) => (
-                <th
+                <Table.Th
                   key={header}
                   style={{
                     whiteSpace: 'nowrap',
@@ -211,31 +211,31 @@ export function DownloadTidy({
                   <Flex direction="row" justify="space-between" align="center">
                     {header}
                     {!REQUIRED_PROPS.includes(header as never) && (
-                    <ActionIcon onClick={() => setSelectedProperties(selectedProperties.filter((prop) => prop !== header))} style={{ marginBottom: -3, marginLeft: 8 }}>
+                    <ActionIcon onClick={() => setSelectedProperties(selectedProperties.filter((prop) => prop !== header))} style={{ marginBottom: -3, marginLeft: 8 }} variant="subtle" color="gray">
                       <IconX size={16} />
                     </ActionIcon>
                     )}
                   </Flex>
-                </th>
+                </Table.Th>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
             {tableData.rows.slice(0, 5).map((row, index) => (
-              <tr key={index}>
+              <Table.Tr key={index}>
                 {tableData.header.map((header) => (
-                  <td
+                  <Table.Td
                     key={`${index}-${header}`}
                     style={{
                       whiteSpace: ['description', 'instruction', 'participantId'].includes(header) ? 'normal' : 'nowrap',
                     }}
                   >
                     {row[header]}
-                  </td>
+                  </Table.Td>
                 ))}
-              </tr>
+              </Table.Tr>
             ))}
-          </tbody>
+          </Table.Tbody>
         </Table>
       </Box>
 

@@ -245,7 +245,7 @@ export function TableView({
             />
           </Group>
           <Group>
-            <DownloadButtons allParticipants={[...completed, ...inProgress]} config={studyConfig} />
+            <DownloadButtons allParticipants={[...completed, ...inProgress]} studyId={studyId || ''} config={studyConfig} />
             <Button disabled={checked.length === 0} onClick={openModal} color="red" size="xs">Reject Participants</Button>
           </Group>
         </Flex>
