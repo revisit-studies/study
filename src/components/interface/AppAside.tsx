@@ -73,6 +73,7 @@ export default function AppAside() {
             leftSection={<IconUserPlus size={14} />}
             onClick={() => getNewParticipant(storageEngine, studyConfig, metadata, studyHref)}
             size="xs"
+            disabled={activeTab === 'allTrials'}
           >
             Next Participant
           </Button>
