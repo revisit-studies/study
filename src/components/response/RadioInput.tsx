@@ -29,7 +29,6 @@ export default function RadioInput({
 
   return (
     <Radio.Group
-      my="md"
       name={`radioInput${response.id}`}
       label={(
         <Flex direction="row" wrap="nowrap" gap={4}>
@@ -40,13 +39,12 @@ export default function RadioInput({
         </Flex>
       )}
       description={secondaryText}
-      size="md"
       key={response.id}
       {...answer}
         // This overrides the answers error. Which..is bad?
       error={generateErrorMessage(response, answer, options)}
     >
-      <Group gap="lg" mt="lg">
+      <Group mt="xs">
         {leftLabel ? <Text style={{ textAlign: 'center' }}>{leftLabel}</Text> : null}
         {options.map((radio) => (
           <Radio

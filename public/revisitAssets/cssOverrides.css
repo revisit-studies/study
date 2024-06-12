@@ -11,5 +11,5 @@
 .no-last-child-bottom-padding > ol:last-child,
 .no-last-child-bottom-padding > img:last-child
 {
-  padding-bottom: 0;
+  padding-bottom: 0 !important;
 }

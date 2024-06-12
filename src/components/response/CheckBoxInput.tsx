@@ -38,9 +38,8 @@ export default function CheckBoxInput({
       description={secondaryText}
       {...answer}
       error={generateErrorMessage(response, answer, options)}
-      size="md"
     >
-      <Group mt="lg">
+      <Group mt="xs">
         {options.map((option) => (
           <Checkbox
             key={option.value}
