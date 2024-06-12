@@ -240,6 +240,7 @@ export function TableView({
               placeholder="Search for a participant ID"
               data={[...completed, ...inProgress].map((record) => ({ value: record.participantId, label: record.participantId }))}
               searchable
+              value={null}
               leftSection={<IconSearch size={14} />}
               onChange={(value) => value && handleSelect(value)}
             />

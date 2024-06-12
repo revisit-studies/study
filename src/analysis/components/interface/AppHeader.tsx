@@ -70,6 +70,7 @@ export default function AppHeader({ studyIds }: { studyIds: string[] }) {
           >
             {inAnalysis && (
             <Select
+              allowDeselect={false}
               placeholder="Select Study"
               data={selectorData}
               value={studyId}
