@@ -55,7 +55,7 @@ export default function AppHeader({ studyIds }: { studyIds: string[] }) {
       <Grid mt={-7} align="center">
         <Grid.Col span={6}>
           <Flex align="center" onClick={() => (inAnalysis ? navigate('/analysis/dashboard') : navigate('/'))} style={{ cursor: 'pointer' }}>
-            <Image maw={40} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
+            <Image w={40} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
             <Space w="md" />
             <Title order={4} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {inAnalysis ? 'ReVISit Analytics Platform' : 'ReVISit Studies'}
