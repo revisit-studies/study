@@ -10,7 +10,7 @@ import rehypeRaw from 'rehype-raw';
 export default function ReactMarkdownWrapper({ text, required }: { text: string; required?: boolean }) {
   const components = {
     img: ({ node, ...props }: { node: unknown; height?: string | number, width?: string | number }) => <Image {...props} h={props.height} w={props.width} />,
-    p: ({ node, ...props }: { node: unknown; }) => <Text {...props} pb={8} />,
+    p: ({ node, ...props }: { node: unknown; }) => <Text {...props} pb={8} fw="inherit" />,
     h1: ({ node, ...props }: { node: unknown; }) => <Title order={1} {...props} pb={12} />,
     h2: ({ node, ...props }: { node: unknown; }) => <Title order={2} {...props} pb={12} />,
     h3: ({ node, ...props }: { node: unknown; }) => <Title order={3} {...props} pb={12} />,
