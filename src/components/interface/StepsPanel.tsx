@@ -128,7 +128,7 @@ function StepItem({
             label={(
               <Box>
                 {interruption && <IconBrain size={16} style={{ marginRight: 4, marginBottom: -2 }} color="orange" />}
-                {active ? <Text size="sm" span fw="700">{step}</Text> : <Text size="sm">{step}</Text>}
+                {active ? <Text size="sm" span fw="700" display="inline">{step}</Text> : <Text size="sm" display="inline">{step}</Text>}
               </Box>
             )}
             onClick={() => (participantView ? navigate(`/${studyId}/${stepIndex}`) : navigate(`/${studyId}/reviewer-${step}`))}
@@ -230,14 +230,14 @@ export function StepsPanel({
                   <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
                 ) : null}
                 {participantView && (
-                <Badge ml={5}>
+                <Badge ml={5} variant="light">
                   {sequenceStepsLength}
                   /
                   {orderSteps.length}
                 </Badge>
                 )}
                 {participantView && step.interruptions && (
-                <Badge ml={5} color="orange">
+                <Badge ml={5} color="orange" variant="light">
                   {participantSubSequence?.components.filter((s) => typeof s === 'string' && step.interruptions?.flatMap((i) => i.components).includes(s)).length || 0}
                 </Badge>
                 )}
