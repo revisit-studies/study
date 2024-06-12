@@ -1,23 +1,48 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Grid } from '@mantine/core';
 import * as d3 from 'd3';
+import { initializeTrrack, Registry } from '@trrack/core';
 import Summary from './Summary';
 import { StimulusParams } from '../../store/types';
 import { SumParams } from './types';
 import Source from './Source';
 
-function SummaryApp({ parameters }: StimulusParams<SumParams>) {
+function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
 
-  const [summaryData, setSummaryData] = useState<{ id: number; text: string; sources: string[] }[]>([]);
+  const [summaryData, setSummaryData] = useState<{ id: string; text: string; sources: string[] }[]>([]);
 
   const [sourcesData, setSourcesData] = useState<{ id: string; text: string }[]>([]);
+
+  const { actions, trrack } = useMemo(() => {
+    const reg = Registry.create();
+
+    const mouseHoverAction = reg.register('mouseHover', (state, mouseEnter: { summaryId: string | null, sourceId: string | null }) => {
+      state.activeSummaryId = mouseEnter.summaryId;
+      state.activeSourceId = mouseEnter.sourceId;
+      return state;
+    });
+
+    const trrackInst = initializeTrrack({
+      registry: reg,
+      initialState: {
+        activeSummaryId: null, activeSourceId: null,
+      },
+    });
+
+    return {
+      actions: {
+        mouseHoverAction,
+      },
+      trrack: trrackInst,
+    };
+  }, []);
 
   // // load data
   useEffect(() => {
     d3.csv(`./data/${parameters.datasetSummary}.csv`).then((_data) => {
       const convertedData = _data.map((row) => ({
-        id: Number(row.id),
+        id: String(row.id),
         text: row.text ?? '', // Provide a default empty string if row.text is undefined
         sources: (row.sources ?? '').split(',').map((s) => s.trim()), // Split sources into an array
       }));
@@ -79,7 +104,15 @@ function SummaryApp({ parameters }: StimulusParams<SumParams>) {
 
   }, []);
 
-  const handleSourceClick = (sourceId: string | null) => {
+  const handleSourceClick = (summaryId: string | null, sourceId: string | null) => {
+    trrack.apply('Clicked', actions.mouseHoverAction({ summaryId, sourceId }));
+
+    setAnswer({
+      status: true,
+      provenanceGraph: trrack.graph.backend,
+      answers: {},
+    });
+
     setActiveSourceId(sourceId);
   };
 

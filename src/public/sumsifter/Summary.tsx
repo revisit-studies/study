@@ -2,8 +2,8 @@ import React from 'react';
 import { Badge, Title, Text } from '@mantine/core';
 
 interface SummaryProps {
-  sentences: { text: string; sources: string[] }[];
-  onSourceClick: (sourceId: string | null) => void;
+  sentences: { id: string, text: string; sources: string[] }[];
+  onSourceClick: (summaryId: string | null, sourceId: string | null) => void;
 }
 
 function Summary({ sentences, onSourceClick }: SummaryProps) {
@@ -24,8 +24,8 @@ function Summary({ sentences, onSourceClick }: SummaryProps) {
             {sentence.sources.map((src, idx) => (
               <React.Fragment key={idx}>
                 <Badge
-                  onMouseEnter={() => onSourceClick(src)}
-                  onMouseLeave={() => onSourceClick(null)}
+                  onMouseEnter={() => onSourceClick(sentence.id, src)}
+                  onMouseLeave={() => onSourceClick(null, null)}
                   style={{ cursor: 'pointer' }}
                 >
                   {src}
