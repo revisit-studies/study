@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { Route, Routes, useLocation } from 'react-router-dom';
 import { ModalsProvider } from '@mantine/modals';
 import { AppShell } from '@mantine/core';
 import ConfigSwitcher from './components/ConfigSwitcher';
@@ -16,6 +16,8 @@ import { GlobalSettings } from './analysis/dashboard/GlobalSettings';
 import { NavigateWithParams } from './utils/NavigateWithParams';
 import AppHeader from './analysis/components/interface/AppHeader';
 import { fetchStudyConfigs } from './utils/fetchConfig';
+import { initializeStorageEngine } from './storage/initialize';
+import { useStorageEngine } from './storage/storageEngineHooks';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
@@ -44,10 +46,41 @@ export function GlobalConfigParser() {
     });
   }, [globalConfig]);
 
+  // Initialize storage engine
+  const { storageEngine, setStorageEngine } = useStorageEngine();
+  useEffect(() => {
+    if (storageEngine !== undefined) return;
+
+    async function fn() {
+      const _storageEngine = await initializeStorageEngine();
+      setStorageEngine(_storageEngine);
+    }
+    fn();
+  }, [setStorageEngine, storageEngine]);
+
+  const location = useLocation();
+  const hasSidebar = useMemo(() => (
+    !location.pathname.includes('/analysis/')
+    && location.pathname !== '/'
+    && location.pathname !== '/login'
+    && location.pathname !== '/settings'
+  ), [location]);
+  const hasAside = useMemo(() => (
+    !location.pathname.includes('/analysis/')
+    && location.pathname !== '/'
+    && location.pathname !== '/login'
+    && location.pathname !== '/settings'
+  ), [location]);
+
   return globalConfig ? (
-    <BrowserRouter basename={PREFIX}>
-      <AuthProvider>
-        <ModalsProvider>
+    <AuthProvider>
+      <ModalsProvider>
+        <AppShell
+          padding="md"
+          header={{ height: 70 }}
+          navbar={{ width: hasSidebar ? 300 : 0, breakpoint: 'xs' }}
+          aside={{ width: hasAside ? 200 : 0, breakpoint: 'xs' }}
+        >
           <Routes>
             <Route
               path="/"
@@ -116,8 +149,8 @@ export function GlobalConfigParser() {
             )}
             />
           </Routes>
-        </ModalsProvider>
-      </AuthProvider>
-    </BrowserRouter>
+        </AppShell>
+      </ModalsProvider>
+    </AuthProvider>
   ) : null;
 }
