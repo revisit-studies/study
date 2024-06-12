@@ -1,0 +1,11 @@
+id,text,sources
+1,"The SCADS 2024 Problem Book outlines a multi-year Grand Challenge focused on creating Tailored Daily Reports (TLDRs) for intelligence community knowledge workers.","S10,S11"
+2,"Automatic summarization involves both extractive and abstractive methods, utilizing tools like the occams package and various large language models.","S25,S30,S36,S37"
+3,"Retrieval Augmented Generation (RAG) is employed to address issues of hallucinations in abstractive summaries.","S72,S73"
+4,"Evaluations include metrics like ROUGE scores, using datasets such as MS MARCO and NeuCLIR1 for benchmarking.","S252,S251"
+5,"User feedback is crucial for refining TLDRs, with interfaces designed to collect and leverage analyst input effectively.","S1064,S1065"
+6,"Analysts benefit from systems that integrate multiple intelligence types into cohesive narratives, enhancing situational awareness.","S1300,S1301"
+7,"Efficient information flow is maintained through platforms that allow dynamic adjustments based on analysts’ workflows and cognitive loads.","S1293,S1294,S1295"
+8,"Personalized summaries are developed to align with analysts’ needs, incorporating various document dimensions.","S988,S990"
+9,"The occams package is highly reliable and often considered the gold standard in summarization tools.","S31,S32"
+10,"Analysts have found that the TLDRs significantly reduce their workload by automating most of the analytical processes.","S1387,S1388"
