@@ -57,7 +57,7 @@
         },
         "consent": {
             "type": "markdown",
-            "path": "demo-brush-interactions/assets/consent.md",
+            "path": "sumsifter/assets/consent.md",
             "nextButtonText": "Agree",
             "response": [
                 {
@@ -238,51 +238,13 @@
             "response": [
                 {
                     "id": "q1",
-                    "prompt": "How useful did you find the rectangular selection method? ",
+                    "prompt": "How useful did you find the attribution of each sentence in the summary to the source document? ",
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "likert",
                     "preset": 7,
                     "rightLabel": "Like",
                     "leftLabel": "Dislike"
-                },
-                {
-                    "id": "q2",
-                    "prompt": "How useful did you find the axis-aligned selection? ",
-                    "required": true,
-                    "location": "aboveStimulus",
-                    "type": "likert",
-                    "preset": 7,
-                    "rightLabel": "Like",
-                    "leftLabel": "Dislike"
-                },
-                {
-                    "id": "q3",
-                    "prompt": "How useful did you find the paint-brush selection?",
-                    "required": true,
-                    "location": "aboveStimulus",
-                    "type": "likert",
-                    "preset": 7,
-                    "rightLabel": "Like",
-                    "leftLabel": "Dislike"
-                },
-                {
-                    "id": "q4",
-                    "prompt": "How useful did you find the slider selection?",
-                    "required": true,
-                    "location": "aboveStimulus",
-                    "type": "likert",
-                    "preset": 7,
-                    "rightLabel": "Like",
-                    "leftLabel": "Dislike"
-                },
-                {
-                    "id": "q5",
-                    "prompt": "Please provide any comments about the different methods",
-                    "required": false,
-                    "location": "aboveStimulus",
-                    "type": "longText",
-                    "placeholder": "Enter your comments here"
                 }
             ]
         },
@@ -350,8 +312,16 @@
             },
             "nextButtonLocation": "sidebar",
             "response": [
+                {
+                    "id": "response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "longText"
+                }
             ]
         }
+
     },
     "sequence": {
         "order": "fixed",
@@ -362,7 +332,6 @@
             {
                 "order": "random",
                 "components": [
-                    "rectangleBrush_q1",
                     "sumsift1", 
                     "sumsift2", 
                     "sumsift3", 
