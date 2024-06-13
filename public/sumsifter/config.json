@@ -227,6 +227,42 @@
                     "placeholder": "Enter your answer here"
                 }
             ]
+        },
+        "feedback-process-1":{
+            "description": "Planned future flow",
+            "instruction": "Go through the planned future flow, and suggest any changes or feedback at the end.",
+            "type": "image",
+            "path": "sumsifter/assets/image-1.png",
+            "style": {
+                "width": "1000px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+            ]
+        },
+        "feedback-process-2":{
+            "description": "Planned future flow",
+            "instruction": "Go through the planned future flow, and suggest any changes or feedback at the end.",
+            "type": "image",
+            "path": "sumsifter/assets/image-2.png",
+            "style": {
+                "width": "1000px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+            ]
+        },
+        "feedback-process-3":{
+            "description": "Planned future flow",
+            "instruction": "Go through the planned future flow, and suggest any changes or feedback at the end.",
+            "type": "image",
+            "path": "sumsifter/assets/image-3.png",
+            "style": {
+                "width": "1000px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+            ]
         }
     },
     "sequence": {
@@ -242,6 +278,9 @@
                     "sumsift1"
                 ]
             },
+            "feedback-process-1",
+            "feedback-process-2",
+            "feedback-process-3",
             "post-study-survey",
             "survey"
         ]
