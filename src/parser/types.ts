@@ -353,15 +353,7 @@ export interface DropdownResponse extends BaseResponse {
  */
 export interface SliderResponse extends BaseResponse {
   type: 'slider';
-  /** This define the steps in the slider and the extent of the slider as an array of objects that have a label and a value:
- * ```js
-{
-  "label": "Bad",
-  "value": 0
-}
- * ```
-   *
-   */
+  /** This defines the steps in the slider and the extent of the slider as an array of objects that have a label and a value, e.g. `[{label: "Bad", value: 0}, {label: "OK", value: 50}, {label: "Good", value: 100}]` */
   options: NumberOption[];
 }
 
@@ -1104,42 +1096,7 @@ export interface ComponentBlock {
 /** An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component). */
 export type InheritedComponent = (Partial<IndividualComponent> & { baseComponent: string })
 
-/**
- * The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.
-
- ```js
- {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/StudyConfigSchema.json",
-    "studyMetadata": {
-      ...
-    },
-    "uiConfig": {
-      ...
-    },
-    "components": {
-      ...
-    },
-    "sequence": {
-      ...
-    }
-}
-```
-
-:::info
-For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually.
-:::
-<br/>
-
-The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.
- */
-export interface StudyConfig {
-  /** A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information */
-  $schema: string;
-  /** The metadata for the study. This is used to identify the study and version in the data file. */
-  studyMetadata: StudyMetadata;
-  /** The UI configuration for the study. This is used to configure the UI of the app. */
-  uiConfig: UIConfig;
-  /** The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;
+/** The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;
 
    * Using baseComponents:
 
@@ -1195,7 +1152,45 @@ In the above code snippet, we have a single base component which holds the infor
 }
 ```
    */
-  baseComponents?: Record<string, IndividualComponent | Partial<IndividualComponent>>;
+export type BaseComponents = Record<string, IndividualComponent>;
+
+/**
+ * The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.
+
+ ```js
+ {
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+      ...
+    },
+    "uiConfig": {
+      ...
+    },
+    "components": {
+      ...
+    },
+    "sequence": {
+      ...
+    }
+}
+```
+
+:::info
+For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually.
+:::
+<br/>
+
+The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.
+ */
+export interface StudyConfig {
+  /** A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information */
+  $schema: string;
+  /** The metadata for the study. This is used to identify the study and version in the data file. */
+  studyMetadata: StudyMetadata;
+  /** The UI configuration for the study. This is used to configure the UI of the app. */
+  uiConfig: UIConfig;
+  /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../type-aliases/BaseComponents) for more information. */
+  baseComponents?: BaseComponents;
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
   components: Record<string, IndividualComponent | InheritedComponent>
   /** The order of the components in the study. This might include some randomness. */
