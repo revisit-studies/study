@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/StudyConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta13/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
         "title": "Randomized Full VLAT (Visualization Literacy Assessment Test)",
         "version": "pilot",
@@ -15,7 +15,7 @@
         ]
     },
     "uiConfig": {
-        "contactEmail": "test@test.com",
+        "contactEmail": "contact@revisit.dev",
         "helpTextPath": "demo-VLAT-full-randomized/assets/help.md",
         "logoPath": "revisitAssets/revisitLogoSquare.svg",
         "withProgressBar": true,

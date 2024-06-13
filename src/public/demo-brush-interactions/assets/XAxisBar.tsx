@@ -45,8 +45,8 @@ export function XAxisBar({
       <g transform={`translate(${xScale.range()[0]}, ${vertPosition + 25})`}>
         <foreignObject width={Math.abs(xScale.range()[0] - xScale.range()[1])} height={20}>
           <Center>
-            <Group spacing={3}>
-              <Text size={compact ? 10 : 14} style={{ color: '#878E95' }}>
+            <Group gap={3}>
+              <Text size={compact ? '10px' : '14px'} style={{ color: '#878E95' }}>
                 {label}
               </Text>
             </Group>
@@ -66,7 +66,7 @@ export function XAxisBar({
               <Tooltip withinPortal label={value}>
                 <Text
                   px={2}
-                  size={10}
+                  size="10px"
                   style={{
                     textAlign: 'center', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap',
                   }}

@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/GlobalConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta13/src/parser/GlobalConfigSchema.json",
     "configsList": [
         "sumsifter",
         "demo-html",

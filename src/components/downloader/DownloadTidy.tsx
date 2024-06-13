@@ -13,12 +13,12 @@ import {
 import { IconLayoutColumns, IconTableExport, IconX } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 import merge from 'lodash.merge';
-import { ParticipantData } from '../storage/types';
+import { ParticipantData } from '../../storage/types';
 import {
   Answer, IndividualComponent, Prettify, StudyConfig,
-} from '../parser/types';
-import { isInheritedComponent } from '../parser/parser';
-import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
+} from '../../parser/types';
+import { isInheritedComponent } from '../../parser/parser';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 export const OPTIONAL_COMMON_PROPS = [
   'status',
@@ -185,23 +185,23 @@ export function DownloadTidy({
     >
       <MultiSelect
         searchable
-        nothingFound="Property not found"
+        nothingFoundMessage="Property not found"
         data={[...OPTIONAL_COMMON_PROPS]}
         value={selectedProperties}
-        onChange={(values: OptionalProperty[]) => setSelectedProperties(values)}
+        onChange={(values: string[]) => setSelectedProperties(values as OptionalProperty[])}
         label="Included optional columns:"
-        icon={<IconLayoutColumns />}
+        leftSection={<IconLayoutColumns />}
         variant="filled"
       />
 
       <Space h="md" />
 
       <Box mih={300} style={{ width: '100%', overflow: 'scroll' }}>
-        <Table striped captionSide="bottom" withBorder>
-          <thead>
-            <tr>
+        <Table striped captionSide="bottom" withTableBorder>
+          <Table.Thead>
+            <Table.Tr>
               {tableData.header.map((header) => (
-                <th
+                <Table.Th
                   key={header}
                   style={{
                     whiteSpace: 'nowrap',
@@ -211,31 +211,31 @@ export function DownloadTidy({
                   <Flex direction="row" justify="space-between" align="center">
                     {header}
                     {!REQUIRED_PROPS.includes(header as never) && (
-                    <ActionIcon onClick={() => setSelectedProperties(selectedProperties.filter((prop) => prop !== header))} style={{ marginBottom: -3, marginLeft: 8 }}>
+                    <ActionIcon onClick={() => setSelectedProperties(selectedProperties.filter((prop) => prop !== header))} style={{ marginBottom: -3, marginLeft: 8 }} variant="subtle" color="gray">
                       <IconX size={16} />
                     </ActionIcon>
                     )}
                   </Flex>
-                </th>
+                </Table.Th>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
             {tableData.rows.slice(0, 5).map((row, index) => (
-              <tr key={index}>
+              <Table.Tr key={index}>
                 {tableData.header.map((header) => (
-                  <td
+                  <Table.Td
                     key={`${index}-${header}`}
                     style={{
                       whiteSpace: ['description', 'instruction', 'participantId'].includes(header) ? 'normal' : 'nowrap',
                     }}
                   >
                     {row[header]}
-                  </td>
+                  </Table.Td>
                 ))}
-              </tr>
+              </Table.Tr>
             ))}
-          </tbody>
+          </Table.Tbody>
         </Table>
       </Box>
 
@@ -247,12 +247,12 @@ export function DownloadTidy({
 
       <Space h="md" />
 
-      <Group position="right">
+      <Group justify="right">
         <Button onClick={close} color="dark" variant="subtle">
           Close
         </Button>
         <Button
-          leftIcon={<IconTableExport />}
+          leftSection={<IconTableExport />}
           onClick={() => downloadTidy()}
           data-autofocus
         >

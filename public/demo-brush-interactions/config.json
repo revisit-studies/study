@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/StudyConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta13/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
         "title": "Interactive Selections in Scatterplots",
         "version": "pilot",
@@ -496,7 +496,7 @@
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "likert",
-                    "preset": 7,
+                    "numItems": 7,
                     "rightLabel": "Like",
                     "leftLabel": "Dislike"
                 },
@@ -506,7 +506,7 @@
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "likert",
-                    "preset": 7,
+                    "numItems": 7,
                     "rightLabel": "Like",
                     "leftLabel": "Dislike"
                 },
@@ -516,7 +516,7 @@
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "likert",
-                    "preset": 7,
+                    "numItems": 7,
                     "rightLabel": "Like",
                     "leftLabel": "Dislike"
                 },
@@ -526,7 +526,7 @@
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "likert",
-                    "preset": 7,
+                    "numItems": 7,
                     "rightLabel": "Like",
                     "leftLabel": "Dislike"
                 },

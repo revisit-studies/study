@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/StudyConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta13/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
         "title": "Question Types and Form Elements Demo",
         "version": "pilot",
@@ -15,7 +15,7 @@
         ]
     },
     "uiConfig": {
-        "contactEmail": "test@test.com",
+        "contactEmail": "contact@revisit.dev",
         "helpTextPath": "demo-survey/assets/help.md",
         "logoPath": "revisitAssets/revisitLogoSquare.svg",
         "withProgressBar": true,
@@ -73,7 +73,7 @@
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "likert",
-                    "preset": 9,
+                    "numItems": 9,
                     "rightLabel": "Like",
                     "leftLabel": "Dislike"
                 },
@@ -111,6 +111,23 @@
                         {
                             "label": "Option 3",
                             "value": "opt-3"
+                        }
+                    ]
+                },
+                {
+                    "id": "q-radio",
+                    "prompt": "Radio button example",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Option 1",
+                            "value": "opt-1"
+                        },
+                        {
+                            "label": "Option 2",
+                            "value": "opt-2"
                         }
                     ]
                 },

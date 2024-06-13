@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/StudyConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta13/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
         "title": "Dynamic React.js Stimuli: A Graphical Perception Experiment",
         "version": "pilot",
@@ -15,7 +15,7 @@
         ]
     },
     "uiConfig": {
-        "contactEmail": "test@test.com",
+        "contactEmail": "contact@revisit.dev",
         "helpTextPath": "demo-cleveland/assets/help.md",
         "logoPath": "revisitAssets/revisitLogoSquare.svg",
         "withProgressBar": true,
@@ -494,7 +494,7 @@
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "likert",
-                    "preset": 5,
+                    "numItems": 5,
                     "rightLabel": "Like",
                     "leftLabel": "Dislike"
                 },
