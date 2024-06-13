@@ -15,13 +15,10 @@ You are being asked to participate in a research study. Before you
               participation.
 
 ## Purpose of the Study
-Visual representations of data (visualizations) are increasingly
-common in everyday life. The purpose of this study is to learn
-more about how people read and understand visualizations.
+Enable analyst to conduct quicker and more accurate research through data summarization and attribution to original sources.
 
 ## Tasks
-The test contains 8 questions about 4 data
-visualizations. 
+The test contains 1 free text question for each of 5 data summarization and attribution demo. 
 It will take approximately 10-15 minutes to finish this
 test. 
 For each question, you will be given an interactive data
