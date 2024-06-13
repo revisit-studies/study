@@ -151,7 +151,7 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses."
         },
         "options": {
-          "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields\n\n```js { \"label\": \"Option 1\", \"value\": \"opt-1\" }",
+          "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
           "items": {
             "$ref": "#/definitions/StringOption"
           },
@@ -1044,6 +1044,7 @@
           "type": "string"
         },
         "leftLabel": {
+          "description": "The left label of the radio group. Used in Likert scales for example",
           "type": "string"
         },
         "location": {
@@ -1051,6 +1052,7 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses."
         },
         "options": {
+          "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
           "items": {
             "$ref": "#/definitions/StringOption"
           },
@@ -1076,6 +1078,7 @@
           "description": "You can provide a required value, which makes it so a participant has to answer with that value."
         },
         "rightLabel": {
+          "description": "The right label of the radio group. Used in Likert scales for example",
           "type": "string"
         },
         "secondaryText": {

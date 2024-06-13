@@ -383,8 +383,11 @@ export interface SliderResponse extends BaseResponse {
  */
 export interface RadioResponse extends BaseResponse {
   type: 'radio';
+  /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields. */
   options: StringOption[];
+  /** The left label of the radio group. Used in Likert scales for example */
   leftLabel?: string;
+  /** The right label of the radio group. Used in Likert scales for example */
   rightLabel?: string;
 }
 
@@ -417,15 +420,7 @@ export interface RadioResponse extends BaseResponse {
  */
 export interface CheckboxResponse extends BaseResponse {
   type: 'checkbox';
-  /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields
-   *
-   ```js
-  {
-    "label": "Option 1",
-    "value": "opt-1"
-  }
-   *
-  */
+  /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields. */
   options: StringOption[];
 }
 
