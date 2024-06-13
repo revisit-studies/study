@@ -42,7 +42,7 @@
     "components": {
         "introduction": {
             "type": "markdown",
-            "path": "demo-brush-interactions/assets/introduction.md",
+            "path": "sumsifter/assets/introduction.md",
             "response": [
                 {
                     "id": "prolificId",
