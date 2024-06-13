@@ -26,36 +26,63 @@
             "path": "Upset-Alttext-User-Survey/assets/introduction.md",
             "response": []
         },
-        "Visual-Only-Q1": {
+        "Visual-Only-Questionnaire 1": {
             "description": "Content: Visual Only",
-            "instruction": "Basic Understanding of the Visualization",
+            "instruction": "Please answer the following question about the chart:",
             "type": "image",
             "path": "Upset-Alttext-User-Survey/assets/VO.png",
             "style": {
-                "width": "600px",
-                "height": "800px"
+                "width": "450px",
+                "height": "600px"
             },
             "nextButtonLocation": "sidebar",
             "response": [
                 {
                     "id": "voq1",
-                    "prompt": "1. What does the Visualization describe?",
+                    "prompt": "1. What are your insights and take-aways from this chart for this data?",
                     "required": true,
                     "location": "sidebar",
                     "type": "longText",
                     "placeholder": "Please enter your answer here"
-                },
+                }
+            ]
+        },
+        "Visual-Only-Questionnaire 2": {
+            "description": "Content: Visual Only",
+            "instruction": "Please answer the following questions about the chart:",
+            "type": "image",
+            "path": "Upset-Alttext-User-Survey/assets/VO.png",
+            "style": {
+                "width": "450px",
+                "height": "600px"
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
                 {
-                    "id": "voq2",
+                    "id": "voq1",
                     "prompt": "2. How many sets are shown in the upset plot?",
                     "required": true,
                     "location": "sidebar",
-                    "type": "shortText",
-                    "placeholder": "Please enter your answer here"
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 100
+
+                },
+                {
+                    "id": "voq2",
+                    "prompt": "3. How many intersections are seen in the UpSet plot?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 100
+
                 },
                 {
                     "id": "voq3",
-                    "prompt": "3. How many intersections are seen in the UpSet plot?",
+                    "prompt": "4. What is the largest set?",
                     "required": true,
                     "location": "sidebar",
                     "type": "shortText",
@@ -63,7 +90,7 @@
                 },
                 {
                     "id": "voq4",
-                    "prompt": "4. What is the largest intersection? (e.g., set_A and set_B)",
+                    "prompt": "5. What is the largest intersection? (e.g., set_A and set_B)",
                     "required": true,
                     "location": "sidebar",
                     "type": "shortText",
@@ -71,40 +98,17 @@
                 },
                 {
                     "id": "voq5",
-                    "prompt": "5. What is the largest set size?",
+                    "prompt": "6. How large is the largest intersection?",
                     "required": true,
                     "location": "sidebar",
-                    "type": "shortText",
-                    "placeholder": "Please enter your answer here"
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 1000000000
                 },
                 {
                     "id": "voq6",
-                    "prompt": "6. What is the largest intersection size?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "shortText",
-                    "placeholder": "Please enter your answer here"
-                },
-                {
-                    "id": "voq7",
-                    "prompt": "7. How are intersections ordered?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "radio",
-                    "options": [
-                        {
-                            "label": "Ascending",
-                            "value": "1"
-                        },
-                        {
-                            "label": "Descending",
-                            "value": "2"
-                        }
-                    ]
-                },
-                {
-                    "id": "voq8",
-                    "prompt": "8. What characterizes the largest intersection?",
+                    "prompt": "7. How many sets make up the largest intersection?",
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
@@ -126,8 +130,8 @@
                     ]
                 },
                 {
-                    "id": "voq9",
-                    "prompt": "9. How do the set sizes diverge??",
+                    "id": "voq7",
+                    "prompt": "8. How similar are the set sizes?",
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
@@ -148,8 +152,8 @@
                     ]
                 },
                 {
-                    "id": "voq10",
-                    "prompt": "10. Is the largest set present in the largest intersection?",
+                    "id": "voq8",
+                    "prompt": "9. Is the largest set present in the largest intersection?",
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
@@ -161,12 +165,16 @@
                         {
                             "label": "No",
                             "value": "2"
+                        },
+                        {
+                            "label": "Not able to extract",
+                            "value": "3"
                         }
                     ]
                 },
                 {
-                    "id": "voq11",
-                    "prompt": "11. Is the smallest set present in the smallest intersection?",
+                    "id": "voq9",
+                    "prompt": "10. Is the all-set intersection (intersection having all the sets) present? ",
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
@@ -178,59 +186,57 @@
                         {
                             "label": "No",
                             "value": "2"
-                        }
-                    ]
-                },
-                {
-                    "id": "voq12",
-                    "prompt": "12. Is the all-set intersection (intersection having all the visible sets) present? ",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "radio",
-                    "options": [
-                        {
-                            "label": "Yes",
-                            "value": "1"
                         },
                         {
-                            "label": "No",
-                            "value": "2"
+                            "label": "Not able to extract",
+                            "value": "3"
                         }
                     ]
                 }
             ]  
                 
         },
-        "Visual-Only-Q2": {
+        "Visual-Only-Questionnaire 3": {
             "description": "Content: Visual Only",
-            "instruction": "Rate the content",
+            "instruction": "Rate the content:",
             "type": "image",
             "path": "Upset-Alttext-User-Survey/assets/VO.png",
             "style": {
-                "width": "600px",
-                "height": "800px"
+                "width": "450px",
+                "height": "600px"
             },
             "nextButtonLocation": "sidebar",
             "response": [
                 {
                     "id": "voq1",
-                    "prompt": "On a scale of 1 to 5, how well did you understand the information presented? (1 = not at all, 5 = Completely)",
+                    "prompt": "11. On a scale of 1 to 5, how confident are you in your answers (1 = Not at all confident, 5 = Extremely confident)",
                     "required": true,
                     "location": "sidebar",
-                    "type": "numerical",
-                    "placeholder": "Please rate your answer",
-                    "min": 1,
-                    "max": 5
+                    "type": "likert",
+                    "preset": 5,
+                    "leftLabel": "Not at all confident",
+                    "rightLabel": "Extremely confident"
+
                 },
                 {
                     "id": "voq2",
-                    "prompt": "On a scale of 1 to 5, how effective was the chart at conveying information? (1 = Not at all effective, 5 = Extremely effective)",
+                    "prompt": "12. On a scale of 1 to 5, how well did you understand the information presented? (1 = Not at all understood, 5 = Completely understood)",
                     "required": true,
                     "location": "sidebar",
-                    "type": "numerical",
-                    "placeholder": "Please rate your answer",
-                    "min": 1,
-                    "max": 5
+                    "type": "likert",
+                    "preset": 5,
+                    "leftLabel": "Not at all understood",
+                    "rightLabel": "Completely understood"
+                },
+                {
+                    "id": "voq3",
+                    "prompt": "13. On a scale of 1 to 5, how effective was the chart at conveying information? (1 = Not at all effective, 5 = Extremely effective)",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "likert",
+                    "preset": 5,
+                    "leftLabel": "Not at all effective",
+                    "rightLabel": "Extremely effective"
                 }
             ]
         }
@@ -240,8 +246,9 @@
         "order": "fixed",
         "components": [
             "Introduction",
-            "Visual-Only-Q1",
-            "Visual-Only-Q2"
+            "Visual-Only-Questionnaire 1",
+            "Visual-Only-Questionnaire 2",
+            "Visual-Only-Questionnaire 3"
         ]
     }
 }
