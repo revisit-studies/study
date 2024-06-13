@@ -46,7 +46,7 @@
             "response": [
                 {
                     "id": "prolificId",
-                    "prompt": "Please enter your Prolific ID",
+                    "prompt": "Please enter your Name (or initials, some way we can find you!)",
                     "required": true,
                     "location": "belowStimulus",
                     "type": "shortText",
@@ -90,38 +90,9 @@
         },
         "tutorial": {
             "type": "markdown",
-            "path": "demo-brush-interactions/assets/tutorial.md",
+            "path": "sumsifter/assets/tutorial.md",
             "nextButtonText": "",
             "response": []
-        },
-        "rectangleBrush_q1": {
-            "baseComponent": "scatterPlot",
-            "instruction": "How many cars from Japan have a Miles Per Gallon value greater than 35?",
-            "parameters": {
-                "dataset": "cars",
-                "x": "Miles per Gallon",
-                "y": "Weight (lbs)",
-                "category": "Origin",
-                "ids": "id",
-                "brushType": "Rectangular Selection"
-            },
-            "response": [
-                {
-                    "id": "response",
-                    "prompt": "Answer:",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "numerical",
-                    "max": 100,
-                    "min": 0
-                }
-            ],
-            "correctAnswer": [
-                {
-                    "id": "response",
-                    "answer": 17
-                }
-            ]
         },
         "sumsift1": {
             "baseComponent": "summarySource",
@@ -244,7 +215,7 @@
             "response": [
                 {
                     "id": "q1",
-                    "prompt": "How useful did you find the attribution of each sentence in the summary to the source document? ",
+                    "prompt": "Sample likert question: How useful did you find the attribution of each sentence in the summary to the source document? ",
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "likert",
@@ -259,34 +230,18 @@
             "path": "demo-VLAT-mini-randomized/assets/survey.md",
             "response": [
                 {
-                    "id": "surveyExperience",
-                    "prompt": "Did you experience any problems with our tool?",
+                    "id": "surveyAnything",
+                    "prompt": "Anything else you'd like to tell us?",
                     "required": true,
                     "location": "belowStimulus",
                     "type": "longText",
                     "placeholder": "Enter your answer here."
-                },
-                {
-                    "id": "surveyRenderIssues",
-                    "prompt": "Did anything not render or display properly?",
-                    "required": true,
-                    "location": "belowStimulus",
-                    "type": "longText",
-                    "placeholder": "Enter your answer here"
-                },
-                {
-                    "id": "surveyOtherIssues",
-                    "prompt": "Any other issues or anything you would like to tell us?",
-                    "required": true,
-                    "location": "belowStimulus",
-                    "type": "longText",
-                    "placeholder": "Enter your answer here"
                 }
             ]
         },
         "feedback-process-1":{
             "description": "Planned future flow",
-            "instruction": "Go through the planned future flow, and suggest any changes or feedback at the end.",
+            "instruction": "Please go through the planned future flow, and suggest any changes or feedback at the end.",
             "type": "image",
             "path": "sumsifter/assets/image-1.png",
             "style": {
@@ -298,7 +253,7 @@
         },
         "feedback-process-2":{
             "description": "Planned future flow",
-            "instruction": "Go through the planned future flow, and suggest any changes or feedback at the end.",
+            "instruction": "Please go through the planned future flow, and suggest any changes or feedback at the end.",
             "type": "image",
             "path": "sumsifter/assets/image-2.png",
             "style": {
@@ -310,7 +265,7 @@
         },
         "feedback-process-3":{
             "description": "Planned future flow",
-            "instruction": "Go through the planned future flow, and suggest any changes or feedback at the end.",
+            "instruction": "Please go through the planned future flow, and suggest any changes or feedback at the end.",
             "type": "image",
             "path": "sumsifter/assets/image-3.png",
             "style": {
@@ -333,7 +288,6 @@
         "order": "fixed",
         "components": [
             "introduction",
-            "consent",
             "tutorial",
             {
                 "order": "random",
@@ -348,7 +302,6 @@
             "feedback-process-1",
             "feedback-process-2",
             "feedback-process-3",
-            "post-study-survey",
             "survey"
         ]
     }
