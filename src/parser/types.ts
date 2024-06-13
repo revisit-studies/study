@@ -119,9 +119,8 @@ export interface UIConfig {
 }
 
 /**
- * The Option interface is used to define the options for a dropdown, slider, radio, or checkbox response.
+ * The NumberOption interface is used to define the options for a slider response.
  * The label is the text that is displayed to the user, and the value is the value that is stored in the data file.
- * The Option interface is used in the Response interface.
  */
 export interface NumberOption {
   /** The label displayed to participants. */
@@ -131,9 +130,8 @@ export interface NumberOption {
 }
 
 /**
- * The Option interface is used to define the options for a dropdown, slider, radio, or checkbox response.
+ * The StringOption interface is used to define the options for a dropdown, radio, or checkbox response.
  * The label is the text that is displayed to the user, and the value is the value that is stored in the data file.
- * The Option interface is used in the Response interface.
  */
 export interface StringOption {
   /** The label displayed to participants. */
@@ -353,7 +351,7 @@ export interface DropdownResponse extends BaseResponse {
  */
 export interface SliderResponse extends BaseResponse {
   type: 'slider';
-  /** This defines the steps in the slider and the extent of the slider as an array of objects that have a label and a value, e.g. `[{label: "Bad", value: 0}, {label: "OK", value: 50}, {label: "Good", value: 100}]` */
+  /** This defines the steps in the slider and the extent of the slider as an array of objects that have a label and a value. */
   options: NumberOption[];
 }
 

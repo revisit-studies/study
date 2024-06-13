@@ -891,7 +891,7 @@
     },
     "NumberOption": {
       "additionalProperties": false,
-      "description": "The Option interface is used to define the options for a dropdown, slider, radio, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file. The Option interface is used in the Response interface.",
+      "description": "The NumberOption interface is used to define the options for a slider response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file.",
       "properties": {
         "label": {
           "description": "The label displayed to participants.",
@@ -1365,7 +1365,7 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses."
         },
         "options": {
-          "description": "This defines the steps in the slider and the extent of the slider as an array of objects that have a label and a value, e.g. `[{label: \"Bad\", value: 0}, {label: \"OK\", value: 50}, {label: \"Good\", value: 100}]`",
+          "description": "This defines the steps in the slider and the extent of the slider as an array of objects that have a label and a value.",
           "items": {
             "$ref": "#/definitions/NumberOption"
           },
@@ -1411,7 +1411,7 @@
     },
     "StringOption": {
       "additionalProperties": false,
-      "description": "The Option interface is used to define the options for a dropdown, slider, radio, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file. The Option interface is used in the Response interface.",
+      "description": "The StringOption interface is used to define the options for a dropdown, radio, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file.",
       "properties": {
         "label": {
           "description": "The label displayed to participants.",
