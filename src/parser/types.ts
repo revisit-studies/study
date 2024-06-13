@@ -895,7 +895,7 @@ export interface IndividualComponentAllResponsesCondition {
 
 /** The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on all components in the block are checked.
  *
- * Answers are checked against the correct answers defined in the IndividualComponent's [CorrectAnswer](./Answer). If no correct answers are defined, the component is considered correct by default.
+ * Answers are checked against the correct answers defined in the IndividualComponent's [CorrectAnswer](../..Answer). If no correct answers are defined, the component is considered correct by default.
  *
  * You might use this if a participant answers two questions in a block incorrectly. Here's an example of how to use the ComponentBlockCondition:
  *
@@ -929,7 +929,7 @@ export interface ComponentBlockCondition {
   to: string;
 }
 
-/** The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to the [ComponentBlockCondition](./ComponentBlockCondition), but it only checks a specific repeated component.
+/** The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to the [ComponentBlockCondition](../..ComponentBlockCondition), but it only checks a specific repeated component.
  *
  * Here's an example of how to use the RepeatedComponentBlockCondition:
  *
@@ -1074,9 +1074,9 @@ export type SkipConditions = (IndividualComponentSingleResponseCondition | Indiv
  * ]
  * ```
  *
- * The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../type-aliases/InterruptionBlock) for more specific information.
+ * The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../..type-aliases/InterruptionBlock) for more specific information.
  *
- * The skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../type-aliases/SkipConditions) for more specific information.
+ * The skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../..type-aliases/SkipConditions) for more specific information.
 */
 export interface ComponentBlock {
   /** The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property. */
@@ -1189,7 +1189,7 @@ export interface StudyConfig {
   studyMetadata: StudyMetadata;
   /** The UI configuration for the study. This is used to configure the UI of the app. */
   uiConfig: UIConfig;
-  /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../type-aliases/BaseComponents) for more information. */
+  /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../..type-aliases/BaseComponents) for more information. */
   baseComponents?: BaseComponents;
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
   components: Record<string, IndividualComponent | InheritedComponent>
