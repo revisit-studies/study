@@ -14,7 +14,7 @@
     },
     "uiConfig": {
         "contactEmail": "ltharri2@ncsu.edu",
-        "helpTextPath": "demo-brush-interactions/assets/tutorial.md",
+        "helpTextPath": "sumsifter/assets/introduction.md",
         "logoPath": "revisitAssets/revisitLogoSquare.svg",
         "withProgressBar": true,
         "autoDownloadStudy": false,
@@ -22,14 +22,6 @@
         "studyEndMsg": "**Thank you for completing the study. You have made SCADS proud!**"
     },
     "baseComponents": {
-        "scatterPlot": {
-            "description": "A scatterplot and accompanying bar chart.",
-            "type": "react-component",
-            "path": "demo-brush-interactions/assets/BrushPlot.tsx",
-            "nextButtonLocation": "sidebar",
-            "instructionLocation": "sidebar",
-            "response": []
-        },
         "summarySource": {
             "description": "A summary and source.",
             "type": "react-component",
@@ -104,7 +96,6 @@
                 "y": "Weight (lbs)",
                 "category": "Origin",
                 "ids": "id",
-                "brushType": "Rectangular Selection",
                 "hallucination": false
             },
             "response": [
@@ -128,7 +119,6 @@
                 "y": "Weight (lbs)",
                 "category": "Origin",
                 "ids": "id",
-                "brushType": "Rectangular Selection",
                 "hallucination": false
             },
             "response": [
@@ -151,7 +141,6 @@
                 "y": "Weight (lbs)",
                 "category": "Origin",
                 "ids": "id",
-                "brushType": "Rectangular Selection",
                 "hallucination": false
             },
             "response": [
@@ -174,7 +163,6 @@
                 "y": "Weight (lbs)",
                 "category": "Origin",
                 "ids": "id",
-                "brushType": "Rectangular Selection",
                 "hallucination": true
             },
             "response": [
@@ -197,7 +185,6 @@
                 "y": "Weight (lbs)",
                 "category": "Origin",
                 "ids": "id",
-                "brushType": "Rectangular Selection",
                 "hallucination": true
             },
             "response": [
@@ -227,7 +214,7 @@
         },
         "survey": {
             "type": "markdown",
-            "path": "demo-VLAT-mini-randomized/assets/survey.md",
+            "path": "sumsifter/assets/survey.md",
             "response": [
                 {
                     "id": "surveyAnything",
