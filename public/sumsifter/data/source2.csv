@@ -1,12 +1,12 @@
 id,text
 S1,<h2>SCADS 2024 Problem Book.</h2>
-S2,Violet B., Susanna Bitters, John M.  
-S3,"Conroy, R. "
-S4,"Jordan Crouser, Sue Mi Kim, J. "
-S5,"Bowman Light, Neil P. "
-S6,"Molino, Amanda Peterson, Elizabeth Richerson, Stephen Shauger, Ben Strickson, Aaron W., Julia S. "
-S7,Yang .
-S8,<p>April 2024 .</p>
+S2,"Violet B., Susanna Bitters, John M. Conroy, Jordan Crouser, Sue Mi Kim, Amanda Peterson Molino, Elizabeth Richerson, Stephen Shauger, Ben Strickson, Aaron W., Julia S. Yang, April 2024"
+S3," "
+S4," "
+S5," "
+S6," "
+S7," "
+S8," "
 S9,<h2>1 Introduction. </h2>
 S10,The Summer Conference on Applied Data Science (SCADS) is an annual eight-week summer research program held at the Laboratory for Analytic Sciences (LAS) that is focused on the research and development of Artificial Intelligence (AI) to assist US Intelligence Community (IC) data analysts. 
 S11,. SCADS identifies a multi-year Grand Challenge to focus the research toward solving a current mission challenge
@@ -253,7 +253,7 @@ S251,". Standard MS MARCO dataset is available from Microsoft or Huggingface Dat
 S252,"NeuCLIR1 - Created for the TREC 2022 NeuCLIR Track, this will also be used for the 2024 NeuCLIR track as well"
 S253,". Contains web pages from Common Crawl in Chinese, Persian, and Russian"
 S254,. Available through Huggingface Datasets .
-S255,References .
+S255,<h2>References . </h2>
 S256,"[1] White, C.T.; Molino, N.P.; Yang, J.S.; Conroy, J.M"
 S257,. occams: A Text Summarization Package
 S258,". Analytics 2023, 2, 546-559 ."
@@ -584,7 +584,7 @@ S582,". Thus, it can be informative to compute beyond-accuracy metrics for model
 S583,. See [7] for a discussion of beyond-accuracy metrics
 S584,". Additionally, see [25] for an example use of content diversity in model evaluation ."
 S585,Comparison of offline vs user studies and/or A/B testing: How well do accuracy (and beyond-accuracy) metrics predict user satisfaction? A sufficient sample size of users is necessary to answer this question. .
-S586,<h3>3.2 User Feedback .    </h3>
+S586,<h3>3.2 User Feedback .</h3>
 S587,"Feedback, either implicit user-item interactions or explicit ratings, is used to infer user preferences about items"
 S588,". For example, if we observe a long dwell time by a user on an online article, we might conclude that they liked the article (an example of implicit feedback)"
 S589,". Alternatively, if they provide a “thumbs up”, we obtain explicit information about their preference"
