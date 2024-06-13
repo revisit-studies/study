@@ -11,7 +11,7 @@ test('html demo works as intended', async ({ page }) => {
   await expect(introText).toBeVisible();
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check the page contains the question
   const questionText = await page.getByText('How many bars have a value greater than 1?');
@@ -27,7 +27,7 @@ test('html demo works as intended', async ({ page }) => {
   await input.fill('2');
 
   // Click on the next button
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check that the end of study text renders
   const endText = await page.getByText('Please wait while your answers are uploaded.');

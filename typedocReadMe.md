@@ -86,14 +86,14 @@ For more detailed documentation on the response section, check out the [document
 
 ## Base Components and Inheritance
 
-[Base Components](interfaces/StudyConfig#basecomponents) can be used to implement inheritance for components. This is often useful if you want to parameterize a component. For example: 
+[Base Components](type-aliases/BaseComponents) can be used to implement inheritance for components. This is often useful if you want to parameterize a component. For example: 
 
 * You might have a stimulus, such as an image, where you want to ask multiple different questions.  
 * You might have a generic implementation of a stimulus, such as a bar chart, and you want to pass in data to change how the stimulus appears. 
 
 In both of these cases, you can set up a component once as a `baseComponent`, including linking to the stimulus and including (partial) responses, but then later write inherited, short components that extend the base component with the specific functionality you want. 
 
-For examples of how to write a base component, refer to the [documentation](interfaces/StudyConfig#basecomponents) and to the [relevant tutorial](../getting-started/tutorial-questionnaire#adding-custom-html).
+For examples of how to write a base component, refer to the [documentation](type-aliases/BaseComponents) and to the [relevant tutorial](../tutorials/html-stimulus).
 
 
 ## Sequence
@@ -105,8 +105,8 @@ The sequence object of the study configuration defines (a) the order participant
     * **Random** order: the order of the components are randomized
     * **[Latin Square](https://en.wikipedia.org/wiki/Latin_square)**: permute the order of stimuli but ensure that for a set of participants, each component occurs at each index an equal amount of times throughout the sequence (e.g. if there are 100 participants and 10 components, each component is seen at each index 10 times).
 * **Sampling:**  `numSamples` draws a given number of items from a block. numSamples can be used in combination with each ordering strategy (while preserving ordering guarantees).
-* **Interruptions** can be used to insert breaks and attention checks into a block. See [InterruptionBlock](type-ailases/InterruptionBlock) for more details.
-* **Skip Logic** can be used to control flow based on the response to a question or a component block. See [SkipConditions](type-ailases/SkipConditions) for more details.
+* **Interruptions** can be used to insert breaks and attention checks into a block. See [InterruptionBlock](type-aliases/InterruptionBlock) for more details.
+* **Skip Logic** can be used to control flow based on the response to a question or a component block. See [SkipConditions](type-aliases/SkipConditions) for more details.
 
 All of these can be applied on arbitrarily nested "blocks", i.e., it is designed in a nested fashion which means that an entry in the "components" list can either be the name of a components or another `ComponentBlock`. For example, the overall structure of a study can be linear (introduction, consent, tutorial, trials, survey), but within trials we can use random order:  
 

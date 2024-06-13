@@ -1,6 +1,8 @@
 import { useForm } from '@mantine/form';
 import { useEffect, useState } from 'react';
-import { BaseResponse, Option, Response } from '../../parser/types';
+import {
+  BaseResponse, NumberOption, Response, StringOption,
+} from '../../parser/types';
 import { StoredAnswer } from '../../store/types';
 
 const queryParameters = new URLSearchParams(window.location.search);
@@ -87,7 +89,7 @@ export function areAnswersEqual(
 export function generateErrorMessage(
   response: BaseResponse,
   answer: { value?: string | string[]; checked?: string[] },
-  options?: Option[],
+  options?: (StringOption | NumberOption)[],
 ) {
   const { requiredValue, requiredLabel } = response;
 

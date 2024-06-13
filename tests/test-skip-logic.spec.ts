@@ -4,12 +4,12 @@ import { test, expect } from '@playwright/test';
 async function answerTrial1(page, q1, q2) {
   await page.getByLabel(q1).check();
   await page.getByLabel(q2).check();
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 }
 
 async function answerAttentionCheck(page, q1) {
   await page.getByLabel(q1).check();
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 }
 
 async function answerAttentionCheckBlock(page, numIncorrect) {
@@ -34,17 +34,17 @@ async function answerAttentionCheckBlock(page, numIncorrect) {
 
 async function verifyContinuingComponent(page) {
   await expect(page.getByText('This component exists to show that we didn\'t get skipped over.')).toBeVisible();
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 }
 
 async function verifyTargetComponent(page) {
   await expect(page.getByText('This component exists to show that we can choose where to skip to.')).toBeVisible();
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 }
 
 async function verifyTargetBlockComponent(page) {
   await expect(page.getByText('This component exists to show that we can choose a block to skip to.')).toBeVisible();
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 }
 
 async function verifyStudyEnd(page) {
