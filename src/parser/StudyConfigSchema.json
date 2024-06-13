@@ -30,7 +30,106 @@
     },
     "BaseComponents": {
       "additionalProperties": {
-        "$ref": "#/definitions/IndividualComponent"
+        "additionalProperties": false,
+        "properties": {
+          "correctAnswer": {
+            "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
+            "items": {
+              "$ref": "#/definitions/Answer"
+            },
+            "type": "array"
+          },
+          "description": {
+            "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
+            "type": "string"
+          },
+          "instruction": {
+            "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
+            "type": "string"
+          },
+          "instructionLocation": {
+            "$ref": "#/definitions/ResponseBlockLocation",
+            "description": "The location of the instructions."
+          },
+          "meta": {
+            "additionalProperties": {},
+            "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
+            "type": "object"
+          },
+          "nextButtonLocation": {
+            "$ref": "#/definitions/ResponseBlockLocation",
+            "description": "The location of the next button."
+          },
+          "nextButtonText": {
+            "description": "The text that is displayed on the next button.",
+            "type": "string"
+          },
+          "parameters": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
+                "type": "object"
+              },
+              {
+                "additionalProperties": {},
+                "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
+                "type": "object"
+              }
+            ],
+            "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
+          },
+          "path": {
+            "anyOf": [
+              {
+                "description": "The path to the markdown file. This should be a relative path from the public folder.",
+                "type": "string"
+              },
+              {
+                "description": "The path to the react component. This should be a relative path from the src/public folder.",
+                "type": "string"
+              },
+              {
+                "description": "The path to the image. This should be a relative path from the public folder.",
+                "type": "string"
+              },
+              {
+                "description": "The path to the website. This should be a relative path from the public folder or could be an external website.",
+                "type": "string"
+              }
+            ],
+            "description": "The path to the markdown file. This should be a relative path from the public folder."
+          },
+          "provideFeedback": {
+            "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+            "type": "boolean"
+          },
+          "response": {
+            "description": "The responses to the component",
+            "items": {
+              "$ref": "#/definitions/Response"
+            },
+            "type": "array"
+          },
+          "style": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "The style of the image. This is an object with css properties as keys and css values as values.",
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "markdown",
+              "react-component",
+              "image",
+              "website",
+              "questionnaire"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
       },
       "description": "The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;\n\n Using baseComponents:\n\n```js \"baseComponents\": { \"my-image-component\": {     \"instructionLocation\": \"sidebar\",     \"nextButtonLocation\": \"sidebar\",     \"path\": \"<study-name>/assets/my-image.jpg\",     \"response\": [         {             \"id\": \"my-image-id\",             \"options\": [                 {                     \"label\": \"Europe\",                     \"value\": \"Europe\"                 },                 {                     \"label\": \"Japan\",                     \"value\": \"Japan\"                 },                 {                     \"label\": \"USA\",                     \"value\": \"USA\"                 }             ],             \"prompt\": \"Your Selected Answer:\",             \"type\": \"dropdown\"         }     ],     \"type\": \"image\" } } ``` In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `\"baseComponent\":\"my-image-component\"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below: ```js \"components\": { \"q1\": {     \"baseComponent\": \"my-image-component\",     \"description\": \"Choosing section with largest GDP\",     \"instruction\": \"Which region has the largest GDP?\" }, \"q2\": {     \"baseComponent\": \"my-image-component\",     \"description\": \"Choosing section with lowest GDP\",     \"instruction\": \"Which region has the lowest GDP?\" }, \"q3\": {     \"baseComponent\": \"my-image-component\",     \"description\": \"Choosing section with highest exports of Wheat\",     \"instruction\": \"Which region had the most Wheat exported in 2022?\" } } ```",
       "type": "object"

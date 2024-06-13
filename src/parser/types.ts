@@ -1152,7 +1152,7 @@ In the above code snippet, we have a single base component which holds the infor
 }
 ```
    */
-export type BaseComponents = Record<string, IndividualComponent>;
+export type BaseComponents = Record<string, Partial<IndividualComponent>>;
 
 /**
  * The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.
