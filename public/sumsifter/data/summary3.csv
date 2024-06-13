@@ -13,4 +13,4 @@ id,text,sources
 12,It is essential to develop methods for combining graphic content with natural language text to improve summary quality and reduce cognitive load.,"S1067,S209"
 13,"The document highlights the creation of synthetic datasets, like the Zendia Synthetic Dataset, for training and evaluation purposes.","S247,S248"
 14,"The occams package is notably effective in generating high-quality summaries, significantly outperforming other summarization tools.","S31,S32"
-15,Analysts have reported significant improvements in their workflows after integrating the TLDRs into their daily routines.,"S1387,S1388"
+15,Analysts have reported significant improvements in their workflows after integrating the TLDRs into their daily routines.,"S1287,S1053"
