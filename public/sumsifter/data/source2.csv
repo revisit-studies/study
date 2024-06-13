@@ -1,13 +1,13 @@
 id,text
 S1,<h2>SCADS 2024 Problem Book.</h2>
 S2,"Violet B., Susanna Bitters, John M. Conroy, Jordan Crouser, Sue Mi Kim, Amanda Peterson Molino, Elizabeth Richerson, Stephen Shauger, Ben Strickson, Aaron W., Julia S. Yang, April 2024"
-S3," "
-S4," "
-S5," "
-S6," "
-S7," "
-S8," "
-S9,<h2>1 Introduction. </h2>
+S3,
+S4,
+S5,
+S6,
+S7,
+S8,
+S9,<h3>1 Introduction. </h3>
 S10,The Summer Conference on Applied Data Science (SCADS) is an annual eight-week summer research program held at the Laboratory for Analytic Sciences (LAS) that is focused on the research and development of Artificial Intelligence (AI) to assist US Intelligence Community (IC) data analysts. 
 S11,. SCADS identifies a multi-year Grand Challenge to focus the research toward solving a current mission challenge
 S12,"SCADS brings together approximately fifty personnel each year, including faculty, graduate students, industry professionals, researchers at National Laboratories and Federally Funded Research and Development Centers (FFRDCs), and government employees from the IC, to advance the research on the current Grand Challenge."
@@ -22,7 +22,7 @@ S20,". We have organized this document by focus areas, and note that some challe
 S21,". For each critical challenge and research question, we attempt to identify the scope (short, medium, or long-term) of the challenge or question, and also which other challenges and questions are related ."
 S22,Throughout this document we attempt to identify research areas which may be served by use of Large Language Models (LLMs) which have been an area of great focus in the field recently
 S23,". Two ubiquitous LLMs are GPT-3.5 and GPT-4, versions of which are incorporated into ChatGPT ."
-S24,<h2>2 Automatic Summarization. </h2>
+S24,<h3>2 Automatic Summarization. </h3>
 S25,Key to the creation of a TLDR will be the automatic summarization of large corpora of documents
 S26,. This process will involve both extractive and abstractive summarization
 S27,". While summarization for SCADS is primarily concerned with text, research in multi-modal summarization techniques is also encouraged"
@@ -253,7 +253,7 @@ S251,". Standard MS MARCO dataset is available from Microsoft or Huggingface Dat
 S252,"NeuCLIR1 - Created for the TREC 2022 NeuCLIR Track, this will also be used for the 2024 NeuCLIR track as well"
 S253,". Contains web pages from Common Crawl in Chinese, Persian, and Russian"
 S254,. Available through Huggingface Datasets .
-S255,<h2>References . </h2>
+S255,<h3>References . </h3>
 S256,"[1] White, C.T.; Molino, N.P.; Yang, J.S.; Conroy, J.M"
 S257,. occams: A Text Summarization Package
 S258,". Analytics 2023, 2, 546-559 ."
@@ -483,7 +483,7 @@ S481,"[28] Bajaj, P., Campos, D., Craswell, N., Deng, L., Gao, J., Liu, X., Maju
 S482,. (2016)
 S483,. Ms marco: A human generated machine reading comprehension dataset
 S484,. ArXiv Preprint ArXiv:1611.09268 .
-S485,<h2>3 Recommendation Systems. </h2>
+S485,<h3>3 Recommendation Systems. </h3>
 S486,"To tailor content to the specific needs and interests of individual knowledge workers, the creation of TLDRs will involve a recommender system, which is a filtering technique that provides personalized item recommendations on a per-user basis"
 S487,". The system can learn to predict “explicit” user feedback (e.g., thumbs up, star ratings) and/or “implicit” user feedback (e.g"
 S488,. dwell time)
@@ -653,7 +653,7 @@ S651,". article titles, text, or video content). ."
 S652,CiteULike [19]: Academic paper citations saved by CiteULike users
 S653,". Includes article text, citations, and user-defined tags ."
 S654,Wikidata (): Structured data useful for constructing knowledge graphs. .
-S655,<h2>References.</h2> .
+S655,<h3>References.</h3> .
 S656,[1] C
 S657,". Wu, F"
 S658,". Wu, S"
@@ -968,7 +968,7 @@ S966,". in Proceedings of the Twenty-Ninth International Joint Conference on Art
 S967,. [Online]
 S968,. Available:
 S969,. . .
-S970,<h2>4 Human-Computer Interaction . </h2>
+S970,<h3>4 Human-Computer Interaction . </h3>
 S971,At the core of the TLDR is the notion that the human knowledge worker trusts the Tailored Daily Report to deliver the information most relevant to the worker
 S972,". Similarly, it is critical that the algorithms behind the creation of the TLDR anticipate the current and future needs of the individual knowledge worker and satisfy those needs"
 S973,". A TDLR must also inculcate the appropriate level of trust between the models and the users, so that a human user is able to appropriately calibrate their decision making processes based on AI explanations and clear representations of model accuracy."
@@ -1071,7 +1071,7 @@ S1069,Question 4.4d How can we best collect and leverage analyst input and inter
 S1070,Critical Challenge 4.D Develop an interface such that a user can navigate from summaries to the underlying documents
 S1071,. Scope: medium-term .
 S1072,"Question 4.4e What type of presentation is most effective for providing users a summary of a conversational audio file? Scope: medium-term, Related: Sections 2.6, 4.2, 4.3 ."
-S1073,<h2>References . </h2>
+S1073,<h3>References . </h3>
 S1074,[1] S
 S1075,". Hepenstal, L"
 S1076,". Zhang, and B"
@@ -1187,7 +1187,7 @@ S1185,". Chen, et al., “Explainable recommendation: A survey and new perspecti
 S1186,". 14, no"
 S1187,". 1, pp"
 S1188,". 1–101, 2020. ."
-S1189,<h2>5 Data Set Creation and/or Augmentation . </h2>
+S1189,<h3>5 Data Set Creation and/or Augmentation . </h3>
 S1190,Research into each of the preceding areas of TLDR creation requires data
 S1191,. A particular challenge is finding data sets appropriate for use in all of the SCADS research areas at a scale that enables meaningful outcomes
 S1192,. Creating a data set specific to the SCADS grand challenge would enable researchers to utilize the same data and represent an end-to-end TLDR use case
@@ -1240,14 +1240,14 @@ S1238,". Scope: medium-term, Related: Section 5.1 ."
 S1239,"While the Zendian dataset is useful for some research tasks, it does not currently contain enough user feedback data to be useful for creating recommender systems. ."
 S1240,"Question 5.3c Given a synthetic dataset, can we create synthetic user-item interaction data sufficient to enable recommender systems research"
 S1241,". Scope: medium-term, Related: Section 5.1 ."
-S1242,<h2>6 Other Areas . </h2>
+S1242,<h3>6 Other Areas . </h3>
 S1243,Other areas of research will also be critical to the creation of TLDRs
 S1244,". Some of those areas are anticipated, but do not fit into one of the categories above"
 S1245,. Some areas are unanticipated
 S1246,". We welcome projects in areas not stipulated here which will serve to further the eventual goal of creating Tailored Daily Reports for individual IC knowledge workers, and ask participants to coordinate with SCADS organizers to ensure such projects are aligned with SCADS objectives ."
 S1247,"While we plan to hold a classified post-conference workshop during SCADS 2024, it will focus on questions of infrastructure and specific use cases, not general research"
 S1248,. We anticipate that all research involving the TLDR will remain completely unclassified in 2024 .
-S1249,<h2>Appendix A . </h2>
+S1249,<h3>Appendix A . </h3>
 S1250,. Quick Start Ideas .
 S1251,We sketch an idea with the coding details in a notebook in the occams repository
 S1252,. The outline below gives improved ROUGE scores on several summarization datasets .
@@ -1265,7 +1265,7 @@ S1263,Compute a matrix-vector product between the term-sentence matrix and the a
 S1264,Generate summaries for the test data with the computed term weights .
 S1265,This experiment could be conducted by using a sample of real world cyber threat intelligence documents to fine-tune a number of different summarization machine learning models
 S1266,". To assess this approach, take the provided set of realistic intelligence questions, written by Elemendar’s lead analyst, and try to answer the questions with your own summarization tool and see if you can beat the benchmark scores set by our analysts and ChatGPT ."
-S1267, <h2>Appendix B . </h2>
+S1267, <h3>Appendix B . </h3>
 S1268,. SAGA .
 S1269,"Figure 1 gives an illustration where we are given five items a, b, c, d, and e, as well as pairwise similarity and dissimilarity scores"
 S1270,. Note that each dissimilarity score is the complement of the corresponding similarity score
@@ -1286,7 +1286,7 @@ S1284,"Thus, I(X) gives the expected number of clusters in the set X with respec
 S1285,"Given two sets X and Y, we can then define a similarity score between them as follows: ."
 S1286,SAGA also defines a directional similarity between two sets by the formula: .
 S1287,which is interpreted as the proportion of information in X and Y relative to the amount of information known in Y .
-S1288,<h2>Appendix C . </h2>
+S1288,<h3>Appendix C . </h3>
 S1289,. Analyst Input on TLDR .
 S1290,"The job of the intelligence analyst is multi-faceted, and the analyst workflow is complex"
 S1291,". A day in the life of an analyst is a lot like a snowflake–no two are the same, but the underlying structures remain constant"
