@@ -6,39 +6,37 @@ interface SourceProps {
   activeSourceId: string | null;
 }
 
-function SourceItem({ source, activeSourceId }: { source: { id?: string; text: string }; activeSourceId: string | null }) {
+function SourceItem({ source, isActive }: { source: { id?: string; text: string }; isActive: boolean }) {
   const ref = React.useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    if (source.id === activeSourceId) {
+    if (isActive) {
       ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
     }
-  }, [source.id, activeSourceId]);
+  }, [source.id, isActive]);
 
   return (
     <Text
       ref={ref}
       component="span"
-      bg={source.id === activeSourceId ? 'blue.1' : 'transparent'}
+      bg={isActive ? 'blue.3' : 'transparent'}
       px={5}
       dangerouslySetInnerHTML={{ __html: source.text }}
     />
   );
 }
 
+const MemoizedSourceItem = React.memo(SourceItem);
+
 function Source({ sourceList, activeSourceId }: SourceProps) {
   const combinedText = sourceList.map((source, index) => (
-    <React.Fragment key={index}>
-      <SourceItem source={source} activeSourceId={activeSourceId} />
-    </React.Fragment>
+    <MemoizedSourceItem key={index} source={source} isActive={source.id === activeSourceId} />
   ));
 
   return (
-    <ScrollArea style={{ height: '800px' }}>
+    <ScrollArea style={{ height: 'calc(100vh - 105px)' }}>
       <Title order={2}>Source Document</Title>
-      <Text>
-        {combinedText}
-      </Text>
+      {combinedText}
     </ScrollArea>
   );
 }

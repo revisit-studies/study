@@ -1,12 +1,16 @@
 import React from 'react';
-import { Badge, Title, Text } from '@mantine/core';
+import {
+  Badge, Title, ScrollArea, Text,
+} from '@mantine/core';
+import style from './sumsifter.module.css';
 
 interface SummaryProps {
   sentences: { id: string, text: string; sources: string[] }[];
   onSourceClick: (summaryId: string | null, sourceId: string | null) => void;
+  activeSourceId: string | null;
 }
 
-function Summary({ sentences, onSourceClick }: SummaryProps) {
+function Summary({ sentences, onSourceClick, activeSourceId }: SummaryProps) {
   const paragraph = sentences.map((sentence, index) => {
     // Use a regular expression to capture the text before and the last punctuation mark
     const regex = /^(.*?)([.?!])?$/;
@@ -24,8 +28,15 @@ function Summary({ sentences, onSourceClick }: SummaryProps) {
             {sentence.sources.map((src, idx) => (
               <React.Fragment key={idx}>
                 <Badge
+                  className={style.badge}
                   onClick={() => onSourceClick(sentence.id, src)}
+                  onMouseEnter={() => {
+                    if (activeSourceId !== src) {
+                      onSourceClick(null, null);
+                    }
+                  }}
                   style={{ cursor: 'pointer' }}
+                  color={activeSourceId === src ? 'blue.5' : 'gray.5'}
                 >
                   {src}
                 </Badge>
@@ -42,10 +53,12 @@ function Summary({ sentences, onSourceClick }: SummaryProps) {
   });
 
   return (
-    <Text>
-      <Title order={2}>LLM-Generated Summary</Title>
-      {paragraph}
-    </Text>
+    <ScrollArea style={{ height: 'calc(100vh - 105px)' }}>
+      <Title order={2} mb={16}>LLM-Generated Summary</Title>
+      <Text>
+        {paragraph}
+      </Text>
+    </ScrollArea>
   );
 }
 

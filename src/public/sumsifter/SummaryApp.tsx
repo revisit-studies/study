@@ -119,7 +119,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   return (
     <Grid>
       <Grid.Col span={6}>
-        <Summary sentences={summaryData} onSourceClick={handleSourceClick} />
+        <Summary sentences={summaryData} onSourceClick={handleSourceClick} activeSourceId={activeSourceId} />
       </Grid.Col>
       <Grid.Col span={6}>
         <Source sourceList={sourcesData} activeSourceId={activeSourceId} />
