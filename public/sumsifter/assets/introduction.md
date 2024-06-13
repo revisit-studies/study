@@ -1,18 +1,21 @@
-# Summary User Study Survey
-
-This is not really a study. It is a survey disguised as a study.
-
-## Summary Tasks
-You will have a few summary and source pairs to compare.
-Please take the task, but also think about what the task **should** be.
-
-We can change details: the source links, the datasets, the number of summaries, sources, and so on.
-
-The goal is to figure out what types of studies we might run.
-
-## Design Feedback Tasks
-
-We have a few additional trials which are simply for you to provide feedback on and to riff on.
+## SumSifter Design Survey
 
 
-... and that's it! Thanks for your help.
+Welcome! What you are about to do is not a real experiment.   
+It is just a survey that looks like an experiment.
+
+We are testing our platform, interaction capabilities, and data collection.  
+
+**We also need your help!**
+
+You will encounter a few (about 5) sample summary reading tasks, and then a few design feedback trials.  
+More on those in a moment.
+
+In general though, we are mainly looking for your input and ideas.  
+Feel free to poke around, explore, and comment as ideas come to you.
+
+We believe that the final design may look quite different as the weeks go forward.
+
+-- The SumSifter Team
+
+

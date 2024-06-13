@@ -1,13 +1,13 @@
 {
     "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
-        "title": "Let's go SumSifter",
+        "title": "SumSifter Team Summary Design Survey",
         "version": "pilot",
         "authors": [
-            "The SCADS Team"
+            "SCADS SumSifter Team"
         ],
         "date": "2024-06-10",
-        "description": "A study comparing summary methods and interaction.",
+        "description": "Brief survey on .",
         "organizations": [
             "WPI"
         ]
@@ -38,45 +38,12 @@
             "response": [
                 {
                     "id": "prolificId",
-                    "prompt": "Please enter your Name (or initials, some way we can find you!)",
+                    "prompt": "Please enter your Name (or initials, or stay anonymous. You do you...)",
                     "required": true,
                     "location": "belowStimulus",
                     "type": "shortText",
                     "placeholder": "Prolific ID",
                     "paramCapture": "PROLIFIC_PID"
-                }
-            ]
-        },
-        "consent": {
-            "type": "markdown",
-            "path": "sumsifter/assets/consent.md",
-            "nextButtonText": "Agree",
-            "response": [
-                {
-                    "id": "signature",
-                    "prompt": "Your signature",
-                    "required": true,
-                    "location": "belowStimulus",
-                    "type": "shortText",
-                    "placeholder": "Please provide your signature"
-                },
-                {
-                    "id": "accept",
-                    "prompt": "Do you consent to the study and wish to continue?",
-                    "required": true,
-                    "requiredValue": "yes",
-                    "location": "belowStimulus",
-                    "type": "radio",
-                    "options": [
-                        {
-                            "label": "Decline",
-                            "value": "no"
-                        },
-                        {
-                            "label": "Accept",
-                            "value": "yes"
-                        }
-                    ]
                 }
             ]
         },
@@ -88,13 +55,10 @@
         },
         "sumsift1": {
             "baseComponent": "summarySource",
-            "instruction": "Please review the summary on the left. You may click source links to highlight relevant passages in the source document on the right. Your task is to determine if the summary is accurate and complete. If you believe the summary is accurate and complete, or if you believe the summary is inaccurate or incomplete, please provide feedback in the text box below.",
+            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try mousing over the blue source links on the left.",
             "parameters": {
                 "datasetSource": "source2",
                 "datasetSummary": "summary1",
-                "x": "Miles per Gallon",
-                "y": "Weight (lbs)",
-                "category": "Origin",
                 "ids": "id",
                 "hallucination": false
             },
@@ -111,13 +75,10 @@
         },
         "sumsift2": {
             "baseComponent": "summarySource",
-            "instruction": "Please review the summary on the left. You may click source links to highlight relevant passages in the source document on the right. Your task is to determine if the summary is accurate and complete. If you believe the summary is accurate and complete, or if you believe the summary is inaccurate or incomplete, please provide feedback in the text box below.",
+            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try mousing over the blue source links on the left.",
             "parameters": {
                 "datasetSource": "source2",
                 "datasetSummary": "summary2",
-                "x": "Miles per Gallon",
-                "y": "Weight (lbs)",
-                "category": "Origin",
                 "ids": "id",
                 "hallucination": false
             },
@@ -133,13 +94,10 @@
         },
         "sumsift3": {
             "baseComponent": "summarySource",
-            "instruction": "Please review the summary on the left. You may click source links to highlight relevant passages in the source document on the right. Your task is to determine if the summary is accurate and complete. If you believe the summary is accurate and complete, or if you believe the summary is inaccurate or incomplete, please provide feedback in the text box below.",
+            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try mousing over the blue source links on the left.",
             "parameters": {
                 "datasetSource": "source2",
                 "datasetSummary": "summary3",
-                "x": "Miles per Gallon",
-                "y": "Weight (lbs)",
-                "category": "Origin",
                 "ids": "id",
                 "hallucination": false
             },
@@ -155,13 +113,10 @@
         },
         "sumsift4": {
             "baseComponent": "summarySource",
-            "instruction": "Please review the summary on the left. You may click source links to highlight relevant passages in the source document on the right. Your task is to determine if the summary is accurate and complete. If you believe the summary is accurate and complete, or if you believe the summary is inaccurate or incomplete, please provide feedback in the text box below.",
+            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try mousing over the blue source links on the left.",
             "parameters": {
                 "datasetSource": "source2",
                 "datasetSummary": "summary4",
-                "x": "Miles per Gallon",
-                "y": "Weight (lbs)",
-                "category": "Origin",
                 "ids": "id",
                 "hallucination": true
             },
@@ -177,13 +132,10 @@
         },   
         "sumsift5": {
             "baseComponent": "summarySource",
-            "instruction": "Please review the summary on the left. You may click source links to highlight relevant passages in the source document on the right. Your task is to determine if the summary is accurate and complete. If you believe the summary is accurate and complete, or if you believe the summary is inaccurate or incomplete, please provide feedback in the text box below.",
+            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try mousing over the blue source links on the left.",
             "parameters": {
                 "datasetSource": "source2",
                 "datasetSummary": "summary5",
-                "x": "Miles per Gallon",
-                "y": "Weight (lbs)",
-                "category": "Origin",
                 "ids": "id",
                 "hallucination": true
             },
@@ -218,7 +170,7 @@
             "response": [
                 {
                     "id": "surveyAnything",
-                    "prompt": "Anything else you'd like to tell us?",
+                    "prompt": "Anything else you'd like to tell us or share?",
                     "required": true,
                     "location": "belowStimulus",
                     "type": "longText",
@@ -228,7 +180,7 @@
         },
         "feedback-process-1":{
             "description": "Planned future flow",
-            "instruction": "Please go through the planned future flow, and suggest any changes or feedback at the end.",
+            "instruction": "Please go through the planned future flow (next buttons when ready), and suggest any changes or feedback at the end.",
             "type": "image",
             "path": "sumsifter/assets/image-1.png",
             "style": {
@@ -240,7 +192,7 @@
         },
         "feedback-process-2":{
             "description": "Planned future flow",
-            "instruction": "Please go through the planned future flow, and suggest any changes or feedback at the end.",
+            "instruction": "Please go through the planned future flow (next buttons when ready), and suggest any changes or feedback at the end.",
             "type": "image",
             "path": "sumsifter/assets/image-2.png",
             "style": {
@@ -252,7 +204,7 @@
         },
         "feedback-process-3":{
             "description": "Planned future flow",
-            "instruction": "Please go through the planned future flow, and suggest any changes or feedback at the end.",
+            "instruction": "Please go through the planned future flow (next buttons when ready), and suggest any changes or feedback at the end.",
             "type": "image",
             "path": "sumsifter/assets/image-3.png",
             "style": {
@@ -262,7 +214,7 @@
             "response": [
                 {
                     "id": "response",
-                    "prompt": "Answer:",
+                    "prompt": "Any feedback on this design sequence?",
                     "required": true,
                     "location": "sidebar",
                     "type": "longText"
@@ -275,6 +227,7 @@
         "order": "fixed",
         "components": [
             "introduction",
+            "tutorial",
             {
                 "order": "random",
                 "components": [
