@@ -73,7 +73,7 @@
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "likert",
-                    "preset": 9,
+                    "numItems": 9,
                     "rightLabel": "Like",
                     "leftLabel": "Dislike"
                 },

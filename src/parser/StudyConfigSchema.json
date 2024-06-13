@@ -148,7 +148,7 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "options": {
           "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
@@ -187,7 +187,6 @@
       },
       "required": [
         "id",
-        "location",
         "options",
         "prompt",
         "required",
@@ -323,7 +322,7 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "options": {
           "description": "The options that are displayed in the dropdown.",
@@ -366,7 +365,6 @@
       },
       "required": [
         "id",
-        "location",
         "options",
         "prompt",
         "required",
@@ -388,7 +386,7 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
@@ -420,7 +418,6 @@
       },
       "required": [
         "id",
-        "location",
         "prompt",
         "required",
         "type"
@@ -701,7 +698,7 @@
     },
     "LikertResponse": {
       "additionalProperties": false,
-      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the preset. For example, preset: 5 will render 5 radio buttons, and preset: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likerts Scale:\n\n```js {    \"id\": \"q-satisfaction\",    \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\",    \"required\": true,    \"location\": \"aboveStimulus\",    \"type\": \"likert\",    \"leftLabel\": \"Not Enjoyable\",    \"rightLabel\": \"Very Enjoyable\",    \"preset\": 5 } ```",
+      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likerts Scale:\n\n```js {    \"id\": \"q-satisfaction\",    \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\",    \"required\": true,    \"location\": \"aboveStimulus\",    \"type\": \"likert\",    \"leftLabel\": \"Not Enjoyable\",    \"rightLabel\": \"Very Enjoyable\",    \"numItems\": 5 } ```",
       "properties": {
         "desc": {
           "description": "The description of the likert scale.",
@@ -721,15 +718,15 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "numItems": {
+          "description": "The number of options to render.",
+          "type": "number"
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
           "type": "string"
-        },
-        "preset": {
-          "description": "The number of options to render.",
-          "type": "number"
         },
         "prompt": {
           "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
@@ -761,8 +758,7 @@
       },
       "required": [
         "id",
-        "location",
-        "preset",
+        "numItems",
         "prompt",
         "required",
         "type"
@@ -783,7 +779,7 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
@@ -819,7 +815,6 @@
       },
       "required": [
         "id",
-        "location",
         "prompt",
         "required",
         "type"
@@ -922,7 +917,7 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "max": {
           "description": "The maximum value that is accepted in the input.",
@@ -966,7 +961,6 @@
       },
       "required": [
         "id",
-        "location",
         "prompt",
         "required",
         "type"
@@ -1049,7 +1043,7 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "options": {
           "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
@@ -1092,7 +1086,6 @@
       },
       "required": [
         "id",
-        "location",
         "options",
         "prompt",
         "required",
@@ -1288,7 +1281,7 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "paramCapture": {
           "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
@@ -1324,7 +1317,6 @@
       },
       "required": [
         "id",
-        "location",
         "prompt",
         "required",
         "type"
@@ -1365,7 +1357,7 @@
         },
         "location": {
           "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses."
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "options": {
           "description": "This defines the steps in the slider and the extent of the slider as an array of objects that have a label and a value.",
@@ -1404,7 +1396,6 @@
       },
       "required": [
         "id",
-        "location",
         "options",
         "prompt",
         "required",

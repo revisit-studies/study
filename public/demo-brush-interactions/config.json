@@ -496,7 +496,7 @@
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "likert",
-                    "preset": 7,
+                    "numItems": 7,
                     "rightLabel": "Like",
                     "leftLabel": "Dislike"
                 },
@@ -506,7 +506,7 @@
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "likert",
-                    "preset": 7,
+                    "numItems": 7,
                     "rightLabel": "Like",
                     "leftLabel": "Dislike"
                 },
@@ -516,7 +516,7 @@
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "likert",
-                    "preset": 7,
+                    "numItems": 7,
                     "rightLabel": "Like",
                     "leftLabel": "Dislike"
                 },
@@ -526,7 +526,7 @@
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "likert",
-                    "preset": 7,
+                    "numItems": 7,
                     "rightLabel": "Like",
                     "leftLabel": "Dislike"
                 },
