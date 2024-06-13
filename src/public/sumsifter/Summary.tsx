@@ -24,8 +24,7 @@ function Summary({ sentences, onSourceClick }: SummaryProps) {
             {sentence.sources.map((src, idx) => (
               <React.Fragment key={idx}>
                 <Badge
-                  onMouseEnter={() => onSourceClick(sentence.id, src)}
-                  onMouseLeave={() => onSourceClick(null, null)}
+                  onClick={() => onSourceClick(sentence.id, src)}
                   style={{ cursor: 'pointer' }}
                 >
                   {src}
