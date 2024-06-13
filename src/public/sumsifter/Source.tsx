@@ -35,7 +35,7 @@ function Source({ sourceList, activeSourceId }: SourceProps) {
 
   return (
     <ScrollArea style={{ height: '800px' }}>
-      <Title order={2}>Source</Title>
+      <Title order={2}>Source Document</Title>
       <Text>
         {combinedText}
       </Text>

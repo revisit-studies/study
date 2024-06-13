@@ -44,7 +44,7 @@ function Summary({ sentences, onSourceClick }: SummaryProps) {
 
   return (
     <Text>
-      <Title order={2}>Summary</Title>
+      <Title order={2}>LLM-Generated Summary</Title>
       {paragraph}
     </Text>
   );

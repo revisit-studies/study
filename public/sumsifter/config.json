@@ -7,7 +7,7 @@
             "SCADS SumSifter Team"
         ],
         "date": "2024-06-10",
-        "description": "Brief survey on .",
+        "description": "Brief survey on summaries and source designs.",
         "organizations": [
             "WPI"
         ]
@@ -50,7 +50,13 @@
         "tutorial": {
             "type": "markdown",
             "path": "sumsifter/assets/tutorial.md",
-            "nextButtonText": "",
+            "nextButtonText": "Begin",
+            "response": []
+        },
+        "feedback-tutorial": {
+            "type": "markdown",
+            "path": "sumsifter/assets/feedback-tutorial.md",
+            "nextButtonText": "Continue",
             "response": []
         },
         "sumsift1": {
@@ -149,21 +155,6 @@
                 }
             ]
         },     
-        "post-study-survey": {
-            "type": "questionnaire",
-            "response": [
-                {
-                    "id": "q1",
-                    "prompt": "Sample likert question: How useful did you find the attribution of each sentence in the summary to the source document? ",
-                    "required": true,
-                    "location": "aboveStimulus",
-                    "type": "likert",
-                    "preset": 7,
-                    "rightLabel": "Like",
-                    "leftLabel": "Dislike"
-                }
-            ]
-        },
         "survey": {
             "type": "markdown",
             "path": "sumsifter/assets/survey.md",
@@ -214,7 +205,7 @@
             "response": [
                 {
                     "id": "response",
-                    "prompt": "Any feedback on this design sequence?",
+                    "prompt": "Any feedback on this more complex design for summary and source studies with multiple documents?",
                     "required": true,
                     "location": "sidebar",
                     "type": "longText"
@@ -238,6 +229,7 @@
                     "sumsift5"
                 ]
             },
+            "feedback-tutorial",
             "feedback-process-1",
             "feedback-process-2",
             "feedback-process-3",
