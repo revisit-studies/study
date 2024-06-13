@@ -7,7 +7,7 @@ test('test', async ({ page }) => {
   // Check for introduction page
   const introText = await page.getByText('Welcome to our study. This is an example survey study. It asks basic questions o');
   await expect(introText).toBeVisible();
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Fill the survey
   await page.getByPlaceholder('Enter your preference').click();
@@ -18,7 +18,8 @@ test('test', async ({ page }) => {
   await page.getByPlaceholder('Enter your long comments here').fill('asdf');
   await page.locator('.mantine-Slider-track').click();
   await page.getByRole('checkbox', { name: 'Option 2' }).click();
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('radio', { name: 'Option 2' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check that the thank you message is displayed
   const endText = await page.getByText('Please wait while your answers are uploaded.');

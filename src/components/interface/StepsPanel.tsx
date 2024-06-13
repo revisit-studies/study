@@ -1,10 +1,9 @@
 import {
-  Badge, NavLink, Popover, Text,
+  Badge, Box, NavLink, Popover, Text,
 } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 import { IconArrowsShuffle, IconBrain } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
-import { createPortal } from 'react-dom';
 import { ComponentBlock } from '../../parser/types';
 import { Sequence } from '../../store/types';
 import { deepCopy } from '../../utils/deepCopy';
@@ -91,13 +90,15 @@ function StepItem({
   startIndex,
   interruption,
   subSequence,
+  participantView,
 }: {
   step: string;
   disabled: boolean;
   fullSequence: Sequence;
   startIndex: number;
-  interruption: boolean,
+  interruption: boolean;
   subSequence?: Sequence;
+  participantView: boolean;
 }) {
   const studyId = useStudyId();
   const navigate = useNavigate();
@@ -108,12 +109,13 @@ function StepItem({
   const task = step in studyConfig.components && studyConfig.components[step];
 
   const stepIndex = subSequence && subSequence.components.slice(startIndex).includes(step) ? findTaskIndexInSequence(fullSequence, step, startIndex, subSequence.orderPath) : -1;
-  const active = currentStep === stepIndex;
+
+  const active = participantView ? currentStep === stepIndex : currentStep === `reviewer-${step}`;
 
   return (
-    <Popover position="left" withArrow arrowSize={10} shadow="md" opened={opened} offset={20}>
+    <Popover withinPortal position="left" withArrow arrowSize={10} shadow="md" opened={opened} offset={20}>
       <Popover.Target>
-        <div
+        <Box
           onMouseEnter={open}
           onMouseLeave={close}
         >
@@ -124,40 +126,39 @@ function StepItem({
               height: '32px',
             }}
             label={(
-              <div>
+              <Box>
                 {interruption && <IconBrain size={16} style={{ marginRight: 4, marginBottom: -2 }} color="orange" />}
-                {active ? <strong>{step}</strong> : step}
-              </div>
+                {active ? <Text size="sm" span fw="700" display="inline">{step}</Text> : <Text size="sm" display="inline">{step}</Text>}
+              </Box>
             )}
-            onClick={() => navigate(`/${studyId}/${stepIndex}`)}
+            onClick={() => (participantView ? navigate(`/${studyId}/${stepIndex}`) : navigate(`/${studyId}/reviewer-${step}`))}
             disabled={disabled}
           />
-        </div>
+        </Box>
       </Popover.Target>
-      {task && (task.description || task.meta) && createPortal(
+      {task && (task.description || task.meta) && (
         <Popover.Dropdown onMouseLeave={close}>
           <Text size="sm">
-            <div>
+            <Box>
               {task.description && (
-                <div>
+                <Box>
                   <Text fw={900} display="inline-block" mr={2}>
                     Description:
                   </Text>
                   <Text fw={400} component="span">
                     {task.description}
                   </Text>
-                </div>
+                </Box>
               )}
               {task.meta && (
                 <Text>
                   <Text fw="900" component="span">Task Meta: </Text>
-                  <pre style={{ margin: 0, padding: 0 }}>{`${JSON.stringify(task.meta, null, 2)}`}</pre>
+                  <Text component="pre" style={{ margin: 0, padding: 0 }}>{`${JSON.stringify(task.meta, null, 2)}`}</Text>
                 </Text>
               )}
-            </div>
+            </Box>
           </Text>
-        </Popover.Dropdown>,
-        document.body,
+        </Popover.Dropdown>
       )}
     </Popover>
   );
@@ -167,31 +168,42 @@ export function StepsPanel({
   configSequence,
   fullSequence,
   participantSequence,
+  participantView,
 }: {
-  configSequence: ComponentBlockWithOrderPath,
-  fullSequence: Sequence,
-  participantSequence?: Sequence,
+  configSequence: ComponentBlockWithOrderPath;
+  fullSequence: Sequence;
+  participantSequence?: Sequence;
+  participantView: boolean;
 }) {
   // If the participantSequence is provided, reorder the components
   let components = deepCopy(configSequence.components);
-  if (participantSequence) {
+  if (participantSequence && participantView) {
     const reorderedComponents = reorderComponents(deepCopy(configSequence.components), deepCopy(participantSequence.components));
     components = reorderedComponents;
   }
 
+  if (!participantView) {
+    // Add interruptions to the sequence
+    components = [
+      ...(configSequence.interruptions?.flatMap((interruption) => interruption.components) || []),
+      ...components,
+    ];
+  }
+
   return (
-    <div>
+    <>
       {components.map((step, idx) => {
         if (typeof step === 'string') {
           return (
             <StepItem
               key={idx}
               step={step}
-              disabled={participantSequence?.components[idx] !== step}
+              disabled={participantView && participantSequence?.components[idx] !== step}
               fullSequence={fullSequence}
               startIndex={idx}
               interruption={(configSequence.interruptions && (configSequence.interruptions.findIndex((i) => i.components.includes(step)) > -1)) || false}
               subSequence={participantSequence}
+              participantView={participantView}
             />
           );
         }
@@ -206,45 +218,44 @@ export function StepsPanel({
           <NavLink
             key={idx}
             label={(
-              <div
+              <Box
                 style={{
                   opacity: sequenceStepsLength > 0 ? 1 : 0.5,
                 }}
               >
-                Group:
-                <Badge ml={5}>
-                  {sequenceStepsLength}
-                  /
-                  {orderSteps.length}
-                </Badge>
-                {step.interruptions && (
-                <Badge ml={5} color="orange">
-                  {participantSubSequence?.components.filter((s) => typeof s === 'string' && step.interruptions?.flatMap((i) => i.components).includes(s)).length || 0}
-                </Badge>
-                )}
-                <Text c="dimmed" display="inline" mr={5} ml={5}>
+                <Text size="sm" display="inline">
                   {step.order}
                 </Text>
                 {step.order === 'random' || step.order === 'latinSquare' ? (
                   <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
                 ) : null}
-              </div>
+                {participantView && (
+                <Badge ml={5} variant="light">
+                  {sequenceStepsLength}
+                  /
+                  {orderSteps.length}
+                </Badge>
+                )}
+                {participantView && step.interruptions && (
+                <Badge ml={5} color="orange" variant="light">
+                  {participantSubSequence?.components.filter((s) => typeof s === 'string' && step.interruptions?.flatMap((i) => i.components).includes(s)).length || 0}
+                </Badge>
+                )}
+              </Box>
             )}
             defaultOpened
             childrenOffset={32}
             style={{
               lineHeight: '32px',
               height: '32px',
-              position: 'sticky',
-              backgroundColor: '#fff',
             }}
           >
-            <div style={{ borderLeft: '1px solid #e9ecef' }}>
-              <StepsPanel configSequence={step} participantSequence={participantSubSequence} fullSequence={fullSequence} />
-            </div>
+            <Box style={{ borderLeft: '1px solid #e9ecef' }}>
+              <StepsPanel configSequence={step} participantSequence={participantSubSequence} fullSequence={fullSequence} participantView={participantView} />
+            </Box>
           </NavLink>
         );
       })}
-    </div>
+    </>
   );
 }

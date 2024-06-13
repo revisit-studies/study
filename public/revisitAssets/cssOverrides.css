@@ -1,0 +1,7 @@
+.no-last-child-bottom-padding > *:last-child {
+  padding-bottom: 0 !important;
+}
+
+.no-last-child-bottom-padding {
+  font-weight: 500;
+}

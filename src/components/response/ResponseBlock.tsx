@@ -5,9 +5,9 @@ import {
   IndividualComponent,
   ResponseBlockLocation,
 } from '../../parser/types';
-import { useCurrentStep } from '../../routes/utils';
+import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
 import {
-  useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,
+  useStoreDispatch, useStoreSelector, useStoreActions,
 } from '../../store/store';
 
 import { deepCopy } from '../../utils/deepCopy';
@@ -30,7 +30,7 @@ export default function ResponseBlock({
   style,
 }: Props) {
   const currentStep = useCurrentStep();
-  const currentComponent = useFlatSequence()[currentStep];
+  const currentComponent = useCurrentComponent();
   const storedAnswer = status?.answer;
 
   const configInUse = config as IndividualComponent;
@@ -77,7 +77,7 @@ export default function ResponseBlock({
 
   return (
     <div style={style}>
-      {responses.map((response) => (
+      {responses.map((response, index) => (
         <React.Fragment key={`${response.id}-${currentStep}`}>
           {response.hidden ? (
             ''
@@ -91,6 +91,7 @@ export default function ResponseBlock({
                   }),
                 }}
                 response={response}
+                index={index + 1}
               />
               {hasCorrectAnswerFeedback && checkClicked && (
                 <Text>
@@ -102,7 +103,7 @@ export default function ResponseBlock({
         </React.Fragment>
       ))}
 
-      <Group position="right" spacing="xs" mt="xl">
+      <Group justify="right" gap="xs">
         {hasCorrectAnswerFeedback && showNextBtn && (
           <Button
             onClick={() => setCheckClicked(true)}

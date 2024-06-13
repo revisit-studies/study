@@ -1,4 +1,5 @@
 import {
+  ActionIcon,
   Box,
   Button,
   Flex,
@@ -9,20 +10,26 @@ import {
   Table,
   Text,
 } from '@mantine/core';
-import { IconLayoutColumns, IconTableExport } from '@tabler/icons-react';
+import { IconLayoutColumns, IconTableExport, IconX } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 import merge from 'lodash.merge';
-import { ParticipantData } from '../storage/types';
+import { ParticipantData } from '../../storage/types';
 import {
   Answer, IndividualComponent, Prettify, StudyConfig,
-} from '../parser/types';
-import { isInheritedComponent } from '../parser/parser';
+} from '../../parser/types';
+import { isInheritedComponent } from '../../parser/parser';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 export const OPTIONAL_COMMON_PROPS = [
+  'status',
+  'percentComplete',
   'description',
   'instruction',
+  'responsePrompt',
   'answer',
   'correctAnswer',
+  'responseMin',
+  'responseMax',
   'startTime',
   'endTime',
   'duration',
@@ -56,6 +63,7 @@ export function download(graph: string, filename: string) {
 }
 
 function participantDataToRows(participant: ParticipantData, studyConfig: StudyConfig, properties: Property[]): TidyRow[] {
+  const percentComplete = ((Object.entries(participant.answers).filter(([id, entry]) => entry.endTime !== undefined).length / (getSequenceFlatMap(participant.sequence).length - 1)) * 100).toFixed(2);
   return Object.entries(participant.answers).map(([trialIdentifier, trialAnswer]) => {
     // Get the whole component, including the base component if there is inheritance
     const trialId = trialIdentifier.split('_').slice(0, -1).join('_');
@@ -75,11 +83,22 @@ function participantDataToRows(participant: ParticipantData, studyConfig: StudyC
         responseId: key,
       };
 
+      const response = completeComponent.response.find((resp) => resp.id === key);
+      if (properties.includes('status')) {
+        // eslint-disable-next-line no-nested-ternary
+        tidyRow.status = participant.rejected ? 'rejected' : (participant.completed ? 'completed' : 'in progress');
+      }
+      if (properties.includes('percentComplete')) {
+        tidyRow.percentComplete = percentComplete;
+      }
       if (properties.includes('description')) {
         tidyRow.description = completeComponent.description;
       }
       if (properties.includes('instruction')) {
         tidyRow.instruction = completeComponent.instruction;
+      }
+      if (properties.includes('responsePrompt')) {
+        tidyRow.responsePrompt = response?.prompt;
       }
       if (properties.includes('answer')) {
         tidyRow.answer = value;
@@ -87,6 +106,12 @@ function participantDataToRows(participant: ParticipantData, studyConfig: StudyC
       if (properties.includes('correctAnswer')) {
         const correctAnswer = (completeComponent.correctAnswer as Answer[])?.find((ans) => ans.id === key)?.answer;
         tidyRow.correctAnswer = typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer;
+      }
+      if (properties.includes('responseMin')) {
+        tidyRow.responseMin = response?.type === 'numerical' ? response.min : undefined;
+      }
+      if (properties.includes('responseMax')) {
+        tidyRow.responseMax = response?.type === 'numerical' ? response.max : undefined;
       }
       if (properties.includes('startTime')) {
         tidyRow.startTime = new Date(trialAnswer.startTime).toISOString();
@@ -160,50 +185,57 @@ export function DownloadTidy({
     >
       <MultiSelect
         searchable
-        nothingFound="Property not found"
+        nothingFoundMessage="Property not found"
         data={[...OPTIONAL_COMMON_PROPS]}
         value={selectedProperties}
-        onChange={(values: OptionalProperty[]) => setSelectedProperties(values)}
+        onChange={(values: string[]) => setSelectedProperties(values as OptionalProperty[])}
         label="Included optional columns:"
-        icon={<IconLayoutColumns />}
+        leftSection={<IconLayoutColumns />}
         variant="filled"
       />
 
       <Space h="md" />
 
       <Box mih={300} style={{ width: '100%', overflow: 'scroll' }}>
-        <Table striped captionSide="bottom" withBorder>
-          <thead>
-            <tr>
+        <Table striped captionSide="bottom" withTableBorder>
+          <Table.Thead>
+            <Table.Tr>
               {tableData.header.map((header) => (
-                <th
+                <Table.Th
                   key={header}
                   style={{
                     whiteSpace: 'nowrap',
                     minWidth: ['description', 'instruction', 'participantId'].includes(header) ? 200 : undefined,
                   }}
                 >
-                  {header}
-                </th>
+                  <Flex direction="row" justify="space-between" align="center">
+                    {header}
+                    {!REQUIRED_PROPS.includes(header as never) && (
+                    <ActionIcon onClick={() => setSelectedProperties(selectedProperties.filter((prop) => prop !== header))} style={{ marginBottom: -3, marginLeft: 8 }} variant="subtle" color="gray">
+                      <IconX size={16} />
+                    </ActionIcon>
+                    )}
+                  </Flex>
+                </Table.Th>
               ))}
-            </tr>
-          </thead>
-          <tbody>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
             {tableData.rows.slice(0, 5).map((row, index) => (
-              <tr key={index}>
+              <Table.Tr key={index}>
                 {tableData.header.map((header) => (
-                  <td
+                  <Table.Td
                     key={`${index}-${header}`}
                     style={{
                       whiteSpace: ['description', 'instruction', 'participantId'].includes(header) ? 'normal' : 'nowrap',
                     }}
                   >
                     {row[header]}
-                  </td>
+                  </Table.Td>
                 ))}
-              </tr>
+              </Table.Tr>
             ))}
-          </tbody>
+          </Table.Tbody>
         </Table>
       </Box>
 
@@ -215,12 +247,12 @@ export function DownloadTidy({
 
       <Space h="md" />
 
-      <Group position="right">
+      <Group justify="right">
         <Button onClick={close} color="dark" variant="subtle">
           Close
         </Button>
         <Button
-          leftIcon={<IconTableExport />}
+          leftSection={<IconTableExport />}
           onClick={() => downloadTidy()}
           data-autofocus
         >

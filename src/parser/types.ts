@@ -14,6 +14,8 @@ export interface GlobalConfig {
     [key: string]: {
       /** The path to the study config file. This should be a relative path from the public folder. */
       path: string;
+      /** Indicates whether the study is a test study. This is used to hide the study from the landing page. */
+      test?: boolean;
     };
   };
   /** A required property that is used to generate the list of available studies in the UI. This list is displayed on the landing page when running the app. */
@@ -65,9 +67,9 @@ export interface StudyMetadata {
  * The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the UI Config would look in your study configuration
 ```js
   uiConfig:{
-    "contactEmail": "test@test.com",
-    "helpTextPath": "path/to/assets/help.md",
-    "logoPath": "path/to/assets/logo.jpg",
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "<study-name>/assets/help.md",
+    "logoPath": "<study-name>/assets/logo.jpg",
     "withProgressBar": true,
     "autoDownloadStudy": true
     "autoDownloadTime": 5000,
@@ -98,6 +100,8 @@ export interface UIConfig {
   studyEndMsg?: string;
   /** Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. */
   sidebar: boolean;
+  /** The width of the left sidebar. Defaults to 300. */
+  sidebarWidth?: number;
   /** Debounce time in milliseconds for automatically tracked window events. Defaults to 100. E.g 100 here means 1000ms / 100ms = 10 times a second, 200 here means 1000ms / 200ms = 5 times per second  */
   windowEventDebounceTime?: number;
   /**
@@ -108,18 +112,32 @@ export interface UIConfig {
    * The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000.
    */
   numSequences?: number;
+  /**
+   * Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar.
+   */
+  enumerateQuestions?: boolean;
 }
 
 /**
- * The Option interface is used to define the options for a dropdown, slider, radio, or checkbox response.
+ * The NumberOption interface is used to define the options for a slider response.
  * The label is the text that is displayed to the user, and the value is the value that is stored in the data file.
- * The Option interface is used in the Response interface.
  */
-export interface Option {
+export interface NumberOption {
   /** The label displayed to participants. */
   label: string;
   /** The value stored in the participant's data. */
-  value: string | number;
+  value: number;
+}
+
+/**
+ * The StringOption interface is used to define the options for a dropdown, radio, or checkbox response.
+ * The label is the text that is displayed to the user, and the value is the value that is stored in the data file.
+ */
+export interface StringOption {
+  /** The label displayed to participants. */
+  label: string;
+  /** The value stored in the participant's data. */
+  value: string;
 }
 
 /**
@@ -145,10 +163,12 @@ export interface BaseResponse {
   id: string;
   /** The prompt that is displayed to the participant. You can use markdown here to render images, links, etc. */
   prompt: string;
+  /** The secondary text that is displayed to the participant under the prompt. This does not accept markdown. */
+  secondaryText?: string;
   /** Controls whether the response is required to be answered. */
   required: boolean;
-  /** Controls the response location. These might be the same for all responses, or differ across responses. */
-  location: ResponseBlockLocation;
+  /** Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus` */
+  location?: ResponseBlockLocation;
   /** You can provide a required value, which makes it so a participant has to answer with that value. */
   requiredValue?: unknown;
   /** You can provide a required label, which makes it so a participant has to answer with a response that matches label. */
@@ -162,6 +182,20 @@ export interface BaseResponse {
 /**
  * The NumericalResponse interface is used to define the properties of a numerical response.
  * NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.
+ *
+ * Example:
+ * ```js
+{
+    "id": "q-numerical",
+    "prompt": "Numerical example",
+    "required": true,
+    "location": "aboveStimulus",
+    "type": "numerical",
+    "placeholder": "Enter your age, range from 0 - 120",
+    "max": 120,
+    "min": 0
+}
+```
  */
 export interface NumericalResponse extends BaseResponse {
   type: 'numerical';
@@ -176,6 +210,18 @@ export interface NumericalResponse extends BaseResponse {
 /**
  * The ShortTextResponse interface is used to define the properties of a short text response.
  * ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.
+ *
+ * ```js
+{
+    "id": "q-short-text",
+    "prompt": "Short text example",
+    "required": true,
+    "location": "aboveStimulus",
+    "type": "shortText",
+    "placeholder": "Enter your answer here"
+}
+```
+ *
  */
 export interface ShortTextResponse extends BaseResponse {
   type: 'shortText';
@@ -186,6 +232,17 @@ export interface ShortTextResponse extends BaseResponse {
 /**
  * The LongTextResponse interface is used to define the properties of a long text response.
  * LongTextResponses render as a text area that accepts any text and can optionally have a placeholder.
+ * ```js
+{
+    "id": "q-name",
+    "prompt": "What is your first name?",
+    "required": true,
+    "location": "aboveStimulus",
+    "type": "longText",
+    "placeholder": "Please enter your first name"
+}
+```
+ *
  */
 export interface LongTextResponse extends BaseResponse {
   type: 'longText';
@@ -195,14 +252,29 @@ export interface LongTextResponse extends BaseResponse {
 
 /**
  * The LikertResponse interface is used to define the properties of a likert response.
- * LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the preset. For example, preset: 5 will render 5 radio buttons, and preset: 7 will render 7 radio buttons.
+ * LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons.
  * LikertResponses can also have a description, and left and right labels.
  * The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.
+ *
+ * Example for a five-point Likerts Scale:
+ *
+ * ```js
+ {
+      "id": "q-satisfaction",
+      "prompt": "Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).",
+      "required": true,
+      "location": "aboveStimulus",
+      "type": "likert",
+      "leftLabel": "Not Enjoyable",
+      "rightLabel": "Very Enjoyable",
+      "numItems": 5
+  }
+  ```
  */
 export interface LikertResponse extends BaseResponse {
   type: 'likert';
   /** The number of options to render. */
-  preset: number;
+  numItems: number;
   /** The description of the likert scale. */
   desc?: string;
   /** The left label of the likert scale. E.g Strongly Disagree */
@@ -214,44 +286,142 @@ export interface LikertResponse extends BaseResponse {
 /**
  * The DropdownResponse interface is used to define the properties of a dropdown response.
  * DropdownResponses render as a select input with user specified options.
+ *
+ * Example:
+ * ```js
+ {
+    "id": "q-color",
+    "prompt": "What is your favorite color?",
+    "required": true,
+    "location": "aboveStimulus",
+    "type": "dropdown",
+    "placeholder": "Please choose your favorite color",
+    "options": [
+        {
+            "label": "Red",
+            "value": "red"
+        },
+        {
+            "label": "Blue",
+            "value": "blue"
+        }
+    ]
+}
+  ```
+ *
+ *
  */
 export interface DropdownResponse extends BaseResponse {
   type: 'dropdown';
   /** The placeholder text that is displayed in the input. */
   placeholder?: string;
   /** The options that are displayed in the dropdown. */
-  options: Option[];
+  options: StringOption[];
 }
 
 /**
  * The SliderResponse interface is used to define the properties of a slider response.
  * SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100.
+ *
+ * Example:
+ * ```js
+{
+    "id": "q-slider",
+    "prompt": "How are you feeling?",
+    "location": "aboveStimulus",
+    "required": true,
+    "type": "slider",
+    "options": [
+        {
+            "label": "Bad",
+            "value": 0
+        },
+        {
+            "label": "OK",
+            "value": 50
+        },
+        {
+            "label": "Good",
+            "value": 100
+        }
+    ]
+}
+  ```
+ *
  */
 export interface SliderResponse extends BaseResponse {
   type: 'slider';
-  /** This define the steps in the slider and the extent of the slider. */
-  options: Option[];
+  /** This defines the steps in the slider and the extent of the slider as an array of objects that have a label and a value. */
+  options: NumberOption[];
 }
 
 /**
- * The RadioResponse interface is used to define the properties of a radio response.
+ * The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection.
  * RadioResponses render as a radio input with user specified options, and optionally left and right labels.
+ *
+ * Example:
+ * ```js
+{
+  "id": "q-radio",
+  "prompt": "Radio button example",
+  "required": true,
+  "location": "aboveStimulus",
+  "type": "radio",
+  "options": [
+    {
+      "label": "Option 1",
+      "value": "opt-1"
+    },
+    {
+      "label": "Option 2",
+      "value": "opt-2"
+    }
+  ]
+}
+  ```
+ *
  */
 export interface RadioResponse extends BaseResponse {
   type: 'radio';
-  options: Option[];
+  /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields. */
+  options: StringOption[];
+  /** The left label of the radio group. Used in Likert scales for example */
   leftLabel?: string;
+  /** The right label of the radio group. Used in Likert scales for example */
   rightLabel?: string;
 }
 
 /**
  * The CheckboxResponse interface is used to define the properties of a checkbox response.
  * CheckboxResponses render as a checkbox input with user specified options.
+ *
+ * ```js
+{
+    "id": "q7",
+    "prompt": "Checkbox example (not required)",
+    "required": false,
+    "location": "aboveStimulus",
+    "type": "checkbox",
+    "options": [
+        {
+            "label": "Option 1",
+            "value": "opt-1"
+        },
+        {
+            "label": "Option 2",
+            "value": "opt-2"
+        },
+        {
+            "label": "Option 3",
+            "value": "opt-3"
+        }
+    ]
+}
  */
 export interface CheckboxResponse extends BaseResponse {
   type: 'checkbox';
-  /** The options that are displayed as checkboxes. */
-  options: Option[];
+  /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields. */
+  options: StringOption[];
 }
 
 /**
@@ -266,6 +436,32 @@ export type Response = NumericalResponse | ShortTextResponse | LongTextResponse 
 
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.
+ *
+ * Answers are used to defined correct answers for a task. These are generally used in training tasks or if skip logic is required based on the answer. The answer field is used to define the correct answer to the question. The acceptableLow and acceptableHigh fields are used to define a range of acceptable answers (these are currently only used for training). For example, if the correct answer is 5, and the acceptableLow is 4 and the acceptableHigh is 6, then any answer between 4 and 6 will be considered correct.
+ *
+ * Here's an example of how to use the Answer interface to define the correct answer to a question:
+ *
+ * ```js
+ * {
+ *   "type": "markdown",
+ *   "path": "<study-name>/assets/question.md",
+ *   "response": [
+ *     {
+ *       "id": "response1",
+ *       "prompt": "What is 2 + 2?",
+ *       "required": true,
+ *       "location": "belowStimulus",
+ *       "type": "numerical"
+ *     }
+ *   ]
+ *   "correctAnswer": [{
+ *     "id": "response1",
+ *     "answer": 4
+ *   }]
+ * }
+ * ```
+ *
+ * In this example, the correct answer to the question "What is 2 + 2?" is 4. If the participant answers 4, they will be considered correct. If they answer anything other than 4, they will be considered incorrect.
  */
 export interface Answer {
   /** The id of the answer. This is used to identify the answer in the data file. */
@@ -365,8 +561,8 @@ export interface MarkdownComponent extends BaseIndividualComponent {
  * ```
  *
  * For in depth examples, see the following studies, and their associated codebases.
- * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v1.0.0-beta10/src/public/demo-click-accuracy-test/assets)
- * https://revisit.dev/study/demo-brush-interactions (https://github.com/revisit-studies/study/tree/v1.0.0-beta10/src/public/demo-brush-interactions/assets)
+ * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v1.0.0-beta12/src/public/demo-click-accuracy-test/assets)
+ * https://revisit.dev/study/demo-brush-interactions (https://github.com/revisit-studies/study/tree/v1.0.0-beta12/src/public/demo-brush-interactions/assets)
  */
 export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
@@ -378,6 +574,16 @@ export interface ReactComponent extends BaseIndividualComponent {
 
 /**
  * The ImageComponent interface is used to define the properties of an image component. This component is used to render an image with optional styling.
+ *
+ * For example, to render an image with a path of `path/to/study/assets/image.jpg` and a max width of 50%, you would use the following snippet:
+ * ```js
+ * {
+ *   "type": "image",
+ *   "path": "<study-name>/assets/image.jpg",
+ *   "style": {
+ *     "maxWidth": "50%"
+ *   }
+ * }
  */
 export interface ImageComponent extends BaseIndividualComponent {
   type: 'image';
@@ -393,7 +599,7 @@ export interface ImageComponent extends BaseIndividualComponent {
 ```js
   {
     "type": "website",
-    "path": "path/to/study/assets/website.html",
+    "path": "<study-name>/assets/website.html",
   }
 ```
 
@@ -402,7 +608,7 @@ export interface ImageComponent extends BaseIndividualComponent {
 ```js
   {
     "type": "website",
-    "path": "path/to/website.html",
+    "path": "<study-name>/website.html",
     "parameters": {
       "barData": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]
     }
@@ -496,7 +702,50 @@ export interface QuestionnaireComponent extends BaseIndividualComponent {
 
 export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent;
 
-interface DeterministicInterruption {
+/** The DeterministicInterruption interface is used to define an interruption that will be shown at a specific location in the block.
+ *
+ * For example, if you want to show an interruption after the second component in the block, you would set firstLocation to 2. If you want to show an interruption after every 3 components, you would set spacing to 3. If you want to show an interruption after the second component and then every 3 components, you would set firstLocation to 2 and spacing to 3.
+ *
+ * The components property is an array of the components that will be inserted at the location specified by firstLocation and spacing. These components should reference components in the StudyConfig.components section of the config.
+ *
+ * Here's an example of how to use the DeterministicInterruption:
+ *
+ * ```js
+ * {
+ *   "order": "fixed",
+ *   "components": [
+ *     "component1",
+ *     "component2",
+ *     "component3",
+ *     "component4",
+ *     "component5",
+ *     "component6"
+ *   ],
+ *   "interruptions": [
+ *     {
+ *       "firstLocation": 2,
+ *       "spacing": 3,
+ *       "components": [
+ *         "interruption1",
+ *         "interruption2"
+ *       ]
+ *     }
+ *   ]
+ * }
+ * ```
+ *
+ * The resulting sequence array could be:
+ *
+ * ```js
+ * [
+ *   ["component1", "component2", "interruption1", "component3", "component4", "component5", "interruption2", "component6"],
+ *   ["component1", "component2", "interruption1", "component3", "component4", "component5", "interruption2", "component6"],
+ *   ["component1", "component2", "interruption1", "component3", "component4", "component5", "interruption2", "component6"],
+ *   ...
+ * ]
+ * ```
+*/
+export interface DeterministicInterruption {
   /** The Location of the first instance of the interruption. If this is set to 2, the interruption will be shown after the second component (inserted at index 2). */
   firstLocation: number;
   /** The number of components between breaks. */
@@ -505,7 +754,50 @@ interface DeterministicInterruption {
   components: (string)[]
 }
 
-interface RandomInterruption {
+/** The RandomInterruption interface is used to define an interruption that will be shown randomly in the block.
+ *
+ * For example, if you want to show a single interruption randomly in the block, you would set `"spacing"` to "random" and `"numInterruptions"` to 1. If you want to show 3 interruptions randomly in the block, you would set `"spacing"` to "random" and `"numInterruptions"` to 3.
+ *
+ * The components property is an array of the components that will be inserted randomly in the block. These components should reference components in the StudyConfig.components section of the config.
+ *
+ * Here's an example of how to use the RandomInterruption:
+ *
+ * ```js
+ * {
+ *   "order": "fixed",
+ *   "components": [
+ *     "component1",
+ *     "component2",
+ *     "component3",
+ *     "component4",
+ *     "component5",
+ *     "component6"
+ *   ],
+ *   "interruptions": [
+ *     {
+ *       "spacing": "random",
+ *       "numInterruptions": 3,
+ *       "components": [
+ *         "interruption1",
+ *         "interruption2"
+ *       ]
+ *     }
+ *   ]
+ * }
+ * ```
+ *
+ * The resulting sequence array could be:
+ *
+ * ```js
+ * [
+ *   ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "component5", "interruption1", "interruption2", "component6],
+ *   ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "interruption1", "interruption2", "component5", "component6],
+ *   ["component1", "component2" "interruption1", "interruption2", "component3", "interruption1", "interruption2", "component4", "component5", "interruption1", "interruption2", "component6],
+ *   ...
+ * ]
+ * ```
+*/
+export interface RandomInterruption {
   /** If spacing is set to random, reVISit will add interruptions randomly. These interruptions will not ever be displayed as the first component in the block. */
   spacing: 'random';
   /** The number of times the interruption will be randomly added */
@@ -514,9 +806,37 @@ interface RandomInterruption {
   components: (string)[];
 }
 
+/**  The InterruptionBlock interface is used to define interruptions in a block. These can be used for breaks or attention checks. Interruptions can be deterministic or random. */
 export type InterruptionBlock = DeterministicInterruption | RandomInterruption;
 
-/** The IndividualComponentSingleResponseCondition interface is used to define a SkipCondition based on a single answer to a specific component. If the component is repeated within the block, this condition will only check the first instance of the component once the order is flattened. */
+/** The IndividualComponentSingleResponseCondition interface is used to define a SkipCondition based on a single answer to a specific component. The skip logic will be checked for every component in the block that has the specified name.
+ *
+ * :::info
+ *
+ * If you need to check all instances of a repeated component, you should use the RepeatedComponentBlockCondition.
+ *
+ * :::
+ *
+ * For example, if you want to skip to a different component based on a response to a specific component, you would use the IndividualComponentSingleResponseCondition. Here's an example of how to use the IndividualComponentSingleResponseCondition:
+ *
+ * ```js
+ * {
+ *   ...
+ *   "skip": [
+ *     {
+ *       "name": "attentionCheck",
+ *       "check": "response",
+ *       "responseId": "attentionCheckResponse",
+ *       "value": "the right answer",
+ *       "to": "end"
+ *     }
+ *   ]
+ *   ...
+ * }
+ * ```
+ *
+ * In this example, we assign our skip logic to the component whose ID is "attentionCheck". If the answer given to the response "attentionCheckResponse" is equal to "the right answer", then the user will be redirected to the end of the study. If the response is _not_ equal to "the right answer", then the participant will continue to the next component in the sequence.
+*/
 export interface IndividualComponentSingleResponseCondition {
   /** The name of the component to check. */
   name: string;
@@ -530,7 +850,33 @@ export interface IndividualComponentSingleResponseCondition {
   to: string;
 }
 
-/** The IndividualComponentAllResponsesCondition interface is used to define a SkipCondition based on all answers to a specific component. If the component is repeated within the block, this condition will only check the first instance of the component once the order is flattened. If you need to check all instances of a repeated component, you should use the RepeatedComponentBlockCondition. */
+/** The IndividualComponentAllResponsesCondition interface is used to define a SkipCondition based on all answers to a specific component. The skip logic will be checked for every component in the block that has the specified name.
+ *
+ * :::info
+ *
+ * If you need to check all instances of a repeated component, you should use the RepeatedComponentBlockCondition.
+ *
+ * :::
+ *
+ *
+ * Here's an example of how to use the IndividualComponentAllResponsesCondition:
+ *
+ * ```js
+ * {
+ *   ...
+ *   "skip": [
+ *     {
+ *       "name": "attentionCheck",
+ *       "check": "responses",
+ *       "to": "end"
+ *     }
+ *   ]
+ *   ...
+ * }
+ * ```
+ *
+ * In this example, if all responses to the component with the ID "attentionCheck" are correct, the participant will be redirected to the end of the study. If any response is incorrect, the participant will continue to the next component in the sequence.
+ */
 export interface IndividualComponentAllResponsesCondition {
   /** The name of the component to check. */
   name: string;
@@ -540,7 +886,31 @@ export interface IndividualComponentAllResponsesCondition {
   to: string;
 }
 
-/** The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on all components in the block are checked. */
+/** The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on all components in the block are checked.
+ *
+ * Answers are checked against the correct answers defined in the IndividualComponent's [CorrectAnswer](../Answer). If no correct answers are defined, the component is considered correct by default.
+ *
+ * You might use this if a participant answers two questions in a block incorrectly. Here's an example of how to use the ComponentBlockCondition:
+ *
+ * ```js
+ * {
+ *   ...
+ *   "skip": [
+ *     {
+ *       "check": "block",
+ *       "condition": "numIncorrect",
+ *       "value": 2,
+ *       "to": "end"
+ *     }
+ *   ]
+ *   ...
+ * }
+ * ```
+ *
+ * In this example, when the number of components with incorrect responses in the block is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.
+ *
+ * When the condition is met, the participant will immediately be redirected to the component or block specified in the `"to"` property. If no conditions are met, the participant will continue to the next component in the sequence.
+*/
 export interface ComponentBlockCondition {
   /** The check we'll perform. */
   check: 'block';
@@ -552,7 +922,28 @@ export interface ComponentBlockCondition {
   to: string;
 }
 
-/** The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. */
+/** The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to the [ComponentBlockCondition](../ComponentBlockCondition), but it only checks a specific repeated component.
+ *
+ * Here's an example of how to use the RepeatedComponentBlockCondition:
+ *
+ * ```js
+ * {
+ *   ...
+ *   "skip": [
+ *     {
+ *       "name": "attentionCheck",
+ *       "check": "repeatedComponent",
+ *       "condition": "numIncorrect",
+ *       "value": 2,
+ *       "to": "end"
+ *     }
+ *   ]
+ *   ...
+ * }
+ * ```
+ *
+ * In this example, when the number of incorrect responses to the repeated component with the name "attentionCheck" is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.
+*/
 export interface RepeatedComponentBlockCondition {
   /** The name of the repeated component to check (e.g. attentionCheck). */
   name: string;
@@ -566,10 +957,120 @@ export interface RepeatedComponentBlockCondition {
   to: string;
 }
 
-/** The SkipConditions interface is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Skip conditions work recursively, that is if you have a nested block, they parent blocks' skip conditions will be considered when computing the skip logic. */
+/** The SkipConditions interface is used to define skip conditions. This is used to skip to a different component/block based on the response to a component or based on the number of correct/incorrect responses in a block. Skip conditions work recursively: if you have a nested block, the parent blocks' skip conditions will be considered when computing the skip logic.
+ *
+ * Skip conditions are evaluated in the order they are defined in the array. If a condition is met, the participant will be redirected to the component or block specified in the `"to"` property. If no conditions are met, the participant will continue to the next component in the sequence.
+ *
+ * Skip conditions allow you to jump to a different component or block. If you intend to skip to a block, you should specify a block id in the sequence. If you intend to skip to a component, you should specify a component id. Skipping backwards is not supported. Skipping to a repeated component will skip to the first instance of the component after the component that triggered the skip.
+ *
+ * Please see the interface definitions for more specific information on the different types of skip conditions.
+*/
 export type SkipConditions = (IndividualComponentSingleResponseCondition | IndividualComponentAllResponsesCondition | ComponentBlockCondition | RepeatedComponentBlockCondition)[];
 
-/** The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a latin square. */
+/** The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).
+ *
+ * The pure random assignment is a random assignment with no guarantees. For example, one component _could_ show up in the first position 10 times in a row. However, this situation is unlikely.
+ *
+ Here's a snippet that shows how to use the random order:
+ *
+ * ```js
+ * {
+ *   "order": "random",
+ *   "components": [
+ *     "component1",
+ *     "component2",
+ *     "component3"
+ *   ]
+ * }
+ *
+ * This snippet would produce a random order of the components in the sequence array. For example, the resulting sequence array could be :
+ *
+ * ```js
+ * [
+ *   ["component2", "component3", "component1"],
+ *   ["component1", "component3", "component2"],
+ *   ["component3", "component1", "component2"],
+ *   ...
+ * ]
+ * ```
+ *
+ * The latin square assignment is a random assignment with some guarantees. It ensures that each component is shown an equal number of times in each position. Here's a snippet that shows how to use the latin square order:
+ *
+ * ```js
+ * {
+ *   "order": "latinSquare",
+ *   "components": [
+ *     "component1",
+ *     "component2",
+ *     "component3"
+ *  ]
+ * }
+ * ```
+ *
+ * This snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:
+ *
+ * ```js
+ * [
+ *   ["component1", "component2", "component3"],
+ *   ["component2", "component3", "component1"],
+ *   ["component3", "component1", "component2"],
+ *   ...
+ * ]
+ * ```
+ *
+ * The fixed assignment is a fixed assignment of components. This is used when you want to show the components in a specific order. Here's a snippet that shows how to use the fixed order:
+ *
+ * ```js
+ * {
+ *   "order": "fixed",
+ *   "components": [
+ *     "component1",
+ *     "component2",
+ *     "component3"
+ *  ]
+ * }
+ * ```
+ *
+ * This snippet would produce a fixed order of the components in the sequence array. The resulting sequence array would be:
+ *
+ * ```js
+ * [
+ *   ["component1", "component2", "component3"],
+ *   ["component1", "component2", "component3"],
+ *   ["component1", "component2", "component3"],
+ *   ...
+ * ]
+ * ```
+ *
+ * In addition to the order property, the ComponentBlock interface also includes the `"numSamples"` property. This is used to reduce the number of components shown to a participant. This property respects the order property and the guarantees provided by the order property. For example, if you have three components in the components array and you set `"numSamples"` to 2, you would randomize across the three components while only showing a participant two of them. Here's a snippet that shows how to use the numSamples property:
+ *
+ * ```js
+ * {
+ *   "order": "latinSquare",
+ *   "components": [
+ *     "component1",
+ *     "component2",
+ *     "component3"
+ *  ],
+ *  "numSamples": 2
+ * }
+ * ```
+ *
+ * This snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:
+ *
+ * ```js
+ * [
+ *   ["component1", "component2"],
+ *   ["component2", "component3"],
+ *   ["component3", "component1"],
+ *   ...
+ * ]
+ * ```
+ *
+ * The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../../type-aliases/InterruptionBlock) for more specific information.
+ *
+ * The skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../../type-aliases/SkipConditions) for more specific information.
+*/
 export interface ComponentBlock {
   /** The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property. */
   id?: string
@@ -588,42 +1089,7 @@ export interface ComponentBlock {
 /** An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component). */
 export type InheritedComponent = (Partial<IndividualComponent> & { baseComponent: string })
 
-/**
- * The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.
-
- ```js
- {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta10/src/parser/StudyConfigSchema.json",
-    "studyMetadata": {
-      ...
-    },
-    "uiConfig": {
-      ...
-    },
-    "components": {
-      ...
-    },
-    "sequence": {
-      ...
-    }
-}
-```
-
-:::info
-For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually.
-:::
-<br/>
-
-The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.
- */
-export interface StudyConfig {
-  /** A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information */
-  $schema: string;
-  /** The metadata for the study. This is used to identify the study and version in the data file. */
-  studyMetadata: StudyMetadata;
-  /** The UI configuration for the study. This is used to configure the UI of the app. */
-  uiConfig: UIConfig;
-  /** The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;
+/** The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;
 
    * Using baseComponents:
 
@@ -632,7 +1098,7 @@ export interface StudyConfig {
     "my-image-component": {
         "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
-        "path": "path/to/assets/my-image.jpg",
+        "path": "<study-name>/assets/my-image.jpg",
         "response": [
             {
                 "id": "my-image-id",
@@ -679,11 +1145,58 @@ In the above code snippet, we have a single base component which holds the infor
 }
 ```
    */
-  baseComponents?: Record<string, IndividualComponent | Partial<IndividualComponent>>;
+export type BaseComponents = Record<string, Partial<IndividualComponent>>;
+
+/**
+ * The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.
+
+ ```js
+ {
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+      ...
+    },
+    "uiConfig": {
+      ...
+    },
+    "components": {
+      ...
+    },
+    "sequence": {
+      ...
+    }
+}
+```
+
+:::info
+For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually.
+:::
+<br/>
+
+The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.
+ */
+export interface StudyConfig {
+  /** A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information */
+  $schema: string;
+  /** The metadata for the study. This is used to identify the study and version in the data file. */
+  studyMetadata: StudyMetadata;
+  /** The UI configuration for the study. This is used to configure the UI of the app. */
+  uiConfig: UIConfig;
+  /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */
+  baseComponents?: BaseComponents;
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
   components: Record<string, IndividualComponent | InheritedComponent>
   /** The order of the components in the study. This might include some randomness. */
   sequence: ComponentBlock;
+}
+
+/**
+ * @ignore
+ * Helper type to write the study config with with errors key
+ */
+export type ParsedStudyConfig = StudyConfig & {
+  errors: { instancePath: string, message?: string, params: object }[]
+  warnings: { instancePath: string, message?: string, params: object }[]
 }
 
 /**

@@ -2,7 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   webServer: {
-    command: 'yarn serve',
+    command: 'VITE_CI=true yarn serve',
     url: 'http://localhost:8080',
     reuseExistingServer: !process.env.CI,
     stdout: 'ignore',
