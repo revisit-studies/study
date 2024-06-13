@@ -61,7 +61,7 @@
         },
         "sumsift1": {
             "baseComponent": "summarySource",
-            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try mousing over the blue source links on the left.",
+            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
             "parameters": {
                 "datasetSource": "source2",
                 "datasetSummary": "summary1",
@@ -81,7 +81,7 @@
         },
         "sumsift2": {
             "baseComponent": "summarySource",
-            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try mousing over the blue source links on the left.",
+            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
             "parameters": {
                 "datasetSource": "source2",
                 "datasetSummary": "summary2",
@@ -100,7 +100,7 @@
         },
         "sumsift3": {
             "baseComponent": "summarySource",
-            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try mousing over the blue source links on the left.",
+            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
             "parameters": {
                 "datasetSource": "source2",
                 "datasetSummary": "summary3",
@@ -119,7 +119,7 @@
         },
         "sumsift4": {
             "baseComponent": "summarySource",
-            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try mousing over the blue source links on the left.",
+            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
             "parameters": {
                 "datasetSource": "source2",
                 "datasetSummary": "summary4",
@@ -138,7 +138,7 @@
         },   
         "sumsift5": {
             "baseComponent": "summarySource",
-            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try mousing over the blue source links on the left.",
+            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
             "parameters": {
                 "datasetSource": "source2",
                 "datasetSummary": "summary5",
@@ -161,7 +161,7 @@
             "response": [
                 {
                     "id": "surveyAnything",
-                    "prompt": "Anything else you'd like to tell us or share?",
+                    "prompt": "Anything else you'd like to tell us or share at this time?",
                     "required": true,
                     "location": "belowStimulus",
                     "type": "longText",
@@ -171,7 +171,7 @@
         },
         "feedback-process-1":{
             "description": "Planned future flow",
-            "instruction": "Please go through the planned future flow (next buttons when ready), and suggest any changes or feedback at the end.",
+            "instruction": "**Note: the text may be tiny, please feel free to zoom in your browser!** Please go through the planned future flow (next buttons when ready), and suggest any changes or feedback at the end.",
             "type": "image",
             "path": "sumsifter/assets/image-1.png",
             "style": {
@@ -183,7 +183,7 @@
         },
         "feedback-process-2":{
             "description": "Planned future flow",
-            "instruction": "Please go through the planned future flow (next buttons when ready), and suggest any changes or feedback at the end.",
+            "instruction": "**Note: the text may be tiny, please feel free to zoom in your browser!** Please go through the planned future flow (next buttons when ready), and suggest any changes or feedback at the end.",
             "type": "image",
             "path": "sumsifter/assets/image-2.png",
             "style": {
@@ -195,7 +195,7 @@
         },
         "feedback-process-3":{
             "description": "Planned future flow",
-            "instruction": "Please go through the planned future flow (next buttons when ready), and suggest any changes or feedback at the end.",
+            "instruction": "**Note: the text may be tiny, please feel free to zoom in your browser!** Please let us know your thoughts on this more complex design for summary and source studies with multiple documents.",
             "type": "image",
             "path": "sumsifter/assets/image-3.png",
             "style": {
