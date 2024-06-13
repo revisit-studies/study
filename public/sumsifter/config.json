@@ -128,6 +128,28 @@
             "instruction": "Please review the summary on the left. You may click source links to highlight relevant passages in the source document on the right. Your task is to determine if the summary is accurate and complete. If you believe the summary is accurate and complete, or if you believe the summary is inaccurate or incomplete, please provide feedback in the text box below.",
             "parameters": {
                 "datasetSource": "source2",
+                "datasetSummary": "summary1",
+                "x": "Miles per Gallon",
+                "y": "Weight (lbs)",
+                "category": "Origin",
+                "ids": "id",
+                "brushType": "Rectangular Selection"
+            },
+            "response": [
+                {
+                    "id": "response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "longText"
+                }
+            ]
+        },
+        "sumsift2": {
+            "baseComponent": "summarySource",
+            "instruction": "Please review the summary on the left. You may click source links to highlight relevant passages in the source document on the right. Your task is to determine if the summary is accurate and complete. If you believe the summary is accurate and complete, or if you believe the summary is inaccurate or incomplete, please provide feedback in the text box below.",
+            "parameters": {
+                "datasetSource": "source2",
                 "datasetSummary": "summary2",
                 "x": "Miles per Gallon",
                 "y": "Weight (lbs)",
@@ -145,6 +167,72 @@
                 }
             ]
         },
+        "sumsift3": {
+            "baseComponent": "summarySource",
+            "instruction": "Please review the summary on the left. You may click source links to highlight relevant passages in the source document on the right. Your task is to determine if the summary is accurate and complete. If you believe the summary is accurate and complete, or if you believe the summary is inaccurate or incomplete, please provide feedback in the text box below.",
+            "parameters": {
+                "datasetSource": "source2",
+                "datasetSummary": "summary3",
+                "x": "Miles per Gallon",
+                "y": "Weight (lbs)",
+                "category": "Origin",
+                "ids": "id",
+                "brushType": "Rectangular Selection"
+            },
+            "response": [
+                {
+                    "id": "response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "longText"
+                }
+            ]
+        },
+        "sumsift4": {
+            "baseComponent": "summarySource",
+            "instruction": "Please review the summary on the left. You may click source links to highlight relevant passages in the source document on the right. Your task is to determine if the summary is accurate and complete. If you believe the summary is accurate and complete, or if you believe the summary is inaccurate or incomplete, please provide feedback in the text box below.",
+            "parameters": {
+                "datasetSource": "source2",
+                "datasetSummary": "summary4",
+                "x": "Miles per Gallon",
+                "y": "Weight (lbs)",
+                "category": "Origin",
+                "ids": "id",
+                "brushType": "Rectangular Selection"
+            },
+            "response": [
+                {
+                    "id": "response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "longText"
+                }
+            ]
+        },   
+        "sumsift5": {
+            "baseComponent": "summarySource",
+            "instruction": "Please review the summary on the left. You may click source links to highlight relevant passages in the source document on the right. Your task is to determine if the summary is accurate and complete. If you believe the summary is accurate and complete, or if you believe the summary is inaccurate or incomplete, please provide feedback in the text box below.",
+            "parameters": {
+                "datasetSource": "source2",
+                "datasetSummary": "summary5",
+                "x": "Miles per Gallon",
+                "y": "Weight (lbs)",
+                "category": "Origin",
+                "ids": "id",
+                "brushType": "Rectangular Selection"
+            },
+            "response": [
+                {
+                    "id": "response",
+                    "prompt": "Answer:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "longText"
+                }
+            ]
+        },     
         "post-study-survey": {
             "type": "questionnaire",
             "response": [
@@ -275,7 +363,11 @@
                 "order": "random",
                 "components": [
                     "rectangleBrush_q1",
-                    "sumsift1"
+                    "sumsift1", 
+                    "sumsift2", 
+                    "sumsift3", 
+                    "sumsift4",
+                    "sumsift5"
                 ]
             },
             "feedback-process-1",
