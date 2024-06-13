@@ -28,9 +28,115 @@
       ],
       "type": "object"
     },
+    "BaseComponents": {
+      "additionalProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "correctAnswer": {
+            "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
+            "items": {
+              "$ref": "#/definitions/Answer"
+            },
+            "type": "array"
+          },
+          "description": {
+            "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
+            "type": "string"
+          },
+          "instruction": {
+            "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
+            "type": "string"
+          },
+          "instructionLocation": {
+            "$ref": "#/definitions/ResponseBlockLocation",
+            "description": "The location of the instructions."
+          },
+          "meta": {
+            "additionalProperties": {},
+            "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
+            "type": "object"
+          },
+          "nextButtonLocation": {
+            "$ref": "#/definitions/ResponseBlockLocation",
+            "description": "The location of the next button."
+          },
+          "nextButtonText": {
+            "description": "The text that is displayed on the next button.",
+            "type": "string"
+          },
+          "parameters": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
+                "type": "object"
+              },
+              {
+                "additionalProperties": {},
+                "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
+                "type": "object"
+              }
+            ],
+            "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
+          },
+          "path": {
+            "anyOf": [
+              {
+                "description": "The path to the markdown file. This should be a relative path from the public folder.",
+                "type": "string"
+              },
+              {
+                "description": "The path to the react component. This should be a relative path from the src/public folder.",
+                "type": "string"
+              },
+              {
+                "description": "The path to the image. This should be a relative path from the public folder.",
+                "type": "string"
+              },
+              {
+                "description": "The path to the website. This should be a relative path from the public folder or could be an external website.",
+                "type": "string"
+              }
+            ],
+            "description": "The path to the markdown file. This should be a relative path from the public folder."
+          },
+          "provideFeedback": {
+            "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+            "type": "boolean"
+          },
+          "response": {
+            "description": "The responses to the component",
+            "items": {
+              "$ref": "#/definitions/Response"
+            },
+            "type": "array"
+          },
+          "style": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "The style of the image. This is an object with css properties as keys and css values as values.",
+            "type": "object"
+          },
+          "type": {
+            "enum": [
+              "markdown",
+              "react-component",
+              "image",
+              "website",
+              "questionnaire"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "description": "The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;\n\n Using baseComponents:\n\n```js \"baseComponents\": { \"my-image-component\": {     \"instructionLocation\": \"sidebar\",     \"nextButtonLocation\": \"sidebar\",     \"path\": \"<study-name>/assets/my-image.jpg\",     \"response\": [         {             \"id\": \"my-image-id\",             \"options\": [                 {                     \"label\": \"Europe\",                     \"value\": \"Europe\"                 },                 {                     \"label\": \"Japan\",                     \"value\": \"Japan\"                 },                 {                     \"label\": \"USA\",                     \"value\": \"USA\"                 }             ],             \"prompt\": \"Your Selected Answer:\",             \"type\": \"dropdown\"         }     ],     \"type\": \"image\" } } ``` In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `\"baseComponent\":\"my-image-component\"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below: ```js \"components\": { \"q1\": {     \"baseComponent\": \"my-image-component\",     \"description\": \"Choosing section with largest GDP\",     \"instruction\": \"Which region has the largest GDP?\" }, \"q2\": {     \"baseComponent\": \"my-image-component\",     \"description\": \"Choosing section with lowest GDP\",     \"instruction\": \"Which region has the lowest GDP?\" }, \"q3\": {     \"baseComponent\": \"my-image-component\",     \"description\": \"Choosing section with highest exports of Wheat\",     \"instruction\": \"Which region had the most Wheat exported in 2022?\" } } ```",
+      "type": "object"
+    },
     "CheckboxResponse": {
       "additionalProperties": false,
-      "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.",
+      "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.\n\n```js {  \"id\": \"q7\",  \"prompt\": \"Checkbox example (not required)\",  \"required\": false,  \"location\": \"aboveStimulus\",  \"type\": \"checkbox\",  \"options\": [      {          \"label\": \"Option 1\",          \"value\": \"opt-1\"      },      {          \"label\": \"Option 2\",          \"value\": \"opt-2\"      },      {          \"label\": \"Option 3\",          \"value\": \"opt-3\"      }  ] }",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -45,9 +151,9 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "options": {
-          "description": "The options that are displayed as checkboxes.",
+          "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
           "items": {
-            "$ref": "#/definitions/Option"
+            "$ref": "#/definitions/StringOption"
           },
           "type": "array"
         },
@@ -90,7 +196,7 @@
     },
     "ComponentBlock": {
       "additionalProperties": false,
-      "description": "The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).\n\nThe pure random assignment is a random assignment with no guarantees. For example, one component _could_ show up in the first position 10 times in a row. However, this situation is unlikely.\n\nHere's a snippet that shows how to use the random order:\n\n```js {  \"order\": \"random\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] }\n\nThis snippet would produce a random order of the components in the sequence array. For example, the resulting sequence array could be :\n\n```js [  [\"component2\", \"component3\", \"component1\"],  [\"component1\", \"component3\", \"component2\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe latin square assignment is a random assignment with some guarantees. It ensures that each component is shown an equal number of times in each position. Here's a snippet that shows how to use the latin square order:\n\n```js {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\" ] } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```js [  [\"component1\", \"component2\", \"component3\"],  [\"component2\", \"component3\", \"component1\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe fixed assignment is a fixed assignment of components. This is used when you want to show the components in a specific order. Here's a snippet that shows how to use the fixed order:\n\n```js {  \"order\": \"fixed\",  \"components\": [    \"component1\",    \"component2\",    \"component3\" ] } ```\n\nThis snippet would produce a fixed order of the components in the sequence array. The resulting sequence array would be:\n\n```js [  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  ... ] ```\n\nIn addition to the order property, the ComponentBlock interface also includes the `\"numSamples\"` property. This is used to reduce the number of components shown to a participant. This property respects the order property and the guarantees provided by the order property. For example, if you have three components in the components array and you set `\"numSamples\"` to 2, you would randomize across the three components while only showing a participant two of them. Here's a snippet that shows how to use the numSamples property:\n\n```js {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\" ], \"numSamples\": 2 } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```js [  [\"component1\", \"component2\"],  [\"component2\", \"component3\"],  [\"component3\", \"component1\"],  ... ] ```\n\nThe interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../type-aliases/InterruptionBlock) for more specific information.\n\nThe skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../type-aliases/SkipConditions) for more specific information.",
+      "description": "The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).\n\nThe pure random assignment is a random assignment with no guarantees. For example, one component _could_ show up in the first position 10 times in a row. However, this situation is unlikely.\n\nHere's a snippet that shows how to use the random order:\n\n```js {  \"order\": \"random\",  \"components\": [    \"component1\",    \"component2\",    \"component3\"  ] }\n\nThis snippet would produce a random order of the components in the sequence array. For example, the resulting sequence array could be :\n\n```js [  [\"component2\", \"component3\", \"component1\"],  [\"component1\", \"component3\", \"component2\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe latin square assignment is a random assignment with some guarantees. It ensures that each component is shown an equal number of times in each position. Here's a snippet that shows how to use the latin square order:\n\n```js {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\" ] } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```js [  [\"component1\", \"component2\", \"component3\"],  [\"component2\", \"component3\", \"component1\"],  [\"component3\", \"component1\", \"component2\"],  ... ] ```\n\nThe fixed assignment is a fixed assignment of components. This is used when you want to show the components in a specific order. Here's a snippet that shows how to use the fixed order:\n\n```js {  \"order\": \"fixed\",  \"components\": [    \"component1\",    \"component2\",    \"component3\" ] } ```\n\nThis snippet would produce a fixed order of the components in the sequence array. The resulting sequence array would be:\n\n```js [  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  [\"component1\", \"component2\", \"component3\"],  ... ] ```\n\nIn addition to the order property, the ComponentBlock interface also includes the `\"numSamples\"` property. This is used to reduce the number of components shown to a participant. This property respects the order property and the guarantees provided by the order property. For example, if you have three components in the components array and you set `\"numSamples\"` to 2, you would randomize across the three components while only showing a participant two of them. Here's a snippet that shows how to use the numSamples property:\n\n```js {  \"order\": \"latinSquare\",  \"components\": [    \"component1\",    \"component2\",    \"component3\" ], \"numSamples\": 2 } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```js [  [\"component1\", \"component2\"],  [\"component2\", \"component3\"],  [\"component3\", \"component1\"],  ... ] ```\n\nThe interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../../type-aliases/InterruptionBlock) for more specific information.\n\nThe skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../../type-aliases/SkipConditions) for more specific information.",
       "properties": {
         "components": {
           "description": "The components that are included in the order.",
@@ -143,7 +249,7 @@
     },
     "ComponentBlockCondition": {
       "additionalProperties": false,
-      "description": "The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on all components in the block are checked.\n\nAnswers are checked against the correct answers defined in the IndividualComponent's [CorrectAnswer](./Answer). If no correct answers are defined, the component is considered correct by default.\n\nYou might use this if a participant answers two questions in a block incorrectly. Here's an example of how to use the ComponentBlockCondition:\n\n```js {  ...  \"skip\": [    {      \"check\": \"block\",      \"condition\": \"numIncorrect\",      \"value\": 2,      \"to\": \"end\"    }  ]  ... } ```\n\nIn this example, when the number of components with incorrect responses in the block is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.\n\nWhen the condition is met, the participant will immediately be redirected to the component or block specified in the `\"to\"` property. If no conditions are met, the participant will continue to the next component in the sequence.",
+      "description": "The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on all components in the block are checked.\n\nAnswers are checked against the correct answers defined in the IndividualComponent's [CorrectAnswer](../Answer). If no correct answers are defined, the component is considered correct by default.\n\nYou might use this if a participant answers two questions in a block incorrectly. Here's an example of how to use the ComponentBlockCondition:\n\n```js {  ...  \"skip\": [    {      \"check\": \"block\",      \"condition\": \"numIncorrect\",      \"value\": 2,      \"to\": \"end\"    }  ]  ... } ```\n\nIn this example, when the number of components with incorrect responses in the block is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.\n\nWhen the condition is met, the participant will immediately be redirected to the component or block specified in the `\"to\"` property. If no conditions are met, the participant will continue to the next component in the sequence.",
       "properties": {
         "check": {
           "const": "block",
@@ -204,7 +310,7 @@
     },
     "DropdownResponse": {
       "additionalProperties": false,
-      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options.",
+      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options.\n\nExample: ```js {  \"id\": \"q-color\",  \"prompt\": \"What is your favorite color?\",  \"required\": true,  \"location\": \"aboveStimulus\",  \"type\": \"dropdown\",  \"placeholder\": \"Please choose your favorite color\",  \"options\": [      {          \"label\": \"Red\",          \"value\": \"red\"      },      {          \"label\": \"Blue\",          \"value\": \"blue\"      }  ] } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -221,7 +327,7 @@
         "options": {
           "description": "The options that are displayed in the dropdown.",
           "items": {
-            "$ref": "#/definitions/Option"
+            "$ref": "#/definitions/StringOption"
           },
           "type": "array"
         },
@@ -525,8 +631,25 @@
           "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
         },
         "path": {
-          "description": "The path to the markdown file. This should be a relative path from the public folder.",
-          "type": "string"
+          "anyOf": [
+            {
+              "description": "The path to the markdown file. This should be a relative path from the public folder.",
+              "type": "string"
+            },
+            {
+              "description": "The path to the react component. This should be a relative path from the src/public folder.",
+              "type": "string"
+            },
+            {
+              "description": "The path to the image. This should be a relative path from the public folder.",
+              "type": "string"
+            },
+            {
+              "description": "The path to the website. This should be a relative path from the public folder or could be an external website.",
+              "type": "string"
+            }
+          ],
+          "description": "The path to the markdown file. This should be a relative path from the public folder."
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
@@ -575,7 +698,7 @@
     },
     "LikertResponse": {
       "additionalProperties": false,
-      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.",
+      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likerts Scale:\n\n```js {    \"id\": \"q-satisfaction\",    \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\",    \"required\": true,    \"location\": \"aboveStimulus\",    \"type\": \"likert\",    \"leftLabel\": \"Not Enjoyable\",    \"rightLabel\": \"Very Enjoyable\",    \"preset\": 5 } ```",
       "properties": {
         "desc": {
           "description": "The description of the likert scale.",
@@ -644,7 +767,7 @@
     },
     "LongTextResponse": {
       "additionalProperties": false,
-      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder.",
+      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```js {  \"id\": \"q-name\",  \"prompt\": \"What is your first name?\",  \"required\": true,  \"location\": \"aboveStimulus\",  \"type\": \"longText\",  \"placeholder\": \"Please enter your first name\" } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -761,9 +884,28 @@
       ],
       "type": "object"
     },
+    "NumberOption": {
+      "additionalProperties": false,
+      "description": "The NumberOption interface is used to define the options for a slider response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file.",
+      "properties": {
+        "label": {
+          "description": "The label displayed to participants.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value stored in the participant's data.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "type": "object"
+    },
     "NumericalResponse": {
       "additionalProperties": false,
-      "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.",
+      "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.\n\nExample: ```js {  \"id\": \"q-numerical\",  \"prompt\": \"Numerical example\",  \"required\": true,  \"location\": \"aboveStimulus\",  \"type\": \"numerical\",  \"placeholder\": \"Enter your age, range from 0 - 120\",  \"max\": 120,  \"min\": 0 } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -822,28 +964,6 @@
         "prompt",
         "required",
         "type"
-      ],
-      "type": "object"
-    },
-    "Option": {
-      "additionalProperties": false,
-      "description": "The Option interface is used to define the options for a dropdown, slider, radio, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file. The Option interface is used in the Response interface.",
-      "properties": {
-        "label": {
-          "description": "The label displayed to participants.",
-          "type": "string"
-        },
-        "value": {
-          "description": "The value stored in the participant's data.",
-          "type": [
-            "string",
-            "number"
-          ]
-        }
-      },
-      "required": [
-        "label",
-        "value"
       ],
       "type": "object"
     },
@@ -907,7 +1027,7 @@
     },
     "RadioResponse": {
       "additionalProperties": false,
-      "description": "The RadioResponse interface is used to define the properties of a radio response. RadioResponses render as a radio input with user specified options, and optionally left and right labels.",
+      "description": "The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection. RadioResponses render as a radio input with user specified options, and optionally left and right labels.\n\nExample: ```js { \"id\": \"q-radio\", \"prompt\": \"Radio button example\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"radio\", \"options\": [  {    \"label\": \"Option 1\",    \"value\": \"opt-1\"  },  {    \"label\": \"Option 2\",    \"value\": \"opt-2\"  } ] } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -918,6 +1038,7 @@
           "type": "string"
         },
         "leftLabel": {
+          "description": "The left label of the radio group. Used in Likert scales for example",
           "type": "string"
         },
         "location": {
@@ -925,8 +1046,9 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "options": {
+          "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
           "items": {
-            "$ref": "#/definitions/Option"
+            "$ref": "#/definitions/StringOption"
           },
           "type": "array"
         },
@@ -950,6 +1072,7 @@
           "description": "You can provide a required value, which makes it so a participant has to answer with that value."
         },
         "rightLabel": {
+          "description": "The right label of the radio group. Used in Likert scales for example",
           "type": "string"
         },
         "secondaryText": {
@@ -1068,7 +1191,7 @@
     },
     "RepeatedComponentBlockCondition": {
       "additionalProperties": false,
-      "description": "The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to the [ComponentBlockCondition](./ComponentBlockCondition), but it only checks a specific repeated component.\n\nHere's an example of how to use the RepeatedComponentBlockCondition:\n\n```js {  ...  \"skip\": [    {      \"name\": \"attentionCheck\",      \"check\": \"repeatedComponent\",      \"condition\": \"numIncorrect\",      \"value\": 2,      \"to\": \"end\"    }  ]  ... } ```\n\nIn this example, when the number of incorrect responses to the repeated component with the name \"attentionCheck\" is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.",
+      "description": "The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to the [ComponentBlockCondition](../ComponentBlockCondition), but it only checks a specific repeated component.\n\nHere's an example of how to use the RepeatedComponentBlockCondition:\n\n```js {  ...  \"skip\": [    {      \"name\": \"attentionCheck\",      \"check\": \"repeatedComponent\",      \"condition\": \"numIncorrect\",      \"value\": 2,      \"to\": \"end\"    }  ]  ... } ```\n\nIn this example, when the number of incorrect responses to the repeated component with the name \"attentionCheck\" is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.",
       "properties": {
         "check": {
           "const": "repeatedComponent",
@@ -1146,7 +1269,7 @@
     },
     "ShortTextResponse": {
       "additionalProperties": false,
-      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.",
+      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.\n\n```js {  \"id\": \"q-short-text\",  \"prompt\": \"Short text example\",  \"required\": true,  \"location\": \"aboveStimulus\",  \"type\": \"shortText\",  \"placeholder\": \"Enter your answer here\" } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -1222,7 +1345,7 @@
     },
     "SliderResponse": {
       "additionalProperties": false,
-      "description": "The SliderResponse interface is used to define the properties of a slider response. SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100.",
+      "description": "The SliderResponse interface is used to define the properties of a slider response. SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100.\n\nExample: ```js {  \"id\": \"q-slider\",  \"prompt\": \"How are you feeling?\",  \"location\": \"aboveStimulus\",  \"required\": true,  \"type\": \"slider\",  \"options\": [      {          \"label\": \"Bad\",          \"value\": 0      },      {          \"label\": \"OK\",          \"value\": 50      },      {          \"label\": \"Good\",          \"value\": 100      }  ] } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -1237,9 +1360,9 @@
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "options": {
-          "description": "This define the steps in the slider and the extent of the slider.",
+          "description": "This defines the steps in the slider and the extent of the slider as an array of objects that have a label and a value.",
           "items": {
-            "$ref": "#/definitions/Option"
+            "$ref": "#/definitions/NumberOption"
           },
           "type": "array"
         },
@@ -1280,6 +1403,25 @@
       ],
       "type": "object"
     },
+    "StringOption": {
+      "additionalProperties": false,
+      "description": "The StringOption interface is used to define the options for a dropdown, radio, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file.",
+      "properties": {
+        "label": {
+          "description": "The label displayed to participants.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value stored in the participant's data.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "type": "object"
+    },
     "StudyConfig": {
       "additionalProperties": false,
       "description": "The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.\n\n```js {  \"$schema\": \"https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/StudyConfigSchema.json\",  \"studyMetadata\": {    ...  },  \"uiConfig\": {    ...  },  \"components\": {    ...  },  \"sequence\": {    ...  } } ```\n\n:::info For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually. ::: <br/>\n\nThe `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.",
@@ -1289,100 +1431,8 @@
           "type": "string"
         },
         "baseComponents": {
-          "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/definitions/IndividualComponent"
-              },
-              {
-                "additionalProperties": false,
-                "properties": {
-                  "correctAnswer": {
-                    "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
-                    "items": {
-                      "$ref": "#/definitions/Answer"
-                    },
-                    "type": "array"
-                  },
-                  "description": {
-                    "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
-                    "type": "string"
-                  },
-                  "instruction": {
-                    "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
-                    "type": "string"
-                  },
-                  "instructionLocation": {
-                    "$ref": "#/definitions/ResponseBlockLocation",
-                    "description": "The location of the instructions."
-                  },
-                  "meta": {
-                    "additionalProperties": {},
-                    "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
-                    "type": "object"
-                  },
-                  "nextButtonLocation": {
-                    "$ref": "#/definitions/ResponseBlockLocation",
-                    "description": "The location of the next button."
-                  },
-                  "nextButtonText": {
-                    "description": "The text that is displayed on the next button.",
-                    "type": "string"
-                  },
-                  "parameters": {
-                    "anyOf": [
-                      {
-                        "additionalProperties": {},
-                        "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
-                        "type": "object"
-                      },
-                      {
-                        "additionalProperties": {},
-                        "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
-                        "type": "object"
-                      }
-                    ],
-                    "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
-                  },
-                  "path": {
-                    "description": "The path to the markdown file. This should be a relative path from the public folder.",
-                    "type": "string"
-                  },
-                  "provideFeedback": {
-                    "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
-                    "type": "boolean"
-                  },
-                  "response": {
-                    "description": "The responses to the component",
-                    "items": {
-                      "$ref": "#/definitions/Response"
-                    },
-                    "type": "array"
-                  },
-                  "style": {
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "The style of the image. This is an object with css properties as keys and css values as values.",
-                    "type": "object"
-                  },
-                  "type": {
-                    "enum": [
-                      "markdown",
-                      "react-component",
-                      "image",
-                      "website",
-                      "questionnaire"
-                    ],
-                    "type": "string"
-                  }
-                },
-                "type": "object"
-              }
-            ]
-          },
-          "description": "The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;\n\nUsing baseComponents:\n\n```js \"baseComponents\": { \"my-image-component\": {   \"instructionLocation\": \"sidebar\",   \"nextButtonLocation\": \"sidebar\",   \"path\": \"<study-name>/assets/my-image.jpg\",   \"response\": [       {           \"id\": \"my-image-id\",           \"options\": [               {                   \"label\": \"Europe\",                   \"value\": \"Europe\"               },               {                   \"label\": \"Japan\",                   \"value\": \"Japan\"               },               {                   \"label\": \"USA\",                   \"value\": \"USA\"               }           ],           \"prompt\": \"Your Selected Answer:\",           \"type\": \"dropdown\"       }   ],   \"type\": \"image\" } } ``` In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `\"baseComponent\":\"my-image-component\"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below: ```js \"components\": { \"q1\": {   \"baseComponent\": \"my-image-component\",   \"description\": \"Choosing section with largest GDP\",   \"instruction\": \"Which region has the largest GDP?\" }, \"q2\": {   \"baseComponent\": \"my-image-component\",   \"description\": \"Choosing section with lowest GDP\",   \"instruction\": \"Which region has the lowest GDP?\" }, \"q3\": {   \"baseComponent\": \"my-image-component\",   \"description\": \"Choosing section with highest exports of Wheat\",   \"instruction\": \"Which region had the most Wheat exported in 2022?\" } } ```",
-          "type": "object"
+          "$ref": "#/definitions/BaseComponents",
+          "description": "The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information."
         },
         "components": {
           "additionalProperties": {
@@ -1467,7 +1517,7 @@
     },
     "UIConfig": {
       "additionalProperties": false,
-      "description": "The UIConfig is used to configure the UI of the app. This includes the logo, contact email, and whether to show a progress bar. The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the UI Config would look in your study configuration ```js uiConfig:{  \"contactEmail\": \"test@test.com\",  \"helpTextPath\": \"<study-name>/assets/help.md\",  \"logoPath\": \"<study-name>/assets/logo.jpg\",  \"withProgressBar\": true,  \"autoDownloadStudy\": true  \"autoDownloadTime\": 5000,  \"studyEndMsg\": \"Thank you for completing this study. You're the best!\",  \"sidebar\": true,  \"windowEventDebounceTime\": 500,  \"urlParticipantIdParam\": \"PROLIFIC_ID\",  \"numSequences\": 500 } ``` In the above, the `path/to/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)",
+      "description": "The UIConfig is used to configure the UI of the app. This includes the logo, contact email, and whether to show a progress bar. The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the UI Config would look in your study configuration ```js uiConfig:{  \"contactEmail\": \"contact@revisit.dev\",  \"helpTextPath\": \"<study-name>/assets/help.md\",  \"logoPath\": \"<study-name>/assets/logo.jpg\",  \"withProgressBar\": true,  \"autoDownloadStudy\": true  \"autoDownloadTime\": 5000,  \"studyEndMsg\": \"Thank you for completing this study. You're the best!\",  \"sidebar\": true,  \"windowEventDebounceTime\": 500,  \"urlParticipantIdParam\": \"PROLIFIC_ID\",  \"numSequences\": 500 } ``` In the above, the `path/to/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)",
       "properties": {
         "autoDownloadStudy": {
           "description": "Controls whether the study data is automatically downloaded at the end of the study.",

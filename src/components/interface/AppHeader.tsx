@@ -1,11 +1,11 @@
 import {
   ActionIcon,
+  AppShell,
   Badge,
   Button,
   Flex,
   Grid,
   Group,
-  Header,
   Image,
   Menu,
   Progress,
@@ -63,11 +63,11 @@ export default function AppHeader() {
   }, [studyConfig]);
 
   return (
-    <Header height="70" p="md">
+    <AppShell.Header p="md">
       <Grid mt={-7} align="center">
         <Grid.Col span={4}>
           <Flex align="center">
-            <Image maw={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" />
+            <Image w={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" />
             <Space w="md" />
             <Title
               ref={titleRef}
@@ -87,8 +87,8 @@ export default function AppHeader() {
         </Grid.Col>
 
         <Grid.Col span={4}>
-          <Group noWrap position="right">
-            {import.meta.env.VITE_REVISIT_MODE === 'public' ? <Tooltip multiline withArrow arrowSize={6} width={300} label="This is a demo version of the study, we’re not collecting any data. Navigate the study via the study browser on the right."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip> : null}
+          <Group wrap="nowrap" justify="right">
+            {import.meta.env.VITE_REVISIT_MODE === 'public' ? <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data. Navigate the study via the study browser on the right."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip> : null}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"
@@ -102,18 +102,18 @@ export default function AppHeader() {
               <Menu
                 shadow="md"
                 width={200}
-                zIndex={1}
+                withinPortal
                 opened={menuOpened}
                 onChange={setMenuOpened}
               >
                 <Menu.Target>
-                  <ActionIcon size="lg" className="studyBrowserMenuDropdown">
+                  <ActionIcon size="lg" className="studyBrowserMenuDropdown" variant="subtle" color="gray">
                     <IconDotsVertical />
                   </ActionIcon>
                 </Menu.Target>
                 <Menu.Dropdown>
                   <Menu.Item
-                    icon={<IconSchema size={14} />}
+                    leftSection={<IconSchema size={14} />}
                     onClick={() => storeDispatch(toggleStudyBrowser())}
                   >
                     Study Browser
@@ -126,13 +126,13 @@ export default function AppHeader() {
                         ? `mailto:${studyConfig.uiConfig.contactEmail}`
                         : undefined
                     }
-                    icon={<IconMail size={14} />}
+                    leftSection={<IconMail size={14} />}
                   >
                     Contact
                   </Menu.Item>
 
                   <Menu.Item
-                    icon={<IconUserPlus size={14} />}
+                    leftSection={<IconUserPlus size={14} />}
                     onClick={() => getNewParticipant(storageEngine, studyConfig, metadata, studyHref)}
                   >
                     Next Participant
@@ -143,6 +143,6 @@ export default function AppHeader() {
           </Group>
         </Grid.Col>
       </Grid>
-    </Header>
+    </AppShell.Header>
   );
 }

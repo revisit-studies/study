@@ -25,9 +25,9 @@ export function YAxis({
       <g transform={`translate(${horizontalPosition - 60}, ${yScale.range()[0]}) rotate(-90)`}>
         <foreignObject width={Math.abs(yScale.range()[1] - yScale.range()[0])} height={20}>
           <Center>
-            <Group spacing={3}>
+            <Group gap={3}>
 
-              <Text size={14} style={{ color: '#878E95' }}>
+              <Text size="14px" style={{ color: '#878E95' }}>
                 {label}
               </Text>
             </Group>
