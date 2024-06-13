@@ -67,7 +67,7 @@ export interface StudyMetadata {
  * The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the UI Config would look in your study configuration
 ```js
   uiConfig:{
-    "contactEmail": "test@test.com",
+    "contactEmail": "contact@revisit.dev",
     "helpTextPath": "<study-name>/assets/help.md",
     "logoPath": "<study-name>/assets/logo.jpg",
     "withProgressBar": true,
@@ -100,6 +100,8 @@ export interface UIConfig {
   studyEndMsg?: string;
   /** Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. */
   sidebar: boolean;
+  /** The width of the left sidebar. Defaults to 300. */
+  sidebarWidth?: number;
   /** Debounce time in milliseconds for automatically tracked window events. Defaults to 100. E.g 100 here means 1000ms / 100ms = 10 times a second, 200 here means 1000ms / 200ms = 5 times per second  */
   windowEventDebounceTime?: number;
   /**
@@ -110,18 +112,32 @@ export interface UIConfig {
    * The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000.
    */
   numSequences?: number;
+  /**
+   * Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar.
+   */
+  enumerateQuestions?: boolean;
 }
 
 /**
- * The Option interface is used to define the options for a dropdown, slider, radio, or checkbox response.
+ * The NumberOption interface is used to define the options for a slider response.
  * The label is the text that is displayed to the user, and the value is the value that is stored in the data file.
- * The Option interface is used in the Response interface.
  */
-export interface Option {
+export interface NumberOption {
   /** The label displayed to participants. */
   label: string;
   /** The value stored in the participant's data. */
-  value: string | number;
+  value: number;
+}
+
+/**
+ * The StringOption interface is used to define the options for a dropdown, radio, or checkbox response.
+ * The label is the text that is displayed to the user, and the value is the value that is stored in the data file.
+ */
+export interface StringOption {
+  /** The label displayed to participants. */
+  label: string;
+  /** The value stored in the participant's data. */
+  value: string;
 }
 
 /**
@@ -147,10 +163,12 @@ export interface BaseResponse {
   id: string;
   /** The prompt that is displayed to the participant. You can use markdown here to render images, links, etc. */
   prompt: string;
+  /** The secondary text that is displayed to the participant under the prompt. This does not accept markdown. */
+  secondaryText?: string;
   /** Controls whether the response is required to be answered. */
   required: boolean;
-  /** Controls the response location. These might be the same for all responses, or differ across responses. */
-  location: ResponseBlockLocation;
+  /** Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus` */
+  location?: ResponseBlockLocation;
   /** You can provide a required value, which makes it so a participant has to answer with that value. */
   requiredValue?: unknown;
   /** You can provide a required label, which makes it so a participant has to answer with a response that matches label. */
@@ -164,6 +182,20 @@ export interface BaseResponse {
 /**
  * The NumericalResponse interface is used to define the properties of a numerical response.
  * NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.
+ *
+ * Example:
+ * ```js
+{
+    "id": "q-numerical",
+    "prompt": "Numerical example",
+    "required": true,
+    "location": "aboveStimulus",
+    "type": "numerical",
+    "placeholder": "Enter your age, range from 0 - 120",
+    "max": 120,
+    "min": 0
+}
+```
  */
 export interface NumericalResponse extends BaseResponse {
   type: 'numerical';
@@ -178,6 +210,18 @@ export interface NumericalResponse extends BaseResponse {
 /**
  * The ShortTextResponse interface is used to define the properties of a short text response.
  * ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.
+ *
+ * ```js
+{
+    "id": "q-short-text",
+    "prompt": "Short text example",
+    "required": true,
+    "location": "aboveStimulus",
+    "type": "shortText",
+    "placeholder": "Enter your answer here"
+}
+```
+ *
  */
 export interface ShortTextResponse extends BaseResponse {
   type: 'shortText';
@@ -188,6 +232,17 @@ export interface ShortTextResponse extends BaseResponse {
 /**
  * The LongTextResponse interface is used to define the properties of a long text response.
  * LongTextResponses render as a text area that accepts any text and can optionally have a placeholder.
+ * ```js
+{
+    "id": "q-name",
+    "prompt": "What is your first name?",
+    "required": true,
+    "location": "aboveStimulus",
+    "type": "longText",
+    "placeholder": "Please enter your first name"
+}
+```
+ *
  */
 export interface LongTextResponse extends BaseResponse {
   type: 'longText';
@@ -197,14 +252,29 @@ export interface LongTextResponse extends BaseResponse {
 
 /**
  * The LikertResponse interface is used to define the properties of a likert response.
- * LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the preset. For example, preset: 5 will render 5 radio buttons, and preset: 7 will render 7 radio buttons.
+ * LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons.
  * LikertResponses can also have a description, and left and right labels.
  * The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.
+ *
+ * Example for a five-point Likerts Scale:
+ *
+ * ```js
+ {
+      "id": "q-satisfaction",
+      "prompt": "Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).",
+      "required": true,
+      "location": "aboveStimulus",
+      "type": "likert",
+      "leftLabel": "Not Enjoyable",
+      "rightLabel": "Very Enjoyable",
+      "numItems": 5
+  }
+  ```
  */
 export interface LikertResponse extends BaseResponse {
   type: 'likert';
   /** The number of options to render. */
-  preset: number;
+  numItems: number;
   /** The description of the likert scale. */
   desc?: string;
   /** The left label of the likert scale. E.g Strongly Disagree */
@@ -216,44 +286,142 @@ export interface LikertResponse extends BaseResponse {
 /**
  * The DropdownResponse interface is used to define the properties of a dropdown response.
  * DropdownResponses render as a select input with user specified options.
+ *
+ * Example:
+ * ```js
+ {
+    "id": "q-color",
+    "prompt": "What is your favorite color?",
+    "required": true,
+    "location": "aboveStimulus",
+    "type": "dropdown",
+    "placeholder": "Please choose your favorite color",
+    "options": [
+        {
+            "label": "Red",
+            "value": "red"
+        },
+        {
+            "label": "Blue",
+            "value": "blue"
+        }
+    ]
+}
+  ```
+ *
+ *
  */
 export interface DropdownResponse extends BaseResponse {
   type: 'dropdown';
   /** The placeholder text that is displayed in the input. */
   placeholder?: string;
   /** The options that are displayed in the dropdown. */
-  options: Option[];
+  options: StringOption[];
 }
 
 /**
  * The SliderResponse interface is used to define the properties of a slider response.
  * SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100.
+ *
+ * Example:
+ * ```js
+{
+    "id": "q-slider",
+    "prompt": "How are you feeling?",
+    "location": "aboveStimulus",
+    "required": true,
+    "type": "slider",
+    "options": [
+        {
+            "label": "Bad",
+            "value": 0
+        },
+        {
+            "label": "OK",
+            "value": 50
+        },
+        {
+            "label": "Good",
+            "value": 100
+        }
+    ]
+}
+  ```
+ *
  */
 export interface SliderResponse extends BaseResponse {
   type: 'slider';
-  /** This define the steps in the slider and the extent of the slider. */
-  options: Option[];
+  /** This defines the steps in the slider and the extent of the slider as an array of objects that have a label and a value. */
+  options: NumberOption[];
 }
 
 /**
- * The RadioResponse interface is used to define the properties of a radio response.
+ * The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection.
  * RadioResponses render as a radio input with user specified options, and optionally left and right labels.
+ *
+ * Example:
+ * ```js
+{
+  "id": "q-radio",
+  "prompt": "Radio button example",
+  "required": true,
+  "location": "aboveStimulus",
+  "type": "radio",
+  "options": [
+    {
+      "label": "Option 1",
+      "value": "opt-1"
+    },
+    {
+      "label": "Option 2",
+      "value": "opt-2"
+    }
+  ]
+}
+  ```
+ *
  */
 export interface RadioResponse extends BaseResponse {
   type: 'radio';
-  options: Option[];
+  /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields. */
+  options: StringOption[];
+  /** The left label of the radio group. Used in Likert scales for example */
   leftLabel?: string;
+  /** The right label of the radio group. Used in Likert scales for example */
   rightLabel?: string;
 }
 
 /**
  * The CheckboxResponse interface is used to define the properties of a checkbox response.
  * CheckboxResponses render as a checkbox input with user specified options.
+ *
+ * ```js
+{
+    "id": "q7",
+    "prompt": "Checkbox example (not required)",
+    "required": false,
+    "location": "aboveStimulus",
+    "type": "checkbox",
+    "options": [
+        {
+            "label": "Option 1",
+            "value": "opt-1"
+        },
+        {
+            "label": "Option 2",
+            "value": "opt-2"
+        },
+        {
+            "label": "Option 3",
+            "value": "opt-3"
+        }
+    ]
+}
  */
 export interface CheckboxResponse extends BaseResponse {
   type: 'checkbox';
-  /** The options that are displayed as checkboxes. */
-  options: Option[];
+  /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields. */
+  options: StringOption[];
 }
 
 /**
@@ -720,7 +888,7 @@ export interface IndividualComponentAllResponsesCondition {
 
 /** The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on all components in the block are checked.
  *
- * Answers are checked against the correct answers defined in the IndividualComponent's [CorrectAnswer](./Answer). If no correct answers are defined, the component is considered correct by default.
+ * Answers are checked against the correct answers defined in the IndividualComponent's [CorrectAnswer](../Answer). If no correct answers are defined, the component is considered correct by default.
  *
  * You might use this if a participant answers two questions in a block incorrectly. Here's an example of how to use the ComponentBlockCondition:
  *
@@ -754,7 +922,7 @@ export interface ComponentBlockCondition {
   to: string;
 }
 
-/** The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to the [ComponentBlockCondition](./ComponentBlockCondition), but it only checks a specific repeated component.
+/** The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to the [ComponentBlockCondition](../ComponentBlockCondition), but it only checks a specific repeated component.
  *
  * Here's an example of how to use the RepeatedComponentBlockCondition:
  *
@@ -899,9 +1067,9 @@ export type SkipConditions = (IndividualComponentSingleResponseCondition | Indiv
  * ]
  * ```
  *
- * The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../type-aliases/InterruptionBlock) for more specific information.
+ * The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../../type-aliases/InterruptionBlock) for more specific information.
  *
- * The skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../type-aliases/SkipConditions) for more specific information.
+ * The skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../../type-aliases/SkipConditions) for more specific information.
 */
 export interface ComponentBlock {
   /** The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property. */
@@ -921,42 +1089,7 @@ export interface ComponentBlock {
 /** An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component). */
 export type InheritedComponent = (Partial<IndividualComponent> & { baseComponent: string })
 
-/**
- * The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.
-
- ```js
- {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/StudyConfigSchema.json",
-    "studyMetadata": {
-      ...
-    },
-    "uiConfig": {
-      ...
-    },
-    "components": {
-      ...
-    },
-    "sequence": {
-      ...
-    }
-}
-```
-
-:::info
-For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually.
-:::
-<br/>
-
-The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.
- */
-export interface StudyConfig {
-  /** A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information */
-  $schema: string;
-  /** The metadata for the study. This is used to identify the study and version in the data file. */
-  studyMetadata: StudyMetadata;
-  /** The UI configuration for the study. This is used to configure the UI of the app. */
-  uiConfig: UIConfig;
-  /** The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;
+/** The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;
 
    * Using baseComponents:
 
@@ -1012,7 +1145,45 @@ In the above code snippet, we have a single base component which holds the infor
 }
 ```
    */
-  baseComponents?: Record<string, IndividualComponent | Partial<IndividualComponent>>;
+export type BaseComponents = Record<string, Partial<IndividualComponent>>;
+
+/**
+ * The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.
+
+ ```js
+ {
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+      ...
+    },
+    "uiConfig": {
+      ...
+    },
+    "components": {
+      ...
+    },
+    "sequence": {
+      ...
+    }
+}
+```
+
+:::info
+For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually.
+:::
+<br/>
+
+The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.
+ */
+export interface StudyConfig {
+  /** A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information */
+  $schema: string;
+  /** The metadata for the study. This is used to identify the study and version in the data file. */
+  studyMetadata: StudyMetadata;
+  /** The UI configuration for the study. This is used to configure the UI of the app. */
+  uiConfig: UIConfig;
+  /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */
+  baseComponents?: BaseComponents;
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
   components: Record<string, IndividualComponent | InheritedComponent>
   /** The order of the components in the study. This might include some randomness. */

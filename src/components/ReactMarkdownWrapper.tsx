@@ -4,31 +4,32 @@ import ReactMarkdown from 'react-markdown';
 import {
   Image, Text, Title, Anchor, List,
 } from '@mantine/core';
-import { ReactNode } from 'react';
 import rehypeRaw from 'rehype-raw';
-import { IconAsterisk } from '@tabler/icons-react';
+import { JsxRuntimeComponents } from 'react-markdown/lib';
 
 export default function ReactMarkdownWrapper({ text, required }: { text: string; required?: boolean }) {
-  const components = {
-    img: ({ node, ...props }: { node: unknown; }) => <Image {...props} />,
-    p: ({ node, ...props }: { node: unknown; }) => <Text {...props} pb={8} />,
-    h1: ({ node, ...props }: { node: unknown; }) => <Title order={1} {...props} pb={12} />,
-    h2: ({ node, ...props }: { node: unknown; }) => <Title order={2} {...props} pb={12} />,
-    h3: ({ node, ...props }: { node: unknown; }) => <Title order={3} {...props} pb={12} />,
-    h4: ({ node, ...props }: { node: unknown; }) => <Title order={4} {...props} pb={12} />,
-    h5: ({ node, ...props }: { node: unknown; }) => <Title order={5} {...props} pb={12} />,
-    h6: ({ node, ...props }: { node: unknown; }) => <Title order={6} {...props} pb={12} />,
-    a: ({ node, ...props }: { node: unknown; }) => <Anchor {...props} />,
-    ul: ({ node, ...props }: { node: unknown; children: ReactNode; }) => <List withPadding {...props} pb={8} />,
-    ol: ({ node, ...props }: { node: unknown; children: ReactNode; }) => <List type="ordered" withPadding {...props} pb={8} />,
+  const components: Partial<JsxRuntimeComponents> = {
+    img({
+      node, width, height, ...props
+    }) { return <Image {...props} h={height} w={width} ref={undefined} />; },
+    p({ node, ...props }) { return <Text {...props} pb={8} fw="inherit" ref={undefined} />; },
+    h1({ node, ...props }) { return <Title {...props} order={1} {...props} pb={12} />; },
+    h2({ node, ...props }) { return <Title {...props} order={2} {...props} pb={12} />; },
+    h3({ node, ...props }) { return <Title {...props} order={3} {...props} pb={12} />; },
+    h4({ node, ...props }) { return <Title {...props} order={4} {...props} pb={12} />; },
+    h5({ node, ...props }) { return <Title {...props} order={5} {...props} pb={12} />; },
+    h6({ node, ...props }) { return <Title {...props} order={6} {...props} pb={12} />; },
+    a({ node, ...props }) { return <Anchor {...props} ref={undefined} />; },
+    ul({ node, ...props }) { return <List withPadding {...props} pb={8} />; },
+    ol({ node, type, ...props }) { return <List type="ordered" withPadding {...props} pb={8} />; },
   };
 
-  const asteriskIcon = ('<span style="color: #fa5252">*</span>');
+  const asteriskIcon = ('<span style="color: #fa5252; margin-left: 4px">*</span>');
 
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <ReactMarkdown components={components} rehypePlugins={[rehypeRaw] as any}>
-      {text + (required ? ` ${asteriskIcon}` : '')}
+      {text + (required ? `${asteriskIcon}` : '')}
     </ReactMarkdown>
   );
 }

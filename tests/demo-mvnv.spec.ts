@@ -12,7 +12,7 @@ test('test', async ({ page }) => {
   await expect(introText).toBeVisible();
 
   // Click on next button
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check for consent page
   const consentText = await page.getByRole('heading', { name: 'Consent' });
@@ -30,7 +30,7 @@ test('test', async ({ page }) => {
   await expect(trainingText).toBeVisible();
   const trainingVideo = await page.frameLocator('#root iframe').locator('video');
   await expect(trainingVideo).toBeVisible();
-  await page.getByRole('button', { name: 'Next' }).click();
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // eslint-disable-next-line no-plusplus
   for (let i = 0; i < 16; i++) {
@@ -83,14 +83,14 @@ test('test', async ({ page }) => {
     }
 
     try {
-      const input = await page.getByLabel('Enter Findings Below *');
+      const input = await page.getByLabel('Enter Findings Below*');
       await expect(input).toBeVisible({ timeout: 100 });
       await input.fill('test');
     } catch (e) {
       // eslint-disable-next-line no-empty
     }
 
-    await page.getByRole('button', { name: 'Next' }).click();
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
   }
 
   // Check that the thank you message is displayed
