@@ -133,7 +133,8 @@
                 "y": "Weight (lbs)",
                 "category": "Origin",
                 "ids": "id",
-                "brushType": "Rectangular Selection"
+                "brushType": "Rectangular Selection",
+                "hallucination": false
             },
             "response": [
                 {
@@ -144,6 +145,7 @@
                     "type": "longText"
                 }
             ]
+            
         },
         "sumsift2": {
             "baseComponent": "summarySource",
@@ -155,7 +157,8 @@
                 "y": "Weight (lbs)",
                 "category": "Origin",
                 "ids": "id",
-                "brushType": "Rectangular Selection"
+                "brushType": "Rectangular Selection",
+                "hallucination": false
             },
             "response": [
                 {
@@ -177,7 +180,8 @@
                 "y": "Weight (lbs)",
                 "category": "Origin",
                 "ids": "id",
-                "brushType": "Rectangular Selection"
+                "brushType": "Rectangular Selection",
+                "hallucination": false
             },
             "response": [
                 {
@@ -199,7 +203,8 @@
                 "y": "Weight (lbs)",
                 "category": "Origin",
                 "ids": "id",
-                "brushType": "Rectangular Selection"
+                "brushType": "Rectangular Selection",
+                "hallucination": true
             },
             "response": [
                 {
@@ -221,7 +226,8 @@
                 "y": "Weight (lbs)",
                 "category": "Origin",
                 "ids": "id",
-                "brushType": "Rectangular Selection"
+                "brushType": "Rectangular Selection",
+                "hallucination": true
             },
             "response": [
                 {
