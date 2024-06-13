@@ -8,20 +8,20 @@ S6,
 S7,
 S8,
 S9,<h3>1 Introduction. </h3>
-S10,The Summer Conference on Applied Data Science (SCADS) is an annual eight-week summer research program held at the Laboratory for Analytic Sciences (LAS) that is focused on the research and development of Artificial Intelligence (AI) to assist US Intelligence Community (IC) data analysts. 
-S11,. SCADS identifies a multi-year Grand Challenge to focus the research toward solving a current mission challenge
+S10,The Summer Conference on Applied Data Science (SCADS) is an annual eight-week summer research program held at the Laboratory for Analytic Sciences (LAS) that is focused on the research and development of Artificial Intelligence (AI) to assist US Intelligence Community (IC) data analysts.
+S11,SCADS identifies a multi-year Grand Challenge to focus the research toward solving a current mission challenge
 S12,"SCADS brings together approximately fifty personnel each year, including faculty, graduate students, industry professionals, researchers at National Laboratories and Federally Funded Research and Development Centers (FFRDCs), and government employees from the IC, to advance the research on the current Grand Challenge."
-S13,<p>Grand Challenge: Generate tailored daily reports for knowledge workers that capture information relevant to their individual objectives and interests . </p>
-S14,The SCADS grand challenge is intended to be a multi-year unifying research goal of creating Tailored Daily Reports (TLDRs) for individual knowledge workers within the IC
-S15,". These reports would be similar in some sense to the well-known President’s Daily Brief or to established commercial news aggregators, but would include a mix of classified and unclassified material, combine information from a variety of modes and formats, and be tailored to the interests and responsibilities of the individual IC worker ."
-S16,"In 2024, we continue working toward creating TLDRs and directed research efforts will fall under the broad areas of Automatic Summarization, Recommendation Systems, and Human-Machine Interaction"
-S17,". Each of these areas will also include a special emphasis on explainability and contextualization, as well as knowledge representation and dataset creation and curation"
-S18,. Efforts will also include development projects that are aimed at bringing together the different areas into a demonstration application to model how the individual research projects come together to support a TLDR .
-S19,"In this document we present relevant critical challenges and research questions that address various aspects of the grand challenge, briefly discuss the motivation for those challenges and questions, and provide references and other resources for further exploration"
-S20,". We have organized this document by focus areas, and note that some challenges and questions presented might span multiple focus areas"
-S21,". For each critical challenge and research question, we attempt to identify the scope (short, medium, or long-term) of the challenge or question, and also which other challenges and questions are related ."
-S22,Throughout this document we attempt to identify research areas which may be served by use of Large Language Models (LLMs) which have been an area of great focus in the field recently
-S23,". Two ubiquitous LLMs are GPT-3.5 and GPT-4, versions of which are incorporated into ChatGPT ."
+S13,<p>Grand Challenge: Generate tailored daily reports for knowledge workers that capture information relevant to their individual objectives and interests. </p>
+S14,The SCADS grand challenge is intended to be a multi-year unifying research goal of creating Tailored Daily Reports (TLDRs) for individual knowledge workers within the IC.
+S15,"These reports would be similar in some sense to the well-known President’s Daily Brief or to established commercial news aggregators, but would include a mix of classified and unclassified material, combine information from a variety of modes and formats, and be tailored to the interests and responsibilities of the individual IC worker ."
+S16,"In 2024, we continue working toward creating TLDRs and directed research efforts will fall under the broad areas of Automatic Summarization, Recommendation Systems, and Human-Machine Interaction."
+S17,"Each of these areas will also include a special emphasis on explainability and contextualization, as well as knowledge representation and dataset creation and curation."
+S18,Efforts will also include development projects that are aimed at bringing together the different areas into a demonstration application to model how the individual research projects come together to support a TLDR.
+S19,"In this document we present relevant critical challenges and research questions that address various aspects of the grand challenge, briefly discuss the motivation for those challenges and questions, and provide references and other resources for further exploration."
+S20,"We have organized this document by focus areas, and note that some challenges and questions presented might span multiple focus areas."
+S21,"For each critical challenge and research question, we attempt to identify the scope (short, medium, or long-term) of the challenge or question, and also which other challenges and questions are related."
+S22,Throughout this document we attempt to identify research areas which may be served by use of Large Language Models (LLMs) which have been an area of great focus in the field recently.
+S23,"Two ubiquitous LLMs are GPT-3.5 and GPT-4, versions of which are incorporated into ChatGPT."
 S24,<h3>2 Automatic Summarization. </h3>
 S25,Key to the creation of a TLDR will be the automatic summarization of large corpora of documents
 S26,. This process will involve both extractive and abstractive summarization
@@ -186,11 +186,11 @@ S184,Question 2.5c Can we use reinforcement learning and human feedback to impro
 S185,Critical Challenge 2.F Design/execute an experiment to identify and classify hallucinations in automatically generated summaries
 S186,. Scope: short-term .
 S187,<h3>2.6 Summarizing Non-Text Data . </h3>
-S188,The eventual TLDR will need to summarize not just articles but also input from a variety of modalities
-S189,". Two modalities of interest are audio, and video content"
-S190,.  Conversational Audio is an instance of the more general problem of dialogue summarization [20] [21]
-S191,. An audio conversation is likely to require different techniques than summarizing an article or similar document
-S192,". This is for a variety of reasons, including that a single transcription of an audio conversation could include many different topics"
+S188,The eventual TLDR will need to summarize not just articles but also input from a variety of modalities.
+S189,"Two modalities of interest are audio, and video content."
+S190,Conversational Audio is an instance of the more general problem of dialogue summarization [20] [21].
+S191,An audio conversation is likely to require different techniques than summarizing an article or similar document.
+S192,"This is for a variety of reasons, including that a single transcription of an audio conversation could include many different topics"
 S193,. It will also include more colloquial language than a prepared article
 S194,". Finally, there will be transcription errors due to both out-of-vocabulary words and also audio quality"
 S195,. Work done at SCADS 2022 suggested that extractive summarization techniques may not be suitable for noisy transcripts
