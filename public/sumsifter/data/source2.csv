@@ -11,7 +11,7 @@ S9,<h3>1 Introduction. </h3>
 S10,The Summer Conference on Applied Data Science (SCADS) is an annual eight-week summer research program held at the Laboratory for Analytic Sciences (LAS) that is focused on the research and development of Artificial Intelligence (AI) to assist US Intelligence Community (IC) data analysts.
 S11,SCADS identifies a multi-year Grand Challenge to focus the research toward solving a current mission challenge
 S12,"SCADS brings together approximately fifty personnel each year, including faculty, graduate students, industry professionals, researchers at National Laboratories and Federally Funded Research and Development Centers (FFRDCs), and government employees from the IC, to advance the research on the current Grand Challenge."
-S13,<p>Grand Challenge: Generate tailored daily reports for knowledge workers that capture information relevant to their individual objectives and interests. </p>
+S13,Grand Challenge: Generate tailored daily reports for knowledge workers that capture information relevant to their individual objectives and interests.
 S14,The SCADS grand challenge is intended to be a multi-year unifying research goal of creating Tailored Daily Reports (TLDRs) for individual knowledge workers within the IC.
 S15,"These reports would be similar in some sense to the well-known President’s Daily Brief or to established commercial news aggregators, but would include a mix of classified and unclassified material, combine information from a variety of modes and formats, and be tailored to the interests and responsibilities of the individual IC worker ."
 S16,"In 2024, we continue working toward creating TLDRs and directed research efforts will fall under the broad areas of Automatic Summarization, Recommendation Systems, and Human-Machine Interaction."
@@ -23,8 +23,8 @@ S21,"For each critical challenge and research question, we attempt to identify t
 S22,Throughout this document we attempt to identify research areas which may be served by use of Large Language Models (LLMs) which have been an area of great focus in the field recently.
 S23,"Two ubiquitous LLMs are GPT-3.5 and GPT-4, versions of which are incorporated into ChatGPT."
 S24,<h3>2 Automatic Summarization. </h3>
-S25,Key to the creation of a TLDR will be the automatic summarization of large corpora of documents
-S26,. This process will involve both extractive and abstractive summarization
+S25,Key to the creation of a TLDR will be the automatic summarization of large corpora of documents.
+S26,This process will involve both extractive and abstractive summarization
 S27,". While summarization for SCADS is primarily concerned with text, research in multi-modal summarization techniques is also encouraged"
 S28,. Researchers would have access to existing summarization engines and be able to improve and augment them
 S29,". Traditionally, automatic summarization has fallen into two categories: extractive and abstractive ."
