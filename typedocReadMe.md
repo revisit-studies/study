@@ -86,14 +86,14 @@ For more detailed documentation on the response section, check out the [document
 
 ## Base Components and Inheritance
 
-[Base Components](interfaces/StudyConfig#basecomponents) can be used to implement inheritance for components. This is often useful if you want to parameterize a component. For example: 
+[Base Components](type-aliases/BaseComponents) can be used to implement inheritance for components. This is often useful if you want to parameterize a component. For example: 
 
 * You might have a stimulus, such as an image, where you want to ask multiple different questions.  
 * You might have a generic implementation of a stimulus, such as a bar chart, and you want to pass in data to change how the stimulus appears. 
 
 In both of these cases, you can set up a component once as a `baseComponent`, including linking to the stimulus and including (partial) responses, but then later write inherited, short components that extend the base component with the specific functionality you want. 
 
-For examples of how to write a base component, refer to the [documentation](interfaces/StudyConfig#basecomponents) and to the [relevant tutorial](../..getting-started/tutorial-questionnaire#adding-custom-html).
+For examples of how to write a base component, refer to the [documentation](type-aliases/BaseComponents) and to the [relevant tutorial](../tutorials/html-stimulus).
 
 
 ## Sequence
