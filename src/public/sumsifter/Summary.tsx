@@ -30,11 +30,6 @@ function Summary({ sentences, onSourceClick, activeSourceId }: SummaryProps) {
                 <Badge
                   className={style.badge}
                   onClick={() => onSourceClick(sentence.id, src)}
-                  onMouseEnter={() => {
-                    if (activeSourceId !== src) {
-                      onSourceClick(null, null);
-                    }
-                  }}
                   style={{ cursor: 'pointer' }}
                   color={activeSourceId === src ? 'blue.5' : 'gray.5'}
                 >

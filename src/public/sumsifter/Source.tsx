@@ -1,5 +1,8 @@
 import React, { useEffect } from 'react';
-import { Text, Title, ScrollArea } from '@mantine/core';
+import {
+  Text, Title, ScrollArea, Badge,
+} from '@mantine/core';
+import style from './sumsifter.module.css';
 
 interface SourceProps {
   sourceList: { id?: string; text: string }[];
@@ -17,12 +20,24 @@ function SourceItem({ source, isActive }: { source: { id?: string; text: string 
 
   return (
     <Text
+      className={style.sourceItem}
       ref={ref}
       component="span"
-      bg={isActive ? 'blue.3' : 'transparent'}
       px={5}
-      dangerouslySetInnerHTML={{ __html: source.text }}
-    />
+    >
+      {isActive && (
+        <Badge
+          className={style.sourceItemBadge}
+        >
+          {source.id}
+        </Badge>
+      )}
+      <Text
+        component="span"
+        bg={isActive ? 'blue.3' : 'transparent'}
+        dangerouslySetInnerHTML={{ __html: source.text }}
+      />
+    </Text>
   );
 }
 
