@@ -42,7 +42,7 @@
                     "required": true,
                     "location": "belowStimulus",
                     "type": "shortText",
-                    "placeholder": "Prolific ID",
+                    "placeholder": "Your Name",
                     "paramCapture": "PROLIFIC_PID"
                 }
             ]
@@ -171,7 +171,7 @@
         },
         "feedback-process-1":{
             "description": "Planned future flow",
-            "instruction": "**Note: the text may be tiny, please feel free to zoom in your browser!** Please go through the planned future flow (next buttons when ready), and suggest any changes or feedback at the end.",
+            "instruction": "**Note: The following is an image. The text may be tiny, please feel free to zoom in your browser!** Please go through the planned future flow (next buttons when ready), and suggest any changes or feedback at the end.",
             "type": "image",
             "path": "sumsifter/assets/image-1.png",
             "style": {
