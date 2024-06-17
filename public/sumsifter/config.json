@@ -162,7 +162,7 @@
                 {
                     "id": "surveyAnything",
                     "prompt": "Anything else you'd like to tell us or share at this time?",
-                    "required": true,
+                    "required": false,
                     "location": "belowStimulus",
                     "type": "longText",
                     "placeholder": "Enter your answer here."
@@ -171,11 +171,10 @@
         },
         "feedback-process-1":{
             "description": "Planned future flow",
-            "instruction": "**Note: The following is an image. The text may be tiny, please feel free to zoom in your browser!** Please go through the planned future flow (next buttons when ready), and suggest any changes or feedback at the end.",
+            "instruction": "**Note: The right is an image of a prototype we'd like your feedback on.**\n\n**The text may be tiny, please feel free to zoom in your browser!**\n\nPlease go through the planned future flow (use next buttons when ready for the next part), and suggest any changes or feedback in the text box at the end.",
             "type": "image",
             "path": "sumsifter/assets/image-1.png",
             "style": {
-                "width": "1000px"
             },
             "nextButtonLocation": "sidebar",
             "response": [
@@ -183,11 +182,10 @@
         },
         "feedback-process-2":{
             "description": "Planned future flow",
-            "instruction": "**Note: the text may be tiny, please feel free to zoom in your browser!** Please go through the planned future flow (next buttons when ready), and suggest any changes or feedback at the end.",
+            "instruction": "**Note: the text may be tiny, please feel free to zoom in your browser!**\n\nPlease go through the planned future flow (use next buttons when ready for the next part), and suggest any changes or feedback in the text box at the end.",
             "type": "image",
             "path": "sumsifter/assets/image-2.png",
             "style": {
-                "width": "1000px"
             },
             "nextButtonLocation": "sidebar",
             "response": [
@@ -195,11 +193,10 @@
         },
         "feedback-process-3":{
             "description": "Planned future flow",
-            "instruction": "**Note: the text may be tiny, please feel free to zoom in your browser!** Please let us know your thoughts on this more complex design for summary and source studies with multiple documents.",
+            "instruction": "**Note: the text may be tiny, please feel free to zoom in your browser!**\n\nPlease let us know your thoughts on this more complex design for summary and source studies with multiple documents.",
             "type": "image",
             "path": "sumsifter/assets/image-3.png",
             "style": {
-                "width": "1000px"
             },
             "nextButtonLocation": "sidebar",
             "response": [
