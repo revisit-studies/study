@@ -14,6 +14,10 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
 
   const [sourcesData, setSourcesData] = useState<{ id: string; text: string }[]>([]);
 
+  const [summaryBadgeTop, setSummaryBadgeTop] = useState(0);
+  const [sourceBadgeTop, setSourceBadgeTop] = useState(0);
+  const [sourceBadgeLeft, setSourceBadgeLeft] = useState(0);
+
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
 
@@ -116,15 +120,37 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
     setActiveSourceId(sourceId);
   };
 
+  const handleSummaryBadgePositionChange = (top: number) => {
+    setSummaryBadgeTop(top);
+  };
+
+  const handleSourceBadgePositionChange = (left: number, top: number) => {
+    setSourceBadgeTop(top);
+    setSourceBadgeLeft(left);
+  };
+
   return (
-    <Grid>
-      <Grid.Col span={6}>
-        <Summary sentences={summaryData} onSourceClick={handleSourceClick} activeSourceId={activeSourceId} />
-      </Grid.Col>
-      <Grid.Col span={6}>
-        <Source sourceList={sourcesData} activeSourceId={activeSourceId} />
-      </Grid.Col>
-    </Grid>
+    <>
+      <Grid gutter={50}>
+        <Grid.Col span={6}>
+          <Summary sentences={summaryData} onSummaryBadgePositionChange={handleSummaryBadgePositionChange} onSourceClick={handleSourceClick} activeSourceId={activeSourceId} />
+        </Grid.Col>
+        <Grid.Col span={6}>
+          <Source sourceList={sourcesData} onSourceBadgePositionChange={handleSourceBadgePositionChange} activeSourceId={activeSourceId} />
+        </Grid.Col>
+      </Grid>
+      {activeSourceId && (
+        <div style={{
+          position: 'fixed',
+          top: (summaryBadgeTop > sourceBadgeTop ? sourceBadgeTop : summaryBadgeTop) + 18,
+          left: sourceBadgeLeft - 10,
+          width: 2,
+          height: Math.abs(summaryBadgeTop - sourceBadgeTop) - (summaryBadgeTop > sourceBadgeTop ? -2 : 2),
+          backgroundColor: 'var(--mantine-color-blue-5)',
+        }}
+        />
+      )}
+    </>
   );
 }
 
