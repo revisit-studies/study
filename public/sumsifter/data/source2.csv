@@ -49,7 +49,7 @@ S47,"As improvements are made in the language model space, the scope of summariz
 S48,". Topics in question answering, information retrieval, and entity extraction are becoming more mainstream for summarization engines within traditional summarization, there are various methods to investigate that focus on different aspects of the text"
 S49,. A past Document Understanding Conference hosted by NIST investigated topic-based summarization
 S50,". Other potential areas could be guided and aspect summaries, all of which incorporate named entities. ."
-S51,<h3>2.1 Text Embedding. </h3>
+S51,2.1 Text Embedding. 
 S52,One outgrowth of natural language processing developments is the ability to embed not only words in context but also sentences and documents
 S53,". Such methods have been used to develop topic models, for example, top2vec clusters documents employing such embeddings"
 S54,. It is natural to consider methods of utilizing sentence embeddings to improve extractive summarization .
