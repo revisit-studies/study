@@ -22,26 +22,20 @@
         "enumerateQuestions": true,
         "sidebarWidth": 400
     },
-    "components": {
-        "Introduction": {
-            "type": "markdown",
-            "path": "Upset-Alttext-User-Survey/assets/introduction.md",
-            "response": []
-        },
-        "Visual-Only-Questionnaire 1": {
-            "description": "Content: Visual Only",
-            "instruction": "Please answer the following question about the chart:",
+    "baseComponents": {
+        "VO-image1": {
             "type": "image",
-            "path": "Upset-Alttext-User-Survey/assets/VO.png",
             "style": {
                 "width": "492px",
                 "height": "1200px"
             },
             "nextButtonLocation": "sidebar",
+            "description": "Content: Visual Only",
+            "instruction": "Please answer the following question about the chart:",
             "response": [
                 {
                     "id": "voq1",
-                    "prompt": "What are your insights and take-aways from this chart for this data?",
+                    "prompt": "What are your insights and take-aways from this plot for this data?",
                     "required": true,
                     "location": "sidebar",
                     "type": "longText",
@@ -49,16 +43,15 @@
                 }
             ]
         },
-        "Visual-Only-Questionnaire 2": {
-            "description": "Content: Visual Only",
-            "instruction": "Please answer the following questions about the chart:",
+        "VO-image2": {
             "type": "image",
-            "path": "Upset-Alttext-User-Survey/assets/VO.png",
             "style": {
                 "width": "492px",
                 "height": "1200px"
             },
             "nextButtonLocation": "sidebar",
+            "description": "Content: Visual Only",
+            "instruction": "Please answer the following question about the chart:",
             "response": [
                 {
                     "id": "voq1",
@@ -189,19 +182,17 @@
                         
                     ]
                 }
-            ]  
-                
+            ]
         },
-        "Visual-Only-Questionnaire 3": {
-            "description": "Content: Visual Only",
-            "instruction": "Rate the content:",
+        "VO-image3": {
             "type": "image",
-            "path": "Upset-Alttext-User-Survey/assets/VO.png",
             "style": {
                 "width": "492px",
                 "height": "1200px"
             },
             "nextButtonLocation": "sidebar",
+            "description": "Content: Visual Only",
+            "instruction": "Rate the content:",
             "response": [
                 {
                     "id": "voq1",
@@ -235,17 +226,17 @@
                     "rightLabel": "Extremely effective"
                 }
             ]
+        
         },
-        "Text-Only-Questionnaire 1": {
+        "TO-text1": {
+            "type": "markdown",
+            "nextButtonLocation": "sidebar",
             "description": "Content: Text Only",
             "instruction": "Please answer the following question about the chart:",
-            "type": "markdown",
-            "path": "Upset-Alttext-User-Survey/assets/text.md",
-            "nextButtonLocation": "sidebar",
             "response": [
                 {
                     "id": "voq1",
-                    "prompt": "What are your insights and take-aways from this text for this data?",
+                    "prompt": "What are your insights and take-aways from the description of this data?",
                     "required": true,
                     "location": "sidebar",
                     "type": "longText",
@@ -253,16 +244,15 @@
                 }
             ]
         },
-        "Text-Only-Questionnaire 2": {
-            "description": "Content: Text Only",
-            "instruction": "Please answer the following questions about the chart:",
+        "TO-text2": {
             "type": "markdown",
-            "path": "Upset-Alttext-User-Survey/assets/text.md",
             "nextButtonLocation": "sidebar",
+            "description": "Content: Text Only",
+            "instruction": "Please answer the following question about the chart:",
             "response": [
                 {
                     "id": "voq1",
-                    "prompt": "How many sets are shown in the upset plot?",
+                    "prompt": "How many sets are shown in the description?",
                     "required": true,
                     "location": "sidebar",
                     "type": "numerical",
@@ -273,7 +263,7 @@
                 },
                 {
                     "id": "voq2",
-                    "prompt": "How many intersections are seen in the UpSet plot?",
+                    "prompt": "How many intersections are seen in the description?",
                     "required": true,
                     "location": "sidebar",
                     "type": "numerical",
@@ -389,15 +379,13 @@
                         
                     ]
                 }
-            ]  
-                
+            ]
         },
-        "Text-Only-Questionnaire 3": {
+        "TO-text3":{
+            "type": "markdown",
+            "nextButtonLocation": "sidebar",
             "description": "Content: Text Only",
             "instruction": "Rate the content:",
-            "type": "markdown",
-            "path": "Upset-Alttext-User-Survey/assets/text.md",
-            "nextButtonLocation": "sidebar",
             "response": [
                 {
                     "id": "voq1",
@@ -422,7 +410,7 @@
                 },
                 {
                     "id": "voq3",
-                    "prompt": "On a scale of 1 to 5, how effective was the text at conveying information? (1 = Not at all effective, 5 = Extremely effective)",
+                    "prompt": "On a scale of 1 to 5, how effective was the description of the data at conveying information? (1 = Not at all effective, 5 = Extremely effective)",
                     "required": true,
                     "location": "sidebar",
                     "type": "likert",
@@ -432,22 +420,278 @@
                 }
             ]
         },
-        "Text-and-Visual-Questionnaire 1": {
+        "TandV1":{
+            "type": "markdown",
+            "nextButtonLocation": "sidebar",
             "description": "Content: Text and Visual",
             "instruction": "Please answer the following question about the chart:",
-            "type": "markdown",
-            "path": "Upset-Alttext-User-Survey/assets/textandVis.md",
-            "nextButtonLocation": "sidebar",
             "response": [
                 {
                     "id": "voq1",
-                    "prompt": "What are your insights and take-aways from this text for this data?",
+                    "prompt": "What are your insights and take-aways from the plot and the description for this data?",
                     "required": true,
                     "location": "sidebar",
                     "type": "longText",
                     "placeholder": "Please enter your answer here"
                 }
             ]
+        },
+        "TandV2":{
+            "type": "markdown",
+            "nextButtonLocation": "sidebar",
+            "description": "Content: Text and Visual",
+            "instruction": "Please answer the following questions about the chart:",
+            "response": [
+                {
+                    "id": "voq1",
+                    "prompt": "How many sets are there?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 100
+
+                },
+                {
+                    "id": "voq2",
+                    "prompt": "How many intersections are seen?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 100
+
+                },
+                {
+                    "id": "voq3",
+                    "prompt": "What is the largest set?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "shortText",
+                    "placeholder": "Please enter your answer here"
+                },
+                {
+                    "id": "voq4",
+                    "prompt": "What is the largest intersection?",
+                    "secondaryText": "e.g., set_A and set_B",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "shortText",
+                    "placeholder": "Please enter your answer here"
+                },
+                {
+                    "id": "voq5",
+                    "prompt": "How large is the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 1000000000
+                },
+                {
+                    "id": "voq6",
+                    "prompt": "How many sets make up the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "It is only of a single set.",
+                            "value": "Independent set"
+                        },
+                        {
+                            "label": "It is the intersection of 2-3 sets.",
+                            "value": "Low set"
+                        },
+                        {
+                            "label": "It is the intersection of many sets.",
+                            "value": "Medium / High order set"
+                        }
+                        
+                    ]
+                },
+                {
+                    "id": "voq7",
+                    "prompt": "How similar are the set sizes?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Roughly equal (all the set sizes look similar).",
+                            "value": "Identical"
+                        },
+                        {
+                            "label": "Diverging a bit (the sizes of the largest set and the smallest set don't differ largely).",
+                            "value": "Diverging a bit"
+                        },
+                        {
+                            "label": "Diverging a lot (the sizes of the largest set and the smallest set differ largely).",
+                            "value": "Diverging a lot"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq8",
+                    "prompt": "Is the largest set present in the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq9",
+                    "prompt": "Is the all-set intersection (intersection having all the sets) present? ",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                        
+                    ]
+                }
+            ]
+        },
+        "TandV3":{
+            "type": "markdown",
+            "nextButtonLocation": "sidebar",
+            "description": "Content: Text and Visual",
+            "instruction": "Rate the content:",
+            "response": [
+                {
+                    "id": "voq1",
+                    "prompt": "On a scale of 1 to 5, how confident are you in your answers (1 = Not at all confident, 5 = Extremely confident)",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "likert",
+                    "numItems": 5,
+                    "leftLabel": "Not at all confident",
+                    "rightLabel": "Extremely confident"
+
+                },
+                {
+                    "id": "voq2",
+                    "prompt": "On a scale of 1 to 5, how well did you understand the information presented? (1 = Not at all understood, 5 = Completely understood)",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "likert",
+                    "numItems": 5,
+                    "leftLabel": "Not at all understood",
+                    "rightLabel": "Completely understood"
+                },
+                {
+                    "id": "voq3",
+                    "prompt": "On a scale of 1 to 5, how effective was the description of the data at conveying information? (1 = Not at all effective, 5 = Extremely effective)",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "likert",
+                    "numItems": 5,
+                    "leftLabel": "Not at all effective",
+                    "rightLabel": "Extremely effective"
+                }
+            ]
+        }
+    },
+    "components": {
+        "Introduction": {
+            "type": "markdown",
+            "path": "Upset-Alttext-User-Survey/assets/introduction.md",
+            "response": []
+        },
+        "(A)Visual-Only-Questionnaire 1": {
+            "baseComponent": "VO-image1",
+            "path": "Upset-Alttext-User-Survey/assets/VO1.png"
+        },
+        "(A)Visual-Only-Questionnaire 2": {
+            "baseComponent": "VO-image2",
+            "path": "Upset-Alttext-User-Survey/assets/VO1.png" 
+        },
+        "(A)Visual-Only-Questionnaire 3": {
+            "baseComponent": "VO-image3",
+            "path": "Upset-Alttext-User-Survey/assets/VO1.png"
+        },
+        "(A)Text-Only-Questionnaire 1": {
+            "baseComponent": "TO-text1",
+            "path": "Upset-Alttext-User-Survey/assets/text1.md"   
+        },
+        "(A)Text-Only-Questionnaire 2": {
+            "baseComponent": "TO-text2",
+            "path": "Upset-Alttext-User-Survey/assets/text1.md"
+        },
+        "(A)Text-Only-Questionnaire 3": {
+            "baseComponent": "TO-text3",
+            "path": "Upset-Alttext-User-Survey/assets/text1.md"
+            
+        },
+        "(A)Text-and-Visual-Questionnaire 1": {
+            "baseComponent": "TandV1",
+            "path": "Upset-Alttext-User-Survey/assets/textandVis1.md"
+        },
+        "(A)Text-and-Visual-Questionnaire 2": {
+            "baseComponent": "TandV2",
+            "path": "Upset-Alttext-User-Survey/assets/textandVis1.md"           
+        },
+        "(A)Text-and-Visual-Questionnaire 3": {
+            "baseComponent": "TandV3",
+            "path": "Upset-Alttext-User-Survey/assets/textandVis1.md"
+            
+        },
+        "(B)Visual-Only-Questionnaire 1": {
+            "baseComponent": "VO-image1",
+            "path": "Upset-Alttext-User-Survey/assets/VO2.png"
+        },
+        "(B)Visual-Only-Questionnaire 2": {
+            "baseComponent": "VO-image2",
+            "path": "Upset-Alttext-User-Survey/assets/VO2.png"
+        },
+        "(B)Visual-Only-Questionnaire 3": {
+            "baseComponent": "VO-image3",
+            "path": "Upset-Alttext-User-Survey/assets/VO2.png"
+        },
+        "(B)Text-Only-Questionnaire 1": {
+            "baseComponent": "TO-text1",
+            "path": "Upset-Alttext-User-Survey/assets/text2.md"
+        },
+        "(B)Text-Only-Questionnaire 2": {
+            "baseComponent": "TO-text2",
+            "path": "Upset-Alttext-User-Survey/assets/text2.md"  
+        },
+        "(B)Text-Only-Questionnaire 3": {
+            "baseComponent": "TO-text3",
+            "path": "Upset-Alttext-User-Survey/assets/text2.md"
+        },
+        "(B)Text-and-Visual-Questionnaire 1": {
+            "baseComponent": "TandV1",
+            "path": "Upset-Alttext-User-Survey/assets/textandVis2.md"
+        },
+        "(B)Text-and-Visual-Questionnaire 2": {
+            "baseComponent": "TandV2",
+            "path": "Upset-Alttext-User-Survey/assets/textandVis2.md"   
+        },
+        "(B)Text-and-Visual-Questionnaire 3": {
+            "baseComponent": "TandV3",
+            "path": "Upset-Alttext-User-Survey/assets/textandVis2.md"
         }
        
     },
@@ -457,31 +701,102 @@
             "Introduction",
             {
                 "order": "latinSquare",
-                "components": [
+                "numSamples": 1,
+                "components":[
                     {
-                        "order": "fixed",
+                        "order":"latinSquare",
                         "components": [
-                            "Visual-Only-Questionnaire 1",
-                            "Visual-Only-Questionnaire 2",
-                            "Visual-Only-Questionnaire 3"
-                            ]
-
-                    },
-                    {
-                        "order": "fixed",
-                        "components": [
-                            "Text-Only-Questionnaire 1",
-                            "Text-Only-Questionnaire 2",
-                            "Text-Only-Questionnaire 3"
+                            {
+                                "order": "fixed",
+                                "components": [
+                                    "(A)Visual-Only-Questionnaire 1",
+                                    "(A)Visual-Only-Questionnaire 2",
+                                    "(A)Visual-Only-Questionnaire 3"
+                                    ]
+        
+                            },
+                            {
+                                "order": "fixed",
+                                "components": [
+                                    "(B)Text-Only-Questionnaire 1",
+                                    "(B)Text-Only-Questionnaire 2",
+                                    "(B)Text-Only-Questionnaire 3"
+                                ]
+                            },
+                            {
+                                "order": "fixed",
+                                "components": [
+                                    "(A)Text-and-Visual-Questionnaire 1",
+                                    "(A)Text-and-Visual-Questionnaire 2",
+                                    "(A)Text-and-Visual-Questionnaire 3"
+                                ]
+                            }
                         ]
                     },
                     {
-                        "order": "fixed",
+                        "order":"latinSquare",
                         "components": [
-                            "Text-and-Visual-Questionnaire 1"
+                            {
+                                "order": "fixed",
+                                "components": [
+                                    "(B)Visual-Only-Questionnaire 1",
+                                    "(B)Visual-Only-Questionnaire 2",
+                                    "(B)Visual-Only-Questionnaire 3"
+                                    ]
+        
+                            },
+                            {
+                                "order": "fixed",
+                                "components": [
+                                    "(A)Text-Only-Questionnaire 1",
+                                    "(A)Text-Only-Questionnaire 2",
+                                    "(A)Text-Only-Questionnaire 3"
+                                ]
+                            },
+                            {
+                                "order": "fixed",
+                                "components": [
+                                    "(A)Text-and-Visual-Questionnaire 1",
+                                    "(A)Text-and-Visual-Questionnaire 2",
+                                    "(A)Text-and-Visual-Questionnaire 3"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "order":"latinSquare",
+                        "components": [
+                            {
+                                "order": "fixed",
+                                "components": [
+                                    "(B)Visual-Only-Questionnaire 1",
+                                    "(B)Visual-Only-Questionnaire 2",
+                                    "(B)Visual-Only-Questionnaire 3"
+                                    ]
+        
+                            },
+                            {
+                                "order": "fixed",
+                                "components": [
+                                    "(A)Text-Only-Questionnaire 1",
+                                    "(A)Text-Only-Questionnaire 2",
+                                    "(A)Text-Only-Questionnaire 3"
+                                ]
+                            },
+                            {
+                                "order": "fixed",
+                                "components": [
+                                    "(B)Text-and-Visual-Questionnaire 1",
+                                    "(B)Text-and-Visual-Questionnaire 2",
+                                    "(B)Text-and-Visual-Questionnaire 3"
+                                ]
+                            }
                         ]
                     }
+
                 ]
+                
+                
             }
           
         ]

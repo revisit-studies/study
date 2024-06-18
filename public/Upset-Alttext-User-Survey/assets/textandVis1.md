@@ -4,34 +4,20 @@
     <style>
         .container {
             display: flex;
+            gap: 20px;
         }
         .column {
-            flex: 50%;
             padding: 10px;
-        }
-        .image-column {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .text-column {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-        }
-        img {
-            max-width: 100%; /* Adjusted to ensure image scales correctly */
-            height: auto;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="column image-column">
-        <img src="Upset-Alttext-User-Survey/assets/VO.png" alt="Description of Image">
+    <div class="column">
+        <img style="width: 500px;" src="./assets/VO1.png" alt="Description of Image">
     </div>
-    <div class="column text-column">
+    <div class="column">
         <h2>Dataset Properties</h2>
         <p>The dataset contains 6 sets and 4340 elements, of which 6 sets are shown in the plot.</p>
         <h2>Set Properties</h2>
