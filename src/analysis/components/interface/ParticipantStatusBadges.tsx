@@ -1,29 +1,24 @@
-import { Tooltip, Text } from '@mantine/core';
+import { Tooltip, Badge, Flex } from '@mantine/core';
 import { IconCheck, IconProgress, IconX } from '@tabler/icons-react';
 
-export function ParticipantStatusBadges({ completed, inProgress, rejected }: { completed: number, inProgress: number, rejected: number }) {
+const ICON_SIZE = 14;
+
+export function ParticipantStatusBadges({
+  completed, inProgress, rejected, filteredCompleted,
+}: {
+  completed: number, inProgress: number, rejected: number; filteredCompleted?: number,
+}) {
   return (
-    <Text fz="sm" ml={4}>
-      (
-      <Tooltip label="Completed"><IconCheck size={16} color="teal" style={{ marginBottom: -3 }} /></Tooltip>
-      :
-      {' '}
-      {completed}
-      {' '}
-      |
-      {' '}
-      <Tooltip label="In Progress"><IconProgress size={16} color="orange" style={{ marginBottom: -3 }} /></Tooltip>
-      :
-      {' '}
-      {inProgress}
-      {' '}
-      |
-      {' '}
-      <Tooltip label="Rejected"><IconX size={16} color="red" style={{ marginBottom: -3 }} /></Tooltip>
-      :
-      {' '}
-      {rejected}
-      )
-    </Text>
+    <Flex ml={4} gap={4}>
+      <Tooltip label="Completed">
+        <Badge variant="light" color="green" leftSection={<IconCheck width={ICON_SIZE} height={ICON_SIZE} style={{ paddingTop: 1 }} />} pb={1}>{filteredCompleted && filteredCompleted !== completed ? `${filteredCompleted}/${completed}` : completed}</Badge>
+      </Tooltip>
+      <Tooltip label="In Progress">
+        <Badge variant="light" color="orange" leftSection={<IconProgress width={ICON_SIZE} height={ICON_SIZE} style={{ paddingTop: 1 }} />} pb={1}>{inProgress}</Badge>
+      </Tooltip>
+      <Tooltip label="Rejected">
+        <Badge variant="light" color="red" leftSection={<IconX width={ICON_SIZE} height={ICON_SIZE} style={{ paddingTop: 1 }} />} pb={1}>{rejected}</Badge>
+      </Tooltip>
+    </Flex>
   );
 }

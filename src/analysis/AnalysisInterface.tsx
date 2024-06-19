@@ -62,7 +62,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
         <Container fluid style={{ height: '100%' }}>
           <LoadingOverlay visible={loading} />
 
-          <Flex direction="row">
+          <Flex direction="row" align="center">
             <Title order={5}>{studyId}</Title>
             <ParticipantStatusBadges completed={completed.length} inProgress={inProgress.length} rejected={rejected.length} />
           </Flex>
@@ -88,7 +88,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
                   )
 }
             </Tabs.List>
-            <Tabs.Panel value="table" pt="xs" style={{ height: 'calc(100% - 38px - 10px)', width: '100%', overflow: 'scroll' }}>
+            <Tabs.Panel value="table" pt="xs">
               {studyConfig && <TableView completed={completed} inProgress={inProgress} studyConfig={studyConfig} refresh={getData} />}
             </Tabs.Panel>
 
