@@ -1,72 +1,12 @@
 {
     "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/GlobalConfigSchema.json",
     "configsList": [
-        "demo-html",
-        "demo-cleveland",
-        "demo-brush-interactions",
-        "demo-html-input",
-        "demo-mvnv",
-        "demo-survey",
-        "demo-VLAT-full-randomized",
-        "demo-VLAT-mini-randomized",
-        "demo-html-trrack",
-        "demo-fairness-jnd",
-        "demo-click-accuracy-test",
-        "demo-image",
-        "test-randomization",
-        "test-skip-logic",
-        "test-parser-errors"
+        "stage-2"
     ],
     "configs": {
-        "demo-html": {
-            "path": "demo-html/config.json"
-        },
-        "demo-cleveland": {
-            "path": "demo-cleveland/config.json"
-        },
-        "demo-brush-interactions": {
-            "path": "demo-brush-interactions/config.json"
-        },
-        "demo-html-input": {
-            "path": "demo-html-input/config.json"
-        },
-        "demo-mvnv": {
-            "path": "demo-mvnv/config.json"
-        },
-        "demo-survey": {
-            "path": "demo-survey/config.json"
-        },
-        "demo-VLAT-full-randomized": {
-            "path": "demo-VLAT-full-randomized/config.json"
-        },
-        "demo-VLAT-mini-randomized": {
-            "path": "demo-VLAT-mini-randomized/config.json"
-        },
-        "demo-html-trrack": {
-            "path": "demo-html-trrack/config.json"
-        },
-        "demo-fairness-jnd": {
-            "path": "demo-fairness-jnd/config.json"
-        },
-        "demo-click-accuracy-test": {
-            "path": "demo-click-accuracy-test/config.json"
-        },
-        "demo-image": {
-            "path": "demo-image/config.json"
-        },
-        "test-randomization": {
-            "path": "test-randomization/config.json",
-            "test": true
-        },
-        "test-skip-logic": {
-            "path": "test-skip-logic/config.json",
-            "test": true
-        },
-        "test-parser-errors": {
-            "path": "test-parser-errors/config.json",
-            "test": true
+        "stage-2": {
+            "path": "stage-2/config-stage-2.json"
         }
     },
     "adminUsers": []
-
 }
