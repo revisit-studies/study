@@ -400,9 +400,9 @@ export class FirebaseStorageEngine extends StorageEngine {
           if (isAdmin) {
             // Add UID to user in collection if not existent.
             if (user.user.email && adminUsersObject[user.user.email] === null) {
-              const adminUser = adminUsers.adminUsersList.find((u: StoredUser) => u.email === user.user!.email);
+              const adminUser: StoredUser | undefined = adminUsers.adminUsersList.find((u: StoredUser) => u.email === user.user!.email);
               if (adminUser) {
-                adminUser.user.uid = user.user.uid;
+                adminUser.uid = user.user.uid;
               }
               await setDoc(doc(this.firestore, 'user-management', 'adminUsers'), {
                 adminUsersList: adminUsers.adminUsersList,
