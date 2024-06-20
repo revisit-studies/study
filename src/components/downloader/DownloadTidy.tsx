@@ -69,7 +69,7 @@ export function download(graph: string, filename: string) {
   downloadAnchorNode.remove();
 }
 
-async function participantDataToRows(participant: ParticipantData, properties: Property[], studyConfig: StudyConfig): Promise<TidyRow[]> {
+function participantDataToRows(participant: ParticipantData, properties: Property[], studyConfig: StudyConfig): TidyRow[] {
   const percentComplete = ((Object.entries(participant.answers).filter(([id, entry]) => entry.endTime !== undefined).length / (getSequenceFlatMap(participant.sequence).length - 1)) * 100).toFixed(2);
   return Object.entries(participant.answers).map(([trialIdentifier, trialAnswer]) => {
     // Get the whole component, including the base component if there is inheritance
