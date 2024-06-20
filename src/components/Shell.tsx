@@ -76,7 +76,7 @@ export function Shell({ globalConfig }: {
         ip: ip.ip,
       };
 
-      const participantSession = await storageEngine.initializeParticipantSession(searchParamsObject, activeConfig, metadata, urlParticipantId);
+      const participantSession = await storageEngine.initializeParticipantSession(studyId, searchParamsObject, activeConfig, metadata, urlParticipantId);
 
       // Initialize the redux stores
       const newStore = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, metadata, participantSession.answers);

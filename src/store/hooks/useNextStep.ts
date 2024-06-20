@@ -1,4 +1,6 @@
-import { useCallback, useMemo } from 'react';
+import {
+  useCallback, useEffect, useMemo, useState,
+} from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   useStoreSelector,
@@ -51,6 +53,19 @@ export function useNextStep() {
   const { saveTrialAnswer, setIframeAnswers } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
+  const studyId = useStudyId();
+
+  const [dataCollectionEnabled, setDataCollectionEnabled] = useState(true);
+  useEffect(() => {
+    const checkStudyNavigatorEnabled = async () => {
+      if (storageEngine) {
+        const modes = await storageEngine.getModes(studyId);
+        setDataCollectionEnabled(modes.dataCollectionEnabled);
+      }
+    };
+    checkStudyNavigatorEnabled();
+  }, [storageEngine, studyId]);
+
   const areResponsesValid = useAreResponsesValid(identifier);
 
   // Status of the next button. If false, the next button should be disabled
@@ -61,8 +76,6 @@ export function useNextStep() {
   const navigate = useNavigate();
 
   const studyConfig = useStudyConfig();
-
-  const studyId = useStudyId();
 
   const startTime = useMemo(() => Date.now(), []);
 
@@ -85,7 +98,7 @@ export function useNextStep() {
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
 
-    if (!storedAnswer.endTime) {
+    if (dataCollectionEnabled && !storedAnswer.endTime) {
       storeDispatch(
         saveTrialAnswer({
           identifier,

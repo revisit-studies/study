@@ -9,6 +9,8 @@ import { StudyConfig } from '../../parser/types';
 export class LocalStorageEngine extends StorageEngine {
   private studyDatabase: LocalForage | undefined = undefined;
 
+  private studyId: string | undefined = undefined;
+
   constructor() {
     super('localStorage');
   }
@@ -19,6 +21,7 @@ export class LocalStorageEngine extends StorageEngine {
 
   async initializeStudyDb(studyId: string, config: StudyConfig) {
     // Create or retrieve database for study
+    this.studyId = studyId;
     this.studyDatabase = await localforage.createInstance({
       name: studyId,
     });
@@ -41,7 +44,7 @@ export class LocalStorageEngine extends StorageEngine {
     });
   }
 
-  async initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, metadata: ParticipantMetadata, urlParticipantId?: string) {
+  async initializeParticipantSession(studyId: string, searchParams: Record<string, string>, config: StudyConfig, metadata: ParticipantMetadata, urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
@@ -59,6 +62,9 @@ export class LocalStorageEngine extends StorageEngine {
       return participant;
     }
 
+    // Get modes
+    const modes = await this.getModes(studyId);
+
     // Initialize participant
     const participantConfigHash = await hash(JSON.stringify(config));
     const participantData: ParticipantData = {
@@ -71,7 +77,10 @@ export class LocalStorageEngine extends StorageEngine {
       completed: false,
       rejected: false,
     };
-    await this.studyDatabase?.setItem(this.currentParticipantId, participantData);
+
+    if (modes.dataCollectionEnabled) {
+      await this.studyDatabase?.setItem(this.currentParticipantId, participantData);
+    }
 
     return participantData;
   }
@@ -154,14 +163,24 @@ export class LocalStorageEngine extends StorageEngine {
       throw new Error('Latin square not initialized');
     }
 
-    // Get the current row
-    const currentRow = sequenceArray.pop();
+    // Get modes
+    if (!this.studyId) {
+      throw new Error('Study ID not initialized');
+    }
+    const modes = await this.getModes(this.studyId);
+
+    // Get the current row or random if data collection is disabled
+    const currentRow = modes.dataCollectionEnabled
+      ? sequenceArray.pop()
+      : sequenceArray[Math.floor(Math.random() * sequenceArray.length - 1)];
     if (!currentRow) {
       throw new Error('Latin square is empty');
     }
 
     // Update the latin square
-    await this.studyDatabase.setItem('sequenceArray', sequenceArray);
+    if (modes.dataCollectionEnabled) {
+      await this.studyDatabase.setItem('sequenceArray', sequenceArray);
+    }
 
     return currentRow;
   }
@@ -219,7 +238,7 @@ export class LocalStorageEngine extends StorageEngine {
     return await this.studyDatabase.getItem(participantId) as ParticipantData | null;
   }
 
-  async nextParticipant(config: StudyConfig, metadata: ParticipantMetadata) {
+  async nextParticipant() {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
@@ -229,28 +248,6 @@ export class LocalStorageEngine extends StorageEngine {
 
     // Set current participant id
     this.studyDatabase.setItem('currentParticipant', newParticipantId);
-    this.currentParticipantId = newParticipantId;
-
-    // Get participant data
-    let participant: ParticipantData | null = await this.studyDatabase.getItem(newParticipantId);
-    if (!participant) {
-      const participantConfigHash = await hash(JSON.stringify(config));
-      // Generate a new participant
-      const newParticipant: ParticipantData = {
-        participantId: newParticipantId,
-        participantConfigHash,
-        sequence: await this.getSequence(),
-        answers: {},
-        searchParams: {},
-        metadata,
-        completed: false,
-        rejected: false,
-      };
-      await this.studyDatabase.setItem(newParticipantId, newParticipant);
-      participant = newParticipant;
-    }
-
-    return participant as ParticipantData;
   }
 
   async verifyCompletion() {

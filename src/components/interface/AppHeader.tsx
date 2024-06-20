@@ -27,10 +27,9 @@ import {
 } from '../../store/store';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { PREFIX } from '../../utils/Prefix';
-import { useAuth } from '../../store/hooks/useAuth';
 import { getNewParticipant } from '../../utils/nextParticipant';
 
-export default function AppHeader({ studyNavigatorEnabled }: { studyNavigatorEnabled: boolean }) {
+export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
   const { config: studyConfig, metadata } = useStoreSelector((state) => state);
   const flatSequence = useFlatSequence();
   const storeDispatch = useStoreDispatch();
@@ -38,8 +37,6 @@ export default function AppHeader({ studyNavigatorEnabled }: { studyNavigatorEna
   const { storageEngine } = useStorageEngine();
 
   const currentStep = useCurrentStep();
-
-  const auth = useAuth();
 
   const progressBarMax = flatSequence.length - 1;
   const progressPercent = typeof currentStep === 'number' ? (currentStep / progressBarMax) * 100 : 0;
@@ -88,7 +85,7 @@ export default function AppHeader({ studyNavigatorEnabled }: { studyNavigatorEna
 
         <Grid.Col span={4}>
           <Group wrap="nowrap" justify="right">
-            {import.meta.env.VITE_REVISIT_MODE === 'public' ? <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data. Navigate the study via the study browser on the right."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip> : null}
+            {!dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"

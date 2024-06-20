@@ -99,11 +99,13 @@ export function StepRenderer() {
   const { storageEngine } = useStorageEngine();
   const studyId = useStudyId();
   const [studyNavigatorEnabled, setStudyNavigatorEnabled] = useState(false);
+  const [dataCollectionEnabled, setDataCollectionEnabled] = useState(false);
   useEffect(() => {
     const checkStudyNavigatorEnabled = async () => {
       if (storageEngine) {
         const modes = await storageEngine.getModes(studyId);
         setStudyNavigatorEnabled(modes.studyNavigatorEnabled);
+        setDataCollectionEnabled(modes.dataCollectionEnabled);
       }
     };
     checkStudyNavigatorEnabled();
@@ -121,7 +123,7 @@ export function StepRenderer() {
       >
         <AppNavBar />
         <AppAside />
-        <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} />
+        <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} />
         <HelpModal />
         <AlertModal />
         <AppShell.Main>
