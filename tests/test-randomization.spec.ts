@@ -137,6 +137,6 @@ test('test', async ({ page }) => {
   await page.locator('.studyBrowserMenuDropdown').click();
   await page.getByRole('menuitem', { name: 'Study Browser' }).click();
 
-  const sequenceHeader = await page.getByText('Study Browser');
+  const sequenceHeader = await page.locator('#root').getByText('Study Browser');
   await expect(sequenceHeader).toBeVisible();
 });
