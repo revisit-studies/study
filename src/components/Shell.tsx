@@ -29,7 +29,6 @@ import { getStudyConfig } from '../utils/fetchConfig';
 import { ParticipantMetadata } from '../store/types';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import ResourceNotFound from '../ResourceNotFound';
-import { useAuth } from '../store/hooks/useAuth';
 
 export function Shell({ globalConfig }: {
   globalConfig: GlobalConfig;
@@ -38,8 +37,6 @@ export function Shell({ globalConfig }: {
   const studyId = useStudyId();
   const [activeConfig, setActiveConfig] = useState<ParsedStudyConfig | null>(null);
   const isValidStudyId = globalConfig.configsList.includes(studyId);
-
-  const auth = useAuth();
 
   useEffect(() => {
     getStudyConfig(studyId, globalConfig).then((config) => {
@@ -82,7 +79,7 @@ export function Shell({ globalConfig }: {
       const participantSession = await storageEngine.initializeParticipantSession(searchParamsObject, activeConfig, metadata, urlParticipantId);
 
       // Initialize the redux stores
-      const newStore = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, metadata, participantSession.answers, auth.user.isAdmin);
+      const newStore = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, metadata, participantSession.answers);
       setStore(newStore);
 
       // Initialize the routing
@@ -106,7 +103,7 @@ export function Shell({ globalConfig }: {
       }]);
     }
     initializeUserStoreRouting();
-  }, [storageEngine, activeConfig, studyId, searchParams, auth.user.isAdmin]);
+  }, [storageEngine, activeConfig, studyId, searchParams]);
 
   const routing = useRoutes(routes);
 

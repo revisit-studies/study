@@ -98,52 +98,50 @@ export default function AppHeader({ studyNavigatorEnabled }: { studyNavigatorEna
               </Button>
             )}
 
-            {(import.meta.env.DEV || import.meta.env.VITE_REVISIT_MODE === 'public' || auth.user.isAdmin) && (
-              <Menu
-                shadow="md"
-                width={200}
-                withinPortal
-                opened={menuOpened}
-                onChange={setMenuOpened}
-              >
-                <Menu.Target>
-                  <ActionIcon size="lg" className="studyBrowserMenuDropdown" variant="subtle" color="gray">
-                    <IconDotsVertical />
-                  </ActionIcon>
-                </Menu.Target>
-                <Menu.Dropdown>
-                  {studyNavigatorEnabled && (
+            <Menu
+              shadow="md"
+              width={200}
+              withinPortal
+              opened={menuOpened}
+              onChange={setMenuOpened}
+            >
+              <Menu.Target>
+                <ActionIcon size="lg" className="studyBrowserMenuDropdown" variant="subtle" color="gray">
+                  <IconDotsVertical />
+                </ActionIcon>
+              </Menu.Target>
+              <Menu.Dropdown>
+                {studyNavigatorEnabled && (
                   <Menu.Item
                     leftSection={<IconSchema size={14} />}
                     onClick={() => storeDispatch(toggleStudyBrowser())}
                   >
                     Study Browser
                   </Menu.Item>
-                  )}
+                )}
 
-                  <Menu.Item
-                    component="a"
-                    href={
+                <Menu.Item
+                  component="a"
+                  href={
                       studyConfig !== null
                         ? `mailto:${studyConfig.uiConfig.contactEmail}`
                         : undefined
                     }
-                    leftSection={<IconMail size={14} />}
-                  >
-                    Contact
-                  </Menu.Item>
+                  leftSection={<IconMail size={14} />}
+                >
+                  Contact
+                </Menu.Item>
 
-                  {studyNavigatorEnabled && (
+                {studyNavigatorEnabled && (
                   <Menu.Item
                     leftSection={<IconUserPlus size={14} />}
                     onClick={() => getNewParticipant(storageEngine, studyConfig, metadata, studyHref)}
                   >
                     Next Participant
                   </Menu.Item>
-                  )}
-                </Menu.Dropdown>
-              </Menu>
-            )}
+                )}
+              </Menu.Dropdown>
+            </Menu>
           </Group>
         </Grid.Col>
       </Grid>
