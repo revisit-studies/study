@@ -3,14 +3,20 @@ import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 // eslint-disable-next-line import/no-cycle
 import { SkipConditions, StudyConfig } from '../parser/types';
 
+/**
+ * The ParticipantMetadata object contains metadata about the participant. This includes the user agent, resolution, language, and IP address. This object is used to store information about the participant that is not directly related to the study itself.
+ */
 export interface ParticipantMetadata {
+  /** The user agent of the participant. This is a string that contains information about the participants browser and operating system. */
   userAgent: string;
+  /** The resolution of the participants screen. This is an object with two keys, "width" and "height". The values are the width and height of the participants screen in pixels. */
   resolution: Record<string, string | number>;
+  /** The language of the participants browser. */
   language: string;
+  /** The IP address of the participant. */
   ip: string | null;
 }
 
-/** TrrackedProvenance is the ProvenanceGraph object from the [trrack](https://apps.vdl.sci.utah.edu/trrack) library */
 export type TrrackedProvenance = ProvenanceGraph<any, any>;
 
 // timestamp, event type, event data
@@ -64,7 +70,7 @@ export interface StoredAnswer {
   startTime: number;
   /** Time that the user ended interaction with the component in epoch milliseconds. */
   endTime: number;
-  /** The entire provenance graph exported from a Trrack instance from a React component. This will only be present if you are using React components and you're utilizing Trrack. */
+  /** The entire provenance graph exported from a Trrack instance from a React component. This will only be present if you are using React components and you're utilizing [Trrack](https://apps.vdl.sci.utah.edu/trrack) */
   provenanceGraph?: TrrackedProvenance,
   /** A list containing the time (in epoch milliseconds), the action (focus, input, kepress, mousedown, mouseup, mousemove, resize, scroll or visibility), and then either a coordinate pertaining to where the event took place on the screen or string related to such event. Below is an example of the windowEvents list.
 ```js
