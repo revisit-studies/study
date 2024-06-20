@@ -2,16 +2,17 @@ import {
   Badge, Box, Button, Card, Center, Text, Title, Container, Flex, Group, Popover,
 } from '@mantine/core';
 import React, { useMemo, useState } from 'react';
-import { IconDatabaseExport, IconChartHistogram, IconTableExport } from '@tabler/icons-react';
-import { DateRangePicker, DateRangePickerValue } from '@mantine/dates';
+import { IconChartHistogram } from '@tabler/icons-react';
+import { DatePickerInput } from '@mantine/dates';
 import { VegaLite } from 'react-vega';
 import { useDisclosure, useResizeObserver } from '@mantine/hooks';
 import { useNavigate } from 'react-router-dom';
 import { ParticipantData } from '../../storage/types';
-import { download, DownloadTidy } from '../../components/DownloadTidy';
 import { StoredAnswer, StudyConfig } from '../../parser/types';
+import { DownloadButtons } from '../../components/downloader/DownloadButtons';
+import { ParticipantStatusBadges } from '../components/interface/ParticipantStatusBadges';
 
-function isWithinRange(answers: Record<string, StoredAnswer>, rangeTime: DateRangePickerValue) {
+function isWithinRange(answers: Record<string, StoredAnswer>, rangeTime: [Date | null, Date | null]) {
   const timeStamps = Object.values(answers).map((ans) => [ans.startTime, ans.endTime]).flat();
   if (rangeTime[0] === null || rangeTime[1] === null) {
     return false;
@@ -23,27 +24,30 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
   const {
     studyId, allParticipants, config,
   } = props;
-  const [openDownload, { open, close }] = useDisclosure(false);
   const navigate = useNavigate();
   const [ref, dms] = useResizeObserver();
 
   const completionTimes = allParticipants
     .filter((d) => d.completed)
-    .map((d) => Math.max(...Object.values(d.answers).map((ans) => ans.endTime)));
-  const [rangeTime, setRangeTime] = useState<DateRangePickerValue>([
+    .map((d) => Math.max(...Object.values(d.answers).map((ans) => ans.endTime).filter((time) => time !== undefined)))
+    .filter((d) => Number.isFinite(d));
+  const [rangeTime, setRangeTime] = useState<[Date | null, Date | null]>([
     new Date(new Date(Math.min(...(completionTimes.length > 0 ? completionTimes : [new Date().getTime()]))).setHours(0, 0, 0, 0)),
     new Date(new Date(Math.max(...(completionTimes.length > 0 ? completionTimes : [new Date().getTime()]))).setHours(24, 0, 0, 0)),
   ]);
 
-  const completedParticipants = useMemo(() => allParticipants.filter((d) => d.completed && isWithinRange(d.answers, rangeTime)), [allParticipants, rangeTime]);
-
-  const inProgressParticipants = useMemo(() => allParticipants.filter((d) => !d.completed && isWithinRange(d.answers, rangeTime)), [allParticipants, rangeTime]);
+  const [completed, inProgress, rejected, completedInTime] = useMemo(() => {
+    const comp = allParticipants.filter((d) => !d.rejected && d.completed);
+    const prog = allParticipants.filter((d) => !d.rejected && !d.completed);
+    const rej = allParticipants.filter((d) => d.rejected);
+    return [comp, prog, rej, comp.filter((d) => isWithinRange(d.answers, rangeTime))];
+  }, [allParticipants, rangeTime]);
 
   const completedStatsData = useMemo(() => {
-    if (completedParticipants.length > 0) {
+    if (completedInTime.length > 0) {
       return [
         { Date: rangeTime[0]?.getTime(), Participants: 0 },
-        ...completedParticipants
+        ...completedInTime
           .map((participant) => Math.max(
             ...Object.values(participant.answers).map((ans) => ans.endTime).flat(),
           ))
@@ -52,12 +56,12 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
             Date: time,
             Participants: idx,
           })),
-        { Date: rangeTime[1]?.getTime(), Participants: completedParticipants.length },
+        { Date: rangeTime[1]?.getTime(), Participants: completedInTime.length },
       ];
     }
 
     return [];
-  }, [completedParticipants, rangeTime]);
+  }, [completedInTime, rangeTime]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const spec: any = useMemo(() => ({
@@ -74,69 +78,18 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
     data: { values: completedStatsData },
   }), [dms.width, rangeTime, completedStatsData]);
 
-  const [jsonOpened, { close: closeJson, open: openJson }] = useDisclosure(false);
-  const [csvOpened, { close: closeCsv, open: openCsv }] = useDisclosure(false);
   const [checkOpened, { close: closeCheck, open: openCheck }] = useDisclosure(false);
 
   return (
     <Container>
-      <Card ref={ref} p="lg" shadow="md" withBorder>
-        <Flex align="center" mb={16} justify="space-between">
-          <Flex direction="column">
-            <Title order={5} mb={4}>{studyId}</Title>
-            <Flex direction="row" wrap="nowrap" gap="xs" align="center" mb={4}>
-              <Badge size="sm" color="orange">
-                Total:&nbsp;
-                {inProgressParticipants.length + completedParticipants.length}
-              </Badge>
-              <Badge size="sm" color="green">
-                Completed:&nbsp;
-                {completedParticipants.length}
-              </Badge>
-              <Badge size="sm" color="cyan">
-                In Progress:&nbsp;
-                {inProgressParticipants.length}
-              </Badge>
-            </Flex>
+      <Card ref={ref} padding="lg" shadow="md" withBorder>
+        <Flex align="center" mb="xs" justify="space-between">
+          <Flex direction="row" align="center">
+            <Title order={5}>{studyId}</Title>
+            <ParticipantStatusBadges completed={completed.length} inProgress={inProgress.length} rejected={rejected.length} filteredCompleted={completedInTime.length} />
           </Flex>
           <Group>
-            <Popover opened={jsonOpened}>
-              <Popover.Target>
-                <Button
-                  variant="light"
-                  disabled={allParticipants.length === 0}
-                  onClick={() => {
-                    download(JSON.stringify(allParticipants, null, 2), `${studyId}_all.json`);
-                  }}
-                  onMouseEnter={openJson}
-                  onMouseLeave={closeJson}
-                  px={4}
-                >
-                  <IconDatabaseExport />
-                </Button>
-              </Popover.Target>
-              <Popover.Dropdown>
-                <Text>Download all participants data as JSON</Text>
-              </Popover.Dropdown>
-            </Popover>
-
-            <Popover opened={csvOpened}>
-              <Popover.Target>
-                <Button
-                  variant="light"
-                  disabled={allParticipants.length === 0}
-                  onClick={open}
-                  onMouseEnter={openCsv}
-                  onMouseLeave={closeCsv}
-                  px={4}
-                >
-                  <IconTableExport />
-                </Button>
-              </Popover.Target>
-              <Popover.Dropdown>
-                <Text>Download all participants data as a tidy CSV</Text>
-              </Popover.Dropdown>
-            </Popover>
+            <DownloadButtons allParticipants={allParticipants} studyId={studyId} />
 
             <Popover opened={checkOpened}>
               <Popover.Target>
@@ -156,9 +109,10 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
           </Group>
         </Flex>
 
-        <DateRangePicker
-          label={<Text>Time Filter:</Text>}
-          placeholder="Pick dates range"
+        <DatePickerInput
+          type="range"
+          label="Time Filter"
+          placeholder="Select a date range"
           value={rangeTime}
           onChange={setRangeTime}
         />
@@ -178,16 +132,6 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
             </Box>
           )}
       </Card>
-
-      {openDownload && (
-      <DownloadTidy
-        opened={openDownload}
-        close={close}
-        filename={`${studyId}_all_tidy.csv`}
-        studyConfig={config}
-        data={allParticipants}
-      />
-      )}
     </Container>
   );
 }

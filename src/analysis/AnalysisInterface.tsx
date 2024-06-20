@@ -1,5 +1,7 @@
 import {
-  AppShell, Container, LoadingOverlay, Tabs,
+  AppShell, Container, Flex, LoadingOverlay, Space, Tabs,
+  Title,
+  Tooltip,
 } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -11,10 +13,11 @@ import React, {
 import AppHeader from './components/interface/AppHeader';
 import { GlobalConfig, ParticipantData, StudyConfig } from '../parser/types';
 import { getStudyConfig } from '../utils/fetchConfig';
-import { TableView } from './stats/TableView';
+import { TableView } from './table/TableView';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { DataManagementBoard } from './management/DataManagementBoard';
 import { FirebaseStorageEngine } from '../storage/engines/FirebaseStorageEngine';
+import { ParticipantStatusBadges } from './components/interface/ParticipantStatusBadges';
 
 export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   const { globalConfig } = props;
@@ -43,41 +46,64 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
     getData();
   }, [globalConfig, storageEngine, studyId, getData]);
 
-  const [completed, inProgress] = useMemo(() => {
-    const comp = expData.filter((d) => d.completed);
-    const prog = expData.filter((d) => !d.completed);
-    return [comp, prog];
+  const [completed, inProgress, rejected] = useMemo(() => {
+    const comp = expData.filter((d) => !d.rejected && d.completed);
+    const prog = expData.filter((d) => !d.rejected && !d.completed);
+    const rej = expData.filter((d) => d.rejected);
+    return [comp, prog, rej];
   }, [expData]);
 
   const showManage = import.meta.env.VITE_REVISIT_MODE !== 'public' && storageEngine instanceof FirebaseStorageEngine;
 
   return (
-    <AppShell>
+    <>
       <AppHeader studyIds={props.globalConfig.configsList} />
-      <Container fluid style={{ height: '100%' }}>
-        <LoadingOverlay visible={loading} />
-        <Tabs variant="outline" value={tab} onTabChange={(value) => navigate(`./../${value}`)} style={{ height: '100%' }}>
-          <Tabs.List>
-            <Tabs.Tab value="table" icon={<IconTable size={16} />}>Table View</Tabs.Tab>
-            <Tabs.Tab value="stats" icon={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
-            <Tabs.Tab value="replay" icon={<IconPlayerPlay size={16} />}>Individual Replay</Tabs.Tab>
-            <Tabs.Tab value="manage" icon={<IconSettings size={16} />} disabled={!showManage}>Manage</Tabs.Tab>
-          </Tabs.List>
-          <Tabs.Panel value="table" pt="xs" style={{ height: 'calc(100% - 38px - 10px)', width: '100%', overflow: 'scroll' }}>
-            {studyConfig && <TableView completed={completed} inProgress={inProgress} studyConfig={studyConfig} refresh={getData} />}
-          </Tabs.Panel>
+      <AppShell.Main>
+        <Container fluid style={{ height: '100%' }}>
+          <LoadingOverlay visible={loading} />
 
-          <Tabs.Panel value="stats" pt="xs">
-            statsboard
-          </Tabs.Panel>
-          <Tabs.Panel value="replay" pt="xs">
-            Replay Tab Content
-          </Tabs.Panel>
-          <Tabs.Panel value="manage" pt="xs">
-            {studyId && showManage && <DataManagementBoard studyId={studyId} refresh={getData} />}
-          </Tabs.Panel>
-        </Tabs>
-      </Container>
-    </AppShell>
+          <Flex direction="row" align="center">
+            <Title order={5}>{studyId}</Title>
+            <ParticipantStatusBadges completed={completed.length} inProgress={inProgress.length} rejected={rejected.length} />
+          </Flex>
+
+          <Space h="xs" />
+
+          <Tabs variant="outline" value={tab} onChange={(value) => navigate(`./../${value}`)} style={{ height: '100%' }}>
+            <Tabs.List>
+              <Tabs.Tab value="table" leftSection={<IconTable size={16} />}>Table View</Tabs.Tab>
+              <Tooltip label="Coming soon" position="bottom">
+                <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />} disabled>Trial Stats</Tabs.Tab>
+              </Tooltip>
+              <Tooltip label="Coming soon" position="bottom">
+                <Tabs.Tab value="replay" leftSection={<IconPlayerPlay size={16} />} disabled>Participant Replay</Tabs.Tab>
+              </Tooltip>
+              {
+                showManage
+                  ? <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />}>Manage</Tabs.Tab>
+                  : (
+                    <Tooltip label="Management is currently only available for Firebase studies" position="bottom">
+                      <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled>Manage</Tabs.Tab>
+                    </Tooltip>
+                  )
+}
+            </Tabs.List>
+            <Tabs.Panel value="table" pt="xs">
+              {studyConfig && <TableView completed={completed} inProgress={inProgress} studyConfig={studyConfig} refresh={getData} />}
+            </Tabs.Panel>
+
+            <Tabs.Panel value="stats" pt="xs">
+              statsboard
+            </Tabs.Panel>
+            <Tabs.Panel value="replay" pt="xs">
+              Replay Tab Content
+            </Tabs.Panel>
+            <Tabs.Panel value="manage" pt="xs">
+              {studyId && showManage && <DataManagementBoard studyId={studyId} refresh={getData} />}
+            </Tabs.Panel>
+          </Tabs>
+        </Container>
+      </AppShell.Main>
+    </>
   );
 }

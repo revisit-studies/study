@@ -12,12 +12,15 @@ import { AlertModal } from './interface/AlertModal';
 import { EventType } from '../store/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { WindowEventsContext } from '../store/hooks/useWindowEvents';
+import { useStoreSelector } from '../store/store';
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
 
   const studyConfig = useStudyConfig();
   const windowEventDebounceTime = studyConfig.uiConfig.windowEventDebounceTime ?? 100;
+
+  const asideOpen = useStoreSelector((state) => state.showStudyBrowser);
 
   // Attach event listeners
   useEffect(() => {
@@ -89,16 +92,24 @@ export function StepRenderer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const sidebarWidth = studyConfig.uiConfig.sidebarWidth ?? 300;
+
   return (
     <WindowEventsContext.Provider value={windowEvents}>
       <AppShell
-        navbar={<AppNavBar />}
-        aside={<AppAside />}
-        header={<AppHeader />}
+        padding="md"
+        header={{ height: 70 }}
+        navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !studyConfig.uiConfig.sidebar, mobile: !studyConfig.uiConfig.sidebar } }}
+        aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
       >
+        <AppNavBar />
+        <AppAside />
+        <AppHeader />
         <HelpModal />
         <AlertModal />
-        <Outlet />
+        <AppShell.Main>
+          <Outlet />
+        </AppShell.Main>
       </AppShell>
     </WindowEventsContext.Provider>
   );

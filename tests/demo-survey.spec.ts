@@ -18,6 +18,7 @@ test('test', async ({ page }) => {
   await page.getByPlaceholder('Enter your long comments here').fill('asdf');
   await page.locator('.mantine-Slider-track').click();
   await page.getByRole('checkbox', { name: 'Option 2' }).click();
+  await page.getByRole('radio', { name: 'Option 2' }).click();
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check that the thank you message is displayed

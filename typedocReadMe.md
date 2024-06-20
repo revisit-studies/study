@@ -24,10 +24,44 @@ For other components of the reVISit spec see [Components](#Components) and [Sequ
 
 Components contain study-specific conent. See the [How does it Work](https://revisit.dev/docs/getting-started/how-does-it-work) guide for an introduction.
 
-TODO: Explain what these are
-- [BaseIndividualComponent](interfaces/BaseIndividualComponent.md)
-- [IndividualComponent](type-aliases/IndividualComponent.md)
-- [InheritedComponent](type-aliases/InheritedComponent.md)
+Each component extends the [BaseIndividualComponent](interfaces/BaseIndividualComponent) interface. To add a component to your study (which can be thought of as a "page" of your study), you add a JSON object representing that component to the "components" object with a key which you can define how you would like. Then, the `type` key in that JSON object controls which type of component you are referring to. 
+
+### Collecting Responses
+
+Each component has a list of responses which represents a set of questions to ask to the user for that particular component. The user can describe where the question should be displayed in the UI, the instruction for the response, and the type of response input (e.g., a [numerical response](interfaces/NumericalResponse), a [dropdown](interfaces/DropdownResponse), a [slider](interfaces/SliderResponse), etc). Each response interface extends the [BaseResponse](interfaces/BaseResponse) interface.
+
+The below example illustrates a simple consent component that is based on a Markdown file and has a response that asks for a signature: 
+
+```js
+  "consent": {
+            "type": "markdown",
+            "path": "demo-brush-interactions/assets/consent.md",
+            "nextButtonText": "Agree",
+            "response": [
+                {
+                    "id": "signature",
+                    "prompt": "Your signature",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "shortText",
+                    "placeholder": "Please provide your signature"
+                }
+            ]
+        }
+```
+
+For more detailed documentation on the response section, check out the [documentation](interfaces/BaseResponse).
+
+## Base Components and Inheritance
+
+[Base Components](type-aliases/BaseComponents) can be used to implement inheritance for components. This is often useful if you want to parameterize a component. For example: 
+
+* You might have a stimulus, such as an image, where you want to ask multiple different questions.  
+* You might have a generic implementation of a stimulus, such as a bar chart, and you want to pass in data to change how the stimulus appears. 
+
+In both of these cases, you can set up a component once as a `baseComponent`, including linking to the stimulus and including (partial) responses, but then later write inherited, short components that extend the base component with the specific functionality you want. 
+
+For examples of how to write a base component, refer to the [documentation](type-aliases/BaseComponents) and to the [relevant tutorial](../tutorials/html-stimulus).
 
 
 The different component types: 

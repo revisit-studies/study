@@ -1,6 +1,6 @@
 import {
-  Flex, Header, Image, Select, Title, Space, Grid, Drawer, Text, Burger, Button, Divider,
-  Box,
+  Flex, Image, Select, Title, Space, Grid, Drawer, Text, Burger, Button, Divider,
+  Box, AppShell,
 } from '@mantine/core';
 
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
@@ -51,11 +51,11 @@ export default function AppHeader({ studyIds }: { studyIds: string[] }) {
   ];
 
   return (
-    <Header height={70} p="md">
+    <AppShell.Header p="md">
       <Grid mt={-7} align="center">
         <Grid.Col span={6}>
-          <Flex align="center" onClick={() => (inAnalysis ? navigate('/analysis/dashboard') : navigate('/'))} sx={{ cursor: 'pointer' }}>
-            <Image maw={40} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
+          <Flex align="center" onClick={() => (inAnalysis ? navigate('/analysis/dashboard') : navigate('/'))} style={{ cursor: 'pointer' }}>
+            <Image w={40} src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`} alt="Revisit Logo" />
             <Space w="md" />
             <Title order={4} style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {inAnalysis ? 'ReVISit Analytics Platform' : 'ReVISit Studies'}
@@ -70,6 +70,7 @@ export default function AppHeader({ studyIds }: { studyIds: string[] }) {
           >
             {inAnalysis && (
             <Select
+              allowDeselect={false}
               placeholder="Select Study"
               data={selectorData}
               value={studyId}
@@ -93,7 +94,7 @@ export default function AppHeader({ studyIds }: { studyIds: string[] }) {
                       return (
                         <Button
                           key={`menu-item-${menuItem.name}`}
-                          leftIcon={menuItem.leftIcon}
+                          leftSection={menuItem.leftIcon}
                           variant="default"
                           style={{ border: 'none', display: 'flex', justifyContent: 'flex-start' }}
                           onClick={() => { navigate(menuItem.href); setNavOpen(false); }}
@@ -106,7 +107,7 @@ export default function AppHeader({ studyIds }: { studyIds: string[] }) {
                   return (
                     <Button
                       key={`menu-item-${menuItem.name}`}
-                      leftIcon={menuItem.leftIcon}
+                      leftSection={menuItem.leftIcon}
                       variant="default"
                       style={{ border: 'none', display: 'flex', justifyContent: 'flex-start' }}
                       onClick={() => { navigate(menuItem.href); setNavOpen(false); }}
@@ -125,7 +126,7 @@ export default function AppHeader({ studyIds }: { studyIds: string[] }) {
                           size="sm"
                           ml={10}
                           style={{ cursor: 'pointer' }}
-                          onClick={logout}
+                          onClick={() => { logout(); navigate('/login'); setNavOpen(false); }}
                         >
                           Logout
                         </Text>
@@ -146,6 +147,6 @@ export default function AppHeader({ studyIds }: { studyIds: string[] }) {
           </Flex>
         </Grid.Col>
       </Grid>
-    </Header>
+    </AppShell.Header>
   );
 }
