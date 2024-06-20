@@ -5,9 +5,8 @@ import { IconDatabaseExport, IconTableExport } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import { DownloadTidy, download } from './DownloadTidy';
 import { ParticipantData } from '../../storage/types';
-import { StudyConfig } from '../../parser/types';
 
-export function DownloadButtons({ allParticipants, studyId, config }: { allParticipants: ParticipantData[]; studyId: string; config: StudyConfig }) {
+export function DownloadButtons({ allParticipants, studyId }: { allParticipants: ParticipantData[]; studyId: string }) {
   const [jsonOpened, { close: closeJson, open: openJson }] = useDisclosure(false);
   const [csvOpened, { close: closeCsv, open: openCsv }] = useDisclosure(false);
   const [openDownload, { open, close }] = useDisclosure(false);
