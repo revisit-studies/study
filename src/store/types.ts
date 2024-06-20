@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 // eslint-disable-next-line import/no-cycle
 import { SkipConditions, StudyConfig } from '../parser/types';
@@ -9,7 +10,7 @@ export interface ParticipantMetadata {
   ip: string | null;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/** TrrackedProvenance is the ProvenanceGraph object from the [trrack](https://apps.vdl.sci.utah.edu/trrack) library */
 export type TrrackedProvenance = ProvenanceGraph<any, any>;
 
 // timestamp, event type, event data

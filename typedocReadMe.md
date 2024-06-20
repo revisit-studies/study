@@ -1,20 +1,17 @@
 # Reference Documentation
 
-
 ## General reVISit 
 
 - [GlobalConfig](interfaces/GlobalConfig.md) — The GlobalConfig is used to generate the list of available studies in the UI. 
 
 ## Data Formats
 
-- [ParticipantData](interfaces/ParticipantData.md) – The ParticipantData is a JSON object that contains all of the data for all of the participants in your study.
+- [ParticipantData](interfaces/ParticipantData.md) – The ParticipantData is a JSON object that includes data for a participant in your study. This is how the data is stored in the database and how it will download with the JSON downloader.
 - [StoredAnswer](interfaces/StoredAnswer.md) - The StoredAnswer object is a data structure describing the participants interaction with an individual component. It is used by ParticipantData to store individual answers.
 
 ## reVISit Spec
 
-
 - [StudyConfig](interfaces/StudyConfig.md) – The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. 
-
 - [StudyMetadata](interfaces/StudyMetadata.md) – A top-level property of the `StudyConfig`. The study metadata defines elements such as the study title, authors, and description.
 - [UIConfig](interfaces/UIConfig.md) – A top-level property of the `StudyConfig`, defining the appearance of the study.
 
@@ -26,6 +23,13 @@ Components contain study-specific content. See the [How does it Work](https://re
 
 Each component extends the [BaseIndividualComponent](interfaces/BaseIndividualComponent) interface. To add a component to your study (which can be thought of as a "page" of your study), you add a JSON object representing that component to the "components" object with a key which you can define how you would like. Then, the `type` key in that JSON object controls which type of component you are referring to. 
 
+The different component types: 
+- [ImageComponent](interfaces/ImageComponent.md)
+- [MarkdownComponent](interfaces/MarkdownComponent.md)
+- [QuestionnaireComponent](interfaces/QuestionnaireComponent.md)
+- [ReactComponent](interfaces/ReactComponent.md)
+- [WebsiteComponent](interfaces/WebsiteComponent.md)
+
 ### Collecting Responses
 
 Each component has a list of responses which represents a set of questions to ask to the user for that particular component. The user can describe where the question should be displayed in the UI, the instruction for the response, and the type of response input (e.g., a [numerical response](interfaces/NumericalResponse), a [dropdown](interfaces/DropdownResponse), a [slider](interfaces/SliderResponse), etc). Each response interface extends the [BaseResponse](interfaces/BaseResponse) interface.
@@ -34,23 +38,23 @@ The below example illustrates a simple consent component that is based on a Mark
 
 ```js
   "consent": {
-            "type": "markdown",
-            "path": "demo-brush-interactions/assets/consent.md",
-            "nextButtonText": "Agree",
-            "response": [
-                {
-                    "id": "signature",
-                    "prompt": "Your signature",
-                    "required": true,
-                    "location": "belowStimulus",
-                    "type": "shortText",
-                    "placeholder": "Please provide your signature"
-                }
-            ]
+    "type": "markdown",
+    "path": "demo-brush-interactions/assets/consent.md",
+    "nextButtonText": "Agree",
+    "response": [
+        {
+            "id": "signature",
+            "prompt": "Your signature",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "shortText",
+            "placeholder": "Please provide your signature"
         }
+    ]
+  }
 ```
 
-For more detailed documentation on the response section, check out the [documentation](interfaces/BaseResponse).
+For more detailed documentation on the response section, check out the [BaseResponse](interfaces/BaseResponse).
 
 ## Base Components and Inheritance
 
@@ -63,24 +67,17 @@ In both of these cases, you can set up a component once as a `baseComponent`, in
 
 For examples of how to write a base component, refer to the [documentation](type-aliases/BaseComponents) and to the [relevant tutorial](../designing-studies/html-stimulus).
 
-
-The different component types: 
-- [ImageComponent](interfaces/ImageComponent.md)
-- [MarkdownComponent](interfaces/MarkdownComponent.md)
-- [QuestionnaireComponent](interfaces/QuestionnaireComponent.md)
-- [ReactComponent](interfaces/ReactComponent.md)
-- [WebsiteComponent](interfaces/WebsiteComponent.md)
-
 ## Responses
 
-Responses are expected as a reaction to many components. Responses are given to administrative forms, such as consent or training, but mostly as a response to a stimulus. 
+Responses allow study designers to collect responses from participants  Responses are included on administrative forms, such as consent or training, but most importantly as a response to a stimulus.
+
 - [Response](type-aliases/Response.md)
 - [IFrameResponse](interfaces/IFrameResponse.md)
 - [Answer](interfaces/Answer.md)
 
 ### Form Elements
 
-Responses are often provided as form elements. reVISit supports the following form elements.
+Responses are provided as form elements. reVISit supports the following form elements.
 
 - [BaseResponse](interfaces/BaseResponse.md)
 - [CheckboxResponse](interfaces/CheckboxResponse.md)
@@ -98,22 +95,18 @@ Responses are often provided as form elements. reVISit supports the following fo
 
 Sequencing determines the order in which components appear.
 
-- [Sequence](interfaces/Sequence.md) – TODO - needs documentation
-
 - [ComponentBlock](interfaces/ComponentBlock.md) — The ComponentBlock interface is used to define order properties within the sequence.
 
-- [DeterministicInterruption](interfaces/DeterministicInterruption.md)
+Interruptions augment the sequence with components that are inserted either randomly or deterministically. These might be for breaks or attention checks.
+
+- [DeterministicInterruption](interfaces/DeterministicInterruption.md) 
 - [RandomInterruption](interfaces/RandomInterruption.md)
 - [InterruptionBlock](type-aliases/InterruptionBlock.md)
+
+Skip conditions enable the participant to jump through the sequence if a certain condition is met.
 
 - [SkipConditions](type-aliases/SkipConditions.md)
 - [ComponentBlockCondition](interfaces/ComponentBlockCondition.md)
 - [IndividualComponentAllResponsesCondition](interfaces/IndividualComponentAllResponsesCondition.md)
 - [IndividualComponentSingleResponseCondition](interfaces/IndividualComponentSingleResponseCondition.md)
 - [RepeatedComponentBlockCondition](interfaces/RepeatedComponentBlockCondition.md)
-
-
-
-
-
-
