@@ -58,8 +58,8 @@ export function DownloadButtons({ allParticipants, studyId, config }: { allParti
         opened={openDownload}
         close={close}
         filename={`${studyId}_all_tidy.csv`}
-        studyConfig={config}
         data={allParticipants}
+        studyId={studyId}
       />
       )}
     </>

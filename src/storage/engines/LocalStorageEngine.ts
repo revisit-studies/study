@@ -84,6 +84,16 @@ export class LocalStorageEngine extends StorageEngine {
     return await this.studyDatabase.getItem('currentConfigHash') as string;
   }
 
+  async getAllConfigsFromHash(hashes: string[], studyId: string): Promise<Record<string, StudyConfig>> {
+    const currStudyDatabase = localforage.createInstance({
+      name: studyId,
+    });
+
+    const allConfigs: Record<string, StudyConfig> = await currStudyDatabase.getItem('configs') || {};
+
+    return allConfigs;
+  }
+
   async getCurrentParticipantId(urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');

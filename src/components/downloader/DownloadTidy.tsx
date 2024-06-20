@@ -19,6 +19,9 @@ import {
 } from '../../parser/types';
 import { isInheritedComponent } from '../../parser/parser';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+import { StorageEngine } from '../../storage/engines/StorageEngine';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { useAsync } from '../../store/hooks/useAsync';
 
 export const OPTIONAL_COMMON_PROPS = [
   'status',
@@ -34,6 +37,7 @@ export const OPTIONAL_COMMON_PROPS = [
   'endTime',
   'duration',
   'meta',
+  'configHash',
 ] as const;
 
 export const REQUIRED_PROPS = [
@@ -62,7 +66,7 @@ export function download(graph: string, filename: string) {
   downloadAnchorNode.remove();
 }
 
-function participantDataToRows(participant: ParticipantData, studyConfig: StudyConfig, properties: Property[]): TidyRow[] {
+async function participantDataToRows(participant: ParticipantData, properties: Property[], studyConfig: StudyConfig): Promise<TidyRow[]> {
   const percentComplete = ((Object.entries(participant.answers).filter(([id, entry]) => entry.endTime !== undefined).length / (getSequenceFlatMap(participant.sequence).length - 1)) * 100).toFixed(2);
   return Object.entries(participant.answers).map(([trialIdentifier, trialAnswer]) => {
     // Get the whole component, including the base component if there is inheritance
@@ -87,6 +91,10 @@ function participantDataToRows(participant: ParticipantData, studyConfig: StudyC
       if (properties.includes('status')) {
         // eslint-disable-next-line no-nested-ternary
         tidyRow.status = participant.rejected ? 'rejected' : (participant.completed ? 'completed' : 'in progress');
+      }
+      if (properties.includes('configHash')) {
+        // eslint-disable-next-line no-nested-ternary
+        tidyRow.configHash = participant.participantConfigHash;
       }
       if (properties.includes('percentComplete')) {
         tidyRow.percentComplete = percentComplete;
@@ -133,46 +141,67 @@ function participantDataToRows(participant: ParticipantData, studyConfig: StudyC
   }).flat();
 }
 
+async function getTableData(selectedProperties: Property[], data: ParticipantData[], storageEngine: StorageEngine | undefined, studyId: string) {
+  if (!storageEngine) {
+    return { header: [], rows: [] };
+  }
+
+  const combinedProperties = [...REQUIRED_PROPS, ...selectedProperties];
+
+  const allConfigHashes = [...new Set(data.map((part) => part.participantConfigHash))];
+  const allConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
+
+  const header = combinedProperties;
+  const rows = await Promise.all(data.map(async (participant) => {
+    const partDataToRows = await participantDataToRows(participant, combinedProperties, allConfigs[participant.participantConfigHash]);
+
+    return partDataToRows;
+  }));
+
+  const flatRows = rows.flat().sort((a, b) => (a !== b ? a.participantId.localeCompare(b.participantId) : a.trialOrder - b.trialOrder));
+
+  return { header, rows: flatRows };
+}
+
 export function DownloadTidy({
   opened,
   close,
   filename,
-  studyConfig,
   data,
+  studyId,
 }: {
   opened: boolean;
   close: () => void;
   filename: string;
-  studyConfig: StudyConfig;
   data: ParticipantData[];
+  studyId: string;
 }) {
   const [selectedProperties, setSelectedProperties] = useState<Array<OptionalProperty>>([...OPTIONAL_COMMON_PROPS].filter((prop) => prop !== 'meta'));
 
-  const tableData = useMemo(() => {
-    const combinedProperties = [...REQUIRED_PROPS, ...selectedProperties];
-
-    const header = combinedProperties;
-    const rows = data
-      .map((participant) => participantDataToRows(participant, studyConfig, combinedProperties))
-      .flat()
-      .sort((a, b) => (a !== b ? a.participantId.localeCompare(b.participantId) : a.trialOrder - b.trialOrder));
-
-    return { header, rows };
-  }, [data, selectedProperties, studyConfig]);
+  const storageEngine = useStorageEngine();
+  const { value: tableData, status: tableDataStatus } = useAsync(getTableData, [selectedProperties, data, storageEngine.storageEngine, studyId]);
 
   const downloadTidy = useCallback(() => {
+    if (!tableData) {
+      return;
+    }
+
     const csv = [
       tableData.header.join(','),
       ...tableData.rows.map((row) => tableData.header.map((header) => row[header]).join(',')),
     ].join('\n');
     download(csv, filename);
-  }, [filename, tableData.header, tableData.rows]);
+  }, [filename, tableData]);
 
   const caption = useMemo(() => {
+    if (!tableData) {
+      return '';
+    }
+
     const numRowsShown = tableData.rows.length > 5 ? 5 : tableData.rows.length;
     const plural = numRowsShown === 1 ? '' : 's';
     return `This is a preview of the first ${plural ? numRowsShown : ''} row${plural} of the CSV. The full CSV contains ${tableData.rows.length} row${plural}.`;
-  }, [tableData.rows]);
+  }, [tableData]);
 
   return (
     <Modal
@@ -200,7 +229,7 @@ export function DownloadTidy({
         <Table striped captionSide="bottom" withTableBorder>
           <Table.Thead>
             <Table.Tr>
-              {tableData.header.map((header) => (
+              {tableDataStatus === 'success' && tableData ? tableData.header.map((header) => (
                 <Table.Th
                   key={header}
                   style={{
@@ -217,11 +246,11 @@ export function DownloadTidy({
                     )}
                   </Flex>
                 </Table.Th>
-              ))}
+              )) : null}
             </Table.Tr>
           </Table.Thead>
           <Table.Tbody>
-            {tableData.rows.slice(0, 5).map((row, index) => (
+            {tableDataStatus === 'success' && tableData ? tableData.rows.slice(0, 5).map((row, index) => (
               <Table.Tr key={index}>
                 {tableData.header.map((header) => (
                   <Table.Td
@@ -234,7 +263,7 @@ export function DownloadTidy({
                   </Table.Td>
                 ))}
               </Table.Tr>
-            ))}
+            )) : null}
           </Table.Tbody>
         </Table>
       </Box>

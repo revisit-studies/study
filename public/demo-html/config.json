@@ -45,9 +45,9 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "numerical",
-                    "placeholder": "0-7",
+                    "placeholder": "0-10",
                     "min": 0,
-                    "max": 7
+                    "max": 10
                 }
             ]
         }
