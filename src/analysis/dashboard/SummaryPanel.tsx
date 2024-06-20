@@ -89,7 +89,7 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
             <ParticipantStatusBadges completed={completed.length} inProgress={inProgress.length} rejected={rejected.length} filteredCompleted={completedInTime.length} />
           </Flex>
           <Group>
-            <DownloadButtons allParticipants={allParticipants} studyId={studyId} config={config} />
+            <DownloadButtons allParticipants={allParticipants} studyId={studyId} />
 
             <Popover opened={checkOpened}>
               <Popover.Target>

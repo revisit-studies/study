@@ -169,6 +169,21 @@ export class FirebaseStorageEngine extends StorageEngine {
     return await this.localForage.getItem('currentConfigHash') as string;
   }
 
+  async getAllConfigsFromHash(tempHashes: string[], studyId: string) {
+    const allConfigs = tempHashes.map((singleHash) => {
+      const participantRef = ref(this.storage, `${this.collectionPrefix}${studyId}/configs/${singleHash}_config`);
+      return this._getFromFirebaseStorageByRef(participantRef, 'config');
+    });
+    const configs = await Promise.all(allConfigs) as StudyConfig[];
+
+    const obj: Record<string, StudyConfig> = {};
+
+    // eslint-disable-next-line no-return-assign
+    tempHashes.forEach((singleHash, i) => obj[singleHash] = configs[i]);
+
+    return obj;
+  }
+
   async getCurrentParticipantId(urlParticipantId?: string) {
     // Get currentParticipantId from localForage
     const currentParticipantId = await this.localForage.getItem('currentParticipantId');
@@ -726,6 +741,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   private async _getFromFirebaseStorageByRef<T extends FirebaseStorageObjectType>(storageRef: StorageReference, type: T) {
     let storageObj: FirebaseStorageObject<T> = {} as FirebaseStorageObject<T>;
+
     try {
       const url = await getDownloadURL(storageRef);
       const response = await fetch(url);

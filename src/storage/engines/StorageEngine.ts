@@ -50,6 +50,8 @@ export abstract class StorageEngine {
 
   abstract getCurrentConfigHash(): Promise<string>;
 
+  abstract getAllConfigsFromHash(hashes: string[], studyId: string): Promise<Record<string, StudyConfig>>;
+
   abstract getCurrentParticipantId(urlParticipantId?: string): Promise<string>;
 
   abstract clearCurrentParticipantId(): Promise<void>;
