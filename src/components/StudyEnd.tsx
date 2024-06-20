@@ -9,6 +9,7 @@ import { useStorageEngine } from '../storage/storageEngineHooks';
 import { useStoreSelector } from '../store/store';
 import { ParticipantData } from '../storage/types';
 import { download } from './downloader/DownloadTidy';
+import { useStudyId } from '../routes/utils';
 
 export function StudyEnd() {
   const studyConfig = useStudyConfig();
@@ -78,10 +79,22 @@ export function StudyEnd() {
     return () => {};
   }, [autoDownload, completed, delayCounter, downloadParticipant]);
 
+  const studyId = useStudyId();
+  const [dataCollectionEnabled, setDataCollectionEnabled] = useState(false);
+  useEffect(() => {
+    const checkStudyNavigatorEnabled = async () => {
+      if (storageEngine) {
+        const modes = await storageEngine.getModes(studyId);
+        setDataCollectionEnabled(modes.dataCollectionEnabled);
+      }
+    };
+    checkStudyNavigatorEnabled();
+  }, [storageEngine, studyId]);
+
   return (
     <Center style={{ height: '100%' }}>
       <Flex direction="column">
-        {completed
+        {completed || !dataCollectionEnabled
           ? (
             <Text size="xl" display="block">
               {studyConfig.uiConfig.studyEndMsg

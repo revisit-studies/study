@@ -17,7 +17,9 @@ import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
-import { StorageEngine, UserWrapped, StoredUser } from './StorageEngine';
+import {
+  StorageEngine, UserWrapped, StoredUser, REVISIT_MODE,
+} from './StorageEngine';
 import { ParticipantData } from '../types';
 import {
   ParticipantMetadata, Sequence, StoredAnswer,
@@ -81,10 +83,6 @@ export class FirebaseStorageEngine extends StorageEngine {
     try {
       await enableNetwork(this.firestore);
 
-      // Check the connection to the database
-      const connectedRef = await doc(this.firestore, '.info/connected');
-      await getDoc(connectedRef);
-
       this.connected = true;
     } catch (e) {
       console.warn('Failed to connect to Firebase');
@@ -129,7 +127,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, metadata: ParticipantMetadata, urlParticipantId?: string) {
+  async initializeParticipantSession(studyId: string, searchParams: Record<string, string>, config: StudyConfig, metadata: ParticipantMetadata, urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -142,6 +140,9 @@ export class FirebaseStorageEngine extends StorageEngine {
 
     // Check if the participant has already been initialized
     const participant = await this._getFromFirebaseStorage(`participants/${this.currentParticipantId}`, 'participantData');
+
+    // Get modes
+    const modes = await this.getModes(studyId);
 
     if (isParticipantData(participant)) {
       // Participant already initialized
@@ -160,7 +161,10 @@ export class FirebaseStorageEngine extends StorageEngine {
       completed: false,
       rejected: false,
     };
-    await this._pushToFirebaseStorage(`participants/${this.currentParticipantId}`, 'participantData', this.participantData);
+
+    if (modes.dataCollectionEnabled) {
+      await this._pushToFirebaseStorage(`participants/${this.currentParticipantId}`, 'participantData', this.participantData);
+    }
 
     return this.participantData;
   }
@@ -267,6 +271,9 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Latin square not initialized');
     }
 
+    // Get modes
+    const modes = await this.getModes(this.studyId);
+
     // Note intent to get a sequence in the sequenceAssignment collection
     const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
     // Initializes document
@@ -279,9 +286,11 @@ export class FirebaseStorageEngine extends StorageEngine {
     if (rejectedDocs.docs.length > 0) {
       const firstReject = rejectedDocs.docs[0];
       const firstRejectTime = firstReject.data().timestamp;
-      await deleteDoc(firstReject.ref);
-      await setDoc(participantSequenceAssignmentDoc, { participantId: this.currentParticipantId, timestamp: firstRejectTime });
-    } else {
+      if (modes.dataCollectionEnabled) {
+        await deleteDoc(firstReject.ref);
+        await setDoc(participantSequenceAssignmentDoc, { participantId: this.currentParticipantId, timestamp: firstRejectTime });
+      }
+    } else if (modes.dataCollectionEnabled) {
       await setDoc(participantSequenceAssignmentDoc, { participantId: this.currentParticipantId, timestamp: serverTimestamp() });
     }
 
@@ -291,8 +300,9 @@ export class FirebaseStorageEngine extends StorageEngine {
     const intents = intentDocs.docs.map((intent) => intent.data());
 
     // Get the current row
-    const intentIndex = intents.findIndex((intent) => intent.participantId === this.currentParticipantId);
-    const currentRow = sequenceArray[intentIndex % sequenceArray.length];
+    const intentIndex = intents.findIndex((intent) => intent.participantId === this.currentParticipantId) % sequenceArray.length;
+    const selectedIndex = intentIndex === -1 ? Math.floor(Math.random() * sequenceArray.length - 1) : intentIndex;
+    const currentRow = sequenceArray[selectedIndex];
 
     if (!currentRow) {
       throw new Error('Latin square is empty');
@@ -338,7 +348,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return isParticipantData(participantData) ? participantData : null;
   }
 
-  async nextParticipant(config: StudyConfig, metadata: ParticipantMetadata): Promise<ParticipantData> {
+  async nextParticipant() {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -348,23 +358,6 @@ export class FirebaseStorageEngine extends StorageEngine {
 
     // Set current participant id
     await this.localForage.setItem('currentParticipantId', newParticipantId);
-    this.currentParticipantId = newParticipantId;
-
-    const participantConfigHash = await hash(JSON.stringify(config));
-    // Generate a new participant
-    const newParticipantData: ParticipantData = {
-      participantId: newParticipantId,
-      participantConfigHash,
-      sequence: await this.getSequence(),
-      answers: {},
-      searchParams: {},
-      metadata,
-      completed: false,
-      rejected: false,
-    };
-    await this._pushToFirebaseStorage(`participants/${newParticipantId}`, 'participantData', newParticipantData);
-
-    return newParticipantData;
   }
 
   async verifyCompletion() {
@@ -382,8 +375,13 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Participant not initialized');
     }
 
+    // Get modes
+    const modes = await this.getModes(this.studyId);
+
     this.participantData.completed = true;
-    await this._pushToFirebaseStorage(`participants/${this.currentParticipantId}`, 'participantData', this.participantData);
+    if (modes.dataCollectionEnabled) {
+      await this._pushToFirebaseStorage(`participants/${this.currentParticipantId}`, 'participantData', this.participantData);
+    }
 
     return true;
   }
@@ -512,6 +510,30 @@ export class FirebaseStorageEngine extends StorageEngine {
     } catch {
       console.warn('Failed to reject the participant.');
     }
+  }
+
+  async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
+    const revisitModesDoc = doc(this.firestore, 'metadata', `${this.collectionPrefix}${studyId}`);
+
+    return await setDoc(revisitModesDoc, { [mode]: value }, { merge: true });
+  }
+
+  async getModes(studyId: string) {
+    const revisitModesDoc = doc(this.firestore, 'metadata', `${this.collectionPrefix}${studyId}`);
+    const revisitModesSnapshot = await getDoc(revisitModesDoc);
+
+    if (revisitModesSnapshot.exists()) {
+      return revisitModesSnapshot.data() as Record<REVISIT_MODE, boolean>;
+    }
+
+    // Else set to default values
+    const defaultModes = {
+      dataCollectionEnabled: true,
+      studyNavigatorEnabled: true,
+      analyticsInterfacePubliclyAccessible: true,
+    };
+    await setDoc(revisitModesDoc, defaultModes);
+    return defaultModes;
   }
 
   async createSnapshot(studyId: string, deleteData: boolean) {

@@ -129,7 +129,7 @@ export function GlobalSettings() {
                     onClick={(event) => (!storageEngineIsFirebase ? event.preventDefault() : handleEnableAuth())}
                     color="green"
                     data-disabled={!storageEngineIsFirebase ? true : undefined}
-                    style={{ '&[data-disabled]': { pointerEvents: 'all' } }}
+                    style={{ '&[dataDisabled]': { pointerEvents: 'all' } }}
                   >
                     Enable Authentication
                   </Button>

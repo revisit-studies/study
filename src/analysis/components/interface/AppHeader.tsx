@@ -40,7 +40,7 @@ export default function AppHeader({ studyIds }: { studyIds: string[] }) {
       name: 'Analysis',
       leftIcon: <IconChartBar />,
       href: '/analysis/dashboard',
-      needAdmin: true,
+      needAdmin: false,
     },
     {
       name: 'Settings',

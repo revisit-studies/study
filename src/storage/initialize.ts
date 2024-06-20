@@ -6,7 +6,7 @@ export async function initializeStorageEngine() {
   let storageEngine: StorageEngine | undefined;
   let fallback = false;
 
-  const storageEngineName: string = import.meta.env.VITE_REVISIT_MODE === 'public' ? 'localStorage' : import.meta.env.VITE_STORAGE_ENGINE;
+  const storageEngineName: string = import.meta.env.VITE_STORAGE_ENGINE;
 
   if (storageEngineName === 'firebase') {
     const firebaseStorageEngine = new FirebaseStorageEngine();
