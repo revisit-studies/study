@@ -2,8 +2,11 @@ import {
   ActionIcon,
   Box,
   Button,
+  Center,
   Flex,
   Group,
+  Loader,
+  LoadingOverlay,
   Modal,
   MultiSelect,
   Space,
@@ -226,46 +229,50 @@ export function DownloadTidy({
       <Space h="md" />
 
       <Box mih={300} style={{ width: '100%', overflow: 'scroll' }}>
-        <Table striped captionSide="bottom" withTableBorder>
-          <Table.Thead>
-            <Table.Tr>
-              {tableDataStatus === 'success' && tableData ? tableData.header.map((header) => (
-                <Table.Th
-                  key={header}
-                  style={{
-                    whiteSpace: 'nowrap',
-                    minWidth: ['description', 'instruction', 'participantId'].includes(header) ? 200 : undefined,
-                  }}
-                >
-                  <Flex direction="row" justify="space-between" align="center">
-                    {header}
-                    {!REQUIRED_PROPS.includes(header as never) && (
-                    <ActionIcon onClick={() => setSelectedProperties(selectedProperties.filter((prop) => prop !== header))} style={{ marginBottom: -3, marginLeft: 8 }} variant="subtle" color="gray">
-                      <IconX size={16} />
-                    </ActionIcon>
-                    )}
-                  </Flex>
-                </Table.Th>
-              )) : null}
-            </Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>
-            {tableDataStatus === 'success' && tableData ? tableData.rows.slice(0, 5).map((row, index) => (
-              <Table.Tr key={index}>
-                {tableData.header.map((header) => (
-                  <Table.Td
-                    key={`${index}-${header}`}
-                    style={{
-                      whiteSpace: ['description', 'instruction', 'participantId'].includes(header) ? 'normal' : 'nowrap',
-                    }}
-                  >
-                    {row[header]}
-                  </Table.Td>
+        {tableDataStatus === 'success' && tableData
+          ? (
+            <Table striped captionSide="bottom" withTableBorder>
+              <Table.Thead>
+                <Table.Tr>
+                  {tableData.header.map((header) => (
+                    <Table.Th
+                      key={header}
+                      style={{
+                        whiteSpace: 'nowrap',
+                        minWidth: ['description', 'instruction', 'participantId'].includes(header) ? 200 : undefined,
+                      }}
+                    >
+                      <Flex direction="row" justify="space-between" align="center">
+                        {header}
+                        {!REQUIRED_PROPS.includes(header as never) && (
+                        <ActionIcon onClick={() => setSelectedProperties(selectedProperties.filter((prop) => prop !== header))} style={{ marginBottom: -3, marginLeft: 8 }} variant="subtle" color="gray">
+                          <IconX size={16} />
+                        </ActionIcon>
+                        )}
+                      </Flex>
+                    </Table.Th>
+                  ))}
+                </Table.Tr>
+              </Table.Thead>
+              <Table.Tbody>
+                {tableData.rows.slice(0, 5).map((row, index) => (
+                  <Table.Tr key={index}>
+                    {tableData.header.map((header) => (
+                      <Table.Td
+                        key={`${index}-${header}`}
+                        style={{
+                          whiteSpace: ['description', 'instruction', 'participantId'].includes(header) ? 'normal' : 'nowrap',
+                        }}
+                      >
+                        {row[header]}
+                      </Table.Td>
+                    ))}
+                  </Table.Tr>
                 ))}
-              </Table.Tr>
-            )) : null}
-          </Table.Tbody>
-        </Table>
+              </Table.Tbody>
+            </Table>
+          ) : null}
+        <LoadingOverlay visible={tableDataStatus !== 'success'} />
       </Box>
 
       <Space h="sm" />
