@@ -30,7 +30,7 @@ import { PREFIX } from '../../utils/Prefix';
 import { useAuth } from '../../store/hooks/useAuth';
 import { getNewParticipant } from '../../utils/nextParticipant';
 
-export default function AppHeader() {
+export default function AppHeader({ studyNavigatorEnabled }: { studyNavigatorEnabled: boolean }) {
   const { config: studyConfig, metadata } = useStoreSelector((state) => state);
   const flatSequence = useFlatSequence();
   const storeDispatch = useStoreDispatch();
@@ -112,12 +112,14 @@ export default function AppHeader() {
                   </ActionIcon>
                 </Menu.Target>
                 <Menu.Dropdown>
+                  {studyNavigatorEnabled && (
                   <Menu.Item
                     leftSection={<IconSchema size={14} />}
                     onClick={() => storeDispatch(toggleStudyBrowser())}
                   >
                     Study Browser
                   </Menu.Item>
+                  )}
 
                   <Menu.Item
                     component="a"
@@ -131,12 +133,14 @@ export default function AppHeader() {
                     Contact
                   </Menu.Item>
 
+                  {studyNavigatorEnabled && (
                   <Menu.Item
                     leftSection={<IconUserPlus size={14} />}
                     onClick={() => getNewParticipant(storageEngine, studyConfig, metadata, studyHref)}
                   >
                     Next Participant
                   </Menu.Item>
+                  )}
                 </Menu.Dropdown>
               </Menu>
             )}
