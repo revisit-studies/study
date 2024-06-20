@@ -61,7 +61,7 @@ For more detailed documentation on the response section, check out the [document
 
 In both of these cases, you can set up a component once as a `baseComponent`, including linking to the stimulus and including (partial) responses, but then later write inherited, short components that extend the base component with the specific functionality you want. 
 
-For examples of how to write a base component, refer to the [documentation](type-aliases/BaseComponents) and to the [relevant tutorial](../tutorials/html-stimulus).
+For examples of how to write a base component, refer to the [documentation](type-aliases/BaseComponents) and to the [relevant tutorial](../designing-studies/html-stimulus).
 
 
 The different component types: 
@@ -88,7 +88,8 @@ Responses are often provided as form elements. reVISit supports the following fo
 - [LikertResponse](interfaces/LikertResponse.md)
 - [LongTextResponse](interfaces/LongTextResponse.md)
 - [NumericalResponse](interfaces/NumericalResponse.md)
-- [Option](interfaces/Option.md)
+- [NumberOption](interfaces/NumberOption.md)
+- [StringOption](interfaces/StringOption.md)
 - [RadioResponse](interfaces/RadioResponse.md)
 - [ShortTextResponse](interfaces/ShortTextResponse.md)
 - [SliderResponse](interfaces/SliderResponse.md)
