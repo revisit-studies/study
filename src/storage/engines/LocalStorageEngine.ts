@@ -1,6 +1,6 @@
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
-import { StorageEngine, UserWrapped } from './StorageEngine';
+import { REVISIT_MODE, StorageEngine, UserWrapped } from './StorageEngine';
 import { ParticipantData } from '../types';
 import { ParticipantMetadata, Sequence, StoredAnswer } from '../../store/types';
 import { hash } from './utils';
@@ -182,7 +182,7 @@ export class LocalStorageEngine extends StorageEngine {
     const returnArray: ParticipantData[] = [];
 
     await this.studyDatabase.iterate((value, key) => {
-      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray' && key !== 'configs' && key !== 'currentConfigHash') {
+      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray' && key !== 'configs' && key !== 'currentConfigHash' && key !== 'modes') {
         returnArray.push(value as ParticipantData);
       }
     });
@@ -198,7 +198,7 @@ export class LocalStorageEngine extends StorageEngine {
     const returnArray: ParticipantData[] = [];
 
     await currStudyDatabase.iterate((value, key) => {
-      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray' && key !== 'configs' && key !== 'currentConfigHash') {
+      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray' && key !== 'configs' && key !== 'currentConfigHash' && key !== 'modes') {
         returnArray.push(value as ParticipantData);
       }
     });
@@ -306,6 +306,45 @@ export class LocalStorageEngine extends StorageEngine {
 
     // Save the user
     await this.studyDatabase.setItem(participantId, participant);
+  }
+
+  async setMode(studyId: string, key: REVISIT_MODE, value: boolean) {
+    // Create or retrieve database for study
+    this.studyDatabase = await localforage.createInstance({
+      name: studyId,
+    });
+
+    // Get the modes
+    const modes = await this.studyDatabase.getItem('modes') as Record<REVISIT_MODE, boolean> | null;
+    if (!modes) {
+      throw new Error('Modes not initialized');
+    }
+
+    // Set the mode
+    modes[key] = value;
+    this.studyDatabase.setItem('modes', modes);
+  }
+
+  async getModes(studyId: string) {
+    // Create or retrieve database for study
+    this.studyDatabase = await localforage.createInstance({
+      name: studyId,
+    });
+
+    // Get the modes
+    const modes = await this.studyDatabase.getItem('modes') as Record<REVISIT_MODE, boolean> | null;
+    if (modes) {
+      return modes;
+    }
+
+    // Else, set and return defaults
+    const defaults: Record<REVISIT_MODE, boolean> = {
+      dataCollectionEnabled: true,
+      studyNavigatorEnabled: true,
+      analyticsInterfacePubliclyAccessible: true,
+    };
+    this.studyDatabase.setItem('modes', defaults);
+    return defaults;
   }
 
   private _verifyStudyDatabase(db: LocalForage | undefined): db is LocalForage {

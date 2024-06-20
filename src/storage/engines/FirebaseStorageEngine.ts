@@ -17,7 +17,9 @@ import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
-import { StorageEngine, UserWrapped, StoredUser } from './StorageEngine';
+import {
+  StorageEngine, UserWrapped, StoredUser, REVISIT_MODE,
+} from './StorageEngine';
 import { ParticipantData } from '../types';
 import {
   ParticipantMetadata, Sequence, StoredAnswer,
@@ -81,9 +83,11 @@ export class FirebaseStorageEngine extends StorageEngine {
     try {
       await enableNetwork(this.firestore);
 
-      // Check the connection to the database
-      const connectedRef = await doc(this.firestore, '.info/connected');
-      await getDoc(connectedRef);
+      const auth = getAuth();
+      if (!auth.currentUser) {
+        await signInAnonymously(auth);
+        if (!auth.currentUser) throw new Error('Login failed with firebase');
+      }
 
       this.connected = true;
     } catch (e) {
@@ -93,12 +97,6 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   async initializeStudyDb(studyId: string, config: StudyConfig) {
     try {
-      const auth = getAuth();
-      if (!auth.currentUser) {
-        await signInAnonymously(auth);
-        if (!auth.currentUser) throw new Error('Login failed with firebase');
-      }
-
       const currentConfigHash = await this.getCurrentConfigHash();
       // Hash the config
       const configHash = await hash(JSON.stringify(config));
@@ -497,6 +495,30 @@ export class FirebaseStorageEngine extends StorageEngine {
     } catch {
       console.warn('Failed to reject the participant.');
     }
+  }
+
+  async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
+    const revisitModesDoc = doc(this.firestore, 'metadata', `${this.collectionPrefix}${studyId}`);
+
+    return await setDoc(revisitModesDoc, { [mode]: value }, { merge: true });
+  }
+
+  async getModes(studyId: string) {
+    const revisitModesDoc = doc(this.firestore, 'metadata', `${this.collectionPrefix}${studyId}`);
+    const revisitModesSnapshot = await getDoc(revisitModesDoc);
+
+    if (revisitModesSnapshot.exists()) {
+      return revisitModesSnapshot.data() as Record<REVISIT_MODE, boolean>;
+    }
+
+    // Else set to default values
+    const defaultModes = {
+      dataCollectionEnabled: true,
+      studyNavigatorEnabled: true,
+      analyticsInterfacePubliclyAccessible: true,
+    };
+    await setDoc(revisitModesDoc, defaultModes);
+    return defaultModes;
   }
 
   async createSnapshot(studyId: string, deleteData: boolean) {

@@ -15,9 +15,8 @@ import { GlobalConfig, ParticipantData, StudyConfig } from '../parser/types';
 import { getStudyConfig } from '../utils/fetchConfig';
 import { TableView } from './table/TableView';
 import { useStorageEngine } from '../storage/storageEngineHooks';
-import { DataManagementBoard } from './management/DataManagementBoard';
-import { FirebaseStorageEngine } from '../storage/engines/FirebaseStorageEngine';
 import { ParticipantStatusBadges } from './components/interface/ParticipantStatusBadges';
+import ManageAccordion from './management/ManageAccordion';
 
 export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   const { globalConfig } = props;
@@ -53,8 +52,6 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
     return [comp, prog, rej];
   }, [expData]);
 
-  const showManage = import.meta.env.VITE_REVISIT_MODE !== 'public' && storageEngine instanceof FirebaseStorageEngine;
-
   return (
     <>
       <AppHeader studyIds={props.globalConfig.configsList} />
@@ -78,15 +75,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
               <Tooltip label="Coming soon" position="bottom">
                 <Tabs.Tab value="replay" leftSection={<IconPlayerPlay size={16} />} disabled>Participant Replay</Tabs.Tab>
               </Tooltip>
-              {
-                showManage
-                  ? <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />}>Manage</Tabs.Tab>
-                  : (
-                    <Tooltip label="Management is currently only available for Firebase studies" position="bottom">
-                      <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled>Manage</Tabs.Tab>
-                    </Tooltip>
-                  )
-}
+              <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />}>Manage</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="table" pt="xs">
               {studyConfig && <TableView completed={completed} inProgress={inProgress} studyConfig={studyConfig} refresh={getData} />}
@@ -99,7 +88,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
               Replay Tab Content
             </Tabs.Panel>
             <Tabs.Panel value="manage" pt="xs">
-              {studyId && showManage && <DataManagementBoard studyId={studyId} refresh={getData} />}
+              {studyId && <ManageAccordion studyId={studyId} refresh={getData} />}
             </Tabs.Panel>
           </Tabs>
         </Container>

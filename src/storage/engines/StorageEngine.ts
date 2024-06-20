@@ -23,6 +23,8 @@ export interface UserWrapped {
   adminVerification:boolean
 }
 
+export type REVISIT_MODE = 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'analyticsInterfacePubliclyAccessible';
+
 export abstract class StorageEngine {
   protected engine: string;
 
@@ -75,4 +77,8 @@ export abstract class StorageEngine {
   abstract validateUser(user: UserWrapped | null): Promise<boolean>;
 
   abstract rejectParticipant(studyId: string, participantID: string): Promise<void>;
+
+  abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
+
+  abstract getModes(studyId: string): Promise<Record<REVISIT_MODE, boolean>>;
 }
