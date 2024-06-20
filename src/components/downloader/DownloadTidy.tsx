@@ -1,11 +1,11 @@
+/* eslint-disable no-nested-ternary */
 import {
   ActionIcon,
+  Alert,
   Box,
   Button,
-  Center,
   Flex,
   Group,
-  Loader,
   LoadingOverlay,
   Modal,
   MultiSelect,
@@ -182,7 +182,7 @@ export function DownloadTidy({
   const [selectedProperties, setSelectedProperties] = useState<Array<OptionalProperty>>([...OPTIONAL_COMMON_PROPS].filter((prop) => prop !== 'meta'));
 
   const storageEngine = useStorageEngine();
-  const { value: tableData, status: tableDataStatus } = useAsync(getTableData, [selectedProperties, data, storageEngine.storageEngine, studyId]);
+  const { value: tableData, status: tableDataStatus, error: tableError } = useAsync(getTableData, [selectedProperties, data, storageEngine.storageEngine, studyId]);
 
   const downloadTidy = useCallback(() => {
     if (!tableData) {
@@ -271,8 +271,8 @@ export function DownloadTidy({
                 ))}
               </Table.Tbody>
             </Table>
-          ) : null}
-        <LoadingOverlay visible={tableDataStatus !== 'success'} />
+          ) : tableDataStatus === 'error' && tableError ? <Alert variant="light">{tableError.message}</Alert> : null}
+        <LoadingOverlay visible={tableDataStatus === 'pending' || tableDataStatus === 'idle'} />
       </Box>
 
       <Space h="sm" />
