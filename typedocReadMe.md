@@ -5,7 +5,7 @@
 
 - [GlobalConfig](interfaces/GlobalConfig.md) — The GlobalConfig is used to generate the list of available studies in the UI. 
 
-## Data Fromats
+## Data Formats
 
 - [ParticipantData](interfaces/ParticipantData.md) – The ParticipantData is a JSON object that contains all of the data for all of the participants in your study.
 - [StoredAnswer](interfaces/StoredAnswer.md) - The StoredAnswer object is a data structure describing the participants interaction with an individual component. It is used by ParticipantData to store individual answers.
@@ -16,13 +16,13 @@
 - [StudyConfig](interfaces/StudyConfig.md) – The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. 
 
 - [StudyMetadata](interfaces/StudyMetadata.md) – A top-level property of the `StudyConfig`. The study metadata defines elements such as the study title, authors, and description.
-- [UIConfig](interfaces/UIConfig.md) – A top-level property of the `StudyConfig`, defining the apperance of the study.
+- [UIConfig](interfaces/UIConfig.md) – A top-level property of the `StudyConfig`, defining the appearance of the study.
 
 For other components of the reVISit spec see [Components](#Components) and [Sequencing](#Sequencing)
 
 ## Components
 
-Components contain study-specific conent. See the [How does it Work](https://revisit.dev/docs/getting-started/how-does-it-work) guide for an introduction.
+Components contain study-specific content. See the [How does it Work](https://revisit.dev/docs/getting-started/how-does-it-work) guide for an introduction.
 
 Each component extends the [BaseIndividualComponent](interfaces/BaseIndividualComponent) interface. To add a component to your study (which can be thought of as a "page" of your study), you add a JSON object representing that component to the "components" object with a key which you can define how you would like. Then, the `type` key in that JSON object controls which type of component you are referring to. 
 
