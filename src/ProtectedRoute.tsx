@@ -19,9 +19,20 @@ export function ProtectedRoute({ children, paramToCheck, paramCallback }: Protec
 
   useEffect(() => {
     const verifyUser = async () => {
-      if (paramToCheck && paramCallback && params[paramToCheck] && isEnabled === false) {
-        const currIsEnabled = await paramCallback(params[paramToCheck]!);
-        setIsEnabled(currIsEnabled);
+      // If isEnabled is false, re-check. Additional rechecking is required becasue this effect needs to trigger whenever there is manipulation from an unwanted user.
+      if (isEnabled === false) {
+        // If we paramToCheck and paramCallback (meaning checking enabling the protected route is necessary), check
+        if (paramToCheck && paramCallback && params[paramToCheck]) {
+          // Get the current enabling feature
+          const currIsEnabled = await paramCallback(params[paramToCheck]!);
+          // If it should be enabled, set to true. Otherwise, leave as false.
+          if (currIsEnabled) {
+            setIsEnabled(currIsEnabled);
+          }
+        // Otherwise, isEnabled was set to false by external user state manipulation
+        } else {
+          setIsEnabled(true);
+        }
       }
       if (isEnabled) {
         try {
