@@ -83,12 +83,6 @@ export class FirebaseStorageEngine extends StorageEngine {
     try {
       await enableNetwork(this.firestore);
 
-      const auth = getAuth();
-      if (!auth.currentUser) {
-        await signInAnonymously(auth);
-        if (!auth.currentUser) throw new Error('Login failed with firebase');
-      }
-
       this.connected = true;
     } catch (e) {
       console.warn('Failed to connect to Firebase');
@@ -97,6 +91,12 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   async initializeStudyDb(studyId: string, config: StudyConfig) {
     try {
+      const auth = getAuth();
+      if (!auth.currentUser) {
+        await signInAnonymously(auth);
+        if (!auth.currentUser) throw new Error('Login failed with firebase');
+      }
+
       const currentConfigHash = await this.getCurrentConfigHash();
       // Hash the config
       const configHash = await hash(JSON.stringify(config));
