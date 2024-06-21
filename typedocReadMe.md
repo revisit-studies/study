@@ -15,7 +15,7 @@
 - [StudyMetadata](interfaces/StudyMetadata.md) – A top-level property of the `StudyConfig`. The study metadata defines elements such as the study title, authors, and description.
 - [UIConfig](interfaces/UIConfig.md) – A top-level property of the `StudyConfig`, defining the appearance of the study.
 
-For other components of the reVISit spec see [Components](#Components) and [Sequencing](#Sequencing)
+For other components of the reVISit spec see [Components](#components) and [Sequencing](#sequencing)
 
 ## Components
 
