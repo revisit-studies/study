@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import {
-  Box, Grid, LoadingOverlay, Title,
+  Box, Grid, LoadingOverlay, Title, Container, Text,
 } from '@mantine/core';
 import { ParticipantData } from '../../storage/types';
 import { SummaryPanel } from './SummaryPanel';
@@ -58,18 +58,20 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
     init();
   }, [globalConfig, storageEngine]);
 
+  const gridList = globalConfig.configsList.map((studyId) => expData[studyId] && (
+    (expStudyVisibility[studyId] || user.isAdmin)
+      ? (
+        <Grid.Col key={`${studyId}-panel`} span={{ md: 12, xl: 6 }}>
+          <SummaryPanel studyId={studyId} allParticipants={expData[studyId]} config={expConfig[studyId]} />
+        </Grid.Col>
+      ) : null
+  ));
+
   return (
     <Box>
       <Title mb={20} order={4}>Your Studies:</Title>
       <Grid>
-        {globalConfig.configsList.map((studyId) => expData[studyId] && (
-          (expStudyVisibility[studyId] || user.isAdmin)
-            ? (
-              <Grid.Col key={`${studyId}-panel`} span={{ md: 12, xl: 6 }}>
-                <SummaryPanel studyId={studyId} allParticipants={expData[studyId]} config={expConfig[studyId]} />
-              </Grid.Col>
-            ) : null
-        ))}
+        {gridList.length > 0 ? gridList : <Container mt={100}><Text>No studies to show. If you believe that this is in error, make sure that you are logged in.</Text></Container>}
         <LoadingOverlay visible={loading} />
       </Grid>
     </Box>
