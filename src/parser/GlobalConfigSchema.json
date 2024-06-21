@@ -7,15 +7,8 @@
       "description": "The GlobalConfig is used to generate the list of available studies in the UI. This list is displayed on the landing page when running the app.",
       "properties": {
         "$schema": {
-          "description": "A required json schema property. This should point to the github link for the version of the schema you would like. See examples for more information",
+          "description": "A required json schema property. This should point to the github link for the version of the schema you would like. See examples in the public folder for more information",
           "type": "string"
-        },
-        "adminUsers": {
-          "description": "A required property listing out the emails of users who require admin access.",
-          "items": {
-            "type": "string"
-          },
-          "type": "array"
         },
         "configs": {
           "additionalProperties": {
@@ -50,8 +43,7 @@
       "required": [
         "$schema",
         "configs",
-        "configsList",
-        "adminUsers"
+        "configsList"
       ],
       "type": "object"
     }

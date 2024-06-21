@@ -66,7 +66,5 @@
             "path": "test-parser-errors/config.json",
             "test": true
         }
-    },
-    "adminUsers": []
-
+    }
 }
