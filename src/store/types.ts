@@ -46,18 +46,18 @@ export type TrialValidation = Record<
 The StoredAnswer object is a data structure describing the participants interaction with an individual component. It is the data structure used as values of the `answers` object of [ParticipantData](../ParticipantData). The general structure for this is below:
 
 ```js
-    {
-      "answer": {
-        "barChart": [
-          1.3
-        ]
-      },
-      "startTime": 1711641174858,
-      "endTime": 1711641178836,
-      "windowEvents": [
-        ...
-      ]
-    }
+{
+  "answer": {
+    "barChart": [
+      1.3
+    ]
+  },
+  "startTime": 1711641174858,
+  "endTime": 1711641178836,
+  "windowEvents": [
+    ...
+  ]
+}
 ```
 The `answer` object here uses the "id" in the [Response](../BaseResponse) list of the component in your [StudyConfiguration](../StudyConfig) as its keys. It then contains a list of the answers given. You are also given a start and end time for the participants interaction with the component. Lastly, a set of windowEvents is given. Below is an example of the windowEvents list.
 
@@ -74,7 +74,6 @@ export interface StoredAnswer {
   provenanceGraph?: TrrackedProvenance,
   /** A list containing the time (in epoch milliseconds), the action (focus, input, kepress, mousedown, mouseup, mousemove, resize, scroll or visibility), and then either a coordinate pertaining to where the event took place on the screen or string related to such event. Below is an example of the windowEvents list.
 ```js
-
 "windowEvents" :[
   [
     1711641174878,

@@ -2,10 +2,11 @@ import {
   AppShell, Container, Flex, LoadingOverlay, Space, Tabs,
   Title,
   Tooltip,
+  Alert,
 } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  IconChartDonut2, IconPlayerPlay, IconTable, IconSettings,
+  IconChartDonut2, IconPlayerPlay, IconTable, IconSettings, IconInfoCircle,
 } from '@tabler/icons-react';
 import React, {
   useCallback, useEffect, useMemo, useState,
@@ -17,6 +18,7 @@ import { TableView } from './table/TableView';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { ParticipantStatusBadges } from './components/interface/ParticipantStatusBadges';
 import ManageAccordion from './management/ManageAccordion';
+import { useAuth } from '../store/hooks/useAuth';
 
 export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   const { globalConfig } = props;
@@ -27,6 +29,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   const { storageEngine } = useStorageEngine();
   const navigate = useNavigate();
   const { tab } = useParams();
+  const { user } = useAuth();
 
   const getData = useCallback(async () => {
     setLoading(true);
@@ -75,7 +78,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
               <Tooltip label="Coming soon" position="bottom">
                 <Tabs.Tab value="replay" leftSection={<IconPlayerPlay size={16} />} disabled>Participant Replay</Tabs.Tab>
               </Tooltip>
-              <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />}>Manage</Tabs.Tab>
+              <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="table" pt="xs">
               {studyConfig && <TableView completed={completed} inProgress={inProgress} studyConfig={studyConfig} refresh={getData} />}
@@ -88,7 +91,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
               Replay Tab Content
             </Tabs.Panel>
             <Tabs.Panel value="manage" pt="xs">
-              {studyId && <ManageAccordion studyId={studyId} refresh={getData} />}
+              {studyId && user.isAdmin ? <ManageAccordion studyId={studyId} refresh={getData} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
             </Tabs.Panel>
           </Tabs>
         </Container>
