@@ -22,6 +22,9 @@
         "sumsifter": {
             "path": "sumsifter/config.json"
         },
+        "sumsifter-memory-study": {
+            "path": "sumsifter-memory-study-p1/config.json"
+        },
         "demo-html": {
             "path": "demo-html/config.json"
         },

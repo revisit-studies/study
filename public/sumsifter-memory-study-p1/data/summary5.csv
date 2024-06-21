@@ -1,0 +1,7 @@
+id,text,sources
+1,"The Summer Conference on Applied Data Science (SCADS) is an annual program aimed at AI research for assisting US Intelligence Community data analysts.","S10"
+2,"SCADS brings together around fifty experts annually, including faculty, graduate students, and professionals.","S12"
+3,"The 2024 Grand Challenge focuses on creating tailored daily reports (TLDRs) for knowledge workers in the IC.","S13"
+4,"Research efforts include automatic summarization, recommendation systems, and human-machine interaction, emphasizing explainability and contextualization.","S16,S17"
+5,"Techniques involve extractive and abstractive summarization, sentence embeddings, and Retrieval Augmented Generation (RAG) to minimize hallucinations.","S26,S54,S72"
+6,"Human evaluation and explainability are crucial for improving TLDR quality.","S159,S620"
