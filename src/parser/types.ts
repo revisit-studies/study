@@ -1,6 +1,7 @@
 // eslint-disable-next-line import/no-cycle
 export type { ParticipantData } from '../storage/types';
 export type { StoredAnswer, ParticipantMetadata } from '../store/types';
+
 /**
  * The GlobalConfig is used to generate the list of available studies in the UI.
  * This list is displayed on the landing page when running the app.
@@ -253,7 +254,7 @@ export interface LongTextResponse extends BaseResponse {
  * LikertResponses can also have a description, and left and right labels.
  * The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.
  *
- * Example for a five-point Likerts Scale:
+ * Example for a five-point Likert Scale:
  *
 ```js
 {
