@@ -6,7 +6,7 @@
   "scripts": {
     "buildDocs": "yarn typedoc",
     "serve": "vite --host=0.0.0.0 --port=8080",
-    "build": "tsc && VITE_STORAGE_ENGINE=firebase vite build",
+    "build": "tsc && vite build",
     "lint": "eslint src",
     "postinstall": "husky",
     "generate-schema:StudyConfig": "ts-json-schema-generator --path src/parser/types.ts --out src/parser/StudyConfigSchema.json --type StudyConfig",
