@@ -246,16 +246,18 @@ export function TableView({
             />
           </Group>
           <Group>
-            <DownloadButtons allParticipants={[...completed, ...inProgress]} studyId={studyId || ''} config={studyConfig} />
+            <DownloadButtons allParticipants={[...completed, ...inProgress]} studyId={studyId || ''} />
             <Button disabled={checked.length === 0} onClick={openModal} color="red">Reject Participants</Button>
           </Group>
         </Flex>
-        <Table striped withTableBorder>
-          <Table.Thead>
-            <Table.Tr>{headers}</Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>{rows}</Table.Tbody>
-        </Table>
+        <Flex direction="column" style={{ width: '100%', overflow: 'auto' }}>
+          <Table striped withTableBorder>
+            <Table.Thead>
+              <Table.Tr>{headers}</Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>{rows}</Table.Tbody>
+          </Table>
+        </Flex>
       </>
     ) : (
       <Flex justify="center" align="center" style={{ height: '100%' }}>

@@ -1,42 +1,64 @@
 import { LoadingOverlay } from '@mantine/core';
-import { ReactNode, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { ReactNode, useEffect, useState } from 'react';
+import { Navigate, useParams } from 'react-router-dom';
 import { useAuth } from './store/hooks/useAuth';
 import { useStorageEngine } from './storage/storageEngineHooks';
 
 interface ProtectedRouteProps {
   children: ReactNode;
+  paramToCheck?: string;
+  paramCallback?: (paramToCheck:string) => Promise<boolean>;
 }
 
 // Wrapper component which only allows users who are authenticated and admins to access its child components.
-export function ProtectedRoute({ children }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, paramToCheck, paramCallback }: ProtectedRouteProps) {
   const { user, verifyAdminStatus, logout } = useAuth();
   const { storageEngine } = useStorageEngine();
+  const [isEnabled, setIsEnabled] = useState<boolean>(false);
+  const params = useParams();
 
   useEffect(() => {
     const verifyUser = async () => {
-      try {
-        if (user) {
-          const isAdmin = await verifyAdminStatus(user);
-          if (!isAdmin) {
+      // If isEnabled is false, re-check. Additional rechecking is required becasue this effect needs to trigger whenever there is manipulation from an unwanted user.
+      if (isEnabled === false) {
+        // If we paramToCheck and paramCallback (meaning checking enabling the protected route is necessary), check
+        if (paramToCheck && paramCallback && params[paramToCheck]) {
+          // Get the current enabling feature
+          const currIsEnabled = await paramCallback(params[paramToCheck]!);
+          // If it should be enabled, set to true. Otherwise, leave as false.
+          if (currIsEnabled) {
+            setIsEnabled(currIsEnabled);
+          }
+        // Otherwise, isEnabled was set to false by external user state manipulation
+        } else {
+          setIsEnabled(true);
+        }
+      }
+      if (isEnabled) {
+        try {
+          if (user) {
+            const isAdmin = await verifyAdminStatus(user);
+            if (!isAdmin) {
+              logout();
+            }
+          } else {
             logout();
           }
-        } else {
+        } catch (error) {
           logout();
+          console.warn(error);
         }
-      } catch (error) {
-        logout();
-        console.warn(error);
       }
     };
+
     verifyUser();
-  }, [user.isAdmin]);
+  }, [user.isAdmin, isEnabled]);
 
   if (user.determiningStatus || !storageEngine) {
     return <LoadingOverlay visible={user.determiningStatus || !storageEngine?.getEngine()} />;
   }
 
-  if (!user.isAdmin && !user.determiningStatus) {
+  if (isEnabled && !user.isAdmin && !user.determiningStatus) {
     return <Navigate to="/login" />;
   }
   // eslint-disable-next-line react/jsx-no-useless-fragment

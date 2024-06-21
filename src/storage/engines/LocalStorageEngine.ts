@@ -1,6 +1,6 @@
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
-import { StorageEngine, UserWrapped } from './StorageEngine';
+import { REVISIT_MODE, StorageEngine, UserWrapped } from './StorageEngine';
 import { ParticipantData } from '../types';
 import { ParticipantMetadata, Sequence, StoredAnswer } from '../../store/types';
 import { hash } from './utils';
@@ -8,6 +8,8 @@ import { StudyConfig } from '../../parser/types';
 
 export class LocalStorageEngine extends StorageEngine {
   private studyDatabase: LocalForage | undefined = undefined;
+
+  private studyId: string | undefined = undefined;
 
   constructor() {
     super('localStorage');
@@ -19,6 +21,7 @@ export class LocalStorageEngine extends StorageEngine {
 
   async initializeStudyDb(studyId: string, config: StudyConfig) {
     // Create or retrieve database for study
+    this.studyId = studyId;
     this.studyDatabase = await localforage.createInstance({
       name: studyId,
     });
@@ -41,7 +44,7 @@ export class LocalStorageEngine extends StorageEngine {
     });
   }
 
-  async initializeParticipantSession(searchParams: Record<string, string>, config: StudyConfig, metadata: ParticipantMetadata, urlParticipantId?: string) {
+  async initializeParticipantSession(studyId: string, searchParams: Record<string, string>, config: StudyConfig, metadata: ParticipantMetadata, urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
@@ -59,6 +62,9 @@ export class LocalStorageEngine extends StorageEngine {
       return participant;
     }
 
+    // Get modes
+    const modes = await this.getModes(studyId);
+
     // Initialize participant
     const participantConfigHash = await hash(JSON.stringify(config));
     const participantData: ParticipantData = {
@@ -71,7 +77,10 @@ export class LocalStorageEngine extends StorageEngine {
       completed: false,
       rejected: false,
     };
-    await this.studyDatabase?.setItem(this.currentParticipantId, participantData);
+
+    if (modes.dataCollectionEnabled) {
+      await this.studyDatabase?.setItem(this.currentParticipantId, participantData);
+    }
 
     return participantData;
   }
@@ -82,6 +91,16 @@ export class LocalStorageEngine extends StorageEngine {
     }
 
     return await this.studyDatabase.getItem('currentConfigHash') as string;
+  }
+
+  async getAllConfigsFromHash(hashes: string[], studyId: string): Promise<Record<string, StudyConfig>> {
+    const currStudyDatabase = localforage.createInstance({
+      name: studyId,
+    });
+
+    const allConfigs: Record<string, StudyConfig> = await currStudyDatabase.getItem('configs') || {};
+
+    return allConfigs;
   }
 
   async getCurrentParticipantId(urlParticipantId?: string) {
@@ -154,14 +173,24 @@ export class LocalStorageEngine extends StorageEngine {
       throw new Error('Latin square not initialized');
     }
 
-    // Get the current row
-    const currentRow = sequenceArray.pop();
+    // Get modes
+    if (!this.studyId) {
+      throw new Error('Study ID not initialized');
+    }
+    const modes = await this.getModes(this.studyId);
+
+    // Get the current row or random if data collection is disabled
+    const currentRow = modes.dataCollectionEnabled
+      ? sequenceArray.pop()
+      : sequenceArray[Math.floor(Math.random() * sequenceArray.length - 1)];
     if (!currentRow) {
       throw new Error('Latin square is empty');
     }
 
     // Update the latin square
-    await this.studyDatabase.setItem('sequenceArray', sequenceArray);
+    if (modes.dataCollectionEnabled) {
+      await this.studyDatabase.setItem('sequenceArray', sequenceArray);
+    }
 
     return currentRow;
   }
@@ -182,7 +211,7 @@ export class LocalStorageEngine extends StorageEngine {
     const returnArray: ParticipantData[] = [];
 
     await this.studyDatabase.iterate((value, key) => {
-      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray' && key !== 'configs' && key !== 'currentConfigHash') {
+      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray' && key !== 'configs' && key !== 'currentConfigHash' && key !== 'modes') {
         returnArray.push(value as ParticipantData);
       }
     });
@@ -198,7 +227,7 @@ export class LocalStorageEngine extends StorageEngine {
     const returnArray: ParticipantData[] = [];
 
     await currStudyDatabase.iterate((value, key) => {
-      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray' && key !== 'configs' && key !== 'currentConfigHash') {
+      if (key !== 'config' && key !== 'currentParticipant' && key !== 'sequenceArray' && key !== 'configs' && key !== 'currentConfigHash' && key !== 'modes') {
         returnArray.push(value as ParticipantData);
       }
     });
@@ -219,7 +248,7 @@ export class LocalStorageEngine extends StorageEngine {
     return await this.studyDatabase.getItem(participantId) as ParticipantData | null;
   }
 
-  async nextParticipant(config: StudyConfig, metadata: ParticipantMetadata) {
+  async nextParticipant() {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
@@ -229,28 +258,6 @@ export class LocalStorageEngine extends StorageEngine {
 
     // Set current participant id
     this.studyDatabase.setItem('currentParticipant', newParticipantId);
-    this.currentParticipantId = newParticipantId;
-
-    // Get participant data
-    let participant: ParticipantData | null = await this.studyDatabase.getItem(newParticipantId);
-    if (!participant) {
-      const participantConfigHash = await hash(JSON.stringify(config));
-      // Generate a new participant
-      const newParticipant: ParticipantData = {
-        participantId: newParticipantId,
-        participantConfigHash,
-        sequence: await this.getSequence(),
-        answers: {},
-        searchParams: {},
-        metadata,
-        completed: false,
-        rejected: false,
-      };
-      await this.studyDatabase.setItem(newParticipantId, newParticipant);
-      participant = newParticipant;
-    }
-
-    return participant as ParticipantData;
   }
 
   async verifyCompletion() {
@@ -306,6 +313,45 @@ export class LocalStorageEngine extends StorageEngine {
 
     // Save the user
     await this.studyDatabase.setItem(participantId, participant);
+  }
+
+  async setMode(studyId: string, key: REVISIT_MODE, value: boolean) {
+    // Create or retrieve database for study
+    this.studyDatabase = await localforage.createInstance({
+      name: studyId,
+    });
+
+    // Get the modes
+    const modes = await this.studyDatabase.getItem('modes') as Record<REVISIT_MODE, boolean> | null;
+    if (!modes) {
+      throw new Error('Modes not initialized');
+    }
+
+    // Set the mode
+    modes[key] = value;
+    this.studyDatabase.setItem('modes', modes);
+  }
+
+  async getModes(studyId: string) {
+    // Create or retrieve database for study
+    this.studyDatabase = await localforage.createInstance({
+      name: studyId,
+    });
+
+    // Get the modes
+    const modes = await this.studyDatabase.getItem('modes') as Record<REVISIT_MODE, boolean> | null;
+    if (modes) {
+      return modes;
+    }
+
+    // Else, set and return defaults
+    const defaults: Record<REVISIT_MODE, boolean> = {
+      dataCollectionEnabled: true,
+      studyNavigatorEnabled: true,
+      analyticsInterfacePubliclyAccessible: true,
+    };
+    this.studyDatabase.setItem('modes', defaults);
+    return defaults;
   }
 
   private _verifyStudyDatabase(db: LocalForage | undefined): db is LocalForage {

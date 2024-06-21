@@ -22,7 +22,7 @@
     "@mantine/core": "^7.10.1",
     "@mantine/dates": "^7.10.1",
     "@mantine/form": "^7.10.1",
-    "@mantine/hooks":"^7.10.1",
+    "@mantine/hooks": "^7.10.1",
     "@mantine/modals": "^7.10.1",
     "@quentinroy/latin-square": "^1.1.1",
     "@reduxjs/toolkit": "^2.2.5",
@@ -52,6 +52,7 @@
     "typedoc": "^0.25.13",
     "typedoc-plugin-frontmatter": "^1.0.0",
     "typedoc-plugin-markdown": "^4.0.3",
+    "use-deep-compare-effect": "^1.8.1",
     "uuid": "^10.0.0",
     "vega": "^5.28.0",
     "vega-lite": "^5.17.0"

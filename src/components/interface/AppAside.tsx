@@ -40,10 +40,9 @@ function InfoHover({ text }: { text: string }) {
 }
 
 export default function AppAside() {
-  const { showStudyBrowser, sequence, metadata } = useStoreSelector((state) => state);
+  const { sequence, metadata } = useStoreSelector((state) => state);
   const { toggleStudyBrowser } = useStoreActions();
 
-  const currentComponent = useCurrentComponent();
   const studyConfig = useStudyConfig();
   const dispatch = useStoreDispatch();
 
@@ -61,7 +60,7 @@ export default function AppAside() {
 
   const [activeTab, setActiveTab] = useState<string | null>('participant');
 
-  return showStudyBrowser || (currentComponent === 'end' && studyConfig.uiConfig.autoDownloadStudy) ? (
+  return (
     <AppShell.Aside p="0">
       <AppShell.Section>
         <Flex direction="row" p="sm" justify="space-between" pb="xs">
@@ -114,5 +113,5 @@ export default function AppAside() {
         </Tabs>
       </AppShell.Section>
     </AppShell.Aside>
-  ) : null;
+  );
 }
