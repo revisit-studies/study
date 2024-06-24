@@ -1,15 +1,13 @@
 ## Tutorial
 
 ### Summary Tasks (First Set)
-You will have about 5 summary and source pairs to compare.  
-While you go through these, please also think about what study we **should** be running.
 
-We can change many details: the source links, design elements, the datasets, the number of summaries, number of sources, and so on.  
-We just need your feedback at this stage.
+You will have **15** documents to read.
+You can click on each one to open it to the side and read it. You can go back and forth between documents but can
+only see one at a time.
 
+You only have **5 minutes** to read over the documents.
 
-### Design Feedback Tasks (Second Set, following a break)
-The second set of trials will present a design mockup.
-Simply view and comment however you wish.
+After you read the documents, you will be asked to provide genera feedback about you. 
 
-...and that's it! Thanks for your help!
+...and that's it! **Thanks for your help!**

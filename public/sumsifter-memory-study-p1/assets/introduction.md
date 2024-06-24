@@ -2,19 +2,19 @@
 
 Estimated study time: 10 minutes.
 
-Welcome! What you are about to do is not a real experiment.   
-It is just a survey that looks like an experiment.
+On the next page, you’ll see a list of documents. You can click on each one to open
+it to the side and read it. You can go back and forth between documents but can
+only see one at a time.
 
-We are testing our platform, interaction capabilities, and data collection.  
+Imagine these documents are from a coworker, you’ve been passed a project of
+theirs that is half-finished. Thus, some of the documents are summaries, some are
+highlighted texts, and some are just full texts. 
 
-**We also need your help!**
-
-We are mainly looking for your input and ideas.  
-Feel free to poke around, explore, and comment as ideas come to you.
-
-Note: there will be a few summary analysis examples, a break, and then a few design feedback trials.
+All of the documents are generally about **X**. You only have **5 minutes** to read over the documents, and then tomorrow you’ll be asked to remember what you read today. 
 
 Thanks!  
 -- The SumSifter Team
+
+
 
 
