@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import {
+  memo, useEffect, useMemo, useState,
+} from 'react';
 import { Box, Grid, NavLink } from '@mantine/core';
 import { Worker, Viewer } from '@react-pdf-viewer/core';
 import { initializeTrrack, Registry } from '@trrack/core';
@@ -11,46 +13,51 @@ import '@react-pdf-viewer/core/lib/styles/index.css';
 
 const TOTAL_TIME = 5 * 60 * 1000; // 5 minutes
 
-function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
+function SummaryApp({ parameters: tempParameters, setAnswer }: StimulusParams<SumParams>) {
   const [docIndex, setDocIndex] = useState(0);
   const [startTime] = useState(Date.now());
   const { goToNextStep } = useNextStep();
 
+  // temporary fix for parameters updating on every setAnswer call
+  const [parameters] = useState(tempParameters);
+
   const [timeLeft, setTimeLeft] = useState(TOTAL_TIME);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      const elapsed = Date.now() - startTime;
-      setTimeLeft(TOTAL_TIME - elapsed);
-      if (elapsed >= TOTAL_TIME) goToNextStep();
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [startTime, goToNextStep]);
 
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
 
-    const mouseHoverAction = reg.register('mouseHover', (state, mouseEnter: { summaryId: string | null, sourceId: string | null }) => {
-      state.activeSummaryId = mouseEnter.summaryId;
-      state.activeSourceId = mouseEnter.sourceId;
+    const documentClickAction = reg.register('click', (state, document: { documentIdx: number, documentPath: string }) => {
+      state.documentIdx = document.documentIdx;
+      state.documentPath = document.documentPath;
       return state;
     });
 
     const trrackInst = initializeTrrack({
       registry: reg,
       initialState: {
-        activeSummaryId: null, activeSourceId: null,
+        documentIdx: 0, documentPath: parameters.documents[0],
       },
     });
 
     return {
       actions: {
-        mouseHoverAction,
+        documentClickAction,
       },
       trrack: trrackInst,
     };
-  }, []);
+  }, [parameters]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      setTimeLeft(TOTAL_TIME - elapsed);
+      if (elapsed >= TOTAL_TIME) {
+        goToNextStep();
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [startTime, goToNextStep, setAnswer, trrack]);
 
   useEffect(() => {
     if (parameters.documents.length) {
@@ -92,7 +99,20 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
         <Grid.Col span={2}>
           <div style={{ position: 'sticky', top: 100 }}>
             {parameters.documents.map((doc, index) => (
-              <NavLink key={index} onClick={() => setDocIndex(index)} label={`Doc ${index + 1}`} active={index === docIndex} />
+              <NavLink
+                key={index}
+                onClick={() => {
+                  setDocIndex(index);
+                  trrack.apply('Clicked', actions.documentClickAction({ documentIdx: index, documentPath: doc }));
+                  setAnswer({
+                    status: true,
+                    provenanceGraph: trrack.graph.backend,
+                    answers: {},
+                  });
+                }}
+                label={`Doc ${index + 1}`}
+                active={index === docIndex}
+              />
             ))}
           </div>
         </Grid.Col>
@@ -106,4 +126,4 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   );
 }
 
-export default SummaryApp;
+export default memo(SummaryApp);
