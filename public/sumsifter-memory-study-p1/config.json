@@ -52,13 +52,27 @@
             "nextButtonText": "Begin",
             "response": []
         },
-
         "sumsift1": {
             "baseComponent": "summarySource",
             "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
             "parameters": {
-                "documents": ["sumsifter-documents/Brinkmann et al. - 2024 - Product Attribute Value Extraction using Large Lan.pdf", "sumsifter-documents/Pan et al. - 2023 - Large Language Models and Knowledge Graphs Opport.pdf", "sumsifter-documents/Kayali et al. - 2023 - CHORUS Foundation Models for Unified Data Discove.pdf", "sumsifter-documents/SCADS_2023_Executive_Summary.pdf", "sumsifter-documents/Wu et al. - 2021 - AI4VIS Survey on Artificial Intelligence Approach.pdf", "sumsifter-documents/Li et al. - 2001 - Information visualization for intelligent decision.pdf", "sumsifter-documents/Li et al. - 2022 - KG4Vis A Knowledge Graph-Based Approach for Visua.pdf", "sumsifter-documents/Cashman et al. - 2021 - CAVA A Visual Analytics System for Exploratory Co.pdf", "sumsifter-documents/Battle and Scheidegger - 2021 - A Structured Review of Data Management Technology.pdf", "sumsifter-documents/Li et al. - 2024 - Visualization Generation with Large Language Model.pdf", "sumsifter-documents/Gorniak et al. - 2024 - VizAbility Enhancing Chart Accessibility with LLM.pdf", "sumsifter-documents/Hoque et al. - 2022 - Chart Question Answering State of the Art and Fut.pdf", "sumsifter-documents/Masson et al. - 2023 - Charagraph Interactive Generation of Charts for R.pdf", "sumsifter-documents/Han et al. - 2023 - ChartLlama A Multimodal LLM for Chart Understandi.pdf", "sumsifter-documents/Wang et al. - 2023 - FinVis-GPT A Multimodal Large Language Model for.pdf"
-]
+                "documents": [
+                            "sumsifter-documents/summary-documents/1_G7F2R1_Summary.pdf", 
+                            "sumsifter-documents/summary-documents/2_T3J9K2_Summary.pdf", 
+                            "sumsifter-documents/summary-documents/3_P8M4L6_Summary.pdf", 
+                            "sumsifter-documents/full-documents/4_X2D1N7_Full.pdf", 
+                            "sumsifter-documents/full-documents/5_​​H6C3Q8_Full.pdf",  
+                            "sumsifter-documents/full-documents/11_Y8C7N2_Full.pdf", 
+                            "sumsifter-documents/full-documents/12_Z5L4D3_Full.pdf", 
+                            "sumsifter-documents/full-documents/13_F1P6R9_Full.pdf", 
+                            "sumsifter-documents/full-documents/14_Q3K8T2_Full.pdf", 
+                            "sumsifter-documents/full-documents/15_D6N7X4_Full.pdf",
+                            "sumsifter-documents/full-documents/1_G7F2R1_Full.pdf", 
+                            "sumsifter-documents/full-documents/2_T3J9K2_Full.pdf", 
+                            "sumsifter-documents/full-documents/3_P8M4L6_Full.pdf", 
+                            "sumsifter-documents/full-documents/4_X2D1N7_Full.pdf", 
+                            "sumsifter-documents/full-documents/5_​​H6C3Q8_Full.pdf"
+                            ]
             },
             "response": [
             ]
