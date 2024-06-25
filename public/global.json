@@ -3,6 +3,7 @@
     "configsList": [
         "sumsifter",
         "sumsifter-memory-study-p1",
+        "sumsifter-translation-and-attribution",
         "demo-html",
         "demo-cleveland",
         "demo-brush-interactions",
@@ -25,6 +26,9 @@
         },
         "sumsifter-memory-study-p1": {
             "path": "sumsifter-memory-study-p1/config.json"
+        },
+        "sumsifter-translation-and-attribution": {
+            "path": "sumsifter-translation-and-attribution/config.json"
         },
         "demo-html": {
             "path": "demo-html/config.json"
