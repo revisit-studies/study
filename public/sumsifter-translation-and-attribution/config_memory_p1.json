@@ -1,0 +1,236 @@
+{
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+        "title": "Experimant on Analysts' Memory and Recall",
+        "version": "pilot",
+        "authors": [
+            "SCADS SumSifter Team"
+        ],
+        "date": "2024-06-10",
+        "description": "Brief survey on anlayst memory and recall.",
+        "organizations": [
+            "WPI"
+        ]
+    },
+    "uiConfig": {
+        "contactEmail": "ltharri2@ncsu.edu",
+        "helpTextPath": "sumsifter/assets/introduction.md",
+        "logoPath": "revisitAssets/revisitLogoSquare.svg",
+        "withProgressBar": true,
+        "autoDownloadStudy": false,
+        "sidebar": true,
+        "studyEndMsg": "**Thank you for completing the study. You have made SCADS proud!**"
+    },
+    "baseComponents": {
+        "summarySource": {
+            "description": "A summary and source.",
+            "type": "react-component",
+            "path": "sumsifter/SummaryApp.tsx",
+            "nextButtonLocation": "sidebar",
+            "instructionLocation": "sidebar",
+            "response": []
+        }
+    },
+    "components": {
+        "introduction": {
+            "type": "markdown",
+            "path": "sumsifter/assets/introduction.md",
+            "response": [
+                {
+                    "id": "prolificId",
+                    "prompt": "Please enter your Name (or initials, or stay anonymous. You do you...)",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "shortText",
+                    "placeholder": "Your Name",
+                    "paramCapture": "PROLIFIC_PID"
+                }
+            ]
+        },
+        "tutorial": {
+            "type": "markdown",
+            "path": "sumsifter/assets/tutorial.md",
+            "nextButtonText": "Begin",
+            "response": []
+        },
+        "feedback-tutorial": {
+            "type": "markdown",
+            "path": "sumsifter/assets/feedback-tutorial.md",
+            "nextButtonText": "Continue",
+            "response": []
+        },
+        "sumsift1": {
+            "baseComponent": "summarySource",
+            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
+            "parameters": {
+                "datasetSource": "source2",
+                "datasetSummary": "summary1",
+                "ids": "id",
+                "hallucination": false
+            },
+            "response": [
+                {
+                    "id": "response",
+                    "prompt": "Answer/Feedback/Thoughts:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "longText"
+                }
+            ]
+            
+        },
+        "sumsift2": {
+            "baseComponent": "summarySource",
+            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
+            "parameters": {
+                "datasetSource": "source2",
+                "datasetSummary": "summary2",
+                "ids": "id",
+                "hallucination": false
+            },
+            "response": [
+                {
+                    "id": "response",
+                    "prompt": "Answer/Feedback/Thoughts:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "longText"
+                }
+            ]
+        },
+        "sumsift3": {
+            "baseComponent": "summarySource",
+            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
+            "parameters": {
+                "datasetSource": "source2",
+                "datasetSummary": "summary3",
+                "ids": "id",
+                "hallucination": false
+            },
+            "response": [
+                {
+                    "id": "response",
+                    "prompt": "Answer/Feedback/Thoughts:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "longText"
+                }
+            ]
+        },
+        "sumsift4": {
+            "baseComponent": "summarySource",
+            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
+            "parameters": {
+                "datasetSource": "source2",
+                "datasetSummary": "summary4",
+                "ids": "id",
+                "hallucination": true
+            },
+            "response": [
+                {
+                    "id": "response",
+                    "prompt": "Answer/Feedback/Thoughts:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "longText"
+                }
+            ]
+        },   
+        "sumsift5": {
+            "baseComponent": "summarySource",
+            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
+            "parameters": {
+                "datasetSource": "source2",
+                "datasetSummary": "summary5",
+                "ids": "id",
+                "hallucination": true
+            },
+            "response": [
+                {
+                    "id": "response",
+                    "prompt": "Answer/Feedback/Thoughts:",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "longText"
+                }
+            ]
+        },     
+        "survey": {
+            "type": "markdown",
+            "path": "sumsifter/assets/survey.md",
+            "response": [
+                {
+                    "id": "surveyAnything",
+                    "prompt": "Anything else you'd like to tell us or share at this time?",
+                    "required": false,
+                    "location": "belowStimulus",
+                    "type": "longText",
+                    "placeholder": "Enter your answer here."
+                }
+            ]
+        },
+        "feedback-process-1":{
+            "description": "Planned future flow",
+            "instruction": "**Note: The right is an image of a prototype we'd like your feedback on.**\n\n**The text may be tiny, please feel free to zoom in your browser!**\n\nPlease go through the planned future flow (use next buttons when ready for the next part), and suggest any changes or feedback in the text box at the end.",
+            "type": "image",
+            "path": "sumsifter/assets/image-1.png",
+            "style": {
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+            ]
+        },
+        "feedback-process-2":{
+            "description": "Planned future flow",
+            "instruction": "**Note: the text may be tiny, please feel free to zoom in your browser!**\n\nPlease go through the planned future flow (use next buttons when ready for the next part), and suggest any changes or feedback in the text box at the end.",
+            "type": "image",
+            "path": "sumsifter/assets/image-2.png",
+            "style": {
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+            ]
+        },
+        "feedback-process-3":{
+            "description": "Planned future flow",
+            "instruction": "**Note: the text may be tiny, please feel free to zoom in your browser!**\n\nPlease let us know your thoughts on this more complex design for summary and source studies with multiple documents.",
+            "type": "image",
+            "path": "sumsifter/assets/image-3.png",
+            "style": {
+            },
+            "nextButtonLocation": "sidebar",
+            "response": [
+                {
+                    "id": "response",
+                    "prompt": "Any feedback on this more complex design for summary and source studies with multiple documents?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "longText"
+                }
+            ]
+        }
+
+    },
+    "sequence": {
+        "order": "fixed",
+        "components": [
+            "introduction",
+            "tutorial",
+            {
+                "order": "random",
+                "components": [
+                    "sumsift1", 
+                    "sumsift2", 
+                    "sumsift3", 
+                    "sumsift4",
+                    "sumsift5"
+                ]
+            },
+            "feedback-tutorial",
+            "feedback-process-1",
+            "feedback-process-2",
+            "feedback-process-3",
+            "survey"
+        ]
+    }
+}
