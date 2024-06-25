@@ -72,6 +72,13 @@ function Source({ sourceList, activeSourceId, onSourceBadgePositionChange }: Sou
     activeRef.current = e;
   }, []);
 
+  useEffect(() => {
+    const element = ref.current;
+    setPositionLeft(element?.getBoundingClientRect().left || 0);
+    setPositionTop(activeRef.current?.getBoundingClientRect().top || 0);
+    onSourceBadgePositionChange(element?.getBoundingClientRect().left || 0, activeRef.current?.getBoundingClientRect().top || 0);
+  }, [activeSourceId, onSourceBadgePositionChange]);
+
   return (
     <ScrollArea style={{ height: 'calc(100vh - 110px)' }} viewportRef={ref}>
       <Title order={2}>Source Document</Title>
