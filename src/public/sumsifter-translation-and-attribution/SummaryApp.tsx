@@ -18,6 +18,8 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   const [sourceBadgeTop, setSourceBadgeTop] = useState(0);
   const [sourceBadgeLeft, setSourceBadgeLeft] = useState(0);
 
+  const { datasetSource, datasetSummary } = parameters;
+
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
 
@@ -44,7 +46,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
 
   // // load data
   useEffect(() => {
-    d3.csv(`./data/${parameters.datasetSummary}.csv`).then((_data) => {
+    d3.csv(`./data/${datasetSummary}.csv`).then((_data) => {
       const convertedData = _data.map((row) => ({
         id: String(row.id),
         text: row.text ?? '', // Provide a default empty string if row.text is undefined
@@ -52,10 +54,10 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
       }));
       setSummaryData(convertedData);
     });
-  }, [parameters]);
+  }, [datasetSummary]);
 
   useEffect(() => {
-    d3.csv(`./data/${parameters.datasetSource}.csv`).then((_data) => {
+    d3.csv(`./data/${datasetSource}.csv`).then((_data) => {
       const convertedData = _data.map((row) => ({
         id: String(row.id), // Convert the id to a string
         text: row.text ?? '', // Provide a default empty string if row.text is undefined
@@ -63,7 +65,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
       }));
       setSourcesData(convertedData);
     });
-  }, [parameters]);
+  }, [datasetSource]);
 
   useEffect(() => {
     // make API calls here and set summary and sources data
