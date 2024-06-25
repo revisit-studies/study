@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Grid } from '@mantine/core';
+import { Button, Grid } from '@mantine/core';
 import * as d3 from 'd3';
 import { initializeTrrack, Registry } from '@trrack/core';
 import Summary from './Summary';
@@ -17,6 +17,8 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   const [summaryBadgeTop, setSummaryBadgeTop] = useState(0);
   const [sourceBadgeTop, setSourceBadgeTop] = useState(0);
   const [sourceBadgeLeft, setSourceBadgeLeft] = useState(0);
+
+  const [showGenerator, setShowGenerator] = useState(false);
 
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
@@ -132,8 +134,23 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   return (
     <>
       <Grid gutter={50}>
-        <Grid.Col span={6}>
-          <Summary sentences={summaryData} onSummaryBadgePositionChange={handleSummaryBadgePositionChange} onSourceClick={handleSourceClick} activeSourceId={activeSourceId} />
+        <Grid.Col span={6} pos="relative">
+          <div>
+            <Summary sentences={summaryData} onSummaryBadgePositionChange={handleSummaryBadgePositionChange} onSourceClick={handleSourceClick} activeSourceId={activeSourceId} />
+          </div>
+          <div style={{
+            zIndex: 200, position: 'absolute', width: '100%', bottom: 0, padding: 10, background: '#ddd',
+          }}
+          >
+            <Button onClick={() => setShowGenerator(!showGenerator)} style={{ width: '100%' }}>
+              {showGenerator ? 'Hide' : 'Show'}
+              Generator
+            </Button>
+
+            {showGenerator && (
+              <iframe src="http://localhost:8501/" style={{ height: '400px', width: '100%', border: 0 }} />
+            )}
+          </div>
         </Grid.Col>
         <Grid.Col span={6}>
           <Source sourceList={sourcesData} onSourceBadgePositionChange={handleSourceBadgePositionChange} activeSourceId={activeSourceId} />
