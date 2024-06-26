@@ -1,9 +1,12 @@
 import {
-  AppShell, Container, LoadingOverlay, Tabs,
+  AppShell, Container, Flex, LoadingOverlay, Space, Tabs,
+  Title,
+  Tooltip,
+  Alert,
 } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  IconChartDonut2, IconPlayerPlay, IconTable, IconSettings,
+  IconChartDonut2, IconPlayerPlay, IconTable, IconSettings, IconInfoCircle,
 } from '@tabler/icons-react';
 import React, {
   useCallback, useEffect, useMemo, useState,
@@ -13,8 +16,9 @@ import { GlobalConfig, ParticipantData, StudyConfig } from '../parser/types';
 import { getStudyConfig } from '../utils/fetchConfig';
 import { TableView } from './table/TableView';
 import { useStorageEngine } from '../storage/storageEngineHooks';
-import { DataManagementBoard } from './management/DataManagementBoard';
-import { FirebaseStorageEngine } from '../storage/engines/FirebaseStorageEngine';
+import { ParticipantStatusBadges } from './components/interface/ParticipantStatusBadges';
+import ManageAccordion from './management/ManageAccordion';
+import { useAuth } from '../store/hooks/useAuth';
 
 export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   const { globalConfig } = props;
@@ -25,6 +29,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
   const { storageEngine } = useStorageEngine();
   const navigate = useNavigate();
   const { tab } = useParams();
+  const { user } = useAuth();
 
   const getData = useCallback(async () => {
     setLoading(true);
@@ -43,13 +48,12 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
     getData();
   }, [globalConfig, storageEngine, studyId, getData]);
 
-  const [completed, inProgress] = useMemo(() => {
-    const comp = expData.filter((d) => d.completed);
-    const prog = expData.filter((d) => !d.completed);
-    return [comp, prog];
+  const [completed, inProgress, rejected] = useMemo(() => {
+    const comp = expData.filter((d) => !d.rejected && d.completed);
+    const prog = expData.filter((d) => !d.rejected && !d.completed);
+    const rej = expData.filter((d) => d.rejected);
+    return [comp, prog, rej];
   }, [expData]);
-
-  const showManage = import.meta.env.VITE_REVISIT_MODE !== 'public' && storageEngine instanceof FirebaseStorageEngine;
 
   return (
     <>
@@ -57,14 +61,26 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
       <AppShell.Main>
         <Container fluid style={{ height: '100%' }}>
           <LoadingOverlay visible={loading} />
+
+          <Flex direction="row" align="center">
+            <Title order={5}>{studyId}</Title>
+            <ParticipantStatusBadges completed={completed.length} inProgress={inProgress.length} rejected={rejected.length} />
+          </Flex>
+
+          <Space h="xs" />
+
           <Tabs variant="outline" value={tab} onChange={(value) => navigate(`./../${value}`)} style={{ height: '100%' }}>
             <Tabs.List>
               <Tabs.Tab value="table" leftSection={<IconTable size={16} />}>Table View</Tabs.Tab>
-              <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
-              <Tabs.Tab value="replay" leftSection={<IconPlayerPlay size={16} />}>Individual Replay</Tabs.Tab>
-              <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!showManage}>Manage</Tabs.Tab>
+              <Tooltip label="Coming soon" position="bottom">
+                <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />} disabled>Trial Stats</Tabs.Tab>
+              </Tooltip>
+              <Tooltip label="Coming soon" position="bottom">
+                <Tabs.Tab value="replay" leftSection={<IconPlayerPlay size={16} />} disabled>Participant Replay</Tabs.Tab>
+              </Tooltip>
+              <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
             </Tabs.List>
-            <Tabs.Panel value="table" pt="xs" style={{ height: 'calc(100% - 38px - 10px)', width: '100%', overflow: 'scroll' }}>
+            <Tabs.Panel value="table" pt="xs">
               {studyConfig && <TableView completed={completed} inProgress={inProgress} studyConfig={studyConfig} refresh={getData} />}
             </Tabs.Panel>
 
@@ -75,7 +91,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
               Replay Tab Content
             </Tabs.Panel>
             <Tabs.Panel value="manage" pt="xs">
-              {studyId && showManage && <DataManagementBoard studyId={studyId} refresh={getData} />}
+              {studyId && user.isAdmin ? <ManageAccordion studyId={studyId} refresh={getData} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
             </Tabs.Panel>
           </Tabs>
         </Container>

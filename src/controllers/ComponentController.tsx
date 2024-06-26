@@ -36,7 +36,7 @@ export default function ComponentController() {
   const storeDispatch = useStoreDispatch();
   const { setAlertModal } = useStoreActions();
   useEffect(() => {
-    if (storageEngine?.getEngine() !== import.meta.env.VITE_STORAGE_ENGINE && import.meta.env.VITE_REVISIT_MODE !== 'public') {
+    if (storageEngine?.getEngine() !== import.meta.env.VITE_STORAGE_ENGINE) {
       storeDispatch(setAlertModal({
         show: true,
         message: `There was an issue connecting to the ${import.meta.env.VITE_STORAGE_ENGINE} database. This could be caused by a network issue or your adblocker. If you are using an adblocker, please disable it for this website and refresh.`,

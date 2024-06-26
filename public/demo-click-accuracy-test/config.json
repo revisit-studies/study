@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta13/src/parser/StudyConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
         "title": "Dynamic React Stimuli and Provenance Tracking",
         "version": "pilot",
