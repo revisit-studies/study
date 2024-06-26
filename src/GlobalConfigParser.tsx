@@ -110,7 +110,7 @@ export function GlobalConfigParser() {
                 element={<NavigateWithParams to="/analysis/dashboard" />}
               />
               <Route
-                path="/analysis/stats/:studyId/:tab"
+                path="/analysis/stats/:studyId/:tab/:trialId?"
                 element={(
                   <ProtectedRoute paramToCheck="studyId" paramCallback={analysisProtectedCallback}>
                     <AnalysisInterface
