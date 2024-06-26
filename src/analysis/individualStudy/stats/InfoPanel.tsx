@@ -136,10 +136,10 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
 
         {/* instruction and description */}
         {(config?.description || config?.instruction) && (
-          <Card ref={ref} mih={105} p={5} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
+          <Card ref={ref} mih={105} p={5} style={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
             <Box
               pl={5}
-              sx={{
+              style={{
                 width: '50%', height: 20, backgroundColor: 'orange', borderRadius: '0px 10px 10px 0px',
               }}
             >
@@ -150,7 +150,7 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
                 config?.instruction
                 && (
                 <Box maw={400}>
-                  <Badge color="green" radius="xs" sx={{ display: 'inline' }}>instruction:</Badge>
+                  <Badge color="green" radius="xs" style={{ display: 'inline' }}>instruction:</Badge>
                   <Text span>{` ${config?.instruction}`}</Text>
                 </Box>
                 )
@@ -159,7 +159,7 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
                 config?.description
                 && (
                 <Box maw={400}>
-                  <Badge color="green" radius="xs" sx={{ display: 'inline' }}>description:</Badge>
+                  <Badge color="green" radius="xs" style={{ display: 'inline' }}>description:</Badge>
                   <Text span>{` ${config?.description}`}</Text>
                 </Box>
                 )
@@ -170,10 +170,10 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
         {/* meta */}
         {
               config && config.meta && (
-              <Box maw={300} p={5} mih={105} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
+              <Box maw={300} p={5} mih={105} style={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
                 <Box
                   pl={5}
-                  sx={{
+                  style={{
                     width: '50%', height: 20, backgroundColor: 'orange', borderRadius: '0px 10px 10px 0px',
                   }}
                 >
@@ -182,7 +182,7 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
 
                 {Object.entries(config.meta).map(([key, value]) => (
                   <Box key={`BoxMeta-${key}`}>
-                    <Badge color="green" radius="xs" sx={{ display: 'inline' }}>
+                    <Badge color="green" radius="xs" style={{ display: 'inline' }}>
                       {key}
                       :
                     </Badge>
@@ -194,10 +194,10 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
           }
 
         {trialName.length > 0 && (
-          <Box p={5} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
+          <Box p={5} style={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
             <Box
               pl={5}
-              sx={{
+              style={{
                 width: '50%', height: 20, backgroundColor: 'orange', borderRadius: '0px 10px 10px 0px',
               }}
             >
@@ -208,19 +208,19 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
 
               <Box mih={105} p={5}>
                 <Box>
-                  <Badge radius="xs" sx={{ display: 'inline' }}>Fastest:</Badge>
+                  <Badge radius="xs" style={{ display: 'inline' }}>Fastest:</Badge>
                   <Text span>{` ${timeStats.minUser}`}</Text>
                 </Box>
                 <Box>
-                  <Badge radius="xs" sx={{ display: 'inline' }}>Slowest:</Badge>
+                  <Badge radius="xs" style={{ display: 'inline' }}>Slowest:</Badge>
                   <Text span>{` ${timeStats.maxUser}`}</Text>
                 </Box>
                 <Box>
-                  <Badge radius="xs" sx={{ display: 'inline' }}>Mean:</Badge>
+                  <Badge radius="xs" style={{ display: 'inline' }}>Mean:</Badge>
                   <Text span>{ ` ${toDisplayData(timeStats.mean)}`}</Text>
                 </Box>
                 <Box>
-                  <Badge radius="xs" sx={{ display: 'inline' }}>Median:</Badge>
+                  <Badge radius="xs" style={{ display: 'inline' }}>Median:</Badge>
                   <Text span>{` ${toDisplayData(timeStats.mid)}`}</Text>
 
                 </Box>

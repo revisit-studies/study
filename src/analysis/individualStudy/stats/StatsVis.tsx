@@ -27,7 +27,7 @@ export default function StatsVis({ config, data }: { data: ParticipantData[], co
     return Array.from(allTrials);
   }, [data]);
 
-  const oneActiveParticipantChange = useCallback((value: string) => {
+  const oneActiveParticipantChange = useCallback((value: string | null, option: unknown) => {
     setActiveParticipant(value);
     if (value === 'All') setSequence(getAllTrials() as string[]);
     else setSequence(getSequenceFlatMap(data.filter((d) => d.participantId === value)[0].sequence));
@@ -53,7 +53,7 @@ export default function StatsVis({ config, data }: { data: ParticipantData[], co
       const trialConfig = config.components[activeTrial];
       setActiveConfig(trialConfig);
     }
-    if (data.length > 0) oneActiveParticipantChange('All');
+    if (data.length > 0) oneActiveParticipantChange('All', undefined);
   }, [activeTrial, config.components, data, oneActiveParticipantChange]);
 
   const extractAnswers = () => {
@@ -71,9 +71,9 @@ export default function StatsVis({ config, data }: { data: ParticipantData[], co
 
   return (
     <Flex>
-      <Box pr={5} sx={{ boxShadow: '3px 0 0 0 orange' }}>
+      <Box pr={5} style={{ boxShadow: '3px 0 0 0 orange' }}>
         <Center><Title order={4}>Trials</Title></Center>
-        <ScrollArea.Autosize maxHeight={600} mih={500} maw={200} mx="auto">
+        <ScrollArea.Autosize mah={600} mih={500} maw={200} mx="auto">
           <Select data={participantsList} defaultValue="All" onChange={oneActiveParticipantChange} />
           {activeParticipant === 'All' && (
             <Group mt={20}>
@@ -82,7 +82,7 @@ export default function StatsVis({ config, data }: { data: ParticipantData[], co
           )}
 
           {activeParticipant !== 'All' && (
-            <Stack mt={20} spacing="xs" align="center">
+            <Stack mt={20} gap="xs" align="center">
               {sequence.map((trial, idx) => (
                 <>
                   <Button variant={activeTrial === `${trial}_${idx}` ? 'filled' : 'outline'}>{`${trial}_${idx}`}</Button>

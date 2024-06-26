@@ -37,7 +37,7 @@ rejected: ParticipantData[];
     <Container fluid>
       <Paper shadow="sm" p="md" withBorder>
         <Flex direction="row" align="center">
-          <Checkbox.Group defaultValue={['completed']} ml={8} mb={4} spacing="sm" onChange={handleCheckboxChange}>
+          <Checkbox.Group defaultValue={['completed']} ml={8} mb={4} onChange={handleCheckboxChange}>
             <Checkbox value="completed" label="Completed" />
             <Checkbox value="inprogress" label="In Progress" />
             <Checkbox value="rejected" label="Rejected" />

@@ -98,7 +98,7 @@ export default function AnswerPanel({ data, config }: { data: Record<string, Rec
   }), [categoricalStats, dms]);
 
   return (
-    <Container p={5} sx={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
+    <Container p={5} style={{ boxShadow: '1px 2px 2px 3px lightgrey;', borderRadius: '5px' }}>
       <Flex
         gap="lg"
         justify="left"
@@ -108,7 +108,7 @@ export default function AnswerPanel({ data, config }: { data: Record<string, Rec
       >
         <Box
           pl={5}
-          sx={{
+          style={{
             width: '50%', height: 20, backgroundColor: 'orange', borderRadius: '0px 10px 10px 0px',
           }}
         >
