@@ -40,7 +40,7 @@ export default function AppHeader({ studyIds }: { studyIds: string[] }) {
       name: 'Analysis',
       leftIcon: <IconChartBar />,
       href: '/analysis/dashboard',
-      needAdmin: true,
+      needAdmin: false,
     },
     {
       name: 'Settings',
@@ -126,7 +126,7 @@ export default function AppHeader({ studyIds }: { studyIds: string[] }) {
                           size="sm"
                           ml={10}
                           style={{ cursor: 'pointer' }}
-                          onClick={logout}
+                          onClick={() => { logout(); navigate('/login'); setNavOpen(false); }}
                         >
                           Logout
                         </Text>

@@ -14,6 +14,7 @@ import { ParticipantMetadata } from '../../store/types';
 import { configSequenceToUniqueTrials, findBlockForStep, getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
+import { useAuth } from '../../store/hooks/useAuth';
 
 function AnswerCell({ cellData }: { cellData: StoredAnswer }) {
   return (
@@ -92,10 +93,15 @@ export function TableView({
 }) {
   const { storageEngine } = useStorageEngine();
   const { studyId } = useParams();
+  const { user } = useAuth();
   const rejectParticipant = async (participantId: string) => {
     if (storageEngine && studyId) {
-      await storageEngine.rejectParticipant(studyId, participantId);
-      await refresh();
+      if (user.isAdmin) {
+        await storageEngine.rejectParticipant(studyId, participantId);
+        await refresh();
+      } else {
+        console.warn('You are not authorized to perform this action.');
+      }
     }
   };
   const [checked, setChecked] = useState<string[]>([]);
@@ -243,16 +249,18 @@ export function TableView({
             />
           </Group>
           <Group>
-            <DownloadButtons allParticipants={[...completed, ...inProgress]} studyId={studyId || ''} config={studyConfig} />
-            <Button disabled={checked.length === 0} onClick={openModal} color="red">Reject Participants</Button>
+            <DownloadButtons allParticipants={[...completed, ...inProgress]} studyId={studyId || ''} />
+            <Button disabled={checked.length === 0 || !user.isAdmin} onClick={openModal} color="red">Reject Participants</Button>
           </Group>
         </Flex>
-        <Table striped withTableBorder>
-          <Table.Thead>
-            <Table.Tr>{headers}</Table.Tr>
-          </Table.Thead>
-          <Table.Tbody>{rows}</Table.Tbody>
-        </Table>
+        <Flex direction="column" style={{ width: '100%', overflow: 'auto' }}>
+          <Table striped withTableBorder>
+            <Table.Thead>
+              <Table.Tr>{headers}</Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>{rows}</Table.Tbody>
+          </Table>
+        </Flex>
       </>
     ) : (
       <>
