@@ -13,7 +13,7 @@ import { StudyCard } from './StudyCard';
 export function AnalysisDashboard({ globalConfig }: { globalConfig: GlobalConfig; }) {
   const [loading, setLoading] = useState(false);
   const [expData, setExpData] = useState<Record<string, ParticipantData[]>>({});
-  const [expStudyVisibility, setStudyVisibility] = useState<Record<string, boolean>>({});
+  const [studyVisibility, setStudyVisibility] = useState<Record<string, boolean>>({});
   const { storageEngine } = useStorageEngine();
 
   const { user } = useAuth();
@@ -56,7 +56,7 @@ export function AnalysisDashboard({ globalConfig }: { globalConfig: GlobalConfig
   }, [globalConfig, storageEngine]);
 
   const gridList = globalConfig.configsList.map((studyId) => expData[studyId] && (
-    (expStudyVisibility[studyId] || user.isAdmin)
+    (studyVisibility[studyId] || user.isAdmin) && (!globalConfig.configs[studyId].test)
       ? (
         <Grid.Col key={`${studyId}-panel`} span={{ md: 12, xl: 6 }}>
           <StudyCard studyId={studyId} allParticipants={expData[studyId]} />
