@@ -7,9 +7,9 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { IconSettings, IconFileLambda, IconChartBar } from '@tabler/icons-react';
 
 import React, { useState } from 'react';
-import { PREFIX } from '../../../utils/Prefix';
-import { useAuth } from '../../../store/hooks/useAuth';
-import { useStorageEngine } from '../../../storage/storageEngineHooks';
+import { PREFIX } from '../../utils/Prefix';
+import { useAuth } from '../../store/hooks/useAuth';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
 
 export default function AppHeader({ studyIds }: { studyIds: string[] }) {
   const navigate = useNavigate();

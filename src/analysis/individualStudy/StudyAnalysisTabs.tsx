@@ -1,27 +1,27 @@
 import {
-  AppShell, Container, Flex, LoadingOverlay, Space, Tabs,
-  Title,
-  Tooltip,
   Alert,
+  AppShell, Container, Flex, LoadingOverlay, Space, Tabs, Title,
+  Tooltip,
 } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
-  IconChartDonut2, IconPlayerPlay, IconTable, IconSettings, IconInfoCircle,
+  IconChartDonut2, IconPlayerPlay, IconTable, IconSettings,
+  IconInfoCircle,
 } from '@tabler/icons-react';
 import React, {
   useCallback, useEffect, useMemo, useState,
 } from 'react';
-import AppHeader from './components/interface/AppHeader';
-import { GlobalConfig, ParticipantData, StudyConfig } from '../parser/types';
-import { getStudyConfig } from '../utils/fetchConfig';
+import AppHeader from '../interface/AppHeader';
+import { GlobalConfig, ParticipantData, StudyConfig } from '../../parser/types';
+import { getStudyConfig } from '../../utils/fetchConfig';
 import { TableView } from './table/TableView';
-import { useStorageEngine } from '../storage/storageEngineHooks';
-import { ParticipantStatusBadges } from './components/interface/ParticipantStatusBadges';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
 import ManageAccordion from './management/ManageAccordion';
-import { useAuth } from '../store/hooks/useAuth';
+import { useAuth } from '../../store/hooks/useAuth';
+import { ParticipantStatusBadges } from '../interface/ParticipantStatusBadges';
+import { StatsView } from './stats/StatsView';
 
-export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
-  const { globalConfig } = props;
+export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig; }) {
   const { studyId } = useParams();
   const [expData, setExpData] = useState<ParticipantData[]>([]);
   const [studyConfig, setStudyConfig] = useState<StudyConfig | undefined>(undefined);
@@ -57,7 +57,8 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
 
   return (
     <>
-      <AppHeader studyIds={props.globalConfig.configsList} />
+      <AppHeader studyIds={globalConfig.configsList} />
+
       <AppShell.Main>
         <Container fluid style={{ height: '100%' }}>
           <LoadingOverlay visible={loading} />
@@ -69,23 +70,21 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
 
           <Space h="xs" />
 
-          <Tabs variant="outline" value={tab} onChange={(value) => navigate(`./../${value}`)} style={{ height: '100%' }}>
+          <Tabs variant="outline" value={tab} onChange={(value) => navigate(`/analysis/stats/${studyId}/${value}`)} style={{ height: '100%' }}>
             <Tabs.List>
               <Tabs.Tab value="table" leftSection={<IconTable size={16} />}>Table View</Tabs.Tab>
-              <Tooltip label="Coming soon" position="bottom">
-                <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />} disabled>Trial Stats</Tabs.Tab>
-              </Tooltip>
+              <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
               <Tooltip label="Coming soon" position="bottom">
                 <Tabs.Tab value="replay" leftSection={<IconPlayerPlay size={16} />} disabled>Participant Replay</Tabs.Tab>
               </Tooltip>
               <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="table" pt="xs">
-              {studyConfig && <TableView completed={completed} inProgress={inProgress} studyConfig={studyConfig} refresh={getData} />}
+              {studyConfig && <TableView completed={completed} inProgress={inProgress} rejected={rejected} studyConfig={studyConfig} refresh={getData} />}
             </Tabs.Panel>
 
             <Tabs.Panel value="stats" pt="xs">
-              statsboard
+              {studyConfig && <StatsView studyConfig={studyConfig} completed={completed} inprogress={inProgress} rejected={rejected} />}
             </Tabs.Panel>
             <Tabs.Panel value="replay" pt="xs">
               Replay Tab Content

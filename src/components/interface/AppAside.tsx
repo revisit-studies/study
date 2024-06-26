@@ -17,18 +17,11 @@ import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import {
   useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../../store/store';
-import { useCurrentComponent, useStudyId } from '../../routes/utils';
+import { useStudyId } from '../../routes/utils';
 import { deepCopy } from '../../utils/deepCopy';
-import { ComponentBlock } from '../../parser/types';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-
-function addPathToComponentBlock(order: ComponentBlock | string, orderPath: string): (ComponentBlock & { orderPath: string }) | string {
-  if (typeof order === 'string') {
-    return order;
-  }
-  return { ...order, orderPath, components: order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)) };
-}
+import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
 
 // eslint-disable-next-line react/display-name
 function InfoHover({ text }: { text: string }) {
@@ -105,10 +98,10 @@ export default function AppAside() {
           </Box>
 
           <Tabs.Panel value="participant">
-            <StepsPanel configSequence={fullOrder} participantSequence={sequence} fullSequence={sequence} participantView />
+            <StepsPanel configSequence={fullOrder} participantSequence={sequence} fullSequence={sequence} participantView studyConfig={studyConfig} />
           </Tabs.Panel>
           <Tabs.Panel value="allTrials">
-            <StepsPanel configSequence={fullOrder} participantSequence={sequence} fullSequence={sequence} participantView={false} />
+            <StepsPanel configSequence={fullOrder} participantSequence={sequence} fullSequence={sequence} participantView={false} studyConfig={studyConfig} />
           </Tabs.Panel>
         </Tabs>
       </AppShell.Section>

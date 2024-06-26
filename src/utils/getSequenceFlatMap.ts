@@ -94,3 +94,10 @@ export function configSequenceToUniqueTrials(sequence: ComponentBlock, orderPath
   });
   return result;
 }
+
+export function addPathToComponentBlock(order: ComponentBlock | string, orderPath: string): (ComponentBlock & { orderPath: string }) | string {
+  if (typeof order === 'string') {
+    return order;
+  }
+  return { ...order, orderPath, components: order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)) };
+}

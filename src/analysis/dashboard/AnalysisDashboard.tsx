@@ -1,21 +1,19 @@
-import React, { useEffect, useState } from 'react';
 import {
-  Box, Grid, LoadingOverlay, Title, Container, Text,
+  AppShell, Box, Container, Grid, LoadingOverlay, Text, Title,
 } from '@mantine/core';
-import { ParticipantData } from '../../storage/types';
-import { SummaryPanel } from './SummaryPanel';
-import { GlobalConfig, StudyConfig } from '../../parser/types';
-import { getStudyConfig } from '../../utils/fetchConfig';
-import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { useState, useEffect } from 'react';
+import { GlobalConfig, ParticipantData, StudyConfig } from '../../parser/types';
+import AppHeader from '../interface/AppHeader';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useAuth } from '../../store/hooks/useAuth';
+import { getStudyConfig } from '../../utils/fetchConfig';
+import { StudyCard } from './StudyCard';
 
-export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
-  const { globalConfig } = props;
+export function AnalysisDashboard({ globalConfig }: { globalConfig: GlobalConfig; }) {
   const [loading, setLoading] = useState(false);
   const [expData, setExpData] = useState<Record<string, ParticipantData[]>>({});
-  const [expConfig, setExpConfig] = useState<Record<string, StudyConfig>>({});
-  const [expStudyVisibility, setStudyVisibility] = useState<Record<string, boolean>>({});
+  const [studyVisibility, setStudyVisibility] = useState<Record<string, boolean>>({});
   const { storageEngine } = useStorageEngine();
 
   const { user } = useAuth();
@@ -45,7 +43,6 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
         try {
           await Promise.all(promises);
           setExpData(allData);
-          setExpConfig(allConfig);
           setStudyVisibility(allStudyVisibility);
         } catch (error) {
           console.error('Error fetching data:', error);
@@ -59,21 +56,28 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
   }, [globalConfig, storageEngine]);
 
   const gridList = globalConfig.configsList.map((studyId) => expData[studyId] && (
-    (expStudyVisibility[studyId] || user.isAdmin)
+    (studyVisibility[studyId] || user.isAdmin) && (!globalConfig.configs[studyId].test)
       ? (
         <Grid.Col key={`${studyId}-panel`} span={{ md: 12, xl: 6 }}>
-          <SummaryPanel studyId={studyId} allParticipants={expData[studyId]} config={expConfig[studyId]} />
+          <StudyCard studyId={studyId} allParticipants={expData[studyId]} />
         </Grid.Col>
       ) : null
   ));
 
   return (
-    <Box>
-      <Title mb={20} order={4}>Your Studies:</Title>
-      <Grid>
-        {gridList.length > 0 ? gridList : <Container mt={100}><Text>No studies to show. If you believe that this is in error, make sure that you are logged in.</Text></Container>}
-        <LoadingOverlay visible={loading} />
-      </Grid>
-    </Box>
+    <>
+      <AppHeader studyIds={globalConfig.configsList} />
+      <AppShell.Main>
+        <Container fluid>
+          <Box>
+            <Title mb={20} order={4}>Your Studies:</Title>
+            <Grid>
+              {gridList.length > 0 ? gridList : <Container mt={100}><Text>No studies to show. If you believe that this is in error, make sure that you are logged in.</Text></Container>}
+              <LoadingOverlay visible={loading} />
+            </Grid>
+          </Box>
+        </Container>
+      </AppShell.Main>
+    </>
   );
 }
