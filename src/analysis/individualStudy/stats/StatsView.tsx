@@ -1,17 +1,19 @@
 import {
   Box,
-  Checkbox, Divider, Flex, Group, Paper, Text,
+  Checkbox, Divider, Flex, Group, MultiSelect, Paper, Text,
 } from '@mantine/core';
 import {
   useCallback, useMemo, useState,
 } from 'react';
 import { useParams } from 'react-router-dom';
+import { IconChartBar } from '@tabler/icons-react';
 import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
 import TrialVisualization from './TrialVisualization';
 import { ComponentBlockWithOrderPath, StepsPanel } from '../../../components/interface/StepsPanel';
 import { deepCopy } from '../../../utils/deepCopy';
 import { addPathToComponentBlock } from '../../../utils/getSequenceFlatMap';
+import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 
 export function StatsView({
   studyConfig,
@@ -49,9 +51,18 @@ rejected: ParticipantData[];
 
   const { trialId } = useParams();
 
+  const responseOptions = useMemo(() => {
+    if (!trialId) return [];
+    const trialConfig = studyConfig.components[trialId];
+    if (!trialConfig) return [];
+    const componentConfig = studyComponentToIndividualComponent(trialConfig, studyConfig);
+    return componentConfig.response.map((r) => r.id);
+  }, [studyConfig, trialId]);
+  const [selectedResponses, setSelectedResponses] = useState<string[]>([]);
+
   return (
     <Paper shadow="sm" p="md" withBorder>
-      <Flex direction="row">
+      <Flex direction="row" justify="space-between">
         <Checkbox.Group
           defaultValue={['completed']}
           onChange={handleCheckboxChange}
@@ -65,6 +76,19 @@ rejected: ParticipantData[];
             <Checkbox value="rejected" label="Rejected" />
           </Group>
         </Checkbox.Group>
+
+        <MultiSelect
+          data={responseOptions}
+          placeholder="Responses to Visualize"
+          value={selectedResponses}
+          onChange={setSelectedResponses}
+          searchable
+          nothingFoundMessage="No responses found"
+          clearable
+          maxValues={2}
+          leftSection={<IconChartBar />}
+          w={600}
+        />
       </Flex>
 
       <Divider my="xs" />
@@ -86,7 +110,7 @@ rejected: ParticipantData[];
               <Divider orientation="vertical" mx="md" />
 
               {/* Visualization and metadata */}
-              <TrialVisualization participantData={participantsToVisualize} studyConfig={studyConfig} trialId={trialId} />
+              <TrialVisualization participantData={participantsToVisualize} studyConfig={studyConfig} responseIds={selectedResponses} trialId={trialId} />
             </Flex>
           )
       }

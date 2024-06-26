@@ -3,12 +3,21 @@ import {
 } from '@mantine/core';
 import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
+import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 
-export default function TrialVisualization({ participantData, studyConfig, trialId }: { participantData: ParticipantData[]; studyConfig: StudyConfig; trialId?: string; }) {
+export default function TrialVisualization({
+  participantData, studyConfig, responseIds, trialId,
+}: {
+  participantData: ParticipantData[]; studyConfig: StudyConfig; responseIds: string[], trialId?: string;
+}) {
+  const trialConfig = trialId && studyComponentToIndividualComponent(studyConfig.components[trialId], studyConfig);
+
   return trialId ? (
     <Flex w="100%">
       <Stack align="flex-start" p={5}>
         {trialId}
+        {responseIds}
+        {JSON.stringify(trialConfig)}
       </Stack>
     </Flex>
   )
