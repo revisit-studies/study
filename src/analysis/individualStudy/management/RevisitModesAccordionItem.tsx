@@ -1,6 +1,6 @@
 import { Stack, Switch } from '@mantine/core';
 import React, { useEffect, useState } from 'react';
-import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { useStorageEngine } from '../../../storage/storageEngineHooks';
 
 export function RevisitModesAccordionItem({ studyId }: { studyId: string }) {
   const { storageEngine } = useStorageEngine();

@@ -4,7 +4,7 @@ import {
 import React, { useEffect, useMemo, useState } from 'react';
 import { VegaLite, VisualizationSpec } from 'react-vega';
 import { useResizeObserver } from '@mantine/hooks';
-import { IndividualComponent, InheritedComponent, RadioResponse } from '../../parser/types';
+import { IndividualComponent, InheritedComponent, RadioResponse } from '../../../parser/types';
 
 export default function AnswerPanel({ data, config }: { data: Record<string, Record<string, unknown>>, config: IndividualComponent | InheritedComponent | undefined}) {
   const [correctUser, setCorrectUser] = useState<string[]>([]);

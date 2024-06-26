@@ -9,12 +9,12 @@ import {
 import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { openConfirmModal } from '@mantine/modals';
-import { ParticipantData, StoredAnswer, StudyConfig } from '../../parser/types';
-import { ParticipantMetadata } from '../../store/types';
-import { configSequenceToUniqueTrials, findBlockForStep, getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
-import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { DownloadButtons } from '../../components/downloader/DownloadButtons';
-import { useAuth } from '../../store/hooks/useAuth';
+import { ParticipantData, StoredAnswer, StudyConfig } from '../../../parser/types';
+import { ParticipantMetadata } from '../../../store/types';
+import { configSequenceToUniqueTrials, findBlockForStep, getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
+import { useStorageEngine } from '../../../storage/storageEngineHooks';
+import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
+import { useAuth } from '../../../store/hooks/useAuth';
 
 function AnswerCell({ cellData }: { cellData: StoredAnswer }) {
   return (

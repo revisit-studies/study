@@ -2,8 +2,8 @@ import {
   Checkbox, Container, Flex, Paper, Space, Text,
 } from '@mantine/core';
 import React, { useCallback, useState } from 'react';
-import { ParticipantData } from '../../storage/types';
-import { StudyConfig } from '../../parser/types';
+import { ParticipantData } from '../../../storage/types';
+import { StudyConfig } from '../../../parser/types';
 import StatsVis from './StatsVis';
 
 export function StatsBoard({

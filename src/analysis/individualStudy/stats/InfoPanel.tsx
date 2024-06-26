@@ -4,8 +4,8 @@ import {
 } from '@mantine/core';
 import { VegaLite, VisualizationSpec } from 'react-vega';
 import { useResizeObserver } from '@mantine/hooks';
-import { StoredAnswer } from '../../store/types';
-import { IndividualComponent, InheritedComponent } from '../../parser/types';
+import { StoredAnswer } from '../../../store/types';
+import { IndividualComponent, InheritedComponent } from '../../../parser/types';
 
 function toDisplayData(milliseconds:number) {
   const minutes = Math.floor(milliseconds / (1000 * 60));

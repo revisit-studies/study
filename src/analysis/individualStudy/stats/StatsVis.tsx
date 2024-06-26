@@ -3,12 +3,12 @@ import {
 } from '@mantine/core';
 import { useCallback, useEffect, useState } from 'react';
 import { IconArrowDown, IconArrowLeft } from '@tabler/icons-react';
-import { StoredAnswer } from '../../store/types';
+import { StoredAnswer } from '../../../store/types';
 import InfoPanel from './InfoPanel';
 import AnswerPanel from './AnswerPanel';
-import { ParticipantData } from '../../storage/types';
-import { StudyConfig, IndividualComponent, InheritedComponent } from '../../parser/types';
-import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+import { ParticipantData } from '../../../storage/types';
+import { StudyConfig, IndividualComponent, InheritedComponent } from '../../../parser/types';
+import { getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 
 export default function StatsVis({ config, data }: { data: ParticipantData[], config: StudyConfig }) {
   const [sequence, setSequence] = useState<string[]>([]);

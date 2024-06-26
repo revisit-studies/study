@@ -11,14 +11,14 @@ import {
 import React, {
   useCallback, useEffect, useMemo, useState,
 } from 'react';
-import AppHeader from './interface/AppHeader';
-import { GlobalConfig, ParticipantData, StudyConfig } from '../parser/types';
-import { getStudyConfig } from '../utils/fetchConfig';
+import AppHeader from '../interface/AppHeader';
+import { GlobalConfig, ParticipantData, StudyConfig } from '../../parser/types';
+import { getStudyConfig } from '../../utils/fetchConfig';
 import { TableView } from './table/TableView';
-import { useStorageEngine } from '../storage/storageEngineHooks';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
 import ManageAccordion from './management/ManageAccordion';
-import { useAuth } from '../store/hooks/useAuth';
-import { ParticipantStatusBadges } from './interface/ParticipantStatusBadges';
+import { useAuth } from '../../store/hooks/useAuth';
+import { ParticipantStatusBadges } from '../interface/ParticipantStatusBadges';
 import { StatsBoard } from './stats/StatsBoard';
 
 export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
