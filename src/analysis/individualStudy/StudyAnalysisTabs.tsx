@@ -19,10 +19,9 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import ManageAccordion from './management/ManageAccordion';
 import { useAuth } from '../../store/hooks/useAuth';
 import { ParticipantStatusBadges } from '../interface/ParticipantStatusBadges';
-import { StatsBoard } from './stats/StatsBoard';
+import { StatsView } from './stats/StatsView';
 
-export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
-  const { globalConfig } = props;
+export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig; }) {
   const { studyId } = useParams();
   const [expData, setExpData] = useState<ParticipantData[]>([]);
   const [studyConfig, setStudyConfig] = useState<StudyConfig | undefined>(undefined);
@@ -58,7 +57,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
 
   return (
     <>
-      <AppHeader studyIds={props.globalConfig.configsList} />
+      <AppHeader studyIds={globalConfig.configsList} />
 
       <AppShell.Main>
         <Container fluid style={{ height: '100%' }}>
@@ -71,7 +70,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
 
           <Space h="xs" />
 
-          <Tabs variant="outline" value={tab} onChange={(value) => navigate(`./../${value}`)} style={{ height: '100%' }}>
+          <Tabs variant="outline" value={tab} onChange={(value) => navigate(`/analysis/stats/${studyId}/${value}`)} style={{ height: '100%' }}>
             <Tabs.List>
               <Tabs.Tab value="table" leftSection={<IconTable size={16} />}>Table View</Tabs.Tab>
               <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
@@ -85,7 +84,7 @@ export function AnalysisInterface(props: { globalConfig: GlobalConfig; }) {
             </Tabs.Panel>
 
             <Tabs.Panel value="stats" pt="xs">
-              {studyConfig && <StatsBoard studyConfig={studyConfig} completed={completed} inprogress={inProgress} rejected={rejected} />}
+              {studyConfig && <StatsView studyConfig={studyConfig} completed={completed} inprogress={inProgress} rejected={rejected} />}
             </Tabs.Panel>
             <Tabs.Panel value="replay" pt="xs">
               Replay Tab Content

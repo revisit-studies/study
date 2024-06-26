@@ -6,7 +6,7 @@ import ConfigSwitcher from './components/ConfigSwitcher';
 import { Shell } from './components/Shell';
 import { parseGlobalConfig } from './parser/parser';
 import { GlobalConfig, Nullable, ParsedStudyConfig } from './parser/types';
-import { AnalysisInterface } from './analysis/individualStudy/AnalysisInterface';
+import { StudyAnalysisTabs } from './analysis/individualStudy/StudyAnalysisTabs';
 import { PREFIX } from './utils/Prefix';
 import { ProtectedRoute } from './ProtectedRoute';
 import { Login } from './Login';
@@ -113,7 +113,7 @@ export function GlobalConfigParser() {
                 path="/analysis/stats/:studyId/:tab/:trialId?"
                 element={(
                   <ProtectedRoute paramToCheck="studyId" paramCallback={analysisProtectedCallback}>
-                    <AnalysisInterface
+                    <StudyAnalysisTabs
                       globalConfig={globalConfig}
                     />
                   </ProtectedRoute>
