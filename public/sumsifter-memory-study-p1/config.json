@@ -52,31 +52,485 @@
             "nextButtonText": "Begin",
             "response": []
         },
-        "sumsift1": {
-            "baseComponent": "summarySource",
-            "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
-            "parameters": {
-                "documents": [
-                            "sumsifter-documents/summary-documents/1_G7F2R1_Summary.pdf", 
-                            "sumsifter-documents/summary-documents/2_T3J9K2_Summary.pdf", 
-                            "sumsifter-documents/summary-documents/3_P8M4L6_Summary.pdf", 
-                            "sumsifter-documents/full-documents/4_X2D1N7_Full.pdf", 
-                            "sumsifter-documents/full-documents/5_​​H6C3Q8_Full.pdf",  
-                            "sumsifter-documents/full-documents/11_Y8C7N2_Full.pdf", 
-                            "sumsifter-documents/full-documents/12_Z5L4D3_Full.pdf", 
-                            "sumsifter-documents/full-documents/13_F1P6R9_Full.pdf", 
-                            "sumsifter-documents/full-documents/14_Q3K8T2_Full.pdf", 
-                            "sumsifter-documents/full-documents/15_D6N7X4_Full.pdf",
-                            "sumsifter-documents/full-documents/1_G7F2R1_Full.pdf", 
-                            "sumsifter-documents/full-documents/2_T3J9K2_Full.pdf", 
-                            "sumsifter-documents/full-documents/3_P8M4L6_Full.pdf", 
-                            "sumsifter-documents/full-documents/4_X2D1N7_Full.pdf", 
-                            "sumsifter-documents/full-documents/5_​​H6C3Q8_Full.pdf"
-                            ]
+            "sumsift1": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/1_G7F2R1_Summary.pdf",
+                        "sumsifter-documents/2_T3J9K2_Summary.pdf",
+                        "sumsifter-documents/4_X2D1N7_Summary.pdf",
+                        "sumsifter-documents/11_Y8C7N2_Summary.pdf",
+                        "sumsifter-documents/15_D6N7X4_Summary.pdf",
+                        "sumsifter-documents/1_G7F2R1_Highlight.pdf",
+                        "sumsifter-documents/2_T3J9K2_Highlight.pdf",
+                        "sumsifter-documents/4_X2D1N7_Highlight.pdf",
+                        "sumsifter-documents/11_Y8C7N2_Highlight.pdf",
+                        "sumsifter-documents/15_D6N7X4_Highlight.pdf",
+                        "sumsifter-documents/1_G7F2R1_Full.pdf",
+                        "sumsifter-documents/2_T3J9K2_Full.pdf",
+                        "sumsifter-documents/4_X2D1N7_Full.pdf",
+                        "sumsifter-documents/11_Y8C7N2_Full.pdf",
+                        "sumsifter-documents/15_D6N7X4_Full.pdf"
+                    ]
+                },
+                "response": []
             },
-            "response": [
-            ]
-            
+            "sumsift2": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/1_G7F2R1_Summary.pdf",
+                        "sumsifter-documents/2_T3J9K2_Summary.pdf",
+                        "sumsifter-documents/4_X2D1N7_Summary.pdf",
+                        "sumsifter-documents/9_K4M3F7_Summary.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Summary.pdf",
+                        "sumsifter-documents/1_G7F2R1_Highlight.pdf",
+                        "sumsifter-documents/2_T3J9K2_Highlight.pdf",
+                        "sumsifter-documents/4_X2D1N7_Highlight.pdf",
+                        "sumsifter-documents/9_K4M3F7_Highlight.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Highlight.pdf",
+                        "sumsifter-documents/1_G7F2R1_Full.pdf",
+                        "sumsifter-documents/2_T3J9K2_Full.pdf",
+                        "sumsifter-documents/4_X2D1N7_Full.pdf",
+                        "sumsifter-documents/9_K4M3F7_Full.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Full.pdf"
+                    ]
+                },
+                "response": []
+            },
+            "sumsift3": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/4_X2D1N7_Summary.pdf",
+                        "sumsifter-documents/6_B9A2E5_Summary.pdf",
+                        "sumsifter-documents/8_V9M2H5_Summary.pdf",
+                        "sumsifter-documents/11_Y8C7N2_Summary.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Summary.pdf",
+                        "sumsifter-documents/4_X2D1N7_Highlight.pdf",
+                        "sumsifter-documents/6_B9A2E5_Highlight.pdf",
+                        "sumsifter-documents/8_V9M2H5_Highlight.pdf",
+                        "sumsifter-documents/11_Y8C7N2_Highlight.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Highlight.pdf",
+                        "sumsifter-documents/4_X2D1N7_Full.pdf",
+                        "sumsifter-documents/6_B9A2E5_Full.pdf",
+                        "sumsifter-documents/8_V9M2H5_Full.pdf",
+                        "sumsifter-documents/11_Y8C7N2_Full.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Full.pdf"
+                    ]
+                },
+                "response": []
+            },
+            "sumsift4": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/3_P8M4L6_Summary.pdf",
+                        "sumsifter-documents/6_B9A2E5_Summary.pdf",
+                        "sumsifter-documents/7_W5R8T1_Summary.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Summary.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Summary.pdf",
+                        "sumsifter-documents/3_P8M4L6_Highlight.pdf",
+                        "sumsifter-documents/6_B9A2E5_Highlight.pdf",
+                        "sumsifter-documents/7_W5R8T1_Highlight.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Highlight.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Highlight.pdf",
+                        "sumsifter-documents/3_P8M4L6_Full.pdf",
+                        "sumsifter-documents/6_B9A2E5_Full.pdf",
+                        "sumsifter-documents/7_W5R8T1_Full.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Full.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Full.pdf"
+                    ]
+                },
+                "response": []
+            },
+            "sumsift5": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/1_G7F2R1_Summary.pdf",
+                        "sumsifter-documents/5_H6C3Q8_Summary.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Summary.pdf",
+                        "sumsifter-documents/13_F1P6R9_Summary.pdf",
+                        "sumsifter-documents/15_D6N7X4_Summary.pdf",
+                        "sumsifter-documents/1_G7F2R1_Highlight.pdf",
+                        "sumsifter-documents/5_H6C3Q8_Highlight.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Highlight.pdf",
+                        "sumsifter-documents/13_F1P6R9_Highlight.pdf",
+                        "sumsifter-documents/15_D6N7X4_Highlight.pdf",
+                        "sumsifter-documents/1_G7F2R1_Full.pdf",
+                        "sumsifter-documents/5_H6C3Q8_Full.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Full.pdf",
+                        "sumsifter-documents/13_F1P6R9_Full.pdf",
+                        "sumsifter-documents/15_D6N7X4_Full.pdf"
+                    ]
+                },
+                "response": []
+            },
+            "sumsift6": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/1_G7F2R1_Summary.pdf",
+                        "sumsifter-documents/5_H6C3Q8_Summary.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Summary.pdf",
+                        "sumsifter-documents/13_F1P6R9_Summary.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Summary.pdf",
+                        "sumsifter-documents/1_G7F2R1_Highlight.pdf",
+                        "sumsifter-documents/5_H6C3Q8_Highlight.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Highlight.pdf",
+                        "sumsifter-documents/13_F1P6R9_Highlight.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Highlight.pdf",
+                        "sumsifter-documents/1_G7F2R1_Full.pdf",
+                        "sumsifter-documents/5_H6C3Q8_Full.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Full.pdf",
+                        "sumsifter-documents/13_F1P6R9_Full.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Full.pdf"
+                    ]
+                },
+                "response": []
+            },
+            "sumsift7": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/2_T3J9K2_Summary.pdf",
+                        "sumsifter-documents/5_H6C3Q8_Summary.pdf",
+                        "sumsifter-documents/8_V9M2H5_Summary.pdf",
+                        "sumsifter-documents/9_K4M3F7_Summary.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Summary.pdf",
+                        "sumsifter-documents/2_T3J9K2_Highlight.pdf",
+                        "sumsifter-documents/5_H6C3Q8_Highlight.pdf",
+                        "sumsifter-documents/8_V9M2H5_Highlight.pdf",
+                        "sumsifter-documents/9_K4M3F7_Highlight.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Highlight.pdf",
+                        "sumsifter-documents/2_T3J9K2_Full.pdf",
+                        "sumsifter-documents/5_H6C3Q8_Full.pdf",
+                        "sumsifter-documents/8_V9M2H5_Full.pdf",
+                        "sumsifter-documents/9_K4M3F7_Full.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Full.pdf"
+                    ]
+                },
+                "response": []
+            },
+            "sumsift8": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/2_T3J9K2_Summary.pdf",
+                        "sumsifter-documents/3_P8M4L6_Summary.pdf",
+                        "sumsifter-documents/10_J2G5L9_Summary.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Summary.pdf",
+                        "sumsifter-documents/13_F1P6R9_Summary.pdf",
+                        "sumsifter-documents/2_T3J9K2_Highlight.pdf",
+                        "sumsifter-documents/3_P8M4L6_Highlight.pdf",
+                        "sumsifter-documents/10_J2G5L9_Highlight.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Highlight.pdf",
+                        "sumsifter-documents/13_F1P6R9_Highlight.pdf",
+                        "sumsifter-documents/2_T3J9K2_Full.pdf",
+                        "sumsifter-documents/3_P8M4L6_Full.pdf",
+                        "sumsifter-documents/10_J2G5L9_Full.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Full.pdf",
+                        "sumsifter-documents/13_F1P6R9_Full.pdf"
+                    ]
+                },
+                "response": []
+            },
+            "sumsift9": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/3_P8M4L6_Summary.pdf",
+                        "sumsifter-documents/7_W5R8T1_Summary.pdf",
+                        "sumsifter-documents/8_V9M2H5_Summary.pdf",
+                        "sumsifter-documents/10_J2G5L9_Summary.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Summary.pdf",
+                        "sumsifter-documents/3_P8M4L6_Highlight.pdf",
+                        "sumsifter-documents/7_W5R8T1_Highlight.pdf",
+                        "sumsifter-documents/8_V9M2H5_Highlight.pdf",
+                        "sumsifter-documents/10_J2G5L9_Highlight.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Highlight.pdf",
+                        "sumsifter-documents/3_P8M4L6_Full.pdf",
+                        "sumsifter-documents/7_W5R8T1_Full.pdf",
+                        "sumsifter-documents/8_V9M2H5_Full.pdf",
+                        "sumsifter-documents/10_J2G5L9_Full.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Full.pdf"
+                    ]
+                },
+                "response": []
+            },
+            "sumsift10": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/1_G7F2R1_Summary.pdf",
+                        "sumsifter-documents/3_P8M4L6_Summary.pdf",
+                        "sumsifter-documents/4_X2D1N7_Summary.pdf",
+                        "sumsifter-documents/7_W5R8T1_Summary.pdf",
+                        "sumsifter-documents/15_D6N7X4_Summary.pdf",
+                        "sumsifter-documents/1_G7F2R1_Highlight.pdf",
+                        "sumsifter-documents/3_P8M4L6_Highlight.pdf",
+                        "sumsifter-documents/4_X2D1N7_Highlight.pdf",
+                        "sumsifter-documents/7_W5R8T1_Highlight.pdf",
+                        "sumsifter-documents/15_D6N7X4_Highlight.pdf",
+                        "sumsifter-documents/1_G7F2R1_Full.pdf",
+                        "sumsifter-documents/3_P8M4L6_Full.pdf",
+                        "sumsifter-documents/4_X2D1N7_Full.pdf",
+                        "sumsifter-documents/7_W5R8T1_Full.pdf",
+                        "sumsifter-documents/15_D6N7X4_Full.pdf"
+                    ]
+                },
+                "response": []
+            },
+            "sumsift11": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/1_G7F2R1_Summary.pdf",
+                        "sumsifter-documents/2_T3J9K2_Summary.pdf",
+                        "sumsifter-documents/5_H6C3Q8_Summary.pdf",
+                        "sumsifter-documents/10_J2G5L9_Summary.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Summary.pdf",
+                        "sumsifter-documents/1_G7F2R1_Highlight.pdf",
+                        "sumsifter-documents/2_T3J9K2_Highlight.pdf",
+                        "sumsifter-documents/5_H6C3Q8_Highlight.pdf",
+                        "sumsifter-documents/10_J2G5L9_Highlight.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Highlight.pdf",
+                        "sumsifter-documents/1_G7F2R1_Full.pdf",
+                        "sumsifter-documents/2_T3J9K2_Full.pdf",
+                        "sumsifter-documents/5_H6C3Q8_Full.pdf",
+                        "sumsifter-documents/10_J2G5L9_Full.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Full.pdf"
+                    ]
+                },
+                "response": []
+            },
+            "sumsift12": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/2_T3J9K2_Summary.pdf",
+                        "sumsifter-documents/3_P8M4L6_Summary.pdf",
+                        "sumsifter-documents/9_K4M3F7_Summary.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Summary.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Summary.pdf",
+                        "sumsifter-documents/2_T3J9K2_Highlight.pdf",
+                        "sumsifter-documents/3_P8M4L6_Highlight.pdf",
+                        "sumsifter-documents/9_K4M3F7_Highlight.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Highlight.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Highlight.pdf",
+                        "sumsifter-documents/2_T3J9K2_Full.pdf",
+                        "sumsifter-documents/3_P8M4L6_Full.pdf",
+                        "sumsifter-documents/9_K4M3F7_Full.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Full.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Full.pdf"
+                    ]
+                },
+                "response": []
+            },
+            "sumsift13": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/2_T3J9K2_Summary.pdf",
+                        "sumsifter-documents/5_H6C3Q8_Summary.pdf",
+                        "sumsifter-documents/9_K4M3F7_Summary.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Summary.pdf",
+                        "sumsifter-documents/15_D6N7X4_Summary.pdf",
+                        "sumsifter-documents/2_T3J9K2_Highlight.pdf",
+                        "sumsifter-documents/5_H6C3Q8_Highlight.pdf",
+                        "sumsifter-documents/9_K4M3F7_Highlight.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Highlight.pdf",
+                        "sumsifter-documents/15_D6N7X4_Highlight.pdf",
+                        "sumsifter-documents/2_T3J9K2_Full.pdf",
+                        "sumsifter-documents/5_H6C3Q8_Full.pdf",
+                        "sumsifter-documents/9_K4M3F7_Full.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Full.pdf",
+                        "sumsifter-documents/15_D6N7X4_Full.pdf"
+                    ]
+                },
+                "response": []
+            },
+            "sumsift14": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/1_G7F2R1_Summary.pdf",
+                        "sumsifter-documents/3_P8M4L6_Summary.pdf",
+                        "sumsifter-documents/7_W5R8T1_Summary.pdf",
+                        "sumsifter-documents/9_K4M3F7_Summary.pdf",
+                        "sumsifter-documents/11_Y8C7N2_Summary.pdf",
+                        "sumsifter-documents/1_G7F2R1_Highlight.pdf",
+                        "sumsifter-documents/3_P8M4L6_Highlight.pdf",
+                        "sumsifter-documents/7_W5R8T1_Highlight.pdf",
+                        "sumsifter-documents/9_K4M3F7_Highlight.pdf",
+                        "sumsifter-documents/11_Y8C7N2_Highlight.pdf",
+                        "sumsifter-documents/1_G7F2R1_Full.pdf",
+                        "sumsifter-documents/3_P8M4L6_Full.pdf",
+                        "sumsifter-documents/7_W5R8T1_Full.pdf",
+                        "sumsifter-documents/9_K4M3F7_Full.pdf",
+                        "sumsifter-documents/11_Y8C7N2_Full.pdf"
+                    ]
+                },
+                "response": []
+            },
+            "sumsift15": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/5_​​H6C3Q8_Summary.pdf",
+                        "sumsifter-documents/6_B9A2E5_Summary.pdf",
+                        "sumsifter-documents/10_J2G5L9_Summary.pdf",
+                        "sumsifter-documents/11_Y8C7N2_Summary.pdf",
+                        "sumsifter-documents/13_F1P6R9_Summary.pdf",
+                        "sumsifter-documents/5_​​H6C3Q8_Highlight.pdf",
+                        "sumsifter-documents/6_B9A2E5_Highlight.pdf",
+                        "sumsifter-documents/10_J2G5L9_Highlight.pdf",
+                        "sumsifter-documents/11_Y8C7N2_Highlight.pdf",
+                        "sumsifter-documents/13_F1P6R9_Highlight.pdf",
+                        "sumsifter-documents/5_​​H6C3Q8_Full.pdf",
+                        "sumsifter-documents/6_B9A2E5_Full.pdf",
+                        "sumsifter-documents/10_J2G5L9_Full.pdf",
+                        "sumsifter-documents/11_Y8C7N2_Full.pdf",
+                        "sumsifter-documents/13_F1P6R9_Full.pdf"
+                    ]
+                },
+                "response": []
+            },
+            "sumsift16": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/1_G7F2R1_Summary.pdf",
+                        "sumsifter-documents/7_W5R8T1_Summary.pdf",
+                        "sumsifter-documents/8_V9M2H5_Summary.pdf",
+                        "sumsifter-documents/11_Y8C7N2_Summary.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Summary.pdf",
+                        "sumsifter-documents/1_G7F2R1_Highlight.pdf",
+                        "sumsifter-documents/7_W5R8T1_Highlight.pdf",
+                        "sumsifter-documents/8_V9M2H5_Highlight.pdf",
+                        "sumsifter-documents/11_Y8C7N2_Highlight.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Highlight.pdf",
+                        "sumsifter-documents/1_G7F2R1_Full.pdf",
+                        "sumsifter-documents/7_W5R8T1_Full.pdf",
+                        "sumsifter-documents/8_V9M2H5_Full.pdf",
+                        "sumsifter-documents/11_Y8C7N2_Full.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Full.pdf"
+                    ]
+                },
+                "response": []
+            },
+            "sumsift17": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/7_W5R8T1_Summary.pdf",
+                        "sumsifter-documents/9_K4M3F7_Summary.pdf",
+                        "sumsifter-documents/10_J2G5L9_Summary.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Summary.pdf",
+                        "sumsifter-documents/15_D6N7X4_Summary.pdf",
+                        "sumsifter-documents/7_W5R8T1_Highlight.pdf",
+                        "sumsifter-documents/9_K4M3F7_Highlight.pdf",
+                        "sumsifter-documents/10_J2G5L9_Highlight.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Highlight.pdf",
+                        "sumsifter-documents/15_D6N7X4_Highlight.pdf",
+                        "sumsifter-documents/7_W5R8T1_Full.pdf",
+                        "sumsifter-documents/9_K4M3F7_Full.pdf",
+                        "sumsifter-documents/10_J2G5L9_Full.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Full.pdf",
+                        "sumsifter-documents/15_D6N7X4_Full.pdf"
+                    ]
+                },
+                "response": []
+            },
+            "sumsift18": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/3_P8M4L6_Summary.pdf",
+                        "sumsifter-documents/4_X2D1N7_Summary.pdf",
+                        "sumsifter-documents/10_J2G5L9_Summary.pdf",
+                        "sumsifter-documents/13_F1P6R9_Summary.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Summary.pdf",
+                        "sumsifter-documents/3_P8M4L6_Highlight.pdf",
+                        "sumsifter-documents/4_X2D1N7_Highlight.pdf",
+                        "sumsifter-documents/10_J2G5L9_Highlight.pdf",
+                        "sumsifter-documents/13_F1P6R9_Highlight.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Highlight.pdf",
+                        "sumsifter-documents/3_P8M4L6_Full.pdf",
+                        "sumsifter-documents/4_X2D1N7_Full.pdf",
+                        "sumsifter-documents/10_J2G5L9_Full.pdf",
+                        "sumsifter-documents/13_F1P6R9_Full.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Full.pdf"
+                    ]
+                },
+                "response": []
+            },
+            "sumsift19": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/2_T3J9K2_Summary.pdf",
+                        "sumsifter-documents/8_V9M2H5_Summary.pdf",
+                        "sumsifter-documents/10_J2G5L9_Summary.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Summary.pdf",
+                        "sumsifter-documents/15_D6N7X4_Summary.pdf",
+                        "sumsifter-documents/2_T3J9K2_Highlight.pdf",
+                        "sumsifter-documents/8_V9M2H5_Highlight.pdf",
+                        "sumsifter-documents/10_J2G5L9_Highlight.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Highlight.pdf",
+                        "sumsifter-documents/15_D6N7X4_Highlight.pdf",
+                        "sumsifter-documents/2_T3J9K2_Full.pdf",
+                        "sumsifter-documents/8_V9M2H5_Full.pdf",
+                        "sumsifter-documents/10_J2G5L9_Full.pdf",
+                        "sumsifter-documents/12_Z5L4D3_Full.pdf",
+                        "sumsifter-documents/15_D6N7X4_Full.pdf"
+                    ]
+                },
+                "response": []
+            },
+            "sumsift20": {
+                "baseComponent": "summarySource",
+                "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **5 minutes** to read over the documents",
+                "parameters": {
+                    "documents": [
+                        "sumsifter-documents/3_P8M4L6_Summary.pdf",
+                        "sumsifter-documents/5_H6C3Q8_Summary.pdf",
+                        "sumsifter-documents/8_V9M2H5_Summary.pdf",
+                        "sumsifter-documents/11_Y8C7N2_Summary.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Summary.pdf",
+                        "sumsifter-documents/3_P8M4L6_Highlight.pdf",
+                        "sumsifter-documents/5_H6C3Q8_Highlight.pdf",
+                        "sumsifter-documents/8_V9M2H5_Highlight.pdf",
+                        "sumsifter-documents/11_Y8C7N2_Highlight.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Highlight.pdf",
+                        "sumsifter-documents/3_P8M4L6_Full.pdf",
+                        "sumsifter-documents/5_H6C3Q8_Full.pdf",
+                        "sumsifter-documents/8_V9M2H5_Full.pdf",
+                        "sumsifter-documents/11_Y8C7N2_Full.pdf",
+                        "sumsifter-documents/14_Q3K8T2_Full.pdf"
+                    ]
+                },
+                "response": []
         },
         "survey": {
             "type": "markdown",
@@ -108,8 +562,19 @@
         "components": [
             "introduction",
             "tutorial",
-            "sumsift1",
+            {
+                "order": "random",
+                "numSamples": 1,
+                "components": [
+                    "sumsift1", "sumsift2", "sumsift3", "sumsift4", 
+                    "sumsift8", 
+                    "sumsift9", "sumsift10", "sumsift12", 
+                     "sumsift14",  "sumsift16", 
+                    "sumsift17", "sumsift18", "sumsift19"
+                ]
+            },
             "survey"
         ]
     }
 }
+
