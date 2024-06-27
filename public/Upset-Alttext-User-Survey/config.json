@@ -25,10 +25,6 @@
     "baseComponents": {
         "VO-image1": {
             "type": "image",
-            "style": {
-                "width": "492px",
-                "height": "1200px"
-            },
             "nextButtonLocation": "sidebar",
             "description": "Content: Visual Only",
             "instruction": "Please answer the following question about the chart:",
@@ -45,10 +41,6 @@
         },
         "VO-image2": {
             "type": "image",
-            "style": {
-                "width": "492px",
-                "height": "1200px"
-            },
             "nextButtonLocation": "sidebar",
             "description": "Content: Visual Only",
             "instruction": "Please answer the following question about the chart:",
@@ -186,10 +178,6 @@
         },
         "VO-image3": {
             "type": "image",
-            "style": {
-                "width": "492px",
-                "height": "1200px"
-            },
             "nextButtonLocation": "sidebar",
             "description": "Content: Visual Only",
             "instruction": "Rate the content:",
@@ -621,15 +609,27 @@
         },
         "(A)Visual-Only-Questionnaire 1": {
             "baseComponent": "VO-image1",
-            "path": "Upset-Alttext-User-Survey/assets/VO1.png"
+            "path": "Upset-Alttext-User-Survey/assets/VO1.png",
+            "style": {
+                "width": "492px",
+                "height": "1200px"
+            }
         },
         "(A)Visual-Only-Questionnaire 2": {
             "baseComponent": "VO-image2",
-            "path": "Upset-Alttext-User-Survey/assets/VO1.png" 
+            "path": "Upset-Alttext-User-Survey/assets/VO1.png",
+            "style": {
+                "width": "492px",
+                "height": "1200px"
+            }
         },
         "(A)Visual-Only-Questionnaire 3": {
             "baseComponent": "VO-image3",
-            "path": "Upset-Alttext-User-Survey/assets/VO1.png"
+            "path": "Upset-Alttext-User-Survey/assets/VO1.png",
+            "style": {
+                "width": "492px",
+                "height": "1200px"
+            }
         },
         "(A)Text-Only-Questionnaire 1": {
             "baseComponent": "TO-text1",
@@ -644,30 +644,42 @@
             "path": "Upset-Alttext-User-Survey/assets/text1.md"
             
         },
-        "(A)Text-and-Visual-Questionnaire 1": {
+        "(A)Text-&-Visual-Questionnaire 1": {
             "baseComponent": "TandV1",
             "path": "Upset-Alttext-User-Survey/assets/textandVis1.md"
         },
-        "(A)Text-and-Visual-Questionnaire 2": {
+        "(A)Text-&-Visual-Questionnaire 2": {
             "baseComponent": "TandV2",
             "path": "Upset-Alttext-User-Survey/assets/textandVis1.md"           
         },
-        "(A)Text-and-Visual-Questionnaire 3": {
+        "(A)Text-&-Visual-Questionnaire 3": {
             "baseComponent": "TandV3",
             "path": "Upset-Alttext-User-Survey/assets/textandVis1.md"
             
         },
         "(B)Visual-Only-Questionnaire 1": {
             "baseComponent": "VO-image1",
-            "path": "Upset-Alttext-User-Survey/assets/VO2.png"
+            "path": "Upset-Alttext-User-Survey/assets/VO2.png",
+            "style": {
+                "width": "515px",
+                "height": "900px"
+            }
         },
         "(B)Visual-Only-Questionnaire 2": {
             "baseComponent": "VO-image2",
-            "path": "Upset-Alttext-User-Survey/assets/VO2.png"
+            "path": "Upset-Alttext-User-Survey/assets/VO2.png",
+            "style": {
+                "width": "515px",
+                "height": "900px"
+            }
         },
         "(B)Visual-Only-Questionnaire 3": {
             "baseComponent": "VO-image3",
-            "path": "Upset-Alttext-User-Survey/assets/VO2.png"
+            "path": "Upset-Alttext-User-Survey/assets/VO2.png",
+            "style": {
+                "width": "515px",
+                "height": "900px"
+            }
         },
         "(B)Text-Only-Questionnaire 1": {
             "baseComponent": "TO-text1",
@@ -681,15 +693,15 @@
             "baseComponent": "TO-text3",
             "path": "Upset-Alttext-User-Survey/assets/text2.md"
         },
-        "(B)Text-and-Visual-Questionnaire 1": {
+        "(B)Text-&-Visual-Questionnaire 1": {
             "baseComponent": "TandV1",
             "path": "Upset-Alttext-User-Survey/assets/textandVis2.md"
         },
-        "(B)Text-and-Visual-Questionnaire 2": {
+        "(B)Text-&-Visual-Questionnaire 2": {
             "baseComponent": "TandV2",
             "path": "Upset-Alttext-User-Survey/assets/textandVis2.md"   
         },
-        "(B)Text-and-Visual-Questionnaire 3": {
+        "(B)Text-&-Visual-Questionnaire 3": {
             "baseComponent": "TandV3",
             "path": "Upset-Alttext-User-Survey/assets/textandVis2.md"
         }
@@ -726,9 +738,9 @@
                             {
                                 "order": "fixed",
                                 "components": [
-                                    "(A)Text-and-Visual-Questionnaire 1",
-                                    "(A)Text-and-Visual-Questionnaire 2",
-                                    "(A)Text-and-Visual-Questionnaire 3"
+                                    "(A)Text-&-Visual-Questionnaire 1",
+                                    "(A)Text-&-Visual-Questionnaire 2",
+                                    "(A)Text-&-Visual-Questionnaire 3"
                                 ]
                             }
                         ]
@@ -756,9 +768,9 @@
                             {
                                 "order": "fixed",
                                 "components": [
-                                    "(A)Text-and-Visual-Questionnaire 1",
-                                    "(A)Text-and-Visual-Questionnaire 2",
-                                    "(A)Text-and-Visual-Questionnaire 3"
+                                    "(A)Text-&-Visual-Questionnaire 1",
+                                    "(A)Text-&-Visual-Questionnaire 2",
+                                    "(A)Text-&-Visual-Questionnaire 3"
                                 ]
                             }
                         ]
@@ -786,9 +798,9 @@
                             {
                                 "order": "fixed",
                                 "components": [
-                                    "(B)Text-and-Visual-Questionnaire 1",
-                                    "(B)Text-and-Visual-Questionnaire 2",
-                                    "(B)Text-and-Visual-Questionnaire 3"
+                                    "(B)Text-&-Visual-Questionnaire 1",
+                                    "(B)Text-&-Visual-Questionnaire 2",
+                                    "(B)Text-&-Visual-Questionnaire 3"
                                 ]
                             }
                         ]
