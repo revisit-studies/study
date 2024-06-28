@@ -14,4 +14,4 @@ export type BrushNames = 'Rectangular Selection' | 'Axis Selection' | 'Slider Se
 
 export interface BrushParams {brushType: BrushNames, dataset: string, x: string, y: string, category: string, ids: string, dataType?: 'date'}
 
-export interface SumParams {datasetSource: string, datasetSummary: string}
+export interface SumParams {prompt: string, document: string}

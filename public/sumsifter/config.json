@@ -63,8 +63,8 @@
             "baseComponent": "summarySource",
             "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
             "parameters": {
-                "datasetSource": "source2",
-                "datasetSummary": "summary1",
+                "document": "doc1.docx",
+                "prompt": "Summarize this document in 5 sentences.",
                 "ids": "id",
                 "hallucination": false
             },
@@ -79,82 +79,82 @@
             ]
             
         },
-        "sumsift2": {
-            "baseComponent": "summarySource",
-            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
-            "parameters": {
-                "datasetSource": "source2",
-                "datasetSummary": "summary2",
-                "ids": "id",
-                "hallucination": false
-            },
-            "response": [
-                {
-                    "id": "response",
-                    "prompt": "Answer/Feedback/Thoughts:",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "longText"
-                }
-            ]
-        },
-        "sumsift3": {
-            "baseComponent": "summarySource",
-            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
-            "parameters": {
-                "datasetSource": "source2",
-                "datasetSummary": "summary3",
-                "ids": "id",
-                "hallucination": false
-            },
-            "response": [
-                {
-                    "id": "response",
-                    "prompt": "Answer/Feedback/Thoughts:",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "longText"
-                }
-            ]
-        },
-        "sumsift4": {
-            "baseComponent": "summarySource",
-            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
-            "parameters": {
-                "datasetSource": "source2",
-                "datasetSummary": "summary4",
-                "ids": "id",
-                "hallucination": true
-            },
-            "response": [
-                {
-                    "id": "response",
-                    "prompt": "Answer/Feedback/Thoughts:",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "longText"
-                }
-            ]
-        },   
-        "sumsift5": {
-            "baseComponent": "summarySource",
-            "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
-            "parameters": {
-                "datasetSource": "source2",
-                "datasetSummary": "summary5",
-                "ids": "id",
-                "hallucination": true
-            },
-            "response": [
-                {
-                    "id": "response",
-                    "prompt": "Answer/Feedback/Thoughts:",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "longText"
-                }
-            ]
-        },     
+        // "sumsift2": {
+        //     "baseComponent": "summarySource",
+        //     "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
+        //     "parameters": {
+        //         "datasetSource": "source2",
+        //         "datasetSummary": "summary2",
+        //         "ids": "id",
+        //         "hallucination": false
+        //     },
+        //     "response": [
+        //         {
+        //             "id": "response",
+        //             "prompt": "Answer/Feedback/Thoughts:",
+        //             "required": true,
+        //             "location": "sidebar",
+        //             "type": "longText"
+        //         }
+        //     ]
+        // },
+        // "sumsift3": {
+        //     "baseComponent": "summarySource",
+        //     "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
+        //     "parameters": {
+        //         "datasetSource": "source2",
+        //         "datasetSummary": "summary3",
+        //         "ids": "id",
+        //         "hallucination": false
+        //     },
+        //     "response": [
+        //         {
+        //             "id": "response",
+        //             "prompt": "Answer/Feedback/Thoughts:",
+        //             "required": true,
+        //             "location": "sidebar",
+        //             "type": "longText"
+        //         }
+        //     ]
+        // },
+        // "sumsift4": {
+        //     "baseComponent": "summarySource",
+        //     "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
+        //     "parameters": {
+        //         "datasetSource": "source2",
+        //         "datasetSummary": "summary4",
+        //         "ids": "id",
+        //         "hallucination": true
+        //     },
+        //     "response": [
+        //         {
+        //             "id": "response",
+        //             "prompt": "Answer/Feedback/Thoughts:",
+        //             "required": true,
+        //             "location": "sidebar",
+        //             "type": "longText"
+        //         }
+        //     ]
+        // },   
+        // "sumsift5": {
+        //     "baseComponent": "summarySource",
+        //     "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
+        //     "parameters": {
+        //         "datasetSource": "source2",
+        //         "datasetSummary": "summary5",
+        //         "ids": "id",
+        //         "hallucination": true
+        //     },
+        //     "response": [
+        //         {
+        //             "id": "response",
+        //             "prompt": "Answer/Feedback/Thoughts:",
+        //             "required": true,
+        //             "location": "sidebar",
+        //             "type": "longText"
+        //         }
+        //     ]
+        // },     
         "survey": {
             "type": "markdown",
             "path": "sumsifter/assets/survey.md",
@@ -220,10 +220,10 @@
                 "order": "random",
                 "components": [
                     "sumsift1", 
-                    "sumsift2", 
-                    "sumsift3", 
-                    "sumsift4",
-                    "sumsift5"
+                    // "sumsift2", 
+                    // "sumsift3", 
+                    // "sumsift4",
+                    // "sumsift5"
                 ]
             },
             "feedback-tutorial",

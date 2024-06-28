@@ -1,6 +1,9 @@
 import React, { useEffect } from 'react';
 import {
   Badge, Title, ScrollArea, Text,
+  Box,
+  Input,
+  Button,
 } from '@mantine/core';
 import style from './sumsifter.module.css';
 
@@ -9,6 +12,7 @@ interface SummaryProps {
   onSourceClick: (summaryId: string | null, sourceId: string | null) => void;
   activeSourceId: string | null;
   onSummaryBadgePositionChange: (badgeTop: number) => void;
+  onSubmitQuery: (queryText: string) => void;
 }
 
 function SummarySourceItem({
@@ -34,13 +38,15 @@ function SummarySourceItem({
 }
 
 function Summary({
-  sentences, onSourceClick, activeSourceId, onSummaryBadgePositionChange,
+  sentences, onSourceClick, activeSourceId, onSummaryBadgePositionChange, onSubmitQuery,
 }: SummaryProps) {
   const ref = React.useRef<HTMLDivElement>(null);
   const activeRef = React.useRef<HTMLSpanElement | null>(null);
   const [positionTop, setPositionTop] = React.useState(0);
   const [positionLeft, setPositionLeft] = React.useState(0);
   const [positionLeftSummary, setPositionLeftSummary] = React.useState(0);
+
+  const [queryText, setQueryText] = React.useState('');
 
   useEffect(() => {
     if (ref.current) {
@@ -101,6 +107,10 @@ function Summary({
       <Text>
         {paragraph}
       </Text>
+      <Box display="flex">
+        <Input placeholder="Type your query here." onChange={(e) => { setQueryText(e.target.value); }} mr={10} flex={1} />
+        <Button onClick={() => { onSubmitQuery(queryText); }}>Send</Button>
+      </Box>
       <div style={{
         position: 'fixed',
         top: positionTop + 18,

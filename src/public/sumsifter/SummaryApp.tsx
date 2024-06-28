@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useState } from 'react';
+import {
+  useCallback, useEffect, useMemo, useState,
+} from 'react';
 import { Button, Grid } from '@mantine/core';
 import * as d3 from 'd3';
 import { initializeTrrack, Registry } from '@trrack/core';
@@ -18,7 +20,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   const [sourceBadgeTop, setSourceBadgeTop] = useState(0);
   const [sourceBadgeLeft, setSourceBadgeLeft] = useState(0);
 
-  const [showGenerator, setShowGenerator] = useState(false);
+  const { prompt: defaultPrompt, document: studyDocument } = parameters;
 
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
@@ -44,28 +46,60 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
     };
   }, []);
 
-  // // load data
   useEffect(() => {
-    d3.csv(`./data/${parameters.datasetSummary}.csv`).then((_data) => {
-      const convertedData = _data.map((row) => ({
-        id: String(row.id),
-        text: row.text ?? '', // Provide a default empty string if row.text is undefined
-        sources: (row.sources ?? '').split(',').map((s) => s.trim()), // Split sources into an array
-      }));
-      setSummaryData(convertedData);
-    });
-  }, [parameters]);
+    async function fetchData() {
+      const response = await fetch('http://localhost:5000/summary/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          question: defaultPrompt,
+          document: studyDocument,
+        }),
+      });
+      const data = await response.json();
 
-  useEffect(() => {
-    d3.csv(`./data/${parameters.datasetSource}.csv`).then((_data) => {
-      const convertedData = _data.map((row) => ({
-        id: String(row.id), // Convert the id to a string
-        text: row.text ?? '', // Provide a default empty string if row.text is undefined
-        sources: (row.sources ?? '').split(',').map((s) => s.trim()), // Split sources into an array
+      const summary = data.summary.map((sentenceObj: { text: string, sources: string[] }, idx: number) => ({
+        id: String(idx),
+        text: sentenceObj.text,
+        sources: sentenceObj.sources,
       }));
-      setSourcesData(convertedData);
-    });
-  }, [parameters]);
+
+      const source = data.source.map((sourceObj: { id: string, text: string }) => ({
+        id: sourceObj.id,
+        text: sourceObj.text,
+      }));
+
+      setSummaryData(summary);
+      setSourcesData(source);
+    }
+
+    fetchData();
+  }, [defaultPrompt, studyDocument]);
+
+  // // // load data
+  // useEffect(() => {
+  //   d3.csv(`./data/${parameters.datasetSummary}.csv`).then((_data) => {
+  //     const convertedData = _data.map((row) => ({
+  //       id: String(row.id),
+  //       text: row.text ?? '', // Provide a default empty string if row.text is undefined
+  //       sources: (row.sources ?? '').split(',').map((s) => s.trim()), // Split sources into an array
+  //     }));
+  //     setSummaryData(convertedData);
+  //   });
+  // }, [parameters]);
+
+  // useEffect(() => {
+  //   d3.csv(`./data/${parameters.datasetSource}.csv`).then((_data) => {
+  //     const convertedData = _data.map((row) => ({
+  //       id: String(row.id), // Convert the id to a string
+  //       text: row.text ?? '', // Provide a default empty string if row.text is undefined
+  //       sources: (row.sources ?? '').split(',').map((s) => s.trim()), // Split sources into an array
+  //     }));
+  //     setSourcesData(convertedData);
+  //   });
+  // }, [parameters]);
 
   useEffect(() => {
     // make API calls here and set summary and sources data
@@ -131,26 +165,43 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
     setSourceBadgeLeft(left);
   };
 
+  const handleSubmitQuery = useCallback((queryPrompt: string) => {
+    async function fetchData() {
+      const response = await fetch('http://localhost:5000/summary/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          question: queryPrompt,
+          document: studyDocument,
+        }),
+      });
+      const data = await response.json();
+
+      const summary = data.summary.map((sentenceObj: { text: string, sources: string[] }, idx: number) => ({
+        id: String(idx),
+        text: sentenceObj.text,
+        sources: sentenceObj.sources,
+      }));
+
+      const source = data.source.map((sourceObj: { id: string, text: string }) => ({
+        id: sourceObj.id,
+        text: sourceObj.text,
+      }));
+
+      setSummaryData(summary);
+      setSourcesData(source);
+    }
+
+    fetchData();
+  }, [studyDocument]);
+
   return (
     <>
       <Grid gutter={50}>
         <Grid.Col span={6} pos="relative">
-          <div>
-            <Summary sentences={summaryData} onSummaryBadgePositionChange={handleSummaryBadgePositionChange} onSourceClick={handleSourceClick} activeSourceId={activeSourceId} />
-          </div>
-          <div style={{
-            zIndex: 200, position: 'absolute', width: '100%', bottom: 0, padding: 10, background: '#ddd',
-          }}
-          >
-            <Button onClick={() => setShowGenerator(!showGenerator)} style={{ width: '100%' }}>
-              {showGenerator ? 'Hide' : 'Show'}
-              Generator
-            </Button>
-
-            {showGenerator && (
-              <iframe src="http://localhost:8501/" style={{ height: '400px', width: '100%', border: 0 }} />
-            )}
-          </div>
+          <Summary sentences={summaryData} onSummaryBadgePositionChange={handleSummaryBadgePositionChange} onSourceClick={handleSourceClick} activeSourceId={activeSourceId} onSubmitQuery={handleSubmitQuery} />
         </Grid.Col>
         <Grid.Col span={6}>
           <Source sourceList={sourcesData} onSourceBadgePositionChange={handleSourceBadgePositionChange} activeSourceId={activeSourceId} />
