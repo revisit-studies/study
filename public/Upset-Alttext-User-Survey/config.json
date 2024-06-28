@@ -607,6 +607,51 @@
             "path": "Upset-Alttext-User-Survey/assets/introduction.md",
             "response": []
         },
+        "Consent": {
+            "type": "markdown",
+            "path": "Upset-Alttext-User-Survey/assets/consent.md",
+            "nextButtonText": "Agree",
+            "response": [
+                {
+                    "id": "signature",
+                    "prompt": "Your signature",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "shortText",
+                    "placeholder": "Please provide your signature"
+                },
+                {
+                    "id": "id",
+                    "prompt": "Your Prolific ID",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "shortText",
+                    "placeholder": "Please provide your prolific id"
+                },
+                {
+                    "id": "accept",
+                    "prompt": "Do you consent to the study and wish to continue?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Decline",
+                            "value": "no"
+                        },
+                        {
+                            "label": "Accept",
+                            "value": "yes"
+                        }
+                    ]
+                }
+            ]
+        },
+        "What Is UpSet?": {
+            "type": "markdown",
+            "path": "Upset-Alttext-User-Survey/assets/upset.md",
+            "response": []
+        },
         "(A)Visual-Only-Questionnaire 1": {
             "baseComponent": "VO-image1",
             "path": "Upset-Alttext-User-Survey/assets/VO1.png",
@@ -711,6 +756,8 @@
         "order": "fixed",
         "components": [
             "Introduction",
+            "Consent",
+            "What Is UpSet?",
             {
                 "order": "latinSquare",
                 "numSamples": 1,
