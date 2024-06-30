@@ -107,7 +107,7 @@ function Summary({
       <Text>
         {paragraph}
       </Text>
-      <Box display="flex">
+      <Box display="flex" pos="sticky" bottom={0} pt={10} mt={10} bg="#fff" style={{ borderTop: '1px solid #ddd' }}>
         <Input placeholder="Type your query here." onChange={(e) => { setQueryText(e.target.value); }} mr={10} flex={1} />
         <Button onClick={() => { onSubmitQuery(queryText); }}>Send</Button>
       </Box>
