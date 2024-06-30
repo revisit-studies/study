@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta13/src/parser/GlobalConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0/src/parser/GlobalConfigSchema.json",
     "configsList": [
         "sumsifter",
         "sumsifter-memory-study-p1",
@@ -78,7 +78,5 @@
             "path": "test-parser-errors/config.json",
             "test": true
         }
-    },
-    "adminUsers": []
-
+    }
 }

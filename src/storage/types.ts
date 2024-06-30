@@ -54,7 +54,7 @@ export interface ParticipantData {
   participantId: string;
   /** Unique ID corresponding to the Configuration that the participant received. */
   participantConfigHash: string;
-  /** Sequence of components that the participant received. */
+  /** Sequence of components that the participant received. This is an internal data type and is compiled from the ComponentBlocks in the StudyConfig sequence. */
   sequence: Sequence;
   /** Object whose keys are the component names and values are StoredAnswer objects. */
   answers: Record<string, StoredAnswer>;
