@@ -21,7 +21,16 @@ jobs:
           cache: 'yarn'
 
       - run: yarn install --immutable
-      - run: yarn build
+
+      - name: Build with .env file
+        if: ${{ vars.VITE_STORAGE_ENGINE == '' }}
+        run: yarn build
+
+      - name: Build with github environment variables
+        if: ${{ vars.VITE_STORAGE_ENGINE != '' }}
+        run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE yarn build
+        env:
+          VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
 
       - uses: peaceiris/actions-gh-pages@v3
         name: Deploy

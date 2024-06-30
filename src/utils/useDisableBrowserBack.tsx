@@ -10,10 +10,7 @@ export function useDisableBrowserBack() {
   const storeDispatch = useStoreDispatch();
 
   useEffect(() => {
-    const searchParams = new URLSearchParams(window.location.search);
-    const isAdmin = (searchParams.get('admin') || 'f') === 't';
-
-    if (import.meta.env.PROD && !isAdmin && import.meta.env.VITE_REVISIT_MODE !== 'public') {
+    if (import.meta.env.PROD) {
       window.history.pushState(null, '', window.location.href);
       window.onpopstate = () => {
         window.history.pushState(null, '', window.location.href);

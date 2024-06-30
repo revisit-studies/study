@@ -10,6 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { ParticipantData } from '../../storage/types';
 import { StoredAnswer, StudyConfig } from '../../parser/types';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
+import { ParticipantStatusBadges } from '../components/interface/ParticipantStatusBadges';
 
 function isWithinRange(answers: Record<string, StoredAnswer>, rangeTime: [Date | null, Date | null]) {
   const timeStamps = Object.values(answers).map((ans) => [ans.startTime, ans.endTime]).flat();
@@ -35,14 +36,18 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
     new Date(new Date(Math.max(...(completionTimes.length > 0 ? completionTimes : [new Date().getTime()]))).setHours(24, 0, 0, 0)),
   ]);
 
-  const completedParticipants = useMemo(() => allParticipants.filter((d) => d.completed && isWithinRange(d.answers, rangeTime)), [allParticipants, rangeTime]);
-  const inProgressParticipants = useMemo(() => allParticipants.filter((d) => !d.completed && isWithinRange(d.answers, rangeTime)), [allParticipants, rangeTime]);
+  const [completed, inProgress, rejected, completedInTime] = useMemo(() => {
+    const comp = allParticipants.filter((d) => !d.rejected && d.completed);
+    const prog = allParticipants.filter((d) => !d.rejected && !d.completed);
+    const rej = allParticipants.filter((d) => d.rejected);
+    return [comp, prog, rej, comp.filter((d) => isWithinRange(d.answers, rangeTime))];
+  }, [allParticipants, rangeTime]);
 
   const completedStatsData = useMemo(() => {
-    if (completedParticipants.length > 0) {
+    if (completedInTime.length > 0) {
       return [
         { Date: rangeTime[0]?.getTime(), Participants: 0 },
-        ...completedParticipants
+        ...completedInTime
           .map((participant) => Math.max(
             ...Object.values(participant.answers).map((ans) => ans.endTime).flat(),
           ))
@@ -51,12 +56,12 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
             Date: time,
             Participants: idx,
           })),
-        { Date: rangeTime[1]?.getTime(), Participants: completedParticipants.length },
+        { Date: rangeTime[1]?.getTime(), Participants: completedInTime.length },
       ];
     }
 
     return [];
-  }, [completedParticipants, rangeTime]);
+  }, [completedInTime, rangeTime]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const spec: any = useMemo(() => ({
@@ -78,26 +83,13 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
   return (
     <Container>
       <Card ref={ref} padding="lg" shadow="md" withBorder>
-        <Flex align="center" mb={16} justify="space-between">
-          <Flex direction="column">
-            <Title order={5} mb={4}>{studyId}</Title>
-            <Flex direction="row" wrap="nowrap" gap="xs" align="center" mb={4}>
-              <Badge size="sm" color="orange">
-                Total:&nbsp;
-                {inProgressParticipants.length + completedParticipants.length}
-              </Badge>
-              <Badge size="sm" color="green">
-                Completed:&nbsp;
-                {completedParticipants.length}
-              </Badge>
-              <Badge size="sm" color="cyan">
-                In Progress:&nbsp;
-                {inProgressParticipants.length}
-              </Badge>
-            </Flex>
+        <Flex align="center" mb="xs" justify="space-between">
+          <Flex direction="row" align="center">
+            <Title order={5}>{studyId}</Title>
+            <ParticipantStatusBadges completed={completed.length} inProgress={inProgress.length} rejected={rejected.length} filteredCompleted={completedInTime.length} />
           </Flex>
           <Group>
-            <DownloadButtons allParticipants={allParticipants} studyId={studyId} config={config} />
+            <DownloadButtons allParticipants={allParticipants} studyId={studyId} />
 
             <Popover opened={checkOpened}>
               <Popover.Target>

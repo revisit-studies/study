@@ -18,6 +18,7 @@ import AppHeader from './analysis/components/interface/AppHeader';
 import { fetchStudyConfigs } from './utils/fetchConfig';
 import { initializeStorageEngine } from './storage/initialize';
 import { useStorageEngine } from './storage/storageEngineHooks';
+import { FirebaseStorageEngine } from './storage/engines/FirebaseStorageEngine';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
@@ -58,6 +59,19 @@ export function GlobalConfigParser() {
     fn();
   }, [setStorageEngine, storageEngine]);
 
+  const analysisProtectedCallback = async (studyId:string) => {
+    if (storageEngine instanceof FirebaseStorageEngine) {
+      const modes = await storageEngine.getModes(studyId);
+      if (modes.analyticsInterfacePubliclyAccessible) {
+        // If accessible, disable
+        return false;
+      }
+      // If not accessible, enable protection
+      return true;
+    }
+    return false;
+  };
+
   return globalConfig ? (
     <BrowserRouter basename={PREFIX}>
       <AuthProvider>
@@ -86,11 +100,9 @@ export function GlobalConfigParser() {
               <Route
                 path="/analysis/dashboard"
                 element={(
-                  <ProtectedRoute>
-                    <AnalysisDashboard
-                      globalConfig={globalConfig}
-                    />
-                  </ProtectedRoute>
+                  <AnalysisDashboard
+                    globalConfig={globalConfig}
+                  />
               )}
               />
               <Route
@@ -99,8 +111,12 @@ export function GlobalConfigParser() {
               />
               <Route
                 path="/analysis/stats/:studyId/:tab"
+                // loader={(params)=>{
+                //   console.log(params)
+                //   return false;
+                // }}
                 element={(
-                  <ProtectedRoute>
+                  <ProtectedRoute paramToCheck="studyId" paramCallback={analysisProtectedCallback}>
                     <AnalysisInterface
                       globalConfig={globalConfig}
                     />

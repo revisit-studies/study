@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta13/src/parser/StudyConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
         "title": "Dynamic React.js Stimuli: A Graphical Perception Experiment",
         "version": "pilot",
@@ -7,7 +7,7 @@
             "The reVISit Team"
         ],
         "date": "2023-04-28",
-        "description": "A demo using dynamic React components as stimuli to replicate a Cleveland & McGill graphical perception task (doi:10.1080/01621459.1984.10478080), with a consent form, brief training, a post study survey. Data is collected via form elements in validated fields.",
+        "description": "A demo using dynamic React components as stimuli to replicate a Heer/Bostock perception study (doi:10.1145/1753326.1753357) that extends Cleveland & McGill graphical perception task (doi:10.1080/01621459.1984.10478080), with a consent form, brief training, a post study survey. Data is collected via form elements in validated fields.",
         "organizations": [
             "University of Utah",
             "WPI",
