@@ -9,6 +9,8 @@ import { StimulusParams } from '../../store/types';
 import { SumParams } from './types';
 import Source from './Source';
 
+const API_BASE_URL = import.meta.env.VITE_SUMSIFTER_API_URL;
+
 function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
 
@@ -48,7 +50,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
 
   useEffect(() => {
     async function fetchData() {
-      const response = await fetch('http://localhost:5000/summary/', {
+      const response = await fetch(`${API_BASE_URL}/summary/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -167,7 +169,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
 
   const handleSubmitQuery = useCallback((queryPrompt: string) => {
     async function fetchData() {
-      const response = await fetch('http://localhost:5000/summary/', {
+      const response = await fetch(`${API_BASE_URL}/summary/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
