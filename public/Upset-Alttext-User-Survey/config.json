@@ -652,6 +652,88 @@
             "path": "Upset-Alttext-User-Survey/assets/upset.md",
             "response": []
         },
+        "Training":{
+            "type": "image",
+            "nextButtonLocation": "sidebar",
+            "path": "Upset-Alttext-User-Survey/assets/T.png",
+            "style": {
+                "width": "460px",
+                "height": "745px"
+            },
+            "instruction": "Please answer the following questions:",
+            "response": [
+                {
+                    "id": "1",
+                    "prompt": "What is the largest set?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "shortText",
+                    "requiredValue": "Drama",
+                    "requiredLabel": "Drama",
+                    "placeholder": "Please enter your answer here"
+                },
+                {
+                    "id": "2",
+                    "prompt": "What is the largest intersection?",
+                    "secondaryText": "e.g., set_A and set_B",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "shortText",
+                    "requiredValue": "Drama",
+                    "requiredLabel": "Drama",
+                    "placeholder": "Please enter your answer here"
+                },
+                {
+                    "id": "3",
+                    "prompt": "How many sets make up the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "requiredValue": "Independent set",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "It is only of a single set.",
+                            "value": "Independent set"
+                        },
+                        {
+                            "label": "It is the intersection of 2-3 sets.",
+                            "value": "Low set"
+                        },
+                        {
+                            "label": "It is the intersection of many sets.",
+                            "value": "Medium / High order set"
+                        }
+                        
+                    ]
+                    
+                },
+                {
+                    "id": "4",
+                    "prompt": "How similar are the set sizes?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "requiredValue": "Diverging a lot",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Roughly equal (all the set sizes look similar).",
+                            "value": "Identical"
+                        },
+                        {
+                            "label": "Diverging a bit (the sizes of the largest set and the smallest set don't differ largely).",
+                            "value": "Diverging a bit"
+                        },
+                        {
+                            "label": "Diverging a lot (the sizes of the largest set and the smallest set differ largely).",
+                            "value": "Diverging a lot"
+                        }
+                    ]
+                }
+            ]
+
+        },
         "(A)Visual-Only-Questionnaire 1": {
             "baseComponent": "VO-image1",
             "path": "Upset-Alttext-User-Survey/assets/VO1.png",
@@ -758,6 +840,7 @@
             "Introduction",
             "Consent",
             "What Is UpSet?",
+            "Training",
             {
                 "order": "latinSquare",
                 "numSamples": 1,
