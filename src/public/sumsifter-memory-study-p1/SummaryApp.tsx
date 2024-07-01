@@ -11,7 +11,7 @@ import { useNextStep } from '../../store/hooks/useNextStep';
 
 import '@react-pdf-viewer/core/lib/styles/index.css';
 
-const TOTAL_TIME = 5 * 60 * 1000; // 5 minutes
+const TOTAL_TIME = 30 * 60 * 1000; // 30 minutes
 
 function SummaryApp({ parameters: tempParameters, setAnswer }: StimulusParams<SumParams>) {
   const [docIndex, setDocIndex] = useState(0);
