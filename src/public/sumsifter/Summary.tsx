@@ -13,6 +13,8 @@ interface SummaryProps {
   activeSourceId: string | null;
   onSummaryBadgePositionChange: (badgeTop: number) => void;
   onSubmitQuery: (queryText: string) => void;
+  queryText: string;
+  onQueryTextChange: (queryText: string) => void;
 }
 
 function SummarySourceItem({
@@ -38,15 +40,13 @@ function SummarySourceItem({
 }
 
 function Summary({
-  sentences, onSourceClick, activeSourceId, onSummaryBadgePositionChange, onSubmitQuery,
+  sentences, onSourceClick, activeSourceId, onSummaryBadgePositionChange, onSubmitQuery, queryText, onQueryTextChange,
 }: SummaryProps) {
   const ref = React.useRef<HTMLDivElement>(null);
   const activeRef = React.useRef<HTMLSpanElement | null>(null);
   const [positionTop, setPositionTop] = React.useState(0);
   const [positionLeft, setPositionLeft] = React.useState(0);
   const [positionLeftSummary, setPositionLeftSummary] = React.useState(0);
-
-  const [queryText, setQueryText] = React.useState('');
 
   useEffect(() => {
     if (ref.current) {
@@ -108,7 +108,7 @@ function Summary({
         {paragraph}
       </Text>
       <Box display="flex" pos="sticky" bottom={0} pt={10} mt={10} bg="#fff" style={{ borderTop: '1px solid #ddd' }}>
-        <Input placeholder="Type your query here." onChange={(e) => { setQueryText(e.target.value); }} mr={10} flex={1} />
+        <Input placeholder="Type your query here." value={queryText} onChange={(e) => { onQueryTextChange(e.target.value); }} mr={10} flex={1} />
         <Button onClick={() => { onSubmitQuery(queryText); }}>Send</Button>
       </Box>
       <div style={{

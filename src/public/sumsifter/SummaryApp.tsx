@@ -21,6 +21,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   const [sourceBadgeTop, setSourceBadgeTop] = useState(0);
   const [sourceBadgeLeft, setSourceBadgeLeft] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const [queryText, setQueryText] = useState('');
 
   const { prompt: defaultPrompt, document: studyDocument } = parameters;
 
@@ -137,6 +138,10 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
     fetchData();
   }, [studyDocument]);
 
+  const handleAddToSummary = useCallback((sourceText: string) => {
+    setQueryText((prev) => `${prev} ${sourceText}`);
+  }, []);
+
   return (
     <>
       {isLoading && (
@@ -170,10 +175,10 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
       )}
       <Grid gutter={50}>
         <Grid.Col span={6} pos="relative">
-          <Summary sentences={summaryData} onSummaryBadgePositionChange={handleSummaryBadgePositionChange} onSourceClick={handleSourceClick} activeSourceId={activeSourceId} onSubmitQuery={handleSubmitQuery} />
+          <Summary sentences={summaryData} onSummaryBadgePositionChange={handleSummaryBadgePositionChange} onSourceClick={handleSourceClick} activeSourceId={activeSourceId} onSubmitQuery={handleSubmitQuery} queryText={queryText} onQueryTextChange={setQueryText} />
         </Grid.Col>
         <Grid.Col span={6}>
-          <Source sourceList={sourcesData} onSourceBadgePositionChange={handleSourceBadgePositionChange} activeSourceId={activeSourceId} />
+          <Source sourceList={sourcesData} onSourceBadgePositionChange={handleSourceBadgePositionChange} activeSourceId={activeSourceId} onAddToSummary={handleAddToSummary} />
         </Grid.Col>
       </Grid>
       {activeSourceId && (
