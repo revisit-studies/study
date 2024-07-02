@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import {
   Badge, Title, ScrollArea, Text,
   Box,
-  Input,
+  Textarea,
   Button,
 } from '@mantine/core';
 import style from './sumsifter.module.css';
@@ -108,7 +108,7 @@ function Summary({
         {paragraph}
       </Text>
       <Box display="flex" pos="sticky" bottom={0} pt={10} mt={10} bg="#fff" style={{ borderTop: '1px solid #ddd' }}>
-        <Input placeholder="Type your query here." value={queryText} onChange={(e) => { onQueryTextChange(e.target.value); }} mr={10} flex={1} />
+        <Textarea minRows={1} maxRows={4} autosize placeholder="Type your query here." value={queryText} onChange={(e) => { onQueryTextChange(e.target.value); }} mr={10} flex={1} />
         <Button onClick={() => { onSubmitQuery(queryText); }}>Send</Button>
       </Box>
       <div style={{

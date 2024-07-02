@@ -139,7 +139,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   }, [studyDocument]);
 
   const handleAddToSummary = useCallback((sourceText: string) => {
-    setQueryText((prev) => `${prev} ${sourceText}`);
+    setQueryText((prev) => `${prev}\n${sourceText}`);
   }, []);
 
   return (
