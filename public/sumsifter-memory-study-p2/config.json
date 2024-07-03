@@ -80,20 +80,20 @@
                           "type": "radio",
                           "options": [
                               {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
+                                  "label": "Definite no",
+                                  "value": "Option 1"
                               },
                               {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
+                                  "label": "Leaning towards no",
+                                  "value": "Option 2"
                               },
                               {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
+                                  "label": "Leaning towards yes",
+                                  "value": "Option 3"
                               },
                               {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
+                                  "label": "Definite yes",
+                                  "value": "Option 4"
                               }
                           ]
                       },
@@ -104,22 +104,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -129,22 +129,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -154,22 +154,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -179,22 +179,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -204,22 +204,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -229,22 +229,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -254,22 +254,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -279,22 +279,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -304,22 +304,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -329,22 +329,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -354,22 +354,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -379,22 +379,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -404,22 +404,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -429,22 +429,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -454,22 +454,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -479,22 +479,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -504,22 +504,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -529,22 +529,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -554,22 +554,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -579,22 +579,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -604,22 +604,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -629,22 +629,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -654,22 +654,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -679,22 +679,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -704,22 +704,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -729,22 +729,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -754,22 +754,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -779,22 +779,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -804,22 +804,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -829,22 +829,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -854,22 +854,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -879,22 +879,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -904,22 +904,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -929,22 +929,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -954,22 +954,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -979,22 +979,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1004,22 +1004,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1029,22 +1029,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1054,22 +1054,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1079,22 +1079,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1104,22 +1104,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1129,22 +1129,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1154,22 +1154,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1179,22 +1179,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1204,22 +1204,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1229,22 +1229,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1254,22 +1254,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1279,22 +1279,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1304,22 +1304,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1329,22 +1329,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1354,22 +1354,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1379,22 +1379,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1404,22 +1404,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1429,22 +1429,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1454,22 +1454,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1479,22 +1479,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1504,22 +1504,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1529,22 +1529,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1554,22 +1554,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1579,22 +1579,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1604,22 +1604,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1629,22 +1629,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1654,22 +1654,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1679,22 +1679,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1704,22 +1704,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1729,22 +1729,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1754,22 +1754,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1779,22 +1779,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1804,22 +1804,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1829,22 +1829,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1854,22 +1854,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1879,22 +1879,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1904,22 +1904,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1929,22 +1929,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1954,22 +1954,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -1979,22 +1979,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -2004,22 +2004,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -2029,22 +2029,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -2054,22 +2054,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -2079,22 +2079,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -2104,22 +2104,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -2129,22 +2129,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -2154,22 +2154,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -2179,22 +2179,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -2204,22 +2204,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -2229,22 +2229,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -2254,22 +2254,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -2279,22 +2279,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       },
                       {
@@ -2304,22 +2304,22 @@
                           "location": "aboveStimulus",
                           "type": "radio",
                           "options": [
-                              {
-                                  "label": "Option 1",
-                                  "value": "Definite no"
-                              },
-                              {
-                                  "label": "Option 2",
-                                  "value": "Leaning towards no"
-                              },
-                              {
-                                  "label": "Option 3",
-                                  "value": "Leaning towards yes"
-                              },
-                              {
-                                  "label": "Option 4",
-                                  "value": "Definite yes"
-                              }
+                            {
+                                "label": "Definite no",
+                                "value": "Option 1"
+                            },
+                            {
+                                "label": "Leaning towards no",
+                                "value": "Option 2"
+                            },
+                            {
+                                "label": "Leaning towards yes",
+                                "value": "Option 3"
+                            },
+                            {
+                                "label": "Definite yes",
+                                "value": "Option 4"
+                            }
                           ]
                       }
                   ]
