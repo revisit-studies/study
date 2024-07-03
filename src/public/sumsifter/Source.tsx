@@ -1,7 +1,11 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
+import { IconCirclePlus } from '@tabler/icons-react';
 import {
   Text, Title, ScrollArea, Badge,
-  Button,
+  Input,
+  ActionIcon,
+  Tooltip,
+  Divider,
 } from '@mantine/core';
 import style from './sumsifter.module.css';
 
@@ -9,7 +13,7 @@ interface SourceProps {
   sourceList: { id?: string; text: string }[];
   activeSourceId: string | null;
   onSourceBadgePositionChange: (badgeLeft: number, badgeTop: number) => void;
-  onAddToSummary: (text: string) => void;
+  onAddToSummary: (text: string, prompt: string) => void;
 }
 
 function SourceItem({ source, isActive, onActiveRefChange }: { source: { id?: string; text: string }; isActive: boolean, onActiveRefChange: (ref: HTMLSpanElement | null) => void }) {
@@ -57,6 +61,8 @@ function Source({
   const [positionLeft, setPositionLeft] = React.useState(0);
   const [userSelection, setUserSelection] = React.useState<string | null>(null);
   const [userSelectectionRect, setUserSelectionRect] = React.useState<DOMRect | null>(null);
+  const [sourceQuery, setSourceQuery] = React.useState<string>('');
+  const [highlightClientRects, setHighlightClientRects] = React.useState<DOMRect[] | null>(null);
 
   useEffect(() => {
     if (ref.current) {
@@ -85,13 +91,22 @@ function Source({
       const handleMouseUp = () => {
         // get selected text
         const selection = window.getSelection();
-        if (selection) {
+        if (selection && selection.toString() !== '') {
           setUserSelection(selection.toString());
 
           // get the bounding box of the selection
           setUserSelectionRect(selection.getRangeAt(0).getBoundingClientRect());
-        } else {
-          setUserSelection(null);
+
+          const ranges = selection.getRangeAt(0);
+
+          setHighlightClientRects(Array.from(ranges.getClientRects()).map((rect) => (
+            new DOMRect(
+              rect.left - (contentRef.current?.getBoundingClientRect().left || 0),
+              rect.top - (contentRef.current?.getBoundingClientRect().top || 0),
+              rect.width,
+              rect.height,
+            )
+          )));
         }
       };
 
@@ -104,6 +119,21 @@ function Source({
   }, [ref]);
 
   useEffect(() => {
+    if (highlightClientRects) {
+      const removeHighlight = () => {
+        setHighlightClientRects(null);
+        setUserSelection(null);
+        setSourceQuery('');
+      };
+      window.addEventListener('mousedown', removeHighlight);
+      return () => {
+        window.removeEventListener('mousedown', removeHighlight);
+      };
+    }
+    return () => { };
+  }, [highlightClientRects]);
+
+  useEffect(() => {
     const element = ref.current;
     setPositionLeft(element?.getBoundingClientRect().left || 0);
     setPositionTop(activeRef.current?.getBoundingClientRect().top || 0);
@@ -112,20 +142,48 @@ function Source({
 
   const userSelectionActionBox = useMemo(() => ({
     top: (userSelectectionRect?.top || 0) - (contentRef.current?.getBoundingClientRect().top || 0),
-    left: (userSelectectionRect?.left || 0) - (contentRef.current?.getBoundingClientRect().left || 0) + (userSelectectionRect?.width || 0) / 2,
+    left: 0,
   }), [userSelectectionRect, contentRef]);
 
   const handleAddToSummary = useCallback(() => {
-    onAddToSummary(userSelection || '');
-
-    // clear selection
-    window.getSelection()?.removeAllRanges();
+    onAddToSummary(userSelection || '', 'Include this to the summary.');
     setUserSelection(null);
+    setHighlightClientRects(null);
   }, [userSelection, onAddToSummary]);
+
+  const handleSourceQueryChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    setSourceQuery(event.target.value);
+  }, []);
+
+  const handleSourceQueryKeyUp = useCallback((event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (event.key === 'Enter') {
+      onAddToSummary(userSelection || '', sourceQuery);
+      setSourceQuery('');
+      setUserSelection(null);
+      setHighlightClientRects(null);
+    }
+  }, [sourceQuery, userSelection, onAddToSummary]);
 
   return (
     <ScrollArea style={{ height: 'calc(100vh - 110px)' }} pos="relative" viewportRef={ref}>
       <div ref={contentRef} style={{ position: 'relative' }}>
+        {/* background highlight */}
+        {highlightClientRects && (
+          <div className={style.textHighlightContainer}>
+            {highlightClientRects.map((rect, index) => (
+              <div
+                key={index}
+                className={style.textHighlight}
+                style={{
+                  top: rect.top,
+                  left: rect.left,
+                  width: rect.width,
+                  height: rect.height,
+                }}
+              />
+            ))}
+          </div>
+        )}
 
         <Title order={2}>Source Document</Title>
 
@@ -140,8 +198,15 @@ function Source({
               top: userSelectionActionBox.top,
               left: userSelectionActionBox.left,
             }}
+            onMouseDown={(e) => { e.stopPropagation(); }}
           >
-            <Button variant="transparent" size="xs" color="gray" onClick={handleAddToSummary}>Add to Summary</Button>
+            <Tooltip label="Include in summary">
+              <ActionIcon variant="transparent" size="md" color="gray" onClick={handleAddToSummary}>
+                <IconCirclePlus />
+              </ActionIcon>
+            </Tooltip>
+            <Divider orientation="vertical" />
+            <Input size="xs" value={sourceQuery} onChange={handleSourceQueryChange} onKeyUp={handleSourceQueryKeyUp} flex={1} ml={4} />
           </div>
         )}
 
