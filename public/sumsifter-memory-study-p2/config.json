@@ -1,0 +1,2343 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Experiment on Analysts' Memory and Recall - Part 2",
+    "version": "pilot",
+    "authors": ["SCADS SumSifter Team"],
+    "date": "2024-06-10",
+    "description": "Brief survey on anlayst' memory and recall'.",
+    "organizations": ["WPI"]
+  },
+  "uiConfig": {
+    "contactEmail": "ltharri2@ncsu.edu",
+    "helpTextPath": "sumsifter-memory-study-p2/assets/introduction.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true,
+    "studyEndMsg": "**That is the end!**<br> Please reach out to Melissa if you have questions. <br><br>**Thank you for completing the study. You have made SCADS proud!**"
+  },
+  "baseComponents": {
+    "summarySource": {
+      "description": "A summary and source.",
+      "type": "react-component",
+      "path": "sumsifter-memory-study-p2/SummaryApp.tsx",
+      "nextButtonLocation": "sidebar",
+      "instructionLocation": "sidebar",
+      "response": []
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "sumsifter-memory-study-p2/assets/introduction.md",
+      "response": [
+        {
+          "id": "prolificId",
+          "prompt": "<br><br>When you’re ready to begin, type in the ID value you got from Melissa over email and click next.",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Type in the same ID value you got from Melissa over email for part-1 of the study and click next.",
+          "paramCapture": "PROLIFIC_PID"
+        }
+      ]
+    },
+    "tutorial1": {
+      "type": "markdown",
+      "path": "sumsifter-memory-study-p2/assets/tutorial1.md",
+      "nextButtonText": "Begin",
+      "response": []
+    },
+    "free-text-response": {
+      "type": "markdown",
+      "path": "sumsifter-memory-study-p2/assets/free-text-response.md",
+      "response": [
+        {
+          "id": "text-response",
+          "prompt": "",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "longText",
+          "placeholder": "Enter your response here."
+        }
+      ]
+    },
+    "tutorial2": {
+      "type": "markdown",
+      "path": "sumsifter-memory-study-p2/assets/tutorial2.md",
+      "nextButtonText": "Begin",
+      "response": []
+    },
+    "multiple-choice": {
+                "type": "questionnaire",
+                "response": [
+                    {
+                          "id": "1",
+                          "prompt": "David Burns of NASA's Marshall Space Flight Center proposed a new idea called a 'helical engine'.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "2",
+                          "prompt": "The helical engine would only operate in a frictionless environment.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "3",
+                          "prompt": "Deep space travel has to consider thrust versus large propellant storage tanks.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "4",
+                          "prompt": "The helical engine relies on quantum tunneling to achieve fuel-free propulsion.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "5",
+                          "prompt": "Burns' helical engine has been endorsed by several prominent physicists who believe it could redefine space travel.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "6",
+                          "prompt": "The helical engine has been successfully tested in a laboratory environment.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "7",
+                          "prompt": "SwRI leads NASA's New Horizons mission.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "8",
+                          "prompt": "New Horizons has enough fuel for another mission.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "9",
+                          "prompt": "The small Kuiper Belt object (KBO) New Horizons flew by is called Ultima Thule.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "10",
+                          "prompt": "SwRI said the Pluto orbiter will include a lander capable of drilling into Pluto's surface to search for signs of life.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "11",
+                          "prompt": "NASA has already allocated a specific launch date for the SwRI Pluto orbiter mission, set for 2025.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "12",
+                          "prompt": "The SwRI Pluto orbiter will utilize AI to autonomously navigate and conduct scientific experiments without human intervention.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "13",
+                          "prompt": "Astronaut Buzz Aldrin thinks NASA won't land on Mars until around 2040.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "14",
+                          "prompt": "Bridenstine thinks the moon is the perfect test ground for technologies that would help us live and work on Mars.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "15",
+                          "prompt": "Jim Bridenstine and Mike Pence both spoke at the International Astronautical Congress.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "16",
+                          "prompt": "The Artemis program will include the development of a new space station in Mars orbit, intended to be operational by 2030.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "17",
+                          "prompt": "Jim Bridenstine announced that NASA has already completed the construction of the spacecraft that will take humans to Mars.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "18",
+                          "prompt": "Vice President Mike Pence stated that private companies like SpaceX and Blue Origin will not be involved in the NASA Mars mission.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "19",
+                          "prompt": "The Samsung \"Space Selfie\" contained cameras and a Samsung phone.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "20",
+                          "prompt": "Welke had their power cut off by the Samsung crash landing.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "21",
+                          "prompt": "The person who retrieved the Space Selfie contraption was from Raven Industries.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "22",
+                          "prompt": "The Samsung balloon had been circling the Earth for over a month before it finally descended.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "23",
+                          "prompt": "The parachuted Samsung object caused significant damage to the Welke's barn and fencing.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "24",
+                          "prompt": "Nancy Welke and her husband received financial compensation from Samsung for recovering the device.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "25",
+                          "prompt": "SpaceX has already been contracted by Intuitive Machines and ispace to deliver payloads to the Moon.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "26",
+                          "prompt": "SpaceX's Mk1 and Mk2 high altitude test vehicle will be proceeded by ships that test orbital flight.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "27",
+                          "prompt": "SpaceX's Starship is intended to be a successor to both Falcon 9 and Falcon Heavy.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "28",
+                          "prompt": "Gwynne Shotwell announced that SpaceX will partner with the European Space Agency (ESA) to develop a lunar base by 2025.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "29",
+                          "prompt": "SpaceX has already completed an orbital test flight of the Starship.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "30",
+                          "prompt": "Elon Musk claimed he will be launching a mission to explore the outer edges of the solar system using the Starship by 2030.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "31",
+                          "prompt": "The Mars 2020 rover will be named by a contest from US students.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "32",
+                          "prompt": "The descent vehicle for the Mars 2020 rover can adjust using retrorockets to allow for an autonomous landing.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "33",
+                          "prompt": "The Mars 2020 rover has a \"rocker-bogie\" suspension system.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "34",
+                          "prompt": "NASA has partnered with Tesla to install solar panels on the Mars 2020 rover, allowing it to recharge during its mission.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "35",
+                          "prompt": "The Mars 2020 rover includes an advanced water detection system that can map underground water reserves on Mars.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "36",
+                          "prompt": "The Mars 2020 rover will be the first rover to carry a drone that will assist in mapping and scouting the Martian terrain.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "37",
+                          "prompt": "Bigelow's B330 lunar habitat is inflatable and meant to protect inhabitants from radiation and debris.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "38",
+                          "prompt": "NASA wants to review all five Gateway mockups so they can take pieces they do and do not like from each.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "39",
+                          "prompt": "Lockheed Martin's inflatable lunar habitat design is adapted from a previous shipping container design.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "40",
+                          "prompt": "NASA intends to include a small greenhouse in each lunar habitat to grow food for the astronauts.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "41",
+                          "prompt": "Each lunar habitat will be equipped with a 3D printer that can create any tool or spare part needed by the astronauts.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "42",
+                          "prompt": "NASA asked five companies for blueprints of lunar habitats, but did not commission prototypes of these habitats to be built.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "43",
+                          "prompt": "OTV-5 flew higher than the previous X-37B flights.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "44",
+                          "prompt": "The success of X-37B results from a government and industry partnership.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "45",
+                          "prompt": "The first X-37B mission (OTV-1) spent less than a year in orbit.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "46",
+                          "prompt": "The X-37B space plane is capable of carrying astronauts in addition to its payloads.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "47",
+                          "prompt": "The X-37B space plane was developed by SpaceX in collaboration with NASA.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "48",
+                          "prompt": "The OTV-5 mission was the first to be launched from the newly constructed Air Force facility in Alaska.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "49",
+                          "prompt": "SpaceX's successful Crew Dragon test flight concludes the investigation of the previous leaky valves.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "50",
+                          "prompt": "The last test of the Crew Dragon before they can be certified will be sending two astronauts up to the ISS.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "51",
+                          "prompt": "The Crew Dragon's emergency abort engines are known as SuperDracos.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "52",
+                          "prompt": "The Crew Dragon capsule is designed to carry up to 12 astronauts at a time.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "53",
+                          "prompt": "SpaceX plans to launch the Crew Dragon directly to Mars as part of its Commercial Crew Program.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "54",
+                          "prompt": "SpaceX has partnered with the European Space Agency to co-develop the Crew Dragon's emergency systems.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "55",
+                          "prompt": "Two astronauts will soon do four spacewalks to repair the Alpha Magnetic Spectrometer (AMS) outside the ISS.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "56",
+                          "prompt": "The AMS needs repair because one pump failed, followed by a second one months later.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "57",
+                          "prompt": "The AMS supports a dark matter experiment.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "58",
+                          "prompt": "The AMS experiment was originally launched to the ISS using a Russian Soyuz rocket.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "59",
+                          "prompt": "The spacewalks will involve testing a new spacesuit that can withstand extreme temperatures.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "60",
+                          "prompt": "The AMS repairs will involve attaching a new robotic arm to assist with future spacewalks.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "61",
+                          "prompt": "NASA's Volatiles Investigating Polar Exploration Rover (VIPER) will explore the lunar south pole in 2022.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "62",
+                          "prompt": "Rough estimates for water quantities at each lunar pole range from 100 million to 1 billion metric tons.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "63",
+                          "prompt": "NASA intentionally crashed LCROSS into the Moon’s south pole in 2009.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "64",
+                          "prompt": "The water reserves on the moon can be replenished within a few decades through natural processes.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "65",
+                          "prompt": "The VIPER rover will use solar panels to power itself during its exploration mission on the moon.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "66",
+                          "prompt": "The VIPER mission is a collaborative effort between NASA and the European Space Agency (ESA).",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "67",
+                          "prompt": "On Mars, oxygen levels rise about 30% in the Spring and Summer.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "68",
+                          "prompt": "Scientists hesitate to claim if the high amounts of methane on Mars are due to life, as is the cause on Earth.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "69",
+                          "prompt": "When NASA saw unexpected methane and oxygen outputs on MARS, they checked if SAM was malfunctioning.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "70",
+                          "prompt": "Curiosity's data shows that carbon monoxide levels fluctuate significantly with the Martian seasons.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "71",
+                          "prompt": "The recent study on Mars' atmospheric oxygen was published in the journal Science.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "72",
+                          "prompt": "The Curiosity rover detected the presence of liquid water on the Martian surface through its atmospheric analysis.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "73",
+                          "prompt": "A focus of new manned spacecraft manufacturing is reliable functional parachutes.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "74",
+                          "prompt": "Bridenstine says astronaut launch timelines are only possible if things go right, which is often not how these development programs go.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "75",
+                          "prompt": "NASA began safety reviews of SpaceX after Musk publicly smoked marijuana on a podcast.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "76",
+                          "prompt": "SpaceX's Crew Dragon capsule has a new type of propulsion system that allows for reentry into Earth's atmosphere without parachutes.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "77",
+                          "prompt": "Boeing has announced a partnership with SpaceX to develop a new generation of reusable rockets.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "78",
+                          "prompt": "NASA's Commercial Crew program will include a new round of funding exclusively for developing space tourism.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "79",
+                          "prompt": "Astronomers are concerned about Musk's plan to launch thousands of satellites as it may alter detection of faint light in space.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "80",
+                          "prompt": "Rural stargazers will be able to see a change in the night sky if all of Starlink's planned satellites get launched.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "81",
+                          "prompt": "The protective nose of the rockets used to launch Starlink satellites are reusable if the company can catch them before hitting seawater.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "82",
+                          "prompt": "The Starlink project has received funding from the United Nations to support global education initiatives.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "83",
+                          "prompt": "SpaceX has received approval from NASA to use the International Space Station as a relay point for the Starlink network.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "84",
+                          "prompt": "SpaceX plans to launch a second constellation of Starlink satellites specifically dedicated to climate monitoring.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "85",
+                          "prompt": "Hayabusa2 went to Ryugu, a dark, carbon-rich asteroid 180 million miles away from Earth.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "86",
+                          "prompt": "The goal of asteroid sampling is to study the ingredients that made our planets and look for the origins of life.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "87",
+                          "prompt": "Japan's Hayabusa2 and NASA's OSIRIS-REx have similar goals, and thus the teams have worked together previously.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "88",
+                          "prompt": "The Hayabusa2 mission discovered a previously unknown type of mineral on the surface of Ryugu.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "89",
+                          "prompt": "The Hayabusa2 capsule's landing was assisted by remote-controlled drones to ensure it could be found.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      },
+                      {
+                          "id": "90",
+                          "prompt": "The samples returned by Hayabusa2 include microdiamonds formed during asteroid collisions.",
+                          "required": true,
+                          "location": "aboveStimulus",
+                          "type": "radio",
+                          "options": [
+                              {
+                                  "label": "Option 1",
+                                  "value": "Definite no"
+                              },
+                              {
+                                  "label": "Option 2",
+                                  "value": "Leaning towards no"
+                              },
+                              {
+                                  "label": "Option 3",
+                                  "value": "Leaning towards yes"
+                              },
+                              {
+                                  "label": "Option 4",
+                                  "value": "Definite yes"
+                              }
+                          ]
+                      }
+                  ]
+                  
+                 
+                
+            }
+
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "tutorial1",
+      "free-text-response",
+      "tutorial2",
+      "multiple-choice"
+   
+    ]
+  }
+}

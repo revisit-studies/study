@@ -3,6 +3,8 @@
     "configsList": [
         "sumsifter",
         "sumsifter-memory-study-p1",
+        "sumsifter-memory-study-p2",
+        "sumsifter-chunking",
         "sumsifter-translation-and-attribution",
         "demo-html",
         "demo-cleveland",
@@ -26,6 +28,12 @@
         },
         "sumsifter-memory-study-p1": {
             "path": "sumsifter-memory-study-p1/config.json"
+        },
+        "sumsifter-memory-study-p2": {
+            "path": "sumsifter-memory-study-p2/config.json"
+        },
+        "sumsifter-chunking": {
+            "path": "sumsifter-chunking/config.json"
         },
         "sumsifter-translation-and-attribution": {
             "path": "sumsifter-translation-and-attribution/config.json"
