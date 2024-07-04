@@ -1,0 +1,155 @@
+{
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+      "title": "SumSifter - Chunking Study",
+      "version": "pilot",
+      "authors": [
+        "SCADS SumSifter Team"
+      ],
+      "date": "2024-06-10",
+      "description": "Brief survey on chunking: Analysts' perspective.",
+      "organizations": [
+        "WPI"
+      ]
+    },
+    "uiConfig": {
+      "contactEmail": "ltharri2@ncsu.edu",
+      "helpTextPath": "sumsifter-chunking/assets/introduction.md",
+      "logoPath": "revisitAssets/revisitLogoSquare.svg",
+      "withProgressBar": true,
+      "autoDownloadStudy": false,
+      "sidebar": true,
+      "studyEndMsg": "**Thank you for completing the study. You have made SCADS proud!**"
+    },
+    "baseComponents": {
+      "summarySource": {
+        "description": "A summary and source.",
+        "type": "react-component",
+        "path": "sumsifter-chunking/SummaryApp.tsx",
+        "nextButtonLocation": "sidebar",
+        "instructionLocation": "sidebar",
+        "response": []
+      }
+    },
+    "components": {
+      "introduction": {
+        "type": "markdown",
+        "path": "sumsifter-chunking/assets/introduction.md",
+        "response": [
+          {
+            "id": "prolificId",
+            "prompt": "Please enter your Name (or initials, or stay anonymous. You do you...)",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "shortText",
+            "placeholder": "Your Name",
+            "paramCapture": "PROLIFIC_PID"
+          }
+        ]
+      },
+      "tutorial": {
+        "type": "markdown",
+        "path": "sumsifter-chunking/assets/tutorial.md",
+        "nextButtonText": "Begin",
+        "response": []
+      },
+      "infochunk1": {
+        "baseComponent": "summarySource",
+        "instruction": "You have as much time as you want to read and mark a single text before clicking NEXT to move on, but you cannot return to a previous text.",
+        "parameters": {
+          "documents": [
+            "sumsifter-documents/Cybersecurity_report.pdf"
+          ]
+        },
+        "response": []
+      },
+      "infochunk2": {
+        "baseComponent": "summarySource",
+        "instruction": "You have as much time as you want to read and mark a single text before clicking NEXT to move on, but you cannot return to a previous text.",
+        "parameters": {
+          "documents": [
+            "sumsifter-documents/Intel_Report.pdf"
+          ]
+        },
+        "response": []
+      },
+        "infochunk3": {
+            "baseComponent": "summarySource",
+            "instruction": "You have as much time as you want to read and mark a single text before clicking NEXT to move on, but you cannot return to a previous text.",
+            "parameters": {
+            "documents": [
+                "sumsifter-documents/News_article.pdf"
+            ]
+            },
+            "response": []
+        },  
+        "infochunk4": {
+            "baseComponent": "summarySource",
+            "instruction": "You have as much time as you want to read and mark a single text before clicking NEXT to move on, but you cannot return to a previous text.",
+            "parameters": {
+            "documents": [
+                "sumsifter-documents/Technical_paper_excerpt.pdf"
+            ]
+            },
+            "response": []
+        },
+      "survey1": {
+        "type": "markdown",
+        "path": "sumsifter-chunking/assets/survey1.md",
+        "response": [
+          {
+            "id": "survey-content",
+            "prompt": "How similar was **the content** of the documents you saw in this survey to the documents you really work with (or have worked with) as an analyst?",
+            "required": false,
+            "location": "belowStimulus",
+            "type": "longText",
+            "placeholder": "E.g., topic X, topic Y."
+          },
+          {
+            "id": "survey-structure",
+            "prompt": "How similar were **the structures** of the documents you saw in this survey to the documents you really work with (or have worked with) as an analyst?",
+            "required": false,
+            "location": "belowStimulus",
+            "type": "longText",
+            "placeholder": "E.g., tweets, news articles,"
+          }
+        ]
+      },
+      "survey2": {
+        "type": "markdown",
+        "path": "sumsifter-chunking/assets/survey2.md",
+        "response": [
+          {
+            "id": "survey-years",
+            "prompt": "How long have you worked as an intelligence analyst?",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "longText",
+            "placeholder": "Years"
+          },
+          {
+            "id": "survey-type-work",
+            "prompt": "What type of intelligence work do you do? (if possible, we’d appreciate knowing the type of intelligence you typically work with (e.g., SIGINT) and the goal of that work (e.g., discovery, cybersecurity).",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "longText",
+            "placeholder": "E.g., tweets, news articles,"
+          }
+        ]
+      }
+    },
+    "sequence": {
+      "order": "fixed",
+      "components": [
+        "introduction",
+        "tutorial",
+        "infochunk1",
+        "infochunk2",
+        "infochunk3",
+        "infochunk4",
+        "survey1",
+        "survey2"
+      ]
+    }
+  }
+  
