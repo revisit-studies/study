@@ -18,3 +18,11 @@
   margin-right: 2px;
   vertical-align: middle;
 }
+
+.splitWord:hover .splitter {
+  background: var(--mantine-color-blue-5);
+}
+
+.splitWordActive .splitter {
+  background: var(--mantine-color-red-5);
+}
