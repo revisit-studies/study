@@ -11,7 +11,7 @@ import { useNextStep } from '../../store/hooks/useNextStep';
 
 import '@react-pdf-viewer/core/lib/styles/index.css';
 
-const TOTAL_TIME = 30 * 60 * 1000; // 30 minutes
+const TOTAL_TIME = 15 * 60 * 1000; // 30 minutes
 
 function SummaryApp({ parameters: tempParameters, setAnswer }: StimulusParams<SumParams>) {
   const [docIndex, setDocIndex] = useState(0);
@@ -110,7 +110,7 @@ function SummaryApp({ parameters: tempParameters, setAnswer }: StimulusParams<Su
                     answers: {},
                   });
                 }}
-                label={`Doc ${index + 1}`}
+                label={doc.match(/sumsifter-documents\/(\d+_)?([A-Z0-9]+)_/)[2]}
                 active={index === docIndex}
               />
             ))}

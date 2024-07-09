@@ -15,7 +15,7 @@
     "withProgressBar": true,
     "autoDownloadStudy": false,
     "sidebar": true,
-    "studyEndMsg": "**Thank you for completing the study. You have made SCADS proud!**"
+    "studyEndMsg": "Thank you again for your time. Please email **Ashley Anderson (alander7@ncsu.edu)** that you’ve completed the survey. You will receive a link to part 2 tomorrow."
   },
   "baseComponents": {
     "summarySource": {
@@ -34,7 +34,7 @@
       "response": [
         {
           "id": "prolificId",
-          "prompt": "<br><br>When you’re ready to begin, type in the ID value you got from Melissa over email and click next.",
+          "prompt": "When you’re ready to begin, type in the ID value you got from Ashley Anderson over email and click **Next**.",
           "required": true,
           "location": "belowStimulus",
           "type": "shortText",
@@ -43,15 +43,9 @@
         }
       ]
     },
-    "tutorial": {
-      "type": "markdown",
-      "path": "sumsifter-memory-study-p1/assets/tutorial.md",
-      "nextButtonText": "Begin",
-      "response": []
-    },
     "sumsift1": {
       "baseComponent": "summarySource",
-      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **30 minutes** to read over the documents",
+      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **15 minutes** to read over the documents",
       "parameters": {
         "documents": [
           "sumsifter-documents/1_G7F2R1_Highlight.pdf",
@@ -75,7 +69,7 @@
     },
     "sumsift2": {
       "baseComponent": "summarySource",
-      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **30 minutes** to read over the documents",
+      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **15 minutes** to read over the documents",
       "parameters": {
         "documents": [
           "sumsifter-documents/1_G7F2R1_Summary.pdf",
@@ -99,7 +93,7 @@
     },
     "sumsift3": {
       "baseComponent": "summarySource",
-      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **30 minutes** to read over the documents",
+      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **15 minutes** to read over the documents",
       "parameters": {
         "documents": [
           "sumsifter-documents/1_G7F2R1_Highlight.pdf",
@@ -123,7 +117,7 @@
     },
     "sumsift4": {
       "baseComponent": "summarySource",
-      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **30 minutes** to read over the documents",
+      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **15 minutes** to read over the documents",
       "parameters": {
         "documents": [
           "sumsifter-documents/1_G7F2R1_Highlight.pdf",
@@ -147,7 +141,7 @@
     },
     "sumsift5": {
       "baseComponent": "summarySource",
-      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **30 minutes** to read over the documents",
+      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **15 minutes** to read over the documents",
       "parameters": {
         "documents": [
           "sumsifter-documents/1_G7F2R1_Summary.pdf",
@@ -171,7 +165,7 @@
     },
     "sumsift6": {
       "baseComponent": "summarySource",
-      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **30 minutes** to read over the documents",
+      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **15 minutes** to read over the documents",
       "parameters": {
         "documents": [
           "sumsifter-documents/1_G7F2R1_Highlight.pdf",
@@ -195,7 +189,7 @@
     },
     "sumsift7": {
       "baseComponent": "summarySource",
-      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **30 minutes** to read over the documents",
+      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **15 minutes** to read over the documents",
       "parameters": {
         "documents": [
           "sumsifter-documents/1_G7F2R1_Summary.pdf",
@@ -219,7 +213,7 @@
     },
     "sumsift8": {
       "baseComponent": "summarySource",
-      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **30 minutes** to read over the documents",
+      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **15 minutes** to read over the documents",
       "parameters": {
         "documents": [
           "sumsifter-documents/1_G7F2R1_Full.pdf",
@@ -243,7 +237,7 @@
     },
     "sumsift9": {
       "baseComponent": "summarySource",
-      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **30 minutes** to read over the documents",
+      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **15 minutes** to read over the documents",
       "parameters": {
         "documents": [
           "sumsifter-documents/1_G7F2R1_Summary.pdf",
@@ -267,7 +261,7 @@
     },
     "sumsift10": {
       "baseComponent": "summarySource",
-      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **30 minutes** to read over the documents",
+      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **15 minutes** to read over the documents",
       "parameters": {
         "documents": [
           "sumsifter-documents/1_G7F2R1_Summary.pdf",
@@ -291,7 +285,7 @@
     },
     "sumsift11": {
       "baseComponent": "summarySource",
-      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **30 minutes** to read over the documents",
+      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **15 minutes** to read over the documents",
       "parameters": {
         "documents": [
           "sumsifter-documents/1_G7F2R1_Full.pdf",
@@ -315,7 +309,7 @@
     },
     "sumsift12": {
       "baseComponent": "summarySource",
-      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **30 minutes** to read over the documents",
+      "instruction": "You will have 15 documents to read. You can click on each one to open it to the side and read it. You can go back and forth between documents but can only see one at a time. You only have **15 minutes** to read over the documents",
       "parameters": {
         "documents": [
           "sumsifter-documents/1_G7F2R1_Summary.pdf",
@@ -337,25 +331,47 @@
       },
       "response": []
   },
-    "survey": {
+    "survey1": {
       "type": "markdown",
-      "path": "sumsifter-memory-study-p1/assets/survey.md",
+      "path": "sumsifter-memory-study-p1/assets/survey1.md",
       "response": [
         {
-          "id": "survey-time",
+          "id": "survey1",
+          "prompt": " ",
+          "required": false,
+          "location": "belowStimulus",
+          "type": "longText",
+          "placeholder": "Type here."
+        }
+      ]
+  },
+    "survey2": {
+      "type": "markdown",
+      "path": "sumsifter-memory-study-p1/assets/survey2.md",
+      "response": [
+        {
+          "id": "survey2-time",
           "prompt": "How long have you worked as an intelligence analyst?",
           "required": false,
           "location": "belowStimulus",
           "type": "longText",
-          "placeholder": "Enter your answer here."
+          "placeholder": "Years"
         },
         {
-          "id": "survey-work-type",
+          "id": "survey2-work-type",
           "prompt": "What type of intelligence work do you (broadly) do?",
           "required": false,
           "location": "belowStimulus",
           "type": "longText",
-          "placeholder": "Enter your answer here."
+          "placeholder": "Domain"
+        }, 
+        {
+          "id": "survey2-types-of-docs",
+          "prompt": "Which types of documents did you prefer?",
+          "required": false,
+          "location": "belowStimulus",
+          "type": "longText",
+          "placeholder": "Documents"
         }
       ]
     }
@@ -364,7 +380,6 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "tutorial",
       {
         "order": "random",
         "numSamples": 1,
@@ -383,7 +398,8 @@
           "sumsift12"
         ]
       },
-      "survey"
+      "survey1",
+      "survey2"
     ]
   }
 }
