@@ -12,11 +12,6 @@ import styles from './sumsifter.module.css';
 
 import '@react-pdf-viewer/core/lib/styles/index.css';
 
-const myText = `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Blandit aliquam etiam erat velit scelerisque. 
-
-A diam maecenas sed enim ut sem viverra. Velit euismod in pellentesque massa. Quis blandit turpis cursus in hac habitasse. Leo integer malesuada nunc vel risus commodo. In nulla posuere sollicitudin aliquam ultrices sagittis. Facilisis leo vel fringilla est. Aliquam sem fringilla ut morbi tincidunt. Facilisi cras fermentum odio eu feugiat pretium. Pulvinar neque laoreet suspendisse interdum consectetur libero id. Pellentesque sit amet porttitor eget dolor. Mattis aliquam faucibus purus in massa. Non consectetur a erat nam at. Nullam non nisi est sit amet facilisis magna. Adipiscing enim eu turpis egestas pretium aenean pharetra magna ac. Condimentum vitae sapien pellentesque habitant morbi tristique senectus.
-`;
-
 function Word({
   text, wordIdx, isActive, onClick,
 }: { text: string, wordIdx: number, isActive: boolean, onClick: (idx: number) => void }) {
@@ -49,6 +44,8 @@ function SummaryApp({ parameters: tempParameters, setAnswer }: StimulusParams<Su
 
   // temporary fix for parameters updating on every setAnswer call
   const [parameters] = useState(tempParameters);
+
+  // console.log(parameters.documentText);
 
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
@@ -89,7 +86,7 @@ function SummaryApp({ parameters: tempParameters, setAnswer }: StimulusParams<Su
   // TODO: Move this to onClick event.
   const chunkOutput = useMemo(() => {
     if (Object.keys(chunkBreaks).length) {
-      const chunkedText = myText.split(' ');
+      const chunkedText = parameters.documentText.split(' ');
       const chunks = Object.keys(chunkBreaks).reduce<number[]>((acc, curr: string) => {
         const c = +curr;
         if (chunkBreaks[c]) {
@@ -110,38 +107,32 @@ function SummaryApp({ parameters: tempParameters, setAnswer }: StimulusParams<Su
       chunked.push(chunkedText.slice(start));
       return chunked;
     }
-    return [myText.split(' ')];
-  }, [chunkBreaks]);
+    return [parameters.documentText.split(' ')];
+  }, [parameters.documentText, chunkBreaks]);
+
+  useEffect(() => {
+    setAnswer({
+      status: true,
+      provenanceGraph: trrack.graph.backend,
+      answers: {
+        'q-splittext': chunkOutput.length === 1 ? null : chunkOutput.map((chunk) => chunk.join(' ')),
+      },
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chunkOutput, trrack]);
 
   return (
     <Box pos="relative">
       <Grid gutter={50}>
         <Grid.Col span={2}>
-          <div style={{ position: 'sticky', top: 100 }}>
-            {parameters.documents.map((doc, index) => (
-              <NavLink
-                key={index}
-                onClick={() => {
-                  setDocIndex(index);
-                  trrack.apply('Clicked', actions.documentClickAction({ documentIdx: index, documentPath: doc }));
-                  setAnswer({
-                    status: true,
-                    provenanceGraph: trrack.graph.backend,
-                    answers: {},
-                  });
-                }}
-                label={`Doc ${index + 1}`}
-                active={index === docIndex}
-              />
-            ))}
-          </div>
+          {/* <div style={{ position: 'sticky', top: 100 }}></div> */}
         </Grid.Col>
         <Grid.Col span={8}>
           <div>
-            <h2>Sample Text as Input</h2>
-            <WordSplit text={myText} chunkBreaks={chunkBreaks} onWordClick={handleWordClick} />
+            <h2>Document:</h2>
+            <WordSplit text={parameters.documentText} chunkBreaks={chunkBreaks} onWordClick={handleWordClick} />
           </div>
-          <div>
+          {/* <div>
             <h2>Output</h2>
             <div>
               {chunkOutput?.map((chunk, index) => (
@@ -157,7 +148,7 @@ function SummaryApp({ parameters: tempParameters, setAnswer }: StimulusParams<Su
                 </div>
               ))}
             </div>
-          </div>
+          </div> */}
         </Grid.Col>
       </Grid>
     </Box>
