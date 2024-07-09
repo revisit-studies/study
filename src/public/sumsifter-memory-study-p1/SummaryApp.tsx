@@ -98,22 +98,26 @@ function SummaryApp({ parameters: tempParameters, setAnswer }: StimulusParams<Su
       <Grid gutter={50}>
         <Grid.Col span={2}>
           <div style={{ position: 'sticky', top: 100 }}>
-            {parameters.documents.map((doc, index) => (
-              <NavLink
-                key={index}
-                onClick={() => {
-                  setDocIndex(index);
-                  trrack.apply('Clicked', actions.documentClickAction({ documentIdx: index, documentPath: doc }));
-                  setAnswer({
-                    status: true,
-                    provenanceGraph: trrack.graph.backend,
-                    answers: {},
-                  });
-                }}
-                label={doc.match(/sumsifter-documents\/(\d+_)?([A-Z0-9]+)_/)[2]}
-                active={index === docIndex}
-              />
-            ))}
+            {parameters.documents.map((doc, index) => {
+              const m = doc.match(/sumsifter-documents\/(\d+_)?([A-Z0-9]+)_/);
+              const displayName = m ? m[2] : 'Doc';
+              return (
+                <NavLink
+                  key={index}
+                  onClick={() => {
+                    setDocIndex(index);
+                    trrack.apply('Clicked', actions.documentClickAction({ documentIdx: index, documentPath: doc }));
+                    setAnswer({
+                      status: true,
+                      provenanceGraph: trrack.graph.backend,
+                      answers: {},
+                    });
+                  }}
+                  label={displayName}
+                  active={index === docIndex}
+                />
+              );
+            })}
           </div>
         </Grid.Col>
         <Grid.Col span={8}>
