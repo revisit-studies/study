@@ -110,7 +110,7 @@ function SummaryApp({ parameters: tempParameters, setAnswer }: StimulusParams<Su
                     answers: {},
                   });
                 }}
-                label={`Doc ${index + 1}`}
+                label={doc.match(/sumsifter-documents\/(\d+_)?([A-Z0-9]+)_/)[2]}
                 active={index === docIndex}
               />
             ))}
