@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.0-beta12/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Experiment on Analysts' Memory and Recall",
+    "title": "Memory and Recall - Part 1",
     "version": "pilot",
     "authors": ["SCADS SumSifter Team"],
     "date": "2024-06-10",
