@@ -1,2 +1,3 @@
 
-We’d like to know how the documents you just saw are similar to and are different from what you’ve seen in real intelligence work. Please answer the following two questions. 
+Thank you for your time today! We have a few questions we’d appreciate you answering. More detail is helpful for us, but you can type “skip” if you don’t want to disclose any information. We will not disclose individualized information when we share this work, but may share summarized information (e.g., our participants ranged in 3-30 years experience)
+

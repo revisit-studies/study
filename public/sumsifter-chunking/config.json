@@ -47,22 +47,85 @@
           }
         ]
       },
-      "tutorial": {
+      "instructions": {
         "type": "markdown",
         "path": "sumsifter-chunking/assets/tutorial.md",
         "nextButtonText": "Begin",
         "response": []
       },
+      "training": {
+        "type": "image",
+        "path": "sumsifter-chunking/assets/exampleofchunking.png",
+        "response": []
+    },
+    "end-instructions": {
+        "type": "markdown",
+        "path": "sumsifter-chunking/assets/end-tutorial.md",
+        "nextButtonText": "Begin",
+        "response": []
+    },
       "infochunk1": {
         "baseComponent": "summarySource",
         "instruction": "You have as much time as you want to read and mark a single text before clicking NEXT to move on, but you cannot return to a previous text.",
         "parameters": {
-          "documents": [
-            "sumsifter-documents/Cybersecurity_report.pdf"
-          ]
-        },
-        "response": []
-      },
+            "documents": [
+              "sumsifter-documents/Cybersecurity_report.pdf"
+            ]
+          },
+        "response": [
+            {
+                "id": "q-frequency-times",
+                "prompt": "How often have you worked with documents structured like this?",
+                "required": true,
+                "location": "sidebar",
+                "type": "radio",
+                "options": [
+                    {
+                        "label": "Never",
+                        "value": "Option 1"
+                    },
+                    {
+                        "label": "Rarely",
+                        "value": "Option 2"
+                    },
+                    {
+                        "label": "Sometimes",
+                        "value": "Option 3"
+                    },
+                    {
+                        "label": "Often",
+                        "value": "Option 4"
+                    }
+                ]
+            }, 
+            {
+                "id": "q-frequency-content",
+                "prompt": "How often have you worked with this kind of content?",
+                "required": true,
+                "location": "sidebar",
+                "type": "radio",
+                "options": [
+                    {
+                        "label": "Never",
+                        "value": "Option 1"
+                    },
+                    {
+                        "label": "Rarely",
+                        "value": "Option 2"
+                    },
+                    {
+                        "label": "Sometimes",
+                        "value": "Option 3"
+                    },
+                    {
+                        "label": "Often",
+                        "value": "Option 4"
+                    }
+                ]
+            }
+        ],
+        "correctAnswer": [ ]
+    },
       "infochunk2": {
         "baseComponent": "summarySource",
         "instruction": "You have as much time as you want to read and mark a single text before clicking NEXT to move on, but you cannot return to a previous text.",
@@ -71,8 +134,60 @@
             "sumsifter-documents/Intel_Report.pdf"
           ]
         },
-        "response": []
-      },
+        "response": [
+            {
+                "id": "q-frequency-times",
+                "prompt": "How often have you worked with documents structured like this?",
+                "required": true,
+                "location": "sidebar",
+                "type": "radio",
+                "options": [
+                    {
+                        "label": "Never",
+                        "value": "Option 1"
+                    },
+                    {
+                        "label": "Rarely",
+                        "value": "Option 2"
+                    },
+                    {
+                        "label": "Sometimes",
+                        "value": "Option 3"
+                    },
+                    {
+                        "label": "Often",
+                        "value": "Option 4"
+                    }
+                ]
+            }, 
+            {
+                "id": "q-frequency-content",
+                "prompt": "How often have you worked with this kind of content?",
+                "required": true,
+                "location": "sidebar",
+                "type": "radio",
+                "options": [
+                    {
+                        "label": "Never",
+                        "value": "Option 1"
+                    },
+                    {
+                        "label": "Rarely",
+                        "value": "Option 2"
+                    },
+                    {
+                        "label": "Sometimes",
+                        "value": "Option 3"
+                    },
+                    {
+                        "label": "Often",
+                        "value": "Option 4"
+                    }
+                ]
+            }
+        ],
+        "correctAnswer": [ ]
+    },
         "infochunk3": {
             "baseComponent": "summarySource",
             "instruction": "You have as much time as you want to read and mark a single text before clicking NEXT to move on, but you cannot return to a previous text.",
@@ -81,8 +196,60 @@
                 "sumsifter-documents/News_article.pdf"
             ]
             },
-            "response": []
-        },  
+            "response": [
+                {
+                    "id": "q-frequency-times",
+                    "prompt": "How often have you worked with documents structured like this?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Never",
+                            "value": "Option 1"
+                        },
+                        {
+                            "label": "Rarely",
+                            "value": "Option 2"
+                        },
+                        {
+                            "label": "Sometimes",
+                            "value": "Option 3"
+                        },
+                        {
+                            "label": "Often",
+                            "value": "Option 4"
+                        }
+                    ]
+                }, 
+                {
+                    "id": "q-frequency-content",
+                    "prompt": "How often have you worked with this kind of content?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Never",
+                            "value": "Option 1"
+                        },
+                        {
+                            "label": "Rarely",
+                            "value": "Option 2"
+                        },
+                        {
+                            "label": "Sometimes",
+                            "value": "Option 3"
+                        },
+                        {
+                            "label": "Often",
+                            "value": "Option 4"
+                        }
+                    ]
+                }
+            ],
+            "correctAnswer": [ ]
+        },
         "infochunk4": {
             "baseComponent": "summarySource",
             "instruction": "You have as much time as you want to read and mark a single text before clicking NEXT to move on, but you cannot return to a previous text.",
@@ -91,49 +258,87 @@
                 "sumsifter-documents/Technical_paper_excerpt.pdf"
             ]
             },
-            "response": []
+            "response": [
+                {
+                    "id": "q-frequency-times",
+                    "prompt": "How often have you worked with documents structured like this?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Never",
+                            "value": "Option 1"
+                        },
+                        {
+                            "label": "Rarely",
+                            "value": "Option 2"
+                        },
+                        {
+                            "label": "Sometimes",
+                            "value": "Option 3"
+                        },
+                        {
+                            "label": "Often",
+                            "value": "Option 4"
+                        }
+                    ]
+                }, 
+                {
+                    "id": "q-frequency-content",
+                    "prompt": "How often have you worked with this kind of content?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Never",
+                            "value": "Option 1"
+                        },
+                        {
+                            "label": "Rarely",
+                            "value": "Option 2"
+                        },
+                        {
+                            "label": "Sometimes",
+                            "value": "Option 3"
+                        },
+                        {
+                            "label": "Often",
+                            "value": "Option 4"
+                        }
+                    ]
+                }
+            ],
+            "correctAnswer": [ ]
         },
-      "survey1": {
+      "survey": {
         "type": "markdown",
         "path": "sumsifter-chunking/assets/survey1.md",
         "response": [
           {
-            "id": "survey-content",
-            "prompt": "How similar was **the content** of the documents you saw in this survey to the documents you really work with (or have worked with) as an analyst?",
+            "id": "survey-process",
+            "prompt": "What was your process for approaching the chunking task in this survey? Was there any specific pattern you tried to stick to or do you have any comments on the task?",
             "required": false,
             "location": "belowStimulus",
             "type": "longText",
-            "placeholder": "E.g., topic X, topic Y."
+            "placeholder": "Process"
           },
           {
-            "id": "survey-structure",
-            "prompt": "How similar were **the structures** of the documents you saw in this survey to the documents you really work with (or have worked with) as an analyst?",
-            "required": false,
-            "location": "belowStimulus",
-            "type": "longText",
-            "placeholder": "E.g., tweets, news articles,"
-          }
-        ]
-      },
-      "survey2": {
-        "type": "markdown",
-        "path": "sumsifter-chunking/assets/survey2.md",
-        "response": [
-          {
-            "id": "survey-years",
+            "id": "survey-experience",
             "prompt": "How long have you worked as an intelligence analyst?",
-            "required": true,
+            "required": false,
             "location": "belowStimulus",
             "type": "longText",
             "placeholder": "Years"
-          },
+          }, 
           {
-            "id": "survey-type-work",
-            "prompt": "What type of intelligence work do you do? (if possible, we’d appreciate knowing the type of intelligence you typically work with (e.g., SIGINT) and the goal of that work (e.g., discovery, cybersecurity).",
-            "required": true,
+            "id": "survey-domain",
+            "prompt": "What type of intelligence work do you do? (if possible, we’d appreciate knowing the type of intelligence you typically work with (e.g., SIGINT) and the goal of that work (e.g., discovery, cybersecurity.)",
+            "required": false,
             "location": "belowStimulus",
             "type": "longText",
-            "placeholder": "E.g., tweets, news articles,"
+            "placeholder": "Domain"
           }
         ]
       }
@@ -142,13 +347,14 @@
       "order": "fixed",
       "components": [
         "introduction",
-        "tutorial",
+        "instructions",
+        "training",
+        "end-instructions", 
         "infochunk1",
         "infochunk2",
         "infochunk3",
         "infochunk4",
-        "survey1",
-        "survey2"
+        "survey"
       ]
     }
   }
