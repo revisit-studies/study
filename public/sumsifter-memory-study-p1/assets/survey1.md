@@ -1,0 +1,1 @@
+Of the documents you read today, were there any topics or specific text that you know you’ve seen before? If so, please list below. If not, type NA.
