@@ -15,7 +15,7 @@
     "withProgressBar": true,
     "autoDownloadStudy": false,
     "sidebar": true,
-    "studyEndMsg": "**That is the end!**<br> Please reach out to Melissa if you have questions. <br><br>**Thank you for completing the study. You have made SCADS proud!**"
+    "studyEndMsg": "That is the end! Thank you for your time.<br><br> Please reach out to Ashley Anderson (alander7@ncsu.edu) if you have questions."
   },
   "baseComponents": {
     "summarySource": {
@@ -34,11 +34,11 @@
       "response": [
         {
           "id": "prolificId",
-          "prompt": "<br><br>When you’re ready to begin, type in the ID value you got from Melissa over email and click next.",
+          "prompt": "<br><br>When you’re ready to begin, type in the ID value you got from Ashley Anderson over email (same ID as for the previous survey link) and click **Next.** ",
           "required": true,
           "location": "belowStimulus",
           "type": "shortText",
-          "placeholder": "Type in the same ID value you got from Melissa over email for part-1 of the study and click next.",
+          "placeholder": "ID",
           "paramCapture": "PROLIFIC_PID"
         }
       ]
@@ -46,7 +46,7 @@
     "tutorial1": {
       "type": "markdown",
       "path": "sumsifter-memory-study-p2/assets/tutorial1.md",
-      "nextButtonText": "Begin",
+      "nextButtonText": "Start",
       "response": []
     },
     "free-text-response": {
@@ -66,7 +66,7 @@
     "tutorial2": {
       "type": "markdown",
       "path": "sumsifter-memory-study-p2/assets/tutorial2.md",
-      "nextButtonText": "Begin",
+      "nextButtonText": "Start",
       "response": []
     },
     "multiple-choice": {
@@ -99,7 +99,7 @@
                       },
                       {
                           "id": "2",
-                          "prompt": "The helical engine would only operate in a frictionless environment.",
+                          "prompt": "Burns helical engine would only operate in a frictionless environment.",
                           "required": true,
                           "location": "aboveStimulus",
                           "type": "radio",
