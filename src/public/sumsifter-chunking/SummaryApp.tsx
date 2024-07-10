@@ -115,7 +115,7 @@ function SummaryApp({ parameters: tempParameters, setAnswer }: StimulusParams<Su
       status: true,
       provenanceGraph: trrack.graph.backend,
       answers: {
-        'q-splittext': chunkOutput.length === 1 ? null : chunkOutput.map((chunk) => chunk.join(' ')),
+        'q-splittext': chunkOutput.map((chunk) => chunk.join(' ')),
       },
     });
   // eslint-disable-next-line react-hooks/exhaustive-deps
