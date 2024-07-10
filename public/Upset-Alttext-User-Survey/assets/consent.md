@@ -6,8 +6,7 @@ Before we begin, please read the following consent form carefully and thereafter
 Taking valuable feedback and assessment from sighted community is crucial as a forst evaluation step for our generated text descriptions. The sole purpose of the study is to evaluate our text description for UpSet plots.
 
 ## Tasks
-The study contains three visualization content (Only Visualization 1, Textual description of a Visualization, Visualization and Textual Description of a Visualization). For each visualization content, we ask you 13/ 14 questions regarding understanding the content. The questions
-contain various types such as single-choice, paragraph, long text, likert scale, etc. Each participant should take 50-60 minutes to complete the questionnaire.
+The study contains three visualization contents: Visualization only (a UpSet plot), Text only (text description of a UpSet plot), Visualization and Text (a UpSet plot and text description of that plot). For each visualization content, we ask you 13 questions regarding understanding the content. The questions contain various types such as single-choice, paragraph, long text, likert scale, etc. After answering the questions for each content, the participant will take part in a post study survey. Each participant should take 50-60 minutes to complete the questionnaire.
 
 Each participant in this study is assigned a random ID for analyses. As such, your participation will remain anonymous, and your responses will not be used to identify you.
 

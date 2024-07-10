@@ -1,3 +1,5 @@
+<h1 style="text-align: center;">Dataset: Game of Thrones</h1>
+
 ## Dataset Properties
 
 The dataset contains 20 sets and 238 elements, of which 7 sets are shown in the plot.

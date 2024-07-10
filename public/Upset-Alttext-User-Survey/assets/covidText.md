@@ -1,3 +1,5 @@
+<h1 style="text-align: center;">Dataset: Covid Symptoms</h1>
+
 ## Dataset Properties
 
 The dataset contains 6 sets and 4340 elements, of which 6 sets are shown in the plot.

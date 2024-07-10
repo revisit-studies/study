@@ -1,3 +1,5 @@
+<h1 style="text-align: center;">Dataset: Covid Symptoms</h1>
+
 <!DOCTYPE html>
 <html>
 <head>

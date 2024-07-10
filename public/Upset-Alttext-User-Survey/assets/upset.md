@@ -3,7 +3,8 @@
 The major challenge in understanding relationships between sets is the combinatorial explosion of the number of set intersections if the number of sets exceeds a trivial threshold. The most common set visualization approach – Venn Diagrams – doesn't scale beyond three or four sets. **UpSet, in contrast, is well suited for the quantitative analysis of data with more than three sets.** 
 
 
-![A simple UpSet Example](./assets/upsetr.png)
+<!-- ![A simple UpSet Example](./assets/upset.png) -->
+<img src="./assets/upset.png" alt="A simple UpSet Example" width="500"/>
 
 UpSet visualizes set intersections in a matrix layout. The matrix layout enables the effective representation of associated data, such as the number of elements in the intersections.
 
