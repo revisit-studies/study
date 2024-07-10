@@ -21,8 +21,11 @@ function Word({
 
   return (
     <span className={`${styles.splitWord} ${isActive && styles.splitWordActive}`}>
-      <span onClick={handleClick}>{text}</span>
-      <span className={styles.splitter} onClick={handleClick}> </span>
+      <span onClick={handleClick}>
+        {text}
+        {' '}
+      </span>
+      {/* <span className={styles.splitter} onClick={handleClick}> </span> */}
     </span>
   );
 }
@@ -118,7 +121,7 @@ function SummaryApp({ parameters: tempParameters, setAnswer }: StimulusParams<Su
         'q-splittext': chunkOutput.map((chunk) => chunk.join(' ')),
       },
     });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chunkOutput, trrack]);
 
   return (

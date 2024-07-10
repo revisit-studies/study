@@ -19,10 +19,27 @@
   vertical-align: middle;
 }
 
-.splitWord:hover .splitter {
+.splitter {
+  font-family: inherit;
+  display: inline;
+}
+
+.splitWord {
+  border-right: 2px solid transparent;
+}
+
+.splitWord:hover {
+  border-right: 2px solid var(--mantine-color-blue-5);
+}
+
+.splitWordActive {
+  border-right: 2px solid var(--mantine-color-blue-5);
+}
+
+/* .splitWord:hover .splitter {
   background: var(--mantine-color-blue-5);
 }
 
 .splitWordActive .splitter {
   background: var(--mantine-color-blue-5);
-}
+} */
