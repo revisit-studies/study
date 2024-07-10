@@ -25,15 +25,15 @@
 }
 
 .splitWord {
-  border-right: 2px solid transparent;
+  border-right: 4px solid transparent;
 }
 
 .splitWord:hover {
-  border-right: 2px solid var(--mantine-color-blue-5);
+  border-right: 4px solid var(--mantine-color-blue-5);
 }
 
 .splitWordActive {
-  border-right: 2px solid var(--mantine-color-blue-5);
+  border-right: 4px solid var(--mantine-color-blue-5);
 }
 
 /* .splitWord:hover .splitter {
