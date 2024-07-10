@@ -4,7 +4,7 @@ The goal of this survey is to get a sense of how analysts break down a text docu
 
 There is no right or wrong way to do the following task, we really just want to see how you as an analyst identify new pieces of information.
 
-We estimate this survey will take around **X-X** minutes. When you’re ready, go ahead and click **NEXT** to see instructions on the next page. 
+We estimate this survey will take around **15** minutes. When you’re ready, go ahead and click **NEXT** to see instructions on the next page. 
 
 
 
