@@ -50,8 +50,8 @@
       "response": []
     },
     "free-text-response": {
-      "type": "markdown",
-      "path": "sumsifter-memory-study-p2/assets/free-text-response.md",
+      "type": "react-component",
+      "path": "sumsifter-memory-study-p2/FreeText.tsx",
       "response": [
         {
           "id": "text-response",
