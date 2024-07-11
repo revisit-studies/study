@@ -20,10 +20,10 @@ function Word({
   };
 
   return (
-    <span className={`${styles.splitWord} ${isActive && styles.splitWordActive}`}>
-      <span onClick={handleClick}>
-        {text}
+    <span className={`${styles.splitWord} ${isActive && styles.splitWordActive}`} onClick={handleClick}>
+      <span>
         {' '}
+        {text}
       </span>
       {/* <span className={styles.splitter} onClick={handleClick}> </span> */}
     </span>
