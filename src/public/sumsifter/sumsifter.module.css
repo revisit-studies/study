@@ -19,6 +19,7 @@
   vertical-align: middle;
 }
 
+.summaryContextPopup,
 .sourceContextPopup {
   position: absolute;
   z-index: var(--mantine-z-index-popover);
