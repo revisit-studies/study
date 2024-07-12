@@ -10,10 +10,10 @@
 </head>
 <body>
 
-<h1 style="text-align: center;">Dataset: Covid Symptoms</h1>
+<h1 style="text-align: center;">Dataset: Tennis Grand Slam Winners</h1>
 
 <div class="image-container">
-    <img src="./assets/VO1.png" alt="Covid Symptoms" width="610" height="1180"/>
+    <img src="./assets/VO3.png" alt="Covid Symptoms" width="610" height="700"/>
 </div>
 
 </body>

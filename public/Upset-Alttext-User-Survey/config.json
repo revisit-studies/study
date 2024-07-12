@@ -764,6 +764,42 @@
             "path": "Upset-Alttext-User-Survey/assets/covidTextandVis.md"
             
         },
+        "Tennis-Vis-Q1": {
+            "baseComponent": "VO-image1",
+            "path": "Upset-Alttext-User-Survey/assets/tennisVis.md"
+        },
+        "Tennis-Vis-Q2": {
+            "baseComponent": "VO-image2",
+            "path": "Upset-Alttext-User-Survey/assets/tennisVis.md"
+        },
+        "Tennis-Vis-Q3": {
+            "baseComponent": "VO-image3",
+            "path": "Upset-Alttext-User-Survey/assets/tennisVis.md"
+        },
+        "Tennis-Text-Q1": {
+            "baseComponent": "TO-text1",
+            "path": "Upset-Alttext-User-Survey/assets/tennisText.md"
+        },
+        "Tennis-Text-Q2": {
+            "baseComponent": "TO-text2",
+            "path": "Upset-Alttext-User-Survey/assets/tennisText.md"  
+        },
+        "Tennis-Text-Q3": {
+            "baseComponent": "TO-text3",
+            "path": "Upset-Alttext-User-Survey/assets/tennisText.md"
+        },
+        "Tennis-Both-Q1": {
+            "baseComponent": "TandV1",
+            "path": "Upset-Alttext-User-Survey/assets/tennisTextandVis.md"
+        },
+        "Tennis-Both-Q2": {
+            "baseComponent": "TandV2",
+            "path": "Upset-Alttext-User-Survey/assets/tennisTextandVis.md"   
+        },
+        "Tennis-Both-Q3": {
+            "baseComponent": "TandV3",
+            "path": "Upset-Alttext-User-Survey/assets/tennisTextandVis.md"
+        },
         "GoT-Vis-Q1": {
             "baseComponent": "VO-image1",
             "path": "Upset-Alttext-User-Survey/assets/GoTVis.md"
@@ -947,9 +983,9 @@
                             {
                                 "order": "fixed",
                                 "components": [
-                                    "Covid-Both-Q1",
-                                    "Covid-Both-Q2",
-                                    "Covid-Both-Q3"
+                                    "Tennis-Both-Q1",
+                                    "Tennis-Both-Q2",
+                                    "Tennis-Both-Q3"
                                 ]
                             }
                         ]
@@ -977,9 +1013,9 @@
                             {
                                 "order": "fixed",
                                 "components": [
-                                    "Covid-Both-Q1",
-                                    "Covid-Both-Q2",
-                                    "Covid-Both-Q3"
+                                    "Tennis-Both-Q1",
+                                    "Tennis-Both-Q2",
+                                    "Tennis-Both-Q3"
                                 ]
                             }
                         ]
@@ -990,9 +1026,9 @@
                             {
                                 "order": "fixed",
                                 "components": [
-                                    "GoT-Vis-Q1",
-                                    "GoT-Vis-Q2",
-                                    "GoT-Vis-Q3"
+                                    "Tennis-Vis-Q1",
+                                    "Tennis-Vis-Q2",
+                                    "Tennis-Vis-Q3"
                                     ]
         
                             },
@@ -1010,6 +1046,96 @@
                                     "GoT-Both-Q1",
                                     "GoT-Both-Q2",
                                     "GoT-Both-Q3"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "order":"latinSquare",
+                        "components": [
+                            {
+                                "order": "fixed",
+                                "components": [
+                                    "Covid-Vis-Q1",
+                                    "Covid-Vis-Q2",
+                                    "Covid-Vis-Q3"
+                                    ]
+        
+                            },
+                            {
+                                "order": "fixed",
+                                "components": [
+                                    "Tennis-Text-Q1",
+                                    "Tennis-Text-Q2",
+                                    "Tennis-Text-Q3"
+                                ]
+                            },
+                            {
+                                "order": "fixed",
+                                "components": [
+                                    "GoT-Both-Q1",
+                                    "GoT-Both-Q2",
+                                    "GoT-Both-Q3"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "order":"latinSquare",
+                        "components": [
+                            {
+                                "order": "fixed",
+                                "components": [
+                                    "Tennis-Vis-Q1",
+                                    "Tennis-Vis-Q2",
+                                    "Tennis-Vis-Q3"
+                                    ]
+        
+                            },
+                            {
+                                "order": "fixed",
+                                "components": [
+                                    "GoT-Text-Q1",
+                                    "GoT-Text-Q2",
+                                    "GoT-Text-Q3"
+                                ]
+                            },
+                            {
+                                "order": "fixed",
+                                "components": [
+                                    "Covid-Both-Q1",
+                                    "Covid-Both-Q2",
+                                    "Covid-Both-Q3"
+                                ]
+                            }
+                        ]
+                    },
+                    {
+                        "order":"latinSquare",
+                        "components": [
+                            {
+                                "order": "fixed",
+                                "components": [
+                                    "GoT-Vis-Q1",
+                                    "GoT-Vis-Q2",
+                                    "GoT-Vis-Q3"
+                                    ]
+        
+                            },
+                            {
+                                "order": "fixed",
+                                "components": [
+                                    "Tennis-Text-Q1",
+                                    "Tennis-Text-Q2",
+                                    "Tennis-Text-Q3"
+                                ]
+                            },
+                            {
+                                "order": "fixed",
+                                "components": [
+                                    "Covid-Both-Q1",
+                                    "Covid-Both-Q2",
+                                    "Covid-Both-Q3"
                                 ]
                             }
                         ]
