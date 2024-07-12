@@ -1,15 +1,10 @@
-## Information Chunking Survey
+## Project Objective
 
-In this survey we’d like you to look at a text and add noticeable marks to break it up into information chunks.
+The goal of this survey is to get a sense of how analysts break down a text document into information chunks. To us, an information chunk is a string of words that provide a new piece of information along with its supporting context in the document, it is not a specific term. These chunks can be as long or short as you want and punctuation does not have to be considered. We want to get a sense for how an analyst deconstructs a document to inform how we can create better summaries. 
 
-To create information chunks in the text, click anywhere in the text and a blue mark will appear ( \ ). These marks will act as the boundaries of each information chunk. Enters and punctuation marks are in the text, but they aren’t considered chunk boundaries unless you add a blue mark because you want them to be a boundary. 
-Create a new chunk anytime you think new information is introduced in a text. That can be as specific or general as you want. 
+There is no right or wrong way to do the following task, we really just want to see how you as an analyst identify new pieces of information.
 
-You can remove a mark by clicking on it again.
-
-There will be **4** documents. You have as much time as you want to read and mark a single text before clicking NEXT to move on, but you cannot return to a previous text. 
-
-Start when you’re ready, please try to do it all in one sitting.
+We estimate this survey will take around **15** minutes. When you’re ready, go ahead and click **NEXT** to see instructions on the next page. 
 
 
 

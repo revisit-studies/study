@@ -11,7 +11,7 @@ import { useNextStep } from '../../store/hooks/useNextStep';
 
 import '@react-pdf-viewer/core/lib/styles/index.css';
 
-const TOTAL_TIME = 30 * 60 * 1000; // 30 minutes
+const TOTAL_TIME = 15 * 60 * 1000; // 30 minutes
 
 function SummaryApp({ parameters: tempParameters, setAnswer }: StimulusParams<SumParams>) {
   const [docIndex, setDocIndex] = useState(0);
@@ -98,22 +98,26 @@ function SummaryApp({ parameters: tempParameters, setAnswer }: StimulusParams<Su
       <Grid gutter={50}>
         <Grid.Col span={2}>
           <div style={{ position: 'sticky', top: 100 }}>
-            {parameters.documents.map((doc, index) => (
-              <NavLink
-                key={index}
-                onClick={() => {
-                  setDocIndex(index);
-                  trrack.apply('Clicked', actions.documentClickAction({ documentIdx: index, documentPath: doc }));
-                  setAnswer({
-                    status: true,
-                    provenanceGraph: trrack.graph.backend,
-                    answers: {},
-                  });
-                }}
-                label={`Doc ${index + 1}`}
-                active={index === docIndex}
-              />
-            ))}
+            {parameters.documents.map((doc, index) => {
+              const m = doc.match(/sumsifter-documents\/(\d+_)?([A-Z0-9]+)_/);
+              const displayName = m ? m[2] : 'Doc';
+              return (
+                <NavLink
+                  key={index}
+                  onClick={() => {
+                    setDocIndex(index);
+                    trrack.apply('Clicked', actions.documentClickAction({ documentIdx: index, documentPath: doc }));
+                    setAnswer({
+                      status: true,
+                      provenanceGraph: trrack.graph.backend,
+                      answers: {},
+                    });
+                  }}
+                  label={displayName}
+                  active={index === docIndex}
+                />
+              );
+            })}
           </div>
         </Grid.Col>
         <Grid.Col span={8}>
