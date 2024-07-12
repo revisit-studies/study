@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
-import { IconCirclePlus } from '@tabler/icons-react';
+import { IconArrowBack, IconCirclePlus, IconPencil } from '@tabler/icons-react';
 import {
   Text, Title, ScrollArea, Badge,
   Input,
@@ -7,6 +7,7 @@ import {
   Tooltip,
   Divider,
 } from '@mantine/core';
+import { useFocusTrap } from '@mantine/hooks';
 import style from './sumsifter.module.css';
 
 interface SourceProps {
@@ -55,12 +56,13 @@ function Source({
   sourceList, activeSourceId, onSourceBadgePositionChange, onAddToSummary,
 }: SourceProps) {
   const ref = React.useRef<HTMLDivElement>(null);
+  const focusTrapRef = useFocusTrap();
   const contentRef = React.useRef<HTMLDivElement>(null);
   const activeRef = React.useRef<HTMLSpanElement | null>(null);
   const [positionTop, setPositionTop] = React.useState(0);
   const [positionLeft, setPositionLeft] = React.useState(0);
   const [userSelection, setUserSelection] = React.useState<string | null>(null);
-  const [userSelectectionRect, setUserSelectionRect] = React.useState<DOMRect | null>(null);
+  const [userSelectionRect, setUserSelectionRect] = React.useState<DOMRect | null>(null);
   const [sourceQuery, setSourceQuery] = React.useState<string>('');
   const [highlightClientRects, setHighlightClientRects] = React.useState<DOMRect[] | null>(null);
 
@@ -141,12 +143,19 @@ function Source({
   }, [activeSourceId, onSourceBadgePositionChange]);
 
   const userSelectionActionBox = useMemo(() => ({
-    top: (userSelectectionRect?.top || 0) - (contentRef.current?.getBoundingClientRect().top || 0),
+    top: (userSelectionRect?.top || 0) - (contentRef.current?.getBoundingClientRect().top || 0),
     left: 0,
-  }), [userSelectectionRect, contentRef]);
+    bottom: (userSelectionRect?.bottom || 0) - (contentRef.current?.getBoundingClientRect().top || 0),
+  }), [userSelectionRect, contentRef]);
 
   const handleAddToSummary = useCallback(() => {
     onAddToSummary(userSelection || '', 'Include this to the summary.');
+    setUserSelection(null);
+    setHighlightClientRects(null);
+  }, [userSelection, onAddToSummary]);
+
+  const handleMakeDescriptive = useCallback(() => {
+    onAddToSummary(userSelection || '', 'Include this to the summary and make this more descriptive.');
     setUserSelection(null);
     setHighlightClientRects(null);
   }, [userSelection, onAddToSummary]);
@@ -195,18 +204,41 @@ function Source({
           <div
             className={style.sourceContextPopup}
             style={{
-              top: userSelectionActionBox.top,
+              top: userSelectionActionBox.bottom,
               left: userSelectionActionBox.left,
             }}
             onMouseDown={(e) => { e.stopPropagation(); }}
           >
-            <Tooltip label="Include in summary">
+            <Tooltip label="Include in summary" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
               <ActionIcon variant="transparent" size="md" color="gray" onClick={handleAddToSummary}>
                 <IconCirclePlus />
               </ActionIcon>
             </Tooltip>
+            <Tooltip label="Make it descriptive" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
+              <ActionIcon variant="transparent" size="md" color="gray" onClick={handleMakeDescriptive}>
+                <IconPencil />
+              </ActionIcon>
+            </Tooltip>
             <Divider orientation="vertical" />
-            <Input size="xs" value={sourceQuery} onChange={handleSourceQueryChange} onKeyUp={handleSourceQueryKeyUp} flex={1} ml={4} />
+            <Input
+              ref={focusTrapRef}
+              size="xs"
+              value={sourceQuery}
+              onChange={handleSourceQueryChange}
+              onKeyUp={handleSourceQueryKeyUp}
+              flex={1}
+              ml={4}
+              placeholder="What do you want to do this selection?"
+              rightSection={
+                (
+                  (sourceQuery.length ? (
+                    <IconArrowBack
+                      color="var(--mantine-color-gray-5)"
+                    />
+                  ) : null)
+                )
+              }
+            />
           </div>
         )}
 
