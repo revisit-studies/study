@@ -1,0 +1,12 @@
+id,text,sources
+1,"The Summer Conference on Applied Data Science (SCADS) focuses on AI for assisting US Intelligence Community data analysts, identifying multi-year Grand Challenges.","S10,S11"
+2,"The 2024 Grand Challenge is creating tailored daily reports for individual knowledge workers, combining classified and unclassified materials.","S13,S14"
+3,"Research areas include Automatic Summarization, Recommendation Systems, and Human-Machine Interaction, with an emphasis on explainability and contextualization.","S16,S17"
+4,"Multi-modal summarization and development projects for demonstration applications are also included.","S18,S27"
+5,"In the document, the importance of accurately summarizing multi-modal content is highlighted.","S188,S189"
+6,"Critical challenges include personalized summaries, Retrieval Augmented Generation (RAG), and handling dynamic data sources.","S46,S78,S100"
+7,"The document stresses the need for contextual citations in summaries.","S43,S44"
+8,"A groundbreaking method for summarizing complex network diagrams was introduced (S206).","S206"
+9,"For future research, the incorporation of reinforcement learning in recommendation systems is proposed.","S539"
+10,"The SCADS program will develop an AI capable of predicting geopolitical events with 90% accuracy.","S100"
+11,"Researchers are required to publish their findings in a dedicated SCADS journal for transparency.","S43"
