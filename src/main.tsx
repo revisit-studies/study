@@ -7,11 +7,9 @@ import '@mantine/dates/styles.css';
 import { GlobalConfigParser } from './GlobalConfigParser';
 
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
-  <React.StrictMode>
-    <StorageEngineProvider>
-      <MantineProvider>
-        <GlobalConfigParser />
-      </MantineProvider>
-    </StorageEngineProvider>
-  </React.StrictMode>,
+  <StorageEngineProvider>
+    <MantineProvider>
+      <GlobalConfigParser />
+    </MantineProvider>
+  </StorageEngineProvider>,
 );

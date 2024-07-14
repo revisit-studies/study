@@ -63,7 +63,7 @@
             "baseComponent": "summarySource",
             "instruction": "Please provide any feedback on the summary quality, design, and anything else you want to comment on below. Feel free to interact! Try clicking on the blue source links on the left.",
             "parameters": {
-                "document": "doc1.docx",
+                "document": "Russian_Offensive_Campaign_Assessment_12JUL24.docx",
                 "prompt": "Summarize this document in 5 sentences.",
                 "ids": "id",
                 "hallucination": false

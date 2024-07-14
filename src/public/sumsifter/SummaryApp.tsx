@@ -17,6 +17,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
 
   const [sourcesData, setSourcesData] = useState<{ id: string; text: string }[]>([]);
 
+  const [conversationId, setConversationId] = useState<string | null>(null);
   const [summaryBadgeTop, setSummaryBadgeTop] = useState(0);
   const [sourceBadgeTop, setSourceBadgeTop] = useState(0);
   const [sourceBadgeLeft, setSourceBadgeLeft] = useState(0);
@@ -52,17 +53,21 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/summary/`, {
+      const response = await fetch(`${API_BASE_URL}/summaries/generate/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          question: defaultPrompt,
-          document: studyDocument,
+          conversationId: null,
+          documentId: studyDocument,
+          promptType: 'general',
+          prompt: defaultPrompt,
         }),
       });
       const data = await response.json();
+
+      setConversationId(data.conversationId);
 
       const summary = data.summary.map((sentenceObj: { text: string, sources: string[] }, idx: number) => ({
         id: String(idx),
@@ -107,14 +112,16 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
   const handleSubmitQuery = useCallback((queryPrompt: string) => {
     async function fetchData() {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/summary/`, {
+      const response = await fetch(`${API_BASE_URL}/summaries/generate/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          question: queryPrompt,
-          document: studyDocument,
+          conversationId,
+          documentId: studyDocument,
+          promptType: 'general',
+          prompt: queryPrompt,
         }),
       });
       const data = await response.json();
@@ -136,11 +143,81 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
     }
 
     fetchData();
-  }, [studyDocument]);
+  }, [studyDocument, conversationId]);
 
-  const handleAddToSummary = useCallback((sourceText: string) => {
-    setQueryText((prev) => `${prev}\n${sourceText}`);
-  }, []);
+  const handleUpdateSummary = useCallback((summaryText: string, sourcePrompt: string) => {
+    async function fetchData() {
+      setIsLoading(true);
+      const response = await fetch(`${API_BASE_URL}/summaries/generate/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversationId,
+          documentId: studyDocument,
+          promptType: 'summary',
+          summaryTargetText: summaryText,
+          prompt: sourcePrompt,
+        }),
+      });
+      const data = await response.json();
+
+      const summary = data.summary.map((sentenceObj: { text: string, sources: string[] }, idx: number) => ({
+        id: String(idx),
+        text: sentenceObj.text,
+        sources: sentenceObj.sources,
+      }));
+
+      const source = data.source.map((sourceObj: { id: string, text: string }) => ({
+        id: sourceObj.id,
+        text: sourceObj.text,
+      }));
+
+      setSummaryData(summary);
+      setSourcesData(source);
+      setIsLoading(false);
+    }
+
+    fetchData();
+  }, [conversationId, studyDocument]);
+
+  const handleAddToSummary = useCallback((sourceText: string, sourcePrompt: string) => {
+    async function fetchData() {
+      setIsLoading(true);
+      const response = await fetch(`${API_BASE_URL}/summaries/generate/`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversationId,
+          documentId: studyDocument,
+          promptType: 'source',
+          sourceTargetText: sourceText,
+          prompt: sourcePrompt,
+        }),
+      });
+      const data = await response.json();
+
+      const summary = data.summary.map((sentenceObj: { text: string, sources: string[] }, idx: number) => ({
+        id: String(idx),
+        text: sentenceObj.text,
+        sources: sentenceObj.sources,
+      }));
+
+      const source = data.source.map((sourceObj: { id: string, text: string }) => ({
+        id: sourceObj.id,
+        text: sourceObj.text,
+      }));
+
+      setSummaryData(summary);
+      setSourcesData(source);
+      setIsLoading(false);
+    }
+
+    fetchData();
+  }, [conversationId, studyDocument]);
 
   return (
     <>
@@ -175,7 +252,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
       )}
       <Grid gutter={50}>
         <Grid.Col span={6} pos="relative">
-          <Summary sentences={summaryData} onSummaryBadgePositionChange={handleSummaryBadgePositionChange} onSourceClick={handleSourceClick} activeSourceId={activeSourceId} onSubmitQuery={handleSubmitQuery} queryText={queryText} onQueryTextChange={setQueryText} />
+          <Summary sentences={summaryData} onSummaryBadgePositionChange={handleSummaryBadgePositionChange} onSourceClick={handleSourceClick} activeSourceId={activeSourceId} onSubmitQuery={handleSubmitQuery} queryText={queryText} onQueryTextChange={setQueryText} onUpdateSummary={handleUpdateSummary} />
         </Grid.Col>
         <Grid.Col span={6}>
           <Source sourceList={sourcesData} onSourceBadgePositionChange={handleSourceBadgePositionChange} activeSourceId={activeSourceId} onAddToSummary={handleAddToSummary} />
