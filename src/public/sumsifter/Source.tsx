@@ -44,7 +44,7 @@ function SourceItem({ source, isActive, onActiveRefChange }: { source: { id?: st
       <Text
         component="span"
         bg={isActive ? 'blue.3' : 'transparent'}
-        dangerouslySetInnerHTML={{ __html: source.text }}
+        dangerouslySetInnerHTML={{ __html: source.text ? `${source.text}.` : '' }}
       />
     </Text>
   );
