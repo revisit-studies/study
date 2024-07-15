@@ -51,15 +51,6 @@ rejected: ParticipantData[];
 
   const { trialId } = useParams();
 
-  const responseOptions = useMemo(() => {
-    if (!trialId) return [];
-    const trialConfig = studyConfig.components[trialId];
-    if (!trialConfig) return [];
-    const componentConfig = studyComponentToIndividualComponent(trialConfig, studyConfig);
-    return componentConfig.response.map((r) => r.id);
-  }, [studyConfig, trialId]);
-  const [selectedResponses, setSelectedResponses] = useState<string[]>([]);
-
   return (
     <Paper shadow="sm" p="md" withBorder>
       <Flex direction="row" justify="space-between">
@@ -76,19 +67,6 @@ rejected: ParticipantData[];
             <Checkbox value="rejected" label="Rejected" />
           </Group>
         </Checkbox.Group>
-
-        <MultiSelect
-          data={responseOptions}
-          placeholder="Responses to Visualize"
-          value={selectedResponses}
-          onChange={setSelectedResponses}
-          searchable
-          nothingFoundMessage="No responses found"
-          clearable
-          maxValues={2}
-          leftSection={<IconChartBar />}
-          w={600}
-        />
       </Flex>
 
       <Divider my="xs" />
@@ -110,7 +88,7 @@ rejected: ParticipantData[];
               <Divider orientation="vertical" mx="md" />
 
               {/* Visualization and metadata */}
-              <TrialVisualization participantData={participantsToVisualize} studyConfig={studyConfig} responseIds={selectedResponses} trialId={trialId} />
+              <TrialVisualization participantData={participantsToVisualize} studyConfig={studyConfig} trialId={trialId} />
             </Flex>
           )
       }
