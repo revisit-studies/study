@@ -232,7 +232,7 @@ function Source({
               top: positionTop + 16,
               backgroundColor: 'var(--mantine-color-blue-5)',
               height: 2,
-              width: ref.current?.clientWidth || 0,
+              width: 4,
             }}
             />
           </>
