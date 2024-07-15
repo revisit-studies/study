@@ -1,21 +1,16 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import {
-  Badge, Title, ScrollArea, Text,
-  Box,
-  Textarea,
-  Button,
-  Tooltip,
-  ActionIcon,
-  Divider,
-  Input,
+  Title, ScrollArea, Box, Textarea, Button, Tooltip, ActionIcon, Divider, Input,
 } from '@mantine/core';
 import { IconArrowBack, IconCircleMinus, IconPencil } from '@tabler/icons-react';
 import { useFocusTrap } from '@mantine/hooks';
+import Markdown from './Markdown';
 import style from './sumsifter.module.css';
 
 interface SummaryProps {
   sentences: { id: string, text: string; sources: string[] }[];
   onSourceClick: (summaryId: string | null, sourceId: string | null) => void;
+  activeSummaryId: string | null;
   activeSourceId: string | null;
   onSummaryBadgePositionChange: (badgeTop: number) => void;
   onSubmitQuery: (queryText: string) => void;
@@ -24,30 +19,16 @@ interface SummaryProps {
   onUpdateSummary: (text: string, prompt: string) => void;
 }
 
-function SummarySourceItem({
-  sentence, src, idx, onSourceClick, activeSourceId,
-}: { sentence: { id: string, text: string; sources: string[] }, src: string, idx: number, onSourceClick: (ref: HTMLDivElement | null, summaryId: string | null, sourceId: string | null) => void, activeSourceId: string | null }) {
-  const ref = React.useRef<HTMLDivElement | null>(null);
-  return (
-    <React.Fragment key={idx}>
-      <Badge
-        ref={ref}
-        className={style.badge}
-        onClick={() => {
-          onSourceClick(ref.current, sentence.id, src);
-        }}
-        style={{ cursor: 'pointer' }}
-        color={activeSourceId === src ? 'blue.5' : 'gray.5'}
-      >
-        {src}
-      </Badge>
-      {idx < sentence.sources.length - 1 && ', '}
-    </React.Fragment>
-  );
-}
-
 function Summary({
-  sentences, onSourceClick, activeSourceId, onSummaryBadgePositionChange, onSubmitQuery, queryText, onQueryTextChange, onUpdateSummary,
+  sentences,
+  onSourceClick,
+  activeSummaryId,
+  activeSourceId,
+  onSummaryBadgePositionChange,
+  onSubmitQuery,
+  queryText,
+  onQueryTextChange,
+  onUpdateSummary,
 }: SummaryProps) {
   const ref = React.useRef<HTMLDivElement>(null);
   const focusTrapRef = useFocusTrap();
@@ -159,40 +140,14 @@ function Summary({
     }
   }, [summaryQuery, userSelection, onUpdateSummary]);
 
-  const paragraph = sentences.map((sentence, index) => {
-    // Use a regular expression to capture the text before and the last punctuation mark
-    const regex = /^(.*?)([.?!])?$/;
-    const match = sentence.text.match(regex);
-    const textBeforePunctuation = match ? match[1] : sentence.text;
-    const punctuation = match ? match[2] : '';
-
-    const handleSourceClick = (elem: HTMLDivElement | null, summaryId: string | null, sourceId: string | null) => {
-      onSourceClick(summaryId, sourceId);
-      onSummaryBadgePositionChange(elem?.getBoundingClientRect().top || 0);
-      activeRef.current = elem;
-      setPositionTop(elem?.getBoundingClientRect().top || 0);
-      setPositionLeftSummary(elem?.getBoundingClientRect().left || 0);
-      setPositionLeft(ref.current?.getBoundingClientRect().right || 0);
-    };
-
-    return (
-      <React.Fragment key={index}>
-        {textBeforePunctuation}
-        {' '}
-        {sentence.sources.length > 0 && (
-          <span>
-            [
-            {sentence.sources.map((src, idx) => (
-              <SummarySourceItem key={idx} sentence={sentence} src={src} idx={idx} onSourceClick={handleSourceClick} activeSourceId={activeSourceId} />
-            ))}
-            ]
-          </span>
-        )}
-        {punctuation}
-        {' '}
-      </React.Fragment>
-    );
-  });
+  const handleSourceClick = useCallback((elem: HTMLDivElement | null, summaryId: string | null, sourceId: string | null) => {
+    onSourceClick(summaryId, sourceId);
+    onSummaryBadgePositionChange(elem?.getBoundingClientRect().top || 0);
+    activeRef.current = elem;
+    setPositionTop(elem?.getBoundingClientRect().top || 0);
+    setPositionLeftSummary(elem?.getBoundingClientRect().left || 0);
+    setPositionLeft(ref.current?.getBoundingClientRect().right || 0);
+  }, [onSourceClick, onSummaryBadgePositionChange]);
 
   return (
     <ScrollArea style={{ height: 'calc(100vh - 110px)' }} pos="relative" viewportRef={ref}>
@@ -215,9 +170,14 @@ function Summary({
           </div>
         )}
         <Title order={2} mb={16}>LLM-Generated Summary</Title>
-        <Text pos="relative">
-          {paragraph}
-        </Text>
+        <Box pos="relative">
+          <Markdown
+            data={sentences}
+            activeSourceId={activeSourceId}
+            activeId={activeSummaryId}
+            onSourceClick={handleSourceClick}
+          />
+        </Box>
 
         {userSelection && (
           <div

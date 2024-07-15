@@ -1,56 +1,19 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import { IconArrowBack, IconCirclePlus, IconPencil } from '@tabler/icons-react';
 import {
-  Text, Title, ScrollArea, Badge,
-  Input,
-  ActionIcon,
-  Tooltip,
-  Divider,
+  Title, ScrollArea, Badge, Input, ActionIcon, Tooltip, Divider,
+  Box,
 } from '@mantine/core';
 import { useFocusTrap } from '@mantine/hooks';
 import style from './sumsifter.module.css';
+import Markdown from './Markdown';
 
 interface SourceProps {
-  sourceList: { id?: string; text: string }[];
+  sourceList: { id: string; text: string }[];
   activeSourceId: string | null;
   onSourceBadgePositionChange: (badgeLeft: number, badgeTop: number) => void;
   onAddToSummary: (text: string, prompt: string) => void;
 }
-
-function SourceItem({ source, isActive, onActiveRefChange }: { source: { id?: string; text: string }; isActive: boolean, onActiveRefChange: (ref: HTMLSpanElement | null) => void }) {
-  const ref = React.useRef<HTMLSpanElement>(null);
-
-  useEffect(() => {
-    if (isActive) {
-      ref.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      onActiveRefChange(ref.current);
-    }
-  }, [source.id, isActive, onActiveRefChange]);
-
-  return (
-    <Text
-      className={style.sourceItem}
-      ref={ref}
-      component="span"
-      px={5}
-    >
-      {/* {isActive && (
-        <Badge
-          className={style.sourceItemBadge}
-        >
-          {source.id}
-        </Badge>
-      )} */}
-      <Text
-        component="span"
-        bg={isActive ? 'blue.3' : 'transparent'}
-        dangerouslySetInnerHTML={{ __html: source.text }}
-      />
-    </Text>
-  );
-}
-
-const MemoizedSourceItem = React.memo(SourceItem);
 
 function Source({
   sourceList, activeSourceId, onSourceBadgePositionChange, onAddToSummary,
@@ -83,7 +46,7 @@ function Source({
     return () => { };
   }, [ref, onSourceBadgePositionChange]);
 
-  const handleActiveRefChange = useCallback((e: HTMLSpanElement | null) => {
+  const handleActiveRefChange = useCallback((e: HTMLDivElement | null) => {
     activeRef.current = e;
   }, []);
 
@@ -196,9 +159,15 @@ function Source({
 
         <Title order={2}>Source Document</Title>
 
-        {sourceList.map((source, index) => (
-          <MemoizedSourceItem key={index} source={source} isActive={source.id === activeSourceId} onActiveRefChange={handleActiveRefChange} />
-        ))}
+        {/* ActiveId for this is activeSourceId, and activeSourceId is null */}
+        <Box pos="relative">
+          <Markdown
+            data={sourceList}
+            activeId={activeSourceId}
+            activeSourceId={null}
+            onActiveRefChange={handleActiveRefChange}
+          />
+        </Box>
 
         {userSelection && (
           <div
