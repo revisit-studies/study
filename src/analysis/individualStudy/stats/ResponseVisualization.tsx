@@ -14,7 +14,10 @@ import { IndividualComponent, ParticipantData, Response } from '../../../parser/
 export function ResponseVisualization({
   response, participantData, trialId, trialConfig,
 }: {
-  response: Response | { id: 'Config and Timing', type: 'metadata'}; participantData: ParticipantData[]; trialId: string; trialConfig: IndividualComponent;
+  response: Response | { id: 'Config and Timing', type: 'metadata' };
+  participantData: ParticipantData[];
+  trialId: string;
+  trialConfig: IndividualComponent;
 }) {
   const [opened, { toggle }] = useDisclosure(true);
   const [ref, dms] = useResizeObserver();
@@ -135,7 +138,7 @@ export function ResponseVisualization({
             field: 'bins',
             scale: min !== undefined && max !== undefined ? { domain: [min, max] } : undefined,
             type: 'quantitative',
-            title: response.id,
+            title: 'Answer',
           },
           x2: { field: 'bins_end' },
           y: {
@@ -157,7 +160,7 @@ export function ResponseVisualization({
         params: correctAnswer !== undefined ? correctAnswerSpec.params : undefined,
         transform: correctAnswer !== undefined ? correctAnswerSpec.transform : undefined,
         encoding: {
-          x: { field: response.id, type: 'ordinal', title: response.id },
+          x: { field: response.id, type: 'ordinal', title: 'Answer' },
           y: { aggregate: 'count', type: 'quantitative', title: 'Count' },
           color: correctAnswer !== undefined ? correctAnswerSpec.color : undefined,
         },
@@ -165,7 +168,8 @@ export function ResponseVisualization({
 
       return spec;
     }
-  }, [participantData, questionData, response.id, response.max, response.min, response.numItems, response.options, response.type, trialId, correctAnswer]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps, @typescript-eslint/no-explicit-any
+  }, [participantData, questionData, response.id, (response as any).max, (response as any).min, (response as any).numItems, (response as any).options, response.type, trialId, correctAnswer]);
 
   return (
     <Paper p="lg" withBorder ref={ref}>
@@ -242,16 +246,16 @@ export function ResponseVisualization({
               : (
                 <>
                   <Text fw={700}>Response Specification: </Text>
-                  <Text component="pre">
+                  <Code block>
                     {JSON.stringify(response, null, 2)}
-                  </Text>
+                  </Code>
                   <br />
                   {correctAnswer && (
                   <>
                     <Text fw={700}>Correct Answer: </Text>
-                    <Text component="pre">
+                    <Code block>
                       {JSON.stringify(correctAnswer, null, 2)}
-                    </Text>
+                    </Code>
                   </>
                   )}
                 </>
