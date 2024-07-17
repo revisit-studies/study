@@ -94,10 +94,12 @@ export function SummaryPanel(props: { studyId: string; allParticipants: Particip
             <Popover opened={checkOpened}>
               <Popover.Target>
                 <Button
-                  onClick={() => navigate(`/analysis/stats/${studyId}`)}
+                  onClick={(event) => { if (!event.ctrlKey && !event.metaKey) { event.preventDefault(); navigate(`/analysis/stats/${studyId}`); } }}
                   onMouseEnter={openCheck}
                   onMouseLeave={closeCheck}
                   px={4}
+                  component="a"
+                  href={`/analysis/stats/${studyId}`}
                 >
                   <IconChartHistogram />
                 </Button>
