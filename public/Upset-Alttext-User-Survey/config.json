@@ -753,7 +753,7 @@
                     "placeholder": "Please provide your prolific id"
                 },
                 {
-                    "id": "accept",
+                    "id": "consent",
                     "prompt": "Do you consent to the study and wish to continue?",
                     "required": true,
                     "location": "belowStimulus",
@@ -1020,6 +1020,16 @@
     },
     "sequence": {
         "order": "fixed",
+        "skip":[
+            {
+                "name": "Consent",
+                "check": "response",
+                "responseId": "consent",
+                "value": "no",
+                "to": "end"
+
+            }
+        ],
         "components": [
             "Introduction",
             "Consent",
