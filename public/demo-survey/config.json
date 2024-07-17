@@ -95,8 +95,10 @@
                 },
                 {
                     "id": "q7",
-                    "prompt": "Checkbox example (not required)",
-                    "required": false,
+                    "prompt": "Checkbox example",
+                    "required": true,
+                    "minSelections": 2,
+                    "maxSelections": 2,
                     "location": "aboveStimulus",
                     "type": "checkbox",
                     "options": [
