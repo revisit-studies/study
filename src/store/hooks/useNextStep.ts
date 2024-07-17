@@ -171,7 +171,7 @@ export function useNextStep() {
 
           // For a response check, we only need to check the specified response
           if (condition.check === 'response') {
-            conditionIsTriggered = condition.value !== response.answer[condition.responseId];
+            conditionIsTriggered = condition.comparison === 'equal' ? condition.value === response.answer[condition.responseId] : condition.value !== response.answer[condition.responseId];
           } else {
             // Check that the response is matches the correct answer
             conditionIsTriggered = !checkAllAnswersCorrect(response.answer, componentId, studyConfig.components[componentId.slice(0, componentId.lastIndexOf('_'))], studyConfig);

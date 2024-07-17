@@ -834,6 +834,7 @@ export type InterruptionBlock = DeterministicInterruption | RandomInterruption;
       "check": "response",
       "responseId": "attentionCheckResponse",
       "value": "the right answer",
+      "comparison": "equal",
       "to": "end"
     }
   ]
@@ -852,6 +853,8 @@ export interface IndividualComponentSingleResponseCondition {
   responseId: string;
   /** The value to check. */
   value: string | number;
+  /** The comparison to use. */
+  comparison: 'equal' | 'notEqual';
   /** The id of the component or block to skip to */
   to: string;
 }
