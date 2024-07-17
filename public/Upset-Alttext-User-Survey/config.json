@@ -604,27 +604,94 @@
             "type": "markdown",
             "nextButtonLocation": "sidebar",
             "instruction": "Please answer the following questions:",
+            "provideFeedback": true,
             "response": [
                 {
                     "id": "1",
                     "prompt": "What is the largest set?",
                     "required": true,
                     "location": "sidebar",
-                    "type": "shortText",
-                    "requiredValue": "Drama",
-                    "requiredLabel": "Drama",
-                    "placeholder": "Please enter your answer here"
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Action",
+                            "value": "Action"
+                        },
+                        {
+                            "label": "Comedy",
+                            "value": "Comedy"
+                        },
+                        {
+                            "label": "Drama",
+                            "value": "Drama"
+                        },
+                        {
+                            "label": "Horror",
+                            "value": "Horror"
+                        },
+                        {
+                            "label": "Mystery",
+                            "value": "Mystery"
+                        },
+                        {
+                            "label": "Romance",
+                            "value": "Romance"
+                        },
+                        {
+                            "label": "SciFi",
+                            "value": "SciFi"
+                        },
+                        {
+                            "label": "Thriller",
+                            "value": "Thriller"
+                        }
+                        
+                    ]
                 },
                 {
                     "id": "2",
-                    "prompt": "What is the largest intersection?",
+                    "prompt": "What is the largest intersection? Select all Sets in the Intersection.",
                     "secondaryText": "e.g., set_A and set_B",
                     "required": true,
                     "location": "sidebar",
-                    "type": "shortText",
-                    "requiredValue": "Drama",
-                    "requiredLabel": "Drama",
-                    "placeholder": "Please enter your answer here"
+                    "type": "checkbox",
+                    "options": [
+                        {
+                            "label": "Action",
+                            "value": "Action"
+                        },
+                        {
+                            "label": "Comedy",
+                            "value": "Comedy"
+                        },
+                        {
+                            "label": "Drama",
+                            "value": "Drama"
+                        },
+                        {
+                            "label": "Horror",
+                            "value": "Horror"
+                        },
+                        {
+                            "label": "Mystery",
+                            "value": "Mystery"
+                        },
+                        {
+                            "label": "Romance",
+                            "value": "Romance"
+                        },
+                        {
+                            "label": "SciFi",
+                            "value": "SciFi"
+                        },
+                        {
+                            "label": "Thriller",
+                            "value": "Thriller"
+                        }
+                        
+                    ]
+
                 },
                 {
                     "id": "3",
@@ -632,7 +699,6 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
-                    "requiredValue": "Independent set",
                     "placeholder": "Please choose your answer",
                     "options": [
                         {
@@ -651,7 +717,20 @@
                     ]
 
                 }
-            ]
+            ],
+            "correctAnswer": [
+                {
+                    "id": "1",
+                    "answer": "Drama"
+                },
+                {
+                    "id": "2",
+                    "answer": "Drama"
+                },
+                {
+                    "id": "3",
+                    "answer": "Independent set"
+                }]
         }
     },
     "components": {
@@ -665,14 +744,6 @@
             "path": "Upset-Alttext-User-Survey/assets/consent.md",
             "nextButtonText": "Agree",
             "response": [
-                {
-                    "id": "signature",
-                    "prompt": "Your signature",
-                    "required": true,
-                    "location": "belowStimulus",
-                    "type": "shortText",
-                    "placeholder": "Please provide your signature"
-                },
                 {
                     "id": "id",
                     "prompt": "Your Prolific ID",
@@ -699,6 +770,7 @@
                     ]
                 }
             ]
+            
         },
         "What Is UpSet?": {
             "type": "markdown",

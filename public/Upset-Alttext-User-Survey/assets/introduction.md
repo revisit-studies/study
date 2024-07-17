@@ -1,3 +1,9 @@
 # Introduction
 
-Welcome to our study. In this study, we ask you questions about our generated text description for UpSet Plots. UpSet plot is a data visualization technique. Data visualization techniques serve as a visual language that conveys intricate patterns, trends, and relationships within data. With their increasing popularity, it’s also necessary that the visualizations reach a wide range of people. Our research aims to make data visualizations more accessible to communities so that people with visual impairments such as low vision, residual vision, and blind users do not miss any valuable information from the visualization. To serve this purpose, we have generated textual-natural-language rich textual descriptions. Before delving into the question-answer session, we will introduce you with what UpSet plot is, why is it used, how you can interpret an UpSet plot.
+Welcome to our study!
+
+In this study, we ask you questions about our generated text description for UpSet Plots. UpSet plot is a data visualization technique. Data visualization techniques serve as a visual language that conveys intricate patterns, trends, and relationships within data. With their increasing popularity, it’s also necessary that the visualizations reach a wide range of people. 
+
+Our research aims to make data visualizations more accessible to communities so that people with visual impairments such as low vision, residual vision, and blind users do not miss any valuable information from the visualization. To serve this purpose, we have generated text description for charts. 
+
+Before delving into the question-answer session, we will introduce you with what UpSet plot is, why is it used, how you can interpret an UpSet plot.

@@ -21,7 +21,7 @@ Sometimes you will find this type of contents that we call "Visualization and Te
 
 <div class="container">
     <div class="column">
-        <img style="width: 460px;" src="./assets/VO2.png" alt="Description of Image">
+        <img style="width: 460px;" src="./assets/T.png" alt="Description of Image">
     </div>
     <div class="column">
         <h2>Dataset Properties</h2>
