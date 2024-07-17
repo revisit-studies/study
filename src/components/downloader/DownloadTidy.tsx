@@ -191,7 +191,12 @@ export function DownloadTidy({
 
     const csv = [
       tableData.header.join(','),
-      ...tableData.rows.map((row) => tableData.header.map((header) => row[header]).join(',')),
+      ...tableData.rows.map((row) => tableData.header.map((header) => {
+        const fieldValue = `${row[header]}`;
+        // Escape double quotes by replacing them with two double quotes
+        const escapedValue = fieldValue.replace(/"/g, '""');
+        return `"${escapedValue}"`; // Double-quote the field value
+      }).join(',')),
     ].join('\n');
     download(csv, filename);
   }, [filename, tableData]);
