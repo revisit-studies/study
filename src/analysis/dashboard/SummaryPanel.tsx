@@ -1,5 +1,5 @@
 import {
-  Badge, Box, Button, Card, Center, Text, Title, Container, Flex, Group, Popover,
+  Box, Button, Card, Center, Text, Title, Container, Flex, Group, Popover,
 } from '@mantine/core';
 import React, { useMemo, useState } from 'react';
 import { IconChartHistogram } from '@tabler/icons-react';
@@ -20,10 +20,7 @@ function isWithinRange(answers: Record<string, StoredAnswer>, rangeTime: [Date |
   return Math.min(...timeStamps) >= rangeTime[0].getTime() && Math.max(...timeStamps) <= rangeTime[1].getTime();
 }
 
-export function SummaryPanel(props: { studyId: string; allParticipants: ParticipantData[]; config: StudyConfig }) {
-  const {
-    studyId, allParticipants, config,
-  } = props;
+export function SummaryPanel({ studyId, allParticipants }: { studyId: string; allParticipants: ParticipantData[]; }) {
   const navigate = useNavigate();
   const [ref, dms] = useResizeObserver();
 
