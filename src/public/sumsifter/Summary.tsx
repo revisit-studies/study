@@ -188,7 +188,7 @@ function Summary({
             }}
             onMouseDown={(e) => { e.stopPropagation(); }}
           >
-            <Tooltip label="Include in summary" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
+            <Tooltip label="Remove from summary" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
               <ActionIcon variant="transparent" size="md" color="gray" onClick={handleRemoveFromSummary}>
                 <IconCircleMinus />
               </ActionIcon>
