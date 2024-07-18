@@ -1,6 +1,6 @@
-# Training
+# Training – Visualization and Text
 
-Sometimes you will find this type of contents that we call "Visualization and Text". In the sidebar, you can see some of the demo questionnaires for this type of contents.
+Sometimes you will see both the visualization and the text, in the "Visualization and Text" condition. In the sidebar, you can see some sample questions. Try to answer them. If you are unsure, click "Check Answer" to get help.
 
 <h1 style="text-align: center;">Dataset: Movie Genres</h1>
 

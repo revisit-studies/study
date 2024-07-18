@@ -1,6 +1,10 @@
 # Training
 
-This is one of the visualization contents that we call "Visualization Only". In the sidebar, you can see some of the demo questionnaires for this type of contents.
+Next, we will review three different "modes" on how data will be presented – either with just a visualization; with just a text description; or with both at the same time. 
+
+## Visualization–Only
+
+Here you see an example for "Visualization Only". In the sidebar, you can see some sample questions. Try to answer them. If you are unsure, click "Check Answer" to get help.
 
 <!DOCTYPE html>
 <html>
