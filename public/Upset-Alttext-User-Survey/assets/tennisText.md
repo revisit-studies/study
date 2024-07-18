@@ -1,8 +1,5 @@
 <h1 style="text-align: center;">Dataset: Tennis Grand Slam Winners</h1>
 
-## UpSet Introduction
-This is an UpSet plot that visualizes set intersection. To learn about UpSet plots, visit https://upset.app.
-
 ## Dataset Properties
 The dataset contains 4 sets and 208 elements, of which 4 sets are shown in the plot.
 

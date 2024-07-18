@@ -26,7 +26,7 @@
         "VO-image1": {
             "type": "markdown",
             "nextButtonLocation": "sidebar",
-            "description": "Content: Visual Only",
+            "description": "Content: Visualization Only",
             "instruction": "Please answer the following question about the chart:",
             "response": [
                 {
@@ -42,144 +42,13 @@
         "VO-image2": {
             "type": "markdown",
             "nextButtonLocation": "sidebar",
-            "description": "Content: Visual Only",
-            "instruction": "Please answer the following question about the chart:",
-            "response": [
-                {
-                    "id": "voq1",
-                    "prompt": "How many sets are shown in the upset plot?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "numerical",
-                    "placeholder": "Please enter your answer here",
-                    "min": 0,
-                    "max": 100
-
-                },
-                {
-                    "id": "voq2",
-                    "prompt": "How many intersections are seen in the UpSet plot?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "numerical",
-                    "placeholder": "Please enter your answer here",
-                    "min": 0,
-                    "max": 100
-
-                },
-                {
-                    "id": "voq3",
-                    "prompt": "What is the largest set?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "shortText",
-                    "placeholder": "Please enter your answer here"
-                },
-                {
-                    "id": "voq4",
-                    "prompt": "What is the largest intersection?",
-                    "secondaryText": "e.g., set_A and set_B",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "shortText",
-                    "placeholder": "Please enter your answer here"
-                },
-                {
-                    "id": "voq5",
-                    "prompt": "How large is the largest intersection?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "numerical",
-                    "placeholder": "Please enter your answer here",
-                    "min": 0,
-                    "max": 1000000000
-                },
-                {
-                    "id": "voq6",
-                    "prompt": "How many sets make up the largest intersection?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "dropdown",
-                    "placeholder": "Please choose your answer",
-                    "options": [
-                        {
-                            "label": "It is only of a single set.",
-                            "value": "Independent set"
-                        },
-                        {
-                            "label": "It is the intersection of 2-3 sets.",
-                            "value": "Low set"
-                        },
-                        {
-                            "label": "It is the intersection of many sets.",
-                            "value": "Medium / High order set"
-                        }
-                        
-                    ]
-                },
-                {
-                    "id": "voq7",
-                    "prompt": "How similar are the set sizes?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "dropdown",
-                    "placeholder": "Please choose your answer",
-                    "options": [
-                        {
-                            "label": "Roughly equal (all the set sizes look similar).",
-                            "value": "Identical"
-                        },
-                        {
-                            "label": "Diverging a bit (the sizes of the largest set and the smallest set don't differ largely).",
-                            "value": "Diverging a bit"
-                        },
-                        {
-                            "label": "Diverging a lot (the sizes of the largest set and the smallest set differ largely).",
-                            "value": "Diverging a lot"
-                        }
-                    ]
-                },
-                {
-                    "id": "voq8",
-                    "prompt": "Is the largest set present in the largest intersection?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "radio",
-                    "options": [
-                        {
-                            "label": "Yes",
-                            "value": "1"
-                        },
-                        {
-                            "label": "No",
-                            "value": "2"
-                        }
-                    ]
-                },
-                {
-                    "id": "voq9",
-                    "prompt": "Is the all-set intersection (intersection having all the sets) present? ",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "radio",
-                    "options": [
-                        {
-                            "label": "Yes",
-                            "value": "1"
-                        },
-                        {
-                            "label": "No",
-                            "value": "2"
-                        }
-                        
-                    ]
-                }
-            ]
+            "description": "Content: Visualization Only",
+            "instruction": "Please answer the following question about the plot:"
         },
         "VO-image3": {
             "type": "markdown",
             "nextButtonLocation": "sidebar",
-            "description": "Content: Visual Only",
+            "description": "Content: Visualization Only",
             "instruction": "Rate the content:",
             "response": [
                 {
@@ -205,7 +74,7 @@
                 },
                 {
                     "id": "voq3",
-                    "prompt": "On a scale of 1 to 5, how effective was the chart at conveying information? (1 = Not at all effective, 5 = Extremely effective)",
+                    "prompt": "On a scale of 1 to 5, how effective was the plot at conveying information? (1 = Not at all effective, 5 = Extremely effective)",
                     "required": true,
                     "location": "sidebar",
                     "type": "likert",
@@ -220,7 +89,7 @@
             "type": "markdown",
             "nextButtonLocation": "sidebar",
             "description": "Content: Text Only",
-            "instruction": "Please answer the following question about the chart:",
+            "instruction": "Please answer the following question about the text:",
             "response": [
                 {
                     "id": "voq1",
@@ -236,138 +105,7 @@
             "type": "markdown",
             "nextButtonLocation": "sidebar",
             "description": "Content: Text Only",
-            "instruction": "Please answer the following question about the chart:",
-            "response": [
-                {
-                    "id": "voq1",
-                    "prompt": "How many sets are shown in the description?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "numerical",
-                    "placeholder": "Please enter your answer here",
-                    "min": 0,
-                    "max": 100
-
-                },
-                {
-                    "id": "voq2",
-                    "prompt": "How many intersections are seen in the description?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "numerical",
-                    "placeholder": "Please enter your answer here",
-                    "min": 0,
-                    "max": 100
-
-                },
-                {
-                    "id": "voq3",
-                    "prompt": "What is the largest set?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "shortText",
-                    "placeholder": "Please enter your answer here"
-                },
-                {
-                    "id": "voq4",
-                    "prompt": "What is the largest intersection?",
-                    "secondaryText": "e.g., set_A and set_B",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "shortText",
-                    "placeholder": "Please enter your answer here"
-                },
-                {
-                    "id": "voq5",
-                    "prompt": "How large is the largest intersection?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "numerical",
-                    "placeholder": "Please enter your answer here",
-                    "min": 0,
-                    "max": 1000000000
-                },
-                {
-                    "id": "voq6",
-                    "prompt": "How many sets make up the largest intersection?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "dropdown",
-                    "placeholder": "Please choose your answer",
-                    "options": [
-                        {
-                            "label": "It is only of a single set.",
-                            "value": "Independent set"
-                        },
-                        {
-                            "label": "It is the intersection of 2-3 sets.",
-                            "value": "Low set"
-                        },
-                        {
-                            "label": "It is the intersection of many sets.",
-                            "value": "Medium / High order set"
-                        }
-                        
-                    ]
-                },
-                {
-                    "id": "voq7",
-                    "prompt": "How similar are the set sizes?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "dropdown",
-                    "placeholder": "Please choose your answer",
-                    "options": [
-                        {
-                            "label": "Roughly equal (all the set sizes look similar).",
-                            "value": "Identical"
-                        },
-                        {
-                            "label": "Diverging a bit (the sizes of the largest set and the smallest set don't differ largely).",
-                            "value": "Diverging a bit"
-                        },
-                        {
-                            "label": "Diverging a lot (the sizes of the largest set and the smallest set differ largely).",
-                            "value": "Diverging a lot"
-                        }
-                    ]
-                },
-                {
-                    "id": "voq8",
-                    "prompt": "Is the largest set present in the largest intersection?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "radio",
-                    "options": [
-                        {
-                            "label": "Yes",
-                            "value": "1"
-                        },
-                        {
-                            "label": "No",
-                            "value": "2"
-                        }
-                    ]
-                },
-                {
-                    "id": "voq9",
-                    "prompt": "Is the all-set intersection (intersection having all the sets) present? ",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "radio",
-                    "options": [
-                        {
-                            "label": "Yes",
-                            "value": "1"
-                        },
-                        {
-                            "label": "No",
-                            "value": "2"
-                        }
-                        
-                    ]
-                }
-            ]
+            "instruction": "Please answer the following question about the text:"
         },
         "TO-text3":{
             "type": "markdown",
@@ -412,7 +150,7 @@
             "type": "markdown",
             "nextButtonLocation": "sidebar",
             "description": "Content: Text and Visual",
-            "instruction": "Please answer the following question about the chart:",
+            "instruction": "Please answer the following question about the content:",
             "response": [
                 {
                     "id": "voq1",
@@ -428,138 +166,7 @@
             "type": "markdown",
             "nextButtonLocation": "sidebar",
             "description": "Content: Text and Visual",
-            "instruction": "Please answer the following questions about the chart:",
-            "response": [
-                {
-                    "id": "voq1",
-                    "prompt": "How many sets are there?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "numerical",
-                    "placeholder": "Please enter your answer here",
-                    "min": 0,
-                    "max": 100
-
-                },
-                {
-                    "id": "voq2",
-                    "prompt": "How many intersections are seen?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "numerical",
-                    "placeholder": "Please enter your answer here",
-                    "min": 0,
-                    "max": 100
-
-                },
-                {
-                    "id": "voq3",
-                    "prompt": "What is the largest set?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "shortText",
-                    "placeholder": "Please enter your answer here"
-                },
-                {
-                    "id": "voq4",
-                    "prompt": "What is the largest intersection?",
-                    "secondaryText": "e.g., set_A and set_B",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "shortText",
-                    "placeholder": "Please enter your answer here"
-                },
-                {
-                    "id": "voq5",
-                    "prompt": "How large is the largest intersection?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "numerical",
-                    "placeholder": "Please enter your answer here",
-                    "min": 0,
-                    "max": 1000000000
-                },
-                {
-                    "id": "voq6",
-                    "prompt": "How many sets make up the largest intersection?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "dropdown",
-                    "placeholder": "Please choose your answer",
-                    "options": [
-                        {
-                            "label": "It is only of a single set.",
-                            "value": "Independent set"
-                        },
-                        {
-                            "label": "It is the intersection of 2-3 sets.",
-                            "value": "Low set"
-                        },
-                        {
-                            "label": "It is the intersection of many sets.",
-                            "value": "Medium / High order set"
-                        }
-                        
-                    ]
-                },
-                {
-                    "id": "voq7",
-                    "prompt": "How similar are the set sizes?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "dropdown",
-                    "placeholder": "Please choose your answer",
-                    "options": [
-                        {
-                            "label": "Roughly equal (all the set sizes look similar).",
-                            "value": "Identical"
-                        },
-                        {
-                            "label": "Diverging a bit (the sizes of the largest set and the smallest set don't differ largely).",
-                            "value": "Diverging a bit"
-                        },
-                        {
-                            "label": "Diverging a lot (the sizes of the largest set and the smallest set differ largely).",
-                            "value": "Diverging a lot"
-                        }
-                    ]
-                },
-                {
-                    "id": "voq8",
-                    "prompt": "Is the largest set present in the largest intersection?",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "radio",
-                    "options": [
-                        {
-                            "label": "Yes",
-                            "value": "1"
-                        },
-                        {
-                            "label": "No",
-                            "value": "2"
-                        }
-                    ]
-                },
-                {
-                    "id": "voq9",
-                    "prompt": "Is the all-set intersection (intersection having all the sets) present? ",
-                    "required": true,
-                    "location": "sidebar",
-                    "type": "radio",
-                    "options": [
-                        {
-                            "label": "Yes",
-                            "value": "1"
-                        },
-                        {
-                            "label": "No",
-                            "value": "2"
-                        }
-                        
-                    ]
-                }
-            ]
+            "instruction": "Please answer the following questions about the content:"
         },
         "TandV3":{
             "type": "markdown",
@@ -590,7 +197,7 @@
                 },
                 {
                     "id": "voq3",
-                    "prompt": "On a scale of 1 to 5, how effective was the description of the data at conveying information? (1 = Not at all effective, 5 = Extremely effective)",
+                    "prompt": "On a scale of 1 to 5, how effective was the content at conveying information? (1 = Not at all effective, 5 = Extremely effective)",
                     "required": true,
                     "location": "sidebar",
                     "type": "likert",
@@ -712,6 +319,10 @@
                         {
                             "label": "It is the intersection of many sets.",
                             "value": "Medium / High order set"
+                        },
+                        {
+                            "label": "It is the empty intersection (no sets)",
+                            "value": "Empty set"
                         }
                         
                     ]
@@ -804,6 +415,183 @@
         },
         "Covid-Vis-Q2": {
             "baseComponent": "VO-image2",
+            "response": [
+                {
+                    "id": "voq1",
+                    "prompt": "How many sets are shown in the upset plot?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 100
+
+                },
+                {
+                    "id": "voq3",
+                    "prompt": "What is the largest set?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Anosmia",
+                            "value": "Anosmia"
+                        },
+                        {
+                            "label": "Cough",
+                            "value": "Cough"
+                        },
+                        {
+                            "label": "Diarrhea",
+                            "value": "Diarrhea"
+                        },
+                        {
+                            "label": "Fatigue",
+                            "value": "Fatigue"
+                        },
+                        {
+
+                            "label": "Fever",
+                            "value": "Fever"
+                        },
+                        {
+                            "label": "Shortness of Breath",
+                            "value": "Shortness of Breath"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq4",
+                    "prompt": "What is the largest intersection? Select all Sets in the Intersection.",
+                    "secondaryText": "e.g., set_A and set_B",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "checkbox",
+                    "options": [
+                        {
+                            "label": "Anosmia",
+                            "value": "Anosmia"
+                        },
+                        {
+                            "label": "Cough",
+                            "value": "Cough"
+                        },
+                        {
+                            "label": "Diarrhea",
+                            "value": "Diarrhea"
+                        },
+                        {
+                            "label": "Fatigue",
+                            "value": "Fatigue"
+                        },
+                        {
+
+                            "label": "Fever",
+                            "value": "Fever"
+                        },
+                        {
+                            "label": "Shortness of Breath",
+                            "value": "Shortness of Breath"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq5",
+                    "prompt": "How large is the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 1000000000
+                },
+                {
+                    "id": "voq6",
+                    "prompt": "How many sets make up the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "It is only of a single set.",
+                            "value": "Independent set"
+                        },
+                        {
+                            "label": "It is the intersection of 2-3 sets.",
+                            "value": "Low set"
+                        },
+                        {
+                            "label": "It is the intersection of many sets.",
+                            "value": "Medium / High order set"
+                        },
+                        {
+                            "label": "It is the empty intersection (no sets)",
+                            "value": "Empty set"
+                        }
+                        
+                    ]
+                },
+                {
+                    "id": "voq7",
+                    "prompt": "How similar are the set sizes?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Roughly equal (all the set sizes look similar).",
+                            "value": "Identical"
+                        },
+                        {
+                            "label": "Diverging a bit (the sizes of the largest set and the smallest set don't differ largely).",
+                            "value": "Diverging a bit"
+                        },
+                        {
+                            "label": "Diverging a lot (the sizes of the largest set and the smallest set differ largely).",
+                            "value": "Diverging a lot"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq8",
+                    "prompt": "Is the largest set present in the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq9",
+                    "prompt": "Is the all-set intersection (intersection having all the sets) present? ",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                        
+                    ]
+                }
+            ],
             "path": "Upset-Alttext-User-Survey/assets/covidVis.md"
         },
         "Covid-Vis-Q3": {
@@ -816,7 +604,185 @@
         },
         "Covid-Text-Q2": {
             "baseComponent": "TO-text2",
-            "path": "Upset-Alttext-User-Survey/assets/covidText.md"
+            "path": "Upset-Alttext-User-Survey/assets/covidText.md",
+            "response": [
+                {
+                    "id": "voq1",
+                    "prompt": "How many sets are shown in the description?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 100
+
+                },
+                {
+                    "id": "voq2",
+                    "prompt": "What is the largest set?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Anosmia",
+                            "value": "Anosmia"
+                        },
+                        {
+                            "label": "Cough",
+                            "value": "Cough"
+                        },
+                        {
+                            "label": "Diarrhea",
+                            "value": "Diarrhea"
+                        },
+                        {
+                            "label": "Fatigue",
+                            "value": "Fatigue"
+                        },
+                        {
+
+                            "label": "Fever",
+                            "value": "Fever"
+                        },
+                        {
+                            "label": "Shortness of Breath",
+                            "value": "Shortness of Breath"
+                        }
+                    ]
+
+                },
+                {
+                    "id": "voq3",
+                    "prompt": "What is the largest intersection? Select all Sets in the Intersection.",
+                    "secondaryText": "e.g., set_A and set_B",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "checkbox",
+                    "options": [
+                        {
+                            "label": "Anosmia",
+                            "value": "Anosmia"
+                        },
+                        {
+                            "label": "Cough",
+                            "value": "Cough"
+                        },
+                        {
+                            "label": "Diarrhea",
+                            "value": "Diarrhea"
+                        },
+                        {
+                            "label": "Fatigue",
+                            "value": "Fatigue"
+                        },
+                        {
+
+                            "label": "Fever",
+                            "value": "Fever"
+                        },
+                        {
+                            "label": "Shortness of Breath",
+                            "value": "Shortness of Breath"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq4",
+                    "prompt": "How large is the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 1000000000
+                },
+                {
+                    "id": "voq5",
+                    "prompt": "How many sets make up the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "It is only of a single set.",
+                            "value": "Independent set"
+                        },
+                        {
+                            "label": "It is the intersection of 2-3 sets.",
+                            "value": "Low set"
+                        },
+                        {
+                            "label": "It is the intersection of many sets.",
+                            "value": "Medium / High order set"
+                        },
+                        {
+                            "label": "It is the empty intersection (no sets)",
+                            "value": "Empty set"
+                        }
+                        
+                    ]
+                },
+                {
+                    "id": "voq6",
+                    "prompt": "How similar are the set sizes?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Roughly equal (all the set sizes look similar).",
+                            "value": "Identical"
+                        },
+                        {
+                            "label": "Diverging a bit (the sizes of the largest set and the smallest set don't differ largely).",
+                            "value": "Diverging a bit"
+                        },
+                        {
+                            "label": "Diverging a lot (the sizes of the largest set and the smallest set differ largely).",
+                            "value": "Diverging a lot"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq7",
+                    "prompt": "Is the largest set present in the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq8",
+                    "prompt": "Is the all-set intersection (intersection having all the sets) present? ",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                        
+                    ]
+                }
+            ]
         },
         "Covid-Text-Q3": {
             "baseComponent": "TO-text3",
@@ -829,7 +795,184 @@
         },
         "Covid-Both-Q2": {
             "baseComponent": "TandV2",
-            "path": "Upset-Alttext-User-Survey/assets/covidTextandVis.md"           
+            "path": "Upset-Alttext-User-Survey/assets/covidTextandVis.md",
+            "response": [
+                {
+                    "id": "voq1",
+                    "prompt": "How many sets are there?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 100
+
+                },
+                {
+                    "id": "voq2",
+                    "prompt": "What is the largest set?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Anosmia",
+                            "value": "Anosmia"
+                        },
+                        {
+                            "label": "Cough",
+                            "value": "Cough"
+                        },
+                        {
+                            "label": "Diarrhea",
+                            "value": "Diarrhea"
+                        },
+                        {
+                            "label": "Fatigue",
+                            "value": "Fatigue"
+                        },
+                        {
+
+                            "label": "Fever",
+                            "value": "Fever"
+                        },
+                        {
+                            "label": "Shortness of Breath",
+                            "value": "Shortness of Breath"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq3",
+                    "prompt": "What is the largest intersection? Select all Sets in the Intersection.",
+                    "secondaryText": "e.g., set_A and set_B",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "checkbox",
+                    "options": [
+                        {
+                            "label": "Anosmia",
+                            "value": "Anosmia"
+                        },
+                        {
+                            "label": "Cough",
+                            "value": "Cough"
+                        },
+                        {
+                            "label": "Diarrhea",
+                            "value": "Diarrhea"
+                        },
+                        {
+                            "label": "Fatigue",
+                            "value": "Fatigue"
+                        },
+                        {
+
+                            "label": "Fever",
+                            "value": "Fever"
+                        },
+                        {
+                            "label": "Shortness of Breath",
+                            "value": "Shortness of Breath"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq4",
+                    "prompt": "How large is the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 1000000000
+                },
+                {
+                    "id": "voq5",
+                    "prompt": "How many sets make up the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "It is only of a single set.",
+                            "value": "Independent set"
+                        },
+                        {
+                            "label": "It is the intersection of 2-3 sets.",
+                            "value": "Low set"
+                        },
+                        {
+                            "label": "It is the intersection of many sets.",
+                            "value": "Medium / High order set"
+                        },
+                        {
+                            "label": "It is the empty intersection (no sets)",
+                            "value": "Empty set"
+                        }
+                        
+                    ]
+                },
+                {
+                    "id": "voq6",
+                    "prompt": "How similar are the set sizes?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Roughly equal (all the set sizes look similar).",
+                            "value": "Identical"
+                        },
+                        {
+                            "label": "Diverging a bit (the sizes of the largest set and the smallest set don't differ largely).",
+                            "value": "Diverging a bit"
+                        },
+                        {
+                            "label": "Diverging a lot (the sizes of the largest set and the smallest set differ largely).",
+                            "value": "Diverging a lot"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq7",
+                    "prompt": "Is the largest set present in the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq8",
+                    "prompt": "Is the all-set intersection (intersection having all the sets) present? ",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                        
+                    ]
+                }
+            ]         
         },
         "Covid-Both-Q3": {
             "baseComponent": "TandV3",
@@ -842,7 +985,166 @@
         },
         "Tennis-Vis-Q2": {
             "baseComponent": "VO-image2",
-            "path": "Upset-Alttext-User-Survey/assets/tennisVis.md"
+            "path": "Upset-Alttext-User-Survey/assets/tennisVis.md",
+            "response": [
+                {
+                    "id": "voq1",
+                    "prompt": "How many sets are shown in the upset plot?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 100
+
+                },
+                {
+                    "id": "voq2",
+                    "prompt": "What is the largest set?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Australian",
+                            "value": "Australian"
+                        },
+                        {
+                            "label": "French Open",
+                            "value": "French Open"
+                        },
+                        {
+                            "label": "US Open",
+                            "value": "US Open"
+                        },
+                        {
+                            "label": "Wimbledon",
+                            "value": "Wimbledon"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq3",
+                    "prompt": "What is the largest intersection? Select all Sets in the Intersection.",
+                    "secondaryText": "e.g., set_A and set_B",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "checkbox",
+                    "options": [
+                        {
+                            "label": "Australian",
+                            "value": "Australian"
+                        },
+                        {
+                            "label": "French Open",
+                            "value": "French Open"
+                        },
+                        {
+                            "label": "US Open",
+                            "value": "US Open"
+                        },
+                        {
+                            "label": "Wimbledon",
+                            "value": "Wimbledon"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq4",
+                    "prompt": "How large is the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 1000000000
+                },
+                {
+                    "id": "voq5",
+                    "prompt": "How many sets make up the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "It is only of a single set.",
+                            "value": "Independent set"
+                        },
+                        {
+                            "label": "It is the intersection of 2-3 sets.",
+                            "value": "Low set"
+                        },
+                        {
+                            "label": "It is the intersection of many sets.",
+                            "value": "Medium / High order set"
+                        },
+                        {
+                            "label": "It is the empty intersection (no sets)",
+                            "value": "Empty set"
+                        }
+                        
+                    ]
+                },
+                {
+                    "id": "voq6",
+                    "prompt": "How similar are the set sizes?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Roughly equal (all the set sizes look similar).",
+                            "value": "Identical"
+                        },
+                        {
+                            "label": "Diverging a bit (the sizes of the largest set and the smallest set don't differ largely).",
+                            "value": "Diverging a bit"
+                        },
+                        {
+                            "label": "Diverging a lot (the sizes of the largest set and the smallest set differ largely).",
+                            "value": "Diverging a lot"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq7",
+                    "prompt": "Is the largest set present in the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq8",
+                    "prompt": "Is the all-set intersection (intersection having all the sets) present? ",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                        
+                    ]
+                }
+            ]
         },
         "Tennis-Vis-Q3": {
             "baseComponent": "VO-image3",
@@ -854,7 +1156,168 @@
         },
         "Tennis-Text-Q2": {
             "baseComponent": "TO-text2",
-            "path": "Upset-Alttext-User-Survey/assets/tennisText.md"  
+            "path": "Upset-Alttext-User-Survey/assets/tennisText.md",
+            "response": [
+                {
+                    "id": "voq1",
+                    "prompt": "How many sets are shown in the description?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 100
+
+                },
+                {
+                    "id": "voq2",
+                    "prompt": "What is the largest set?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Australian",
+                            "value": "Australian"
+                        },
+                        {
+                            "label": "French Open",
+                            "value": "French Open"
+                        },
+                        {
+                            "label": "US Open",
+                            "value": "US Open"
+                        },
+                        {
+                            "label": "Wimbledon",
+                            "value": "Wimbledon"
+                        }
+                    ]
+
+                },
+                {
+                    "id": "voq3",
+                    "prompt": "What is the largest intersection? Select all Sets in the Intersection.",
+                    "secondaryText": "e.g., set_A and set_B",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "checkbox",
+                    "options": [
+                        {
+                            "label": "Australian",
+                            "value": "Australian"
+                        },
+                        {
+                            "label": "French Open",
+                            "value": "French Open"
+                        },
+                        {
+                            "label": "US Open",
+                            "value": "US Open"
+                        },
+                        {
+                            "label": "Wimbledon",
+                            "value": "Wimbledon"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq4",
+                    "prompt": "How large is the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 1000000000
+                },
+                {
+                    "id": "voq5",
+                    "prompt": "How many sets make up the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "It is only of a single set.",
+                            "value": "Independent set"
+                        },
+                        {
+                            "label": "It is the intersection of 2-3 sets.",
+                            "value": "Low set"
+                        },
+                        {
+                            "label": "It is the intersection of many sets.",
+                            "value": "Medium / High order set"
+                        },
+                        {
+                            "label": "It is the empty intersection (no sets)",
+                            "value": "Empty set"
+                        }
+                        
+                    ]
+                },
+                {
+                    "id": "voq6",
+                    "prompt": "How similar are the set sizes?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Roughly equal (all the set sizes look similar).",
+                            "value": "Identical"
+                        },
+                        {
+                            "label": "Diverging a bit (the sizes of the largest set and the smallest set don't differ largely).",
+                            "value": "Diverging a bit"
+                        },
+                        {
+                            "label": "Diverging a lot (the sizes of the largest set and the smallest set differ largely).",
+                            "value": "Diverging a lot"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq7",
+                    "prompt": "Is the largest set present in the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq8",
+                    "prompt": "Is the all-set intersection (intersection having all the sets) present? ",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                        
+                    ]
+                }
+            ]
+            
         },
         "Tennis-Text-Q3": {
             "baseComponent": "TO-text3",
@@ -866,7 +1329,166 @@
         },
         "Tennis-Both-Q2": {
             "baseComponent": "TandV2",
-            "path": "Upset-Alttext-User-Survey/assets/tennisTextandVis.md"   
+            "path": "Upset-Alttext-User-Survey/assets/tennisTextandVis.md",
+            "response": [
+                {
+                    "id": "voq1",
+                    "prompt": "How many sets are there?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 100
+
+                },
+                {
+                    "id": "voq2",
+                    "prompt": "What is the largest set?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Australian",
+                            "value": "Australian"
+                        },
+                        {
+                            "label": "French Open",
+                            "value": "French Open"
+                        },
+                        {
+                            "label": "US Open",
+                            "value": "US Open"
+                        },
+                        {
+                            "label": "Wimbledon",
+                            "value": "Wimbledon"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq3",
+                    "prompt": "What is the largest intersection? Select all Sets in the Intersection.",
+                    "secondaryText": "e.g., set_A and set_B",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "checkbox",
+                    "options": [
+                        {
+                            "label": "Australian",
+                            "value": "Australian"
+                        },
+                        {
+                            "label": "French Open",
+                            "value": "French Open"
+                        },
+                        {
+                            "label": "US Open",
+                            "value": "US Open"
+                        },
+                        {
+                            "label": "Wimbledon",
+                            "value": "Wimbledon"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq4",
+                    "prompt": "How large is the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 1000000000
+                },
+                {
+                    "id": "voq5",
+                    "prompt": "How many sets make up the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "It is only of a single set.",
+                            "value": "Independent set"
+                        },
+                        {
+                            "label": "It is the intersection of 2-3 sets.",
+                            "value": "Low set"
+                        },
+                        {
+                            "label": "It is the intersection of many sets.",
+                            "value": "Medium / High order set"
+                        },
+                        {
+                            "label": "It is the empty intersection (no sets)",
+                            "value": "Empty set"
+                        }
+                        
+                    ]
+                },
+                {
+                    "id": "voq6",
+                    "prompt": "How similar are the set sizes?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Roughly equal (all the set sizes look similar).",
+                            "value": "Identical"
+                        },
+                        {
+                            "label": "Diverging a bit (the sizes of the largest set and the smallest set don't differ largely).",
+                            "value": "Diverging a bit"
+                        },
+                        {
+                            "label": "Diverging a lot (the sizes of the largest set and the smallest set differ largely).",
+                            "value": "Diverging a lot"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq7",
+                    "prompt": "Is the largest set present in the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq8",
+                    "prompt": "Is the all-set intersection (intersection having all the sets) present? ",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                        
+                    ]
+                }
+            ] 
         },
         "Tennis-Both-Q3": {
             "baseComponent": "TandV3",
@@ -878,7 +1500,192 @@
         },
         "GoT-Vis-Q2": {
             "baseComponent": "VO-image2",
-            "path": "Upset-Alttext-User-Survey/assets/GoTVis.md"
+            "path": "Upset-Alttext-User-Survey/assets/GoTVis.md",
+            "response": [
+                {
+                    "id": "voq1",
+                    "prompt": "How many sets are shown in the upset plot?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 100
+
+                },
+                {
+                    "id": "voq2",
+                    "prompt": "What is the largest set?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Baratheon",
+                            "value": "Baratheon"
+                        },
+                        {
+                            "label": "Lannister",
+                            "value": "Lannister"
+                        },
+                        {
+                            "label": "Stark",
+                            "value": "Stark"
+                        },
+                        {
+                            "label": "Targarayen",
+                            "value": "Targarayen"
+                        },
+                        {
+
+                            "label": "Female",
+                            "value": "Female"
+                        },
+                        {
+                            "label": "Male",
+                            "value": "Male"
+                        },
+                        {
+                            "label": "royal",
+                            "value": "royal"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq3",
+                    "prompt": "What is the largest intersection? Select all Sets in the Intersection.",
+                    "secondaryText": "e.g., set_A and set_B",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "checkbox",
+                    "options": [
+                        {
+                            "label": "Baratheon",
+                            "value": "Baratheon"
+                        },
+                        {
+                            "label": "Lannister",
+                            "value": "Lannister"
+                        },
+                        {
+                            "label": "Stark",
+                            "value": "Stark"
+                        },
+                        {
+                            "label": "Targarayen",
+                            "value": "Targarayen"
+                        },
+                        {
+
+                            "label": "Female",
+                            "value": "Female"
+                        },
+                        {
+                            "label": "Male",
+                            "value": "Male"
+                        },
+                        {
+                            "label": "royal",
+                            "value": "royal"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq4",
+                    "prompt": "How large is the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 1000000000
+                },
+                {
+                    "id": "voq5",
+                    "prompt": "How many sets make up the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "It is only of a single set.",
+                            "value": "Independent set"
+                        },
+                        {
+                            "label": "It is the intersection of 2-3 sets.",
+                            "value": "Low set"
+                        },
+                        {
+                            "label": "It is the intersection of many sets.",
+                            "value": "Medium / High order set"
+                        },
+                        {
+                            "label": "It is the empty intersection (no sets)",
+                            "value": "Empty set"
+                        }
+                        
+                    ]
+                },
+                {
+                    "id": "voq6",
+                    "prompt": "How similar are the set sizes?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Roughly equal (all the set sizes look similar).",
+                            "value": "Identical"
+                        },
+                        {
+                            "label": "Diverging a bit (the sizes of the largest set and the smallest set don't differ largely).",
+                            "value": "Diverging a bit"
+                        },
+                        {
+                            "label": "Diverging a lot (the sizes of the largest set and the smallest set differ largely).",
+                            "value": "Diverging a lot"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq7",
+                    "prompt": "Is the largest set present in the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq8",
+                    "prompt": "Is the all-set intersection (intersection having all the sets) present? ",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                        
+                    ]
+                }
+            ]
         },
         "GoT-Vis-Q3": {
             "baseComponent": "VO-image3",
@@ -890,7 +1697,194 @@
         },
         "GoT-Text-Q2": {
             "baseComponent": "TO-text2",
-            "path": "Upset-Alttext-User-Survey/assets/GoText.md"  
+            "path": "Upset-Alttext-User-Survey/assets/GoText.md",
+            "response": [
+                {
+                    "id": "voq1",
+                    "prompt": "How many sets are shown in the description?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 100
+
+                },
+                {
+                    "id": "voq2",
+                    "prompt": "What is the largest set?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Baratheon",
+                            "value": "Baratheon"
+                        },
+                        {
+                            "label": "Lannister",
+                            "value": "Lannister"
+                        },
+                        {
+                            "label": "Stark",
+                            "value": "Stark"
+                        },
+                        {
+                            "label": "Targarayen",
+                            "value": "Targarayen"
+                        },
+                        {
+
+                            "label": "Female",
+                            "value": "Female"
+                        },
+                        {
+                            "label": "Male",
+                            "value": "Male"
+                        },
+                        {
+                            "label": "royal",
+                            "value": "royal"
+                        }
+                    ]
+
+                },
+                {
+                    "id": "voq3",
+                    "prompt": "What is the largest intersection? Select all Sets in the Intersection.",
+                    "secondaryText": "e.g., set_A and set_B",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "checkbox",
+                    "options": [
+                        {
+                            "label": "Baratheon",
+                            "value": "Baratheon"
+                        },
+                        {
+                            "label": "Lannister",
+                            "value": "Lannister"
+                        },
+                        {
+                            "label": "Stark",
+                            "value": "Stark"
+                        },
+                        {
+                            "label": "Targarayen",
+                            "value": "Targarayen"
+                        },
+                        {
+
+                            "label": "Female",
+                            "value": "Female"
+                        },
+                        {
+                            "label": "Male",
+                            "value": "Male"
+                        },
+                        {
+                            "label": "royal",
+                            "value": "royal"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq4",
+                    "prompt": "How large is the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 1000000000
+                },
+                {
+                    "id": "voq5",
+                    "prompt": "How many sets make up the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "It is only of a single set.",
+                            "value": "Independent set"
+                        },
+                        {
+                            "label": "It is the intersection of 2-3 sets.",
+                            "value": "Low set"
+                        },
+                        {
+                            "label": "It is the intersection of many sets.",
+                            "value": "Medium / High order set"
+                        },
+                        {
+                            "label": "It is the empty intersection (no sets)",
+                            "value": "Empty set"
+                        }
+                        
+                    ]
+                },
+                {
+                    "id": "voq6",
+                    "prompt": "How similar are the set sizes?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Roughly equal (all the set sizes look similar).",
+                            "value": "Identical"
+                        },
+                        {
+                            "label": "Diverging a bit (the sizes of the largest set and the smallest set don't differ largely).",
+                            "value": "Diverging a bit"
+                        },
+                        {
+                            "label": "Diverging a lot (the sizes of the largest set and the smallest set differ largely).",
+                            "value": "Diverging a lot"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq7",
+                    "prompt": "Is the largest set present in the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq8",
+                    "prompt": "Is the all-set intersection (intersection having all the sets) present? ",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                        
+                    ]
+                }
+            ]
+
         },
         "GoT-Text-Q3": {
             "baseComponent": "TO-text3",
@@ -902,7 +1896,192 @@
         },
         "GoT-Both-Q2": {
             "baseComponent": "TandV2",
-            "path": "Upset-Alttext-User-Survey/assets/GoTextandVis.md"   
+            "path": "Upset-Alttext-User-Survey/assets/GoTextandVis.md",
+            "response": [
+                {
+                    "id": "voq1",
+                    "prompt": "How many sets are there?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 100
+
+                },
+                {
+                    "id": "voq2",
+                    "prompt": "What is the largest set?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Baratheon",
+                            "value": "Baratheon"
+                        },
+                        {
+                            "label": "Lannister",
+                            "value": "Lannister"
+                        },
+                        {
+                            "label": "Stark",
+                            "value": "Stark"
+                        },
+                        {
+                            "label": "Targarayen",
+                            "value": "Targarayen"
+                        },
+                        {
+
+                            "label": "Female",
+                            "value": "Female"
+                        },
+                        {
+                            "label": "Male",
+                            "value": "Male"
+                        },
+                        {
+                            "label": "royal",
+                            "value": "royal"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq3",
+                    "prompt": "What is the largest intersection? Select all Sets in the Intersection.",
+                    "secondaryText": "e.g., set_A and set_B",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "checkbox",
+                    "options": [
+                        {
+                            "label": "Baratheon",
+                            "value": "Baratheon"
+                        },
+                        {
+                            "label": "Lannister",
+                            "value": "Lannister"
+                        },
+                        {
+                            "label": "Stark",
+                            "value": "Stark"
+                        },
+                        {
+                            "label": "Targarayen",
+                            "value": "Targarayen"
+                        },
+                        {
+
+                            "label": "Female",
+                            "value": "Female"
+                        },
+                        {
+                            "label": "Male",
+                            "value": "Male"
+                        },
+                        {
+                            "label": "royal",
+                            "value": "royal"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq4",
+                    "prompt": "How large is the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "numerical",
+                    "placeholder": "Please enter your answer here",
+                    "min": 0,
+                    "max": 1000000000
+                },
+                {
+                    "id": "voq5",
+                    "prompt": "How many sets make up the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "It is only of a single set.",
+                            "value": "Independent set"
+                        },
+                        {
+                            "label": "It is the intersection of 2-3 sets.",
+                            "value": "Low set"
+                        },
+                        {
+                            "label": "It is the intersection of many sets.",
+                            "value": "Medium / High order set"
+                        },
+                        {
+                            "label": "It is the empty intersection (no sets)",
+                            "value": "Empty set"
+                        }
+                        
+                    ]
+                },
+                {
+                    "id": "voq6",
+                    "prompt": "How similar are the set sizes?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "Roughly equal (all the set sizes look similar).",
+                            "value": "Identical"
+                        },
+                        {
+                            "label": "Diverging a bit (the sizes of the largest set and the smallest set don't differ largely).",
+                            "value": "Diverging a bit"
+                        },
+                        {
+                            "label": "Diverging a lot (the sizes of the largest set and the smallest set differ largely).",
+                            "value": "Diverging a lot"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq7",
+                    "prompt": "Is the largest set present in the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                    ]
+                },
+                {
+                    "id": "voq8",
+                    "prompt": "Is the all-set intersection (intersection having all the sets) present? ",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Yes",
+                            "value": "1"
+                        },
+                        {
+                            "label": "No",
+                            "value": "2"
+                        }
+                        
+                    ]
+                }
+            ]    
         },
         "GoT-Both-Q3": {
             "baseComponent": "TandV3",
@@ -1025,7 +2204,7 @@
                 "name": "Consent",
                 "check": "response",
                 "responseId": "consent",
-                "value": "no",
+                "value": "yes",
                 "to": "end"
 
             }
