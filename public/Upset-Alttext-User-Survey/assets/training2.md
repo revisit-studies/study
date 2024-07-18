@@ -1,6 +1,6 @@
-# Training
+# Training – Text Only
 
-Sometimes you will find this type of contents that we call "Text Only". In the sidebar, you can see some of the demo questionnaires for this type of contents.
+Sometimes you will see a text description of the plot, without a chart. We call this "Text Only".  In the sidebar, you can see some sample questions. Try to answer them. If you are unsure, click "Check Answer" to get help.
 
 <h1 style="text-align: center;">Dataset: Movie Genres</h1>
 
