@@ -11,6 +11,7 @@ import Source from './Source';
 const API_BASE_URL = import.meta.env.VITE_SUMSIFTER_API_URL;
 
 function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
+  const [activeSummaryId, setActiveSummaryId] = useState<string | null>(null);
   const [activeSourceId, setActiveSourceId] = useState<string | null>(null);
 
   const [summaryData, setSummaryData] = useState<{ id: string; text: string; sources: string[] }[]>([]);
@@ -88,7 +89,7 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
     fetchData();
   }, [defaultPrompt, studyDocument]);
 
-  const handleSourceClick = (summaryId: string | null, sourceId: string | null) => {
+  const handleSourceClick = useCallback((summaryId: string | null, sourceId: string | null) => {
     trrack.apply('Clicked', actions.mouseHoverAction({ summaryId, sourceId }));
 
     setAnswer({
@@ -98,16 +99,17 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
     });
 
     setActiveSourceId(sourceId);
-  };
+    setActiveSummaryId(summaryId);
+  }, [actions, trrack, setAnswer]);
 
-  const handleSummaryBadgePositionChange = (top: number) => {
+  const handleSummaryBadgePositionChange = useCallback((top: number) => {
     setSummaryBadgeTop(top);
-  };
+  }, []);
 
-  const handleSourceBadgePositionChange = (left: number, top: number) => {
+  const handleSourceBadgePositionChange = useCallback((left: number, top: number) => {
     setSourceBadgeTop(top);
     setSourceBadgeLeft(left);
-  };
+  }, []);
 
   const handleSubmitQuery = useCallback((queryPrompt: string) => {
     async function fetchData() {
@@ -252,10 +254,25 @@ function SummaryApp({ parameters, setAnswer }: StimulusParams<SumParams>) {
       )}
       <Grid gutter={50}>
         <Grid.Col span={6} pos="relative">
-          <Summary sentences={summaryData} onSummaryBadgePositionChange={handleSummaryBadgePositionChange} onSourceClick={handleSourceClick} activeSourceId={activeSourceId} onSubmitQuery={handleSubmitQuery} queryText={queryText} onQueryTextChange={setQueryText} onUpdateSummary={handleUpdateSummary} />
+          <Summary
+            sentences={summaryData}
+            onSummaryBadgePositionChange={handleSummaryBadgePositionChange}
+            onSourceClick={handleSourceClick}
+            activeSummaryId={activeSummaryId}
+            activeSourceId={activeSourceId}
+            onSubmitQuery={handleSubmitQuery}
+            queryText={queryText}
+            onQueryTextChange={setQueryText}
+            onUpdateSummary={handleUpdateSummary}
+          />
         </Grid.Col>
         <Grid.Col span={6}>
-          <Source sourceList={sourcesData} onSourceBadgePositionChange={handleSourceBadgePositionChange} activeSourceId={activeSourceId} onAddToSummary={handleAddToSummary} />
+          <Source
+            sourceList={sourcesData}
+            onSourceBadgePositionChange={handleSourceBadgePositionChange}
+            activeSourceId={activeSourceId}
+            onAddToSummary={handleAddToSummary}
+          />
         </Grid.Col>
       </Grid>
       {activeSourceId && (

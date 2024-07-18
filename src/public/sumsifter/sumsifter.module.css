@@ -1,10 +1,48 @@
 .badge {
-  padding-left: 3px;
-  padding-right: 3px;
-  border-radius: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-radius: 0px;
+  cursor: pointer;
+  vertical-align: text-bottom;
+  margin-right: 0px;
+  font-weight: normal;
+  line-height: 1rem;
+  display: inline;
+  background: var(--mantine-color-gray-4);
+  color: white;
+  font-size: 12px;
+
   &:hover {
-    box-shadow: 0 0 0 2px var(--mantine-color-blue-7);
+    background: var(--mantine-color-blue-6);
   }
+
+  &:first-child {
+    border-top-left-radius: 4px;
+    border-bottom-left-radius: 4px;
+  }
+
+  &:last-child {
+    border-top-right-radius: 4px;
+    border-bottom-right-radius: 4px;
+  }
+}
+
+.badge + .badge {
+  border-left: 1px solid var(--mantine-color-gray-1);
+}
+
+.badgeHovered {
+  background: var(--mantine-color-blue-4);
+}
+
+.badgeActive {
+  background: var(--mantine-color-blue-6);
+}
+
+.badgeContainer {
+  display: inline-block;
+  margin-right: 10px;
+  transform: translateY(-2px);
 }
 
 .sourceItem {
@@ -40,4 +78,11 @@
   background: var(--mantine-color-blue-2);
   border-radius: 0px;
   padding: 0 10px;
+}
+
+.markdownTable,
+.markdownTable th,
+.markdownTable td {
+  border: 1px solid #000;
+  border-collapse: collapse;
 }
