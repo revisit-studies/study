@@ -37,6 +37,36 @@ function SourceItem({
   );
 }
 
+function ReactMarkdown({ text }: { text: string}) {
+  return (
+    <Markdown
+      rehypePlugins={[rehypeRaw, remarkGfm]}
+      components={{
+        // eslint-disable-next-line react/no-unstable-nested-components
+        p: (props) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars, react/prop-types
+          const { node, children, ...rest } = props;
+          return (
+            <div style={{ display: 'inline' }} {...rest}>
+              {children}
+            </div>
+          );
+        },
+        // eslint-disable-next-line react/no-unstable-nested-components
+        table: (props) => {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars, react/prop-types
+          const { node, ...rest } = props;
+          return <table className={style.markdownTable} {...rest} />;
+        },
+      }}
+    >
+      {text}
+    </Markdown>
+  );
+}
+
+const MemoizedReactMarkdown = memo(ReactMarkdown);
+
 function MarkdownElement({
   element,
   active,
@@ -79,43 +109,18 @@ function MarkdownElement({
   return (
     <Fragment>
       {' '}
-
       <div
         ref={ref}
         style={
           {
             display: 'inline',
-            textDecoration: isHovered ? 'underline #000 dotted' : 'none',
             backgroundColor: active ? '#f0f0f0' : 'transparent',
           }
         }
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        <Markdown
-          rehypePlugins={[rehypeRaw, remarkGfm]}
-          components={{
-            // eslint-disable-next-line react/no-unstable-nested-components
-            p: (props) => {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars, react/prop-types
-              const { node, children, ...rest } = props;
-              // return <div style={{ display: 'inline' }} {...rest} />;
-              return (
-                <div style={{ display: 'inline' }} {...rest}>
-                  {children}
-                </div>
-              );
-            },
-            // eslint-disable-next-line react/no-unstable-nested-components
-            table: (props) => {
-              // eslint-disable-next-line @typescript-eslint/no-unused-vars, react/prop-types
-              const { node, ...rest } = props;
-              return <table className={style.markdownTable} {...rest} />;
-            },
-          }}
-        >
-          {element.text}
-        </Markdown>
+        <MemoizedReactMarkdown text={element.text} />
       </div>
 
       {((element.sources?.length ?? 0) > 0)
