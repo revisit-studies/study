@@ -1,8 +1,11 @@
-import React, { useCallback, useEffect, useMemo } from 'react';
-import { IconArrowBack, IconCirclePlus, IconPencil } from '@tabler/icons-react';
+import React, {
+  useCallback, useEffect, useMemo, useState, useRef,
+} from 'react';
 import {
-  Title, ScrollArea, Badge, Input, ActionIcon, Tooltip, Divider,
-  Box,
+  IconArrowBack, IconCirclePlus, IconPencil, IconNotebook, IconWritingSign,
+} from '@tabler/icons-react';
+import {
+  Title, ScrollArea, Badge, Input, ActionIcon, Tooltip, Divider, Box, Modal, Textarea, Button,
 } from '@mantine/core';
 import { useFocusTrap } from '@mantine/hooks';
 import style from './sumsifter.module.css';
@@ -18,16 +21,19 @@ interface SourceProps {
 function Source({
   sourceList, activeSourceId, onSourceBadgePositionChange, onAddToSummary,
 }: SourceProps) {
-  const ref = React.useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null);
   const focusTrapRef = useFocusTrap();
-  const contentRef = React.useRef<HTMLDivElement>(null);
-  const activeRef = React.useRef<HTMLSpanElement | null>(null);
-  const [positionTop, setPositionTop] = React.useState(0);
-  const [positionLeft, setPositionLeft] = React.useState(0);
-  const [userSelection, setUserSelection] = React.useState<string | null>(null);
-  const [userSelectionRect, setUserSelectionRect] = React.useState<DOMRect | null>(null);
-  const [sourceQuery, setSourceQuery] = React.useState<string>('');
-  const [highlightClientRects, setHighlightClientRects] = React.useState<DOMRect[] | null>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const activeRef = useRef<HTMLSpanElement | null>(null);
+  const [positionTop, setPositionTop] = useState(0);
+  const [positionLeft, setPositionLeft] = useState(0);
+  const [userSelection, setUserSelection] = useState<string | null>(null);
+  const [userSelectionRect, setUserSelectionRect] = useState<DOMRect | null>(null);
+  const [sourceQuery, setSourceQuery] = useState<string>('');
+  const [highlightClientRects, setHighlightClientRects] = useState<DOMRect[] | null>(null);
+  const [popupVisible, setPopupVisible] = useState(false);
+  const [issues, setIssues] = useState<Array<Record<string, string>>>([]); // state to store issues
+  const [issuesModalVisible, setIssuesModalVisible] = useState(false);
 
   useEffect(() => {
     if (ref.current) {
@@ -123,6 +129,11 @@ function Source({
     setHighlightClientRects(null);
   }, [userSelection, onAddToSummary]);
 
+  const handleCreateTicket = useCallback(() => {
+    setPopupVisible(true);
+    setHighlightClientRects(null);
+  }, []);
+
   const handleSourceQueryChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSourceQuery(event.target.value);
   }, []);
@@ -136,109 +147,202 @@ function Source({
     }
   }, [sourceQuery, userSelection, onAddToSummary]);
 
+  const handleFormSubmit = useCallback((event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const issue = event.currentTarget.issue.value;
+    const documentTitle = event.currentTarget.documentTitle.value;
+    const summary = event.currentTarget.summary.value;
+    const description = event.currentTarget.description.value;
+    const priority = event.currentTarget.priority.value;
+
+    const newIssue = {
+      issue,
+      documentTitle,
+      summary,
+      description,
+      priority,
+    };
+
+    setIssues((prevIssues) => [...prevIssues, newIssue]);
+    setPopupVisible(false);
+  }, []);
+
+  const handlePrintIssues = useCallback(() => {
+    setIssuesModalVisible(true);
+  }, [issues]);
+
   return (
-    <ScrollArea style={{ height: 'calc(100vh - 110px)' }} pos="relative" viewportRef={ref}>
-      <div ref={contentRef} style={{ position: 'relative' }}>
-        {/* background highlight */}
-        {highlightClientRects && (
-          <div className={style.textHighlightContainer}>
-            {highlightClientRects.map((rect, index) => (
-              <div
-                key={index}
-                className={style.textHighlight}
-                style={{
-                  top: rect.top,
-                  left: rect.left,
-                  width: rect.width,
-                  height: rect.height,
-                }}
-              />
-            ))}
-          </div>
-        )}
+    <>
+      <ScrollArea style={{ height: 'calc(100vh - 110px)' }} pos="relative" viewportRef={ref}>
+        <div ref={contentRef} style={{ position: 'relative' }}>
+          {/* background highlight */}
+          {highlightClientRects && (
+            <div className={style.textHighlightContainer}>
+              {highlightClientRects.map((rect, index) => (
+                <div
+                  key={index}
+                  className={style.textHighlight}
+                  style={{
+                    top: rect.top,
+                    left: rect.left,
+                    width: rect.width,
+                    height: rect.height,
+                  }}
+                />
+              ))}
+            </div>
+          )}
 
-        <Title order={2}>Source Document</Title>
+          <Title order={2}>Source Document</Title>
 
-        {/* ActiveId for this is activeSourceId, and activeSourceId is null */}
-        <Box pos="relative">
-          <Markdown
-            data={sourceList}
-            activeId={activeSourceId}
-            activeSourceId={null}
-            onActiveRefChange={handleActiveRefChange}
-          />
-        </Box>
-
-        {userSelection && (
-          <div
-            className={style.sourceContextPopup}
-            style={{
-              top: userSelectionActionBox.bottom,
-              left: userSelectionActionBox.left,
-            }}
-            onMouseDown={(e) => { e.stopPropagation(); }}
-          >
-            <Tooltip label="Include in summary" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
-              <ActionIcon variant="transparent" size="md" color="gray" onClick={handleAddToSummary}>
-                <IconCirclePlus />
-              </ActionIcon>
-            </Tooltip>
-            <Tooltip label="Make it descriptive" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
-              <ActionIcon variant="transparent" size="md" color="gray" onClick={handleMakeDescriptive}>
-                <IconPencil />
-              </ActionIcon>
-            </Tooltip>
-            <Divider orientation="vertical" />
-            <Input
-              ref={focusTrapRef}
-              size="xs"
-              value={sourceQuery}
-              onChange={handleSourceQueryChange}
-              onKeyUp={handleSourceQueryKeyUp}
-              flex={1}
-              ml={4}
-              placeholder="What do you want to do this selection?"
-              rightSection={
-                (
-                  (sourceQuery.length ? (
-                    <IconArrowBack
-                      color="var(--mantine-color-gray-5)"
-                    />
-                  ) : null)
-                )
-              }
+          {/* ActiveId for this is activeSourceId, and activeSourceId is null */}
+          <Box pos="relative">
+            <Markdown
+              data={sourceList}
+              activeId={activeSourceId}
+              activeSourceId={null}
+              onActiveRefChange={handleActiveRefChange}
             />
-          </div>
-        )}
+          </Box>
 
-        {activeSourceId && (
-          <>
-            <Badge
-              key={activeSourceId}
-              className={style.sourceItemBadge}
-              color="blue.5"
+          {userSelection && (
+            <div
+              className={style.sourceContextPopup}
               style={{
+                top: userSelectionActionBox.bottom,
+                left: userSelectionActionBox.left,
+              }}
+              onMouseDown={(e) => { e.stopPropagation(); }}
+            >
+              <Tooltip label="Include in summary" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
+                <ActionIcon variant="transparent" size="md" color="gray" onClick={handleAddToSummary}>
+                  <IconCirclePlus />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Make it descriptive" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
+                <ActionIcon variant="transparent" size="md" color="gray" onClick={handleMakeDescriptive}>
+                  <IconPencil />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Add to Custom Notes" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
+                <ActionIcon variant="transparent" size="md" color="gray" onClick={handleCreateTicket}>
+                  <IconWritingSign />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Open Custom Notes" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
+                <ActionIcon variant="transparent" size="md" color="gray" onClick={handlePrintIssues}>
+                  <IconNotebook />
+                </ActionIcon>
+              </Tooltip>
+              <Divider orientation="vertical" />
+              <Input
+                ref={focusTrapRef}
+                size="xs"
+                value={sourceQuery}
+                onChange={handleSourceQueryChange}
+                onKeyUp={handleSourceQueryKeyUp}
+                flex={1}
+                ml={4}
+                placeholder="What do you want to do this selection?"
+                rightSection={
+                  (
+                    (sourceQuery.length ? (
+                      <IconArrowBack
+                        color="var(--mantine-color-gray-5)"
+                      />
+                    ) : null)
+                  )
+                }
+              />
+            </div>
+          )}
+
+          {activeSourceId && (
+            <>
+              <Badge
+                key={activeSourceId}
+                className={style.sourceItemBadge}
+                color="blue.5"
+                style={{
+                  position: 'fixed',
+                  left: positionLeft - 10,
+                  top: positionTop,
+                  transform: 'translate(-100%, 0)',
+                }}
+              >
+                {activeSourceId}
+              </Badge>
+              <div style={{
                 position: 'fixed',
                 left: positionLeft - 10,
-                top: positionTop,
-                transform: 'translate(-100%, 0)',
+                top: positionTop + 16,
+                backgroundColor: 'var(--mantine-color-blue-5)',
+                height: 2,
+                width: 4,
               }}
-            >
-              {activeSourceId}
-            </Badge>
-            <div style={{
-              position: 'fixed',
-              left: positionLeft - 10,
-              top: positionTop + 16,
-              backgroundColor: 'var(--mantine-color-blue-5)',
-              height: 2,
-              width: 4,
-            }}
-            />
-          </>
-        )}
-      </div>
-    </ScrollArea>
+              />
+            </>
+          )}
+        </div>
+      </ScrollArea>
+
+      {popupVisible && (
+        <div className={style.popupOverlay}>
+          <div className={style.popupContent}>
+            <span className={style.close} onClick={() => setPopupVisible(false)}>&times;</span>
+            <form onSubmit={handleFormSubmit}>
+              <label htmlFor="issue">Topic:</label>
+              <select id="issue" name="issue" required>
+                <option value="technicalReview">Technical Review</option>
+                <option value="translationReview">Translation Support from Language Analyst</option>
+              </select>
+
+              <label htmlFor="documentTitle">Document Title:</label>
+              <input type="text" id="documentTitle" name="documentTitle" required />
+
+              <label htmlFor="summary">Summary:</label>
+              <input type="text" id="summary" name="summary" rows="4" required />
+
+              <label htmlFor="description">Text of Interest:</label>
+              <textarea id="description" name="description" rows="6" required defaultValue={userSelection || ''} />
+
+              <label htmlFor="priority">Priority Level:</label>
+              <select id="priority" name="priority" required>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <button type="submit">Create</button>
+                <button type="button" onClick={() => setPopupVisible(false)}>Cancel</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      <Modal
+        opened={issuesModalVisible}
+        onClose={() => setIssuesModalVisible(false)}
+        title="Collected Issues"
+      >
+        <Textarea
+          readOnly
+          value={issues.map((issue, index) => (
+            `Issue ${index + 1}:
+            Issue Type: ${issue.issue}
+            Document Title: ${issue.documentTitle}
+            Summary: ${issue.summary}
+            Description: ${issue.description}
+            Priority: ${issue.priority}`
+          )).join('\n\n')}
+          rows={10}
+          style={{ width: '100%' }}
+        />
+        <Button onClick={() => setIssuesModalVisible(false)}>Close</Button>
+      </Modal>
+    </>
   );
 }
 
