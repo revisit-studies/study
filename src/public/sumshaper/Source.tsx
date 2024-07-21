@@ -1,6 +1,4 @@
-import React, {
-  useCallback, useEffect, useMemo, useState, useRef,
-} from 'react';
+import React, { useCallback, useEffect, useMemo } from 'react';
 import {
   IconArrowBack, IconCirclePlus, IconPencil, IconNotebook, IconWritingSign,
 } from '@tabler/icons-react';
@@ -21,19 +19,19 @@ interface SourceProps {
 function Source({
   sourceList, activeSourceId, onSourceBadgePositionChange, onAddToSummary,
 }: SourceProps) {
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = React.useRef<HTMLDivElement>(null);
   const focusTrapRef = useFocusTrap();
-  const contentRef = useRef<HTMLDivElement>(null);
-  const activeRef = useRef<HTMLSpanElement | null>(null);
-  const [positionTop, setPositionTop] = useState(0);
-  const [positionLeft, setPositionLeft] = useState(0);
-  const [userSelection, setUserSelection] = useState<string | null>(null);
-  const [userSelectionRect, setUserSelectionRect] = useState<DOMRect | null>(null);
-  const [sourceQuery, setSourceQuery] = useState<string>('');
-  const [highlightClientRects, setHighlightClientRects] = useState<DOMRect[] | null>(null);
-  const [popupVisible, setPopupVisible] = useState(false);
-  const [issues, setIssues] = useState<Array<Record<string, string>>>([]); // state to store issues
-  const [issuesModalVisible, setIssuesModalVisible] = useState(false);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  const activeRef = React.useRef<HTMLSpanElement | null>(null);
+  const [positionTop, setPositionTop] = React.useState(0);
+  const [positionLeft, setPositionLeft] = React.useState(0);
+  const [userSelection, setUserSelection] = React.useState<string | null>(null);
+  const [userSelectionRect, setUserSelectionRect] = React.useState<DOMRect | null>(null);
+  const [sourceQuery, setSourceQuery] = React.useState<string>('');
+  const [highlightClientRects, setHighlightClientRects] = React.useState<DOMRect[] | null>(null);
+  const [popupVisible, setPopupVisible] = React.useState(false);
+  const [issues, setIssues] = React.useState<Array<Record<string, string>>>([]);
+  const [issuesModalVisible, setIssuesModalVisible] = React.useState(false);
 
   useEffect(() => {
     if (ref.current) {
@@ -60,16 +58,12 @@ function Source({
     if (ref.current) {
       const element = ref.current;
       const handleMouseUp = () => {
-        // get selected text
         const selection = window.getSelection();
         if (selection && selection.toString() !== '') {
           setUserSelection(selection.toString());
-
-          // get the bounding box of the selection
           setUserSelectionRect(selection.getRangeAt(0).getBoundingClientRect());
 
           const ranges = selection.getRangeAt(0);
-
           setHighlightClientRects(Array.from(ranges.getClientRects()).map((rect) => (
             new DOMRect(
               rect.left - (contentRef.current?.getBoundingClientRect().left || 0),
@@ -175,7 +169,6 @@ function Source({
     <>
       <ScrollArea style={{ height: 'calc(100vh - 110px)' }} pos="relative" viewportRef={ref}>
         <div ref={contentRef} style={{ position: 'relative' }}>
-          {/* background highlight */}
           {highlightClientRects && (
             <div className={style.textHighlightContainer}>
               {highlightClientRects.map((rect, index) => (
@@ -195,7 +188,6 @@ function Source({
 
           <Title order={2}>Source Document</Title>
 
-          {/* ActiveId for this is activeSourceId, and activeSourceId is null */}
           <Box pos="relative">
             <Markdown
               data={sourceList}
@@ -286,41 +278,40 @@ function Source({
         </div>
       </ScrollArea>
 
-      {popupVisible && (
-        <div className={style.popupOverlay}>
-          <div className={style.popupContent}>
-            <span className={style.close} onClick={() => setPopupVisible(false)}>&times;</span>
-            <form onSubmit={handleFormSubmit}>
-              <label htmlFor="issue">Topic:</label>
-              <select id="issue" name="issue" required>
-                <option value="technicalReview">Technical Review</option>
-                <option value="translationReview">Translation Support from Language Analyst</option>
-              </select>
+      <Modal
+        opened={popupVisible}
+        onClose={() => setPopupVisible(false)}
+        title="Create a Ticket"
+      >
+        <form onSubmit={handleFormSubmit}>
+          <label htmlFor="issue">Topic:</label>
+          <select id="issue" name="issue" required>
+            <option value="technicalReview">Technical Review</option>
+            <option value="translationReview">Translation Support from Language Analyst</option>
+          </select>
 
-              <label htmlFor="documentTitle">Document Title:</label>
-              <input type="text" id="documentTitle" name="documentTitle" required />
+          <label htmlFor="documentTitle">Document Title:</label>
+          <input type="text" id="documentTitle" name="documentTitle" required />
 
-              <label htmlFor="summary">Summary:</label>
-              <input type="text" id="summary" name="summary" rows="4" required />
+          <label htmlFor="summary">Summary:</label>
+          <input type="text" id="summary" name="summary" required />
 
-              <label htmlFor="description">Text of Interest:</label>
-              <textarea id="description" name="description" rows="6" required defaultValue={userSelection || ''} />
+          <label htmlFor="description">Text of Interest:</label>
+          <textarea id="description" name="description" rows="6" required defaultValue={userSelection || ''} />
 
-              <label htmlFor="priority">Priority Level:</label>
-              <select id="priority" name="priority" required>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
+          <label htmlFor="priority">Priority Level:</label>
+          <select id="priority" name="priority" required>
+            <option value="low">Low</option>
+            <option value="medium">Medium</option>
+            <option value="high">High</option>
+          </select>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <button type="submit">Create</button>
-                <button type="button" onClick={() => setPopupVisible(false)}>Cancel</button>
-              </div>
-            </form>
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Button type="submit">Create</Button>
+            <Button type="button" onClick={() => setPopupVisible(false)}>Cancel</Button>
           </div>
-        </div>
-      )}
+        </form>
+      </Modal>
 
       <Modal
         opened={issuesModalVisible}
