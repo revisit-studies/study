@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo } from 'react';
 import {
-  IconArrowBack, IconCirclePlus, IconPencil, IconNotebook, IconWritingSign,
+  IconArrowBack, IconCirclePlus, IconPencil, IconNotebook, IconWritingSign, IconMail,
 } from '@tabler/icons-react';
 import {
   Title, ScrollArea, Badge, Input, ActionIcon, Tooltip, Divider, Box, Modal, Textarea, Button,
@@ -32,16 +32,20 @@ function Source({
   const [popupVisible, setPopupVisible] = React.useState(false);
   const [issues, setIssues] = React.useState<Array<Record<string, string>>>([]);
   const [issuesModalVisible, setIssuesModalVisible] = React.useState(false);
+  const [emailContent, setEmailContent] = React.useState<string | null>(null);
+  const [emailModalVisible, setEmailModalVisible] = React.useState(false);
 
   useEffect(() => {
     if (ref.current) {
       const element = ref.current;
       const handleScroll = () => {
-        setPositionLeft(element?.getBoundingClientRect().left || 0);
-        setPositionTop(activeRef.current?.getBoundingClientRect().top || 0);
-        onSourceBadgePositionChange(element?.getBoundingClientRect().left || 0, activeRef.current?.getBoundingClientRect().top || 0);
+        if (element && activeRef.current) {
+          setPositionLeft(element.getBoundingClientRect().left);
+          setPositionTop(activeRef.current.getBoundingClientRect().top);
+          onSourceBadgePositionChange(element.getBoundingClientRect().left, activeRef.current.getBoundingClientRect().top);
+        }
       };
-      ref.current.addEventListener('scroll', handleScroll);
+      element.addEventListener('scroll', handleScroll);
 
       return () => {
         element.removeEventListener('scroll', handleScroll);
@@ -63,8 +67,8 @@ function Source({
           setUserSelection(selection.toString());
           setUserSelectionRect(selection.getRangeAt(0).getBoundingClientRect());
 
-          const ranges = selection.getRangeAt(0);
-          setHighlightClientRects(Array.from(ranges.getClientRects()).map((rect) => (
+          const range = selection.getRangeAt(0);
+          setHighlightClientRects(Array.from(range.getClientRects()).map((rect) => (
             new DOMRect(
               rect.left - (contentRef.current?.getBoundingClientRect().left || 0),
               rect.top - (contentRef.current?.getBoundingClientRect().top || 0),
@@ -99,10 +103,12 @@ function Source({
   }, [highlightClientRects]);
 
   useEffect(() => {
-    const element = ref.current;
-    setPositionLeft(element?.getBoundingClientRect().left || 0);
-    setPositionTop(activeRef.current?.getBoundingClientRect().top || 0);
-    onSourceBadgePositionChange(element?.getBoundingClientRect().left || 0, activeRef.current?.getBoundingClientRect().top || 0);
+    if (ref.current && activeRef.current) {
+      const element = ref.current;
+      setPositionLeft(element.getBoundingClientRect().left);
+      setPositionTop(activeRef.current.getBoundingClientRect().top);
+      onSourceBadgePositionChange(element.getBoundingClientRect().left, activeRef.current.getBoundingClientRect().top);
+    }
   }, [activeSourceId, onSourceBadgePositionChange]);
 
   const userSelectionActionBox = useMemo(() => ({
@@ -127,6 +133,29 @@ function Source({
     setPopupVisible(true);
     setHighlightClientRects(null);
   }, []);
+
+  const handleCreateEmail = useCallback(async () => {
+    if (userSelection) {
+      const response = await fetch('http://127.0.0.1:5000/summaries/generate-email/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          conversationId: '04d08ca8-e8e0-4612-83f5-65bcefcc6b28',
+          documentId: '2024 Problem Book_sumsifter_short_2.docx', // Example documentId, replace with actual
+          promptType: 'general',
+          sourceTargetText: null,
+          summaryTargetText: null,
+          prompt: userSelection,
+        }),
+      });
+
+      const data = await response.json();
+      setEmailContent(data.emailContent);
+      setEmailModalVisible(true);
+    }
+  }, [userSelection]);
 
   const handleSourceQueryChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setSourceQuery(event.target.value);
@@ -226,6 +255,11 @@ function Source({
                   <IconNotebook />
                 </ActionIcon>
               </Tooltip>
+              <Tooltip label="Create Email" position="bottom" arrowOffset={50} arrowSize={8} withArrow>
+                <ActionIcon variant="transparent" size="md" color="gray" onClick={handleCreateEmail}>
+                  <IconMail />
+                </ActionIcon>
+              </Tooltip>
               <Divider orientation="vertical" />
               <Input
                 ref={focusTrapRef}
@@ -235,15 +269,13 @@ function Source({
                 onKeyUp={handleSourceQueryKeyUp}
                 flex={1}
                 ml={4}
-                placeholder="What do you want to do this selection?"
+                placeholder="What do you want to do with this selection?"
                 rightSection={
-                  (
-                    (sourceQuery.length ? (
-                      <IconArrowBack
-                        color="var(--mantine-color-gray-5)"
-                      />
-                    ) : null)
-                  )
+                  sourceQuery.length ? (
+                    <IconArrowBack
+                      color="var(--mantine-color-gray-5)"
+                    />
+                  ) : null
                 }
               />
             </div>
@@ -332,6 +364,20 @@ function Source({
           style={{ width: '100%' }}
         />
         <Button onClick={() => setIssuesModalVisible(false)}>Close</Button>
+      </Modal>
+
+      <Modal
+        opened={emailModalVisible}
+        onClose={() => setEmailModalVisible(false)}
+        title="AI Generated Email Content"
+      >
+        <Textarea
+          readOnly
+          value={emailContent || ''}
+          rows={20}
+          style={{ width: '100%' }}
+        />
+        <Button onClick={() => setEmailModalVisible(false)}>Close</Button>
       </Modal>
     </>
   );
