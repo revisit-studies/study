@@ -215,7 +215,300 @@
             "type": "markdown",
             "nextButtonLocation": "sidebar",
             "instruction": "Please answer the following questions:",
-            "provideFeedback": true,
+            "provideFeedback": true       
+        }
+    },
+    "components": {
+        "Introduction": {
+            "type": "markdown",
+            "path": "Upset-Alttext-User-Survey/assets/introduction.md",
+            "response": []
+        },
+        "Consent": {
+            "type": "markdown",
+            "path": "Upset-Alttext-User-Survey/assets/consent.md",
+            "nextButtonText": "Agree",
+            "response": [
+                {
+                    "id": "id",
+                    "prompt": "Your Prolific ID",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "shortText",
+                    "placeholder": "Please provide your prolific id"
+                },
+                {
+                    "id": "consent",
+                    "prompt": "Do you consent to the study and wish to continue?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Decline",
+                            "value": "no"
+                        },
+                        {
+                            "label": "Accept",
+                            "value": "yes"
+                        }
+                    ]
+                }
+            ]
+            
+        },
+        "What Is UpSet?": {
+            "type": "markdown",
+            "path": "Upset-Alttext-User-Survey/assets/upset.md",
+            "response": []
+        },
+        "Training 1":{
+            "baseComponent": "Training",
+            "path": "Upset-Alttext-User-Survey/assets/training1.md",
+            "response": [
+                {
+                    "id": "1",
+                    "prompt": "What is the largest set?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please select an answer",
+                    "options": [
+                        {
+                            "label": "Action",
+                            "value": "Action"
+                        },
+                        {
+                            "label": "Adventure",
+                            "value": "Adventure"
+                        },
+                        {
+                            "label": "Documentary",
+                            "value": "Documentary"
+                        },
+                        {
+                            "label": "Fantasy",
+                            "value": "Fantasy"
+                        },
+                        {
+                            "label": "Horror",
+                            "value": "Horror"
+                        },
+                        {
+                            "label": "Romance",
+                            "value": "Romance"
+                        },
+                        {
+                            "label": "Thriller",
+                            "value": "Thriller"
+                        }
+                        
+                    ]
+                },
+                {
+                    "id": "2",
+                    "prompt": "What is the largest intersection?",
+                    "secondaryText": "Select all Sets in the Intersection.",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "checkbox",
+                    "options": [
+                        {
+                            "label": "Action",
+                            "value": "Action"
+                        },
+                        {
+                            "label": "Adventure",
+                            "value": "Adventure"
+                        },
+                        {
+                            "label": "Documentary",
+                            "value": "Documentary"
+                        },
+                        {
+                            "label": "Fantasy",
+                            "value": "Fantasy"
+                        },
+                        {
+                            "label": "Romance",
+                            "value": "Romance"
+                        },
+                        {
+                            "label": "Thriller",
+                            "value": "Thriller"
+                        },
+                        {
+                            "label": "Empty Intersection (no sets)",
+                            "value": "Empty Intersection"
+                        }
+                        
+                    ]
+
+                },
+                {
+                    "id": "3",
+                    "prompt": "How many sets make up the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "It is only of a single set.",
+                            "value": "Independent set"
+                        },
+                        {
+                            "label": "It is the intersection of 2-3 sets.",
+                            "value": "Low set"
+                        },
+                        {
+                            "label": "It is the intersection of many sets.",
+                            "value": "Medium / High order set"
+                        },
+                        {
+                            "label": "It is the empty intersection (no sets)",
+                            "value": "No set"
+                        }
+                        
+                    ]
+
+                }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "1",
+                    "answer": "Action"
+                },
+                {
+                    "id": "2",
+                    "answer": "Drama"
+                },
+                {
+                    "id": "3",
+                    "answer": "No set"
+                }
+            ]
+
+        },
+        "Training 2":{
+            "baseComponent": "Training",
+            "path": "Upset-Alttext-User-Survey/assets/training2.md",
+            "response": [
+                {
+                    "id": "1",
+                    "prompt": "What is the largest set?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please select an answer",
+                    "options": [
+                        {
+                            "label": "Adventure",
+                            "value": "Adventure"
+                        },
+                        {
+                            "label": "Documentary",
+                            "value": "Documentary"
+                        },
+                        {
+                            "label": "Fantasy",
+                            "value": "Fantasy"
+                        },
+                        {
+                            "label": "Mystery",
+                            "value": "Mystery"
+                        },
+                        {
+                            "label": "War",
+                            "value": "War"
+                        }
+                        
+                    ]
+                },
+                {
+                    "id": "2",
+                    "prompt": "What is the largest intersection?",
+                    "secondaryText": "Select all Sets in the Intersection.",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "checkbox",
+                    "options": [
+                        {
+                            "label": "Adventure",
+                            "value": "Adventure"
+                        },
+                        {
+                            "label": "Documentary",
+                            "value": "Documentary"
+                        },
+                        {
+                            "label": "Fantasy",
+                            "value": "Fantasy"
+                        },
+                        {
+                            "label": "Mystery",
+                            "value": "Mystery"
+                        },
+                        {
+                            "label": "War",
+                            "value": "War"
+                        },
+                        {
+                            "label": "Empty Intersection (no sets)",
+                            "value": "Empty Intersection"
+                        }
+                        
+                    ]
+
+                },
+                {
+                    "id": "3",
+                    "prompt": "How many sets make up the largest intersection?",
+                    "required": true,
+                    "location": "sidebar",
+                    "type": "dropdown",
+                    "placeholder": "Please choose your answer",
+                    "options": [
+                        {
+                            "label": "It is only of a single set.",
+                            "value": "Independent set"
+                        },
+                        {
+                            "label": "It is the intersection of 2-3 sets.",
+                            "value": "Low set"
+                        },
+                        {
+                            "label": "It is the intersection of many sets.",
+                            "value": "Medium / High order set"
+                        },
+                        {
+                            "label": "It is the empty intersection (no sets)",
+                            "value": "No set"
+                        }
+                        
+                    ]
+
+                }
+            ],
+            "correctAnswer": [
+                {
+                    "id": "1",
+                    "answer": "Adventure"
+                },
+                {
+                    "id": "2",
+                    "answer": "Adventure"
+                },
+                {
+                    "id": "3",
+                    "answer": "Independent set"
+                }
+            ]
+
+        },
+        "Training 3":{
+            "baseComponent": "Training",
+            "path": "Upset-Alttext-User-Survey/assets/training3.md",
             "response": [
                 {
                     "id": "1",
@@ -299,6 +592,10 @@
                         {
                             "label": "Thriller",
                             "value": "Thriller"
+                        },
+                        {
+                            "label": "Empty Intersection (no sets)",
+                            "value": "Empty Intersection"
                         }
                         
                     ]
@@ -326,7 +623,7 @@
                         },
                         {
                             "label": "It is the empty intersection (no sets)",
-                            "value": "Empty set"
+                            "value": "No set"
                         }
                         
                     ]
@@ -345,66 +642,8 @@
                 {
                     "id": "3",
                     "answer": "Independent set"
-                }]
-        }
-    },
-    "components": {
-        "Introduction": {
-            "type": "markdown",
-            "path": "Upset-Alttext-User-Survey/assets/introduction.md",
-            "response": []
-        },
-        "Consent": {
-            "type": "markdown",
-            "path": "Upset-Alttext-User-Survey/assets/consent.md",
-            "nextButtonText": "Agree",
-            "response": [
-                {
-                    "id": "id",
-                    "prompt": "Your Prolific ID",
-                    "required": true,
-                    "location": "belowStimulus",
-                    "type": "shortText",
-                    "placeholder": "Please provide your prolific id"
-                },
-                {
-                    "id": "consent",
-                    "prompt": "Do you consent to the study and wish to continue?",
-                    "required": true,
-                    "location": "belowStimulus",
-                    "type": "radio",
-                    "options": [
-                        {
-                            "label": "Decline",
-                            "value": "no"
-                        },
-                        {
-                            "label": "Accept",
-                            "value": "yes"
-                        }
-                    ]
                 }
             ]
-            
-        },
-        "What Is UpSet?": {
-            "type": "markdown",
-            "path": "Upset-Alttext-User-Survey/assets/upset.md",
-            "response": []
-        },
-        "Training 1":{
-            "baseComponent": "Training",
-            "path": "Upset-Alttext-User-Survey/assets/training1.md"
-
-        },
-        "Training 2":{
-            "baseComponent": "Training",
-            "path": "Upset-Alttext-User-Survey/assets/training2.md"
-
-        },
-        "Training 3":{
-            "baseComponent": "Training",
-            "path": "Upset-Alttext-User-Survey/assets/training3.md"
 
         },
         "Let's Get Started!": {

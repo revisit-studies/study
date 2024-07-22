@@ -21,9 +21,11 @@ Sometimes you will see both the visualization and the text, in the "Visualizatio
 
 <div class="container">
     <div class="column">
-        <img style="width: 460px;" src="./assets/T.png" alt="Description of Image">
+        <img style="width: 460px;" src="./assets/T3.png" alt="Description of Image">
     </div>
     <div class="column">
+        <h2>Dataset Introduction</h2>
+        This UpSet plot shows movies and their genres. The sets are movie genres. The items are movies.
         <h2>Dataset Properties</h2>
         <p>The dataset contains 17 sets and 6303 elements, of which 8 sets are shown in the plot.</p>
         <h2>Set Properties</h2>

@@ -4,17 +4,20 @@ Sometimes you will see a text description of the plot, without a chart. We call 
 
 <h1 style="text-align: center;">Dataset: Movie Genres</h1>
 
+## UpSet Introduction
+This UpSet plot shows movies and their genres. The sets are movie genres. The items are movies.
+
 ## Dataset Properties
-The dataset contains 17 sets and 6303 elements, of which 8 sets are shown in the plot.
+The dataset contains 17 sets and 6303 elements, of which 5 sets are shown in the plot.
 
 ## Set Properties
-The set sizes are diverging a lot, ranging from 106 to 1603. The largest set is Drama with 1603 elements, followed by Comedy with 1200, Action with 503, Thriller with 492, Romance with 471, Horror with 343, SciFi with 276, and Mystery with 106.
+The set sizes are diverging a lot, ranging from 68 to 283. The largest set is Adventure with 283 elements, followed by War with 143, Documentary with 127, Mystery with 106, and Fantasy with 68.
 
 ## Intersection Properties
-The plot is sorted by size in descending order. There are 83 non-empty intersections, all of which are shown in the plot. The largest 5 intersections are Just Drama (993), Just Comedy (670), the empty intersection (367), Just Horror (182), and Drama, and Comedy (178).
+The plot is sorted by size in descending order. There are 10 non-empty intersections, all of which are shown in the plot. The largest 5 intersections are Just Adventure (233), Just War (129), Just Documentary (126), Just Mystery (103), and Fantasy, and Adventure (35).
 
 ## Statistical Information
-The average intersection size is 46, and the median is 4. The 90th percentile is 134, and the 10th percentile is 1. The largest set, Drama, is present in 32.5% of all non-empty intersections. The smallest set, Mystery, is present in 27.7% of all non-empty intersections.
+The average intersection size is 67, and the median is 33. The 90th percentile is 233, and the 10th percentile is 1. The largest set, Adventure, is present in 40.0% of all non-empty intersections. The smallest set, Fantasy, is present in 30.0% of all non-empty intersections.
 
 ## Trend Analysis
-The intersection sizes peak at a value of 993 and then drastically flatten down to 1. The empty intersection is present with a size of 367. An all set intersection is not present. The individual set intersections are in largest and large intersections. The low degree set intersections lie in small and large and medium sized intersections. The medium degree set intersections can be seen among small sized intersections. Among the small sized intersections, the high order set intersections are significantly present.
+The intersection sizes peak at a value of 233 and then drastically flatten down to 1. Just Adventure is the largest by a factor of 2. An all set intersection is not present. The individual set intersections are in largest and large and medium intersections. The low degree set intersections lie in small and medium sized intersections. No high order intersections are present.

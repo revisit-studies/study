@@ -20,8 +20,10 @@ Here you see an example for "Visualization Only". In the sidebar, you can see so
 
 <h1 style="text-align: center;">Dataset: Movie Genres</h1>
 
+This UpSet plot shows movies and their genres. The sets are movie genres. The items are movies.
+
 <div class="image-container">
-    <img src="./assets/T.png" alt="Movie Genres" width="460" height="745"/>
+    <img src="./assets/T1.png" alt="Movie Genres" width="600" height="940"/>
 </div>
 
 </body>
