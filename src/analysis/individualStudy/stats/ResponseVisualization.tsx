@@ -192,7 +192,7 @@ export function ResponseVisualization({
         <IconChevronDown style={{ rotate: opened ? '180deg' : 'none', transition: 'rotate 200ms' }} />
       </Flex>
 
-      <Collapse in={opened} mah={400} style={{ overflow: 'scroll' }}>
+      <Collapse in={opened} mah={400}>
         <Box
           style={{
             top: 0, position: 'sticky', backgroundColor: 'white', zIndex: 2,
@@ -203,33 +203,35 @@ export function ResponseVisualization({
         </Box>
 
         <SimpleGrid cols={2} h={360}>
-          {(response.type !== 'metadata' && response.type !== 'shortText' && response.type !== 'longText' && response.type !== 'iframe') ? (
-            <VegaLite
-              spec={vegaLiteSpec as VisualizationSpec}
-              actions={false}
-              height={270}
-              width={(dms.width / 2) - 60 - (correctAnswer === undefined ? 0 : 60)}
-              padding={0}
-              style={{ justifySelf: 'center' }}
-              renderer="svg"
-            />
-          ) : (
-            <Flex direction="column" gap="xs" style={{ overflowX: 'clip' }}>
-              {response.type === 'metadata' && (
-                <Code block>{`${JSON.stringify(trialConfig, null, 2)}`}</Code>
-              )}
-              {response.type !== 'metadata' && (
-                <>
-                  <Text fw={700}>Response Values: </Text>
-                  {questionData.map((d, idx) => (
-                    <Flex key={idx} align="center" gap="xs">
-                      <Text>test</Text>
-                    </Flex>
-                  ))}
-                </>
-              )}
-            </Flex>
-          )}
+          <ScrollArea mih={200}>
+            {(response.type !== 'metadata' && response.type !== 'shortText' && response.type !== 'longText' && response.type !== 'iframe') ? (
+              <VegaLite
+                spec={vegaLiteSpec as VisualizationSpec}
+                actions={false}
+                height={270}
+                width={(dms.width / 2) - 60 - (correctAnswer === undefined ? 0 : 60)}
+                padding={0}
+                style={{ justifySelf: 'center' }}
+                renderer="svg"
+              />
+            ) : (
+              <Flex direction="column" gap="xs" style={{ overflowX: 'clip' }}>
+                {response.type === 'metadata' && (
+                  <Code block>{`${JSON.stringify(trialConfig, null, 2)}`}</Code>
+                )}
+                {response.type !== 'metadata' && (
+                  <>
+                    <Text fw={700}>Response Values: </Text>
+                    {questionData.map((d, idx) => (
+                      <Flex key={idx} align="center" gap="xs">
+                        <Text>test</Text>
+                      </Flex>
+                    ))}
+                  </>
+                )}
+              </Flex>
+            )}
+          </ScrollArea>
 
           <ScrollArea mih={200}>
             {response.type === 'metadata'
