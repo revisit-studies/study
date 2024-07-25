@@ -224,7 +224,7 @@ export function ResponseVisualization({
                     <Text fw={700}>Response Values: </Text>
                     {questionData.map((d, idx) => (
                       <Flex key={idx} align="center" gap="xs">
-                        <Text>test</Text>
+                        <Text>{d[response.id] as unknown as string}</Text>
                       </Flex>
                     ))}
                   </>
