@@ -10,7 +10,7 @@ import { useNavigate } from 'react-router-dom';
 import { ParticipantData } from '../../storage/types';
 import { StoredAnswer } from '../../parser/types';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
-import { ParticipantStatusBadges } from '../components/interface/ParticipantStatusBadges';
+import { ParticipantStatusBadges } from '../interface/ParticipantStatusBadges';
 
 function isWithinRange(answers: Record<string, StoredAnswer>, rangeTime: [Date | null, Date | null]) {
   const timeStamps = Object.values(answers).map((ans) => [ans.startTime, ans.endTime]).flat();
@@ -20,7 +20,7 @@ function isWithinRange(answers: Record<string, StoredAnswer>, rangeTime: [Date |
   return Math.min(...timeStamps) >= rangeTime[0].getTime() && Math.max(...timeStamps) <= rangeTime[1].getTime();
 }
 
-export function SummaryPanel({ studyId, allParticipants }: { studyId: string; allParticipants: ParticipantData[]; }) {
+export function StudyCard({ studyId, allParticipants }: { studyId: string; allParticipants: ParticipantData[]; }) {
   const navigate = useNavigate();
   const [ref, dms] = useResizeObserver();
 

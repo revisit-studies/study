@@ -1,15 +1,15 @@
 import {
   Badge, Box, NavLink, Popover, Text,
 } from '@mantine/core';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { IconArrowsShuffle, IconBrain } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
-import { ComponentBlock } from '../../parser/types';
+import { useCallback } from 'react';
+import { ComponentBlock, StudyConfig } from '../../parser/types';
 import { Sequence } from '../../store/types';
 import { deepCopy } from '../../utils/deepCopy';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
-import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 
 export type ComponentBlockWithOrderPath = Omit<ComponentBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]};
 
@@ -89,28 +89,39 @@ function StepItem({
   fullSequence,
   startIndex,
   interruption,
-  subSequence,
   participantView,
+  studyConfig,
+  subSequence,
+  analysisNavigation,
 }: {
   step: string;
   disabled: boolean;
   fullSequence: Sequence;
   startIndex: number;
   interruption: boolean;
-  subSequence?: Sequence;
   participantView: boolean;
+  studyConfig: StudyConfig;
+  subSequence?: Sequence;
+  analysisNavigation?: boolean;
 }) {
   const studyId = useStudyId();
   const navigate = useNavigate();
   const currentStep = useCurrentStep();
-  const studyConfig = useStudyConfig();
   const [opened, { close, open }] = useDisclosure(false);
 
   const task = step in studyConfig.components && studyConfig.components[step];
 
   const stepIndex = subSequence && subSequence.components.slice(startIndex).includes(step) ? findTaskIndexInSequence(fullSequence, step, startIndex, subSequence.orderPath) : -1;
 
-  const active = participantView ? currentStep === stepIndex : currentStep === `reviewer-${step}`;
+  const { trialId } = useParams();
+
+  const analysisActive = trialId === step;
+  const studyActive = participantView ? currentStep === stepIndex : currentStep === `reviewer-${step}`;
+  const active = analysisNavigation ? analysisActive : studyActive;
+
+  const analysisNavigateTo = useCallback(() => (trialId ? navigate(`./../${step}`) : navigate(`./${step}`)), [navigate, step, trialId]);
+  const studyNavigateTo = () => (participantView ? navigate(`/${studyId}/${stepIndex}`) : navigate(`/${studyId}/reviewer-${step}`));
+  const navigateTo = analysisNavigation ? analysisNavigateTo : studyNavigateTo;
 
   return (
     <Popover withinPortal position="left" withArrow arrowSize={10} shadow="md" opened={opened} offset={20}>
@@ -131,7 +142,7 @@ function StepItem({
                 {active ? <Text size="sm" span fw="700" display="inline">{step}</Text> : <Text size="sm" display="inline">{step}</Text>}
               </Box>
             )}
-            onClick={() => (participantView ? navigate(`/${studyId}/${stepIndex}`) : navigate(`/${studyId}/reviewer-${step}`))}
+            onClick={navigateTo}
             disabled={disabled}
           />
         </Box>
@@ -169,11 +180,15 @@ export function StepsPanel({
   fullSequence,
   participantSequence,
   participantView,
+  studyConfig,
+  analysisNavigation,
 }: {
   configSequence: ComponentBlockWithOrderPath;
   fullSequence: Sequence;
   participantSequence?: Sequence;
   participantView: boolean;
+  studyConfig: StudyConfig;
+  analysisNavigation?: boolean;
 }) {
   // If the participantSequence is provided, reorder the components
   let components = deepCopy(configSequence.components);
@@ -202,8 +217,10 @@ export function StepsPanel({
               fullSequence={fullSequence}
               startIndex={idx}
               interruption={(configSequence.interruptions && (configSequence.interruptions.findIndex((i) => i.components.includes(step)) > -1)) || false}
-              subSequence={participantSequence}
               participantView={participantView}
+              studyConfig={studyConfig}
+              subSequence={participantSequence}
+              analysisNavigation={analysisNavigation}
             />
           );
         }
@@ -251,7 +268,7 @@ export function StepsPanel({
             }}
           >
             <Box style={{ borderLeft: '1px solid #e9ecef' }}>
-              <StepsPanel configSequence={step} participantSequence={participantSubSequence} fullSequence={fullSequence} participantView={participantView} />
+              <StepsPanel configSequence={step} participantSequence={participantSubSequence} fullSequence={fullSequence} participantView={participantView} studyConfig={studyConfig} analysisNavigation={analysisNavigation} />
             </Box>
           </NavLink>
         );

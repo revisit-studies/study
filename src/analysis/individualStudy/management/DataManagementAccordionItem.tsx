@@ -4,8 +4,8 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import { IconTrashX, IconRefresh } from '@tabler/icons-react';
 import { openConfirmModal } from '@mantine/modals';
-import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
+import { useStorageEngine } from '../../../storage/storageEngineHooks';
+import { FirebaseStorageEngine } from '../../../storage/engines/FirebaseStorageEngine';
 
 export function DataManagementAccordionItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<void> }) {
   const [modalArchiveOpened, setModalArchiveOpened] = useState<boolean>(false);
