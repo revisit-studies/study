@@ -121,7 +121,7 @@ export function GlobalConfigParser() {
                 element={<NavigateWithParams to="/analysis/dashboard" />}
               />
               <Route
-                path="/analysis/stats/:studyId/:tab"
+                path="/analysis/stats/:studyId/:tab/:trialId?"
                 element={(
                   <>
                     <PageTitle title="ReVISit | Analysis" />
