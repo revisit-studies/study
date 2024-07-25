@@ -150,6 +150,14 @@
           "$ref": "#/definitions/ResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "maxSelections": {
+          "description": "The maximum number of selections that are required.",
+          "type": "number"
+        },
+        "minSelections": {
+          "description": "The minimum number of selections that are required.",
+          "type": "number"
+        },
         "options": {
           "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
           "items": {
@@ -540,11 +548,19 @@
     },
     "IndividualComponentSingleResponseCondition": {
       "additionalProperties": false,
-      "description": "The IndividualComponentSingleResponseCondition interface is used to define a SkipCondition based on a single answer to a specific component. The skip logic will be checked for every component in the block that has the specified name.\n\n:::info\n\nIf you need to check all instances of a repeated component, you should use the RepeatedComponentBlockCondition.\n\n:::\n\nFor example, if you want to skip to a different component based on a response to a specific component, you would use the IndividualComponentSingleResponseCondition. Here's an example of how to use the IndividualComponentSingleResponseCondition:\n\n```js { ... \"skip\": [ {   \"name\": \"attentionCheck\",   \"check\": \"response\",   \"responseId\": \"attentionCheckResponse\",   \"value\": \"the right answer\",   \"to\": \"end\" } ] ... } ```\n\nIn this example, we assign our skip logic to the component whose ID is \"attentionCheck\". If the answer given to the response \"attentionCheckResponse\" is equal to \"the right answer\", then the user will be redirected to the end of the study. If the response is _not_ equal to \"the right answer\", then the participant will continue to the next component in the sequence.",
+      "description": "The IndividualComponentSingleResponseCondition interface is used to define a SkipCondition based on a single answer to a specific component. The skip logic will be checked for every component in the block that has the specified name.\n\n:::info\n\nIf you need to check all instances of a repeated component, you should use the RepeatedComponentBlockCondition.\n\n:::\n\nFor example, if you want to skip to a different component based on a response to a specific component, you would use the IndividualComponentSingleResponseCondition. Here's an example of how to use the IndividualComponentSingleResponseCondition:\n\n```js { ... \"skip\": [ {   \"name\": \"attentionCheck\",   \"check\": \"response\",   \"responseId\": \"attentionCheckResponse\",   \"value\": \"the right answer\",   \"comparison\": \"equal\",   \"to\": \"end\" } ] ... } ```\n\nIn this example, we assign our skip logic to the component whose ID is \"attentionCheck\". If the answer given to the response \"attentionCheckResponse\" is equal to \"the right answer\", then the user will be redirected to the end of the study. If the response is _not_ equal to \"the right answer\", then the participant will continue to the next component in the sequence.",
       "properties": {
         "check": {
           "const": "response",
           "description": "The check we'll perform.",
+          "type": "string"
+        },
+        "comparison": {
+          "description": "The comparison to use.",
+          "enum": [
+            "equal",
+            "notEqual"
+          ],
           "type": "string"
         },
         "name": {
@@ -572,6 +588,7 @@
         "check",
         "responseId",
         "value",
+        "comparison",
         "to"
       ],
       "type": "object"

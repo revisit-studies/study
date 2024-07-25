@@ -109,6 +109,7 @@
           "check": "response",
           "responseId": "q1",
           "value": "Blue",
+          "comparison": "notEqual",
           "to": "targetComponent"
         }]
       },
