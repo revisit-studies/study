@@ -202,7 +202,7 @@ export function useNextStep() {
     }
 
     navigate(`/${studyId}/${nextStep}${window.location.search}`);
-  }, [trialValidation, identifier, windowEvents, storedAnswer, currentStep, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setIframeAnswers, studyConfig, participantSequence]);
+  }, [currentStep, trialValidation, identifier, windowEvents, dataCollectionEnabled, storedAnswer.endTime, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setIframeAnswers, studyConfig, participantSequence]);
 
   return {
     isNextDisabled,

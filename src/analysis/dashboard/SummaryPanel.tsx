@@ -8,7 +8,7 @@ import { VegaLite } from 'react-vega';
 import { useDisclosure, useResizeObserver } from '@mantine/hooks';
 import { useNavigate } from 'react-router-dom';
 import { ParticipantData } from '../../storage/types';
-import { StoredAnswer, StudyConfig } from '../../parser/types';
+import { StoredAnswer } from '../../parser/types';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
 import { ParticipantStatusBadges } from '../components/interface/ParticipantStatusBadges';
 

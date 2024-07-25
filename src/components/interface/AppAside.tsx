@@ -17,7 +17,7 @@ import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import {
   useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../../store/store';
-import { useCurrentComponent, useStudyId } from '../../routes/utils';
+import { useStudyId } from '../../routes/utils';
 import { deepCopy } from '../../utils/deepCopy';
 import { ComponentBlock } from '../../parser/types';
 import { getNewParticipant } from '../../utils/nextParticipant';

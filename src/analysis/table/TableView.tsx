@@ -190,7 +190,7 @@ export function TableView({
         }
           {(!record.completed) && (
           <Text size="sm" mb={-1} ml={4}>
-            {((Object.entries(record.answers).filter(([id, entry]) => entry.endTime !== undefined).length / (getSequenceFlatMap(record.sequence).length - 1)) * 100).toFixed(2)}
+            {((Object.entries(record.answers).filter(([_, entry]) => entry.endTime !== undefined).length / (getSequenceFlatMap(record.sequence).length - 1)) * 100).toFixed(2)}
             %
           </Text>
           )}

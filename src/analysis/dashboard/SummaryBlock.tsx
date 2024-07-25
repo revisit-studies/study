@@ -14,7 +14,6 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
   const { globalConfig } = props;
   const [loading, setLoading] = useState(false);
   const [expData, setExpData] = useState<Record<string, ParticipantData[]>>({});
-  const [expConfig, setExpConfig] = useState<Record<string, StudyConfig>>({});
   const [expStudyVisibility, setStudyVisibility] = useState<Record<string, boolean>>({});
   const { storageEngine } = useStorageEngine();
 
@@ -45,7 +44,6 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
         try {
           await Promise.all(promises);
           setExpData(allData);
-          setExpConfig(allConfig);
           setStudyVisibility(allStudyVisibility);
         } catch (error) {
           console.error('Error fetching data:', error);
@@ -62,7 +60,7 @@ export function SummaryBlock(props: { globalConfig: GlobalConfig; }) {
     (expStudyVisibility[studyId] || user.isAdmin)
       ? (
         <Grid.Col key={`${studyId}-panel`} span={{ md: 12, xl: 6 }}>
-          <SummaryPanel studyId={studyId} allParticipants={expData[studyId]} config={expConfig[studyId]} />
+          <SummaryPanel studyId={studyId} allParticipants={expData[studyId]} />
         </Grid.Col>
       ) : null
   ));
