@@ -1,19 +1,17 @@
 import {
   Box,
-  Checkbox, Divider, Flex, Group, MultiSelect, Paper, Text,
+  Checkbox, Divider, Flex, Group, Paper, Text,
 } from '@mantine/core';
 import {
   useCallback, useMemo, useState,
 } from 'react';
 import { useParams } from 'react-router-dom';
-import { IconChartBar } from '@tabler/icons-react';
 import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
 import TrialVisualization from './TrialVisualization';
 import { ComponentBlockWithOrderPath, StepsPanel } from '../../../components/interface/StepsPanel';
 import { deepCopy } from '../../../utils/deepCopy';
 import { addPathToComponentBlock } from '../../../utils/getSequenceFlatMap';
-import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 
 export function StatsView({
   studyConfig,

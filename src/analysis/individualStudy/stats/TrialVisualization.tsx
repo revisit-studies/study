@@ -3,7 +3,7 @@ import {
 } from '@mantine/core';
 import { useMemo } from 'react';
 import { ParticipantData } from '../../../storage/types';
-import { Response, StudyConfig } from '../../../parser/types';
+import { StudyConfig } from '../../../parser/types';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import { ResponseVisualization } from './ResponseVisualization';
 

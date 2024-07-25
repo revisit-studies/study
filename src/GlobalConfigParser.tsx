@@ -19,6 +19,7 @@ import { fetchStudyConfigs } from './utils/fetchConfig';
 import { initializeStorageEngine } from './storage/initialize';
 import { useStorageEngine } from './storage/storageEngineHooks';
 import { FirebaseStorageEngine } from './storage/engines/FirebaseStorageEngine';
+import PageTitle from './utils/PageTitle';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
@@ -85,6 +86,7 @@ export function GlobalConfigParser() {
                 path="/"
                 element={(
                   <>
+                    <PageTitle title="ReVISit | Home" />
                     <AppHeader studyIds={globalConfig.configsList} />
                     <ConfigSwitcher
                       globalConfig={globalConfig}
@@ -95,14 +97,23 @@ export function GlobalConfigParser() {
               />
               <Route
                 path="/:studyId/*"
-                element={<Shell globalConfig={globalConfig} />}
+                element={(
+                  <>
+                    <PageTitle title="ReVISit | Study" />
+                    <Shell globalConfig={globalConfig} />
+                  </>
+                )}
               />
               <Route
                 path="/analysis/dashboard"
                 element={(
-                  <AnalysisDashboard
-                    globalConfig={globalConfig}
-                  />
+                  <>
+                    <PageTitle title="ReVISit | Analysis" />
+                    <AnalysisDashboard
+                      globalConfig={globalConfig}
+                    />
+                  </>
+
               )}
               />
               <Route
@@ -110,13 +121,16 @@ export function GlobalConfigParser() {
                 element={<NavigateWithParams to="/analysis/dashboard" />}
               />
               <Route
-                path="/analysis/stats/:studyId/:tab/:trialId?"
+                path="/analysis/stats/:studyId/:tab"
                 element={(
-                  <ProtectedRoute paramToCheck="studyId" paramCallback={analysisProtectedCallback}>
-                    <StudyAnalysisTabs
-                      globalConfig={globalConfig}
-                    />
-                  </ProtectedRoute>
+                  <>
+                    <PageTitle title="ReVISit | Analysis" />
+                    <ProtectedRoute paramToCheck="studyId" paramCallback={analysisProtectedCallback}>
+                      <StudyAnalysisTabs
+                        globalConfig={globalConfig}
+                      />
+                    </ProtectedRoute>
+                  </>
             )}
               />
               <Route
@@ -127,6 +141,7 @@ export function GlobalConfigParser() {
                 path="/settings"
                 element={(
                   <ProtectedRoute>
+                    <PageTitle title="ReVISit | Settings" />
                     <AppHeader studyIds={globalConfig.configsList} />
                     <AppShell.Main>
                       <GlobalSettings />
@@ -138,6 +153,7 @@ export function GlobalConfigParser() {
                 path="/login"
                 element={(
                   <>
+                    <PageTitle title="ReVISit | Login" />
                     <AppHeader studyIds={globalConfig.configsList} />
                     <AppShell.Main>
                       <Login />

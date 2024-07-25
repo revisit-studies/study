@@ -1,5 +1,5 @@
 import {
-  Box, Flex, Input, List, Text,
+  Box, Flex, Input, List,
 } from '@mantine/core';
 import { IFrameResponse } from '../../parser/types';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';

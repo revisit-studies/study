@@ -17,7 +17,16 @@ test('test', async ({ page }) => {
   await page.getByPlaceholder('Enter your answer here').fill('ads');
   await page.getByPlaceholder('Enter your long comments here').fill('asdf');
   await page.locator('.mantine-Slider-track').click();
+
   await page.getByRole('checkbox', { name: 'Option 2' }).click();
+  const minSelectionsText = await page.getByText('Please select at least 2 options');
+  await expect(minSelectionsText).toBeVisible();
+  await page.getByRole('checkbox', { name: 'Option 1' }).click();
+  await page.getByRole('checkbox', { name: 'Option 3' }).click();
+  const maxSelectionsText = await page.getByText('Please select at most 2 options');
+  await expect(maxSelectionsText).toBeVisible();
+  await page.getByRole('checkbox', { name: 'Option 1' }).click();
+
   await page.getByRole('radio', { name: 'Option 2' }).click();
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 

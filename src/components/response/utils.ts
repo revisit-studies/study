@@ -1,9 +1,29 @@
 import { useForm } from '@mantine/form';
 import { useEffect, useState } from 'react';
 import {
-  BaseResponse, NumberOption, Response, StringOption,
+  CheckboxResponse, NumberOption, Response, StringOption,
 } from '../../parser/types';
 import { StoredAnswer } from '../../store/types';
+
+function checkCheckboxResponse(response: Response, value: string[]) {
+  if (response.type === 'checkbox') {
+    // Check max and min selections
+    const checkboxResponse = response as CheckboxResponse;
+    const minNotSelected = checkboxResponse.minSelections && value.length < checkboxResponse.minSelections;
+    const maxNotSelected = checkboxResponse.maxSelections && value.length > checkboxResponse.maxSelections;
+
+    if (minNotSelected && maxNotSelected) {
+      return `Please select between ${checkboxResponse.minSelections} and ${checkboxResponse.maxSelections} options`;
+    }
+    if (minNotSelected) {
+      return `Please select at least ${checkboxResponse.minSelections} options`;
+    }
+    if (maxNotSelected) {
+      return `Please select at most ${checkboxResponse.maxSelections} options`;
+    }
+  }
+  return null;
+}
 
 const queryParameters = new URLSearchParams(window.location.search);
 export const generateInitFields = (responses: Response[], storedAnswer: StoredAnswer['answer']) => {
@@ -31,8 +51,9 @@ const generateValidation = (responses: Response[]) => {
         [response.id]: (value: string | string[]) => {
           if (Array.isArray(value)) {
             if (response.requiredValue != null && !Array.isArray(response.requiredValue)) {
-              return 'Incorrect required value';
-            } if (response.requiredValue != null && Array.isArray(response.requiredValue)) {
+              return 'Incorrect required value. Contact study administrator.';
+            }
+            if (response.requiredValue != null && Array.isArray(response.requiredValue)) {
               if (response.requiredValue.length !== value.length) {
                 return 'Incorrect input';
               }
@@ -40,6 +61,9 @@ const generateValidation = (responses: Response[]) => {
               const sortedVal = [...value].sort();
 
               return sortedReq.every((val, index) => val === sortedVal[index]) ? null : 'Incorrect input';
+            }
+            if (response.type === 'checkbox') {
+              return checkCheckboxResponse(response, value);
             }
             return value.length === 0 ? 'Empty input' : null;
           }
@@ -87,7 +111,7 @@ export function areAnswersEqual(
 }
 
 export function generateErrorMessage(
-  response: BaseResponse,
+  response: Response,
   answer: { value?: string | string[]; checked?: string[] },
   options?: (StringOption | NumberOption)[],
 ) {
@@ -96,6 +120,8 @@ export function generateErrorMessage(
   let error: string | null = '';
   if (answer.checked && Array.isArray(requiredValue)) {
     error = requiredValue && [...requiredValue].sort().toString() !== [...answer.checked].sort().toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || requiredValue.toString()} to continue.` : null;
+  } else if (answer.checked && response.required) {
+    error = checkCheckboxResponse(response, answer.checked);
   } else {
     error = answer.value && requiredValue && requiredValue.toString() !== answer.value.toString() ? `Please ${options ? 'select' : 'enter'} ${requiredLabel || (options ? options.find((opt) => opt.value === requiredValue)?.label : requiredValue.toString())} to continue.` : null;
   }

@@ -1,4 +1,4 @@
-import { Button, Group, Text } from '@mantine/core';
+import { Alert, Button, Group } from '@mantine/core';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import {
@@ -94,9 +94,9 @@ export default function ResponseBlock({
                 index={index + 1}
               />
               {hasCorrectAnswerFeedback && checkClicked && (
-                <Text>
+                <Alert mb="md" title="Correct Answer">
                   {`The correct answer is: ${configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer}`}
-                </Text>
+                </Alert>
               )}
             </>
           )}
