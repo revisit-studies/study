@@ -6,19 +6,20 @@ import ConfigSwitcher from './components/ConfigSwitcher';
 import { Shell } from './components/Shell';
 import { parseGlobalConfig } from './parser/parser';
 import { GlobalConfig, Nullable, ParsedStudyConfig } from './parser/types';
-import { AnalysisInterface } from './analysis/AnalysisInterface';
+import { StudyAnalysisTabs } from './analysis/individualStudy/StudyAnalysisTabs';
 import { PREFIX } from './utils/Prefix';
 import { ProtectedRoute } from './ProtectedRoute';
 import { Login } from './Login';
 import { AuthProvider } from './store/hooks/useAuth';
-import { AnalysisDashboard } from './analysis/AnalysisDashboard';
-import { GlobalSettings } from './analysis/dashboard/GlobalSettings';
+import { AnalysisDashboard } from './analysis/dashboard/AnalysisDashboard';
+import { GlobalSettings } from './components/settings/GlobalSettings';
 import { NavigateWithParams } from './utils/NavigateWithParams';
-import AppHeader from './analysis/components/interface/AppHeader';
+import AppHeader from './analysis/interface/AppHeader';
 import { fetchStudyConfigs } from './utils/fetchConfig';
 import { initializeStorageEngine } from './storage/initialize';
 import { useStorageEngine } from './storage/storageEngineHooks';
 import { FirebaseStorageEngine } from './storage/engines/FirebaseStorageEngine';
+import PageTitle from './utils/PageTitle';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);
@@ -85,6 +86,7 @@ export function GlobalConfigParser() {
                 path="/"
                 element={(
                   <>
+                    <PageTitle title="ReVISit | Home" />
                     <AppHeader studyIds={globalConfig.configsList} />
                     <ConfigSwitcher
                       globalConfig={globalConfig}
@@ -95,14 +97,23 @@ export function GlobalConfigParser() {
               />
               <Route
                 path="/:studyId/*"
-                element={<Shell globalConfig={globalConfig} />}
+                element={(
+                  <>
+                    <PageTitle title="ReVISit | Study" />
+                    <Shell globalConfig={globalConfig} />
+                  </>
+                )}
               />
               <Route
                 path="/analysis/dashboard"
                 element={(
-                  <AnalysisDashboard
-                    globalConfig={globalConfig}
-                  />
+                  <>
+                    <PageTitle title="ReVISit | Analysis" />
+                    <AnalysisDashboard
+                      globalConfig={globalConfig}
+                    />
+                  </>
+
               )}
               />
               <Route
@@ -110,17 +121,16 @@ export function GlobalConfigParser() {
                 element={<NavigateWithParams to="/analysis/dashboard" />}
               />
               <Route
-                path="/analysis/stats/:studyId/:tab"
-                // loader={(params)=>{
-                //   console.log(params)
-                //   return false;
-                // }}
+                path="/analysis/stats/:studyId/:tab/:trialId?"
                 element={(
-                  <ProtectedRoute paramToCheck="studyId" paramCallback={analysisProtectedCallback}>
-                    <AnalysisInterface
-                      globalConfig={globalConfig}
-                    />
-                  </ProtectedRoute>
+                  <>
+                    <PageTitle title="ReVISit | Analysis" />
+                    <ProtectedRoute paramToCheck="studyId" paramCallback={analysisProtectedCallback}>
+                      <StudyAnalysisTabs
+                        globalConfig={globalConfig}
+                      />
+                    </ProtectedRoute>
+                  </>
             )}
               />
               <Route
@@ -131,6 +141,7 @@ export function GlobalConfigParser() {
                 path="/settings"
                 element={(
                   <ProtectedRoute>
+                    <PageTitle title="ReVISit | Settings" />
                     <AppHeader studyIds={globalConfig.configsList} />
                     <AppShell.Main>
                       <GlobalSettings />
@@ -142,6 +153,7 @@ export function GlobalConfigParser() {
                 path="/login"
                 element={(
                   <>
+                    <PageTitle title="ReVISit | Login" />
                     <AppHeader studyIds={globalConfig.configsList} />
                     <AppShell.Main>
                       <Login />

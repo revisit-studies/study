@@ -1,27 +1,20 @@
 import {
-  Box, Spoiler, Stack, Table, Text,
-  Flex,
-  Checkbox,
-  Button,
-  Tooltip,
-  LoadingOverlay,
-  Group,
-  Select,
+  Box, Spoiler, Stack, Table, Text, Flex, Checkbox, Button, Tooltip, LoadingOverlay, Group, Select, Space,
 } from '@mantine/core';
 import {
   IconCheck, IconProgress,
   IconSearch,
   IconX,
 } from '@tabler/icons-react';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { openConfirmModal } from '@mantine/modals';
-import { ParticipantData, StoredAnswer, StudyConfig } from '../../parser/types';
-import { ParticipantMetadata } from '../../store/types';
-import { configSequenceToUniqueTrials, findBlockForStep, getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
-import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { DownloadButtons } from '../../components/downloader/DownloadButtons';
-import { useAuth } from '../../store/hooks/useAuth';
+import { ParticipantData, StoredAnswer, StudyConfig } from '../../../parser/types';
+import { ParticipantMetadata } from '../../../store/types';
+import { configSequenceToUniqueTrials, findBlockForStep, getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
+import { useStorageEngine } from '../../../storage/storageEngineHooks';
+import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
+import { useAuth } from '../../../store/hooks/useAuth';
 
 function AnswerCell({ cellData }: { cellData: StoredAnswer }) {
   return (
@@ -88,11 +81,13 @@ function MetaCell(props:{metaData: ParticipantMetadata}) {
 export function TableView({
   completed,
   inProgress,
+  rejected,
   studyConfig,
   refresh,
 }: {
   completed: ParticipantData[];
   inProgress: ParticipantData[];
+  rejected: ParticipantData[];
   studyConfig: StudyConfig;
   refresh: () => Promise<void>;
 }) {
@@ -135,12 +130,14 @@ export function TableView({
     },
   });
 
+  const allParticipants = useMemo(() => [...completed, ...inProgress, ...rejected], [completed, inProgress, rejected]);
+
   function handleSelect(value: string) {
     if (value === 'all') {
-      if (checked.length === [...completed, ...inProgress].length) {
+      if (checked.length === allParticipants.length) {
         setChecked([]);
       } else {
-        setChecked([...completed, ...inProgress].map((record) => record.participantId));
+        setChecked(allParticipants.map((record) => record.participantId));
       }
     } else if (!checked.includes(value)) {
       setChecked([...checked, value]);
@@ -152,7 +149,7 @@ export function TableView({
   const headers = [
     <Table.Th key="action">
       <Flex justify="center">
-        <Checkbox mb={-4} checked={checked.length === [...completed, ...inProgress].length} onChange={() => handleSelect('all')} />
+        <Checkbox mb={-4} checked={checked.length === allParticipants.length} onChange={() => handleSelect('all')} />
       </Flex>
     </Table.Th>,
     <Table.Th key="ID">ID</Table.Th>,
@@ -161,7 +158,7 @@ export function TableView({
     ...uniqueTrials.flatMap((trial) => [
       <Table.Th key={`header-${trial.componentName}-${trial.timesSeenInBlock}`}>{trial.componentName}</Table.Th>,
       <Table.Th key={`header-${trial.componentName}-${trial.timesSeenInBlock}-duration`}>
-        {trial.componentName}
+        <span style={{ whiteSpace: 'nowrap' }}>{trial.componentName}</span>
         {' '}
         Duration
       </Table.Th>,
@@ -169,7 +166,7 @@ export function TableView({
     <Table.Th key="total-duration">Total Duration</Table.Th>,
   ];
 
-  const rows = [...completed, ...inProgress].map((record) => (
+  const rows = allParticipants.map((record) => (
     <Table.Tr key={record.participantId}>
       <Table.Td>
         <Flex justify="center">
@@ -190,7 +187,7 @@ export function TableView({
         }
           {(!record.completed) && (
           <Text size="sm" mb={-1} ml={4}>
-            {((Object.entries(record.answers).filter(([id, entry]) => entry.endTime !== undefined).length / (getSequenceFlatMap(record.sequence).length - 1)) * 100).toFixed(2)}
+            {((Object.entries(record.answers).filter(([_, entry]) => entry.endTime !== undefined).length / (getSequenceFlatMap(record.sequence).length - 1)) * 100).toFixed(2)}
             %
           </Text>
           )}
@@ -235,7 +232,7 @@ export function TableView({
   ));
 
   return (
-    [...completed, ...inProgress].length > 0 ? (
+    allParticipants.length > 0 ? (
       <>
         <LoadingOverlay visible={loading} overlayProps={{ blur: 2 }} />
         <Flex justify="space-between" mb={8} p={8}>
@@ -244,7 +241,7 @@ export function TableView({
               w={350}
               variant="filled"
               placeholder="Search for a participant ID"
-              data={[...completed, ...inProgress].map((record) => ({ value: record.participantId, label: record.participantId }))}
+              data={allParticipants.map((record) => ({ value: record.participantId, label: record.participantId }))}
               searchable
               value={null}
               leftSection={<IconSearch size={14} />}
@@ -266,9 +263,12 @@ export function TableView({
         </Flex>
       </>
     ) : (
-      <Flex justify="center" align="center" style={{ height: '100%' }}>
-        <Text>No data available</Text>
-      </Flex>
+      <>
+        <Space h="xl" />
+        <Flex justify="center" align="center">
+          <Text>No data available</Text>
+        </Flex>
+      </>
     )
   );
 }

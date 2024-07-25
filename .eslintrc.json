@@ -45,7 +45,13 @@
     "react/no-array-index-key": "off",
     "jsx-a11y/click-events-have-key-events": "off",
     "no-return-await": "off",
-    "@typescript-eslint/no-unused-vars": "warn",
+    "@typescript-eslint/no-unused-vars": [
+      "error", 
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
     "max-classes-per-file": "off",
     "no-param-reassign": ["error", { "props": false }],
     "cypress/unsafe-to-chain-command": "off",

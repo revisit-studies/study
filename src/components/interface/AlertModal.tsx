@@ -1,5 +1,5 @@
 import {
-  Alert, Box, Button, Group, Modal, Text,
+  Alert, Button, Group, Modal, Text,
 } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { useCallback, useEffect, useState } from 'react';

@@ -280,7 +280,7 @@ export class LocalStorageEngine extends StorageEngine {
     return true;
   }
 
-  async validateUser(user: UserWrapped | null) {
+  async validateUser(_: UserWrapped | null) {
     return true;
   }
 
