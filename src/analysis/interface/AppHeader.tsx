@@ -33,19 +33,19 @@ export default function AppHeader({ studyIds }: { studyIds: string[] }) {
     {
       name: 'Studies',
       leftIcon: <IconFileLambda />,
-      href: '/',
+      href: '',
       needAdmin: false,
     },
     {
       name: 'Analysis',
       leftIcon: <IconChartBar />,
-      href: '/analysis/dashboard',
+      href: 'analysis/dashboard',
       needAdmin: false,
     },
     {
       name: 'Settings',
       leftIcon: <IconSettings />,
-      href: '/settings',
+      href: 'settings',
       needAdmin: true,
     },
   ];
@@ -97,7 +97,9 @@ export default function AppHeader({ studyIds }: { studyIds: string[] }) {
                           leftSection={menuItem.leftIcon}
                           variant="default"
                           style={{ border: 'none', display: 'flex', justifyContent: 'flex-start' }}
-                          onClick={() => { navigate(menuItem.href); setNavOpen(false); }}
+                          onClick={(event) => { event.preventDefault(); navigate(`/${menuItem.href}`); setNavOpen(false); }}
+                          component="a"
+                          href={`${PREFIX}${menuItem.href}`}
                         >
                           {menuItem.name}
                         </Button>
@@ -110,7 +112,9 @@ export default function AppHeader({ studyIds }: { studyIds: string[] }) {
                       leftSection={menuItem.leftIcon}
                       variant="default"
                       style={{ border: 'none', display: 'flex', justifyContent: 'flex-start' }}
-                      onClick={() => { navigate(menuItem.href); setNavOpen(false); }}
+                      onClick={(event) => { event.preventDefault(); navigate(`/${menuItem.href}`); setNavOpen(false); }}
+                      component="a"
+                      href={`${PREFIX}${menuItem.href}`}
                     >
                       {menuItem.name}
                     </Button>

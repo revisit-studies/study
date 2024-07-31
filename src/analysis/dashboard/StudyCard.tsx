@@ -11,6 +11,7 @@ import { ParticipantData } from '../../storage/types';
 import { StoredAnswer } from '../../parser/types';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
 import { ParticipantStatusBadges } from '../interface/ParticipantStatusBadges';
+import { PREFIX } from '../../utils/Prefix';
 
 function isWithinRange(answers: Record<string, StoredAnswer>, rangeTime: [Date | null, Date | null]) {
   const timeStamps = Object.values(answers).map((ans) => [ans.startTime, ans.endTime]).flat();
@@ -96,7 +97,7 @@ export function StudyCard({ studyId, allParticipants }: { studyId: string; allPa
                   onMouseLeave={closeCheck}
                   px={4}
                   component="a"
-                  href={`/analysis/stats/${studyId}`}
+                  href={`${PREFIX}analysis/stats/${studyId}`}
                 >
                   <IconChartHistogram />
                 </Button>
