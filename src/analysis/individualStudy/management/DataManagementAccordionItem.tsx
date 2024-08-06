@@ -5,12 +5,14 @@ import { useCallback, useEffect, useState } from 'react';
 import { IconTrashX, IconRefresh } from '@tabler/icons-react';
 import { openConfirmModal } from '@mantine/modals';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
-import { FirebaseStorageEngine } from '../../../storage/engines/FirebaseStorageEngine';
+import { FirebaseStorageEngine, FirebaseError, FirebaseActionResponse } from '../../../storage/engines/FirebaseStorageEngine';
 
 export function DataManagementAccordionItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<void> }) {
   const [modalArchiveOpened, setModalArchiveOpened] = useState<boolean>(false);
   const [modalDeleteSnapshotOpened, setModalDeleteSnapshotOpened] = useState<boolean>(false);
   const [modalDeleteLiveOpened, setModalDeleteLiveOpened] = useState<boolean>(false);
+  const [modalErrorOpened, setModalErrorOpened] = useState<boolean>(false);
+  const [error, setError] = useState<FirebaseError | null>(null);
 
   const [currentSnapshot, setCurrentSnapshot] = useState<string>('');
 
@@ -37,20 +39,32 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
 
   const handleCreateSnapshot = async () => {
     setLoading(true);
-    await storageEngine.createSnapshot(studyId, false);
-    refreshSnapshots();
-    setLoading(false);
-    await refresh();
+    const createdSnapshot: FirebaseActionResponse = await storageEngine.createSnapshot(studyId, false);
+    if (createdSnapshot.status === 'SUCCESS') {
+      refreshSnapshots();
+      setLoading(false);
+      await refresh();
+    } else {
+      setLoading(false);
+      setError(createdSnapshot.error);
+      setModalErrorOpened(true);
+    }
   };
 
   const handleArchiveData = async () => {
     setLoading(true);
     setDeleteValue('');
     setModalArchiveOpened(false);
-    await storageEngine.createSnapshot(studyId, true);
-    refreshSnapshots();
-    setLoading(false);
-    await refresh();
+    const createdSnapshot: FirebaseActionResponse = await storageEngine.createSnapshot(studyId, true);
+    if (createdSnapshot.status === 'SUCCESS') {
+      refreshSnapshots();
+      setLoading(false);
+      await refresh();
+    } else {
+      setLoading(false);
+      setError(createdSnapshot.error);
+      setModalErrorOpened(true);
+    }
   };
 
   const handleRestoreSnapshot = async (snapshot: string) => {
@@ -89,7 +103,7 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
     labels: { confirm: 'Create', cancel: 'Cancel' },
     // confirmProps: { color: 'blue' },
     cancelProps: { variant: 'subtle', color: 'dark' },
-    onCancel: () => {},
+    onCancel: () => { },
     onConfirm: () => handleCreateSnapshot(),
   });
 
@@ -101,7 +115,7 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
     labels: { confirm: 'Restore', cancel: 'Cancel' },
     confirmProps: { color: 'red' },
     cancelProps: { variant: 'subtle', color: 'dark' },
-    onCancel: () => {},
+    onCancel: () => { },
     onConfirm: () => handleRestoreSnapshot(snapshot),
   });
 
@@ -183,7 +197,7 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
         {/* Position relative keeps the loading overlay only on the list */}
         <Box style={{ position: 'relative' }}>
           <LoadingOverlay visible={snapshotListLoading} />
-          { snapshots.length > 0
+          {snapshots.length > 0
             ? snapshots.map(
               (datasetName: string) => (
                 <Flex key={datasetName} justify="space-between" mb="xs">
@@ -294,6 +308,19 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
           </Button>
           <Button color="red" onClick={handleDeleteLive} disabled={deleteValue !== studyId}>
             Delete
+          </Button>
+        </Flex>
+      </Modal>
+
+      <Modal
+        opened={modalErrorOpened}
+        onClose={() => setModalErrorOpened(false)}
+        title={<Text>{error?.title}</Text>}
+      >
+        <Text mb="sm">{error?.message}</Text>
+        <Flex mt="sm" justify="right">
+          <Button mr={5} onClick={() => setModalErrorOpened(false)}>
+            Okay
           </Button>
         </Flex>
       </Modal>
