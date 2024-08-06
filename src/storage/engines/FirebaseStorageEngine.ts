@@ -788,12 +788,31 @@ export class FirebaseStorageEngine extends StorageEngine {
 
       if (metadataSnapshot.exists()) {
         const collections = metadataSnapshot.data();
-        const matchingCollections = Object.keys(collections).filter(
-          (directoryName) => directoryName.startsWith(
+        const matchingCollections = Object.keys(collections)
+          .filter((directoryName) => directoryName.startsWith(
             `${this.collectionPrefix}${studyId}-snapshot`,
-          ),
-        );
-        return matchingCollections.sort().reverse();
+          ))
+          .map((directoryName) => {
+            const value = collections[directoryName];
+            let transformedValue;
+            if (typeof value === 'boolean') {
+              transformedValue = directoryName;
+            } else if (
+              value
+              && typeof value === 'object'
+              && value.enabled === true
+            ) {
+              transformedValue = value.name;
+            } else {
+              transformedValue = null;
+            }
+            return { originalName: directoryName, transformedValue };
+          })
+          .filter((item) => item.transformedValue !== null);
+        const sortedCollections = matchingCollections
+          .sort((a, b) => a.originalName.localeCompare(b.originalName))
+          .reverse(); // Reverse the sorted array if needed
+        return sortedCollections;
       }
       return [];
     } catch (error) {
@@ -823,9 +842,26 @@ export class FirebaseStorageEngine extends StorageEngine {
   async _addDirectoryNameToMetadata(directoryName: string) {
     try {
       const metadataDoc = doc(this.firestore, 'metadata', 'collections');
-      await setDoc(metadataDoc, { [directoryName]: true }, { merge: true });
+      await setDoc(
+        metadataDoc,
+        { [directoryName]: { exists: true, name: directoryName } },
+        { merge: true },
+      );
     } catch (error) {
       console.error('Error adding collection to metadata:', error);
+    }
+  }
+
+  async renameSnapshot(directoryName: string, newName: string) {
+    try {
+      const metadataDoc = doc(this.firestore, 'metadata', 'collections');
+      await setDoc(
+        metadataDoc,
+        { [directoryName]: { exists: true, name: newName } },
+        { merge: true },
+      );
+    } catch (error) {
+      console.error('Error renaming collection in metadata', error);
     }
   }
 
