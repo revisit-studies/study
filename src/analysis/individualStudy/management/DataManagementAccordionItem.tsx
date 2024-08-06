@@ -2,23 +2,28 @@ import {
   Text, LoadingOverlay, Box, Title, Flex, Modal, TextInput, Button, Tooltip, ActionIcon, Space,
 } from '@mantine/core';
 import { useCallback, useEffect, useState } from 'react';
-import { IconTrashX, IconRefresh } from '@tabler/icons-react';
+import { IconTrashX, IconRefresh, IconPencil } from '@tabler/icons-react';
 import { openConfirmModal } from '@mantine/modals';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
-import { FirebaseStorageEngine, FirebaseError, FirebaseActionResponse } from '../../../storage/engines/FirebaseStorageEngine';
+import {
+  FirebaseStorageEngine, FirebaseError, FirebaseActionResponse, SnapshotNameItem,
+} from '../../../storage/engines/FirebaseStorageEngine';
 
 export function DataManagementAccordionItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<void> }) {
   const [modalArchiveOpened, setModalArchiveOpened] = useState<boolean>(false);
   const [modalDeleteSnapshotOpened, setModalDeleteSnapshotOpened] = useState<boolean>(false);
+  const [modalRenameSnapshotOpened, setModalRenameSnapshotOpened] = useState<boolean>(false);
   const [modalDeleteLiveOpened, setModalDeleteLiveOpened] = useState<boolean>(false);
   const [modalErrorOpened, setModalErrorOpened] = useState<boolean>(false);
   const [error, setError] = useState<FirebaseError | null>(null);
 
   const [currentSnapshot, setCurrentSnapshot] = useState<string>('');
 
-  const [snapshots, setSnapshots] = useState<string[]>([]);
+  const [snapshots, setSnapshots] = useState<SnapshotNameItem[]>([]);
 
   const [deleteValue, setDeleteValue] = useState<string>('');
+  const [renameValue, setRenameValue] = useState<string>('');
+
   const [loading, setLoading] = useState<boolean>(false);
   const [snapshotListLoading, setSnapshotListLoading] = useState<boolean>(false);
 
@@ -80,6 +85,16 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
     setDeleteValue('');
     setModalDeleteSnapshotOpened(false);
     await storageEngine.removeSnapshotOrLive(currentSnapshot, true);
+    refreshSnapshots();
+    setLoading(false);
+    await refresh();
+  };
+
+  const handleRenameSnapshot = async () => {
+    setLoading(true);
+    setModalRenameSnapshotOpened(false);
+    await storageEngine.renameSnapshot(currentSnapshot, renameValue);
+    setRenameValue('');
     refreshSnapshots();
     setLoading(false);
     await refresh();
@@ -199,15 +214,24 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
           <LoadingOverlay visible={snapshotListLoading} />
           {snapshots.length > 0
             ? snapshots.map(
-              (datasetName: string) => (
-                <Flex key={datasetName} justify="space-between" mb="xs">
-                  <Text>{datasetName}</Text>
+              (snapshotItem: SnapshotNameItem) => (
+                <Flex key={snapshotItem.originalName} justify="space-between" mb="xs">
+                  <Text>{snapshotItem.alternateName}</Text>
                   <Flex direction="row" gap="xs">
+                    <Tooltip label="Rename">
+                      <ActionIcon
+                        color="green"
+                        variant="subtle"
+                        onClick={() => { setModalRenameSnapshotOpened(true); setCurrentSnapshot(snapshotItem.originalName); }}
+                      >
+                        <IconPencil />
+                      </ActionIcon>
+                    </Tooltip>
                     <Tooltip label="Restore Snapshot">
                       <ActionIcon
                         color="blue"
                         variant="subtle"
-                        onClick={() => { openRestoreSnapshotModal(datasetName); }}
+                        onClick={() => { openRestoreSnapshotModal(snapshotItem.originalName); }}
                       >
                         <IconRefresh />
                       </ActionIcon>
@@ -216,7 +240,7 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
                       <ActionIcon
                         color="red"
                         variant="subtle"
-                        onClick={() => { setModalDeleteSnapshotOpened(true); setCurrentSnapshot(datasetName); }}
+                        onClick={() => { setModalDeleteSnapshotOpened(true); setCurrentSnapshot(snapshotItem.originalName); }}
                       >
                         <IconTrashX />
                       </ActionIcon>
@@ -275,6 +299,34 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
             Cancel
           </Button>
           <Button color="red" onClick={handleDeleteSnapshot} disabled={deleteValue !== studyId}>
+            Delete
+          </Button>
+        </Flex>
+      </Modal>
+
+      <Modal
+        opened={modalRenameSnapshotOpened}
+        onClose={() => { setModalRenameSnapshotOpened(false); setRenameValue(''); }}
+        title={<Text>Rename Snapshot</Text>}
+      >
+        <Text mb="sm">
+          This will permanently remove this snapshot. This action is
+          {' '}
+          <Text span fw={700}>irreversible</Text>
+          .
+        </Text>
+
+        <TextInput
+          label="Enter the new name of the snapshot."
+          placeholder={studyId}
+          onChange={(event) => setRenameValue(event.target.value)}
+        />
+
+        <Flex mt="sm" justify="right">
+          <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalRenameSnapshotOpened(false); setRenameValue(''); }}>
+            Cancel
+          </Button>
+          <Button color="red" onClick={handleRenameSnapshot} disabled={!renameValue || renameValue.length === 0}>
             Delete
           </Button>
         </Flex>

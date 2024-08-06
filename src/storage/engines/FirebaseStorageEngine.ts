@@ -64,6 +64,11 @@ export type FirebaseActionResponse =
   | FirebaseActionResponseSuccess
   | FirebaseActionResponseFailed;
 
+export interface SnapshotNameItem {
+  originalName: string;
+  alternateName: string;
+}
+
 type FirebaseStorageObjectType = 'sequenceArray' | 'participantData' | 'config';
 type FirebaseStorageObject<T extends FirebaseStorageObjectType> =
   T extends 'sequenceArray'
@@ -806,9 +811,12 @@ export class FirebaseStorageEngine extends StorageEngine {
             } else {
               transformedValue = null;
             }
-            return { originalName: directoryName, transformedValue };
+            return {
+              originalName: directoryName,
+              alternateName: transformedValue,
+            };
           })
-          .filter((item) => item.transformedValue !== null);
+          .filter((item) => item.alternateName !== null);
         const sortedCollections = matchingCollections
           .sort((a, b) => a.originalName.localeCompare(b.originalName))
           .reverse(); // Reverse the sorted array if needed
