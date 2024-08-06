@@ -852,7 +852,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       const metadataDoc = doc(this.firestore, 'metadata', 'collections');
       await setDoc(
         metadataDoc,
-        { [directoryName]: { exists: true, name: directoryName } },
+        { [directoryName]: { enabled: true, name: directoryName } },
         { merge: true },
       );
     } catch (error) {
@@ -865,7 +865,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       const metadataDoc = doc(this.firestore, 'metadata', 'collections');
       await setDoc(
         metadataDoc,
-        { [directoryName]: { exists: true, name: newName } },
+        { [directoryName]: { enabled: true, name: newName } },
         { merge: true },
       );
     } catch (error) {

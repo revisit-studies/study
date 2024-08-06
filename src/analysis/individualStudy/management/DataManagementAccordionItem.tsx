@@ -309,16 +309,16 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
         onClose={() => { setModalRenameSnapshotOpened(false); setRenameValue(''); }}
         title={<Text>Rename Snapshot</Text>}
       >
-        <Text mb="sm">
+        {/* <Text mb="sm">
           This will permanently remove this snapshot. This action is
           {' '}
           <Text span fw={700}>irreversible</Text>
           .
-        </Text>
+        </Text> */}
 
         <TextInput
           label="Enter the new name of the snapshot."
-          placeholder={studyId}
+          placeholder={currentSnapshot}
           onChange={(event) => setRenameValue(event.target.value)}
         />
 
@@ -326,8 +326,8 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
           <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalRenameSnapshotOpened(false); setRenameValue(''); }}>
             Cancel
           </Button>
-          <Button color="red" onClick={handleRenameSnapshot} disabled={!renameValue || renameValue.length === 0}>
-            Delete
+          <Button color="green" onClick={handleRenameSnapshot} disabled={!renameValue || renameValue.length === 0}>
+            Rename
           </Button>
         </Flex>
       </Modal>
