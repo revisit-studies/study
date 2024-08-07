@@ -829,21 +829,39 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  async restoreSnapshot(studyId: string, snapshotName: string) {
+  async restoreSnapshot(
+    studyId: string,
+    snapshotName: string,
+  ): Promise<FirebaseActionResponse> {
     const originalName = `${this.collectionPrefix}${studyId}`;
     // Snapshot current collection
-    await this.createSnapshot(studyId, true);
+    try {
+      await this.createSnapshot(studyId, true);
 
-    await this._copyDirectory(
-      `${snapshotName}/configs`,
-      `${originalName}/configs`,
-    );
-    await this._copyDirectory(
-      `${snapshotName}/participants`,
-      `${originalName}/participants`,
-    );
-    await this._copyDirectory(snapshotName, originalName);
-    await this._copyCollection(snapshotName, originalName);
+      await this._copyDirectory(
+        `${snapshotName}/configs`,
+        `${originalName}/configs`,
+      );
+      await this._copyDirectory(
+        `${snapshotName}/participants`,
+        `${originalName}/participants`,
+      );
+      await this._copyDirectory(snapshotName, originalName);
+      await this._copyCollection(snapshotName, originalName);
+      return {
+        status: 'SUCCESS',
+      };
+    } catch (error) {
+      console.error('Error trying to delete a snapshot', error);
+      return {
+        status: 'FAILED',
+        error: {
+          title: 'Failed to restore a snapshot fully.',
+          message:
+            'There was an unspecified error when trying to restore this snapshot.',
+        },
+      };
+    }
   }
 
   // Function to add collection name to metadata
@@ -857,10 +875,14 @@ export class FirebaseStorageEngine extends StorageEngine {
       );
     } catch (error) {
       console.error('Error adding collection to metadata:', error);
+      throw error;
     }
   }
 
-  async renameSnapshot(directoryName: string, newName: string) {
+  async renameSnapshot(
+    directoryName: string,
+    newName: string,
+  ): Promise<FirebaseActionResponse> {
     try {
       const metadataDoc = doc(this.firestore, 'metadata', 'collections');
       await setDoc(
@@ -868,8 +890,18 @@ export class FirebaseStorageEngine extends StorageEngine {
         { [directoryName]: { enabled: true, name: newName } },
         { merge: true },
       );
+      return {
+        status: 'SUCCESS',
+      };
     } catch (error) {
       console.error('Error renaming collection in metadata', error);
+      return {
+        status: 'FAILED',
+        error: {
+          title: 'Failed to Rename Snapshot.',
+          message: 'There was an error when trying to rename the snapshot.',
+        },
+      };
     }
   }
 

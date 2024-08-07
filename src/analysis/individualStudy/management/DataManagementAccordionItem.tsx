@@ -42,42 +42,46 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
     refreshSnapshots();
   }, [refreshSnapshots]);
 
-  const handleCreateSnapshot = async () => {
-    setLoading(true);
-    const createdSnapshot: FirebaseActionResponse = await storageEngine.createSnapshot(studyId, false);
-    if (createdSnapshot.status === 'SUCCESS') {
-      refreshSnapshots();
-      setLoading(false);
-      await refresh();
-    } else {
-      setLoading(false);
-      setError(createdSnapshot.error);
-      setModalErrorOpened(true);
-    }
-  };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  type FirebaseAction = (...args: any[]) => Promise<FirebaseActionResponse>;
 
-  const handleArchiveData = async () => {
-    setLoading(true);
-    setDeleteValue('');
-    setModalArchiveOpened(false);
-    const createdSnapshot: FirebaseActionResponse = await storageEngine.createSnapshot(studyId, true);
-    if (createdSnapshot.status === 'SUCCESS') {
-      refreshSnapshots();
-      setLoading(false);
-      await refresh();
-    } else {
-      setLoading(false);
-      setError(createdSnapshot.error);
-      setModalErrorOpened(true);
-    }
-  };
-
-  const handleRestoreSnapshot = async (snapshot: string) => {
-    setLoading(true);
-    await storageEngine.restoreSnapshot(studyId, snapshot);
+  const finishSnapshotAction = async () => {
     refreshSnapshots();
     setLoading(false);
     await refresh();
+  };
+
+  // Generalized snapshot action handler
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const snapshotAction = async (action: FirebaseAction, ...args: any[]) => {
+    setLoading(true);
+    const response: FirebaseActionResponse = await action(...args);
+    if (response.status === 'SUCCESS') {
+      await finishSnapshotAction();
+    } else {
+      setLoading(false);
+      setError(error);
+      setModalErrorOpened(true);
+    }
+  };
+
+  const handleCreateSnapshot = async () => {
+    await snapshotAction(storageEngine.createSnapshot, studyId, false);
+  };
+
+  const handleArchiveData = async () => {
+    setDeleteValue('');
+    setModalArchiveOpened(false);
+    await snapshotAction(storageEngine.createSnapshot, studyId, true);
+  };
+
+  const handleRenameSnapshot = async () => {
+    setModalRenameSnapshotOpened(false);
+    await snapshotAction(storageEngine.createSnapshot, currentSnapshot, renameValue);
+  };
+
+  const handleRestoreSnapshot = async (snapshot: string) => {
+    await snapshotAction(storageEngine.restoreSnapshot, studyId, snapshot);
   };
 
   const handleDeleteSnapshot = async () => {
@@ -85,19 +89,7 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
     setDeleteValue('');
     setModalDeleteSnapshotOpened(false);
     await storageEngine.removeSnapshotOrLive(currentSnapshot, true);
-    refreshSnapshots();
-    setLoading(false);
-    await refresh();
-  };
-
-  const handleRenameSnapshot = async () => {
-    setLoading(true);
-    setModalRenameSnapshotOpened(false);
-    await storageEngine.renameSnapshot(currentSnapshot, renameValue);
-    setRenameValue('');
-    refreshSnapshots();
-    setLoading(false);
-    await refresh();
+    await finishSnapshotAction();
   };
 
   const handleDeleteLive = async () => {
@@ -105,9 +97,7 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
     setDeleteValue('');
     setModalDeleteLiveOpened(false);
     await storageEngine.removeSnapshotOrLive(studyId, true);
-    refreshSnapshots();
-    setLoading(false);
-    await refresh();
+    await finishSnapshotAction();
   };
 
   const openCreateSnapshotModal = () => openConfirmModal({
@@ -309,13 +299,6 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
         onClose={() => { setModalRenameSnapshotOpened(false); setRenameValue(''); }}
         title={<Text>Rename Snapshot</Text>}
       >
-        {/* <Text mb="sm">
-          This will permanently remove this snapshot. This action is
-          {' '}
-          <Text span fw={700}>irreversible</Text>
-          .
-        </Text> */}
-
         <TextInput
           label="Enter the new name of the snapshot."
           placeholder={currentSnapshot}
