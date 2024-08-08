@@ -84,7 +84,7 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
 
   const handleRenameSnapshot = async () => {
     setModalRenameSnapshotOpened(false);
-    await snapshotAction(storageEngine.createSnapshot.bind(storageEngine), currentSnapshot, renameValue);
+    await snapshotAction(storageEngine.renameSnapshot.bind(storageEngine), currentSnapshot, renameValue);
   };
 
   const handleRestoreSnapshot = async (snapshot: string) => {
