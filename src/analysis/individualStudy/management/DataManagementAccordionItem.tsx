@@ -3,12 +3,11 @@ import {
 } from '@mantine/core';
 import { useCallback, useEffect, useState } from 'react';
 import { IconTrashX, IconRefresh, IconPencil } from '@tabler/icons-react';
-import { notifications } from '@mantine/notifications';
 import { openConfirmModal } from '@mantine/modals';
-import classes from './notify.module.css';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
+import { showNotification, RevisitNotification } from '../../../utils/notifications';
 import {
-  FirebaseStorageEngine, FirebaseActionResponse, SnapshotNameItem, FirebaseNotification,
+  FirebaseStorageEngine, FirebaseActionResponse, SnapshotNameItem,
 } from '../../../storage/engines/FirebaseStorageEngine';
 
 export function DataManagementAccordionItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<void> }) {
@@ -45,17 +44,6 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   type FirebaseAction = (...args: any[]) => Promise<FirebaseActionResponse>;
 
-  const showNotification = (title: string, message: string, color: string | undefined) => {
-    notifications.show({
-      title,
-      message,
-      position: 'top-center',
-      classNames: classes,
-      color: color || 'blue',
-      autoClose: color === 'red' || color === 'yellow' ? false : 5000,
-    });
-  };
-
   // Generalized snapshot action handler
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const snapshotAction = async (action: FirebaseAction, ...args: any[]) => {
@@ -65,15 +53,16 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
       refreshSnapshots();
       setLoading(false);
       await refresh();
+      // Show all notifications from success.
       if (response.notifications) {
-        response.notifications.forEach((notification: FirebaseNotification) => {
-          showNotification(notification.title, notification.message, notification.color);
+        response.notifications.forEach((notification: RevisitNotification) => {
+          showNotification(notification);
         });
       }
     } else {
+      // Show returned error as a notification in red.
       setLoading(false);
-      showNotification(response.error.title, response.error.message, 'red');
-      // setModalErrorOpened(true);
+      showNotification({ title: response.error.title, message: response.error.message, color: 'red' });
     }
   };
 

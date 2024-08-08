@@ -41,6 +41,7 @@ import {
 } from './StorageEngine';
 import { ParticipantData } from '../types';
 import { ParticipantMetadata, Sequence, StoredAnswer } from '../../store/types';
+import { RevisitNotification } from '../../utils/notifications';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
 
@@ -50,22 +51,18 @@ export interface FirebaseError {
   details?: string;
 }
 
-export interface FirebaseNotification {
-  title: string;
-  message: string;
-  color?: string;
-}
-
+// Success response always has list of notifications which are then presented to user. Notifications can contain pieces which are individual errors from upstream functions.
 interface FirebaseActionResponseSuccess {
   status: 'SUCCESS';
   error?: undefined;
-  notifications?: FirebaseNotification[];
+  notifications?: RevisitNotification[];
 }
 
+// Failed responses never take notifications, only report error. Notifications will be handled in downstream functions.
 interface FirebaseActionResponseFailed {
   status: 'FAILED';
   error: FirebaseError;
-  notifications?: FirebaseNotification[];
+  notifications?: undefined;
 }
 
 export type FirebaseActionResponse =
@@ -770,7 +767,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     await this._copyCollection(sourceName, targetName);
     await this._addDirectoryNameToMetadata(targetName);
 
-    const createSnapshotSuccessNotifications: FirebaseNotification[] = [];
+    const createSnapshotSuccessNotifications: RevisitNotification[] = [];
     if (deleteData) {
       const removeSnapshotResponse = await this.removeSnapshotOrLive(
         sourceName,
@@ -784,7 +781,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         });
       } else {
         createSnapshotSuccessNotifications.push({
-          title: 'Sucess!',
+          title: 'Success!',
           message: 'Successfully deleted live data.',
           color: 'green',
         });
@@ -889,7 +886,7 @@ export class FirebaseStorageEngine extends StorageEngine {
   ): Promise<FirebaseActionResponse> {
     const originalName = `${this.collectionPrefix}${studyId}`;
     // Snapshot current collection
-    const successNotifications: FirebaseNotification[] = [];
+    const successNotifications: RevisitNotification[] = [];
     try {
       const createSnapshotResponse = await this.createSnapshot(studyId, true);
       if (createSnapshotResponse.status === 'FAILED') {
