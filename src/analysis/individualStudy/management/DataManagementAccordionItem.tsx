@@ -1,5 +1,5 @@
 import {
-  Text, LoadingOverlay, Box, Title, Flex, Modal, TextInput, Button, Tooltip, ActionIcon, Space,
+  Text, LoadingOverlay, Box, Title, Flex, Modal, TextInput, Button, Tooltip, ActionIcon, Space, Table,
 } from '@mantine/core';
 import { useCallback, useEffect, useState } from 'react';
 import { IconTrashX, IconRefresh, IconPencil } from '@tabler/icons-react';
@@ -121,6 +121,16 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
     onConfirm: () => handleRestoreSnapshot(snapshot),
   });
 
+  const getDateFromSnapshotName = (snapshotName: string): string | null => {
+    const regex = /-snapshot-(.+)$/;
+    const match = snapshotName.match(regex);
+
+    if (match && match[1]) {
+      const dateStuff = match[1];
+      return dateStuff.replace('T', ' ');
+    }
+    return null;
+  };
   return (
     <>
       <LoadingOverlay visible={loading} />
@@ -200,41 +210,59 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
         <Box style={{ position: 'relative' }}>
           <LoadingOverlay visible={snapshotListLoading} />
           {snapshots.length > 0
-            ? snapshots.map(
-              (snapshotItem: SnapshotNameItem) => (
-                <Flex key={snapshotItem.originalName} justify="space-between" mb="xs">
-                  <Text>{snapshotItem.alternateName}</Text>
-                  <Flex direction="row" gap="xs">
-                    <Tooltip label="Rename">
-                      <ActionIcon
-                        color="green"
-                        variant="subtle"
-                        onClick={() => { setModalRenameSnapshotOpened(true); setCurrentSnapshot(snapshotItem.originalName); }}
-                      >
-                        <IconPencil />
-                      </ActionIcon>
-                    </Tooltip>
-                    <Tooltip label="Restore Snapshot">
-                      <ActionIcon
-                        color="blue"
-                        variant="subtle"
-                        onClick={() => { openRestoreSnapshotModal(snapshotItem.originalName); }}
-                      >
-                        <IconRefresh />
-                      </ActionIcon>
-                    </Tooltip>
-                    <Tooltip label="Delete Snapshot">
-                      <ActionIcon
-                        color="red"
-                        variant="subtle"
-                        onClick={() => { setModalDeleteSnapshotOpened(true); setCurrentSnapshot(snapshotItem.originalName); }}
-                      >
-                        <IconTrashX />
-                      </ActionIcon>
-                    </Tooltip>
-                  </Flex>
-                </Flex>
-              ),
+            ? (
+              <Table>
+                <Table.Thead>
+                  <Table.Tr>
+                    <Table.Th>Snapshot Name</Table.Th>
+                    <Table.Th>Date Created</Table.Th>
+                    <Table.Th>Actions</Table.Th>
+                  </Table.Tr>
+                </Table.Thead>
+                <Table.Tbody>
+                  {snapshots.map(
+                    (snapshotItem: SnapshotNameItem) => (
+                      <Table.Tr key={snapshotItem.originalName}>
+                        <Table.Td>{snapshotItem.alternateName}</Table.Td>
+                        <Table.Td>{getDateFromSnapshotName(snapshotItem.originalName)}</Table.Td>
+                        <Table.Td>
+                          <Tooltip label="Rename">
+                            <ActionIcon
+                              color="green"
+                              variant="subtle"
+                              style={{ margin: '0px 5px 0px 0px' }}
+                              onClick={() => { setModalRenameSnapshotOpened(true); setCurrentSnapshot(snapshotItem.originalName); }}
+                            >
+                              <IconPencil />
+                            </ActionIcon>
+                          </Tooltip>
+                          <Tooltip label="Restore Snapshot">
+                            <ActionIcon
+                              color="blue"
+                              variant="subtle"
+                              style={{ margin: '0px 5px' }}
+                              onClick={() => { openRestoreSnapshotModal(snapshotItem.originalName); }}
+                            >
+                              <IconRefresh />
+                            </ActionIcon>
+                          </Tooltip>
+
+                          <Tooltip label="Delete Snapshot">
+                            <ActionIcon
+                              color="red"
+                              variant="subtle"
+                              style={{ margin: '0px 5px' }}
+                              onClick={() => { setModalDeleteSnapshotOpened(true); setCurrentSnapshot(snapshotItem.originalName); }}
+                            >
+                              <IconTrashX />
+                            </ActionIcon>
+                          </Tooltip>
+                        </Table.Td>
+                      </Table.Tr>
+                    ),
+                  )}
+                </Table.Tbody>
+              </Table>
             )
             : <Text>No snapshots.</Text>}
         </Box>

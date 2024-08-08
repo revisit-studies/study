@@ -648,7 +648,6 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   async rejectParticipant(studyId: string, participantId: string) {
-
     const studyCollection = collection(
       this.firestore,
       `${this.collectionPrefix}${studyId}`,
