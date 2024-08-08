@@ -770,19 +770,34 @@ export class FirebaseStorageEngine extends StorageEngine {
     await this._copyCollection(sourceName, targetName);
     await this._addDirectoryNameToMetadata(targetName);
 
+    const createSnapshotSuccessNotifications: FirebaseNotification[] = [];
     if (deleteData) {
-      await this.removeSnapshotOrLive(sourceName, false);
+      const removeSnapshotResponse = await this.removeSnapshotOrLive(
+        sourceName,
+        false,
+      );
+      if (removeSnapshotResponse.status === 'FAILED') {
+        createSnapshotSuccessNotifications.push({
+          title: removeSnapshotResponse.error.title,
+          message: removeSnapshotResponse.error.message,
+          color: 'red',
+        });
+      } else {
+        createSnapshotSuccessNotifications.push({
+          title: 'Sucess!',
+          message: 'Successfully deleted live data.',
+          color: 'green',
+        });
+      }
     }
-
+    createSnapshotSuccessNotifications.push({
+      message: 'Successfully created snapshot',
+      title: 'Success!',
+      color: 'green',
+    });
     return {
       status: 'SUCCESS',
-      notifications: [
-        {
-          message: 'Successfully created snapshot',
-          title: 'Success!',
-          color: 'green',
-        },
-      ],
+      notifications: createSnapshotSuccessNotifications,
     };
   }
 
@@ -876,15 +891,19 @@ export class FirebaseStorageEngine extends StorageEngine {
     // Snapshot current collection
     const successNotifications: FirebaseNotification[] = [];
     try {
-      try {
-        await this.createSnapshot(studyId, true);
-      } catch (error) {
+      const createSnapshotResponse = await this.createSnapshot(studyId, true);
+      if (createSnapshotResponse.status === 'FAILED') {
         console.warn('No live data to capture.');
         successNotifications.push({
-          title: 'Empty Dataset',
-          message:
-            'Could not create a snapshot because there was no data to capture.',
+          title: createSnapshotResponse.error.title,
+          message: createSnapshotResponse.error.message,
           color: 'yellow',
+        });
+      } else {
+        successNotifications.push({
+          title: 'Success!',
+          message: 'Successfully created snapshot of live data.',
+          color: 'green',
         });
       }
 

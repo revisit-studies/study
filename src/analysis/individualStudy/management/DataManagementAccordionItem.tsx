@@ -64,6 +64,7 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
             position: 'top-center',
             classNames: classes,
             color: notification.color ? notification.color : 'blue',
+            autoClose: notification.color === 'red' || notification.color === 'yellow' ? false : 5000,
           });
         });
       }
