@@ -885,6 +885,11 @@ export class FirebaseStorageEngine extends StorageEngine {
       await this._copyCollection(snapshotName, originalName);
       return {
         status: 'SUCCESS',
+        notification: {
+          message: 'Successfully restored snapshot to live data.',
+          title: 'Success!',
+          color: 'green',
+        },
       };
     } catch (error) {
       console.error('Error trying to delete a snapshot', error);
@@ -927,6 +932,11 @@ export class FirebaseStorageEngine extends StorageEngine {
       );
       return {
         status: 'SUCCESS',
+        notification: {
+          message: 'Successfully renamed snapshot.',
+          title: 'Success!',
+          color: 'green',
+        },
       };
     } catch (error) {
       console.error('Error renaming collection in metadata', error);

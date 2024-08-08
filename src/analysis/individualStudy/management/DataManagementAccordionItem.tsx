@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { IconTrashX, IconRefresh, IconPencil } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { openConfirmModal } from '@mantine/modals';
+import classes from './notify.module.css';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import {
   FirebaseStorageEngine, FirebaseError, FirebaseActionResponse, SnapshotNameItem,
@@ -58,10 +59,10 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
       if (response.notification) {
         notifications.show({
           title: response.notification.title,
-          color: response.notification.color ? response.notification.color : undefined,
           message: response.notification.message,
           position: 'top-center',
-          style: response.notification.color ? { backgroundColor: response.notification.color } : {},
+          classNames: classes,
+          color: response.notification.color ? response.notification.color : 'blue',
         });
       }
     } else {
