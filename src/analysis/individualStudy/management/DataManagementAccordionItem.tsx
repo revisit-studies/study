@@ -8,7 +8,7 @@ import { openConfirmModal } from '@mantine/modals';
 import classes from './notify.module.css';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import {
-  FirebaseStorageEngine, FirebaseError, FirebaseActionResponse, SnapshotNameItem,
+  FirebaseStorageEngine, FirebaseError, FirebaseActionResponse, SnapshotNameItem, FirebaseNotification,
 } from '../../../storage/engines/FirebaseStorageEngine';
 
 export function DataManagementAccordionItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<void> }) {
@@ -56,13 +56,15 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
       refreshSnapshots();
       setLoading(false);
       await refresh();
-      if (response.notification) {
-        notifications.show({
-          title: response.notification.title,
-          message: response.notification.message,
-          position: 'top-center',
-          classNames: classes,
-          color: response.notification.color ? response.notification.color : 'blue',
+      if (response.notifications) {
+        response.notifications.forEach((notification: FirebaseNotification) => {
+          notifications.show({
+            title: notification.title,
+            message: notification.message,
+            position: 'top-center',
+            classNames: classes,
+            color: notification.color ? notification.color : 'blue',
+          });
         });
       }
     } else {

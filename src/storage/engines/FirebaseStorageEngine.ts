@@ -59,13 +59,13 @@ export interface FirebaseNotification {
 interface FirebaseActionResponseSuccess {
   status: 'SUCCESS';
   error?: undefined;
-  notification?: FirebaseNotification;
+  notifications?: FirebaseNotification[];
 }
 
 interface FirebaseActionResponseFailed {
   status: 'FAILED';
   error: FirebaseError;
-  notification?: FirebaseNotification;
+  notifications?: FirebaseNotification[];
 }
 
 export type FirebaseActionResponse =
@@ -776,11 +776,13 @@ export class FirebaseStorageEngine extends StorageEngine {
 
     return {
       status: 'SUCCESS',
-      notification: {
-        message: 'Successfully created snapshot',
-        title: 'Success!',
-        color: 'green',
-      },
+      notifications: [
+        {
+          message: 'Successfully created snapshot',
+          title: 'Success!',
+          color: 'green',
+        },
+      ],
     };
   }
 
@@ -803,11 +805,13 @@ export class FirebaseStorageEngine extends StorageEngine {
       }
       return {
         status: 'SUCCESS',
-        notification: {
-          message: 'Successfully deleted snapshot or live data.',
-          title: 'Success!',
-          color: 'green',
-        },
+        notifications: [
+          {
+            message: 'Successfully deleted snapshot or live data.',
+            title: 'Success!',
+            color: 'green',
+          },
+        ],
       };
     } catch (error) {
       return {
@@ -870,8 +874,19 @@ export class FirebaseStorageEngine extends StorageEngine {
   ): Promise<FirebaseActionResponse> {
     const originalName = `${this.collectionPrefix}${studyId}`;
     // Snapshot current collection
+    const successNotifications: FirebaseNotification[] = [];
     try {
-      await this.createSnapshot(studyId, true);
+      try {
+        await this.createSnapshot(studyId, true);
+      } catch (error) {
+        console.warn('No live data to capture.');
+        successNotifications.push({
+          title: 'Empty Dataset',
+          message:
+            'Could not create a snapshot because there was no data to capture.',
+          color: 'yellow',
+        });
+      }
 
       await this._copyDirectory(
         `${snapshotName}/configs`,
@@ -883,13 +898,14 @@ export class FirebaseStorageEngine extends StorageEngine {
       );
       await this._copyDirectory(snapshotName, originalName);
       await this._copyCollection(snapshotName, originalName);
+      successNotifications.push({
+        message: 'Successfully restored snapshot to live data.',
+        title: 'Success!',
+        color: 'green',
+      });
       return {
         status: 'SUCCESS',
-        notification: {
-          message: 'Successfully restored snapshot to live data.',
-          title: 'Success!',
-          color: 'green',
-        },
+        notifications: successNotifications,
       };
     } catch (error) {
       console.error('Error trying to delete a snapshot', error);
@@ -932,11 +948,13 @@ export class FirebaseStorageEngine extends StorageEngine {
       );
       return {
         status: 'SUCCESS',
-        notification: {
-          message: 'Successfully renamed snapshot.',
-          title: 'Success!',
-          color: 'green',
-        },
+        notifications: [
+          {
+            message: 'Successfully renamed snapshot.',
+            title: 'Success!',
+            color: 'green',
+          },
+        ],
       };
     } catch (error) {
       console.error('Error renaming collection in metadata', error);
