@@ -60,40 +60,40 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
       await finishSnapshotAction();
     } else {
       setLoading(false);
-      setError(error);
+      setError(response.error);
       setModalErrorOpened(true);
     }
   };
 
   const handleCreateSnapshot = async () => {
-    await snapshotAction(storageEngine.createSnapshot, studyId, false);
+    await snapshotAction(storageEngine.createSnapshot.bind(storageEngine), studyId, false);
   };
 
   const handleArchiveData = async () => {
     setDeleteValue('');
     setModalArchiveOpened(false);
-    await snapshotAction(storageEngine.createSnapshot, studyId, true);
+    await snapshotAction(storageEngine.createSnapshot.bind(storageEngine), studyId, true);
   };
 
   const handleRenameSnapshot = async () => {
     setModalRenameSnapshotOpened(false);
-    await snapshotAction(storageEngine.createSnapshot, currentSnapshot, renameValue);
+    await snapshotAction(storageEngine.createSnapshot.bind(storageEngine), currentSnapshot, renameValue);
   };
 
   const handleRestoreSnapshot = async (snapshot: string) => {
-    await snapshotAction(storageEngine.restoreSnapshot, studyId, snapshot);
+    await snapshotAction(storageEngine.restoreSnapshot.bind(storageEngine), studyId, snapshot);
   };
 
   const handleDeleteSnapshot = async () => {
     setDeleteValue('');
     setModalDeleteSnapshotOpened(false);
-    await snapshotAction(storageEngine.removeSnapshotOrLive, currentSnapshot, true);
+    await snapshotAction(storageEngine.removeSnapshotOrLive.bind(storageEngine), currentSnapshot, true);
   };
 
   const handleDeleteLive = async () => {
     setDeleteValue('');
     setModalDeleteLiveOpened(false);
-    await snapshotAction(storageEngine.removeSnapshotOrLive, studyId, true);
+    await snapshotAction(storageEngine.removeSnapshotOrLive.bind(storageEngine), studyId, true);
   };
 
   const openCreateSnapshotModal = () => openConfirmModal({
