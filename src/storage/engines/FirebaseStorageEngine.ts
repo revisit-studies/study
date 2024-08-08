@@ -489,7 +489,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   async rejectParticipant(studyId: string, participantId: string) {
     const studyCollection = collection(this.firestore, `${this.collectionPrefix}${studyId}`);
-    const participantRef = ref(this.storage, `${this.collectionPrefix}${studyId}/participants/${participantId}`);
+    const participantRef = ref(this.storage, `${this.collectionPrefix}${studyId}/participants/${participantId}_participantData`);
     const participant = await this._getFromFirebaseStorageByRef(participantRef, 'participantData');
 
     try {
