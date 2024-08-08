@@ -16,8 +16,6 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
   const [modalDeleteSnapshotOpened, setModalDeleteSnapshotOpened] = useState<boolean>(false);
   const [modalRenameSnapshotOpened, setModalRenameSnapshotOpened] = useState<boolean>(false);
   const [modalDeleteLiveOpened, setModalDeleteLiveOpened] = useState<boolean>(false);
-  // const [modalErrorOpened, setModalErrorOpened] = useState<boolean>(false);
-  // const [error, setError] = useState<FirebaseError | null>(null);
 
   const [currentSnapshot, setCurrentSnapshot] = useState<string>('');
 
@@ -356,19 +354,6 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
           </Button>
         </Flex>
       </Modal>
-
-      {/* <Modal
-        opened={modalErrorOpened}
-        onClose={() => setModalErrorOpened(false)}
-        title={<Text>{error?.title}</Text>}
-      >
-        <Text mb="sm">{error?.message}</Text>
-        <Flex mt="sm" justify="right">
-          <Button mr={5} onClick={() => setModalErrorOpened(false)}>
-            Okay
-          </Button>
-        </Flex>
-      </Modal> */}
     </>
   );
 }
