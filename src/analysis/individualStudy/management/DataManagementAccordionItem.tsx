@@ -3,6 +3,7 @@ import {
 } from '@mantine/core';
 import { useCallback, useEffect, useState } from 'react';
 import { IconTrashX, IconRefresh, IconPencil } from '@tabler/icons-react';
+import { notifications } from '@mantine/notifications';
 import { openConfirmModal } from '@mantine/modals';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import {
@@ -45,19 +46,22 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   type FirebaseAction = (...args: any[]) => Promise<FirebaseActionResponse>;
 
-  const finishSnapshotAction = async () => {
-    refreshSnapshots();
-    setLoading(false);
-    await refresh();
-  };
-
   // Generalized snapshot action handler
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const snapshotAction = async (action: FirebaseAction, ...args: any[]) => {
     setLoading(true);
     const response: FirebaseActionResponse = await action(...args);
     if (response.status === 'SUCCESS') {
-      await finishSnapshotAction();
+      refreshSnapshots();
+      setLoading(false);
+      await refresh();
+      if (response.notification) {
+        notifications.show({
+          title: response.notification.title,
+          color: response.notification.color ? response.notification.color : undefined,
+          message: response.notification.message,
+        });
+      }
     } else {
       setLoading(false);
       setError(response.error);

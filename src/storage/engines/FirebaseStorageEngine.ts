@@ -50,14 +50,22 @@ export interface FirebaseError {
   details?: string;
 }
 
+export interface FirebaseNotification {
+  title: string;
+  message: string;
+  color?: string;
+}
+
 interface FirebaseActionResponseSuccess {
   status: 'SUCCESS';
   error?: undefined;
+  notification?: FirebaseNotification;
 }
 
 interface FirebaseActionResponseFailed {
   status: 'FAILED';
   error: FirebaseError;
+  notification?: FirebaseNotification;
 }
 
 export type FirebaseActionResponse =
@@ -768,6 +776,11 @@ export class FirebaseStorageEngine extends StorageEngine {
 
     return {
       status: 'SUCCESS',
+      notification: {
+        message: 'Successfully created snapshot',
+        title: 'Success!',
+        color: 'green',
+      },
     };
   }
 
