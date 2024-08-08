@@ -8,7 +8,7 @@ import { openConfirmModal } from '@mantine/modals';
 import classes from './notify.module.css';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import {
-  FirebaseStorageEngine, FirebaseError, FirebaseActionResponse, SnapshotNameItem, FirebaseNotification,
+  FirebaseStorageEngine, FirebaseActionResponse, SnapshotNameItem, FirebaseNotification,
 } from '../../../storage/engines/FirebaseStorageEngine';
 
 export function DataManagementAccordionItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<void> }) {
@@ -16,8 +16,8 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
   const [modalDeleteSnapshotOpened, setModalDeleteSnapshotOpened] = useState<boolean>(false);
   const [modalRenameSnapshotOpened, setModalRenameSnapshotOpened] = useState<boolean>(false);
   const [modalDeleteLiveOpened, setModalDeleteLiveOpened] = useState<boolean>(false);
-  const [modalErrorOpened, setModalErrorOpened] = useState<boolean>(false);
-  const [error, setError] = useState<FirebaseError | null>(null);
+  // const [modalErrorOpened, setModalErrorOpened] = useState<boolean>(false);
+  // const [error, setError] = useState<FirebaseError | null>(null);
 
   const [currentSnapshot, setCurrentSnapshot] = useState<string>('');
 
@@ -47,6 +47,17 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   type FirebaseAction = (...args: any[]) => Promise<FirebaseActionResponse>;
 
+  const showNotification = (title: string, message: string, color: string | undefined) => {
+    notifications.show({
+      title,
+      message,
+      position: 'top-center',
+      classNames: classes,
+      color: color || 'blue',
+      autoClose: color === 'red' || color === 'yellow' ? false : 5000,
+    });
+  };
+
   // Generalized snapshot action handler
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const snapshotAction = async (action: FirebaseAction, ...args: any[]) => {
@@ -58,20 +69,13 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
       await refresh();
       if (response.notifications) {
         response.notifications.forEach((notification: FirebaseNotification) => {
-          notifications.show({
-            title: notification.title,
-            message: notification.message,
-            position: 'top-center',
-            classNames: classes,
-            color: notification.color ? notification.color : 'blue',
-            autoClose: notification.color === 'red' || notification.color === 'yellow' ? false : 5000,
-          });
+          showNotification(notification.title, notification.message, notification.color);
         });
       }
     } else {
       setLoading(false);
-      setError(response.error);
-      setModalErrorOpened(true);
+      showNotification(response.error.title, response.error.message, 'red');
+      // setModalErrorOpened(true);
     }
   };
 
@@ -353,7 +357,7 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
         </Flex>
       </Modal>
 
-      <Modal
+      {/* <Modal
         opened={modalErrorOpened}
         onClose={() => setModalErrorOpened(false)}
         title={<Text>{error?.title}</Text>}
@@ -364,7 +368,7 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
             Okay
           </Button>
         </Flex>
-      </Modal>
+      </Modal> */}
     </>
   );
 }
