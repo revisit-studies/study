@@ -12,9 +12,8 @@ ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <StorageEngineProvider>
       <MantineProvider>
-        <Notifications>
-          <GlobalConfigParser />
-        </Notifications>
+        <Notifications />
+        <GlobalConfigParser />
       </MantineProvider>
     </StorageEngineProvider>
   </React.StrictMode>,

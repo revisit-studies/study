@@ -803,6 +803,11 @@ export class FirebaseStorageEngine extends StorageEngine {
       }
       return {
         status: 'SUCCESS',
+        notification: {
+          message: 'Successfully deleted snapshot or live data.',
+          title: 'Success!',
+          color: 'green',
+        },
       };
     } catch (error) {
       return {

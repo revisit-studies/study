@@ -60,6 +60,8 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
           title: response.notification.title,
           color: response.notification.color ? response.notification.color : undefined,
           message: response.notification.message,
+          position: 'top-center',
+          style: response.notification.color ? { backgroundColor: response.notification.color } : {},
         });
       }
     } else {
