@@ -771,18 +771,35 @@ export class FirebaseStorageEngine extends StorageEngine {
     };
   }
 
-  async removeSnapshotOrLive(targetName: string, includeMetadata: boolean) {
-    const targetNameWithPrefix = targetName.startsWith(this.collectionPrefix)
-      ? targetName
-      : `${this.collectionPrefix}${targetName}`;
+  async removeSnapshotOrLive(
+    targetName: string,
+    includeMetadata: boolean,
+  ): Promise<FirebaseActionResponse> {
+    try {
+      const targetNameWithPrefix = targetName.startsWith(this.collectionPrefix)
+        ? targetName
+        : `${this.collectionPrefix}${targetName}`;
 
-    await this._deleteDirectory(`${targetNameWithPrefix}/configs`);
-    await this._deleteDirectory(`${targetNameWithPrefix}/participants`);
-    await this._deleteDirectory(targetNameWithPrefix);
-    await this._deleteCollection(targetNameWithPrefix);
+      await this._deleteDirectory(`${targetNameWithPrefix}/configs`);
+      await this._deleteDirectory(`${targetNameWithPrefix}/participants`);
+      await this._deleteDirectory(targetNameWithPrefix);
+      await this._deleteCollection(targetNameWithPrefix);
 
-    if (includeMetadata) {
-      await this._removeNameFromMetadata(targetNameWithPrefix);
+      if (includeMetadata) {
+        await this._removeNameFromMetadata(targetNameWithPrefix);
+      }
+      return {
+        status: 'SUCCESS',
+      };
+    } catch (error) {
+      return {
+        status: 'FAILED',
+        error: {
+          title: 'Failed to delete live data or snapshot',
+          message:
+            'There was an unspecified error when trying to remove a snapshot or live data.',
+        },
+      };
     }
   }
 

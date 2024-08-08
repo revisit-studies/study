@@ -85,19 +85,15 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
   };
 
   const handleDeleteSnapshot = async () => {
-    setLoading(true);
     setDeleteValue('');
     setModalDeleteSnapshotOpened(false);
-    await storageEngine.removeSnapshotOrLive(currentSnapshot, true);
-    await finishSnapshotAction();
+    await snapshotAction(storageEngine.removeSnapshotOrLive, currentSnapshot, true);
   };
 
   const handleDeleteLive = async () => {
-    setLoading(true);
     setDeleteValue('');
     setModalDeleteLiveOpened(false);
-    await storageEngine.removeSnapshotOrLive(studyId, true);
-    await finishSnapshotAction();
+    await snapshotAction(storageEngine.removeSnapshotOrLive, studyId, true);
   };
 
   const openCreateSnapshotModal = () => openConfirmModal({
