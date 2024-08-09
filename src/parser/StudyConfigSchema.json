@@ -118,6 +118,10 @@
             "description": "The style of the image. This is an object with css properties as keys and css values as values.",
             "type": "object"
           },
+          "trainingAttempts": {
+            "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and will not show the correct answer ot the user.",
+            "type": "number"
+          },
           "type": {
             "enum": [
               "markdown",
@@ -490,6 +494,10 @@
           "description": "The style of the image. This is an object with css properties as keys and css values as values.",
           "type": "object"
         },
+        "trainingAttempts": {
+          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and will not show the correct answer ot the user.",
+          "type": "number"
+        },
         "type": {
           "const": "image",
           "type": "string"
@@ -685,6 +693,10 @@
           },
           "description": "The style of the image. This is an object with css properties as keys and css values as values.",
           "type": "object"
+        },
+        "trainingAttempts": {
+          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and will not show the correct answer ot the user.",
+          "type": "number"
         },
         "type": {
           "enum": [
@@ -889,6 +901,10 @@
           },
           "type": "array"
         },
+        "trainingAttempts": {
+          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and will not show the correct answer ot the user.",
+          "type": "number"
+        },
         "type": {
           "const": "markdown",
           "type": "string"
@@ -1030,6 +1046,10 @@
             "$ref": "#/definitions/Response"
           },
           "type": "array"
+        },
+        "trainingAttempts": {
+          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and will not show the correct answer ot the user.",
+          "type": "number"
         },
         "type": {
           "const": "questionnaire",
@@ -1193,6 +1213,10 @@
             "$ref": "#/definitions/Response"
           },
           "type": "array"
+        },
+        "trainingAttempts": {
+          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and will not show the correct answer ot the user.",
+          "type": "number"
         },
         "type": {
           "const": "react-component",
@@ -1652,6 +1676,10 @@
             "$ref": "#/definitions/Response"
           },
           "type": "array"
+        },
+        "trainingAttempts": {
+          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and will not show the correct answer ot the user.",
+          "type": "number"
         },
         "type": {
           "const": "website",
