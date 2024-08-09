@@ -134,10 +134,9 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
     return null;
   };
 
-  const fetchParticipants = async (snapshotName: string): Promise<ParticipantData[]> => {
+  const fetchParticipants = async (snapshotName: string) => {
     const strippedFilename = snapshotName.slice(snapshotName.indexOf('-') + 1);
-    const participants = await storageEngine.getAllParticipantsDataByStudy(strippedFilename);
-    return participants;
+    return await storageEngine.getAllParticipantsDataByStudy(strippedFilename);
   };
   return (
     <>
