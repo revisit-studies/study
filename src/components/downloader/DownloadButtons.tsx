@@ -1,5 +1,5 @@
 import {
-  Popover, Button, Text, Group,
+  Button, Group, Tooltip,
 } from '@mantine/core';
 import { IconDatabaseExport, IconTableExport } from '@tabler/icons-react';
 import { useState } from 'react';
@@ -12,8 +12,8 @@ type ParticipantDataFetcher = ParticipantData[] | (() => Promise<ParticipantData
 export function DownloadButtons({
   allParticipants, studyId, gap, fileName,
 }: { allParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string }) {
-  const [jsonOpened, { close: closeJson, open: openJson }] = useDisclosure(false);
-  const [csvOpened, { close: closeCsv, open: openCsv }] = useDisclosure(false);
+  // const [jsonOpened, { close: closeJson, open: openJson }] = useDisclosure(false);
+  // const [csvOpened, { close: closeCsv, open: openCsv }] = useDisclosure(false);
   const [openDownload, { open, close }] = useDisclosure(false);
   const [participants, setParticipants] = useState<ParticipantData[]>([]);
 
@@ -37,40 +37,44 @@ export function DownloadButtons({
   return (
     <>
       <Group style={{ gap }}>
-        <Popover opened={jsonOpened}>
-          <Popover.Target>
-            <Button
-              variant="light"
-              disabled={allParticipants.length === 0 && typeof allParticipants !== 'function'}
-              onClick={handleDownloadJSON}
-              onMouseEnter={openJson}
-              onMouseLeave={closeJson}
-              px={4}
-            >
-              <IconDatabaseExport />
-            </Button>
-          </Popover.Target>
+        {/* <Popover opened={jsonOpened}>
+          <Popover.Target> */}
+        <Tooltip label="Download all participants data as JSON">
+          <Button
+            variant="light"
+            disabled={allParticipants.length === 0 && typeof allParticipants !== 'function'}
+            onClick={handleDownloadJSON}
+            // onMouseEnter={openJson}
+            // onMouseLeave={closeJson}
+            px={4}
+          >
+            <IconDatabaseExport />
+          </Button>
+        </Tooltip>
+        {/* </Popover.Target>
           <Popover.Dropdown>
             <Text>Download all participants data as JSON</Text>
           </Popover.Dropdown>
-        </Popover>
-        <Popover opened={csvOpened}>
-          <Popover.Target>
-            <Button
-              variant="light"
-              disabled={allParticipants.length === 0 && typeof allParticipants !== 'function'}
-              onClick={handleOpenTidy}
-              onMouseEnter={openCsv}
-              onMouseLeave={closeCsv}
-              px={4}
-            >
-              <IconTableExport />
-            </Button>
-          </Popover.Target>
+        </Popover> */}
+        {/* <Popover opened={csvOpened}>
+          <Popover.Target> */}
+        <Tooltip label="Download all participants data as a tidy CSV">
+          <Button
+            variant="light"
+            disabled={allParticipants.length === 0 && typeof allParticipants !== 'function'}
+            onClick={handleOpenTidy}
+            // onMouseEnter={openCsv}
+            // onMouseLeave={closeCsv}
+            px={4}
+          >
+            <IconTableExport />
+          </Button>
+        </Tooltip>
+        {/* </Popover.Target>
           <Popover.Dropdown>
             <Text>Download all participants data as a tidy CSV</Text>
           </Popover.Dropdown>
-        </Popover>
+        </Popover> */}
       </Group>
 
       {openDownload && participants.length > 0 && (
