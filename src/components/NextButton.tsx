@@ -6,24 +6,21 @@ type Props = {
   label?: string;
   disabled?: boolean;
   onClick?: null | (() => void | Promise<void>);
-  setCheckClicked: (arg: boolean) => void | null
 };
 
 export function NextButton({
   label = 'Next',
   disabled = false,
-  setCheckClicked = () => {},
   onClick,
 }: Props) {
   const { isNextDisabled, goToNextStep } = useNextStep();
 
   const handleClick = useCallback(() => {
-    setCheckClicked(false);
     if (onClick) {
       onClick();
     }
     goToNextStep();
-  }, [goToNextStep, onClick, setCheckClicked]);
+  }, [goToNextStep, onClick]);
 
   return (
     <Button

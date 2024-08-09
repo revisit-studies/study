@@ -282,6 +282,7 @@
                 ]
             },
             "provideFeedback": true,
+            "allowFailedTraining": false,
             "correctAnswer": [
                 {
                     "id": "cm-response",
