@@ -24,9 +24,6 @@ export async function signInWithGoogle(storageEngine: StorageEngine | undefined,
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       showNotification({ title: 'Error', message: error.message, color: 'red' });
-      // if (setErrorMessage) {
-      //   setErrorMessage(error.message);
-      // }
     } finally {
       setLoading(false);
     }
@@ -42,7 +39,6 @@ export function Login() {
 
   useEffect(() => {
     if (!user.determiningStatus && !user.isAdmin && user.adminVerification) {
-      // setErrorMessage('You are not authorized to use this application.');
       showNotification({ title: 'Unauthorized', message: 'You are not authorized to use this application.', color: 'red' });
     }
   }, [user.adminVerification]);
