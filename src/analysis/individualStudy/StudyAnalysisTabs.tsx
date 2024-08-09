@@ -60,7 +60,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
       <AppHeader studyIds={globalConfig.configsList} />
 
       <AppShell.Main>
-        <Container fluid style={{ height: '100%' }}>
+        <Container fluid style={{ height: '100%', position: 'relative' }}>
           <LoadingOverlay visible={loading} />
 
           <Flex direction="row" align="center">

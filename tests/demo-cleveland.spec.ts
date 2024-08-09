@@ -54,7 +54,7 @@ test('test', async ({ page }) => {
     await page.getByRole('button', { name: 'Check Answer' }).click();
 
     // Check that the correct answer is shown
-    const correctAnswer = await page.getByText('The correct answer is: 66');
+    const correctAnswer = await page.getByText('You have answered the question correctly.');
     await expect(correctAnswer).toBeVisible();
 
     // Click on the next button

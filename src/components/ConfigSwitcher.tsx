@@ -1,8 +1,8 @@
 import {
-  Anchor, AppShell, Card, Container, Flex, Image, Text, UnstyledButton,
+  ActionIcon, Anchor, AppShell, Card, Container, Flex, Image, Text, UnstyledButton,
 } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
-import { IconAlertTriangle } from '@tabler/icons-react';
+import { IconAlertTriangle, IconExternalLink } from '@tabler/icons-react';
 import { GlobalConfig, ParsedStudyConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { PREFIX } from '../utils/Prefix';
@@ -42,7 +42,8 @@ function ConfigSwitcher({
           return (
             <UnstyledButton
               key={configName}
-              onClick={() => {
+              onClick={(event) => {
+                event.preventDefault();
                 navigate(`/${url}`);
               }}
               my="sm"
@@ -62,7 +63,23 @@ function ConfigSwitcher({
                   )
                   : (
                     <>
-                      <Text fw="bold">{config.studyMetadata.title}</Text>
+                      <Flex direction="row" justify="space-between">
+                        <Text fw="bold">
+                          {config.studyMetadata.title}
+                        </Text>
+                        <ActionIcon
+                          onClick={(event) => {
+                            event.stopPropagation();
+                          }}
+                          variant="transparent"
+                          size={20}
+                          style={{ float: 'right' }}
+                          component="a"
+                          href={`${PREFIX}${url}`}
+                        >
+                          <IconExternalLink style={{ paddingTop: 4 }} />
+                        </ActionIcon>
+                      </Flex>
                       <Text c="dimmed">
                         <Text span fw={500}>Authors: </Text>
                         {config.studyMetadata.authors}

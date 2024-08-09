@@ -1,16 +1,17 @@
 import {
-  Box, Button, Card, Center, Text, Title, Container, Flex, Group, Popover,
+  Box, Button, Card, Center, Text, Title, Container, Flex, Group, Tooltip,
 } from '@mantine/core';
 import React, { useMemo, useState } from 'react';
 import { IconChartHistogram } from '@tabler/icons-react';
 import { DatePickerInput } from '@mantine/dates';
 import { VegaLite } from 'react-vega';
-import { useDisclosure, useResizeObserver } from '@mantine/hooks';
+import { useResizeObserver } from '@mantine/hooks';
 import { useNavigate } from 'react-router-dom';
 import { ParticipantData } from '../../storage/types';
 import { StoredAnswer } from '../../parser/types';
 import { DownloadButtons } from '../../components/downloader/DownloadButtons';
 import { ParticipantStatusBadges } from '../interface/ParticipantStatusBadges';
+import { PREFIX } from '../../utils/Prefix';
 
 function isWithinRange(answers: Record<string, StoredAnswer>, rangeTime: [Date | null, Date | null]) {
   const timeStamps = Object.values(answers).map((ans) => [ans.startTime, ans.endTime]).flat();
@@ -75,8 +76,6 @@ export function StudyCard({ studyId, allParticipants }: { studyId: string; allPa
     data: { values: completedStatsData },
   }), [dms.width, rangeTime, completedStatsData]);
 
-  const [checkOpened, { close: closeCheck, open: openCheck }] = useDisclosure(false);
-
   return (
     <Container>
       <Card ref={ref} padding="lg" shadow="md" withBorder>
@@ -87,24 +86,16 @@ export function StudyCard({ studyId, allParticipants }: { studyId: string; allPa
           </Flex>
           <Group>
             <DownloadButtons allParticipants={allParticipants} studyId={studyId} />
-
-            <Popover opened={checkOpened}>
-              <Popover.Target>
-                <Button
-                  onClick={(event) => { if (!event.ctrlKey && !event.metaKey) { event.preventDefault(); navigate(`/analysis/stats/${studyId}`); } }}
-                  onMouseEnter={openCheck}
-                  onMouseLeave={closeCheck}
-                  px={4}
-                  component="a"
-                  href={`/analysis/stats/${studyId}`}
-                >
-                  <IconChartHistogram />
-                </Button>
-              </Popover.Target>
-              <Popover.Dropdown>
-                <Text>Analyze and manage study data</Text>
-              </Popover.Dropdown>
-            </Popover>
+            <Tooltip label="Analyze and manage study data">
+              <Button
+                onClick={(event) => { if (!event.ctrlKey && !event.metaKey) { event.preventDefault(); navigate(`/analysis/stats/${studyId}`); } }}
+                px={4}
+                component="a"
+                href={`${PREFIX}analysis/stats/${studyId}`}
+              >
+                <IconChartHistogram />
+              </Button>
+            </Tooltip>
           </Group>
         </Flex>
 

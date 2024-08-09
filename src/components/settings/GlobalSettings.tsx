@@ -20,8 +20,9 @@ export function GlobalSettings() {
   const [modalAddOpened, setModalAddOpened] = useState<boolean>(false);
   const [modalRemoveOpened, setModalRemoveOpened] = useState<boolean>(false);
   const [modalEnableAuthOpened, setModalEnableAuthOpened] = useState<boolean>(false);
+  const [modalEnableAuthErrorOpened, setModalEnableAuthErrorOpened] = useState<boolean>(false);
   const [userToRemove, setUserToRemove] = useState<string>('');
-  const [enableAuthUser, setEnableAuthUser] = useState<StoredUser|null>(null);
+  const [enableAuthUser, setEnableAuthUser] = useState<StoredUser | null>(null);
 
   const form = useForm({
     initialValues: {
@@ -40,7 +41,7 @@ export function GlobalSettings() {
         setAuthEnabled(authInfo?.isEnabled);
         const adminUsers = await storageEngine?.getUserManagementData('adminUsers');
         if (adminUsers && adminUsers.adminUsersList) {
-          setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser:StoredUser) => storedUser.email));
+          setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email));
         }
       } else {
         setAuthEnabled(false);
@@ -59,13 +60,15 @@ export function GlobalSettings() {
           email: newUser.email,
           uid: newUser.uid,
         });
+        setModalEnableAuthOpened(true);
+      } else {
+        setModalEnableAuthErrorOpened(true);
       }
-      setModalEnableAuthOpened(true);
     }
     setLoading(false);
   };
 
-  const confirmEnableAuth = async (rootUser: StoredUser| null) => {
+  const confirmEnableAuth = async (rootUser: StoredUser | null) => {
     setLoading(true);
     if (storageEngine instanceof FirebaseStorageEngine) {
       if (rootUser) {
@@ -85,7 +88,7 @@ export function GlobalSettings() {
     if (storageEngine instanceof FirebaseStorageEngine) {
       await storageEngine.addAdminUser({ email: form.values.email, uid: null });
       const adminUsers = await storageEngine.getUserManagementData('adminUsers');
-      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser:StoredUser) => storedUser.email));
+      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email));
     }
     setLoading(false);
     setModalAddOpened(false);
@@ -94,7 +97,7 @@ export function GlobalSettings() {
     });
   };
 
-  const handleRemoveUser = (inputUser:string) => {
+  const handleRemoveUser = (inputUser: string) => {
     setModalRemoveOpened(true);
     setUserToRemove(inputUser);
   };
@@ -104,7 +107,7 @@ export function GlobalSettings() {
     if (storageEngine instanceof FirebaseStorageEngine) {
       await storageEngine.removeAdminUser(userToRemove);
       const adminUsers = await storageEngine.getUserManagementData('adminUsers');
-      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser:StoredUser) => storedUser.email));
+      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email));
     }
     setModalRemoveOpened(false);
     setLoading(false);
@@ -136,15 +139,15 @@ export function GlobalSettings() {
                 </Tooltip>
               </Flex>
             )}
-          { isAuthEnabled
+          {isAuthEnabled
             ? (
               <Flex mt={40} direction="column">
                 <Flex style={{ borderBottom: '1px solid #dedede' }} direction="row" justify="space-between" mb={15} pb={15}>
                   <Title order={6}>Enabled Users</Title>
                   <IconUserPlus style={{ cursor: 'pointer' }} onClick={() => setModalAddOpened(true)} />
                 </Flex>
-                { authenticatedUsers.length > 0 ? authenticatedUsers.map(
-                  (storedUser:string) => (
+                {authenticatedUsers.length > 0 ? authenticatedUsers.map(
+                  (storedUser: string) => (
                     <Flex key={storedUser} justify="space-between" mb={10}>
                       <Text>{storedUser}</Text>
                       {storedUser === user.user?.email ? <Text color="blue" size="xs">You</Text>
@@ -188,7 +191,7 @@ export function GlobalSettings() {
             {userToRemove}
             ?
           </Text>
-)}
+        )}
       >
         <Text mt={40}>
           Are you sure you want to remove
@@ -209,12 +212,12 @@ export function GlobalSettings() {
       <Modal
         opened={modalEnableAuthOpened}
         size="md"
-        onClose={() => setModalRemoveOpened(false)}
+        onClose={() => setModalEnableAuthOpened(false)}
         title={(
           <Text fw={700}>
             Enable Authentication?
           </Text>
-)}
+        )}
       >
         <Text mt={40}>
           User
@@ -231,6 +234,30 @@ export function GlobalSettings() {
             Yes, I&apos;m sure.
           </Button>
 
+        </Flex>
+      </Modal>
+
+      <Modal
+        opened={modalEnableAuthErrorOpened}
+        size="md"
+        onClose={() => setModalEnableAuthErrorOpened(false)}
+        title={(
+          <Text fw={700}>
+            An Error Occurred.
+          </Text>
+        )}
+      >
+        <Text mt={40}>
+          An error has occurred when trying to enable authentication. Please consult the
+          {' '}
+          <a href="https://revisit.dev/docs/data-and-deployment/authentication-authorization/adding-removing-ui/" target="_blank" rel="noreferrer">documentation</a>
+          {' '}
+          for more information.
+        </Text>
+        <Flex mt={40} justify="right">
+          <Button mr={5} onClick={() => setModalEnableAuthErrorOpened(false)}>
+            Okay
+          </Button>
         </Flex>
       </Modal>
       <LoadingOverlay visible={loading} />
