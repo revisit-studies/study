@@ -10,7 +10,6 @@ import { DownloadButtons } from '../../../components/downloader/DownloadButtons'
 import {
   FirebaseStorageEngine, FirebaseActionResponse, SnapshotNameItem,
 } from '../../../storage/engines/FirebaseStorageEngine';
-import { ParticipantData } from '../../../storage/types';
 
 export function DataManagementAccordionItem({ studyId, refresh }: { studyId: string, refresh: () => Promise<void> }) {
   const [modalArchiveOpened, setModalArchiveOpened] = useState<boolean>(false);
