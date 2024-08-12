@@ -460,24 +460,7 @@
                     "location": "aboveStimulus",
                     "type": "dropdown",
                     "placeholder": "Enter your preference",
-                    "options": [
-                        {
-                            "label": "Bar",
-                            "value": "Bar"
-                        },
-                        {
-                            "label": "Stacked Bar",
-                            "value": "Stacked Bar"
-                        },
-                        {
-                            "label": "Bubble",
-                            "value": "Bubble"
-                        },
-                        {
-                            "label": "Pie",
-                            "value": "Pike"
-                        }
-                    ]
+                    "options": ["Bar", "Bubble", "Pie", "Stacked Bar"]
                 },
                 {
                     "id": "q2",

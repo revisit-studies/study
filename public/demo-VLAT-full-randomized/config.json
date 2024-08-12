@@ -109,28 +109,7 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "options": [
-                        {
-                            "label": "$57.36",
-                            "value": "$57.36"
-                        },
-                        {
-                            "label": "$47.82",
-                            "value": "$47.82"
-                        },
-                        {
-                            "label": "$50.24",
-                            "value": "$50.24"
-                        },
-                        {
-                            "label": "$39.72",
-                            "value": "$39.72"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["57.36", "47.82", "50.24", "39.72", "Skip"]
                 }
             ]
         },
@@ -159,28 +138,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "March",
-                            "value": "March"
-                        },
-                        {
-                            "label": "May",
-                            "value": "May"
-                        },
-                        {
-                            "label": "July",
-                            "value": "July"
-                        },
-                        {
-                            "label": "December",
-                            "value": "December"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["March", "May", "July", "December", "Skip"]
                 }
             ]
         },
@@ -209,28 +167,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "$35 - $65",
-                            "value": "$35 - $65"
-                        },
-                        {
-                            "label": "$48.36 - $60.95",
-                            "value": "$48.36 - $60.95"
-                        },
-                        {
-                            "label": "$37.04 - $48.36",
-                            "value": "$37.04 - $48.36"
-                        },
-                        {
-                            "label": "$37.04 - $60.95",
-                            "value": "$37.04 - $60.95"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["$35 - $65", "$48.36 - $60.95", "$37.04 - $48.36", "$37.04 - $60.95", "Skip"]
                 }
             ]
         },
@@ -259,24 +196,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "Rising",
-                            "value": "Rising"
-                        },
-                        {
-                            "label": "Falling",
-                            "value": "Falling"
-                        },
-                        {
-                            "label": "Staying",
-                            "value": "Staying"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["Rising", "Falling", "Staying", "Skip"]
                 }
             ]
         },
@@ -305,28 +225,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "$4",
-                            "value": "$4"
-                        },
-                        {
-                            "label": "$15",
-                            "value": "$15"
-                        },
-                        {
-                            "label": "$17",
-                            "value": "$17"
-                        },
-                        {
-                            "label": "$45",
-                            "value": "$45"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["$4", "$15", "$17", "$45", "Skip"]
                 }
             ]
         },
@@ -355,28 +254,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "10 Mbps",
-                            "value": "10 Mbps"
-                        },
-                        {
-                            "label": "14 Mbps",
-                            "value": "14 Mbps"
-                        },
-                        {
-                            "label": "15 Mbps",
-                            "value": "15 Mbps"
-                        },
-                        {
-                            "label": "16 Mbps",
-                            "value": "16 Mbps"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["10 Mbps", "14 Mbps", "15 Mbps", "16 Mbps", "Skip"]
                 }
             ]
         },
@@ -405,27 +283,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "China",
-                            "value": "China"
-                        },
-                        {
-                            "label": "Hong Kong",
-                            "value": "Hong Kong"
-                        },
-                        {
-                            "label": "South Korea",
-                            "value": "South Korea"
-                        },
-                        {
-                            "label": "Vietnam",
-                            "value": "Vietnam"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
+                    "options": ["China", "Hong Kong", "South Korea", "Vietnam", "Skip"]
                     ]
                 }
             ]
@@ -455,28 +313,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "0 - 22 Mbps",
-                            "value": "0 - 22 Mbps"
-                        },
-                        {
-                            "label": " 2 - 20.5 Mbps",
-                            "value": " 2 - 20.5 Mbps"
-                        },
-                        {
-                            "label": "3 - 20 Mbps",
-                            "value": "3 - 20 Mbps"
-                        },
-                        {
-                            "label": "3.4 - 7.8 Mbps",
-                            "value": "3.4 - 7.8 Mbps"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["0 - 22 Mbps", "2 - 20.5 Mbps", "3 - 20 Mbps", "3.4 - 7.8 Mbps", "Skip"]
                 }
             ]
         },
@@ -505,28 +342,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "5 Countries",
-                            "value": "5 Countries"
-                        },
-                        {
-                            "label": " 6 Countries",
-                            "value": " 6 Countries"
-                        },
-                        {
-                            "label": "7 Countries",
-                            "value": "7 Countries"
-                        },
-                        {
-                            "label": "8 Countries",
-                            "value": "8 Countries"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["5 Countries", "6 Countries", "7 Countries", "8 Countries", "Skip"]
                 }
             ]
         },
@@ -555,28 +371,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "$12",
-                            "value": "$12"
-                        },
-                        {
-                            "label": " $16.7",
-                            "value": " $16.7"
-                        },
-                        {
-                            "label": "$23.4",
-                            "value": "$23.4"
-                        },
-                        {
-                            "label": "$35.4",
-                            "value": "$35.4"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["$12", " $16.7", "$23.4", "$35.4", "Skip"]
                 }
             ]
         },
@@ -605,28 +400,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "1 to 10",
-                            "value": "1 to 10"
-                        },
-                        {
-                            "label": "2 to 10",
-                            "value": "2 to 10"
-                        },
-                        {
-                            "label": "4 to 10",
-                            "value": "4 to 10"
-                        },
-                        {
-                            "label": "6 to 10",
-                            "value": "6 to 10"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["1 to 10", "2 to 10", "4 to 10", "6 to 10", "Skip"]
                 }
             ]
         },
@@ -655,28 +429,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "New York City",
-                            "value": "New York City"
-                        },
-                        {
-                            "label": "Las Vegas",
-                            "value": "Las Vegas"
-                        },
-                        {
-                            "label": "Atlanta",
-                            "value": "Atlanta"
-                        },
-                        {
-                            "label": "Washington D.C.",
-                            "value": "Washington D.C."
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["New York City", "Las Vegas", "Atlanta", "Washington D.C.", "Skip"]
                 }
             ]
         },
@@ -705,20 +458,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "True",
-                            "value": "True"
-                        },
-                        {
-                            "label": "False",
-                            "value": "False"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["True", "False", "Skip"]
                 }
             ]
         },
@@ -747,20 +487,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "True",
-                            "value": "True"
-                        },
-                        {
-                            "label": "False",
-                            "value": "False"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["True", "False", "Skip"]
                 }
             ]
         },
@@ -789,28 +516,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "38%",
-                            "value": "38%"
-                        },
-                        {
-                            "label": "47%",
-                            "value": "47%"
-                        },
-                        {
-                            "label": "53%",
-                            "value": "53%"
-                        },
-                        {
-                            "label": "62%",
-                            "value": "62%"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["38%", "47%", "53%", "62%", "Skip"]
                 }
             ]
         },
@@ -839,28 +545,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "High School Graduate or Less",
-                            "value": "High School Graduate or Less"
-                        },
-                        {
-                            "label": "Some College Degree",
-                            "value": "Some College Degree"
-                        },
-                        {
-                            "label": "College Graduate",
-                            "value": "College Graduate"
-                        },
-                        {
-                            "label": "Postgraduate study",
-                            "value": "Postgraduate study"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["High School Graduate or Less", "Some College Degree", "College Graduate", "Postgraduate study", "Skip"]
                 }
             ]
         },
@@ -889,20 +574,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "True",
-                            "value": "True"
-                        },
-                        {
-                            "label": "False",
-                            "value": "False"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["True", "False", "Skip"]
                 }
             ]
         },
@@ -931,28 +603,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "15%",
-                            "value": "15%"
-                        },
-                        {
-                            "label": "25%",
-                            "value": "25%"
-                        },
-                        {
-                            "label": "33%",
-                            "value": "33%"
-                        },
-                        {
-                            "label": "50%",
-                            "value": "50%"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["15%", "25%", "33%", "50%", "Skip"]
                 }
             ]
         },
@@ -981,28 +632,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "Apple",
-                            "value": "Apple"
-                        },
-                        {
-                            "label": "Xiaomi",
-                            "value": "Xiaomi"
-                        },
-                        {
-                            "label": "Lenovo",
-                            "value": "Lenovo"
-                        },
-                        {
-                            "label": "Others",
-                            "value": "Others"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["Apple", "Xiaomi", "Lenovo", "Others", "Skip"]
                 }
             ]
         },
@@ -1031,20 +661,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "True",
-                            "value": "True"
-                        },
-                        {
-                            "label": "False",
-                            "value": "False"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["True", "False", "Skip"]
                 }
             ]
         },
@@ -1073,28 +690,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "145",
-                            "value": "145"
-                        },
-                        {
-                            "label": "153",
-                            "value": "153"
-                        },
-                        {
-                            "label": "200",
-                            "value": "200"
-                        },
-                        {
-                            "label": "240",
-                            "value": "240"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["145", "153", "200", "240", "Skip"]
                 }
             ]
         },
@@ -1123,28 +719,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "4.2-4.4",
-                            "value": "4.2-4.4"
-                        },
-                        {
-                            "label": "4.4-4.6",
-                            "value": "4.4-4.6"
-                        },
-                        {
-                            "label": "4.6-4.8",
-                            "value": "4.6-4.8"
-                        },
-                        {
-                            "label": "4.8-5.0",
-                            "value": "4.8-5.0"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["4.2-4.4", "4.4-4.6", "4.6-4.8", "4.8-5.0", "Skip"]
                 }
             ]
         },
@@ -1173,20 +748,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "True",
-                            "value": "True"
-                        },
-                        {
-                            "label": "False",
-                            "value": "False"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["True", "False", "Skip"]
                 }
             ]
         },
@@ -1215,28 +777,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "53.9kg",
-                            "value": "53.9kg"
-                        },
-                        {
-                            "label": "67.7kg",
-                            "value": "67.7kg"
-                        },
-                        {
-                            "label": "70.5kg",
-                            "value": "70.5kg"
-                        },
-                        {
-                            "label": "82.7kg",
-                            "value": "82.7kg"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["53.9kg", "67.7kg", "70.5kg", "82.7kg", "Skip"]
                 }
             ]
         },
@@ -1265,28 +806,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "175.3cm",
-                            "value": "175.3cm"
-                        },
-                        {
-                            "label": "192cm",
-                            "value": "192cm"
-                        },
-                        {
-                            "label": "197.1cm",
-                            "value": "197.1cm"
-                        },
-                        {
-                            "label": "200cm",
-                            "value": "200cm"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["175.3cm", "192cm", "197.1cm", "200cm", "Skip"]
                 }
             ]
         },
@@ -1315,28 +835,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "40 - 130kg",
-                            "value": "40 - 130kg"
-                        },
-                        {
-                            "label": "62.3 - 90.9kg",
-                            "value": "62.3 - 90.9kg"
-                        },
-                        {
-                            "label": "53.9 - 102.3kg",
-                            "value": "53.9 - 102.3kg"
-                        },
-                        {
-                            "label": "53.9 - 123.6kg",
-                            "value": "53.9 - 123.6kg"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["40 - 130kg", "62.3 - 90.9kg", "53.9 - 102.3kg", "53.9 - 123.6kg", "Skip"]
                 }
             ]
         },
@@ -1365,28 +864,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "167.4cm",
-                            "value": "167.4cm"
-                        },
-                        {
-                            "label": "175.3cm",
-                            "value": "175.3cm"
-                        },
-                        {
-                            "label": "193cm",
-                            "value": "193cm"
-                        },
-                        {
-                            "label": "197.1cm",
-                            "value": "197.1cm"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["167.4cm", "175.3cm", "193cm", "197.1cm", "Skip"]
                 }
             ]
         },
@@ -1415,20 +893,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "True",
-                            "value": "True"
-                        },
-                        {
-                            "label": "False",
-                            "value": "False"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["True", "False", "Skip"]
                 }
             ]
         },
@@ -1457,20 +922,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "True",
-                            "value": "True"
-                        },
-                        {
-                            "label": "False",
-                            "value": "False"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["True", "False", "Skip"]
                 }
             ]
         },
@@ -1499,20 +951,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "True",
-                            "value": "True"
-                        },
-                        {
-                            "label": "False",
-                            "value": "False"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["True", "False", "Skip"]
                 }
             ]
         },
@@ -1541,28 +980,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "$4.9",
-                            "value": "$4.9"
-                        },
-                        {
-                            "label": "$5.0",
-                            "value": "$5.0"
-                        },
-                        {
-                            "label": "$5.1",
-                            "value": "$5.1"
-                        },
-                        {
-                            "label": "$5.2",
-                            "value": "$5.2"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["$4.9", "$5.0", "$5.1", "$5.2", "Skip"]
                 }
             ]
         },

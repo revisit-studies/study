@@ -294,16 +294,7 @@ export interface LikertResponse extends BaseResponse {
   "location": "aboveStimulus",
   "type": "dropdown",
   "placeholder": "Please choose your favorite color",
-  "options": [
-    {
-      "label": "Red",
-      "value": "red"
-    },
-    {
-      "label": "Blue",
-      "value": "blue"
-    }
-  ]
+  "options": ["Red", "Blue"]
 }
   ```
  *
@@ -365,16 +356,7 @@ export interface SliderResponse extends BaseResponse {
   "required": true,
   "location": "aboveStimulus",
   "type": "radio",
-  "options": [
-    {
-      "label": "Option 1",
-      "value": "opt-1"
-    },
-    {
-      "label": "Option 2",
-      "value": "opt-2"
-    }
-  ]
+  "options": ["Option 1", "Option 2"]
 }
 ```
  *
@@ -400,20 +382,7 @@ export interface RadioResponse extends BaseResponse {
   "required": false,
   "location": "aboveStimulus",
   "type": "checkbox",
-  "options": [
-    {
-      "label": "Option 1",
-      "value": "opt-1"
-    },
-    {
-      "label": "Option 2",
-      "value": "opt-2"
-    },
-    {
-      "label": "Option 3",
-      "value": "opt-3"
-    }
-  ]
+  "options": ["Option 1", "Option 2", "Option 3"]
 }
 ```
  */
@@ -682,25 +651,7 @@ export interface WebsiteComponent extends BaseIndividualComponent {
       "required": true,
       "location": "belowStimulus",
       "type": "checkbox",
-      "options": [
-        {
-          "label": "Man",
-          "value": "Man"
-        },
-        {
-          "label": "Woman",
-          "value": "Woman"
-        },
-        {
-          "label": "Genderqueer",
-          "value": "Genderqueer"
-        },
-        {
-          "label": "Third-gender",
-          "value": "Third-gender"
-        },
-        ... etc.
-      ]
+      "options": ["Man", "Woman", "Genderqueer", "Third-gender", ...]
     }
   ]
 }
@@ -1115,20 +1066,7 @@ export type InheritedComponent = (Partial<IndividualComponent> & { baseComponent
     "response": [
       {
         "id": "my-image-id",
-        "options": [
-          {
-            "label": "Europe",
-            "value": "Europe"
-          },
-          {
-            "label": "Japan",
-            "value": "Japan"
-          },
-          {
-            "label": "USA",
-            "value": "USA"
-          }
-        ],
+        "options": ["Europe", "Japan", "USA"],
         "prompt": "Your Selected Answer:",
         "type": "dropdown"
       }

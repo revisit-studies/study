@@ -136,20 +136,7 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
-                    "options": [
-                        {
-                            "label": "Europe",
-                            "value": "Europe"
-                        },
-                        {
-                            "label": "Japan",
-                            "value": "Japan"
-                        },
-                        {
-                            "label": "USA",
-                            "value": "USA"
-                        }
-                    ]
+                    "options": ["Europe", "Japan", "USA"]
                 },
                 {
                     "id": "min-response",
@@ -157,20 +144,7 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
-                    "options": [
-                        {
-                            "label": "Europe",
-                            "value": "Europe"
-                        },
-                        {
-                            "label": "Japan",
-                            "value": "Japan"
-                        },
-                        {
-                            "label": "USA",
-                            "value": "USA"
-                        }
-                    ]
+                    "options": ["Europe", "Japan", "USA"]
                 }
             ],
             "correctAnswer": [
@@ -233,24 +207,7 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
-                    "options": [
-                        {
-                            "label": "drizzle",
-                            "value": "drizzle"
-                        },
-                        {
-                            "label": "fog",
-                            "value": "fog"
-                        },
-                        {
-                            "label": "rain",
-                            "value": "rain"
-                        },
-                        {
-                            "label": "sun",
-                            "value": "sun"
-                        }
-                    ]
+                    "options": ["drizzle", "fog", "rain", "sun"]
                 },
                 {
                     "id": "min-response",
@@ -258,24 +215,7 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
-                    "options": [
-                        {
-                            "label": "drizzle",
-                            "value": "drizzle"
-                        },
-                        {
-                            "label": "fog",
-                            "value": "fog"
-                        },
-                        {
-                            "label": "rain",
-                            "value": "rain"
-                        },
-                        {
-                            "label": "sun",
-                            "value": "sun"
-                        }
-                    ]
+                    "options": ["drizzle", "fog", "rain", "sun"]
                 }
             ],
             "correctAnswer": [
@@ -336,20 +276,7 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
-                    "options": [
-                        {
-                            "label": "Adelie",
-                            "value": "Adelie"
-                        },
-                        {
-                            "label": "Chinstrap",
-                            "value": "Chinstrap"
-                        },
-                        {
-                            "label": "Gentoo",
-                            "value": "Gentoo"
-                        }
-                    ]
+                    "options": ["Adelie", "Chinstrap", "Gentoo"]
                 },
                 {
                     "id": "min-response",
@@ -357,20 +284,7 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
-                    "options": [
-                        {
-                            "label": "Adelie",
-                            "value": "Adelie"
-                        },
-                        {
-                            "label": "Chinstrap",
-                            "value": "Chinstrap"
-                        },
-                        {
-                            "label": "Gentoo",
-                            "value": "Gentoo"
-                        }
-                    ]
+                    "options": ["Adelie", "Chinstrap", "Gentoo"]
                 }
             ],
             "correctAnswer": [
@@ -431,24 +345,7 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
-                    "options": [
-                        {
-                            "label": "Action",
-                            "value": "Action"
-                        },
-                        {
-                            "label": "Adventure",
-                            "value": "Adventure"
-                        },
-                        {
-                            "label": "Comedy",
-                            "value": "Comedy"
-                        },
-                        {
-                            "label": "Drama",
-                            "value": "Drama"
-                        }
-                    ]
+                    "options": ["Action", "Adventure", "Comedy", "Drama"]
                 },
                 {
                     "id": "min-response",
@@ -456,24 +353,7 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "dropdown",
-                    "options": [
-                        {
-                            "label": "Action",
-                            "value": "Action"
-                        },
-                        {
-                            "label": "Adventure",
-                            "value": "Adventure"
-                        },
-                        {
-                            "label": "Comedy",
-                            "value": "Comedy"
-                        },
-                        {
-                            "label": "Drama",
-                            "value": "Drama"
-                        }
-                    ]
+                    "options": ["Action", "Adventure", "Comedy", "Drama"]
                 }
             ],
             "correctAnswer": [

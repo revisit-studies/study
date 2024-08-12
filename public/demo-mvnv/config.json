@@ -268,16 +268,7 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "options": [
-                        {
-                            "label": "Mentions",
-                            "value": "Mentions"
-                        },
-                        {
-                            "label": "Retweets",
-                            "value": "Retweets"
-                        }
-                    ]
+                    "options": ["Mentions", "Retweets"]
                 },
                 {
                     "id": "task8-2",
@@ -385,24 +376,7 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "options": [
-                        {
-                            "label": "NA",
-                            "value": "NA"
-                        },
-                        {
-                            "label": "SA",
-                            "value": "SA"
-                        },
-                        {
-                            "label": "EU",
-                            "value": "EU"
-                        },
-                        {
-                            "label": "AS",
-                            "value": "AS"
-                        }
-                    ]
+                    "options": ["NA", "SA", "EU", "AS"]
                 }
             ]
         },
@@ -431,24 +405,7 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "options": [
-                        {
-                            "label": "NA",
-                            "value": "NA"
-                        },
-                        {
-                            "label": "SA",
-                            "value": "SA"
-                        },
-                        {
-                            "label": "EU",
-                            "value": "EU"
-                        },
-                        {
-                            "label": "AS",
-                            "value": "AS"
-                        }
-                    ]
+                    "options": ["NA", "SA", "EU", "AS"]
                 }
             ]
         },
