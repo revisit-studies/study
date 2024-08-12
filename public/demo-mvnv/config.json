@@ -47,16 +47,7 @@
                     "required": true,
                     "location": "belowStimulus",
                     "type": "radio",
-                    "options": [
-                        {
-                            "label": "Decline",
-                            "value": "no"
-                        },
-                        {
-                            "label": "Accept",
-                            "value": "yes"
-                        }
-                    ]
+                    "options": ["Decline", "Accept"]
                 }
             ]
         },
@@ -208,16 +199,7 @@
                     "type": "radio",
                     "prompt": "Select Answer Below",
                     "required": true,
-                    "options": [
-                        {
-                            "label": "European",
-                            "value": "EU"
-                        },
-                        {
-                            "label": "North American",
-                            "value": "NA"
-                        }
-                    ],
+                    "options": ["European", "North American"],
                     "location": "sidebar"
                 },
                 {

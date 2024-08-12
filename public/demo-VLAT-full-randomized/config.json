@@ -1009,28 +1009,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "April 2013",
-                            "value": "April 2013"
-                        },
-                        {
-                            "label": "September 2013",
-                            "value": "September 2013"
-                        },
-                        {
-                            "label": "June 2014",
-                            "value": "June 2014"
-                        },
-                        {
-                            "label": "December 2014",
-                            "value": "December 2014"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["April 2013", "September 2013", "June 2014", "December 2014", "Skip"]
                 }
             ]
         },
@@ -1059,28 +1038,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "$4.4 - $6.2",
-                            "value": "$4.4 - $6.2"
-                        },
-                        {
-                            "label": "$4.6 - $5.9",
-                            "value": "$4.6 - $5.9"
-                        },
-                        {
-                            "label": "$4.6 - $6.0",
-                            "value": "$4.6 - $6.0"
-                        },
-                        {
-                            "label": "$4.6 - $6.1",
-                            "value": "$4.6 - $6.1"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["$4.4 - $6.2", "$4.6 - $5.9", "$4.6 - $6.0", "$4.6 - $6.1", "Skip"]
                 }
             ]
         },
@@ -1109,24 +1067,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "Rising",
-                            "value": "Rising"
-                        },
-                        {
-                            "label": "Falling",
-                            "value": "Falling"
-                        },
-                        {
-                            "label": "Staying",
-                            "value": "Staying"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["Rising", "Falling", "Staying", "Skip"]
                 }
             ]
         },
@@ -1155,28 +1096,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "1500",
-                            "value": "1500"
-                        },
-                        {
-                            "label": "3800",
-                            "value": "3800"
-                        },
-                        {
-                            "label": "4200",
-                            "value": "4200"
-                        },
-                        {
-                            "label": "8000",
-                            "value": "8000"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["1500", "3800", "4200", "8000", "Skip"]
                 }
             ]
         },
@@ -1205,28 +1125,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "1 to 1",
-                            "value": "1 to 1"
-                        },
-                        {
-                            "label": "1 to 2",
-                            "value": "1 to 2"
-                        },
-                        {
-                            "label": "1 to 3",
-                            "value": "1 to 3"
-                        },
-                        {
-                            "label": "1 to 4",
-                            "value": "1 to 4"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["1 to 1", "1 to 2", "1 to 3", "1 to 4", "Skip"]
                 }
             ]
         },
@@ -1255,28 +1154,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "2009",
-                            "value": "2009"
-                        },
-                        {
-                            "label": "2011",
-                            "value": "2011"
-                        },
-                        {
-                            "label": "2012",
-                            "value": "2012"
-                        },
-                        {
-                            "label": "2014",
-                            "value": "2014"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["2009", "2011", "2012", "2014", "Skip"]
                 }
             ]
         },
@@ -1305,24 +1183,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "Rising",
-                            "value": "Rising"
-                        },
-                        {
-                            "label": "Falling",
-                            "value": "Falling"
-                        },
-                        {
-                            "label": "Staying",
-                            "value": "Staying"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["Rising", "Falling", "Staying", "Skip"]
                 }
             ]
         },
@@ -1351,20 +1212,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "True",
-                            "value": "True"
-                        },
-                        {
-                            "label": "False",
-                            "value": "False"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["True", "False", "Skip"]
                 }
             ]
         },
@@ -1393,20 +1241,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "True",
-                            "value": "True"
-                        },
-                        {
-                            "label": "False",
-                            "value": "False"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["True", "False", "Skip"]
                 }
             ]
         },
@@ -1435,28 +1270,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "330km",
-                            "value": "330km"
-                        },
-                        {
-                            "label": "400km",
-                            "value": "400km"
-                        },
-                        {
-                            "label": "530km",
-                            "value": "530km"
-                        },
-                        {
-                            "label": "560km",
-                            "value": "560km"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["330km", "400km", "530km", "560km", "Skip"]
                 }
             ]
         },
@@ -1485,28 +1299,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "Seoul",
-                            "value": "Seoul"
-                        },
-                        {
-                            "label": "Beijing",
-                            "value": "Beijing"
-                        },
-                        {
-                            "label": "New York City",
-                            "value": "New York City"
-                        },
-                        {
-                            "label": "Shanghai",
-                            "value": "Shanghai"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["Seoul", "Beijing", "New York City", "Shanghai", "Skip"]
                 }
             ]
         },
@@ -1535,28 +1328,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "150 - 600 km",
-                            "value": "150 - 600 km"
-                        },
-                        {
-                            "label": "240 - 380 km",
-                            "value": "240 - 380 km"
-                        },
-                        {
-                            "label": "240 - 560 km",
-                            "value": "240 - 560 km"
-                        },
-                        {
-                            "label": "180 - 560 km",
-                            "value": "180 - 560 km"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["150 - 600 km", "240 - 380 km", "240 - 560 km", "180 - 560 km", "Skip"]
                 }
             ]
         },
@@ -1585,28 +1357,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "Tokyo",
-                            "value": "Tokyo"
-                        },
-                        {
-                            "label": "New York City",
-                            "value": "New York City"
-                        },
-                        {
-                            "label": "Beijing",
-                            "value": "Beijing"
-                        },
-                        {
-                            "label": "London",
-                            "value": "London"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["Tokyo", "New York City", "Beijing", "London", "Skip"]
                 }
             ]
         },
@@ -1635,20 +1386,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "True",
-                            "value": "True"
-                        },
-                        {
-                            "label": "False",
-                            "value": "False"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["True", "False", "Skip"]
                 }
             ]
         },
@@ -1677,20 +1415,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "True",
-                            "value": "True"
-                        },
-                        {
-                            "label": "False",
-                            "value": "False"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["True", "False", "Skip"]
                 }
             ]
         },
@@ -1719,20 +1444,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "True",
-                            "value": "True"
-                        },
-                        {
-                            "label": "False",
-                            "value": "False"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["True", "False", "Skip"]
                 }
             ]
         },
@@ -1761,28 +1473,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "1.1 - 2.3%",
-                            "value": "1.1 - 2.3%"
-                        },
-                        {
-                            "label": "2.3 - 3.4%",
-                            "value": "2.3 - 3.4%"
-                        },
-                        {
-                            "label": "3.4 - 4.6%",
-                            "value": "3.4 - 4.6%"
-                        },
-                        {
-                            "label": "4.6 - 5.7%",
-                            "value": "4.6 - 5.7%"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["1.1 - 2.3%", "2.3 - 3.4%", "3.4 - 4.6%", "4.6 - 5.7%", "Skip"]
                 }
             ]
         },
@@ -1811,28 +1502,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "Alaska (AK)",
-                            "value": "Alaska (AK)"
-                        },
-                        {
-                            "label": "New Mexico (NM)",
-                            "value": "New Mexico (NM)"
-                        },
-                        {
-                            "label": "Florida (FL)",
-                            "value": "Florida (FL)"
-                        },
-                        {
-                            "label": "New York (NY)",
-                            "value": "New York (NY)"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["Alaska (AK)", "New Mexico (NM)", "Florida (FL)", "New York (NY)", "Skip"]
                 }
             ]
         },
@@ -1861,20 +1531,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "True",
-                            "value": "True"
-                        },
-                        {
-                            "label": "False",
-                            "value": "False"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["True", "False", "Skip"]
                 }
             ]
         },
@@ -1903,28 +1560,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "Facebook",
-                            "value": "Facebook"
-                        },
-                        {
-                            "label": "Amazon",
-                            "value": "Amazon"
-                        },
-                        {
-                            "label": "Bing",
-                            "value": "Bing"
-                        },
-                        {
-                            "label": "Google",
-                            "value": "Google"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["Facebook", "Amazon", "Bing", "Google", "Skip"]
                 }
             ]
         },
@@ -1953,20 +1589,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "True",
-                            "value": "True"
-                        },
-                        {
-                            "label": "False",
-                            "value": "False"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["True", "False", "Skip"]
                 }
             ]
         },
@@ -1995,20 +1618,7 @@
                     "prompt": "Your answer (do not skip more than 3 times)",
                     "required": true,
                     "location": "sidebar",
-                    "options": [
-                        {
-                            "label": "True",
-                            "value": "True"
-                        },
-                        {
-                            "label": "False",
-                            "value": "False"
-                        },
-                        {
-                            "label": "Skip",
-                            "value": "Skip"
-                        }
-                    ]
+                    "options": ["True", "False", "Skip"]
                 }
             ]
         }
