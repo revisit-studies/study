@@ -314,7 +314,7 @@ export interface DropdownResponse extends BaseResponse {
   /** The placeholder text that is displayed in the input. */
   placeholder?: string;
   /** The options that are displayed in the dropdown. */
-  options: StringOption[];
+  options: (StringOption | string)[];
 }
 
 /**
@@ -382,7 +382,7 @@ export interface SliderResponse extends BaseResponse {
 export interface RadioResponse extends BaseResponse {
   type: 'radio';
   /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields. */
-  options: StringOption[];
+  options: (StringOption | string)[];
   /** The left label of the radio group. Used in Likert scales for example */
   leftLabel?: string;
   /** The right label of the radio group. Used in Likert scales for example */
@@ -420,7 +420,7 @@ export interface RadioResponse extends BaseResponse {
 export interface CheckboxResponse extends BaseResponse {
   type: 'checkbox';
   /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields. */
-  options: StringOption[];
+  options: (StringOption | string)[];
   /** The minimum number of selections that are required. */
   minSelections?: number;
   /** The maximum number of selections that are required. */

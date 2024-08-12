@@ -39,22 +39,10 @@
                     "type": "dropdown",
                     "placeholder": "Enter your preference",
                     "options": [
-                        {
-                            "label": "Bar",
-                            "value": "Bar"
-                        },
-                        {
-                            "label": "Bubble",
-                            "value": "Bubble"
-                        },
-                        {
-                            "label": "Pie",
-                            "value": "Pie"
-                        },
-                        {
-                            "label": "Stacked Bar",
-                            "value": "Stacked Bar"
-                        }
+                        "Bar",
+                        "Bubble",
+                        "Pie",
+                        "Stacked Bar"
                     ]
                 },
                 {

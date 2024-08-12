@@ -26,6 +26,8 @@ export default function DropdownInput({
     secondaryText,
   } = response;
 
+  const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+
   return (
     <Select
       disabled={disabled}
@@ -39,11 +41,11 @@ export default function DropdownInput({
       )}
       description={secondaryText}
       placeholder={placeholder}
-      data={options}
+      data={optionsAsStringOptions}
       radius="md"
       size="md"
       {...answer}
-      error={generateErrorMessage(response, answer, options)}
+      error={generateErrorMessage(response, answer, optionsAsStringOptions)}
     />
   );
 }

@@ -169,7 +169,14 @@
         "options": {
           "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
           "items": {
-            "$ref": "#/definitions/StringOption"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "type": "array"
         },
@@ -343,7 +350,14 @@
         "options": {
           "description": "The options that are displayed in the dropdown.",
           "items": {
-            "$ref": "#/definitions/StringOption"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "type": "array"
         },
@@ -1105,7 +1119,14 @@
         "options": {
           "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
           "items": {
-            "$ref": "#/definitions/StringOption"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "type": "array"
         },

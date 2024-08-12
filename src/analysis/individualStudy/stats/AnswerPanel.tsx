@@ -41,7 +41,11 @@ export default function AnswerPanel({ data, config }: { data: Record<string, Rec
               }
             }
 
-            const categoryData:{option:string, count:number, correct:boolean}[] = (response as RadioResponse).options.map((op) => ({
+            const categoryData: { option: string, count: number, correct: boolean }[] = (response as RadioResponse).options.map((op) => (typeof op === 'string' ? {
+              option: op,
+              count: map.get(op as string) || 0,
+              correct: op === correctAnswer.find((ans) => ans.id === id)?.answer,
+            } : {
               option: op.value as string,
               count: map.get(op.value as string) || 0,
               correct: op.value === correctAnswer.find((ans) => ans.id === id)?.answer,
