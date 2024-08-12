@@ -91,10 +91,15 @@ export default function ResponseBlock({
 
     const correctAnswers = responses.every((response) => {
       const configCorrectAnswer = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
-      const suppliedAnswer = answerValidator.getInputProps(response.id, {
-        type: response.type === 'checkbox' ? 'checkbox' : 'input',
-      }).value;
-      return configCorrectAnswer === suppliedAnswer;
+      const suppliedAnswer = (answerValidator.values as Record<string, unknown>)[response.id];
+
+      return Array.isArray(suppliedAnswer)
+        ? (
+          typeof configCorrectAnswer === 'string'
+            ? (suppliedAnswer.length === 1 && configCorrectAnswer === suppliedAnswer[0])
+            : (suppliedAnswer.length === configCorrectAnswer.length && suppliedAnswer.every((answer) => configCorrectAnswer.includes(answer)))
+        )
+        : configCorrectAnswer === suppliedAnswer;
     });
 
     if (hasCorrectAnswerFeedback) {
