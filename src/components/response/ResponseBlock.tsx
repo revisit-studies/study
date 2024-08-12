@@ -79,56 +79,59 @@ export default function ResponseBlock({
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [answerValidator.values, currentComponent, currentStep, location, storeDispatch, updateResponseBlockValidation, provenanceGraph]);
-  const [alertConfig, setAlertConfig] = useState({
+  const [alertConfig, setAlertConfig] = useState(Object.fromEntries(responses.map((response) => ([response.id, {
     visible: false,
     title: 'Correct Answer',
     message: 'The correct answer is: ',
     color: 'green',
-  });
+  }]))));
+  const updateAlertConfig = (id: string, visible: boolean, title: string, message: string, color: string) => {
+    setAlertConfig((conf) => ({
+      ...conf,
+      [id]: {
+        visible,
+        title,
+        message,
+        color,
+      },
+    }));
+  };
   const checkAnswerProvideFeedback = () => {
     const newAttemptsUsed = attemptsUsed + 1;
     setAttemptsUsed(newAttemptsUsed);
 
-    const correctAnswers = responses.every((response) => {
+    const correctAnswers = Object.fromEntries(responses.map((response) => {
       const configCorrectAnswer = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
       const suppliedAnswer = (answerValidator.values as Record<string, unknown>)[response.id];
 
-      return Array.isArray(suppliedAnswer)
+      return [response.id, Array.isArray(suppliedAnswer)
         ? (
           typeof configCorrectAnswer === 'string'
             ? (suppliedAnswer.length === 1 && configCorrectAnswer === suppliedAnswer[0])
             : (suppliedAnswer.length === configCorrectAnswer.length && suppliedAnswer.every((answer) => configCorrectAnswer.includes(answer)))
         )
-        : configCorrectAnswer === suppliedAnswer;
-    });
+        : configCorrectAnswer === suppliedAnswer];
+    }));
 
     if (hasCorrectAnswerFeedback) {
-      if (correctAnswers && !alertConfig.message.includes('You\'ve failed to answer this question correctly')) {
-        setAlertConfig({
-          visible: true,
-          title: 'Correct Answer',
-          message: 'You have answered the question correctly.',
-          color: 'green',
-        });
-      } else {
-        let message = '';
-        if (newAttemptsUsed >= trainingAttempts) {
-          message = `You've failed to answer this question correctly after ${trainingAttempts} attempts. ${allowFailedTraining ? 'You can continue to the next question.' : 'Unfortunately you have not met the criteria for continuing this study.'}`;
-        } else if (trainingAttempts - newAttemptsUsed === 1) {
-          message = 'Please try again. You have 1 attempt left. Please read the help text carefully.';
+      responses.forEach((response) => {
+        if (correctAnswers[response.id] && !alertConfig[response.id]?.message.includes('You\'ve failed to answer this question correctly')) {
+          updateAlertConfig(response.id, true, 'Correct Answer', 'You have answered the question correctly.', 'green');
         } else {
-          message = `Please try again. You have ${trainingAttempts - newAttemptsUsed} attempts left.`;
+          let message = '';
+          if (newAttemptsUsed >= trainingAttempts) {
+            message = `You've failed to answer this question correctly after ${trainingAttempts} attempts. ${allowFailedTraining ? 'You can continue to the next question.' : 'Unfortunately you have not met the criteria for continuing this study.'}`;
+          } else if (trainingAttempts - newAttemptsUsed === 1) {
+            message = 'Please try again. You have 1 attempt left. Please read the help text carefully.';
+          } else {
+            message = `Please try again. You have ${trainingAttempts - newAttemptsUsed} attempts left.`;
+          }
+          updateAlertConfig(response.id, true, 'Incorrect Answer', message, 'red');
         }
-        setAlertConfig({
-          visible: true,
-          title: 'Incorrect Answer',
-          message,
-          color: 'red',
-        });
-      }
-    }
+      });
 
-    setEnableNextButton((allowFailedTraining && newAttemptsUsed >= trainingAttempts) || (correctAnswers && newAttemptsUsed <= trainingAttempts));
+      setEnableNextButton((allowFailedTraining && newAttemptsUsed >= trainingAttempts) || (Object.values(correctAnswers).every((isCorrect) => isCorrect) && newAttemptsUsed <= trainingAttempts));
+    }
   };
 
   return (
@@ -152,9 +155,9 @@ export default function ResponseBlock({
                   response={response}
                   index={index + 1}
                 />
-                {alertConfig.visible && (
-                  <Alert mb="md" title={alertConfig.title} color={alertConfig.color}>
-                    {alertConfig.message}
+                {alertConfig[response.id].visible && (
+                  <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>
+                    {alertConfig[response.id].message}
                     <br />
                     <br />
                     {attemptsUsed >= trainingAttempts && configCorrectAnswer && ` The correct answer was: ${configCorrectAnswer}.`}
