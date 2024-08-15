@@ -1,7 +1,10 @@
 /* eslint-disable no-nested-ternary */
-import { Alert, Button, Group } from '@mantine/core';
+import {
+  Alert, Anchor, Button, Group,
+} from '@mantine/core';
 
 import React, { useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   IndividualComponent,
   ResponseBlockLocation,
@@ -31,10 +34,12 @@ export default function ResponseBlock({
   style,
 }: Props) {
   const storeDispatch = useStoreDispatch();
-  const { updateResponseBlockValidation } = useStoreActions();
+  const { updateResponseBlockValidation, toggleShowHelpText } = useStoreActions();
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
   const storedAnswer = status?.answer;
+
+  const navigate = useNavigate();
 
   const configInUse = config as IndividualComponent;
 
@@ -121,8 +126,15 @@ export default function ResponseBlock({
           let message = '';
           if (newAttemptsUsed >= trainingAttempts) {
             message = `You've failed to answer this question correctly after ${trainingAttempts} attempts. ${allowFailedTraining ? 'You can continue to the next question.' : 'Unfortunately you have not met the criteria for continuing this study.'}`;
+
+            // If the user has failed the training, wait 5 seconds and redirect to a fail page
+            if (!allowFailedTraining) {
+              setTimeout(() => {
+                navigate('./__trainingFailed');
+              }, 5000);
+            }
           } else if (trainingAttempts - newAttemptsUsed === 1) {
-            message = 'Please try again. You have 1 attempt left. Please read the help text carefully.';
+            message = 'Please try again. You have 1 attempt left.';
           } else {
             message = `Please try again. You have ${trainingAttempts - newAttemptsUsed} attempts left.`;
           }
@@ -158,6 +170,16 @@ export default function ResponseBlock({
                 {alertConfig[response.id].visible && (
                   <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>
                     {alertConfig[response.id].message}
+                      {' '}
+                      {alertConfig[response.id].message.includes('Please try again') && (
+                      <>
+                        Please
+                        {' '}
+                        <Anchor style={{ fontSize: 14 }} onClick={() => storeDispatch(toggleShowHelpText())}>click here</Anchor>
+                        {' '}
+                        and read the help text carefully.
+                      </>
+                      )}
                     <br />
                     <br />
                     {attemptsUsed >= trainingAttempts && configCorrectAnswer && ` The correct answer was: ${configCorrectAnswer}.`}
