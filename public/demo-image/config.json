@@ -49,16 +49,7 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "options": [
-                        {
-                            "label": "Yes",
-                            "value": "1"
-                        },
-                        {
-                            "label": "No",
-                            "value": "2"
-                        }
-                    ]
+                    "options": ["Yes", "No"]
                 }
             ]
         },
@@ -83,16 +74,7 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "options": [
-                        {
-                            "label": "Yes",
-                            "value": "1"
-                        },
-                        {
-                            "label": "No",
-                            "value": "2"
-                        }
-                    ]
+                    "options": ["Yes", "No"]
                 }
             ]
         },
@@ -117,16 +99,7 @@
                     "required": true,
                     "location": "sidebar",
                     "type": "radio",
-                    "options": [
-                        {
-                            "label": "Yes",
-                            "value": "1"
-                        },
-                        {
-                            "label": "No",
-                            "value": "2"
-                        }
-                    ]
+                    "options": ["Yes", "No"]
                 }
             ]
         }

@@ -25,6 +25,8 @@ export default function CheckBoxInput({
     secondaryText,
   } = response;
 
+  const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+
   return (
     <Checkbox.Group
       label={(
@@ -37,11 +39,11 @@ export default function CheckBoxInput({
       )}
       description={secondaryText}
       {...answer}
-      error={generateErrorMessage(response, answer, options)}
+      error={generateErrorMessage(response, answer, optionsAsStringOptions)}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
       <Group mt="xs">
-        {options.map((option) => (
+        {optionsAsStringOptions.map((option) => (
           <Checkbox
             key={option.value}
             disabled={disabled}

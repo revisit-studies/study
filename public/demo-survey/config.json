@@ -39,22 +39,10 @@
                     "type": "dropdown",
                     "placeholder": "Enter your preference",
                     "options": [
-                        {
-                            "label": "Bar",
-                            "value": "Bar"
-                        },
-                        {
-                            "label": "Bubble",
-                            "value": "Bubble"
-                        },
-                        {
-                            "label": "Pie",
-                            "value": "Pie"
-                        },
-                        {
-                            "label": "Stacked Bar",
-                            "value": "Stacked Bar"
-                        }
+                        "Bar",
+                        "Bubble",
+                        "Pie",
+                        "Stacked Bar"
                     ]
                 },
                 {
@@ -101,20 +89,7 @@
                     "maxSelections": 2,
                     "location": "aboveStimulus",
                     "type": "checkbox",
-                    "options": [
-                        {
-                            "label": "Option 1",
-                            "value": "opt-1"
-                        },
-                        {
-                            "label": "Option 2",
-                            "value": "opt-2"
-                        },
-                        {
-                            "label": "Option 3",
-                            "value": "opt-3"
-                        }
-                    ]
+                    "options": ["Option 1", "Option 2", "Option 3"]
                 },
                 {
                     "id": "q-radio",
@@ -122,16 +97,7 @@
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "radio",
-                    "options": [
-                        {
-                            "label": "Option 1",
-                            "value": "opt-1"
-                        },
-                        {
-                            "label": "Option 2",
-                            "value": "opt-2"
-                        }
-                    ]
+                    "options": ["Option 1", "Option 2"]
                 },
                 {
                     "id": "q6",

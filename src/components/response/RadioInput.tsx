@@ -27,6 +27,8 @@ export default function RadioInput({
     secondaryText,
   } = response;
 
+  const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+
   return (
     <Radio.Group
       name={`radioInput${response.id}`}
@@ -42,12 +44,12 @@ export default function RadioInput({
       key={response.id}
       {...answer}
         // This overrides the answers error. Which..is bad?
-      error={generateErrorMessage(response, answer, options)}
+      error={generateErrorMessage(response, answer, optionsAsStringOptions)}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
       <Group mt="xs">
         {leftLabel ? <Text style={{ textAlign: 'center' }}>{leftLabel}</Text> : null}
-        {options.map((radio) => (
+        {optionsAsStringOptions.map((radio) => (
           <Radio
             disabled={disabled}
             value={radio.value}
