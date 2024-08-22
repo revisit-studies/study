@@ -125,7 +125,7 @@ export default function ResponseBlock({
         } else {
           let message = '';
           if (newAttemptsUsed >= trainingAttempts) {
-            message = `You've didn't answer this question correctly after ${trainingAttempts} attempts. ${allowFailedTraining ? 'You can continue to the next question.' : 'Unfortunately you have not met the criteria for continuing this study.'}`;
+            message = `You didn't answer this question correctly after ${trainingAttempts} attempts. ${allowFailedTraining ? 'You can continue to the next question.' : 'Unfortunately you have not met the criteria for continuing this study.'}`;
 
             // If the user has failed the training, wait 5 seconds and redirect to a fail page
             if (!allowFailedTraining) {

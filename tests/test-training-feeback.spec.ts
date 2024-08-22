@@ -51,7 +51,7 @@ test('test', async ({ page }) => {
   // Answer the training question incorrectly again
   await page.getByPlaceholder('0-100').fill('52');
   await page.getByRole('button', { name: 'Check Answer' }).click();
-  const incorrectAnswer3 = await page.getByText('You\'ve failed to answer this question correctly after 2 attempts. Unfortunately you have not met the criteria for continuing this study.');
+  const incorrectAnswer3 = await page.getByText('You didn\'t answer this question correctly after 2 attempts. Unfortunately you have not met the criteria for continuing this study.');
   await expect(incorrectAnswer3).toBeVisible();
 
   // Expect the next button to be disabled

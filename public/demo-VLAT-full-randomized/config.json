@@ -284,7 +284,6 @@
                     "required": true,
                     "location": "sidebar",
                     "options": ["China", "Hong Kong", "South Korea", "Vietnam", "Skip"]
-                    ]
                 }
             ]
         },
