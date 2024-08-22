@@ -139,12 +139,12 @@
         },
         "type": "object"
       },
-      "description": "The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;\n\n Using baseComponents:\n\n```js \"baseComponents\": { \"my-image-component\": { \"instructionLocation\": \"sidebar\", \"nextButtonLocation\": \"sidebar\", \"path\": \"<study-name>/assets/my-image.jpg\", \"response\": [   {     \"id\": \"my-image-id\",     \"options\": [       {         \"label\": \"Europe\",         \"value\": \"Europe\"       },       {         \"label\": \"Japan\",         \"value\": \"Japan\"       },       {         \"label\": \"USA\",         \"value\": \"USA\"       }     ],     \"prompt\": \"Your Selected Answer:\",     \"type\": \"dropdown\"   } ], \"type\": \"image\" } } ``` In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `\"baseComponent\":\"my-image-component\"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below: ```js \"components\": { \"q1\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with largest GDP\", \"instruction\": \"Which region has the largest GDP?\" }, \"q2\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with lowest GDP\", \"instruction\": \"Which region has the lowest GDP?\" }, \"q3\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with highest exports of Wheat\", \"instruction\": \"Which region had the most Wheat exported in 2022?\" } } ```",
+      "description": "The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;\n\n Using baseComponents:\n\n```js \"baseComponents\": { \"my-image-component\": { \"instructionLocation\": \"sidebar\", \"nextButtonLocation\": \"sidebar\", \"path\": \"<study-name>/assets/my-image.jpg\", \"response\": [   {     \"id\": \"my-image-id\",     \"options\": [\"Europe\", \"Japan\", \"USA\"],     \"prompt\": \"Your Selected Answer:\",     \"type\": \"dropdown\"   } ], \"type\": \"image\" } } ``` In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `\"baseComponent\":\"my-image-component\"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below: ```js \"components\": { \"q1\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with largest GDP\", \"instruction\": \"Which region has the largest GDP?\" }, \"q2\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with lowest GDP\", \"instruction\": \"Which region has the lowest GDP?\" }, \"q3\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with highest exports of Wheat\", \"instruction\": \"Which region had the most Wheat exported in 2022?\" } } ```",
       "type": "object"
     },
     "CheckboxResponse": {
       "additionalProperties": false,
-      "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.\n\n```js { \"id\": \"q7\", \"prompt\": \"Checkbox example (not required)\", \"required\": false, \"location\": \"aboveStimulus\", \"type\": \"checkbox\", \"options\": [  {    \"label\": \"Option 1\",    \"value\": \"opt-1\"  },  {    \"label\": \"Option 2\",    \"value\": \"opt-2\"  },  {    \"label\": \"Option 3\",    \"value\": \"opt-3\"  } ] } ```",
+      "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.\n\n```js { \"id\": \"q7\", \"prompt\": \"Checkbox example (not required)\", \"required\": false, \"location\": \"aboveStimulus\", \"type\": \"checkbox\", \"options\": [\"Option 1\", \"Option 2\", \"Option 3\"] } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -169,7 +169,14 @@
         "options": {
           "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
           "items": {
-            "$ref": "#/definitions/StringOption"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "type": "array"
         },
@@ -326,7 +333,7 @@
     },
     "DropdownResponse": {
       "additionalProperties": false,
-      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options.\n\nExample: ```js { \"id\": \"q-color\", \"prompt\": \"What is your favorite color?\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"dropdown\", \"placeholder\": \"Please choose your favorite color\", \"options\": [  {    \"label\": \"Red\",    \"value\": \"red\"  },  {    \"label\": \"Blue\",    \"value\": \"blue\"  } ] } ```",
+      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options.\n\nExample: ```js { \"id\": \"q-color\", \"prompt\": \"What is your favorite color?\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"dropdown\", \"placeholder\": \"Please choose your favorite color\", \"options\": [\"Red\", \"Blue\"] } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -343,7 +350,14 @@
         "options": {
           "description": "The options that are displayed in the dropdown.",
           "items": {
-            "$ref": "#/definitions/StringOption"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "type": "array"
         },
@@ -1018,7 +1032,7 @@
     },
     "QuestionnaireComponent": {
       "additionalProperties": false,
-      "description": "A QuestionnaireComponent is used to render simple questions that require a response. The main use case of this component type is to ask participants questions when you don't need to render a stimulus. Please note, that even though we're not using a stimulus, the responses still require a `location`. For example this could be used to collect demographic information from a participant using the following snippet:\n\n```js { \"type\": \"questionnaire\", \"response\": [  {    \"id\": \"gender\",    \"prompt\": \"Gender:\",    \"required\": true,    \"location\": \"belowStimulus\",    \"type\": \"checkbox\",    \"options\": [      {        \"label\": \"Man\",        \"value\": \"Man\"      },      {        \"label\": \"Woman\",        \"value\": \"Woman\"      },      {        \"label\": \"Genderqueer\",        \"value\": \"Genderqueer\"      },      {        \"label\": \"Third-gender\",        \"value\": \"Third-gender\"      },      ... etc.    ]  } ] } ```",
+      "description": "A QuestionnaireComponent is used to render simple questions that require a response. The main use case of this component type is to ask participants questions when you don't need to render a stimulus. Please note, that even though we're not using a stimulus, the responses still require a `location`. For example this could be used to collect demographic information from a participant using the following snippet:\n\n```js { \"type\": \"questionnaire\", \"response\": [  {    \"id\": \"gender\",    \"prompt\": \"Gender:\",    \"required\": true,    \"location\": \"belowStimulus\",    \"type\": \"checkbox\",    \"options\": [\"Man\", \"Woman\", \"Genderqueer\", \"Third-gender\", ...]  } ] } ```",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
@@ -1084,7 +1098,7 @@
     },
     "RadioResponse": {
       "additionalProperties": false,
-      "description": "The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection. RadioResponses render as a radio input with user specified options, and optionally left and right labels.\n\nExample: ```js { \"id\": \"q-radio\", \"prompt\": \"Radio button example\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"radio\", \"options\": [  {    \"label\": \"Option 1\",    \"value\": \"opt-1\"  },  {    \"label\": \"Option 2\",    \"value\": \"opt-2\"  } ] } ```",
+      "description": "The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection. RadioResponses render as a radio input with user specified options, and optionally left and right labels.\n\nExample: ```js { \"id\": \"q-radio\", \"prompt\": \"Radio button example\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"radio\", \"options\": [\"Option 1\", \"Option 2\"] } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -1105,7 +1119,14 @@
         "options": {
           "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
           "items": {
-            "$ref": "#/definitions/StringOption"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "type": "array"
         },

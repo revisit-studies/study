@@ -15,6 +15,7 @@ import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { StudyEnd } from '../components/StudyEnd';
+import { TrainingFailed } from '../components/TrainingFailed';
 import ResourceNotFound from '../ResourceNotFound';
 
 // current active stimuli presented to the user
@@ -48,6 +49,11 @@ export default function ComponentController() {
   // This avoids issues with the component config being undefined for the end of the study.
   if (currentComponent === 'end') {
     return <StudyEnd />;
+  }
+
+  // Handle failed training
+  if (currentComponent === '__trainingFailed') {
+    return <TrainingFailed />;
   }
 
   if (currentComponent === 'Notfound') {
