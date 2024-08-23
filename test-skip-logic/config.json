@@ -1,5 +1,5 @@
 {
-  "$schema": "file:///Users/jwilburn/projects/revisit-study/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Using Skip Logic",
     "description": "This is a test study to check the functionality of the reVISit' skip logic. This study is not meant to be used for any real data collection.",
@@ -30,7 +30,7 @@
           "prompt": "What is your favorite color?",
           "location": "belowStimulus",
           "required": true,
-          "options": [{"label": "Blue", "value": "Blue"}, {"label": "Red", "value": "Red"}, {"label": "Green", "value": "Green"}, {"label": "Yellow", "value": "Yellow"}]
+          "options": ["Blue", "Red", "Green", "Yellow"]
         },
         {
           "id": "q2",
@@ -38,7 +38,8 @@
           "prompt": "What is your favorite animal?",
           "location": "belowStimulus",
           "required": true,
-          "options": [{"label": "Dog", "value": "dog"}, {"label": "Cat", "value": "cat"}, {"label": "Bird", "value": "bird"}, {"label": "Fish", "value": "fish"}]}
+          "options": ["Dog", "Cat", "Bird", "Fish"]
+        }
       ],
       "nextButtonLocation": "belowStimulus",
       "instruction": "Please answer the following questions...",
@@ -55,7 +56,7 @@
         },
         {
           "id": "q2",
-          "answer": "cat"
+          "answer": "Cat"
         }
       ]
     },
@@ -69,10 +70,7 @@
           "prompt": "Are you paying attention?",
           "location": "belowStimulus",
           "required": true,
-          "options": [
-            {"label": "Yes", "value": "Yes"},
-            {"label": "No", "value": "No"}
-          ]
+          "options": ["Yes", "No"]
         }
       ],
       "correctAnswer": [
