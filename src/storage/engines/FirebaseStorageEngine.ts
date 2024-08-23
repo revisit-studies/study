@@ -152,16 +152,16 @@ export class FirebaseStorageEngine extends StorageEngine {
         if (!auth.currentUser) throw new Error('Login failed with firebase');
       }
 
-      const currentConfigHash = await this.getCurrentConfigHash();
-      // Hash the config
-      const configHash = await hash(JSON.stringify(config));
-
       // Create or retrieve database for study
       this.studyCollection = collection(
         this.firestore,
         `${this.collectionPrefix}${studyId}`,
       );
       this.studyId = studyId;
+
+      const currentConfigHash = await this.getCurrentConfigHash();
+      // Hash the config
+      const configHash = await hash(JSON.stringify(config));
 
       // Push the config ref in storage
       await this._pushToFirebaseStorage(
@@ -180,7 +180,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         await this.clearCurrentParticipantId();
       }
 
-      await this.localForage.setItem('currentConfigHash', configHash);
+      await this.setcurrentConfigHash(configHash);
 
       return Promise.resolve();
     } catch (error) {
@@ -245,7 +245,26 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   async getCurrentConfigHash() {
-    return (await this.localForage.getItem('currentConfigHash')) as string;
+    if (!this._verifyStudyDatabase(this.studyCollection)) {
+      throw new Error('Study database not initialized');
+    }
+    const configHashDoc = doc(
+      this.studyCollection,
+      'configHash',
+    );
+    const configHashDocData = await getDoc(configHashDoc);
+    return configHashDocData.exists() ? configHashDocData.data().configHash : null;
+  }
+
+  async setcurrentConfigHash(configHash: string) {
+    if (!this._verifyStudyDatabase(this.studyCollection)) {
+      throw new Error('Study database not initialized');
+    }
+    const configHashDoc = doc(
+      this.studyCollection,
+      'configHash',
+    );
+    await setDoc(configHashDoc, { configHash });
   }
 
   async getAllConfigsFromHash(tempHashes: string[], studyId: string) {
