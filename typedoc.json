@@ -1,24 +1,24 @@
 {
-    "$schema": "https://typedoc.org/schema.json",
-    "entryPoints": [
-        "src/parser/types.ts"
-    ],
-    "plugin": [
-        "typedoc-plugin-markdown",
-        "typedoc-plugin-frontmatter"
-    ],
-    "name": "Modules",
-    "githubPages": false,
-    "readme": "typedocReadMe.md",
-    "entryFileName": "index.md",
-    "hideBreadcrumbs": true,
-    "frontmatterGlobals": {
-      "sidebar_position": 1,
-      "displayed_sidebar": "reference"
-    },
-    "textContentMappings": {
-        "title.memberPage": "{name}"
-    },
-    "hidePageHeader": true,
-    "propertiesFormat": "table"
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "src/parser/types.ts"
+  ],
+  "plugin": [
+    "typedoc-plugin-markdown",
+    "typedoc-plugin-frontmatter"
+  ],
+  "name": "Modules",
+  "githubPages": false,
+  "readme": "typedocReadMe.md",
+  "entryFileName": "index.md",
+  "hideBreadcrumbs": true,
+  "frontmatterGlobals": {
+    "sidebar_position": 1,
+    "displayed_sidebar": "reference"
+  },
+  "textContentMappings": {
+    "title.memberPage": "{name}"
+  },
+  "hidePageHeader": true,
+  "propertiesFormat": "table"
 }
