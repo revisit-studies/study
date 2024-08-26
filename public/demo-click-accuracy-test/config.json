@@ -28,14 +28,6 @@
       "path": "demo-click-accuracy-test/assets/introduction.md",
       "response": []
     },
-    "uiConfig": {
-        "contactEmail": "contact@revisit.dev",
-        "helpTextPath": "demo-click-accuracy-test/assets/help.md",
-        "logoPath": "revisitAssets/revisitLogoSquare.svg",
-        "withProgressBar": true,
-        "autoDownloadStudy": false,
-        "sidebar": true
-    },
     "baseComponents": {
         "trial": {
             "description": "try to click on the center of the moving dot",
