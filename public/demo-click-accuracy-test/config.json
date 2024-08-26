@@ -28,8 +28,18 @@
       "instruction": "Click on the moving dot",
       "type": "react-component",
       "path": "demo-click-accuracy-test/assets/ClickAccuracyTest.tsx",
-      "nextButtonLocation": "sidebar"
-    }
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "accuracy",
+          "prompt": "Your click distance to circle center",
+          "required": true,
+          "location": "sidebar",
+          "type": "iframe"
+        }
+      ]
+    },
+
   },
   "components": {
     "introduction": {
@@ -46,15 +56,7 @@
         "speed": 100,
         "taskid": "accuracy"
       },
-      "response": [
-        {
-          "id": "accuracy",
-          "prompt": "Your click distance to circle center",
-          "required": true,
-          "location": "sidebar",
-          "type": "iframe"
-        }
-      ]
+
     },
     "trial2": {
       "baseComponent": "trial",
@@ -65,15 +67,6 @@
         "speed": 200,
         "taskid": "accuracy"
       },
-      "response": [
-        {
-          "id": "accuracy",
-          "prompt": "Your click distance to circle center",
-          "required": true,
-          "location": "sidebar",
-          "type": "iframe"
-        }
-      ]
     }
   },
   "sequence": {
