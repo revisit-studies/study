@@ -80,6 +80,8 @@ export abstract class StorageEngine {
 
   abstract rejectParticipant(studyId: string, participantID: string): Promise<void>;
 
+  abstract rejectCurrentParticipant(studyId: string): Promise<void>;
+
   abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
 
   abstract getModes(studyId: string): Promise<Record<REVISIT_MODE, boolean>>;

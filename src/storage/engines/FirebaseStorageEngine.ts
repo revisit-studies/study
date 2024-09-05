@@ -714,6 +714,14 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
+  async rejectCurrentParticipant(studyId: string) {
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+
+    return await this.rejectParticipant(studyId, this.currentParticipantId);
+  }
+
   async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {
     const revisitModesDoc = doc(
       this.firestore,
