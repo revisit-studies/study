@@ -64,6 +64,9 @@ export interface ParticipantData {
   metadata: ParticipantMetadata
   /** Whether the participant has completed the study. */
   completed: boolean;
-  /** Whether the participant has been rejected. */
-  rejected: boolean;
+  /** Whether the participant has been rejected and the reason. */
+  rejected: {
+    reason: string;
+    timestamp: number;
+  } | false;
 }

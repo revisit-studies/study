@@ -28,6 +28,8 @@ import { useAsync } from '../../store/hooks/useAsync';
 
 export const OPTIONAL_COMMON_PROPS = [
   'status',
+  'rejectReason',
+  'rejectTime',
   'percentComplete',
   'description',
   'instruction',
@@ -94,6 +96,12 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
       if (properties.includes('status')) {
         // eslint-disable-next-line no-nested-ternary
         tidyRow.status = participant.rejected ? 'rejected' : (participant.completed ? 'completed' : 'in progress');
+      }
+      if (properties.includes('rejectReason')) {
+        tidyRow.rejectReason = participant.rejected ? participant.rejected.reason : undefined;
+      }
+      if (properties.includes('rejectTime')) {
+        tidyRow.rejectTime = participant.rejected ? new Date(participant.rejected.timestamp).toISOString() : undefined;
       }
       if (properties.includes('configHash')) {
         // eslint-disable-next-line no-nested-ternary

@@ -133,7 +133,7 @@ export default function ResponseBlock({
 
             // If the user has failed the training, wait 5 seconds and redirect to a fail page
             if (!allowFailedTraining && storageEngine) {
-              storageEngine.rejectCurrentParticipant(studyId)
+              storageEngine.rejectCurrentParticipant(studyId, 'Failed training')
                 .then(() => {
                   setTimeout(() => {
                     navigate('./__trainingFailed');

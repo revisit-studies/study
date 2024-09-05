@@ -284,7 +284,7 @@ export class LocalStorageEngine extends StorageEngine {
     return true;
   }
 
-  async rejectParticipant(studyId: string, participantId: string) {
+  async rejectParticipant(studyId: string, participantId: string, reason: string) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
@@ -302,7 +302,10 @@ export class LocalStorageEngine extends StorageEngine {
     }
 
     // Set the user as rejected
-    participant.rejected = true;
+    participant.rejected = {
+      reason,
+      timestamp: new Date().getTime(),
+    };
 
     // Return the user's sequence to the pool
     const sequenceArray = await this.studyDatabase.getItem('sequenceArray') as Sequence[] | null;
@@ -315,7 +318,7 @@ export class LocalStorageEngine extends StorageEngine {
     await this.studyDatabase.setItem(participantId, participant);
   }
 
-  async rejectCurrentParticipant(studyId: string) {
+  async rejectCurrentParticipant(studyId: string, reason: string) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
@@ -324,7 +327,7 @@ export class LocalStorageEngine extends StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    await this.rejectParticipant(studyId, this.currentParticipantId);
+    await this.rejectParticipant(studyId, this.currentParticipantId, reason);
   }
 
   async setMode(studyId: string, key: REVISIT_MODE, value: boolean) {
