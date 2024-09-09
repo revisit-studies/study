@@ -47,7 +47,9 @@ export function useNextStep() {
   const currentComponent = useCurrentComponent();
   const identifier = `${currentComponent}_${currentStep}`;
 
-  const { trialValidation, sequence, answers } = useStoreSelector((state) => state);
+  const trialValidation = useStoreSelector((state) => state.trialValidation);
+  const sequence = useStoreSelector((state) => state.sequence);
+  const answers = useStoreSelector((state) => state.answers);
 
   const storeDispatch = useStoreDispatch();
   const { saveTrialAnswer, setIframeAnswers } = useStoreActions();

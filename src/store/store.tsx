@@ -1,4 +1,6 @@
-import { createSlice, configureStore, type PayloadAction } from '@reduxjs/toolkit';
+import {
+  createSlice, configureStore, type PayloadAction, createSelector,
+} from '@reduxjs/toolkit';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { ResponseBlockLocation, StudyConfig } from '../parser/types';
@@ -155,6 +157,11 @@ export function useAreResponsesValid(id: string) {
   });
 }
 
-export function useFlatSequence(): string[] {
-  return useStoreSelector((state) => getSequenceFlatMap(state.sequence));
+const flatSequenceSelector = createSelector(
+  (state) => state.sequence,
+  (sequence) => getSequenceFlatMap(sequence),
+);
+
+export function useFlatSequence() {
+  return useStoreSelector(flatSequenceSelector);
 }

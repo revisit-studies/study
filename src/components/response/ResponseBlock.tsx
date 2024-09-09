@@ -51,7 +51,8 @@ export default function ResponseBlock({
 
   const answerValidator = useAnswerField(responses, currentStep, storedAnswer || {});
   const [provenanceGraph, setProvenanceGraph] = useState<TrrackedProvenance | undefined>(undefined);
-  const { iframeAnswers, iframeProvenance } = useStoreSelector((state) => state);
+  const iframeAnswers = useStoreSelector((state) => state.iframeAnswers);
+  const iframeProvenance = useStoreSelector((state) => state.iframeProvenance);
 
   const hasCorrectAnswerFeedback = configInUse?.provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
   const allowFailedTraining = configInUse?.allowFailedTraining === undefined ? true : configInUse.allowFailedTraining;
