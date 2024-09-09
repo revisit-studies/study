@@ -18,7 +18,13 @@ export async function studyStoreCreator(
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
 
-  const emptyAnswers = Object.fromEntries(flatSequence.filter((id) => id !== 'end').map((id, idx) => [`${id}_${idx}`, { answer: {} }])) as Record<string, StoredAnswer>;
+  const emptyAnswers: Record<string, StoredAnswer> = Object.fromEntries(flatSequence.filter((id) => id !== 'end')
+    .map((id, idx) => [
+      `${id}_${idx}`,
+      {
+        answer: {}, startTime: 0, endTime: -1, provenanceGraph: undefined, windowEvents: [],
+      },
+    ]));
   const emptyValidation: TrialValidation = Object.assign(
     {},
     ...flatSequence.map((id, idx) => ({ [`${id}_${idx}`]: { aboveStimulus: { valid: false, values: {} }, belowStimulus: { valid: false, values: {} }, sidebar: { valid: false, values: {} } } })),

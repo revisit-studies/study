@@ -55,7 +55,7 @@ export function ResponseVisualization({
     if (response.type === 'metadata') {
       const timingData = participantData
         .map((p) => Object.entries(p.answers).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === trialId))
-        .map((p) => p.map(([_, value]) => (value.endTime - value.startTime) / 1000))
+        .map((p) => p.filter(([_, value]) => value.endTime !== -1).map(([_, value]) => (value.endTime - value.startTime) / 1000))
         .flat();
 
       // Histogram of completion times

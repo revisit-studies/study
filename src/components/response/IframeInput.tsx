@@ -30,10 +30,11 @@ export default function IframeInput({
       description={secondaryText}
       size="md"
     >
-
+      {answer.value && (
       <List>
         {Array.isArray(answer.value) ? (answer.value).map((item) => <List.Item key={item}>{item}</List.Item>) : <List.Item>{answer.value}</List.Item>}
       </List>
+      )}
     </Input.Wrapper>
   );
 }

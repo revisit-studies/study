@@ -14,9 +14,10 @@ import { configSequenceToUniqueTrials, findBlockForStep, getSequenceFlatMap } fr
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
 import { useAuth } from '../../../store/hooks/useAuth';
+import { getCleanedDuration } from '../../../utils/getCleanedDuration';
 
 function AnswerCell({ cellData }: { cellData: StoredAnswer }) {
-  return (
+  return Number.isFinite(cellData.endTime) && Number.isFinite(cellData.startTime) ? (
     <Table.Td>
       <Stack miw={100}>
         {Object.entries(cellData.answer).map(([key, storedAnswer]) => (
@@ -32,17 +33,32 @@ function AnswerCell({ cellData }: { cellData: StoredAnswer }) {
         ))}
       </Stack>
     </Table.Td>
+  ) : (
+    <Table.Td>N/A</Table.Td>
   );
 }
 
 function DurationCell({ cellData }: { cellData: StoredAnswer }) {
   const duration = (cellData.endTime - cellData.startTime) / 1000;
-  return (
+  const cleanedDuration = getCleanedDuration(cellData);
+  return Number.isFinite(cellData.endTime) && Number.isFinite(cellData.startTime) ? (
     <Table.Td>
       {duration.toFixed(1)}
       {' '}
       s
+      {cleanedDuration && (
+        <>
+          <br />
+          {' '}
+          (
+          {(cleanedDuration / 1000).toFixed(1)}
+          {' '}
+          s)
+        </>
+      )}
     </Table.Td>
+  ) : (
+    <Table.Td>N/A</Table.Td>
   );
 }
 
@@ -149,10 +165,10 @@ export function TableView({
       <Table.Th key={`header-${trial.componentName}-${trial.timesSeenInBlock}-duration`}>
         <span style={{ whiteSpace: 'nowrap' }}>{trial.componentName}</span>
         {' '}
-        Duration
+        Duration (clean)
       </Table.Th>,
     ]),
-    <Table.Th key="total-duration">Total Duration</Table.Th>,
+    <Table.Th key="total-duration">Total Duration (clean)</Table.Th>,
   ];
 
   const rows = allParticipants.map((record) => (
@@ -177,7 +193,7 @@ export function TableView({
             }
             {(!record.completed) && (
             <Text size="sm" mb={-1} ml={4}>
-              {((Object.entries(record.answers).filter(([_, entry]) => entry.endTime !== undefined).length / (getSequenceFlatMap(record.sequence).length - 1)) * 100).toFixed(2)}
+              {((Object.entries(record.answers).filter(([_, entry]) => entry.endTime !== -1).length / (getSequenceFlatMap(record.sequence).length - 1)) * 100).toFixed(2)}
               %
             </Text>
             )}
@@ -203,7 +219,7 @@ export function TableView({
             const trialIndex = parseInt(trialId.slice(trialId.lastIndexOf('_') + 1), 10);
             return trialName === trial.componentName && trialIndex <= sequenceBlock[0].lastIndex && trialIndex >= sequenceBlock[0].firstIndex;
           });
-        return (trialData !== null && trialData.length >= trial.timesSeenInBlock + 1 ? (
+        return (trialData !== null && trialData.length >= trial.timesSeenInBlock + 1 && trialData[trial.timesSeenInBlock][1].endTime !== -1 ? (
           <React.Fragment key={`cellgroup-${record.participantId}-${trial.componentName}-${trial.timesSeenInBlock}`}>
             <AnswerCell cellData={trialData[trial.timesSeenInBlock][1]} />
             <DurationCell cellData={trialData[trial.timesSeenInBlock][1]} />
@@ -217,10 +233,10 @@ export function TableView({
       })}
       <DurationCell
         cellData={{
-          startTime: Math.min(...Object.values(record.answers).map((a) => a.startTime)),
-          endTime: Math.max(...Object.values(record.answers).map((a) => a.endTime)),
+          startTime: Math.min(...Object.values(record.answers).filter((a) => a.endTime !== -1).map((a) => a.startTime)),
+          endTime: Math.max(...Object.values(record.answers).filter((a) => a.endTime !== -1).map((a) => a.endTime)),
           answer: {},
-          windowEvents: [],
+          windowEvents: Object.values(record.answers).flatMap((a) => a.windowEvents),
         }}
         key={`cell-${record.participantId}-total-duration`}
       />

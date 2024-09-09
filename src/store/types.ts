@@ -74,7 +74,7 @@ export interface StoredAnswer {
   provenanceGraph?: TrrackedProvenance,
   /** A list containing the time (in epoch milliseconds), the action (focus, input, kepress, mousedown, mouseup, mousemove, resize, scroll or visibility), and then either a coordinate pertaining to where the event took place on the screen or string related to such event. Below is an example of the windowEvents list.
 ```js
-"windowEvents" :[
+"windowEvents": [
   [
     1711641174878,
     "mousedown",

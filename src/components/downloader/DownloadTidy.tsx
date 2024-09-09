@@ -25,6 +25,7 @@ import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { StorageEngine } from '../../storage/engines/StorageEngine';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useAsync } from '../../store/hooks/useAsync';
+import { getCleanedDuration } from '../../utils/getCleanedDuration';
 
 export const OPTIONAL_COMMON_PROPS = [
   'status',
@@ -41,6 +42,7 @@ export const OPTIONAL_COMMON_PROPS = [
   'startTime',
   'endTime',
   'duration',
+  'cleanedDuration',
   'meta',
   'configHash',
 ] as const;
@@ -72,7 +74,7 @@ export function download(graph: string, filename: string) {
 }
 
 function participantDataToRows(participant: ParticipantData, properties: Property[], studyConfig: StudyConfig): TidyRow[] {
-  const percentComplete = ((Object.entries(participant.answers).filter(([_, entry]) => entry.endTime !== undefined).length / (getSequenceFlatMap(participant.sequence).length - 1)) * 100).toFixed(2);
+  const percentComplete = ((Object.entries(participant.answers).filter(([_, entry]) => entry.endTime !== -1).length / (getSequenceFlatMap(participant.sequence).length - 1)) * 100).toFixed(2);
   return Object.entries(participant.answers).map(([trialIdentifier, trialAnswer]) => {
     // Get the whole component, including the base component if there is inheritance
     const trialId = trialIdentifier.split('_').slice(0, -1).join('_');
@@ -82,7 +84,8 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
       ? merge({}, studyConfig.baseComponents[trialConfig.baseComponent], trialConfig)
       : trialConfig;
 
-    const duration = trialAnswer.endTime - trialAnswer.startTime;
+    const duration = trialAnswer.endTime === -1 ? undefined : trialAnswer.endTime - trialAnswer.startTime;
+    const cleanedDuration = getCleanedDuration(trialAnswer);
 
     const rows = Object.entries(trialAnswer.answer).map(([key, value]) => {
       const tidyRow: TidyRow = {
@@ -140,6 +143,9 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
       }
       if (properties.includes('duration')) {
         tidyRow.duration = duration;
+      }
+      if (properties.includes('cleanedDuration')) {
+        tidyRow.cleanedDuration = cleanedDuration;
       }
       if (properties.includes('meta')) {
         tidyRow.meta = JSON.stringify(completeComponent.meta, null, 2);
