@@ -42,6 +42,7 @@
     "localforage": "^1.10.0",
     "lodash.debounce": "^4.0.8",
     "lodash.merge": "^4.6.2",
+    "nvm": "^0.0.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-markdown": "^9.0.0",
