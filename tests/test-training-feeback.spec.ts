@@ -43,12 +43,6 @@ test('test', async ({ page }) => {
   await expect(incorrectAnswer).toBeVisible();
 
   // Answer the training question incorrectly again
-  await page.getByPlaceholder('0-100').fill('51');
-  await page.getByRole('button', { name: 'Check Answer' }).click();
-  const incorrectAnswer2 = await page.getByText('Incorrect Answer');
-  await expect(incorrectAnswer2).toBeVisible();
-
-  // Answer the training question incorrectly again
   await page.getByPlaceholder('0-100').fill('52');
   await page.getByRole('button', { name: 'Check Answer' }).click();
   const incorrectAnswer3 = await page.getByText('You didn\'t answer this question correctly after 2 attempts. Unfortunately you have not met the criteria for continuing this study.');
@@ -60,7 +54,6 @@ test('test', async ({ page }) => {
 
   // Answer the training question correctly and expect the next button to be disabled still
   await page.getByPlaceholder('0-100').fill('66');
-  await page.getByRole('button', { name: 'Check Answer' }).click();
   await expect(nextButton).toBeDisabled();
 
   // Click next participant

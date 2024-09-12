@@ -6,7 +6,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useStoreActions, useStoreDispatch, useStoreSelector } from '../../store/store';
 
 export function AlertModal() {
-  const { alertModal } = useStoreSelector((state) => state);
+  const alertModal = useStoreSelector((state) => state.alertModal);
   const { setAlertModal } = useStoreActions();
   const storeDispatch = useStoreDispatch();
 

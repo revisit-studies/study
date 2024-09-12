@@ -30,7 +30,9 @@ import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
 
 export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
-  const { config: studyConfig, metadata } = useStoreSelector((state) => state);
+  const studyConfig = useStoreSelector((state) => state.config);
+  const metadata = useStoreSelector((state) => state.metadata);
+
   const flatSequence = useFlatSequence();
   const storeDispatch = useStoreDispatch();
   const { toggleShowHelpText, toggleStudyBrowser } = useStoreActions();

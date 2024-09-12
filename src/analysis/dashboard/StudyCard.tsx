@@ -14,7 +14,7 @@ import { ParticipantStatusBadges } from '../interface/ParticipantStatusBadges';
 import { PREFIX } from '../../utils/Prefix';
 
 function isWithinRange(answers: Record<string, StoredAnswer>, rangeTime: [Date | null, Date | null]) {
-  const timeStamps = Object.values(answers).map((ans) => [ans.startTime, ans.endTime]).flat();
+  const timeStamps = Object.values(answers).map((ans) => [ans.startTime, ans.endTime]).flat().filter((time) => time !== -1);
   if (rangeTime[0] === null || rangeTime[1] === null) {
     return false;
   }
@@ -27,7 +27,7 @@ export function StudyCard({ studyId, allParticipants }: { studyId: string; allPa
 
   const completionTimes = allParticipants
     .filter((d) => d.completed)
-    .map((d) => Math.max(...Object.values(d.answers).map((ans) => ans.endTime).filter((time) => time !== undefined)))
+    .map((d) => Math.max(...Object.values(d.answers).map((ans) => ans.endTime).filter((time) => time !== -1)))
     .filter((d) => Number.isFinite(d));
   const [rangeTime, setRangeTime] = useState<[Date | null, Date | null]>([
     new Date(new Date(Math.min(...(completionTimes.length > 0 ? completionTimes : [new Date().getTime()]))).setHours(0, 0, 0, 0)),
@@ -47,7 +47,7 @@ export function StudyCard({ studyId, allParticipants }: { studyId: string; allPa
         { Date: rangeTime[0]?.getTime(), Participants: 0 },
         ...completedInTime
           .map((participant) => Math.max(
-            ...Object.values(participant.answers).map((ans) => ans.endTime).flat(),
+            ...Object.values(participant.answers).map((ans) => ans.endTime).flat().filter((time) => time !== -1),
           ))
           .sort((a, b) => a - b)
           .map((time, idx) => ({

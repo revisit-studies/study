@@ -44,6 +44,11 @@ export default function InfoPanel(props: { data: Record<string, StoredAnswer>, t
       const durationAry:number[] = [];
       Object.entries(data).forEach(([pid, answers]) => {
         const duration = answers.endTime - answers.startTime;
+
+        if (duration < 0) {
+          return;
+        }
+
         sum += duration;
         durationAry.push(duration);
         if (duration > max) {

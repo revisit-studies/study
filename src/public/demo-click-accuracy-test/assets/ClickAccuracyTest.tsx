@@ -28,7 +28,7 @@ function ClickAccuracyTest({ parameters, setAnswer }: StimulusParams<any>) {
   const [ref, dms] = useChartDimensions(chartSettings);
   const [x, setX] = useState(100);
   const [y, setY] = useState(100);
-  const [speed, setSpeed] = useState(300);
+  const [speed, setSpeed] = useState(parameters.speed);
   const { taskid } = parameters;
 
   const { actions, trrack } = useMemo(() => {

@@ -47,7 +47,9 @@ export function useNextStep() {
   const currentComponent = useCurrentComponent();
   const identifier = `${currentComponent}_${currentStep}`;
 
-  const { trialValidation, sequence, answers } = useStoreSelector((state) => state);
+  const trialValidation = useStoreSelector((state) => state.trialValidation);
+  const sequence = useStoreSelector((state) => state.sequence);
+  const answers = useStoreSelector((state) => state.answers);
 
   const storeDispatch = useStoreDispatch();
   const { saveTrialAnswer, setIframeAnswers } = useStoreActions();
@@ -98,7 +100,7 @@ export function useNextStep() {
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
 
-    if (dataCollectionEnabled && !storedAnswer.endTime) {
+    if (dataCollectionEnabled && storedAnswer.endTime === -1) { // === -1 means the answer has not been saved yet
       storeDispatch(
         saveTrialAnswer({
           identifier,
@@ -202,7 +204,7 @@ export function useNextStep() {
     }
 
     navigate(`/${studyId}/${nextStep}${window.location.search}`);
-  }, [currentStep, trialValidation, identifier, windowEvents, dataCollectionEnabled, storedAnswer.endTime, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setIframeAnswers, studyConfig, participantSequence]);
+  }, [currentStep, trialValidation, identifier, windowEvents, dataCollectionEnabled, storedAnswer?.endTime, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setIframeAnswers, studyConfig, participantSequence]);
 
   return {
     isNextDisabled,
