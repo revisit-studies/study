@@ -3,6 +3,7 @@ import { StoredAnswer } from '../store/types';
 export function getCleanedDuration(answer: StoredAnswer) {
   const duration = answer.endTime === -1 ? undefined : answer.endTime - answer.startTime;
   const visibilityEvents = (answer.windowEvents || [])
+    .filter((event) => event !== undefined)
     .filter(([_, type, __]) => type === 'visibility');
   let timeNavigatedAway = 0;
   let i = 0;

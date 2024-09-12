@@ -193,7 +193,7 @@ export function TableView({
             }
             {(!record.completed) && (
             <Text size="sm" mb={-1} ml={4}>
-              {((Object.entries(record.answers).filter(([_, entry]) => entry.endTime !== -1).length / (getSequenceFlatMap(record.sequence).length - 1)) * 100).toFixed(2)}
+              {((Object.entries(record.answers).filter(([_, entry]) => entry.endTime !== -1 && entry.endTime !== undefined).length / (getSequenceFlatMap(record.sequence).length - 1)) * 100).toFixed(2)}
               %
             </Text>
             )}
@@ -233,8 +233,8 @@ export function TableView({
       })}
       <DurationCell
         cellData={{
-          startTime: Math.min(...Object.values(record.answers).filter((a) => a.endTime !== -1).map((a) => a.startTime)),
-          endTime: Math.max(...Object.values(record.answers).filter((a) => a.endTime !== -1).map((a) => a.endTime)),
+          startTime: Math.min(...Object.values(record.answers).filter((a) => a.endTime !== -1 && a.endTime !== undefined).map((a) => a.startTime)),
+          endTime: Math.max(...Object.values(record.answers).filter((a) => a.endTime !== -1 && a.endTime !== undefined).map((a) => a.endTime)),
           answer: {},
           windowEvents: Object.values(record.answers).flatMap((a) => a.windowEvents),
         }}
