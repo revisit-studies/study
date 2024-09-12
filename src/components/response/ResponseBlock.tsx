@@ -9,7 +9,7 @@ import {
   IndividualComponent,
   ResponseBlockLocation,
 } from '../../parser/types';
-import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
+import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions,
 } from '../../store/store';
@@ -19,6 +19,7 @@ import { NextButton } from '../NextButton';
 import { useAnswerField } from './utils';
 import ResponseSwitcher from './ResponseSwitcher';
 import { StoredAnswer, TrrackedProvenance } from '../../store/types';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
 
 type Props = {
   status?: StoredAnswer;
@@ -33,11 +34,14 @@ export default function ResponseBlock({
   status,
   style,
 }: Props) {
+  const { storageEngine } = useStorageEngine();
   const storeDispatch = useStoreDispatch();
   const { updateResponseBlockValidation, toggleShowHelpText } = useStoreActions();
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
   const storedAnswer = status?.answer;
+
+  const studyId = useStudyId();
 
   const navigate = useNavigate();
 
@@ -47,7 +51,8 @@ export default function ResponseBlock({
 
   const answerValidator = useAnswerField(responses, currentStep, storedAnswer || {});
   const [provenanceGraph, setProvenanceGraph] = useState<TrrackedProvenance | undefined>(undefined);
-  const { iframeAnswers, iframeProvenance } = useStoreSelector((state) => state);
+  const iframeAnswers = useStoreSelector((state) => state.iframeAnswers);
+  const iframeProvenance = useStoreSelector((state) => state.iframeProvenance);
 
   const hasCorrectAnswerFeedback = configInUse?.provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
   const allowFailedTraining = configInUse?.allowFailedTraining === undefined ? true : configInUse.allowFailedTraining;
@@ -128,10 +133,19 @@ export default function ResponseBlock({
             message = `You didn't answer this question correctly after ${trainingAttempts} attempts. ${allowFailedTraining ? 'You can continue to the next question.' : 'Unfortunately you have not met the criteria for continuing this study.'}`;
 
             // If the user has failed the training, wait 5 seconds and redirect to a fail page
-            if (!allowFailedTraining) {
-              setTimeout(() => {
-                navigate('./__trainingFailed');
-              }, 5000);
+            if (!allowFailedTraining && storageEngine) {
+              storageEngine.rejectCurrentParticipant(studyId, 'Failed training')
+                .then(() => {
+                  setTimeout(() => {
+                    navigate('./__trainingFailed');
+                  }, 5000);
+                })
+                .catch(() => {
+                  console.error('Failed to reject participant who failed training');
+                  setTimeout(() => {
+                    navigate('./__trainingFailed');
+                  }, 5000);
+                });
             }
           } else if (trainingAttempts - newAttemptsUsed === 1) {
             message = 'Please try again. You have 1 attempt left.';
@@ -195,7 +209,7 @@ export default function ResponseBlock({
         {hasCorrectAnswerFeedback && showNextBtn && (
           <Button
             onClick={() => checkAnswerProvideFeedback()}
-            disabled={!answerValidator.isValid()}
+            disabled={!answerValidator.isValid() || attemptsUsed >= trainingAttempts}
           >
             Check Answer
           </Button>

@@ -14,7 +14,7 @@ import { useStudyId } from '../routes/utils';
 export function StudyEnd() {
   const studyConfig = useStudyConfig();
   const { storageEngine } = useStorageEngine();
-  const { answers } = useStoreSelector((state) => state);
+  const answers = useStoreSelector((state) => state.answers);
 
   const [completed, setCompleted] = useState(false);
   useEffect(() => {

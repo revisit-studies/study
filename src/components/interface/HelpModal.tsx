@@ -7,7 +7,8 @@ import ResourceNotFound from '../../ResourceNotFound';
 
 export default function HelpModal() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { showHelpText, config } = useStoreSelector((state: any) => state);
+  const showHelpText = useStoreSelector((state) => state.showHelpText);
+  const config = useStoreSelector((state) => state.config);
 
   const storeDispatch = useStoreDispatch();
   const { toggleShowHelpText } = useStoreActions();
@@ -16,7 +17,11 @@ export default function HelpModal() {
 
   const [loading, setLoading] = useState(true);
   useEffect(() => {
-    async function fetchImage() {
+    async function fetchText() {
+      if (!config.uiConfig.helpTextPath) {
+        setLoading(false);
+        return;
+      }
       const asset = await getStaticAssetByPath(config.uiConfig.helpTextPath);
       if (asset !== undefined) {
         setHelpText(asset);
@@ -24,7 +29,7 @@ export default function HelpModal() {
       setLoading(false);
     }
 
-    fetchImage();
+    fetchText();
   }, [config.uiConfig.helpTextPath]);
 
   return (

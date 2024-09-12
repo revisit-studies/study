@@ -666,7 +666,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return participantsData;
   }
 
-  async rejectParticipant(studyId: string, participantId: string) {
+  async rejectParticipant(studyId: string, participantId: string, reason: string) {
     const studyCollection = collection(
       this.firestore,
       `${this.collectionPrefix}${studyId}`,
@@ -691,7 +691,10 @@ export class FirebaseStorageEngine extends StorageEngine {
       }
 
       // set reject flag
-      participant.rejected = true;
+      participant.rejected = {
+        reason,
+        timestamp: new Date().getTime(),
+      };
       await this._pushToFirebaseStorageByRef(
         participantRef,
         'participantData',
@@ -712,6 +715,14 @@ export class FirebaseStorageEngine extends StorageEngine {
     } catch {
       console.warn('Failed to reject the participant.');
     }
+  }
+
+  async rejectCurrentParticipant(studyId: string, reason: string) {
+    if (!this.currentParticipantId) {
+      throw new Error('Participant not initialized');
+    }
+
+    return await this.rejectParticipant(studyId, this.currentParticipantId, reason);
   }
 
   async setMode(studyId: string, mode: REVISIT_MODE, value: boolean) {

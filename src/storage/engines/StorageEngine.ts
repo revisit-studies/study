@@ -78,7 +78,9 @@ export abstract class StorageEngine {
 
   abstract validateUser(user: UserWrapped | null): Promise<boolean>;
 
-  abstract rejectParticipant(studyId: string, participantID: string): Promise<void>;
+  abstract rejectParticipant(studyId: string, participantID: string, reason: string): Promise<void>;
+
+  abstract rejectCurrentParticipant(studyId: string, reason: string): Promise<void>;
 
   abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
 

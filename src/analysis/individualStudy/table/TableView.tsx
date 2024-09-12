@@ -1,5 +1,5 @@
 import {
-  Box, Spoiler, Stack, Table, Text, Flex, Checkbox, Button, Tooltip, LoadingOverlay, Group, Select, Space,
+  Box, Spoiler, Stack, Table, Text, Flex, Checkbox, Button, Tooltip, LoadingOverlay, Group, Select, Space, Modal, TextInput,
 } from '@mantine/core';
 import {
   IconCheck, IconProgress,
@@ -8,16 +8,16 @@ import {
 } from '@tabler/icons-react';
 import React, { useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { openConfirmModal } from '@mantine/modals';
 import { ParticipantData, StoredAnswer, StudyConfig } from '../../../parser/types';
 import { ParticipantMetadata } from '../../../store/types';
 import { configSequenceToUniqueTrials, findBlockForStep, getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
 import { useAuth } from '../../../store/hooks/useAuth';
+import { getCleanedDuration } from '../../../utils/getCleanedDuration';
 
 function AnswerCell({ cellData }: { cellData: StoredAnswer }) {
-  return (
+  return Number.isFinite(cellData.endTime) && Number.isFinite(cellData.startTime) ? (
     <Table.Td>
       <Stack miw={100}>
         {Object.entries(cellData.answer).map(([key, storedAnswer]) => (
@@ -33,17 +33,32 @@ function AnswerCell({ cellData }: { cellData: StoredAnswer }) {
         ))}
       </Stack>
     </Table.Td>
+  ) : (
+    <Table.Td>N/A</Table.Td>
   );
 }
 
 function DurationCell({ cellData }: { cellData: StoredAnswer }) {
   const duration = (cellData.endTime - cellData.startTime) / 1000;
-  return (
+  const cleanedDuration = getCleanedDuration(cellData);
+  return Number.isFinite(cellData.endTime) && Number.isFinite(cellData.startTime) ? (
     <Table.Td>
       {duration.toFixed(1)}
       {' '}
       s
+      {cleanedDuration && (
+        <>
+          <br />
+          {' '}
+          (
+          {(cleanedDuration / 1000).toFixed(1)}
+          {' '}
+          s)
+        </>
+      )}
     </Table.Td>
+  ) : (
+    <Table.Td>N/A</Table.Td>
   );
 }
 
@@ -94,10 +109,11 @@ export function TableView({
   const { storageEngine } = useStorageEngine();
   const { studyId } = useParams();
   const { user } = useAuth();
-  const rejectParticipant = async (participantId: string) => {
+  const rejectParticipant = async (participantId: string, reason: string) => {
     if (storageEngine && studyId) {
       if (user.isAdmin) {
-        await storageEngine.rejectParticipant(studyId, participantId);
+        const finalReason = reason === '' ? 'Rejected by admin' : reason;
+        await storageEngine.rejectParticipant(studyId, participantId, finalReason);
         await refresh();
       } else {
         console.warn('You are not authorized to perform this action.');
@@ -106,29 +122,18 @@ export function TableView({
   };
   const [checked, setChecked] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const openModal = () => openConfirmModal({
-    title: 'Confirm rejecting participants',
-    children: (
-      <Text size="sm">
-        Are you sure you want to reject the selected participants? This action is
-        {' '}
-        <Text span fw={700} td="underline" inherit>irreversible</Text>
-        , and will return the participants&apos; sequences to the beginning of the sequence array.
-      </Text>
-    ),
-    labels: { confirm: 'Reject Participants', cancel: 'Cancel' },
-    confirmProps: { color: 'red' },
-    cancelProps: { variant: 'subtle', color: 'dark' },
-    onCancel: () => {},
-    onConfirm: async () => {
-      setLoading(true);
-      const promises = checked.map(async (participantId) => await rejectParticipant(participantId));
-      await Promise.all(promises);
-      setChecked([]);
-      await refresh();
-      setLoading(false);
-    },
-  });
+  const [modalRejectParticipantsOpened, setModalRejectParticipantsOpened] = useState<boolean>(false);
+  const [rejectParticipantsMessage, setRejectParticipantsMessage] = useState<string>('');
+
+  const handleRejectParticipants = async () => {
+    setLoading(true);
+    setModalRejectParticipantsOpened(false);
+    const promises = checked.map(async (participantId) => await rejectParticipant(participantId, rejectParticipantsMessage));
+    await Promise.all(promises);
+    setChecked([]);
+    await refresh();
+    setLoading(false);
+  };
 
   const allParticipants = useMemo(() => [...completed, ...inProgress, ...rejected], [completed, inProgress, rejected]);
 
@@ -160,10 +165,10 @@ export function TableView({
       <Table.Th key={`header-${trial.componentName}-${trial.timesSeenInBlock}-duration`}>
         <span style={{ whiteSpace: 'nowrap' }}>{trial.componentName}</span>
         {' '}
-        Duration
+        Duration (clean)
       </Table.Th>,
     ]),
-    <Table.Th key="total-duration">Total Duration</Table.Th>,
+    <Table.Th key="total-duration">Total Duration (clean)</Table.Th>,
   ];
 
   const rows = allParticipants.map((record) => (
@@ -177,19 +182,26 @@ export function TableView({
         {record.participantId}
       </Table.Td>
       <Table.Td>
-        <Flex direction="row" align="center">
-          {
-          // eslint-disable-next-line no-nested-ternary
-          record.rejected ? <Tooltip label="Rejected"><IconX size={16} color="red" style={{ marginBottom: -3 }} /></Tooltip>
-            : record.completed
-              ? <Tooltip label="Completed"><IconCheck size={16} color="teal" style={{ marginBottom: -3 }} /></Tooltip>
-              : <Tooltip label="In Progress"><IconProgress size={16} color="orange" style={{ marginBottom: -3 }} /></Tooltip>
-        }
-          {(!record.completed) && (
-          <Text size="sm" mb={-1} ml={4}>
-            {((Object.entries(record.answers).filter(([_, entry]) => entry.endTime !== undefined).length / (getSequenceFlatMap(record.sequence).length - 1)) * 100).toFixed(2)}
-            %
-          </Text>
+        <Flex direction="column" miw={100}>
+          <Flex direction="row" align="center">
+            {
+              // eslint-disable-next-line no-nested-ternary
+              record.rejected ? <Tooltip label="Rejected"><IconX size={16} color="red" style={{ marginBottom: -3 }} /></Tooltip>
+                : record.completed
+                  ? <Tooltip label="Completed"><IconCheck size={16} color="teal" style={{ marginBottom: -3 }} /></Tooltip>
+                  : <Tooltip label="In Progress"><IconProgress size={16} color="orange" style={{ marginBottom: -3 }} /></Tooltip>
+            }
+            {(!record.completed) && (
+            <Text size="sm" mb={-1} ml={4}>
+              {((Object.entries(record.answers).filter(([_, entry]) => entry.endTime !== -1 && entry.endTime !== undefined).length / (getSequenceFlatMap(record.sequence).length - 1)) * 100).toFixed(2)}
+              %
+            </Text>
+            )}
+          </Flex>
+          {record.rejected && (
+            <Text mt={5} fz={10}>
+              {record.rejected.reason}
+            </Text>
           )}
         </Flex>
       </Table.Td>
@@ -207,7 +219,7 @@ export function TableView({
             const trialIndex = parseInt(trialId.slice(trialId.lastIndexOf('_') + 1), 10);
             return trialName === trial.componentName && trialIndex <= sequenceBlock[0].lastIndex && trialIndex >= sequenceBlock[0].firstIndex;
           });
-        return (trialData !== null && trialData.length >= trial.timesSeenInBlock + 1 ? (
+        return (trialData !== null && trialData.length >= trial.timesSeenInBlock + 1 && trialData[trial.timesSeenInBlock][1].endTime !== -1 ? (
           <React.Fragment key={`cellgroup-${record.participantId}-${trial.componentName}-${trial.timesSeenInBlock}`}>
             <AnswerCell cellData={trialData[trial.timesSeenInBlock][1]} />
             <DurationCell cellData={trialData[trial.timesSeenInBlock][1]} />
@@ -221,10 +233,10 @@ export function TableView({
       })}
       <DurationCell
         cellData={{
-          startTime: Math.min(...Object.values(record.answers).map((a) => a.startTime)),
-          endTime: Math.max(...Object.values(record.answers).map((a) => a.endTime)),
+          startTime: Math.min(...Object.values(record.answers).filter((a) => a.endTime !== -1 && a.endTime !== undefined).map((a) => a.startTime)),
+          endTime: Math.max(...Object.values(record.answers).filter((a) => a.endTime !== -1 && a.endTime !== undefined).map((a) => a.endTime)),
           answer: {},
-          windowEvents: [],
+          windowEvents: Object.values(record.answers).flatMap((a) => a.windowEvents),
         }}
         key={`cell-${record.participantId}-total-duration`}
       />
@@ -249,8 +261,12 @@ export function TableView({
             />
           </Group>
           <Group>
-            <DownloadButtons allParticipants={[...completed, ...inProgress]} studyId={studyId || ''} />
-            <Button disabled={checked.length === 0 || !user.isAdmin} onClick={openModal} color="red">Reject Participants</Button>
+            <DownloadButtons allParticipants={allParticipants} studyId={studyId || ''} />
+            <Button disabled={checked.length === 0 || !user.isAdmin} onClick={() => setModalRejectParticipantsOpened(true)} color="red">
+              Reject Participants (
+              {checked.length}
+              )
+            </Button>
           </Group>
         </Flex>
         <Flex direction="column" style={{ width: '100%', overflow: 'auto' }}>
@@ -261,7 +277,32 @@ export function TableView({
             <Table.Tbody>{rows}</Table.Tbody>
           </Table>
         </Flex>
+        <Modal
+          opened={modalRejectParticipantsOpened}
+          onClose={() => setModalRejectParticipantsOpened(false)}
+          title={(
+            <Text>
+              Reject Participants (
+              {checked.length}
+              )
+            </Text>
+)}
+        >
+          <TextInput
+            label="Please enter the reason for rejection."
+            onChange={(event) => setRejectParticipantsMessage(event.target.value)}
+          />
+          <Flex mt="sm" justify="right">
+            <Button mr={5} variant="subtle" color="dark" onClick={() => { setModalRejectParticipantsOpened(false); setRejectParticipantsMessage(''); }}>
+              Cancel
+            </Button>
+            <Button color="red" onClick={() => handleRejectParticipants()}>
+              Reject Participants
+            </Button>
+          </Flex>
+        </Modal>
       </>
+
     ) : (
       <>
         <Space h="xl" />
