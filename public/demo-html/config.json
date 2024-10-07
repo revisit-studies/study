@@ -50,13 +50,19 @@
           "max": 7
         }
       ]
+    },
+    "external_website": {
+      "type": "website",
+      "path": "https://www.revisit.dev",
+      "response": []
     }
   },
   "sequence": {
     "order": "fixed",
     "components": [
       "introduction",
-      "barChart"
+      "barChart",
+      "external_website"
     ]
   }
 }

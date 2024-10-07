@@ -82,7 +82,11 @@ export default function IframeController({ currentConfig }: { currentConfig: Web
   return (
     <iframe
       ref={ref}
-      src={`${BASE_PREFIX}${currentConfig.path}?trialid=${currentComponent}&id=${iframeId}`}
+      src={
+        currentConfig.path.startsWith('http')
+          ? currentConfig.path
+          : `${BASE_PREFIX}${currentConfig.path}?trialid=${currentComponent}&id=${iframeId}`
+      }
       style={defaultStyle}
     />
   );
