@@ -24,9 +24,146 @@
     "autoDownloadStudy": false,
     "sidebar": true
   },
-  "components": {},
+  "components": {
+    "welcome": {
+      "type": "markdown",
+      "path": "tutorial/simple-study/assets/welcome.md",
+      "response": []
+    },
+    "consent": {
+      "type": "markdown",
+      "path": "tutorial/simple-study/assets/consent.md",
+      "nextButtonText": "I agree",
+      "response": []
+    },
+    "demographics": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "age",
+          "type": "numerical",
+          "required": true,
+          "prompt": "What is your age?"
+        },
+        {
+          "id": "height",
+          "type": "numerical",
+          "required": true,
+          "prompt": "What is your height in inches?"
+        }
+      ]
+    },
+    "stimulus_1": {
+      "type": "image",
+      "path": "tutorial/simple-study/assets/hurricane.png",
+      "response": [
+        {
+          "id": "count",
+          "type": "numerical",
+          "required": true,
+          "prompt": "How many category 5 Atlantic hurricanes have made landfall since 1856?",
+          "min": 0,
+          "max": 100,
+          "location": "sidebar"
+        },
+        {
+          "id": "reaction",
+          "type": "radio",
+          "required": true,
+          "prompt": "Based on this image, would you host VIS 2024 in Florida",
+          "options": [
+            "Yes",
+            "No",
+            "Maybe"
+          ],
+          "location": "sidebar"
+        },
+        {
+          "id": "reason",
+          "type": "longText",
+          "required": true,
+          "prompt": "Please explain your reasoning.",
+          "location": "sidebar"
+        }
+      ]
+    },
+    "stimulus_2": {
+      "type": "image",
+      "path": "tutorial/simple-study/assets/AI-gender.webp",
+      "response": [
+        {
+          "id": "women",
+          "type": "radio",
+          "required": true,
+          "prompt": "For which profession did AI generate women the least compared to US census data?",
+          "location": "sidebar",
+          "options": [
+            "Doctor",
+            "Engineer",
+            "Dishwasher",
+            "Janitor"
+          ]
+        },
+        {
+          "id": "men",
+          "type": "radio",
+          "required": true,
+          "prompt": "For which profession did AI generate men the least compared to US census data?",
+          "location": "sidebar",
+          "options": [
+            "Doctor",
+            "Engineer",
+            "Dishwasher",
+            "Janitor"
+          ]
+        }
+      ]
+    },
+    "post_study_survey": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "enjoyment",
+          "type": "radio",
+          "required": true,
+          "prompt": "How much did you enjoy the study?",
+          "options": [
+            "Not at all",
+            "A little",
+            "Somewhat",
+            "Very much"
+          ]
+        },
+        {
+          "id": "learned",
+          "type": "radio",
+          "required": true,
+          "prompt": "How much did you learn from the study?",
+          "options": [
+            "Nothing",
+            "A little",
+            "Some",
+            "A lot"
+          ]
+        },
+        {
+          "id": "comments",
+          "type": "longText",
+          "required": false,
+          "prompt": "Any additional comments?"
+        }
+      ]
+    }
+  },
   "sequence": {
     "order": "fixed",
-    "components": []
+    "components": [
+      "welcome",
+      "consent",
+      "demographics",
+      "stimulus_1",
+      "stimulus_2",
+      "post_study_survey"
+    ]
   }
 }
