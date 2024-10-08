@@ -67,22 +67,10 @@
           "location": "sidebar"
         },
         {
-          "id": "reaction",
-          "type": "radio",
-          "required": true,
-          "prompt": "Based on this image, would you host VIS 2024 in Florida",
-          "options": [
-            "Yes",
-            "No",
-            "Maybe"
-          ],
-          "location": "sidebar"
-        },
-        {
           "id": "reason",
           "type": "longText",
           "required": true,
-          "prompt": "Please explain your reasoning.",
+          "prompt": "Explain the trends you see in the image.",
           "location": "sidebar"
         }
       ]
