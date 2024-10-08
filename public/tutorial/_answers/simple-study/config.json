@@ -55,28 +55,6 @@
     },
     "stimulus_1": {
       "type": "image",
-      "path": "tutorial/simple-study/assets/hurricane.png",
-      "response": [
-        {
-          "id": "count",
-          "type": "numerical",
-          "required": true,
-          "prompt": "How many category 5 Atlantic hurricanes have made landfall since 1856?",
-          "min": 0,
-          "max": 100,
-          "location": "sidebar"
-        },
-        {
-          "id": "reason",
-          "type": "longText",
-          "required": true,
-          "prompt": "Explain the trends you see in the image.",
-          "location": "sidebar"
-        }
-      ]
-    },
-    "stimulus_2": {
-      "type": "image",
       "path": "tutorial/simple-study/assets/AI-gender.webp",
       "response": [
         {
@@ -104,41 +82,6 @@
             "Dishwasher",
             "Janitor"
           ]
-        }
-      ]
-    },
-    "post_study_survey": {
-      "type": "questionnaire",
-      "response": [
-        {
-          "id": "enjoyment",
-          "type": "radio",
-          "required": true,
-          "prompt": "How much did you enjoy the study?",
-          "options": [
-            "Not at all",
-            "A little",
-            "Somewhat",
-            "Very much"
-          ]
-        },
-        {
-          "id": "learned",
-          "type": "radio",
-          "required": true,
-          "prompt": "How much did you learn from the study?",
-          "options": [
-            "Nothing",
-            "A little",
-            "Some",
-            "A lot"
-          ]
-        },
-        {
-          "id": "comments",
-          "type": "longText",
-          "required": false,
-          "prompt": "Any additional comments?"
         }
       ]
     }
