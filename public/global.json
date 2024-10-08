@@ -3,7 +3,8 @@
   "configsList": [
     "simple-study",
     "react-and-randomization",
-    "demo-html"
+    "demo-html",
+    "advanced-react-component"
   ],
   "configs": {
     "demo-html": {
@@ -14,6 +15,9 @@
     },
     "react-and-randomization": {
       "path": "tutorial/react-and-randomization/config.json"
+    },
+    "advanced-react-component": {
+      "path": "tutorial/advanced-react-component/config.json"
     }
   }
 }
