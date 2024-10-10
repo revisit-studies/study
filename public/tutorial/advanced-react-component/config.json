@@ -25,14 +25,36 @@
   "components": {
     "introduction": {
       "type": "markdown",
-      "path": "tutorial/advanced-react-component/assessts/introduction.md",
+      "path": "tutorial/advanced-react-component/assets/introduction.md",
       "response": []
+    },
+    "clickCircle": {
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "description": "Trial in reVISit tutorial",
+      "instruction": "Click on any place inside the box",
+      "path": "tutorial/advanced-react-component/ClickCircle.tsx",
+      "response": [
+        {
+          "id": "click",
+          "prompt": "Your click distance to circle center",
+          "required": true,
+          "location": "sidebar",
+          "type": "iframe"
+        }
+      ],
+      "parameters": {
+        "cx": 100,
+        "cy": 100,
+        "taskid": "click"
+      }
     }
   },
   "sequence": {
     "order": "fixed",
     "components": [
-      "introduction"
+      "introduction",
+      "clickCircle"
     ]
   }
 }
