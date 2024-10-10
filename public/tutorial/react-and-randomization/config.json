@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Interactive Selections in Scatterplots",
+    "title": "TUTORIAL - Interactive Selections in Scatterplots",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
