@@ -31,9 +31,9 @@
     "clickCircle": {
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "description": "Trial in reVISit tutorial",
+      "description": "Click on any place inside the box",
       "instruction": "Click on any place inside the box",
-      "path": "tutorial/advanced-react-component/ClickCircle.tsx",
+      "path": "tutorial/advanced-react-component/assets/ClickCircle.tsx",
       "response": [
         {
           "id": "click",

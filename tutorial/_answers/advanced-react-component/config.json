@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Advanced React Component Tutorial",
+    "title": "TUTORIAL - Advanced React Component Tutorial",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
@@ -25,7 +25,7 @@
   "components": {
     "introduction": {
       "type": "markdown",
-      "path": "tutorial/advanced-react-component/assessts/introduction.md",
+      "path": "tutorial/advanced-react-component/assets/introduction.md",
       "response": []
     },
     "clickCircle": {
@@ -33,7 +33,7 @@
       "nextButtonLocation": "sidebar",
       "description": "Click on any place inside the box",
       "instruction": "Click on any place inside the box",
-      "path": "tutorial/advanced-react-component/assessts/ClickCircle.tsx",
+      "path": "tutorial/advanced-react-component/assets/ClickCircle.tsx",
       "response": [
         {
           "id": "click",
