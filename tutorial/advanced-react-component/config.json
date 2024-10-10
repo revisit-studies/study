@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Advanced React Component Tutorial",
+    "title": "TUTORIAL - Advanced React Component Tutorial",
     "version": "pilot",
     "authors": [
       "The reVISit Team"

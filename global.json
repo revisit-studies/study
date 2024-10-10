@@ -1,6 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/GlobalConfigSchema.json",
   "configsList": [
+    "tutorial-simple-study",
+    "tutorial-react-and-randomization",
     "tutorial-advanced-react",
     "demo-html",
     "demo-cleveland",
@@ -19,6 +21,12 @@
     "test-parser-errors"
   ],
   "configs": {
+    "tutorial-simple-study": {
+      "path": "tutorial/simple-study/config.json"
+    },
+    "tutorial-react-and-randomization": {
+      "path": "tutorial/react-and-randomization/config.json"
+    },
     "tutorial-advanced-react": {
       "path": "tutorial/advanced-react-component/config.json"
     },

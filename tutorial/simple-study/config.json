@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "A simple study for our tutorial",
+    "title": "TUTORIAL - A simple study for our tutorial",
     "version": "development",
     "authors": [
       "The reVISit Team",
