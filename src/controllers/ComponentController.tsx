@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import merge from 'lodash.merge';
 import ResponseBlock from '../components/response/ResponseBlock';
 import IframeController from './IframeController';
@@ -25,6 +25,13 @@ export default function ComponentController() {
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent() || 'Notfound';
   const stepConfig = studyConfig.components[currentComponent];
+  const storage = useStorageEngine();
+
+  const [audioStream, setAudioStream] = useState<MediaRecorder | null>(null);
+  const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
+
+  const dispatch = useStoreDispatch();
+  const { setIsRecording } = useStoreActions();
 
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
@@ -44,6 +51,44 @@ export default function ComponentController() {
       }));
     }
   }, [setAlertModal, storageEngine, storeDispatch]);
+
+  useEffect(() => {
+    if (!currentStep || !studyConfig || !studyConfig.recordStudyAudio || !storage.storageEngine) {
+      return;
+    }
+
+    if (audioStream && prevTrialName) {
+      storage.storageEngine.saveAudio(audioStream, prevTrialName);
+    }
+
+    if (stepConfig && !stepConfig.recordAudio) {
+      audioStream?.stop();
+      setPrevTrialName(null);
+      setAudioStream(null);
+      dispatch(setIsRecording(false));
+    } else {
+      const _stream = navigator.mediaDevices.getUserMedia({
+        audio: true,
+      });
+
+      _stream.then((stream) => {
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorder.start();
+
+        setAudioStream(mediaRecorder);
+        dispatch(setIsRecording(true));
+      });
+      setPrevTrialName(currentComponent);
+    }
+
+    // return () => {
+    //   if (_stream) {
+    //     _stream.then((data) => {
+    //       data.getTracks().forEach((track) => track.stop());
+    //     });
+    //   }
+    // };
+  }, [currentComponent]);
 
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.

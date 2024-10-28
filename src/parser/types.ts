@@ -480,6 +480,9 @@ export interface BaseIndividualComponent {
   description?: string;
   /** The instruction of the component. This is used to identify and provide additional information for the component in the admin panel. */
   instruction?: string;
+  /** Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.  */
+  recordAudio?: boolean;
+
 }
 
 /**
@@ -1131,6 +1134,8 @@ export interface StudyConfig {
   $schema: string;
   /** The metadata for the study. This is used to identify the study and version in the data file. */
   studyMetadata: StudyMetadata;
+  /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.  */
+  recordStudyAudio?: boolean;
   /** The UI configuration for the study. This is used to configure the UI of the app. */
   uiConfig: UIConfig;
   /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */

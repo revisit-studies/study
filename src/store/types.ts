@@ -119,6 +119,7 @@ export interface Sequence {
 
 export interface StoreState {
   studyId: string;
+  isRecording: boolean;
   answers: Record<string, StoredAnswer>;
   sequence: Sequence;
   config: StudyConfig;

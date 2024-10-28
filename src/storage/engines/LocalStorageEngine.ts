@@ -44,6 +44,11 @@ export class LocalStorageEngine extends StorageEngine {
     });
   }
 
+  async saveAudio(audioStream: MediaRecorder): Promise<void> {
+    console.warn('not yet implemented', audioStream);
+    return Promise.resolve();
+  }
+
   async initializeParticipantSession(studyId: string, searchParams: Record<string, string>, config: StudyConfig, metadata: ParticipantMetadata, urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');

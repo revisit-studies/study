@@ -322,6 +322,25 @@ export class FirebaseStorageEngine extends StorageEngine {
     return await this.localForage.removeItem('currentParticipantId');
   }
 
+  async saveAudio(
+    audioStream: MediaRecorder,
+    taskName: string,
+  ) {
+    audioStream.addEventListener('dataavailable', (data) => {
+      const storage = getStorage();
+
+      const storeRef = ref(storage, `${this.studyId}/audio/${this.currentParticipantId}_${taskName}`);
+
+      uploadBytes(storeRef, data.data).then(() => {
+        console.warn('Uploaded a blob or file!');
+      });
+    });
+
+    audioStream.stop();
+
+    audioStream.stream.getTracks().forEach((track) => track.stop());
+  }
+
   async saveAnswers(answers: Record<string, StoredAnswer>) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
