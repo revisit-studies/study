@@ -61,7 +61,7 @@ export default function ComponentController() {
       storage.storageEngine.saveAudio(audioStream, prevTrialName);
     }
 
-    if (stepConfig && !stepConfig.recordAudio) {
+    if (stepConfig && stepConfig.recordAudio !== undefined && !stepConfig.recordAudio) {
       audioStream?.stop();
       setPrevTrialName(null);
       setAudioStream(null);
@@ -80,14 +80,6 @@ export default function ComponentController() {
       });
       setPrevTrialName(currentComponent);
     }
-
-    // return () => {
-    //   if (_stream) {
-    //     _stream.then((data) => {
-    //       data.getTracks().forEach((track) => track.stop());
-    //     });
-    //   }
-    // };
   }, [currentComponent]);
 
   // We're not using hooks below here, so we can return early if we're at the end of the study.

@@ -329,7 +329,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     audioStream.addEventListener('dataavailable', (data) => {
       const storage = getStorage();
 
-      const storeRef = ref(storage, `${this.studyId}/audio/${this.currentParticipantId}_${taskName}`);
+      const storeRef = ref(storage, `${this.collectionPrefix}${this.studyId}/audio/${this.currentParticipantId}_${taskName}`);
 
       uploadBytes(storeRef, data.data).then(() => {
         console.warn('Uploaded a blob or file!');
