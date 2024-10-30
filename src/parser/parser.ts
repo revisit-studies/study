@@ -4,9 +4,10 @@ import Ajv from 'ajv';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
 import {
-  GlobalConfig, IndividualComponent, InheritedComponent, ParsedConfig, StudyConfig,
+  GlobalConfig, ParsedConfig, StudyConfig,
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
+import { isInheritedComponent } from './utils';
 
 const ajv1 = new Ajv();
 ajv1.addSchema(globalSchema);
@@ -28,10 +29,6 @@ function verifyGlobalConfig(data: GlobalConfig) {
   });
 
   return [configsListVerified, errors] as const;
-}
-
-export function isInheritedComponent(comp: IndividualComponent | InheritedComponent) : comp is InheritedComponent {
-  return (<InheritedComponent>comp).baseComponent !== undefined;
 }
 
 export function parseGlobalConfig(fileData: string) {

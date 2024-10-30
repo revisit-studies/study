@@ -20,7 +20,7 @@ import { ParticipantData } from '../../storage/types';
 import {
   Answer, IndividualComponent, Prettify, StudyConfig,
 } from '../../parser/types';
-import { isInheritedComponent } from '../../parser/parser';
+import { isInheritedComponent } from '../../parser/utils';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { StorageEngine } from '../../storage/engines/StorageEngine';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
