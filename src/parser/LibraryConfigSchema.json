@@ -1,0 +1,1628 @@
+{
+  "$ref": "#/definitions/LibraryConfig",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "definitions": {
+    "Answer": {
+      "additionalProperties": false,
+      "description": "The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.\n\nAnswers are used to defined correct answers for a task. These are generally used in training tasks or if skip logic is required based on the answer. The answer field is used to define the correct answer to the question. The acceptableLow and acceptableHigh fields are used to define a range of acceptable answers (these are currently only used for training). For example, if the correct answer is 5, and the acceptableLow is 4 and the acceptableHigh is 6, then any answer between 4 and 6 will be considered correct.\n\nHere's an example of how to use the Answer interface to define the correct answer to a question:\n\n```js { \"type\": \"markdown\", \"path\": \"<study-name>/assets/question.md\", \"response\": [  {    \"id\": \"response1\",    \"prompt\": \"What is 2 + 2?\",    \"required\": true,    \"location\": \"belowStimulus\",    \"type\": \"numerical\"  } ] \"correctAnswer\": [{  \"id\": \"response1\",  \"answer\": 4 }] } ```\n\nIn this example, the correct answer to the question \"What is 2 + 2?\" is 4. If the participant answers 4, they will be considered correct. If they answer anything other than 4, they will be considered incorrect.",
+      "properties": {
+        "acceptableHigh": {
+          "description": "The acceptable high value for the answer. This is used to define a range of acceptable answers.",
+          "type": "number"
+        },
+        "acceptableLow": {
+          "description": "The acceptable low value for the answer. This is used to define a range of acceptable answers.",
+          "type": "number"
+        },
+        "answer": {
+          "description": "The correct answer to the question."
+        },
+        "id": {
+          "description": "The id of the answer. This is used to identify the answer in the data file.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "answer"
+      ],
+      "type": "object"
+    },
+    "BaseComponents": {
+      "additionalProperties": {
+        "additionalProperties": false,
+        "properties": {
+          "allowFailedTraining": {
+            "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+            "type": "boolean"
+          },
+          "correctAnswer": {
+            "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
+            "items": {
+              "$ref": "#/definitions/Answer"
+            },
+            "type": "array"
+          },
+          "description": {
+            "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
+            "type": "string"
+          },
+          "instruction": {
+            "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
+            "type": "string"
+          },
+          "instructionLocation": {
+            "$ref": "#/definitions/ResponseBlockLocation",
+            "description": "The location of the instructions."
+          },
+          "meta": {
+            "additionalProperties": {},
+            "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
+            "type": "object"
+          },
+          "nextButtonLocation": {
+            "$ref": "#/definitions/ResponseBlockLocation",
+            "description": "The location of the next button."
+          },
+          "nextButtonText": {
+            "description": "The text that is displayed on the next button.",
+            "type": "string"
+          },
+          "parameters": {
+            "anyOf": [
+              {
+                "additionalProperties": {},
+                "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
+                "type": "object"
+              },
+              {
+                "additionalProperties": {},
+                "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
+                "type": "object"
+              }
+            ],
+            "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
+          },
+          "path": {
+            "anyOf": [
+              {
+                "description": "The path to the markdown file. This should be a relative path from the public folder.",
+                "type": "string"
+              },
+              {
+                "description": "The path to the react component. This should be a relative path from the src/public folder.",
+                "type": "string"
+              },
+              {
+                "description": "The path to the image. This should be a relative path from the public folder.",
+                "type": "string"
+              },
+              {
+                "description": "The path to the website. This should be a relative path from the public folder or could be an external website.",
+                "type": "string"
+              }
+            ],
+            "description": "The path to the markdown file. This should be a relative path from the public folder."
+          },
+          "provideFeedback": {
+            "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+            "type": "boolean"
+          },
+          "response": {
+            "description": "The responses to the component",
+            "items": {
+              "$ref": "#/definitions/Response"
+            },
+            "type": "array"
+          },
+          "style": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "The style of the image. This is an object with css properties as keys and css values as values.",
+            "type": "object"
+          },
+          "trainingAttempts": {
+            "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+            "type": "number"
+          },
+          "type": {
+            "enum": [
+              "markdown",
+              "react-component",
+              "image",
+              "website",
+              "questionnaire"
+            ],
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "description": "The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;\n\n Using baseComponents:\n\n```js \"baseComponents\": { \"my-image-component\": { \"instructionLocation\": \"sidebar\", \"nextButtonLocation\": \"sidebar\", \"path\": \"<study-name>/assets/my-image.jpg\", \"response\": [   {     \"id\": \"my-image-id\",     \"options\": [\"Europe\", \"Japan\", \"USA\"],     \"prompt\": \"Your Selected Answer:\",     \"type\": \"dropdown\"   } ], \"type\": \"image\" } } ``` In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `\"baseComponent\":\"my-image-component\"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below: ```js \"components\": { \"q1\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with largest GDP\", \"instruction\": \"Which region has the largest GDP?\" }, \"q2\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with lowest GDP\", \"instruction\": \"Which region has the lowest GDP?\" }, \"q3\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with highest exports of Wheat\", \"instruction\": \"Which region had the most Wheat exported in 2022?\" } } ```",
+      "type": "object"
+    },
+    "CheckboxResponse": {
+      "additionalProperties": false,
+      "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.\n\n```js { \"id\": \"q7\", \"prompt\": \"Checkbox example (not required)\", \"required\": false, \"location\": \"aboveStimulus\", \"type\": \"checkbox\", \"options\": [\"Option 1\", \"Option 2\", \"Option 3\"] } ```",
+      "properties": {
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "maxSelections": {
+          "description": "The maximum number of selections that are required.",
+          "type": "number"
+        },
+        "minSelections": {
+          "description": "The minimum number of selections that are required.",
+          "type": "number"
+        },
+        "options": {
+          "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "type": {
+          "const": "checkbox",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "options",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "ComponentBlock": {
+      "additionalProperties": false,
+      "description": "The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).\n\nThe pure random assignment is a random assignment with no guarantees. For example, one component _could_ show up in the first position 10 times in a row. However, this situation is unlikely.\n\nHere's a snippet that shows how to use the random order:\n\n```js { \"order\": \"random\", \"components\": [ \"component1\", \"component2\", \"component3\" ] } ``` This snippet would produce a random order of the components in the sequence array. For example, the resulting sequence array could be :\n\n```js [ [\"component2\", \"component3\", \"component1\"], [\"component1\", \"component3\", \"component2\"], [\"component3\", \"component1\", \"component2\"], ... ] ```\n\nThe latin square assignment is a random assignment with some guarantees. It ensures that each component is shown an equal number of times in each position. Here's a snippet that shows how to use the latin square order:\n\n```js { \"order\": \"latinSquare\", \"components\": [ \"component1\", \"component2\", \"component3\" ] } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```js [ [\"component1\", \"component2\", \"component3\"], [\"component2\", \"component3\", \"component1\"], [\"component3\", \"component1\", \"component2\"], ... ] ```\n\nThe fixed assignment is a fixed assignment of components. This is used when you want to show the components in a specific order. Here's a snippet that shows how to use the fixed order:\n\n```js { \"order\": \"fixed\", \"components\": [ \"component1\", \"component2\", \"component3\" ] } ```\n\nThis snippet would produce a fixed order of the components in the sequence array. The resulting sequence array would be:\n\n```js [ [\"component1\", \"component2\", \"component3\"], [\"component1\", \"component2\", \"component3\"], [\"component1\", \"component2\", \"component3\"], ... ] ```\n\nIn addition to the order property, the ComponentBlock interface also includes the `\"numSamples\"` property. This is used to reduce the number of components shown to a participant. This property respects the order property and the guarantees provided by the order property. For example, if you have three components in the components array and you set `\"numSamples\"` to 2, you would randomize across the three components while only showing a participant two of them. Here's a snippet that shows how to use the numSamples property:\n\n```js { \"order\": \"latinSquare\", \"components\": [ \"component1\", \"component2\", \"component3\" ], \"numSamples\": 2 } ```\n\nThis snippet would produce a latin square order of the components in the sequence array. Since the latin square guarantees that each component is shown an equal number of times in each position, the resulting sequence array could be:\n\n```js [ [\"component1\", \"component2\"], [\"component2\", \"component3\"], [\"component3\", \"component1\"], ... ] ```\n\nThe interruptions property specifies an array of interruptions. These can be used for breaks or attention checks. Interruptions can be deterministic or random. Please see [InterruptionBlock](../../type-aliases/InterruptionBlock) for more specific information.\n\nThe skip property is used to define skip conditions. This is used to skip to a different component or block based on the response to a component or the number of correct or incorrect responses in a block. Please see [SkipConditions](../../type-aliases/SkipConditions) for more specific information.",
+      "properties": {
+        "components": {
+          "description": "The components that are included in the order.",
+          "items": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "$ref": "#/definitions/ComponentBlock"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "id": {
+          "description": "The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property.",
+          "type": "string"
+        },
+        "interruptions": {
+          "description": "The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks.",
+          "items": {
+            "$ref": "#/definitions/InterruptionBlock"
+          },
+          "type": "array"
+        },
+        "numSamples": {
+          "description": "The number of samples to use for the random assignments. This means you can randomize across 3 components while only showing a participant 2 at a time.",
+          "type": "number"
+        },
+        "order": {
+          "description": "The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed.",
+          "enum": [
+            "random",
+            "latinSquare",
+            "fixed"
+          ],
+          "type": "string"
+        },
+        "skip": {
+          "$ref": "#/definitions/SkipConditions",
+          "description": "The skip conditions for the block."
+        }
+      },
+      "required": [
+        "order",
+        "components"
+      ],
+      "type": "object"
+    },
+    "ComponentBlockCondition": {
+      "additionalProperties": false,
+      "description": "The ComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect components in a block. All answers on all components in the block are checked.\n\nAnswers are checked against the correct answers defined in the IndividualComponent's [CorrectAnswer](../Answer). If no correct answers are defined, the component is considered correct by default.\n\nYou might use this if a participant answers two questions in a block incorrectly. Here's an example of how to use the ComponentBlockCondition:\n\n```js { ... \"skip\": [ {   \"check\": \"block\",   \"condition\": \"numIncorrect\",   \"value\": 2,   \"to\": \"end\" } ] ... } ```\n\nIn this example, when the number of components with incorrect responses in the block is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.\n\nWhen the condition is met, the participant will immediately be redirected to the component or block specified in the `\"to\"` property. If no conditions are met, the participant will continue to the next component in the sequence.",
+      "properties": {
+        "check": {
+          "const": "block",
+          "description": "The check we'll perform.",
+          "type": "string"
+        },
+        "condition": {
+          "description": "The condition to check.",
+          "enum": [
+            "numCorrect",
+            "numIncorrect"
+          ],
+          "type": "string"
+        },
+        "to": {
+          "description": "The id of the component or block to skip to",
+          "type": "string"
+        },
+        "value": {
+          "description": "The number of correct or incorrect responses to check for.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "check",
+        "condition",
+        "value",
+        "to"
+      ],
+      "type": "object"
+    },
+    "DeterministicInterruption": {
+      "additionalProperties": false,
+      "description": "The DeterministicInterruption interface is used to define an interruption that will be shown at a specific location in the block.\n\nFor example, if you want to show an interruption after the second component in the block, you would set firstLocation to 2. If you want to show an interruption after every 3 components, you would set spacing to 3. If you want to show an interruption after the second component and then every 3 components, you would set firstLocation to 2 and spacing to 3.\n\nThe components property is an array of the components that will be inserted at the location specified by firstLocation and spacing. These components should reference components in the StudyConfig.components section of the config.\n\nHere's an example of how to use the DeterministicInterruption:\n\n```js { \"order\": \"fixed\", \"components\": [ \"component1\", \"component2\", \"component3\", \"component4\", \"component5\", \"component6\" ], \"interruptions\": [ {   \"firstLocation\": 2,   \"spacing\": 3,   \"components\": [     \"interruption1\",     \"interruption2\"   ] } ] } ```\n\nThe resulting sequence array could be:\n\n```js [ [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"], [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"], [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"], ... ] ```",
+      "properties": {
+        "components": {
+          "description": "The components that are included in the interruption. These reference components in the StudyConfig.components section of the config.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "firstLocation": {
+          "description": "The Location of the first instance of the interruption. If this is set to 2, the interruption will be shown after the second component (inserted at index 2).",
+          "type": "number"
+        },
+        "spacing": {
+          "description": "The number of components between breaks.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "firstLocation",
+        "spacing",
+        "components"
+      ],
+      "type": "object"
+    },
+    "DropdownResponse": {
+      "additionalProperties": false,
+      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options.\n\nExample: ```js { \"id\": \"q-color\", \"prompt\": \"What is your favorite color?\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"dropdown\", \"placeholder\": \"Please choose your favorite color\", \"options\": [\"Red\", \"Blue\"] } ```",
+      "properties": {
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "options": {
+          "description": "The options that are displayed in the dropdown.",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "placeholder": {
+          "description": "The placeholder text that is displayed in the input.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "type": {
+          "const": "dropdown",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "options",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "IFrameResponse": {
+      "additionalProperties": false,
+      "description": "The IFrameResponse interface is used to define the properties of an iframe response. IFrameResponses render as a list, that is connected to a WebsiteComponent. When data is sent from the WebsiteComponent, it is displayed in the list.",
+      "properties": {
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "type": {
+          "const": "iframe",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "ImageComponent": {
+      "additionalProperties": false,
+      "description": "The ImageComponent interface is used to define the properties of an image component. This component is used to render an image with optional styling.\n\nFor example, to render an image with a path of `path/to/study/assets/image.jpg` and a max width of 50%, you would use the following snippet: ```js { \"type\": \"image\", \"path\": \"<study-name>/assets/image.jpg\", \"style\": { \"maxWidth\": \"50%\" } } ```",
+      "properties": {
+        "allowFailedTraining": {
+          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "type": "boolean"
+        },
+        "correctAnswer": {
+          "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instruction": {
+          "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the instructions."
+        },
+        "meta": {
+          "additionalProperties": {},
+          "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "object"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the next button."
+        },
+        "nextButtonText": {
+          "description": "The text that is displayed on the next button.",
+          "type": "string"
+        },
+        "path": {
+          "description": "The path to the image. This should be a relative path from the public folder.",
+          "type": "string"
+        },
+        "provideFeedback": {
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "response": {
+          "description": "The responses to the component",
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "style": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The style of the image. This is an object with css properties as keys and css values as values.",
+          "type": "object"
+        },
+        "trainingAttempts": {
+          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "type": "number"
+        },
+        "type": {
+          "const": "image",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "response",
+        "type"
+      ],
+      "type": "object"
+    },
+    "IndividualComponent": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/MarkdownComponent"
+        },
+        {
+          "$ref": "#/definitions/ReactComponent"
+        },
+        {
+          "$ref": "#/definitions/ImageComponent"
+        },
+        {
+          "$ref": "#/definitions/WebsiteComponent"
+        },
+        {
+          "$ref": "#/definitions/QuestionnaireComponent"
+        }
+      ]
+    },
+    "IndividualComponentAllResponsesCondition": {
+      "additionalProperties": false,
+      "description": "The IndividualComponentAllResponsesCondition interface is used to define a SkipCondition based on all answers to a specific component. The skip logic will be checked for every component in the block that has the specified name.\n\n:::info\n\nIf you need to check all instances of a repeated component, you should use the RepeatedComponentBlockCondition.\n\n:::\n\n\nHere's an example of how to use the IndividualComponentAllResponsesCondition:\n\n```js { ... \"skip\": [ {   \"name\": \"attentionCheck\",   \"check\": \"responses\",   \"to\": \"end\" } ] ... } ```\n\nIn this example, if all responses to the component with the ID \"attentionCheck\" are correct, the participant will be redirected to the end of the study. If any response is incorrect, the participant will continue to the next component in the sequence.",
+      "properties": {
+        "check": {
+          "const": "responses",
+          "description": "The check we'll perform.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the component to check.",
+          "type": "string"
+        },
+        "to": {
+          "description": "The id of the component or block to skip to",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "check",
+        "to"
+      ],
+      "type": "object"
+    },
+    "IndividualComponentSingleResponseCondition": {
+      "additionalProperties": false,
+      "description": "The IndividualComponentSingleResponseCondition interface is used to define a SkipCondition based on a single answer to a specific component. The skip logic will be checked for every component in the block that has the specified name.\n\n:::info\n\nIf you need to check all instances of a repeated component, you should use the RepeatedComponentBlockCondition.\n\n:::\n\nFor example, if you want to skip to a different component based on a response to a specific component, you would use the IndividualComponentSingleResponseCondition. Here's an example of how to use the IndividualComponentSingleResponseCondition:\n\n```js { ... \"skip\": [ {   \"name\": \"attentionCheck\",   \"check\": \"response\",   \"responseId\": \"attentionCheckResponse\",   \"value\": \"the right answer\",   \"comparison\": \"equal\",   \"to\": \"end\" } ] ... } ```\n\nIn this example, we assign our skip logic to the component whose ID is \"attentionCheck\". If the answer given to the response \"attentionCheckResponse\" is equal to \"the right answer\", then the user will be redirected to the end of the study. If the response is _not_ equal to \"the right answer\", then the participant will continue to the next component in the sequence.",
+      "properties": {
+        "check": {
+          "const": "response",
+          "description": "The check we'll perform.",
+          "type": "string"
+        },
+        "comparison": {
+          "description": "The comparison to use.",
+          "enum": [
+            "equal",
+            "notEqual"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the component to check.",
+          "type": "string"
+        },
+        "responseId": {
+          "description": "The response id to check.",
+          "type": "string"
+        },
+        "to": {
+          "description": "The id of the component or block to skip to",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value to check.",
+          "type": [
+            "string",
+            "number"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "check",
+        "responseId",
+        "value",
+        "comparison",
+        "to"
+      ],
+      "type": "object"
+    },
+    "InheritedComponent": {
+      "additionalProperties": false,
+      "description": "An InheritedComponent is a component that inherits properties from a baseComponent. This is used to avoid repeating properties in components. This also means that components in the baseComponents object can be partially defined, while components in the components object can inherit from them and must be fully defined and include all properties (after potentially merging with a base component).",
+      "properties": {
+        "allowFailedTraining": {
+          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "type": "boolean"
+        },
+        "baseComponent": {
+          "type": "string"
+        },
+        "correctAnswer": {
+          "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instruction": {
+          "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the instructions."
+        },
+        "meta": {
+          "additionalProperties": {},
+          "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "object"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the next button."
+        },
+        "nextButtonText": {
+          "description": "The text that is displayed on the next button.",
+          "type": "string"
+        },
+        "parameters": {
+          "anyOf": [
+            {
+              "additionalProperties": {},
+              "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
+              "type": "object"
+            },
+            {
+              "additionalProperties": {},
+              "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
+              "type": "object"
+            }
+          ],
+          "description": "The parameters that are passed to the react component. These can be used within your react component to render different things."
+        },
+        "path": {
+          "anyOf": [
+            {
+              "description": "The path to the markdown file. This should be a relative path from the public folder.",
+              "type": "string"
+            },
+            {
+              "description": "The path to the react component. This should be a relative path from the src/public folder.",
+              "type": "string"
+            },
+            {
+              "description": "The path to the image. This should be a relative path from the public folder.",
+              "type": "string"
+            },
+            {
+              "description": "The path to the website. This should be a relative path from the public folder or could be an external website.",
+              "type": "string"
+            }
+          ],
+          "description": "The path to the markdown file. This should be a relative path from the public folder."
+        },
+        "provideFeedback": {
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "response": {
+          "description": "The responses to the component",
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "style": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "The style of the image. This is an object with css properties as keys and css values as values.",
+          "type": "object"
+        },
+        "trainingAttempts": {
+          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "type": "number"
+        },
+        "type": {
+          "enum": [
+            "markdown",
+            "react-component",
+            "image",
+            "website",
+            "questionnaire"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "baseComponent"
+      ],
+      "type": "object"
+    },
+    "InterruptionBlock": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/DeterministicInterruption"
+        },
+        {
+          "$ref": "#/definitions/RandomInterruption"
+        }
+      ],
+      "description": "The InterruptionBlock interface is used to define interruptions in a block. These can be used for breaks or attention checks. Interruptions can be deterministic or random."
+    },
+    "LibraryConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "$schema": {
+          "description": "A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information",
+          "type": "string"
+        },
+        "baseComponents": {
+          "$ref": "#/definitions/BaseComponents",
+          "description": "The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information."
+        },
+        "components": {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/IndividualComponent"
+              },
+              {
+                "$ref": "#/definitions/InheritedComponent"
+              }
+            ]
+          },
+          "description": "The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents.",
+          "type": "object"
+        },
+        "sequences": {
+          "additionalProperties": {
+            "$ref": "#/definitions/ComponentBlock"
+          },
+          "description": "The order of the components in the study. This might include some randomness.",
+          "type": "object"
+        }
+      },
+      "required": [
+        "$schema",
+        "components",
+        "sequences"
+      ],
+      "type": "object"
+    },
+    "LikertResponse": {
+      "additionalProperties": false,
+      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likert Scale:\n\n```js { \"id\": \"q-satisfaction\", \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"likert\", \"leftLabel\": \"Not Enjoyable\", \"rightLabel\": \"Very Enjoyable\", \"numItems\": 5 } ```",
+      "properties": {
+        "desc": {
+          "description": "The description of the likert scale.",
+          "type": "string"
+        },
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "leftLabel": {
+          "description": "The left label of the likert scale. E.g Strongly Disagree",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "numItems": {
+          "description": "The number of options to render.",
+          "type": "number"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "rightLabel": {
+          "description": "The right label of the likert scale. E.g Strongly Agree",
+          "type": "string"
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "type": {
+          "const": "likert",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "numItems",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "LongTextResponse": {
+      "additionalProperties": false,
+      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```js { \"id\": \"q-name\", \"prompt\": \"What is your first name?\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"longText\", \"placeholder\": \"Please enter your first name\" } ```",
+      "properties": {
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "placeholder": {
+          "description": "The placeholder text that is displayed in the input.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "type": {
+          "const": "longText",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "MarkdownComponent": {
+      "additionalProperties": false,
+      "description": "The MarkdownComponent interface is used to define the properties of a markdown component. The components can be used to render many different things, such as consent forms, instructions, and debriefs. Additionally, you can use the markdown component to render images, videos, and other media, with supporting text. Markdown components can have responses (e.g. in a consent form), or no responses (e.g. in a help text file). Here's an example with no responses for a simple help text file:\n\n```js { \"type\": \"markdown\", \"path\": \"<study-name>/assets/help.md\", \"response\": [] } ```",
+      "properties": {
+        "allowFailedTraining": {
+          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "type": "boolean"
+        },
+        "correctAnswer": {
+          "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instruction": {
+          "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the instructions."
+        },
+        "meta": {
+          "additionalProperties": {},
+          "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "object"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the next button."
+        },
+        "nextButtonText": {
+          "description": "The text that is displayed on the next button.",
+          "type": "string"
+        },
+        "path": {
+          "description": "The path to the markdown file. This should be a relative path from the public folder.",
+          "type": "string"
+        },
+        "provideFeedback": {
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "response": {
+          "description": "The responses to the component",
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "trainingAttempts": {
+          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "type": "number"
+        },
+        "type": {
+          "const": "markdown",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "response",
+        "type"
+      ],
+      "type": "object"
+    },
+    "NumberOption": {
+      "additionalProperties": false,
+      "description": "The NumberOption interface is used to define the options for a slider response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file.",
+      "properties": {
+        "label": {
+          "description": "The label displayed to participants.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value stored in the participant's data.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "type": "object"
+    },
+    "NumericalResponse": {
+      "additionalProperties": false,
+      "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.\n\nExample: ```js { \"id\": \"q-numerical\", \"prompt\": \"Numerical example\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"numerical\", \"placeholder\": \"Enter your age, range from 0 - 120\", \"max\": 120, \"min\": 0 } ```",
+      "properties": {
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "max": {
+          "description": "The maximum value that is accepted in the input.",
+          "type": "number"
+        },
+        "min": {
+          "description": "The minimum value that is accepted in the input.",
+          "type": "number"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "placeholder": {
+          "description": "The placeholder text that is displayed in the input.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "type": {
+          "const": "numerical",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "QuestionnaireComponent": {
+      "additionalProperties": false,
+      "description": "A QuestionnaireComponent is used to render simple questions that require a response. The main use case of this component type is to ask participants questions when you don't need to render a stimulus. Please note, that even though we're not using a stimulus, the responses still require a `location`. For example this could be used to collect demographic information from a participant using the following snippet:\n\n```js { \"type\": \"questionnaire\", \"response\": [  {    \"id\": \"gender\",    \"prompt\": \"Gender:\",    \"required\": true,    \"location\": \"belowStimulus\",    \"type\": \"checkbox\",    \"options\": [\"Man\", \"Woman\", \"Genderqueer\", \"Third-gender\", ...]  } ] } ```",
+      "properties": {
+        "allowFailedTraining": {
+          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "type": "boolean"
+        },
+        "correctAnswer": {
+          "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instruction": {
+          "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the instructions."
+        },
+        "meta": {
+          "additionalProperties": {},
+          "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "object"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the next button."
+        },
+        "nextButtonText": {
+          "description": "The text that is displayed on the next button.",
+          "type": "string"
+        },
+        "provideFeedback": {
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "response": {
+          "description": "The responses to the component",
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "trainingAttempts": {
+          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "type": "number"
+        },
+        "type": {
+          "const": "questionnaire",
+          "type": "string"
+        }
+      },
+      "required": [
+        "response",
+        "type"
+      ],
+      "type": "object"
+    },
+    "RadioResponse": {
+      "additionalProperties": false,
+      "description": "The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection. RadioResponses render as a radio input with user specified options, and optionally left and right labels.\n\nExample: ```js { \"id\": \"q-radio\", \"prompt\": \"Radio button example\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"radio\", \"options\": [\"Option 1\", \"Option 2\"] } ```",
+      "properties": {
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "leftLabel": {
+          "description": "The left label of the radio group. Used in Likert scales for example",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "options": {
+          "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "rightLabel": {
+          "description": "The right label of the radio group. Used in Likert scales for example",
+          "type": "string"
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "type": {
+          "const": "radio",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "options",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "RandomInterruption": {
+      "additionalProperties": false,
+      "description": "The RandomInterruption interface is used to define an interruption that will be shown randomly in the block.\n\nFor example, if you want to show a single interruption randomly in the block, you would set `\"spacing\"` to \"random\" and `\"numInterruptions\"` to 1. If you want to show 3 interruptions randomly in the block, you would set `\"spacing\"` to \"random\" and `\"numInterruptions\"` to 3.\n\nThe components property is an array of the components that will be inserted randomly in the block. These components should reference components in the StudyConfig.components section of the config.\n\nHere's an example of how to use the RandomInterruption:\n\n```js { \"order\": \"fixed\", \"components\": [ \"component1\", \"component2\", \"component3\", \"component4\", \"component5\", \"component6\" ], \"interruptions\": [ {   \"spacing\": \"random\",   \"numInterruptions\": 3,   \"components\": [     \"interruption1\",     \"interruption2\"   ] } ] } ```\n\nThe resulting sequence array could be:\n\n```js [ [\"component1\", \"interruption1\", \"interruption2\", \"component2\", \"interruption1\", \"interruption2\", \"component3\", \"component4\", \"component5\", \"interruption1\", \"interruption2\", \"component6], [\"component1\", \"interruption1\", \"interruption2\", \"component2\", \"interruption1\", \"interruption2\", \"component3\", \"component4\", \"interruption1\", \"interruption2\", \"component5\", \"component6], [\"component1\", \"component2\" \"interruption1\", \"interruption2\", \"component3\", \"interruption1\", \"interruption2\", \"component4\", \"component5\", \"interruption1\", \"interruption2\", \"component6], ... ] ```",
+      "properties": {
+        "components": {
+          "description": "The components that are included in the interruption. These reference components in the StudyConfig.components section of the config.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "numInterruptions": {
+          "description": "The number of times the interruption will be randomly added",
+          "type": "number"
+        },
+        "spacing": {
+          "const": "random",
+          "description": "If spacing is set to random, reVISit will add interruptions randomly. These interruptions will not ever be displayed as the first component in the block.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "spacing",
+        "numInterruptions",
+        "components"
+      ],
+      "type": "object"
+    },
+    "ReactComponent": {
+      "additionalProperties": false,
+      "description": "The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.\n\nUnlike other types of components, the path for a React component is relative to the `src/public/` folder. Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study. Your React component which you link to in the path must be default exported from its file.\n\nReact components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.\n\n```ts { parameters: T; setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void } ```\n\nparameters is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component. setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.\n\nSo, for example, if I had the following ReactComponent in my config ```js { type: 'react-component'; path: 'my_study/CoolComponent.tsx'; parameters: {  name: 'Zach';  age: 26; } } ```\n\nMy react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this\n\n```ts export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) { // render something } ```\n\nFor in depth examples, see the following studies, and their associated codebases. https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v1.0.5/src/public/demo-click-accuracy-test/assets) https://revisit.dev/study/demo-brush-interactions (https://github.com/revisit-studies/study/tree/v1.0.5/src/public/demo-brush-interactions/assets)",
+      "properties": {
+        "allowFailedTraining": {
+          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "type": "boolean"
+        },
+        "correctAnswer": {
+          "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instruction": {
+          "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the instructions."
+        },
+        "meta": {
+          "additionalProperties": {},
+          "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "object"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the next button."
+        },
+        "nextButtonText": {
+          "description": "The text that is displayed on the next button.",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters that are passed to the react component. These can be used within your react component to render different things.",
+          "type": "object"
+        },
+        "path": {
+          "description": "The path to the react component. This should be a relative path from the src/public folder.",
+          "type": "string"
+        },
+        "provideFeedback": {
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "response": {
+          "description": "The responses to the component",
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "trainingAttempts": {
+          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "type": "number"
+        },
+        "type": {
+          "const": "react-component",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "response",
+        "type"
+      ],
+      "type": "object"
+    },
+    "RepeatedComponentBlockCondition": {
+      "additionalProperties": false,
+      "description": "The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to the [ComponentBlockCondition](../ComponentBlockCondition), but it only checks a specific repeated component.\n\nHere's an example of how to use the RepeatedComponentBlockCondition:\n\n```js { ... \"skip\": [ {   \"name\": \"attentionCheck\",   \"check\": \"repeatedComponent\",   \"condition\": \"numIncorrect\",   \"value\": 2,   \"to\": \"end\" } ] ... } ```\n\nIn this example, when the number of incorrect responses to the repeated component with the name \"attentionCheck\" is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.",
+      "properties": {
+        "check": {
+          "const": "repeatedComponent",
+          "description": "The check we'll perform.",
+          "type": "string"
+        },
+        "condition": {
+          "description": "The condition to check.",
+          "enum": [
+            "numCorrect",
+            "numIncorrect"
+          ],
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the repeated component to check (e.g. attentionCheck).",
+          "type": "string"
+        },
+        "to": {
+          "description": "The id of the component or block to skip to",
+          "type": "string"
+        },
+        "value": {
+          "description": "The number of correct or incorrect responses to check for.",
+          "type": "number"
+        }
+      },
+      "required": [
+        "name",
+        "check",
+        "condition",
+        "value",
+        "to"
+      ],
+      "type": "object"
+    },
+    "Response": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/NumericalResponse"
+        },
+        {
+          "$ref": "#/definitions/ShortTextResponse"
+        },
+        {
+          "$ref": "#/definitions/LongTextResponse"
+        },
+        {
+          "$ref": "#/definitions/LikertResponse"
+        },
+        {
+          "$ref": "#/definitions/DropdownResponse"
+        },
+        {
+          "$ref": "#/definitions/SliderResponse"
+        },
+        {
+          "$ref": "#/definitions/RadioResponse"
+        },
+        {
+          "$ref": "#/definitions/CheckboxResponse"
+        },
+        {
+          "$ref": "#/definitions/IFrameResponse"
+        }
+      ]
+    },
+    "ResponseBlockLocation": {
+      "enum": [
+        "sidebar",
+        "aboveStimulus",
+        "belowStimulus"
+      ],
+      "type": "string"
+    },
+    "ShortTextResponse": {
+      "additionalProperties": false,
+      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.\n\n```js { \"id\": \"q-short-text\", \"prompt\": \"Short text example\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"shortText\", \"placeholder\": \"Enter your answer here\" } ```",
+      "properties": {
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "placeholder": {
+          "description": "The placeholder text that is displayed in the input.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "type": {
+          "const": "shortText",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "SkipConditions": {
+      "description": "The SkipConditions interface is used to define skip conditions. This is used to skip to a different component/block based on the response to a component or based on the number of correct/incorrect responses in a block. Skip conditions work recursively: if you have a nested block, the parent blocks' skip conditions will be considered when computing the skip logic.\n\nSkip conditions are evaluated in the order they are defined in the array. If a condition is met, the participant will be redirected to the component or block specified in the `\"to\"` property. If no conditions are met, the participant will continue to the next component in the sequence.\n\nSkip conditions allow you to jump to a different component or block. If you intend to skip to a block, you should specify a block id in the sequence. If you intend to skip to a component, you should specify a component id. Skipping backwards is not supported. Skipping to a repeated component will skip to the first instance of the component after the component that triggered the skip.\n\nPlease see the interface definitions for more specific information on the different types of skip conditions.",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/definitions/IndividualComponentSingleResponseCondition"
+          },
+          {
+            "$ref": "#/definitions/IndividualComponentAllResponsesCondition"
+          },
+          {
+            "$ref": "#/definitions/ComponentBlockCondition"
+          },
+          {
+            "$ref": "#/definitions/RepeatedComponentBlockCondition"
+          }
+        ]
+      },
+      "type": "array"
+    },
+    "SliderResponse": {
+      "additionalProperties": false,
+      "description": "The SliderResponse interface is used to define the properties of a slider response. SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100.\n\nExample: ```js { \"id\": \"q-slider\", \"prompt\": \"How are you feeling?\", \"location\": \"aboveStimulus\", \"required\": true, \"type\": \"slider\", \"options\": [  {    \"label\": \"Bad\",    \"value\": 0  },  {    \"label\": \"OK\",    \"value\": 50  },  {    \"label\": \"Good\",    \"value\": 100  } ] } ```",
+      "properties": {
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "options": {
+          "description": "This defines the steps in the slider and the extent of the slider as an array of objects that have a label and a value.",
+          "items": {
+            "$ref": "#/definitions/NumberOption"
+          },
+          "type": "array"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "type": {
+          "const": "slider",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "options",
+        "prompt",
+        "required",
+        "type"
+      ],
+      "type": "object"
+    },
+    "StringOption": {
+      "additionalProperties": false,
+      "description": "The StringOption interface is used to define the options for a dropdown, radio, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file.",
+      "properties": {
+        "label": {
+          "description": "The label displayed to participants.",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value stored in the participant's data.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "value"
+      ],
+      "type": "object"
+    },
+    "WebsiteComponent": {
+      "additionalProperties": false,
+      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder.\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/assets/website.html\", } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/website.html\", \"parameters\": {  \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3] } \"response\": [  {    \"id\": \"barChart\",    \"prompt\": \"Your selected answer:\",    \"required\": true,    \"location\": \"belowStimulus\",    \"type\": \"iframe\"  } ], } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {  const barData = data['barData'];  ... });\n\n// Call out that 'barChart' needs to match ID in 'response' object Revisit.postAnswers({ barChart: userAnswer }); </script> ```\n\n If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenanceGraph` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.\n\n```js const trrack = initializeTrrack({ initialState, registry });\n\n... Revisit.postProvenance(trrack.graph.backend); ```",
+      "properties": {
+        "allowFailedTraining": {
+          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "type": "boolean"
+        },
+        "correctAnswer": {
+          "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instruction": {
+          "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the instructions."
+        },
+        "meta": {
+          "additionalProperties": {},
+          "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "object"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the next button."
+        },
+        "nextButtonText": {
+          "description": "The text that is displayed on the next button.",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters that are passed to the website (iframe). These can be used within your website to render different things.",
+          "type": "object"
+        },
+        "path": {
+          "description": "The path to the website. This should be a relative path from the public folder or could be an external website.",
+          "type": "string"
+        },
+        "provideFeedback": {
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "response": {
+          "description": "The responses to the component",
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "trainingAttempts": {
+          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "type": "number"
+        },
+        "type": {
+          "const": "website",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "response",
+        "type"
+      ],
+      "type": "object"
+    }
+  }
+}

@@ -1141,6 +1141,17 @@ export interface StudyConfig {
   sequence: ComponentBlock;
 }
 
+export interface LibraryConfig {
+  /** A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information */
+  $schema: string;
+  /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */
+  baseComponents?: BaseComponents;
+  /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
+  components: Record<string, IndividualComponent | InheritedComponent>
+  /** The order of the components in the study. This might include some randomness. */
+  sequences: Record<string, ComponentBlock>;
+}
+
 /**
  * @ignore
  * Helper type to write the study config with with errors key
