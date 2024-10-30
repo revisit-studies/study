@@ -10,6 +10,7 @@ test('parser errors are shown correctly', async ({ page }) => {
     'You have an error at /sequence/: Component missingComponent is not defined in components object - {"action":"add the component to the components object"}',
     'You have an error at /sequence/: Component testBaseComponent is a base component and cannot be used in the sequence - {"action":"add the component to the components object"}',
     'You have an error at /sequence/: Component nestedMissingComponent is not defined in components object - {"action":"add the component to the components object"}',
+    'You have an error at /sequence/: Component $test.components.test-missing is not defined in components object - {"action":"add the component to the components object"}',
     'You have an error at /sequence/: Skip target md1 does not occur after the skip block it is used in - {"action":"add the target to the sequence after the skip block"}',
   ];
 

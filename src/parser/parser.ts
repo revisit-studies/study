@@ -133,16 +133,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
       }
     });
 
-  const usedComponents = getSequenceFlatMapWithInterruptions(studyConfig.sequence)
-    // Filter out library components and sequences from the used components.
-    // Imported library components might not be used in the sequence.
-    // Misspelled/missing sequences will be caught by expandLibrarySequences.
-    .filter((componentName) => (
-      !componentName.includes('.se.')
-      && !componentName.includes('.sequences.')
-      && !componentName.includes('.co.')
-      && !componentName.includes('.components.')
-    ));
+  const usedComponents = getSequenceFlatMapWithInterruptions(studyConfig.sequence);
 
   // Verify sequence is well defined
   usedComponents.forEach((component) => {
