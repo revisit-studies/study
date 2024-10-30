@@ -66,20 +66,6 @@ export function expandLibrarySequences(sequence: StudyConfig['sequence'], import
 
 // This function verifies that the library usage in the study config is valid
 export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserErrorWarning[], importedLibrariesData: Record<string, LibraryConfig>) {
-  // Pull in library components
-  const importedLibraries = studyConfig.importedLibraries || [];
-
-  // Verify imported libraries are well defined
-  importedLibraries.forEach((library) => {
-    if (!importedLibrariesData[library]) {
-      errors.push({
-        message: `Could not find library \`${library}\``,
-        instancePath: '/importedLibraries/',
-        params: { action: 'make sure the library is in the correct location' },
-      });
-    }
-  });
-
   Object.entries(importedLibrariesData).forEach(([library, libraryData]) => {
     // Verify that the library components are well defined
     Object.entries(libraryData.components).forEach(([componentName, component]) => {
@@ -96,7 +82,7 @@ export function verifyLibraryUsage(studyConfig: StudyConfig, errors: ParserError
 }
 
 // This verifies that the library config has a valid schema and returns the parsed data
-export function parseLibraryConfig(fileData: string): ParsedConfig<LibraryConfig> {
+export function parseLibraryConfig(fileData: string, libraryName: string): ParsedConfig<LibraryConfig> {
   let validatedData = false;
   let data: LibraryConfig | undefined;
 
@@ -110,7 +96,13 @@ export function parseLibraryConfig(fileData: string): ParsedConfig<LibraryConfig
   const errors: Required<ParsedConfig<LibraryConfig>>['errors'] = [];
   const warnings: Required<ParsedConfig<LibraryConfig>>['warnings'] = [];
 
-  if (!validatedData) {
+  if (!data) {
+    errors.push({
+      message: `Could not find library \`${libraryName}\``,
+      instancePath: '/importedLibraries/',
+      params: { action: 'make sure the library is in the correct location' },
+    });
+  } else if (!validatedData) {
     errors.push({
       message: 'Library config is not valid',
       instancePath: '',
@@ -123,7 +115,7 @@ export function parseLibraryConfig(fileData: string): ParsedConfig<LibraryConfig
 
 async function getLibraryConfig(libraryName: string) {
   const config = await (await fetch(`${PREFIX}libraries/${libraryName}/config.json`)).text();
-  return parseLibraryConfig(config);
+  return parseLibraryConfig(config, libraryName);
 }
 
 export async function loadLibrariesParseNamespace(importedLibraries: string[], errors: ParserErrorWarning[], warnings: ParserErrorWarning[]) {
@@ -138,10 +130,20 @@ export async function loadLibrariesParseNamespace(importedLibraries: string[], e
 
     return [library, libraryData];
   });
-  const importedLibrariesData: Record<string, LibraryConfig> = Object.fromEntries(await Promise.all(loadedLibraries));
+  const importedLibrariesData: Record<string, ParsedConfig<LibraryConfig>> = Object.fromEntries(await Promise.all(loadedLibraries));
+
+  // Filter out the missing imported libraries
+  Object.entries(importedLibrariesData).forEach(([libraryName, libraryData]) => {
+    if (!libraryData.components) {
+      delete importedLibrariesData[libraryName];
+    }
+  });
 
   // Namespace the components object with the library name, and inherit the base components
   importedLibraries.forEach((libraryName) => {
+    if (!importedLibrariesData[libraryName]) {
+      return;
+    }
     importedLibrariesData[libraryName].components = Object.fromEntries(
       Object.entries(importedLibrariesData[libraryName].components).map(([componentName, component]) => {
         if (isInheritedComponent(component)) {

@@ -160,7 +160,13 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
 
   // Warnings for components that are defined but not used in the sequence
   Object.keys(studyConfig.components)
-    .filter((componentName) => !usedComponents.includes(componentName))
+    .filter((componentName) => (
+      !usedComponents.includes(componentName)
+      && !componentName.includes('.se.')
+      && !componentName.includes('.sequences.')
+      && !componentName.includes('.co.')
+      && !componentName.includes('.components.')
+    ))
     .forEach((componentName) => {
       warnings.push({
         message: `Component \`${componentName}\` is defined in components object but not used in the sequence`,
@@ -203,9 +209,9 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
     const importedLibrariesData = await loadLibrariesParseNamespace(importedLibraries, errors, warnings);
 
     // Add the imported libraries to the components object and baseComponents object
-    importedLibraries.forEach((library) => {
-      data!.components = { ...data!.components, ...importedLibrariesData[library].components };
-      data!.baseComponents = { ...data!.baseComponents, ...importedLibrariesData[library].components };
+    Object.values(importedLibrariesData).forEach((libraryData) => {
+      data!.components = { ...data!.components, ...libraryData.components };
+      data!.baseComponents = { ...data!.baseComponents, ...libraryData.components };
     });
 
     // Expand the imported sequences to use the correct component names
