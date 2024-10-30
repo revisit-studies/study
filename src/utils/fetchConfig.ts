@@ -5,7 +5,7 @@ import { PREFIX } from './Prefix';
 
 async function fetchStudyConfig(configLocation: string) {
   const config = await (await fetch(`${PREFIX}${configLocation}`)).text();
-  return parseStudyConfig(config);
+  return await parseStudyConfig(config);
 }
 
 export async function getStudyConfig(studyId: string, globalConfig: GlobalConfig) {
