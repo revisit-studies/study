@@ -1,10 +1,9 @@
 import { parse as hjsonParse } from 'hjson';
 import Ajv from 'ajv';
+import { merge } from 'lodash';
 import librarySchema from './LibraryConfigSchema.json';
 import {
-  IndividualComponent,
-  InheritedComponent,
-  LibraryConfig, ParsedConfig, ParserErrorWarning, StudyConfig,
+  IndividualComponent, LibraryConfig, ParsedConfig, ParserErrorWarning, StudyConfig,
 } from './types';
 import { isInheritedComponent } from './utils';
 import { PREFIX } from '../utils/Prefix';
@@ -146,15 +145,17 @@ export async function loadLibrariesParseNamespace(importedLibraries: string[], e
     importedLibrariesData[libraryName].components = Object.fromEntries(
       Object.entries(importedLibrariesData[libraryName].components).map(([componentName, component]) => {
         if (isInheritedComponent(component)) {
+          const mergedComponent = merge({}, importedLibrariesData[libraryName].baseComponents![component.baseComponent], component) as IndividualComponent & { baseComponent?: string };
+          delete mergedComponent.baseComponent;
           return [
-            [`$${libraryName}.components.${componentName}`, { ...importedLibrariesData[libraryName].baseComponents![component.baseComponent], ...component }],
-            [`$${libraryName}.co.${componentName}`, { ...importedLibrariesData[libraryName].baseComponents![component.baseComponent], ...component }],
-          ] as [string, IndividualComponent | InheritedComponent][];
+            [`$${libraryName}.components.${componentName}`, mergedComponent],
+            [`$${libraryName}.co.${componentName}`, mergedComponent],
+          ] as [string, IndividualComponent][];
         }
         return [
           [`$${libraryName}.components.${componentName}`, component],
           [`$${libraryName}.co.${componentName}`, component],
-        ] as [string, IndividualComponent | InheritedComponent][];
+        ] as [string, IndividualComponent][];
       })
       // spread double array to single array for Object.fromEntries
         .reduce((acc, [key, value]) => {
