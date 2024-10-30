@@ -1534,6 +1534,13 @@
           "description": "The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents.",
           "type": "object"
         },
+        "importedLibraries": {
+          "description": "A list of libraries that are used in the study. This is used to import external libraries into the study. Library names are valid namespaces to be used later.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
         "sequence": {
           "$ref": "#/definitions/ComponentBlock",
           "description": "The order of the components in the study. This might include some randomness."

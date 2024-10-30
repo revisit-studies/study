@@ -1133,6 +1133,8 @@ export interface StudyConfig {
   studyMetadata: StudyMetadata;
   /** The UI configuration for the study. This is used to configure the UI of the app. */
   uiConfig: UIConfig;
+  /** A list of libraries that are used in the study. This is used to import external libraries into the study. Library names are valid namespaces to be used later. */
+  importedLibraries?: string[];
   /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */
   baseComponents?: BaseComponents;
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */

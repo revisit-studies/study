@@ -4,9 +4,10 @@ import Ajv from 'ajv';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
 import {
-  GlobalConfig, ParsedConfig, StudyConfig,
+  GlobalConfig, LibraryConfig, ParsedConfig, StudyConfig,
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
+import { expandLibrarySequences, loadLibrariesParseNamespace, verifyLibraryUsage } from './libraryParser';
 import { isInheritedComponent } from './utils';
 
 const ajv1 = new Ajv();
@@ -113,9 +114,11 @@ function verifyStudySkip(
 }
 
 // This function verifies the study config file satisfies conditions that are not covered by the schema
-function verifyStudyConfig(studyConfig: StudyConfig) {
+function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Record<string, LibraryConfig>) {
   const errors: ParsedConfig<StudyConfig>['errors'] = [];
   const warnings: ParsedConfig<StudyConfig>['warnings'] = [];
+
+  verifyLibraryUsage(studyConfig, errors, importedLibrariesData);
 
   // Verify components are well defined
   Object.entries(studyConfig.components)
@@ -130,7 +133,16 @@ function verifyStudyConfig(studyConfig: StudyConfig) {
       }
     });
 
-  const usedComponents = getSequenceFlatMapWithInterruptions(studyConfig.sequence);
+  const usedComponents = getSequenceFlatMapWithInterruptions(studyConfig.sequence)
+    // Filter out library components and sequences from the used components.
+    // Imported library components might not be used in the sequence.
+    // Misspelled/missing sequences will be caught by expandLibrarySequences.
+    .filter((componentName) => (
+      !componentName.includes('.se.')
+      && !componentName.includes('.sequences.')
+      && !componentName.includes('.co.')
+      && !componentName.includes('.components.')
+    ));
 
   // Verify sequence is well defined
   usedComponents.forEach((component) => {
@@ -171,7 +183,7 @@ function verifyStudyConfig(studyConfig: StudyConfig) {
   return { errors, warnings };
 }
 
-export function parseStudyConfig(fileData: string): ParsedConfig<StudyConfig> {
+export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<StudyConfig>> {
   let validatedData = false;
   let data: StudyConfig | undefined;
 
@@ -182,16 +194,28 @@ export function parseStudyConfig(fileData: string): ParsedConfig<StudyConfig> {
     validatedData = false;
   }
 
-  let errors: Required<ParsedConfig<StudyConfig>>['errors'] = [];
+  let errors: Required<ParsedConfig<StudyConfig>>['errors'] = studyValidate.errors || [];
   let warnings: Required<ParsedConfig<StudyConfig>>['warnings'] = [];
 
   // We can only run our custom validator if the schema validation passes
   if (validatedData) {
-    const { errors: parserErrors, warnings: parserWarnings } = verifyStudyConfig(data!);
-    errors = [...(studyValidate.errors || []), ...parserErrors];
-    warnings = parserWarnings;
+    const importedLibraries = data!.importedLibraries || [];
+    const importedLibrariesData = await loadLibrariesParseNamespace(importedLibraries, errors, warnings);
+
+    // Add the imported libraries to the components object and baseComponents object
+    importedLibraries.forEach((library) => {
+      data!.components = { ...data!.components, ...importedLibrariesData[library].components };
+      data!.baseComponents = { ...data!.baseComponents, ...importedLibrariesData[library].components };
+    });
+
+    // Expand the imported sequences to use the correct component names
+    data!.sequence = expandLibrarySequences(data!.sequence, importedLibrariesData, errors);
+
+    const { errors: parserErrors, warnings: parserWarnings } = verifyStudyConfig(data!, importedLibrariesData);
+    errors = [...errors, ...parserErrors];
+    warnings = [...warnings, ...parserWarnings];
   } else {
-    errors = studyValidate.errors || [{ message: 'There was an issue validating your config file', instancePath: 'root', params: { action: 'fix the errors in your file or make sure the global config references the right file path' } }];
+    errors = [...errors, { message: 'There was an issue validating your config file', instancePath: 'root', params: { action: 'fix the errors in your file or make sure the global config references the right file path' } }];
   }
 
   return { ...data as StudyConfig, errors, warnings };
