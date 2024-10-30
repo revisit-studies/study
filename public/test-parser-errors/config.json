@@ -23,6 +23,7 @@
     "sidebar": true,
     "windowEventDebounceTime": 200
   },
+  "importedLibraries": ["test", "test-missing"],
   "baseComponents": {
     "testBaseComponent": {
       "type": "markdown",
@@ -43,6 +44,17 @@
     },
     "missingBaseComponent": {
       "baseComponent": "missingBaseComponent"
+    },
+    "workingBaseComponentFromLibrary": {
+      "baseComponent": "$test.co.test-md"
+    },
+    "missingComponentFromLibrary": {
+      "baseComponent": "$test.co.test-missing"
+    },
+    "testComponent": {
+      "type": "markdown",
+      "path": "test-parser-errors/assets/md1.md",
+      "response": []
     }
   },
   "sequence": {
@@ -79,7 +91,15 @@
           }
         ]
       },
-      "md2"
+      "md2",
+      "$test.sequences.small",
+      "$test.se.long",
+      "$test.components.test-md",
+      "$test.co.test-react",
+      "$test.components.test-missing",
+      "missingBaseComponent",
+      "workingBaseComponentFromLibrary",
+      "missingComponentFromLibrary"
     ]
   }
 }
