@@ -4,7 +4,7 @@ import Ajv from 'ajv';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
 import {
-  GlobalConfig, IndividualComponent, InheritedComponent, ParsedStudyConfig, StudyConfig,
+  GlobalConfig, IndividualComponent, InheritedComponent, ParsedConfig, StudyConfig,
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 
@@ -117,8 +117,8 @@ function verifyStudySkip(
 
 // This function verifies the study config file satisfies conditions that are not covered by the schema
 function verifyStudyConfig(studyConfig: StudyConfig) {
-  const errors: ParsedStudyConfig['errors'] = [];
-  const warnings: ParsedStudyConfig['warnings'] = [];
+  const errors: ParsedConfig<StudyConfig>['errors'] = [];
+  const warnings: ParsedConfig<StudyConfig>['warnings'] = [];
 
   // Verify components are well defined
   Object.entries(studyConfig.components)
@@ -174,7 +174,7 @@ function verifyStudyConfig(studyConfig: StudyConfig) {
   return { errors, warnings };
 }
 
-export function parseStudyConfig(fileData: string): ParsedStudyConfig {
+export function parseStudyConfig(fileData: string): ParsedConfig<StudyConfig> {
   let validatedData = false;
   let data: StudyConfig | undefined;
 
@@ -185,8 +185,8 @@ export function parseStudyConfig(fileData: string): ParsedStudyConfig {
     validatedData = false;
   }
 
-  let errors: Required<ParsedStudyConfig>['errors'] = [];
-  let warnings: Required<ParsedStudyConfig>['warnings'] = [];
+  let errors: Required<ParsedConfig<StudyConfig>>['errors'] = [];
+  let warnings: Required<ParsedConfig<StudyConfig>>['warnings'] = [];
 
   // We can only run our custom validator if the schema validation passes
   if (validatedData) {

@@ -1154,11 +1154,21 @@ export interface LibraryConfig {
 
 /**
  * @ignore
+ * Helper error type to make reading the error messages easier
+ */
+export type ParserErrorWarning = {
+  instancePath: string;
+  message?: string;
+  params: object;
+}
+
+/**
+ * @ignore
  * Helper type to write the study config with with errors key
  */
-export type ParsedStudyConfig = StudyConfig & {
-  errors: { instancePath: string, message?: string, params: object }[]
-  warnings: { instancePath: string, message?: string, params: object }[]
+export type ParsedConfig<T> = T & {
+  errors: ParserErrorWarning[]
+  warnings: ParserErrorWarning[]
 }
 
 /**

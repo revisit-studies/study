@@ -3,7 +3,7 @@ import {
 } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 import { IconAlertTriangle, IconExternalLink } from '@tabler/icons-react';
-import { GlobalConfig, ParsedStudyConfig } from '../parser/types';
+import { GlobalConfig, ParsedConfig, StudyConfig } from '../parser/types';
 import { sanitizeStringForUrl } from '../utils/sanitizeStringForUrl';
 import { PREFIX } from '../utils/Prefix';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
@@ -15,7 +15,7 @@ function ConfigSwitcher({
   studyConfigs,
 }: {
   globalConfig: GlobalConfig;
-  studyConfigs: Record<string, ParsedStudyConfig | null>;
+  studyConfigs: Record<string, ParsedConfig<StudyConfig> | null>;
 }) {
   const { configsList } = globalConfig;
   const navigate = useNavigate();
