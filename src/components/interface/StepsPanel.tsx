@@ -125,7 +125,7 @@ function StepItem({
 
   // eslint-disable-next-line no-nested-ternary
   const coOrComponents = step.includes('.co.')
-    ? 'co.'
+    ? '.co.'
     : (step.includes('.components.') ? '.components.' : false);
   const cleanedStep = step.includes('$') && coOrComponents && step.includes(coOrComponents) ? step.split(coOrComponents).at(-1) : step;
 
