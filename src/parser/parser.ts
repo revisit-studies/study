@@ -195,20 +195,20 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
   let warnings: Required<ParsedConfig<StudyConfig>>['warnings'] = [];
 
   // We can only run our custom validator if the schema validation passes
-  if (validatedData) {
-    const importedLibraries = data!.importedLibraries || [];
+  if (validatedData && data) {
+    const importedLibraries = data.importedLibraries || [];
     const importedLibrariesData = await loadLibrariesParseNamespace(importedLibraries, errors, warnings);
 
     // Add the imported libraries to the components object and baseComponents object
     Object.values(importedLibrariesData).forEach((libraryData) => {
-      data!.components = { ...data!.components, ...libraryData.components };
-      data!.baseComponents = { ...data!.baseComponents, ...libraryData.components };
+      data.components = { ...data.components, ...libraryData.components };
+      data.baseComponents = { ...data.baseComponents, ...libraryData.components };
     });
 
     // Expand the imported sequences to use the correct component names
-    data!.sequence = expandLibrarySequences(data!.sequence, importedLibrariesData, errors);
+    data.sequence = expandLibrarySequences(data.sequence, importedLibrariesData, errors);
 
-    const { errors: parserErrors, warnings: parserWarnings } = verifyStudyConfig(data!, importedLibrariesData);
+    const { errors: parserErrors, warnings: parserWarnings } = verifyStudyConfig(data, importedLibrariesData);
     errors = [...errors, ...parserErrors];
     warnings = [...warnings, ...parserWarnings];
   } else {
