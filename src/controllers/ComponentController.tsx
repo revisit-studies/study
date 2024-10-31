@@ -9,7 +9,7 @@ import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
 import { useStoredAnswer } from '../store/hooks/useStoredAnswer';
 import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
-import { isInheritedComponent } from '../parser/parser';
+import { isInheritedComponent } from '../parser/utils';
 import { IndividualComponent } from '../parser/types';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';

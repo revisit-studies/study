@@ -16,9 +16,10 @@
     "demo-fairness-jnd",
     "demo-click-accuracy-test",
     "demo-image",
+    "test-library",
+    "test-parser-errors",
     "test-randomization",
-    "test-skip-logic",
-    "test-parser-errors"
+    "test-skip-logic"
   ],
   "configs": {
     "tutorial-simple-study": {
@@ -66,16 +67,20 @@
     "demo-image": {
       "path": "demo-image/config.json"
     },
+    "test-library": {
+      "path": "test-library/config.json",
+      "test": true
+    },
+    "test-parser-errors": {
+      "path": "test-parser-errors/config.json",
+      "test": true
+    },
     "test-randomization": {
       "path": "test-randomization/config.json",
       "test": true
     },
     "test-skip-logic": {
       "path": "test-skip-logic/config.json",
-      "test": true
-    },
-    "test-parser-errors": {
-      "path": "test-parser-errors/config.json",
       "test": true
     }
   }
