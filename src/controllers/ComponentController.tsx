@@ -13,7 +13,7 @@ import { isInheritedComponent } from '../parser/parser';
 import { IndividualComponent } from '../parser/types';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
-import { useStoreActions, useStoreDispatch } from '../store/store';
+import { useStoreActions, useStoreDispatch, useStoreSelector } from '../store/store';
 import { StudyEnd } from '../components/StudyEnd';
 import { TrainingFailed } from '../components/TrainingFailed';
 import ResourceNotFound from '../ResourceNotFound';
@@ -32,6 +32,7 @@ export default function ComponentController() {
 
   const dispatch = useStoreDispatch();
   const { setIsRecording } = useStoreActions();
+  const { analysisTrialName, analysisProvState, analysisParticipantName } = useStoreSelector((state) => state);
 
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
@@ -116,7 +117,7 @@ export default function ComponentController() {
         {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
         {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} />}
         {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
-        {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} />}
+        {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} />}
       </Suspense>
 
       {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}

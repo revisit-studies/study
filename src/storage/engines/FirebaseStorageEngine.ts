@@ -494,6 +494,31 @@ export class FirebaseStorageEngine extends StorageEngine {
     return participantsData;
   }
 
+  async getAudio(
+    taskList: string[],
+    participantId: string,
+  ) {
+    const storage = getStorage();
+
+    const urlList = await Promise.all(taskList.map(async (task) => await getDownloadURL(ref(storage, `${this.studyId}/audio/${participantId}_${task}`))));
+
+    const allAudioList = Promise.all(urlList.map((url) => new Promise<string>((resolve) => {
+      const xhr = new XMLHttpRequest();
+      xhr.responseType = 'blob';
+      xhr.onload = () => {
+        const blob = xhr.response;
+
+        const _url = URL.createObjectURL(blob);
+
+        resolve(_url);
+      };
+      xhr.open('GET', url);
+      xhr.send();
+    })));
+
+    return allAudioList;
+  }
+
   async getParticipantData() {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');

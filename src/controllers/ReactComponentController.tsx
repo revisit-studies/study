@@ -1,17 +1,19 @@
 import { Suspense } from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
+import { AppShell } from '@mantine/core';
 import { ReactComponent } from '../parser/types';
 import { StimulusParams } from '../store/types';
 import ResourceNotFound from '../ResourceNotFound';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
+import { AnalysisPopout } from '../components/audioAnalysis/AnalysisPopout';
 
 const modules = import.meta.glob(
   '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
   { eager: true },
 );
 
-function ReactComponentController({ currentConfig }: { currentConfig: ReactComponent; }) {
+function ReactComponentController({ currentConfig, provState }: { currentConfig: ReactComponent; provState?: unknown }) {
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
 
@@ -40,9 +42,15 @@ function ReactComponentController({ currentConfig }: { currentConfig: ReactCompo
             parameters={currentConfig.parameters}
             // eslint-disable-next-line react/jsx-no-bind
             setAnswer={setAnswer}
+            provState={provState}
           />
         )
         : <ResourceNotFound path={currentConfig.path} />}
+      {currentStep.toString().startsWith('reviewer-') ? (
+        <AppShell.Footer p="md">
+          <AnalysisPopout />
+        </AppShell.Footer>
+      ) : null }
     </Suspense>
   );
 }

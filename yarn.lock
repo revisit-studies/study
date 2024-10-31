@@ -2132,6 +2132,11 @@ cross-spawn@^7.0.0, cross-spawn@^7.0.2, cross-spawn@^7.0.3:
     shebang-command "^2.0.0"
     which "^2.0.1"
 
+crunker@^2.4.0:
+  version "2.4.0"
+  resolved "https://registry.yarnpkg.com/crunker/-/crunker-2.4.0.tgz#d83ee6d1ba22098d847a66a4a762a5194e1356ac"
+  integrity sha512-3J0aBgLaB8jpGh6o+bisjYzOEkJLYxhnisHXogjY4fxYewh1aVCptWAz7RSTYPncCyxdfA+UaWAM1BrQiZvZgQ==
+
 css-mediaquery@^0.1.2:
   version "0.1.2"
   resolved "https://registry.yarnpkg.com/css-mediaquery/-/css-mediaquery-0.1.2.tgz#6a2c37344928618631c54bd33cedd301da18bea0"
@@ -6009,6 +6014,16 @@ vscode-textmate@^8.0.0:
   version "8.0.0"
   resolved "https://registry.yarnpkg.com/vscode-textmate/-/vscode-textmate-8.0.0.tgz#2c7a3b1163ef0441097e0b5d6389cd5504b59e5d"
   integrity sha512-AFbieoL7a5LMqcnOF04ji+rpXadgOXnZsxQr//r83kLPr7biP7am3g9zbaZIaBGwBRWeSvoMD4mgPdX3e4NWBg==
+
+wavesurfer-react@^3.0.4:
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/wavesurfer-react/-/wavesurfer-react-3.0.4.tgz#018c0c3928c688a5064b487cf8256d5a96c3fce7"
+  integrity sha512-Eq+9ihd28UhX23ZVRrg9llpfo4ejUbYZ8oMEx+XwoymHiwLw44GwYVAo+iUPl9W8aVxuoncBKjbslukvqv0kFw==
+
+wavesurfer.js@^7.8.8:
+  version "7.8.8"
+  resolved "https://registry.yarnpkg.com/wavesurfer.js/-/wavesurfer.js-7.8.8.tgz#5ace659a8eae615aaed943d417e036bef31d007e"
+  integrity sha512-FNiJ6RCAu4TijRcwdaqlN19+Y+Hhqb7Nfo2P4LudzhNnQRMKvF3QmXd9+KHlQZrSjexeK3WbY4COsxgGJkxMag==
 
 web-namespaces@^2.0.0:
   version "2.0.1"

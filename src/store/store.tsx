@@ -51,6 +51,10 @@ export async function studyStoreCreator(
     iframeAnswers: {},
     iframeProvenance: null,
     metadata,
+    analysisTrialName: null,
+    analysisProvState: null,
+    analysisParticipantName: null,
+    analysisWaveformTime: 0,
   };
 
   const storeSlice = createSlice({
@@ -77,6 +81,9 @@ export async function studyStoreCreator(
       },
       setIframeProvenance: (state, action: PayloadAction<TrrackedProvenance | null>) => {
         state.iframeProvenance = action.payload;
+      },
+      saveAnalysisState(state, { payload } : PayloadAction<unknown>) {
+        state.analysisProvState = payload;
       },
       updateResponseBlockValidation: (
         state,

@@ -7,7 +7,6 @@ import {
 import { from, escape } from 'arquero';
 import ColumnTable from 'arquero/dist/types/table/column-table';
 import { Registry, initializeTrrack } from '@trrack/core';
-
 import * as d3 from 'd3';
 import debounce from 'lodash.debounce';
 import { Scatter } from './Scatter';
@@ -15,9 +14,9 @@ import { Bar } from './Bar';
 import { StimulusParams } from '../../../store/types';
 import { BrushParams, BrushState, SelectionType } from './types';
 
-export function BrushPlot({ parameters, setAnswer }: StimulusParams<BrushParams>) {
+export function BrushPlot({ parameters, setAnswer, provenanceState }: StimulusParams<BrushParams, BrushState>) {
   const [filteredTable, setFilteredTable] = useState<ColumnTable | null>(null);
-  const [brushState, setBrushState] = useState<BrushState>({
+  const [brushState, setBrushState] = useState<BrushState>(provenanceState || {
     hasBrush: false, x1: 0, y1: 0, x2: 0, y2: 0, ids: [],
   });
 
