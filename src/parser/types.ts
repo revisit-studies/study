@@ -480,6 +480,10 @@ export interface BaseIndividualComponent {
   description?: string;
   /** The instruction of the component. This is used to identify and provide additional information for the component in the admin panel. */
   instruction?: string;
+  /** A timeout after which the next button will be disabled. */
+  nextButtonDisableTime?: number;
+  /** A timer after which the next button will be enabled. */
+  nextButtonEnableTime?: number;
 }
 
 /**
