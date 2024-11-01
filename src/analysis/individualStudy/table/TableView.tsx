@@ -20,17 +20,19 @@ function AnswerCell({ cellData }: { cellData: StoredAnswer }) {
   return Number.isFinite(cellData.endTime) && Number.isFinite(cellData.startTime) ? (
     <Table.Td>
       <Stack miw={100}>
-        {Object.entries(cellData.answer).map(([key, storedAnswer]) => (
-          <Box key={`cell-${key}`}>
-            <Text fw={700} span>
-              {' '}
-              {`${key}: `}
-            </Text>
-            <Text span>
-              {`${storedAnswer}`}
-            </Text>
-          </Box>
-        ))}
+        {cellData.timedOut
+          ? <Text>Timed out</Text>
+          : Object.entries(cellData.answer).map(([key, storedAnswer]) => (
+            <Box key={`cell-${key}`}>
+              <Text fw={700} span>
+                {' '}
+                {`${key}: `}
+              </Text>
+              <Text span>
+                {`${storedAnswer}`}
+              </Text>
+            </Box>
+          ))}
       </Stack>
     </Table.Td>
   ) : (
@@ -237,6 +239,7 @@ export function TableView({
           endTime: Math.max(...Object.values(record.answers).filter((a) => a.endTime !== -1 && a.endTime !== undefined).map((a) => a.endTime)),
           answer: {},
           windowEvents: Object.values(record.answers).flatMap((a) => a.windowEvents),
+          timedOut: false, // not used
         }}
         key={`cell-${record.participantId}-total-duration`}
       />

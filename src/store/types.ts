@@ -102,6 +102,8 @@ export interface StoredAnswer {
 ```
    */
   windowEvents: EventType[];
+  /** A boolean value that indicates whether the participant timed out on this question. */
+  timedOut: boolean;
 }
 
 export interface StimulusParams<T> {

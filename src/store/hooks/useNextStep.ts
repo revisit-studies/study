@@ -82,7 +82,7 @@ export function useNextStep() {
   const startTime = useMemo(() => Date.now(), []);
 
   const windowEvents = useWindowEvents();
-  const goToNextStep = useCallback(() => {
+  const goToNextStep = useCallback((collectData = true) => {
     if (typeof currentStep !== 'number') {
       return;
     }
@@ -101,14 +101,18 @@ export function useNextStep() {
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
 
     if (dataCollectionEnabled && storedAnswer.endTime === -1) { // === -1 means the answer has not been saved yet
+      const toSave = {
+        answer: collectData ? answer : {},
+        startTime,
+        endTime,
+        provenanceGraph,
+        windowEvents: currentWindowEvents,
+        timedOut: !collectData,
+      };
       storeDispatch(
         saveTrialAnswer({
           identifier,
-          answer,
-          startTime,
-          endTime,
-          provenanceGraph,
-          windowEvents: currentWindowEvents,
+          ...toSave,
         }),
       );
       // Update database
@@ -116,9 +120,7 @@ export function useNextStep() {
         storageEngine.saveAnswers(
           {
             ...answers,
-            [identifier]: {
-              answer, startTime, endTime, provenanceGraph, windowEvents: currentWindowEvents,
-            },
+            [identifier]: toSave,
           },
         );
       }

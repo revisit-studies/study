@@ -21,6 +21,8 @@ import { useAnswerField } from './utils';
 import ResponseSwitcher from './ResponseSwitcher';
 import { StoredAnswer, TrrackedProvenance } from '../../store/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { useStudyConfig } from '../../store/hooks/useStudyConfig';
+import { useNextStep } from '../../store/hooks/useNextStep';
 
 type Props = {
   status?: StoredAnswer;
@@ -43,6 +45,7 @@ export default function ResponseBlock({
   const storedAnswer = status?.answer;
 
   const studyId = useStudyId();
+  const studyConfig = useStudyConfig();
 
   const navigate = useNavigate();
 
@@ -77,6 +80,11 @@ export default function ResponseBlock({
       clearInterval(interval);
     };
   }, []);
+  useEffect(() => {
+    if (timer && nextButtonDisableTime && timer >= nextButtonDisableTime && studyConfig.uiConfig.timeoutReject) {
+      navigate('./__timeout');
+    }
+  }, [nextButtonDisableTime, timer, navigate, studyConfig.uiConfig.timeoutReject]);
 
   useEffect(() => {
     const iframeResponse = responses.find((r) => r.type === 'iframe');
@@ -191,6 +199,8 @@ export default function ResponseBlock({
     [nextButtonDisableTime, nextButtonEnableTime, timer],
   );
 
+  const { goToNextStep } = useNextStep();
+
   return (
     <div style={style}>
       {responses.map((response, index) => {
@@ -271,9 +281,12 @@ export default function ResponseBlock({
               {' '}
               seconds.
             </Alert>
-          ) : (
+          ) : !studyConfig.uiConfig.timeoutReject && (
             <Alert mt="md" title="Next button disabled" color="red" icon={<IconAlertTriangle />}>
               The next button has timed out and is now disabled.
+              <Group justify="right" mt="sm">
+                <Button onClick={() => goToNextStep(false)} variant="link" color="red">Proceed</Button>
+              </Group>
             </Alert>
           ))}
     </div>
