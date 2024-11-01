@@ -1700,6 +1700,10 @@
           "description": "The message to display when the study ends.",
           "type": "string"
         },
+        "timeoutReject": {
+          "description": "Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set.",
+          "type": "boolean"
+        },
         "urlParticipantIdParam": {
           "description": "If the participant ID is passed in the URL, this is the name of the querystring parameter that is used to capture the participant ID (e.g. PROLIFIC_ID). This will allow a user to continue a study on different devices and browsers.",
           "type": "string"

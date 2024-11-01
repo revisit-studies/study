@@ -114,6 +114,8 @@ export interface UIConfig {
    * Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar.
    */
   enumerateQuestions?: boolean;
+  /** Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set. */
+  timeoutReject?: boolean;
 }
 
 /**
