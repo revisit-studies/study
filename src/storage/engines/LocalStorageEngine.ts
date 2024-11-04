@@ -76,6 +76,7 @@ export class LocalStorageEngine extends StorageEngine {
       metadata,
       completed: false,
       rejected: false,
+      participantTags: [],
     };
 
     if (modes.dataCollectionEnabled) {

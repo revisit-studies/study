@@ -231,6 +231,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       metadata,
       completed: false,
       rejected: false,
+      participantTags: [],
     };
 
     if (modes.dataCollectionEnabled) {
