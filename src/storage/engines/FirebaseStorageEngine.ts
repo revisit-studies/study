@@ -493,6 +493,57 @@ export class FirebaseStorageEngine extends StorageEngine {
     return isParticipantData(participantData) ? participantData : null;
   }
 
+  async getParticipantTags(): Promise<string[]> {
+    if (!this._verifyStudyDatabase(this.studyCollection)) {
+      throw new Error('Study database not initialized');
+    }
+
+    const participantData = await this.getParticipantData();
+    if (!participantData) {
+      throw new Error('Participant not initialized');
+    }
+
+    return participantData.participantTags;
+  }
+
+  async addParticipantTags(tags: string[]): Promise<void> {
+    if (!this._verifyStudyDatabase(this.studyCollection)) {
+      throw new Error('Study database not initialized');
+    }
+
+    const participantData = await this.getParticipantData();
+    if (!participantData) {
+      throw new Error('Participant not initialized');
+    }
+
+    participantData.participantTags = [...new Set([...participantData.participantTags, ...tags])];
+
+    await this._pushToFirebaseStorage(
+      `participants/${this.currentParticipantId}`,
+      'participantData',
+      participantData,
+    );
+  }
+
+  async removeParticipantTags(tags: string[]): Promise<void> {
+    if (!this._verifyStudyDatabase(this.studyCollection)) {
+      throw new Error('Study database not initialized');
+    }
+
+    const participantData = await this.getParticipantData();
+    if (!participantData) {
+      throw new Error('Participant not initialized');
+    }
+
+    participantData.participantTags = participantData.participantTags.filter((tag) => !tags.includes(tag));
+
+    await this._pushToFirebaseStorage(
+      `participants/${this.currentParticipantId}`,
+      'participantData',
+      participantData,
+    );
+  }
+
   async nextParticipant() {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
