@@ -1,4 +1,4 @@
-import { Suspense, useEffect } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import merge from 'lodash.merge';
 import ResponseBlock from '../components/response/ResponseBlock';
 import IframeController from './IframeController';
@@ -18,6 +18,7 @@ import { StudyEnd } from '../components/StudyEnd';
 import { TrainingFailed } from '../components/TrainingFailed';
 import ResourceNotFound from '../ResourceNotFound';
 import { TimedOut } from '../components/TimedOut';
+import { findBlockForStep } from '../utils/getSequenceFlatMap';
 
 // current active stimuli presented to the user
 export default function ComponentController() {
@@ -45,6 +46,27 @@ export default function ComponentController() {
       }));
     }
   }, [setAlertModal, storageEngine, storeDispatch]);
+
+  // Find current block, if it has an ID, add it as a participant tag
+  const [blockForStep, setBlockForStep] = useState<string | undefined>(undefined);
+  useEffect(() => {
+    async function getBlockForStep() {
+      const participantData = await storageEngine?.getParticipantData();
+      if (participantData) {
+        const mostNestedBlock = findBlockForStep(participantData.sequence, currentStep)?.[0];
+        setBlockForStep(mostNestedBlock?.currentBlock.id);
+      }
+    }
+    getBlockForStep();
+  }, [currentStep, storageEngine]);
+  useEffect(() => {
+    async function addParticipantTag() {
+      if (blockForStep && storageEngine) {
+        storageEngine.addParticipantTags([blockForStep]);
+      }
+    }
+    addParticipantTag();
+  }, [blockForStep, storageEngine]);
 
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.
