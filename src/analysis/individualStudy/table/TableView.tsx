@@ -161,6 +161,7 @@ export function TableView({
     </Table.Th>,
     <Table.Th key="ID">ID</Table.Th>,
     <Table.Th key="status">Status</Table.Th>,
+    <Table.Th key="tags">Tags</Table.Th>,
     <Table.Th key="meta">Meta</Table.Th>,
     ...uniqueTrials.flatMap((trial) => [
       <Table.Th key={`header-${trial.componentName}-${trial.timesSeenInBlock}`}>{trial.componentName}</Table.Th>,
@@ -205,6 +206,18 @@ export function TableView({
               {record.rejected.reason}
             </Text>
           )}
+        </Flex>
+      </Table.Td>
+
+      <Table.Td>
+        <Flex direction="column" miw={100}>
+          {record.participantTags.map((tag) => (
+            <Text key={`tag-${tag}`} fz={10}>
+              -
+              {' '}
+              {tag}
+            </Text>
+          ))}
         </Flex>
       </Table.Td>
       {record.metadata ? <MetaCell metaData={record.metadata} /> : <Table.Td>N/A</Table.Td>}
