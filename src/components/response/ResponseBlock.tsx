@@ -181,8 +181,9 @@ export default function ResponseBlock({
       });
 
       setEnableNextButton(
-        (allowFailedTraining && newAttemptsUsed >= trainingAttempts)
-        || (
+      (
+          allowFailedTraining && newAttemptsUsed >= trainingAttempts
+       ) || (
           Object.values(correctAnswers).every((isCorrect) => isCorrect)
           && newAttemptsUsed <= trainingAttempts
         ),
