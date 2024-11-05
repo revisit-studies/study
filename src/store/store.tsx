@@ -22,7 +22,7 @@ export async function studyStoreCreator(
     .map((id, idx) => [
       `${id}_${idx}`,
       {
-        answer: {}, startTime: 0, endTime: -1, provenanceGraph: undefined, windowEvents: [],
+        answer: {}, startTime: 0, endTime: -1, provenanceGraph: undefined, windowEvents: [], timedOut: false,
       },
     ]));
   const emptyValidation: TrialValidation = Object.assign(
@@ -107,7 +107,7 @@ export async function studyStoreCreator(
         }: PayloadAction<{ identifier: string } & StoredAnswer>,
       ) {
         const {
-          identifier, answer, startTime, endTime, provenanceGraph, windowEvents,
+          identifier, answer, startTime, endTime, provenanceGraph, windowEvents, timedOut,
         } = payload;
         state.answers[identifier] = {
           answer,
@@ -115,6 +115,7 @@ export async function studyStoreCreator(
           endTime,
           provenanceGraph,
           windowEvents,
+          timedOut,
         };
       },
     },

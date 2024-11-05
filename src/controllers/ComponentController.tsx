@@ -17,6 +17,7 @@ import { useStoreActions, useStoreDispatch } from '../store/store';
 import { StudyEnd } from '../components/StudyEnd';
 import { TrainingFailed } from '../components/TrainingFailed';
 import ResourceNotFound from '../ResourceNotFound';
+import { TimedOut } from '../components/TimedOut';
 
 // current active stimuli presented to the user
 export default function ComponentController() {
@@ -54,6 +55,11 @@ export default function ComponentController() {
   // Handle failed training
   if (currentComponent === '__trainingFailed') {
     return <TrainingFailed />;
+  }
+
+  // Handle timed out participants
+  if (currentComponent === '__timedOut') {
+    return <TimedOut />;
   }
 
   if (currentComponent === 'Notfound') {

@@ -114,6 +114,8 @@ export interface UIConfig {
    * Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar.
    */
   enumerateQuestions?: boolean;
+  /** Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set. */
+  timeoutReject?: boolean;
 }
 
 /**
@@ -480,6 +482,10 @@ export interface BaseIndividualComponent {
   description?: string;
   /** The instruction of the component. This is used to identify and provide additional information for the component in the admin panel. */
   instruction?: string;
+  /** A timeout (in ms) after which the next button will be disabled. */
+  nextButtonDisableTime?: number;
+  /** A timer (in ms) after which the next button will be enabled. */
+  nextButtonEnableTime?: number;
 }
 
 /**
