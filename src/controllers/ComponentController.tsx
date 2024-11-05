@@ -54,7 +54,7 @@ export default function ComponentController() {
       const participantData = await storageEngine?.getParticipantData();
       if (participantData) {
         // Get all nested block IDs
-        const blockIds = findBlockForStep(participantData.sequence, currentStep)?.map((block) => block.currentBlock.id).filter<string>((blockId) => blockId !== undefined) || [];
+        const blockIds = findBlockForStep(participantData.sequence, currentStep)?.map((block) => block.currentBlock.id).filter((blockId) => blockId !== undefined) as string[] | undefined || [];
         setBlockForStep(blockIds);
       }
     }
