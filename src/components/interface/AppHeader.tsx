@@ -12,6 +12,7 @@ import {
   Space,
   Title,
   Tooltip,
+  Text,
 } from '@mantine/core';
 import {
   IconDotsVertical,
@@ -28,6 +29,7 @@ import {
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
+import RecordingAudioWaveform from './RecordingAudioWaveform';
 
 export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
@@ -54,6 +56,8 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const [isTruncated, setIsTruncated] = useState(false);
 
+  const isRecording = useStoreSelector((store) => store.isRecording);
+
   useEffect(() => {
     const element = titleRef.current;
     if (element) {
@@ -76,6 +80,12 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
             >
               {studyConfig?.studyMetadata.title}
             </Title>
+            {isRecording ? (
+              <Group ml="xl" gap={20} wrap="nowrap">
+                <Text c="red">Recording audio</Text>
+                <RecordingAudioWaveform />
+              </Group>
+            ) : null}
           </Flex>
         </Grid.Col>
 

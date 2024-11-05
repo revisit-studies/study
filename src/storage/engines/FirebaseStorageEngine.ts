@@ -74,15 +74,15 @@ export interface SnapshotNameItem {
   alternateName: string;
 }
 
-type FirebaseStorageObjectType = 'sequenceArray' | 'participantData' | 'config';
+type FirebaseStorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 type FirebaseStorageObject<T extends FirebaseStorageObjectType> =
   T extends 'sequenceArray'
-    ? Sequence[] | object
+    ? Sequence[]
     : T extends 'participantData'
-    ? ParticipantData | object
+    ? ParticipantData
     : T extends 'config'
-    ? StudyConfig | object
-    : never;
+    ? StudyConfig
+    : object; // Fallback for any random string
 
 function isParticipantData(obj: unknown): obj is ParticipantData {
   const potentialParticipantData = obj as ParticipantData;
@@ -327,13 +327,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     taskName: string,
   ) {
     audioStream.addEventListener('dataavailable', (data) => {
-      const storage = getStorage();
-
-      const storeRef = ref(storage, `${this.collectionPrefix}${this.studyId}/audio/${this.currentParticipantId}_${taskName}`);
-
-      uploadBytes(storeRef, data.data).then(() => {
-        console.warn('Uploaded a blob or file!');
-      });
+      this._pushToFirebaseStorage(`/audio/${this.currentParticipantId}`, taskName, data.data);
     });
 
     audioStream.stop();
