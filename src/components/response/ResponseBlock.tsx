@@ -75,7 +75,7 @@ export default function ResponseBlock({
     const interval = setInterval(() => {
       time += 100;
       setTimer(time);
-    }, 100);
+    }, 500);
     return () => {
       clearInterval(interval);
     };
@@ -181,9 +181,9 @@ export default function ResponseBlock({
       });
 
       setEnableNextButton(
-      (
+        (
           allowFailedTraining && newAttemptsUsed >= trainingAttempts
-       ) || (
+        ) || (
           Object.values(correctAnswers).every((isCorrect) => isCorrect)
           && newAttemptsUsed <= trainingAttempts
         ),
