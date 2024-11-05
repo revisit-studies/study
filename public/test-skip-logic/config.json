@@ -113,6 +113,7 @@
       },
       "continuingComponent",
       {
+        "id": "testBlockId",
         "order": "fixed",
         "components": ["trial1"],
         "skip": [{
