@@ -114,6 +114,8 @@ export interface UIConfig {
    * Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar.
    */
   enumerateQuestions?: boolean;
+  /** Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set. */
+  timeoutReject?: boolean;
 }
 
 /**
@@ -482,7 +484,10 @@ export interface BaseIndividualComponent {
   instruction?: string;
   /** Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.  */
   recordAudio?: boolean;
-
+  /** A timeout (in ms) after which the next button will be disabled. */
+  nextButtonDisableTime?: number;
+  /** A timer (in ms) after which the next button will be enabled. */
+  nextButtonEnableTime?: number;
 }
 
 /**
@@ -1138,6 +1143,8 @@ export interface StudyConfig {
   recordStudyAudio?: boolean;
   /** The UI configuration for the study. This is used to configure the UI of the app. */
   uiConfig: UIConfig;
+  /** A list of libraries that are used in the study. This is used to import external libraries into the study. Library names are valid namespaces to be used later. */
+  importedLibraries?: string[];
   /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */
   baseComponents?: BaseComponents;
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
@@ -1146,13 +1153,53 @@ export interface StudyConfig {
   sequence: ComponentBlock;
 }
 
+/**  LibraryConfig is used to define the properties of a library configuration. This is a JSON object with three main components: baseComponents, components, and the sequences. Libraries are useful for defining components and sequences of these components that are to be reused across multiple studies. We (the reVISit team) provide several libraries that can be used in your study configurations. Check the public/libraries folder in the reVISit-studies repository for available libraries. We also plan to accept community contributions for libraries. If you have a library that you think would be useful for others, please reach out to us. We would love to include it in our repository.
+ *
+ * Below is the general template that should be followed when constructing a Library configuration file.
+ *
+ * ```js
+ * {
+ *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/LibraryConfigSchema.json",
+ *   "baseComponents": {
+ *     // BaseComponents here are defined exactly as is in the StudyConfig
+ *   },
+ *   "components": {
+ *     // Components here are defined exactly as is in the StudyConfig
+ *   },
+ *   "sequences": {
+ *    // Sequences here are defined as "key": "value" pairs where the key is the name of the sequence and the value is a ComponentBlock, just like in the StudyConfig
+ *   }
+ * }
+ * ```
+ */
+export interface LibraryConfig {
+  /** A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information */
+  $schema: string;
+  /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */
+  baseComponents?: BaseComponents;
+  /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
+  components: Record<string, IndividualComponent | InheritedComponent>
+  /** The order of the components in the study. This might include some randomness. */
+  sequences: Record<string, ComponentBlock>;
+}
+
+/**
+ * @ignore
+ * Helper error type to make reading the error messages easier
+ */
+export type ParserErrorWarning = {
+  instancePath: string;
+  message?: string;
+  params: object;
+}
+
 /**
  * @ignore
  * Helper type to write the study config with with errors key
  */
-export type ParsedStudyConfig = StudyConfig & {
-  errors: { instancePath: string, message?: string, params: object }[]
-  warnings: { instancePath: string, message?: string, params: object }[]
+export type ParsedConfig<T> = T & {
+  errors: ParserErrorWarning[]
+  warnings: ParserErrorWarning[]
 }
 
 /**

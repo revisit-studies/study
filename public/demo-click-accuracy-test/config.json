@@ -38,8 +38,7 @@
           "type": "iframe"
         }
       ]
-    },
-
+    }
   },
   "components": {
     "introduction": {
@@ -55,8 +54,7 @@
       "parameters": {
         "speed": 100,
         "taskid": "accuracy"
-      },
-
+      }
     },
     "trial2": {
       "baseComponent": "trial",
@@ -66,7 +64,7 @@
       "parameters": {
         "speed": 200,
         "taskid": "accuracy"
-      },
+      }
     }
   },
   "sequence": {

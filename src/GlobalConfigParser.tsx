@@ -5,7 +5,9 @@ import { AppShell } from '@mantine/core';
 import ConfigSwitcher from './components/ConfigSwitcher';
 import { Shell } from './components/Shell';
 import { parseGlobalConfig } from './parser/parser';
-import { GlobalConfig, Nullable, ParsedStudyConfig } from './parser/types';
+import {
+  GlobalConfig, Nullable, ParsedConfig, StudyConfig,
+} from './parser/types';
 import { StudyAnalysisTabs } from './analysis/individualStudy/StudyAnalysisTabs';
 import { PREFIX } from './utils/Prefix';
 import { ProtectedRoute } from './ProtectedRoute';
@@ -29,7 +31,7 @@ async function fetchGlobalConfigArray() {
 
 export function GlobalConfigParser() {
   const [globalConfig, setGlobalConfig] = useState<Nullable<GlobalConfig>>(null);
-  const [studyConfigs, setStudyConfigs] = useState<Record<string, ParsedStudyConfig | null>>({});
+  const [studyConfigs, setStudyConfigs] = useState<Record<string, ParsedConfig<StudyConfig> | null>>({});
 
   useEffect(() => {
     async function fetchData() {
