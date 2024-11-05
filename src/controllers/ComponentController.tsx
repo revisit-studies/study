@@ -48,13 +48,14 @@ export default function ComponentController() {
   }, [setAlertModal, storageEngine, storeDispatch]);
 
   // Find current block, if it has an ID, add it as a participant tag
-  const [blockForStep, setBlockForStep] = useState<string | undefined>(undefined);
+  const [blockForStep, setBlockForStep] = useState<string[]>([]);
   useEffect(() => {
     async function getBlockForStep() {
       const participantData = await storageEngine?.getParticipantData();
       if (participantData) {
-        const mostNestedBlock = findBlockForStep(participantData.sequence, currentStep)?.[0];
-        setBlockForStep(mostNestedBlock?.currentBlock.id);
+        // Get all nested block IDs
+        const blockIds = findBlockForStep(participantData.sequence, currentStep)?.map((block) => block.currentBlock.id).filter<string>((blockId) => blockId !== undefined) || [];
+        setBlockForStep(blockIds);
       }
     }
     getBlockForStep();
@@ -62,7 +63,7 @@ export default function ComponentController() {
   useEffect(() => {
     async function addParticipantTag() {
       if (blockForStep && storageEngine) {
-        storageEngine.addParticipantTags([blockForStep]);
+        storageEngine.addParticipantTags(blockForStep);
       }
     }
     addParticipantTag();
