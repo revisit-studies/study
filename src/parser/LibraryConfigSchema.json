@@ -61,11 +61,11 @@
             "type": "object"
           },
           "nextButtonDisableTime": {
-            "description": "A timeout after which the next button will be disabled.",
+            "description": "A timeout (in ms) after which the next button will be disabled.",
             "type": "number"
           },
           "nextButtonEnableTime": {
-            "description": "A timer after which the next button will be enabled.",
+            "description": "A timer (in ms) after which the next button will be enabled.",
             "type": "number"
           },
           "nextButtonLocation": {
@@ -495,11 +495,11 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout after which the next button will be disabled.",
+          "description": "A timeout (in ms) after which the next button will be disabled.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer after which the next button will be enabled.",
+          "description": "A timer (in ms) after which the next button will be enabled.",
           "type": "number"
         },
         "nextButtonLocation": {
@@ -675,11 +675,11 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout after which the next button will be disabled.",
+          "description": "A timeout (in ms) after which the next button will be disabled.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer after which the next button will be enabled.",
+          "description": "A timer (in ms) after which the next button will be enabled.",
           "type": "number"
         },
         "nextButtonLocation": {
@@ -974,11 +974,11 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout after which the next button will be disabled.",
+          "description": "A timeout (in ms) after which the next button will be disabled.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer after which the next button will be enabled.",
+          "description": "A timer (in ms) after which the next button will be enabled.",
           "type": "number"
         },
         "nextButtonLocation": {
@@ -1136,11 +1136,11 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout after which the next button will be disabled.",
+          "description": "A timeout (in ms) after which the next button will be disabled.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer after which the next button will be enabled.",
+          "description": "A timer (in ms) after which the next button will be enabled.",
           "type": "number"
         },
         "nextButtonLocation": {
@@ -1313,11 +1313,11 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout after which the next button will be disabled.",
+          "description": "A timeout (in ms) after which the next button will be disabled.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer after which the next button will be enabled.",
+          "description": "A timer (in ms) after which the next button will be enabled.",
           "type": "number"
         },
         "nextButtonLocation": {
@@ -1630,11 +1630,11 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout after which the next button will be disabled.",
+          "description": "A timeout (in ms) after which the next button will be disabled.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer after which the next button will be enabled.",
+          "description": "A timer (in ms) after which the next button will be enabled.",
           "type": "number"
         },
         "nextButtonLocation": {
