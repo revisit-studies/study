@@ -1,7 +1,19 @@
 {
     "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
+    "baseComponents": {
+      "line": {
+        "type": "image",
+            "path": "libraries/vlat/assets/VLAT1.png",
+            "style": {
+              "width": "800px"
+            },
+            "nextButtonLocation": "sidebar",
+            "nextButtonDisableTime": 25000
+      }
+    },
     "components": {
         "line-value": {
+          "baseComponent": "line",
             "meta": {
               "trueAnswer": 2,
               "chartType": "line",
@@ -13,12 +25,6 @@
             },
             "instruction": "What was the price of a barrel of oil in February 2015?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT1.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-line-value",
@@ -37,6 +43,7 @@
             ]
           },
           "line-extremum": {
+            "baseComponent": "line",
             "meta": {
               "trueAnswer": 3,
               "chartType": "line",
@@ -48,12 +55,6 @@
             },
             "instruction": "In which month was the price of a barrel of oil the lowest in 2015?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT1.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-line-extremum",
@@ -1884,11 +1885,16 @@
       "fixed": {
         "order": "fixed",
         "components": [
-         "line-value",
-          "line-extremum",
-          "line-range",
-          "line-trends",
-          "line-comparisons",
+          {
+            "order": "latinSquare",
+            "components": [
+              "line-value",
+              "line-extremum",
+              "line-range",
+              "line-trends",
+              "line-comparisons"
+            ]
+          },
           "bar-value",
           "bar-extremum",
           "bar-range",
