@@ -20,7 +20,7 @@
     "withProgressBar": false,
     "sidebar": true
   },
-  "importedLibraries": ["test"],
+  "importedLibraries": ["test", "vlat"],
   "components": {
     "my-test": {
       "baseComponent": "$test.components.test-md",
@@ -39,6 +39,7 @@
     "order": "fixed",
     "components": [
       "$test.sequences.small",
+      "$vlat.se.fixed",
       "$test.se.long",
       "$test.components.test-md",
       "$test.co.test-react",
