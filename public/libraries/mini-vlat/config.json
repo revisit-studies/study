@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
   "components": {
-    "q1": {
+    "treemap": {
       "meta": {
         "trueAnswer": 1,
         "chartType": "treemap"
@@ -16,7 +16,7 @@
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "res1",
+          "id": "res-treemap",
           "prompt": "Your answer",
           "required": true,
           "location": "sidebar",
@@ -30,12 +30,12 @@
       ],
       "correctAnswer": [
         {
-          "id": "res1",
+          "id": "res-treemap",
           "answer": "False"
         }
       ]
     },
-    "q2": {
+    "stackedBar100": {
       "meta": {
         "trueAnswer": 0,
         "chartType": "stackedBar100"
@@ -50,7 +50,7 @@
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "res2",
+          "id": "res-stackedBar100",
           "prompt": "Your answer",
           "required": true,
           "location": "sidebar",
@@ -66,12 +66,12 @@
       ],
       "correctAnswer": [
         {
-          "id": "res2",
+          "id": "res-stackedBar100",
           "answer": "Great Britain"
         }
       ]
     },
-    "q3": {
+    "histogram": {
       "meta": {
         "trueAnswer": 1,
         "chartType": "histogram"
@@ -86,7 +86,7 @@
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "res3",
+          "id": "res-histogram",
           "prompt": "Your answer",
           "required": true,
           "location": "sidebar",
@@ -107,7 +107,7 @@
         }
       ]
     },
-    "q4": {
+    "choropleth": {
       "meta": {
         "trueAnswer": 0,
         "chartType": "choropleth"
@@ -122,7 +122,7 @@
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "res4",
+          "id": "res-choropleth",
           "prompt": "Your answer",
           "required": true,
           "location": "sidebar",
@@ -136,12 +136,12 @@
       ],
       "correctAnswer": [
         {
-          "id": "res4",
+          "id": "res-choropleth",
           "answer": "True"
         }
       ]
     },
-    "q5": {
+    "piechart": {
       "meta": {
         "trueAnswer": 0,
         "chartType": "piechart"
@@ -156,7 +156,7 @@
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "res5",
+          "id": "res-piechart",
           "prompt": "Your answer",
           "required": true,
           "location": "sidebar",
@@ -172,12 +172,12 @@
       ],
       "correctAnswer": [
         {
-          "id": "res5",
+          "id": "res-piechart",
           "answer": "17.6%"
         }
       ]
     },
-    "q6": {
+    "bubblechart": {
       "meta": {
         "trueAnswer": 1,
         "chartType": "bubblechart"
@@ -192,7 +192,7 @@
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "res6",
+          "id": "res-bubblechart",
           "prompt": "Your answer",
           "required": true,
           "location": "sidebar",
@@ -208,12 +208,12 @@
       ],
       "correctAnswer": [
         {
-          "id": "res6",
+          "id": "res-bubblechart",
           "answer": "Shanghai"
         }
       ]
     },
-    "q7": {
+    "stackedbar": {
       "meta": {
         "trueAnswer": 1,
         "chartType": "stackedbar"
@@ -228,7 +228,7 @@
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "res7",
+          "id": "res-stackedbar",
           "prompt": "Your answer",
           "required": true,
           "location": "sidebar",
@@ -244,12 +244,12 @@
       ],
       "correctAnswer": [
         {
-          "id": "res7",
+          "id": "res-stackedbar",
           "answer": "$6.1"
         }
       ]
     },
-    "q8": {
+    "linechart": {
       "meta": {
         "trueAnswer": 0,
         "chartType": "linechart"
@@ -264,7 +264,7 @@
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "res8",
+          "id": "res-linechart",
           "prompt": "Your answer",
           "required": true,
           "location": "sidebar",
@@ -280,12 +280,12 @@
       ],
       "correctAnswer": [
         {
-          "id": "res8",
+          "id": "res-linechart",
           "answer": "$50.54"
         }
       ]
     },
-    "q9": {
+    "barchart": {
       "meta": {
         "trueAnswer": 1,
         "chartType": "barchart"
@@ -300,7 +300,7 @@
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "res9",
+          "id": "res-barchart",
           "prompt": "Your answer",
           "required": true,
           "location": "sidebar",
@@ -316,12 +316,12 @@
       ],
       "correctAnswer": [
         {
-          "id": "res9",
+          "id": "res-barchart",
           "answer": "40.51 Mbps"
         }
       ]
     },
-    "q10": {
+    "areachar": {
       "meta": {
         "trueAnswer": 0,
         "chartType": "areachart"
@@ -336,7 +336,7 @@
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "res10",
+          "id": "res-areachar",
           "prompt": "Your answer",
           "required": true,
           "location": "sidebar",
@@ -352,12 +352,12 @@
       ],
       "correctAnswer": [
         {
-          "id": "res10",
+          "id": "res-areachar",
           "answer": "$0.71"
         }
       ]
     },
-    "q11": {
+    "stackedarea": {
       "meta": {
         "trueAnswer": 1,
         "chartType": "stackedarea"
@@ -372,7 +372,7 @@
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "res11",
+          "id": "res-stackedarea",
           "prompt": "Your answer",
           "required": true,
           "location": "sidebar",
@@ -388,12 +388,12 @@
       ],
       "correctAnswer": [
         {
-          "id": "res11",
+          "id": "res-stackedarea",
           "answer": "1 to 2"
         }
       ]
     },
-    "q12": {
+    "scatterplot": {
       "meta": {
         "trueAnswer": 1,
         "chartType": "scatterplot"
@@ -408,7 +408,7 @@
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "res12",
+          "id": "res-scatterplot",
           "prompt": "Your answer",
           "required": true,
           "location": "sidebar",
@@ -422,28 +422,62 @@
       ],
       "correctAnswer": [
         {
-          "id": "res12",
+          "id": "res-scatterplot",
           "answer": "False"
         }
       ]
     }
   },
   "sequences": {
-    "mini": {
+    "latinSquare": {
       "order": "latinSquare",
       "components": [
-        "q1",
-        "q2",
-        "q3",
-        "q4",
-        "q5",
-        "q6",
-        "q7",
-        "q8",
-        "q9",
-        "q10",
-        "q11",
-        "q12"
+        "treemap",
+        "stackedBar100",
+        "histogram",
+        "choropleth",
+        "piechart",
+        "bubblechart",
+        "stackedbar",
+        "linechart",
+        "barchart",
+        "areachar",
+        "stackedarea",
+        "scatterplot"
+      ]
+    },
+    "fixed": {
+      "order": "fixed",
+      "components": [
+        "treemap",
+        "stackedBar100",
+        "histogram",
+        "choropleth",
+        "piechart",
+        "bubblechart",
+        "stackedbar",
+        "linechart",
+        "barchart",
+        "areachar",
+        "stackedarea",
+        "scatterplot"
+      ]
+    },
+    "random": {
+      "order": "random",
+      "components": [
+        "treemap",
+        "stackedBar100",
+        "histogram",
+        "choropleth",
+        "piechart",
+        "bubblechart",
+        "stackedbar",
+        "linechart",
+        "barchart",
+        "areachar",
+        "stackedarea",
+        "scatterplot"
       ]
     }
   }
