@@ -1823,7 +1823,7 @@
           }
     },
     "sequences": {
-      "mini": {
+      "vlat": {
         "order": "latinSquare",
         "components": [
           "q0",
