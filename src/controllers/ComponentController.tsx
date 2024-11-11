@@ -27,7 +27,7 @@ export default function ComponentController() {
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent() || 'Notfound';
   const stepConfig = studyConfig.components[currentComponent];
-  const storage = useStorageEngine();
+  const { storageEngine } = useStorageEngine();
 
   const [audioStream, setAudioStream] = useState<MediaRecorder | null>(null);
   const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
@@ -42,7 +42,6 @@ export default function ComponentController() {
   useDisableBrowserBack();
 
   // Check if we have issues connecting to the database, if so show alert modal
-  const { storageEngine } = useStorageEngine();
   const storeDispatch = useStoreDispatch();
   const { setAlertModal } = useStoreActions();
   useEffect(() => {
@@ -55,12 +54,12 @@ export default function ComponentController() {
   }, [setAlertModal, storageEngine, storeDispatch]);
 
   useEffect(() => {
-    if (!currentStep || !studyConfig || !studyConfig.recordStudyAudio || !storage.storageEngine) {
+    if (!studyConfig || !studyConfig.recordStudyAudio || !storageEngine || storageEngine.getEngine() !== 'firebase') {
       return;
     }
 
     if (audioStream && prevTrialName) {
-      storage.storageEngine.saveAudio(audioStream, prevTrialName);
+      storageEngine.saveAudio(audioStream, prevTrialName);
     }
 
     if (stepConfig && stepConfig.recordAudio !== undefined && !stepConfig.recordAudio) {

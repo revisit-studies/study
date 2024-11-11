@@ -16,6 +16,7 @@
     "demo-fairness-jnd",
     "demo-click-accuracy-test",
     "demo-image",
+    "test-audio",
     "test-library",
     "test-parser-errors",
     "test-randomization",
@@ -66,6 +67,10 @@
     },
     "demo-image": {
       "path": "demo-image/config.json"
+    },
+    "test-audio": {
+      "path": "test-audio/config.json",
+      "test": true
     },
     "test-library": {
       "path": "test-library/config.json",

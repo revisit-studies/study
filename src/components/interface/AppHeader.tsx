@@ -80,12 +80,6 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
             >
               {studyConfig?.studyMetadata.title}
             </Title>
-            {isRecording ? (
-              <Group ml="xl" gap={20} wrap="nowrap">
-                <Text c="red">Recording audio</Text>
-                <RecordingAudioWaveform />
-              </Group>
-            ) : null}
           </Flex>
         </Grid.Col>
 
@@ -97,6 +91,12 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
 
         <Grid.Col span={4}>
           <Group wrap="nowrap" justify="right">
+            {isRecording ? (
+              <Group ml="xl" gap={20} wrap="nowrap">
+                <Text color="red">Recording audio</Text>
+                <RecordingAudioWaveform />
+              </Group>
+            ) : null}
             {!dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
