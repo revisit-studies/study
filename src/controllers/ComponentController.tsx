@@ -22,16 +22,10 @@ import { findBlockForStep } from '../utils/getSequenceFlatMap';
 import { useAsync } from '../store/hooks/useAsync';
 
 async function createAudioStream() {
-  const _stream = navigator.mediaDevices.getUserMedia({
+  const stream = await navigator.mediaDevices.getUserMedia({
     audio: true,
   });
-
-  const recorder = await _stream.then((stream) => {
-    const mediaRecorder = new MediaRecorder(stream);
-    return mediaRecorder;
-  });
-
-  return recorder;
+  return new MediaRecorder(stream);
 }
 
 // current active stimuli presented to the user
@@ -46,7 +40,6 @@ export default function ComponentController() {
   const { value: audioStream, status: audioStreamStatus } = useAsync(createAudioStream, []);
   const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
 
-  const dispatch = useStoreDispatch();
   const { setIsRecording } = useStoreActions();
 
   // If we have a trial, use that config to render the right component else use the step
@@ -78,7 +71,7 @@ export default function ComponentController() {
 
     if ((stepConfig && stepConfig.recordAudio !== undefined && !stepConfig.recordAudio) || currentComponent === 'end') {
       setPrevTrialName(null);
-      dispatch(setIsRecording(false));
+      storeDispatch(setIsRecording(false));
       if (audioStream && audioStream.state !== 'inactive') {
         audioStream.pause();
       }
@@ -88,7 +81,7 @@ export default function ComponentController() {
       } else {
         audioStream.resume();
       }
-      dispatch(setIsRecording(true));
+      storeDispatch(setIsRecording(true));
 
       setPrevTrialName(`${currentComponent}_${currentStep}`);
     }
