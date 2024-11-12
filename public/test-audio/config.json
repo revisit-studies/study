@@ -35,6 +35,7 @@
       "order": "fixed",
       "components": [
         "$test.sequences.small",
+        "$test.sequences.small",
         "my-test"
       ]
     }

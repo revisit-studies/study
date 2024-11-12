@@ -327,13 +327,19 @@ export class FirebaseStorageEngine extends StorageEngine {
     audioStream: MediaRecorder,
     taskName: string,
   ) {
-    audioStream.addEventListener('dataavailable', (data) => {
+    const listener = (data: BlobEvent) => {
       this._pushToFirebaseStorage(`/audio/${this.currentParticipantId}`, taskName, data.data);
-    });
+    };
 
-    audioStream.stop();
+    audioStream.addEventListener('dataavailable', listener);
+    audioStream.requestData();
 
-    audioStream.stream.getTracks().forEach((track) => track.stop());
+    // The 0 timeout is to ensure that we let the event get sent before removing the event listener
+    setTimeout(() => {
+      audioStream.removeEventListener('dataavailable', listener);
+    }, 0);
+
+    // audioStream.removeEventListener('dataavailable', listener);
   }
 
   async saveAnswers(answers: Record<string, StoredAnswer>) {
@@ -1287,11 +1293,14 @@ export class FirebaseStorageEngine extends StorageEngine {
     type: T,
     objectToUpload: FirebaseStorageObject<T>,
   ) {
-    if (Object.keys(objectToUpload).length > 0) {
-      const storageRef = ref(
-        this.storage,
-        `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
-      );
+    const storageRef = ref(
+      this.storage,
+      `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
+    );
+
+    if (objectToUpload instanceof Blob) {
+      await uploadBytes(storageRef, objectToUpload);
+    } else if (Object.keys(objectToUpload).length > 0) {
       const blob = new Blob([JSON.stringify(objectToUpload)], {
         type: 'application/json',
       });

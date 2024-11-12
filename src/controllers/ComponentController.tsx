@@ -19,6 +19,20 @@ import { TrainingFailed } from '../components/TrainingFailed';
 import ResourceNotFound from '../ResourceNotFound';
 import { TimedOut } from '../components/TimedOut';
 import { findBlockForStep } from '../utils/getSequenceFlatMap';
+import { useAsync } from '../store/hooks/useAsync';
+
+async function createAudioStream() {
+  const _stream = navigator.mediaDevices.getUserMedia({
+    audio: true,
+  });
+
+  const recorder = await _stream.then((stream) => {
+    const mediaRecorder = new MediaRecorder(stream);
+    return mediaRecorder;
+  });
+
+  return recorder;
+}
 
 // current active stimuli presented to the user
 export default function ComponentController() {
@@ -29,7 +43,7 @@ export default function ComponentController() {
   const stepConfig = studyConfig.components[currentComponent];
   const { storageEngine } = useStorageEngine();
 
-  const [audioStream, setAudioStream] = useState<MediaRecorder | null>(null);
+  const { value: audioStream, status: audioStreamStatus } = useAsync(createAudioStream, []);
   const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
 
   const dispatch = useStoreDispatch();
@@ -62,27 +76,24 @@ export default function ComponentController() {
       storageEngine.saveAudio(audioStream, prevTrialName);
     }
 
-    if (stepConfig && stepConfig.recordAudio !== undefined && !stepConfig.recordAudio) {
-      audioStream?.stop();
+    if ((stepConfig && stepConfig.recordAudio !== undefined && !stepConfig.recordAudio) || currentComponent === 'end') {
       setPrevTrialName(null);
-      setAudioStream(null);
       dispatch(setIsRecording(false));
-    } else {
-      const _stream = navigator.mediaDevices.getUserMedia({
-        audio: true,
-      });
+      if (audioStream && audioStream.state !== 'inactive') {
+        audioStream.pause();
+      }
+    } else if (audioStream) {
+      if (audioStream.state === 'inactive') {
+        audioStream.start();
+      } else {
+        audioStream.resume();
+      }
+      dispatch(setIsRecording(true));
 
-      _stream.then((stream) => {
-        const mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.start();
-
-        setAudioStream(mediaRecorder);
-        dispatch(setIsRecording(true));
-      });
-      setPrevTrialName(currentComponent);
+      setPrevTrialName(`${currentComponent}_${currentStep}`);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentComponent]);
+  }, [currentComponent, audioStreamStatus, currentStep]);
 
   // Find current block, if it has an ID, add it as a participant tag
   const [blockForStep, setBlockForStep] = useState<string[]>([]);
