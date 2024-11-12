@@ -69,4 +69,6 @@ export interface ParticipantData {
     reason: string;
     timestamp: number;
   } | false;
+  /** The component blocks that the participant entered. */
+  participantTags: string[];
 }

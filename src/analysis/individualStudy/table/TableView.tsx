@@ -20,17 +20,19 @@ function AnswerCell({ cellData }: { cellData: StoredAnswer }) {
   return Number.isFinite(cellData.endTime) && Number.isFinite(cellData.startTime) ? (
     <Table.Td>
       <Stack miw={100}>
-        {Object.entries(cellData.answer).map(([key, storedAnswer]) => (
-          <Box key={`cell-${key}`}>
-            <Text fw={700} span>
-              {' '}
-              {`${key}: `}
-            </Text>
-            <Text span>
-              {`${storedAnswer}`}
-            </Text>
-          </Box>
-        ))}
+        {cellData.timedOut
+          ? <Text>Timed out</Text>
+          : Object.entries(cellData.answer).map(([key, storedAnswer]) => (
+            <Box key={`cell-${key}`}>
+              <Text fw={700} span>
+                {' '}
+                {`${key}: `}
+              </Text>
+              <Text span>
+                {`${storedAnswer}`}
+              </Text>
+            </Box>
+          ))}
       </Stack>
     </Table.Td>
   ) : (
@@ -159,6 +161,7 @@ export function TableView({
     </Table.Th>,
     <Table.Th key="ID">ID</Table.Th>,
     <Table.Th key="status">Status</Table.Th>,
+    <Table.Th key="tags">Tags</Table.Th>,
     <Table.Th key="meta">Meta</Table.Th>,
     ...uniqueTrials.flatMap((trial) => [
       <Table.Th key={`header-${trial.componentName}-${trial.timesSeenInBlock}`}>{trial.componentName}</Table.Th>,
@@ -205,6 +208,18 @@ export function TableView({
           )}
         </Flex>
       </Table.Td>
+
+      <Table.Td>
+        <Flex direction="column" miw={100}>
+          {record.participantTags.map((tag) => (
+            <Text key={`tag-${tag}`} fz={10}>
+              -
+              {' '}
+              {tag}
+            </Text>
+          ))}
+        </Flex>
+      </Table.Td>
       {record.metadata ? <MetaCell metaData={record.metadata} /> : <Table.Td>N/A</Table.Td>}
       {uniqueTrials.map((trial) => {
         const sequenceBlock = findBlockForStep(record.sequence, trial.orderPath);
@@ -237,6 +252,7 @@ export function TableView({
           endTime: Math.max(...Object.values(record.answers).filter((a) => a.endTime !== -1 && a.endTime !== undefined).map((a) => a.endTime)),
           answer: {},
           windowEvents: Object.values(record.answers).flatMap((a) => a.windowEvents),
+          timedOut: false, // not used
         }}
         key={`cell-${record.participantId}-total-duration`}
       />

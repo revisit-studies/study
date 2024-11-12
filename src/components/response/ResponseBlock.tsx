@@ -5,6 +5,7 @@ import {
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { IconAlertTriangle, IconInfoCircle } from '@tabler/icons-react';
 import {
   IndividualComponent,
   ResponseBlockLocation,
@@ -20,6 +21,8 @@ import { useAnswerField } from './utils';
 import ResponseSwitcher from './ResponseSwitcher';
 import { StoredAnswer, TrrackedProvenance } from '../../store/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { useStudyConfig } from '../../store/hooks/useStudyConfig';
+import { useNextStep } from '../../store/hooks/useNextStep';
 
 type Props = {
   status?: StoredAnswer;
@@ -42,6 +45,7 @@ export default function ResponseBlock({
   const storedAnswer = status?.answer;
 
   const studyId = useStudyId();
+  const studyConfig = useStudyConfig();
 
   const navigate = useNavigate();
 
@@ -61,6 +65,26 @@ export default function ResponseBlock({
   const [enableNextButton, setEnableNextButton] = useState(false);
 
   const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
+
+  const nextButtonDisableTime = configInUse?.nextButtonDisableTime;
+  const nextButtonEnableTime = configInUse?.nextButtonEnableTime || 0;
+  const [timer, setTimer] = useState<number | undefined>(undefined);
+  // Start a timer on first render, update timer every 100ms
+  useEffect(() => {
+    let time = 0;
+    const interval = setInterval(() => {
+      time += 100;
+      setTimer(time);
+    }, 500);
+    return () => {
+      clearInterval(interval);
+    };
+  }, []);
+  useEffect(() => {
+    if (timer && nextButtonDisableTime && timer >= nextButtonDisableTime && studyConfig.uiConfig.timeoutReject) {
+      navigate('./__timeout');
+    }
+  }, [nextButtonDisableTime, timer, navigate, studyConfig.uiConfig.timeoutReject]);
 
   useEffect(() => {
     const iframeResponse = responses.find((r) => r.type === 'iframe');
@@ -156,9 +180,27 @@ export default function ResponseBlock({
         }
       });
 
-      setEnableNextButton((allowFailedTraining && newAttemptsUsed >= trainingAttempts) || (Object.values(correctAnswers).every((isCorrect) => isCorrect) && newAttemptsUsed <= trainingAttempts));
+      setEnableNextButton(
+        (
+          allowFailedTraining && newAttemptsUsed >= trainingAttempts
+        ) || (
+          Object.values(correctAnswers).every((isCorrect) => isCorrect)
+          && newAttemptsUsed <= trainingAttempts
+        ),
+      );
     }
   };
+
+  const buttonTimerSatisfied = useMemo(
+    () => {
+      const nextButtonDisableSatisfied = nextButtonDisableTime && timer ? timer <= nextButtonDisableTime : true;
+      const nextButtonEnableSatisfied = timer ? timer >= nextButtonEnableTime : true;
+      return nextButtonDisableSatisfied && nextButtonEnableSatisfied;
+    },
+    [nextButtonDisableTime, nextButtonEnableTime, timer],
+  );
+
+  const { goToNextStep } = useNextStep();
 
   return (
     <div style={style}>
@@ -216,11 +258,38 @@ export default function ResponseBlock({
         )}
         {showNextBtn && (
           <NextButton
-            disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
+            disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid() || !buttonTimerSatisfied}
             label={configInUse.nextButtonText || 'Next'}
           />
         )}
       </Group>
+      {showNextBtn && nextButtonEnableTime > 0 && timer && timer < nextButtonEnableTime && (
+      <Alert mt="md" title="Please wait" color="blue" icon={<IconInfoCircle />}>
+        The next button will be enabled in
+        {' '}
+        {Math.ceil((nextButtonEnableTime - timer) / 1000)}
+        {' '}
+        seconds.
+      </Alert>
+      )}
+      {showNextBtn && nextButtonDisableTime && timer && (nextButtonDisableTime - timer) < 10000 && (
+        (nextButtonDisableTime - timer) > 0
+          ? (
+            <Alert mt="md" title="Next button disables soon" color="yellow" icon={<IconAlertTriangle />}>
+              The next button disables in
+              {' '}
+              {Math.ceil((nextButtonDisableTime - timer) / 1000)}
+              {' '}
+              seconds.
+            </Alert>
+          ) : !studyConfig.uiConfig.timeoutReject && (
+            <Alert mt="md" title="Next button disabled" color="red" icon={<IconAlertTriangle />}>
+              The next button has timed out and is now disabled.
+              <Group justify="right" mt="sm">
+                <Button onClick={() => goToNextStep(false)} variant="link" color="red">Proceed</Button>
+              </Group>
+            </Alert>
+          ))}
     </div>
   );
 }

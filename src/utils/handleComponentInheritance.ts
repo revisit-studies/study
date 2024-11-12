@@ -1,5 +1,5 @@
 import merge from 'lodash.merge';
-import { isInheritedComponent } from '../parser/parser';
+import { isInheritedComponent } from '../parser/utils';
 import { InheritedComponent, IndividualComponent, StudyConfig } from '../parser/types';
 
 export function studyComponentToIndividualComponent(stepConfig: InheritedComponent | IndividualComponent, studyConfig: StudyConfig): IndividualComponent {

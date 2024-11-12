@@ -9,7 +9,7 @@ import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
 import { useStoredAnswer } from '../store/hooks/useStoredAnswer';
 import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
-import { isInheritedComponent } from '../parser/parser';
+import { isInheritedComponent } from '../parser/utils';
 import { IndividualComponent } from '../parser/types';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
@@ -17,6 +17,22 @@ import { useStoreActions, useStoreDispatch, useStoreSelector } from '../store/st
 import { StudyEnd } from '../components/StudyEnd';
 import { TrainingFailed } from '../components/TrainingFailed';
 import ResourceNotFound from '../ResourceNotFound';
+import { TimedOut } from '../components/TimedOut';
+import { findBlockForStep } from '../utils/getSequenceFlatMap';
+import { useAsync } from '../store/hooks/useAsync';
+
+async function createAudioStream() {
+  const _stream = navigator.mediaDevices.getUserMedia({
+    audio: true,
+  });
+
+  const recorder = await _stream.then((stream) => {
+    const mediaRecorder = new MediaRecorder(stream);
+    return mediaRecorder;
+  });
+
+  return recorder;
+}
 
 // current active stimuli presented to the user
 export default function ComponentController() {
@@ -25,9 +41,9 @@ export default function ComponentController() {
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent() || 'Notfound';
   const stepConfig = studyConfig.components[currentComponent];
-  const storage = useStorageEngine();
+  const { storageEngine } = useStorageEngine();
 
-  const [audioStream, setAudioStream] = useState<MediaRecorder | null>(null);
+  const { value: audioStream, status: audioStreamStatus } = useAsync(createAudioStream, []);
   const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
 
   const dispatch = useStoreDispatch();
@@ -41,7 +57,6 @@ export default function ComponentController() {
   useDisableBrowserBack();
 
   // Check if we have issues connecting to the database, if so show alert modal
-  const { storageEngine } = useStorageEngine();
   const storeDispatch = useStoreDispatch();
   const { setAlertModal } = useStoreActions();
   useEffect(() => {
@@ -54,34 +69,54 @@ export default function ComponentController() {
   }, [setAlertModal, storageEngine, storeDispatch]);
 
   useEffect(() => {
-    if (!currentStep || !studyConfig || !studyConfig.recordStudyAudio || !storage.storageEngine) {
+    if (!studyConfig || !studyConfig.recordStudyAudio || !storageEngine || storageEngine.getEngine() !== 'firebase') {
       return;
     }
 
     if (audioStream && prevTrialName) {
-      storage.storageEngine.saveAudio(audioStream, prevTrialName);
+      storageEngine.saveAudio(audioStream, prevTrialName);
     }
 
-    if (stepConfig && stepConfig.recordAudio !== undefined && !stepConfig.recordAudio) {
-      audioStream?.stop();
+    if ((stepConfig && stepConfig.recordAudio !== undefined && !stepConfig.recordAudio) || currentComponent === 'end') {
       setPrevTrialName(null);
-      setAudioStream(null);
       dispatch(setIsRecording(false));
-    } else {
-      const _stream = navigator.mediaDevices.getUserMedia({
-        audio: true,
-      });
+      if (audioStream && audioStream.state !== 'inactive') {
+        audioStream.pause();
+      }
+    } else if (audioStream) {
+      if (audioStream.state === 'inactive') {
+        audioStream.start();
+      } else {
+        audioStream.resume();
+      }
+      dispatch(setIsRecording(true));
 
-      _stream.then((stream) => {
-        const mediaRecorder = new MediaRecorder(stream);
-        mediaRecorder.start();
-
-        setAudioStream(mediaRecorder);
-        dispatch(setIsRecording(true));
-      });
-      setPrevTrialName(currentComponent);
+      setPrevTrialName(`${currentComponent}_${currentStep}`);
     }
-  }, [currentComponent]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentComponent, audioStreamStatus, currentStep]);
+
+  // Find current block, if it has an ID, add it as a participant tag
+  const [blockForStep, setBlockForStep] = useState<string[]>([]);
+  useEffect(() => {
+    async function getBlockForStep() {
+      const participantData = await storageEngine?.getParticipantData();
+      if (participantData) {
+        // Get all nested block IDs
+        const blockIds = findBlockForStep(participantData.sequence, currentStep)?.map((block) => block.currentBlock.id).filter((blockId) => blockId !== undefined) as string[] | undefined || [];
+        setBlockForStep(blockIds);
+      }
+    }
+    getBlockForStep();
+  }, [currentStep, storageEngine]);
+  useEffect(() => {
+    async function addParticipantTag() {
+      if (blockForStep && storageEngine) {
+        storageEngine.addParticipantTags(blockForStep);
+      }
+    }
+    addParticipantTag();
+  }, [blockForStep, storageEngine]);
 
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.
@@ -92,6 +127,11 @@ export default function ComponentController() {
   // Handle failed training
   if (currentComponent === '__trainingFailed') {
     return <TrainingFailed />;
+  }
+
+  // Handle timed out participants
+  if (currentComponent === '__timedOut') {
+    return <TimedOut />;
   }
 
   if (currentComponent === 'Notfound') {

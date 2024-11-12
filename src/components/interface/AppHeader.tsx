@@ -12,6 +12,7 @@ import {
   Space,
   Title,
   Tooltip,
+  Text,
 } from '@mantine/core';
 import {
   IconDotsVertical,
@@ -28,6 +29,7 @@ import {
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
+import RecordingAudioWaveform from './RecordingAudioWaveform';
 
 export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
@@ -53,6 +55,8 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
 
   const titleRef = useRef<HTMLHeadingElement | null>(null);
   const [isTruncated, setIsTruncated] = useState(false);
+
+  const isRecording = useStoreSelector((store) => store.isRecording);
 
   useEffect(() => {
     const element = titleRef.current;
@@ -87,6 +91,12 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
 
         <Grid.Col span={4}>
           <Group wrap="nowrap" justify="right">
+            {isRecording ? (
+              <Group ml="xl" gap={20} wrap="nowrap">
+                <Text color="red">Recording audio</Text>
+                <RecordingAudioWaveform />
+              </Group>
+            ) : null}
             {!dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button

@@ -72,6 +72,16 @@ export abstract class StorageEngine {
 
   abstract getParticipantData(): Promise<ParticipantData | null>;
 
+  abstract getParticipantTags(): Promise<string[]>;
+
+  /**
+   * This function adds tags to the participant. It ensures that the tags are unique, so if a tag is already present, it will not be added again.
+   * @param tags An array of tags to add to the participant
+   */
+  abstract addParticipantTags(tags: string[]): Promise<void>;
+
+  abstract removeParticipantTags(tags: string[]): Promise<void>;
+
   abstract nextParticipant(): Promise<void>;
 
   abstract verifyCompletion(answers: Record<string, StoredAnswer>): Promise<boolean>;

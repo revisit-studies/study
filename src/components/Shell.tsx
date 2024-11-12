@@ -11,7 +11,8 @@ import { LoadingOverlay, Title } from '@mantine/core';
 import {
   GlobalConfig,
   Nullable,
-  ParsedStudyConfig,
+  ParsedConfig,
+  StudyConfig,
 } from '../parser/types';
 import { useStudyId } from '../routes/utils';
 import {
@@ -35,7 +36,7 @@ export function Shell({ globalConfig }: {
 }) {
   // Pull study config
   const studyId = useStudyId();
-  const [activeConfig, setActiveConfig] = useState<ParsedStudyConfig | null>(null);
+  const [activeConfig, setActiveConfig] = useState<ParsedConfig<StudyConfig> | null>(null);
   const isValidStudyId = globalConfig.configsList.includes(studyId);
 
   useEffect(() => {
