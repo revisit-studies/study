@@ -92,7 +92,7 @@ export function Shell({ globalConfig }: {
             element: <NavigateWithParams to="0" replace />,
           },
           {
-            path: '/:index',
+            path: '/:index/:participantId?',
             element: activeConfig.errors.length > 0 ? (
               <>
                 <Title order={2} mb={8}>Error loading config</Title>

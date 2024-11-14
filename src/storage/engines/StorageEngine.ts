@@ -70,7 +70,7 @@ export abstract class StorageEngine {
 
   abstract getAllParticipantsDataByStudy(studyId:string): Promise<ParticipantData[]>;
 
-  abstract getParticipantData(): Promise<ParticipantData | null>;
+  abstract getParticipantData(participantid?: string): Promise<ParticipantData | null>;
 
   abstract getParticipantTags(): Promise<string[]>;
 

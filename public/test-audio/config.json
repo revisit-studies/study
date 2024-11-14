@@ -14,7 +14,7 @@
         "University of Toronto"
       ]
     },
-    "recordStudyAudio": true,
+    "recordStudyAudio": false,
     "uiConfig": {
       "contactEmail": "",
       "logoPath": "revisitAssets/revisitLogoSquare.svg",

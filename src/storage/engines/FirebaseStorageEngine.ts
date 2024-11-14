@@ -501,7 +501,7 @@ export class FirebaseStorageEngine extends StorageEngine {
   ) {
     const storage = getStorage();
 
-    const urlList = await Promise.all(taskList.map(async (task) => await getDownloadURL(ref(storage, `${this.studyId}/audio/${participantId}_${task}`))));
+    const urlList = await Promise.all(taskList.map(async (task) => await getDownloadURL(ref(storage, `${this.collectionPrefix}${this.studyId}/audio/${participantId}_${task}`))));
 
     const allAudioList = Promise.all(urlList.map((url) => new Promise<string>((resolve) => {
       const xhr = new XMLHttpRequest();
@@ -520,17 +520,17 @@ export class FirebaseStorageEngine extends StorageEngine {
     return allAudioList;
   }
 
-  async getParticipantData() {
+  async getParticipantData(participantId?: string) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
 
-    if (this.currentParticipantId === null) {
+    if (this.currentParticipantId === null && !participantId) {
       throw new Error('Participant not initialized');
     }
 
     const participantData = await this._getFromFirebaseStorage(
-      `participants/${this.currentParticipantId}`,
+      `participants/${participantId || this.currentParticipantId}`,
       'participantData',
     );
 

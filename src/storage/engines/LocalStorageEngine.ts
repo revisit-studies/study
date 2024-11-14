@@ -246,12 +246,12 @@ export class LocalStorageEngine extends StorageEngine {
     return returnArray;
   }
 
-  async getParticipantData() {
+  async getParticipantData(participantIdInput?: string) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
 
-    const participantId = await this.studyDatabase.getItem('currentParticipant') as string | null;
+    const participantId = participantIdInput || await this.studyDatabase.getItem('currentParticipant') as string | null;
     if (!participantId) {
       return null;
     }

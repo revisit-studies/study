@@ -20,6 +20,7 @@ import ResourceNotFound from '../ResourceNotFound';
 import { TimedOut } from '../components/TimedOut';
 import { findBlockForStep } from '../utils/getSequenceFlatMap';
 import { useAsync } from '../store/hooks/useAsync';
+import ReplayCard from './ReplayCard';
 
 async function createAudioStream() {
   const _stream = navigator.mediaDevices.getUserMedia({
@@ -48,7 +49,7 @@ export default function ComponentController() {
 
   const dispatch = useStoreDispatch();
   const { setIsRecording } = useStoreActions();
-  const { analysisTrialName, analysisProvState, analysisParticipantName } = useStoreSelector((state) => state);
+  const { analysisProvState } = useStoreSelector((state) => state);
 
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
@@ -158,6 +159,7 @@ export default function ComponentController() {
         {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} />}
         {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
         {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} />}
+
       </Suspense>
 
       {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
@@ -167,6 +169,10 @@ export default function ComponentController() {
         config={currentConfig}
         location="belowStimulus"
       />
+
+      {currentStep.toString().startsWith('reviewer-') ? (
+        <ReplayCard />
+      ) : null }
     </>
   );
 }

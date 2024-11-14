@@ -2,7 +2,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
 
-  Box, Group, Loader, Stack,
+  ActionIcon,
+  Box, Center, Group, Loader, Stack,
 } from '@mantine/core';
 import { useParams } from 'react-router-dom';
 import {
@@ -15,14 +16,15 @@ import Crunker from 'crunker';
 import * as d3 from 'd3';
 import { Registry, Trrack, initializeTrrack } from '@trrack/core';
 import WaveSurfer from 'wavesurfer.js';
+import { IconPlayerPauseFilled, IconPlayerPlayFilled } from '@tabler/icons-react';
+import { PluginDictionary } from 'wavesurfer-react/dist/hooks/useWavesurfer';
+import { GenericPlugin } from 'wavesurfer.js/dist/base-plugin';
 import { StorageEngine } from '../../storage/engines/StorageEngine';
 import { useCurrentComponent } from '../../routes/utils';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useAsync } from '../../store/hooks/useAsync';
 import { useStoreActions, useStoreDispatch } from '../../store/store';
-import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { deepCopy } from '../../utils/deepCopy';
-import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { useEvent } from '../../store/hooks/useEvent';
 import { SingleTaskTimeline } from './SingleTaskTimeline';
 
@@ -39,11 +41,12 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Storage
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function AnalysisPopout() {
-  const { trrackId, index } = useParams();
+export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void}) {
+  const { participantId, index } = useParams();
 
   const _trialFilter = useCurrentComponent();
 
+  const totalAudioLength = useRef<number>(0);
   const trialFilter = useMemo(() => (index ? _trialFilter : null), [_trialFilter, index]);
 
   const { storageEngine } = useStorageEngine();
@@ -52,7 +55,7 @@ export function AnalysisPopout() {
 
   const [currentNode, setCurrentNode] = useState<string | null>(null);
 
-  const { value: participant, status } = useAsync(getParticipantData, [trrackId, storageEngine]);
+  const { value: participant, status } = useAsync(getParticipantData, [participantId, storageEngine]);
 
   const { saveAnalysisState } = useStoreActions();
   const storeDispatch = useStoreDispatch();
@@ -61,8 +64,6 @@ export function AnalysisPopout() {
   const [playTime, setPlayTime] = useThrottledState<number>(0, 200);
 
   const waveSurferDiv = useRef(null);
-
-  const config = useStudyConfig();
 
   const [waveSurferLoading, setWaveSurferLoading] = useState<boolean>(true);
 
@@ -111,18 +112,20 @@ export function AnalysisPopout() {
       _setCurrentNode(trrackForTrial.current.current.children[0]);
     }
 
-    if (participant && trialFilter) {
-      const startTime = (trialFilterAnswersName ? participant.answers[trialFilterAnswersName].startTime : participant.answers.audioTest_2.startTime);
+    if (participant && trialFilter && trialFilterAnswersName) {
+      const { startTime } = participant.answers[trialFilterAnswersName];
       setPlayTime(t * 1000 + startTime);
+
+      setPercent((t / totalAudioLength.current) * 100);
     }
   });
 
   const handleWSMount = useCallback(
     (waveSurfer: WaveSurfer | null) => {
-      if (waveSurfer && participant && trrackId) {
+      if (waveSurfer && participant && participantId) {
         const crunker = new Crunker();
 
-        storageEngine?.getAudio(getSequenceFlatMap(participant.sequence).filter((seq) => config.tasksToNotRecordAudio === undefined || !config.tasksToNotRecordAudio.includes(seq)).filter((seq) => (trialFilter ? seq === trialFilter : true)), trrackId).then((urls) => {
+        storageEngine?.getAudio([`${trialFilter}_0`], participantId).then((urls) => {
           if (waveSurfer) {
             crunker
               .fetchAudio(...urls)
@@ -134,28 +137,31 @@ export function AnalysisPopout() {
               });
           }
 
+          totalAudioLength.current = waveSurfer.getDuration();
           waveSurfer.on('timeupdate', timeUpdate);
         });
       }
     },
-    [config.tasksToNotRecordAudio, participant, storageEngine, timeUpdate, trialFilter, trrackId],
+    [participant, storageEngine, timeUpdate, trialFilter, participantId],
   );
 
   const plugins = useMemo(() => [], []);
 
-  const wavesurfer = useWavesurfer({
+  const [wavesurfer] = useWavesurfer({
     container: waveSurferDiv.current!, plugins, onMount: handleWSMount, progressColor: 'cornflowerblue', waveColor: 'lightgray',
   } as any);
 
   const _setPlayTime = useCallback((n: number, percent: number) => {
     setPlayTime(n);
 
+    setPercent(percent);
+
     if (wavesurfer && percent) {
       setTimeout(() => {
         wavesurfer.seekTo(percent);
       });
     }
-  }, [setPlayTime, wavesurfer]);
+  }, [setPercent, setPlayTime, wavesurfer]);
 
   const _setIsPlaying = useCallback((b: boolean) => {
     setIsPlaying(b);
@@ -187,26 +193,34 @@ export function AnalysisPopout() {
     handleWSMount(wavesurfer);
   }, [handleWSMount, participant, wavesurfer]);
 
+  const fullWaveSurferObj: [WaveSurfer, PluginDictionary<GenericPlugin>, GenericPlugin[]] = useMemo(() => [wavesurfer, {}, []], [wavesurfer]);
+
   return (
     <Group wrap="nowrap" gap={25}>
       <Stack ref={ref} style={{ width: '100%' }} gap={0}>
-        { xScale && participant !== null && (trialFilterAnswersName ? participant.answers[trialFilterAnswersName] !== undefined : true)
-          ? (
-            <Box
-              ref={waveSurferDiv}
-              ml={participant && xScale ? xScale(participant.answers.audioTest_2.startTime) : 0}
-              mr={participant && xScale ? xScale(participant.answers['post-study_19'].startTime) : 0}
-              style={{
-                overflow: 'visible', width: `${participant && !trialFilter ? xScale(participant.answers['post-study_19'].startTime) - xScale(participant.answers.audioTest_2.startTime) : (xScale.range()[1] - xScale.range()[0])}px`,
-              }}
-            >
-              <WaveSurferContext.Provider value={wavesurfer}>
-                <WaveForm id="waveform" />
-              </WaveSurferContext.Provider>
-              {waveSurferLoading ? <Loader /> : null}
-            </Box>
-          ) : null }
-        {status === 'success' && participant && xScale ? <SingleTaskTimeline xScale={xScale} playTime={playTime - participant.answers.introduction_0.startTime} setPlayTime={_setPlayTime} currentNode={currentNode} setCurrentNode={_setCurrentNode} participantData={participant} width={width} height={50} /> : null}
+        <Group wrap="nowrap">
+          <Center>
+            <ActionIcon variant="light" size={50} onClick={() => _setIsPlaying(!isPlaying)}>{isPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}</ActionIcon>
+          </Center>
+          { xScale && participant !== null && (trialFilterAnswersName ? participant.answers[trialFilterAnswersName] !== undefined : true)
+            ? (
+              <Box
+                ref={waveSurferDiv}
+                ml={participant && xScale ? xScale(participant.answers['$test.components.test-md_0'].startTime) : 0}
+                mr={participant && xScale ? xScale(participant.answers['$test.components.test-md_1'].startTime) : 0}
+                style={{
+                  overflow: 'visible', width: `${participant && !trialFilter ? xScale(participant.answers['post-study_19'].startTime) - xScale(participant.answers.audioTest_2.startTime) : (xScale.range()[1] - xScale.range()[0])}px`,
+                }}
+              >
+                <WaveSurferContext.Provider value={fullWaveSurferObj}>
+                  <WaveForm id="waveform" />
+                </WaveSurferContext.Provider>
+                {waveSurferLoading ? <Loader /> : null}
+              </Box>
+            ) : null }
+        </Group>
+
+        {status === 'success' && participant && xScale && trialFilterAnswersName && participant.answers[trialFilterAnswersName].provenanceGraph ? <SingleTaskTimeline xScale={xScale} playTime={playTime - participant.answers['$test.components.test-md_0'].startTime} setPlayTime={_setPlayTime} currentNode={currentNode} setCurrentNode={_setCurrentNode} participantData={participant} width={width} height={50} /> : null}
       </Stack>
     </Group>
   );
