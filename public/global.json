@@ -20,6 +20,7 @@
     "test-library",
     "test-likert-matrix",
     "test-parser-errors",
+    "demo-vega",
     "test-randomization",
     "test-skip-logic"
   ],
@@ -83,6 +84,9 @@
     "test-parser-errors": {
       "path": "test-parser-errors/config.json",
       "test": true
+    },
+    "demo-vega": {
+      "path": "demo-vega/config.json"
     },
     "test-randomization": {
       "path": "test-randomization/config.json",

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Vega } from 'react-vega';
+import { VegaLite } from 'react-vega';
 import { VegaComponent } from '../parser/types';
 // import { PREFIX } from '../utils/Prefix';
 import { getJsonAssetByPath } from '../utils/getStaticAsset';
@@ -14,7 +14,6 @@ function VegaController({ currentConfig }: { currentConfig: VegaComponent; }) {
   const [assetFound, setAssetFound] = useState(false);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [vegaConfig, setVegaConfig] = useState<Record<string, any>>({});
-
   useEffect(() => {
     async function fetchVega() {
       const asset = await getJsonAssetByPath(currentConfig.path);
@@ -29,7 +28,7 @@ function VegaController({ currentConfig }: { currentConfig: VegaComponent; }) {
   }, [currentConfig]);
 
   return loading || assetFound ? (
-    <Vega spec={vegaConfig.spec} data={vegaConfig.data} />
+    <VegaLite spec={vegaConfig.spec || {}} data={vegaConfig.data || {}} />
   )
     : <ResourceNotFound path={currentConfig.path} />;
 }

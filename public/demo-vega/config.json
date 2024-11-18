@@ -1,0 +1,63 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Demo of use Vega-Lite as stimuli",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2024-11-16",
+    "description": "A demo of vega-lite stimuli",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-vega/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-vega/assets/introduction.md",
+      "response": []
+    },
+    "vegademo": {
+      "meta": {
+        "metadata": 1
+      },
+      "description": "vega test",
+      "instruction": "vega test",
+      "type": "vega",
+      "path": "demo-vega/assets/vega.json",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "demo-vega/assets-response",
+          "prompt": "Answer:",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "Yes",
+            "No"
+          ]
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "vegademo"
+
+    ]
+  }
+}

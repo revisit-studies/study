@@ -21,6 +21,7 @@ import { TrainingFailed } from '../components/TrainingFailed';
 import ResourceNotFound from '../ResourceNotFound';
 import { TimedOut } from '../components/TimedOut';
 import { findBlockForStep } from '../utils/getSequenceFlatMap';
+import VegaController from './VegaController';
 
 // current active stimuli presented to the user
 export default function ComponentController() {
@@ -160,6 +161,8 @@ export default function ComponentController() {
         {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} />}
         {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
         {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} />}
+        {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} />}
+
       </Suspense>
 
       {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}

@@ -108,6 +108,10 @@
               {
                 "description": "The path to the website. This should be a relative path from the public folder or could be an external website.",
                 "type": "string"
+              },
+              {
+                "description": "The path to the vega file. This should be a relative path from the public folder.",
+                "type": "string"
               }
             ],
             "description": "The path to the markdown file. This should be a relative path from the public folder."
@@ -144,7 +148,8 @@
               "react-component",
               "image",
               "website",
-              "questionnaire"
+              "questionnaire",
+              "vega"
             ],
             "type": "string"
           }
@@ -572,6 +577,9 @@
         },
         {
           "$ref": "#/definitions/QuestionnaireComponent"
+        },
+        {
+          "$ref": "#/definitions/VegaComponent"
         }
       ]
     },
@@ -730,6 +738,10 @@
             {
               "description": "The path to the website. This should be a relative path from the public folder or could be an external website.",
               "type": "string"
+            },
+            {
+              "description": "The path to the vega file. This should be a relative path from the public folder.",
+              "type": "string"
             }
           ],
           "description": "The path to the markdown file. This should be a relative path from the public folder."
@@ -766,7 +778,8 @@
             "react-component",
             "image",
             "website",
-            "questionnaire"
+            "questionnaire",
+            "vega"
           ],
           "type": "string"
         }
@@ -1840,6 +1853,76 @@
         "logoPath",
         "withProgressBar",
         "sidebar"
+      ],
+      "type": "object"
+    },
+    "VegaComponent": {
+      "additionalProperties": false,
+      "properties": {
+        "allowFailedTraining": {
+          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "type": "boolean"
+        },
+        "correctAnswer": {
+          "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instruction": {
+          "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the instructions."
+        },
+        "meta": {
+          "additionalProperties": {},
+          "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "object"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the next button."
+        },
+        "nextButtonText": {
+          "description": "The text that is displayed on the next button.",
+          "type": "string"
+        },
+        "path": {
+          "description": "The path to the vega file. This should be a relative path from the public folder.",
+          "type": "string"
+        },
+        "provideFeedback": {
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "response": {
+          "description": "The responses to the component",
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "trainingAttempts": {
+          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "type": "number"
+        },
+        "type": {
+          "const": "vega",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "response",
+        "type"
       ],
       "type": "object"
     },
