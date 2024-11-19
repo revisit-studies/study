@@ -3,9 +3,9 @@
 import {
 
   ActionIcon,
-  Box, Center, Group, Loader, Stack,
+  Box, Center, Group, Loader, Select, Stack,
 } from '@mantine/core';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
@@ -14,7 +14,9 @@ import { WaveForm, useWavesurfer } from 'wavesurfer-react';
 import WaveSurferContext from 'wavesurfer-react/dist/contexts/WaveSurferContext';
 import Crunker from 'crunker';
 import * as d3 from 'd3';
-import { Registry, Trrack, initializeTrrack } from '@trrack/core';
+import {
+  Registry, Trrack, initializeTrrack, isRootNode,
+} from '@trrack/core';
 import WaveSurfer from 'wavesurfer.js';
 import { IconPlayerPauseFilled, IconPlayerPlayFilled } from '@tabler/icons-react';
 import { PluginDictionary } from 'wavesurfer-react/dist/hooks/useWavesurfer';
@@ -27,14 +29,23 @@ import { useStoreActions, useStoreDispatch } from '../../store/store';
 import { deepCopy } from '../../utils/deepCopy';
 import { useEvent } from '../../store/hooks/useEvent';
 import { SingleTaskTimeline } from './SingleTaskTimeline';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 const margin = {
-  left: 5, top: 0, right: 5, bottom: 0,
+  left: 0, top: 0, right: 5, bottom: 0,
 };
 
 function getParticipantData(trrackId: string | undefined, storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
     return storageEngine.getParticipantData(trrackId);
+  }
+
+  return null;
+}
+
+function getAllParticipantIds(storageEngine: StorageEngine | undefined) {
+  if (storageEngine) {
+    return storageEngine.getAllParticipantsData();
   }
 
   return null;
@@ -52,10 +63,13 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
   const { storageEngine } = useStorageEngine();
 
   const [ref, { width }] = useResizeObserver();
+  const [waveSurferWidth, setWaveSurferWidth] = useState<number>(0);
 
   const [currentNode, setCurrentNode] = useState<string | null>(null);
 
   const { value: participant, status } = useAsync(getParticipantData, [participantId, storageEngine]);
+
+  const { value: allParticipants } = useAsync(getAllParticipantIds, [storageEngine]);
 
   const { saveAnalysisState } = useStoreActions();
   const storeDispatch = useStoreDispatch();
@@ -107,11 +121,6 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
   }, [participant, saveAnalysisState, storeDispatch, trialFilterAnswersName]);
 
   const timeUpdate = useEvent((t: number) => {
-    // check if were on the next node. If so, navigate to the next node
-    if (participant && trialFilter && trrackForTrial.current && trrackForTrial.current.current.children.length > 0 && (trrackForTrial.current.graph.backend.nodes[trrackForTrial.current.current.children[0]].createdOn - participant.answers.audioTest_2.startTime) / 1000 < t) {
-      _setCurrentNode(trrackForTrial.current.current.children[0]);
-    }
-
     if (participant && trialFilter && trialFilterAnswersName) {
       const { startTime } = participant.answers[trialFilterAnswersName];
       setPlayTime(t * 1000 + startTime);
@@ -120,12 +129,54 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
     }
   });
 
+  // use effect to control the current provenance node based on the changing playtime.
+  useEffect(() => {
+    if (!trialFilterAnswersName || !participant || !trrackForTrial.current) {
+      return;
+    }
+    const provGraph = participant.answers[trialFilterAnswersName].provenanceGraph;
+
+    if (!provGraph) {
+      return;
+    }
+
+    if (!currentNode || !provGraph.nodes[currentNode]) {
+      _setCurrentNode(provGraph.root as string);
+      return;
+    }
+
+    let tempNode = provGraph.nodes[currentNode];
+
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      if (playTime < tempNode.createdOn) {
+        if (!isRootNode(tempNode)) {
+          const parentNode = tempNode.parent;
+
+          if (playTime < provGraph.nodes[parentNode].createdOn) {
+            tempNode = provGraph.nodes[parentNode];
+          } else break;
+        } else break;
+      } else if (tempNode.children.length > 0) {
+        const child = tempNode.children[0];
+
+        if (playTime > provGraph.nodes[child].createdOn) {
+          tempNode = provGraph.nodes[child];
+        } else break;
+      } else break;
+    }
+
+    if (tempNode.id !== currentNode) {
+      _setCurrentNode(tempNode.id);
+    }
+  }, [_setCurrentNode, currentNode, participant, participantId, playTime, trialFilterAnswersName]);
+
   const handleWSMount = useCallback(
     (waveSurfer: WaveSurfer | null) => {
-      if (waveSurfer && participant && participantId) {
+      if (waveSurfer && participant && participantId && trialFilterAnswersName) {
         const crunker = new Crunker();
 
-        storageEngine?.getAudio([`${trialFilter}_0`], participantId).then((urls) => {
+        storageEngine?.getAudio([trialFilterAnswersName], participantId).then((urls) => {
           if (waveSurfer) {
             crunker
               .fetchAudio(...urls)
@@ -138,11 +189,13 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
           }
 
           totalAudioLength.current = waveSurfer.getDuration();
+          setWaveSurferWidth(waveSurfer.getWidth());
           waveSurfer.on('timeupdate', timeUpdate);
+          waveSurfer.on('redrawcomplete', () => setWaveSurferWidth(waveSurfer.getWidth()));
         });
       }
     },
-    [participant, storageEngine, timeUpdate, trialFilter, participantId],
+    [participant, participantId, trialFilterAnswersName, storageEngine, timeUpdate],
   );
 
   const plugins = useMemo(() => [], []);
@@ -191,7 +244,9 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
 
   useEffect(() => {
     handleWSMount(wavesurfer);
-  }, [handleWSMount, participant, wavesurfer]);
+  }, [handleWSMount, participant, participantId, wavesurfer]);
+
+  const navigate = useNavigate();
 
   const fullWaveSurferObj: [WaveSurfer, PluginDictionary<GenericPlugin>, GenericPlugin[]] = useMemo(() => [wavesurfer, {}, []], [wavesurfer]);
 
@@ -199,17 +254,13 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
     <Group wrap="nowrap" gap={25}>
       <Stack ref={ref} style={{ width: '100%' }} gap={0}>
         <Group wrap="nowrap">
-          <Center>
-            <ActionIcon variant="light" size={50} onClick={() => _setIsPlaying(!isPlaying)}>{isPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}</ActionIcon>
-          </Center>
+          <Center />
           { xScale && participant !== null && (trialFilterAnswersName ? participant.answers[trialFilterAnswersName] !== undefined : true)
             ? (
               <Box
                 ref={waveSurferDiv}
-                ml={participant && xScale ? xScale(participant.answers['$test.components.test-md_0'].startTime) : 0}
-                mr={participant && xScale ? xScale(participant.answers['$test.components.test-md_1'].startTime) : 0}
                 style={{
-                  overflow: 'visible', width: `${participant && !trialFilter ? xScale(participant.answers['post-study_19'].startTime) - xScale(participant.answers.audioTest_2.startTime) : (xScale.range()[1] - xScale.range()[0])}px`,
+                  overflow: 'visible', width: `${(xScale.range()[1] - xScale.range()[0])}px`,
                 }}
               >
                 <WaveSurferContext.Provider value={fullWaveSurferObj}>
@@ -220,7 +271,40 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
             ) : null }
         </Group>
 
-        {status === 'success' && participant && xScale && trialFilterAnswersName && participant.answers[trialFilterAnswersName].provenanceGraph ? <SingleTaskTimeline xScale={xScale} playTime={playTime - participant.answers['$test.components.test-md_0'].startTime} setPlayTime={_setPlayTime} currentNode={currentNode} setCurrentNode={_setCurrentNode} participantData={participant} width={width} height={50} /> : null}
+        {status === 'success' && participant && xScale && trialFilterAnswersName && participant.answers[trialFilterAnswersName].provenanceGraph
+          ? (
+            <SingleTaskTimeline
+              xScale={xScale}
+              trialName={trialFilterAnswersName}
+              setPlayTime={_setPlayTime}
+              currentNode={currentNode}
+              setCurrentNode={_setCurrentNode}
+              participantData={participant}
+              width={waveSurferWidth}
+              height={50}
+            />
+          ) : null}
+        <Center>
+          <Group>
+            <ActionIcon variant="light" size={50} onClick={() => _setIsPlaying(!isPlaying)}>{isPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}</ActionIcon>
+
+            <Select
+              style={{ width: '300px' }}
+              value={participant?.participantId}
+              onChange={(e) => {
+                navigate(`../${e}`, { relative: 'path' });
+              }}
+              data={allParticipants ? allParticipants?.map((part) => part.participantId) : []}
+            />
+            <Select
+              style={{ width: '300px' }}
+              clearable
+              value={trialFilter}
+              data={participant ? [...getSequenceFlatMap(participant.sequence)] : []}
+              onChange={(val) => navigate(`../../reviewer-${val || ''}/${participantId}`, { relative: 'path' })}
+            />
+          </Group>
+        </Center>
       </Stack>
     </Group>
   );

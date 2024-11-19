@@ -14,17 +14,23 @@ import { Bar } from './Bar';
 import { StimulusParams } from '../../../store/types';
 import { BrushParams, BrushState, SelectionType } from './types';
 
-export function BrushPlot({ parameters, setAnswer, provenanceState }: StimulusParams<BrushParams, BrushState>) {
+export function BrushPlot({ parameters, setAnswer, provenanceState }: StimulusParams<BrushParams, {all: {brush: BrushState}}>) {
   const [filteredTable, setFilteredTable] = useState<ColumnTable | null>(null);
-  const [brushState, setBrushState] = useState<BrushState>(provenanceState || {
+  const [brushState, setBrushState] = useState<BrushState>(provenanceState ? (provenanceState.all.brush || provenanceState.all) : {
     hasBrush: false, x1: 0, y1: 0, x2: 0, y2: 0, ids: [],
   });
+
+  useEffect(() => {
+    if (provenanceState) {
+      setBrushState(provenanceState.all.brush || provenanceState.all);
+    }
+  }, [provenanceState]);
 
   const [data, setData] = useState<any[] | null>(null);
 
   // load data
   useEffect(() => {
-    d3.csv(`./data/${parameters.dataset}.csv`).then((_data) => {
+    d3.csv(`/demo-brush-interactions/data/${parameters.dataset}.csv`).then((_data) => {
       setData(_data);
     });
   }, [parameters]);

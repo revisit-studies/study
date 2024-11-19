@@ -40,7 +40,7 @@ function ReactComponentController({ currentConfig, provState }: { currentConfig:
             parameters={currentConfig.parameters}
             // eslint-disable-next-line react/jsx-no-bind
             setAnswer={setAnswer}
-            provState={provState}
+            provenanceState={provState}
           />
         )
         : <ResourceNotFound path={currentConfig.path} />}

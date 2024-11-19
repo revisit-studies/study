@@ -332,14 +332,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     };
 
     audioStream.addEventListener('dataavailable', listener);
-    audioStream.requestData();
-
-    // The 0 timeout is to ensure that we let the event get sent before removing the event listener
-    setTimeout(() => {
-      audioStream.removeEventListener('dataavailable', listener);
-    }, 0);
-
-    // audioStream.removeEventListener('dataavailable', listener);
+    audioStream.stop();
   }
 
   async saveAnswers(answers: Record<string, StoredAnswer>) {

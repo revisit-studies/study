@@ -22,7 +22,7 @@ import { findBlockForStep } from '../utils/getSequenceFlatMap';
 import { useAsync } from '../store/hooks/useAsync';
 import ReplayCard from './ReplayCard';
 
-async function createAudioStream() {
+async function createAudioStream(_taskName: string) {
   const _stream = navigator.mediaDevices.getUserMedia({
     audio: true,
   });
@@ -44,7 +44,7 @@ export default function ComponentController() {
   const stepConfig = studyConfig.components[currentComponent];
   const { storageEngine } = useStorageEngine();
 
-  const { value: audioStream, status: audioStreamStatus } = useAsync(createAudioStream, []);
+  const { value: audioStream, status: audioStreamStatus } = useAsync(createAudioStream, [currentStep as string]);
   const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
 
   const dispatch = useStoreDispatch();
@@ -80,16 +80,15 @@ export default function ComponentController() {
 
     if ((stepConfig && stepConfig.recordAudio !== undefined && !stepConfig.recordAudio) || currentComponent === 'end') {
       setPrevTrialName(null);
+
       dispatch(setIsRecording(false));
-      if (audioStream && audioStream.state !== 'inactive') {
-        audioStream.pause();
-      }
     } else if (audioStream) {
       if (audioStream.state === 'inactive') {
         audioStream.start();
-      } else {
-        audioStream.resume();
       }
+      // } else {
+      //   audioStream.resume();
+      // }
       dispatch(setIsRecording(true));
 
       setPrevTrialName(`${currentComponent}_${currentStep}`);
