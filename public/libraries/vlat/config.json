@@ -9,10 +9,109 @@
             },
             "nextButtonLocation": "sidebar",
             "nextButtonDisableTime": 25000
+      },
+      "bar":{
+        "type": "image",
+        "path": "libraries/vlat/assets/VLAT2.png",
+        "style": {
+          "width": "800px"
+        },
+        "nextButtonLocation": "sidebar",
+        "nextButtonDisableTime": 25000
+      },
+      "stackbar": {
+        "type": "image",
+        "path": "libraries/vlat/assets/VLAT3.png",
+        "style": {
+          "width": "800px"
+        },
+        "nextButtonLocation": "sidebar",
+        "nextButtonDisableTime": 25000
+      },
+      "stackbar100": {
+        "type": "image",
+        "path": "libraries/vlat/assets/VLAT4.png",
+        "style": {
+          "width": "800px"
+        },
+        "nextButtonLocation": "sidebar",
+        "nextButtonDisableTime": 25000
+      },
+      "pie": {
+        "type": "image",
+        "path": "libraries/vlat/assets/VLAT5.png",
+        "style": {
+          "width": "800px"
+        },
+        "nextButtonLocation": "sidebar",
+        "nextButtonDisableTime": 25000
+      },
+      "histogram": {
+        "type": "image",
+        "path": "libraries/vlat/assets/VLAT6.png",
+        "style": {
+          "width": "800px"
+        },
+        "nextButtonLocation": "sidebar",
+        "nextButtonDisableTime": 25000
+      },
+      "scatterplot": {
+        "type": "image",
+        "path": "libraries/vlat/assets/VLAT7.png",
+        "style": {
+          "width": "800px"
+        },
+        "nextButtonLocation": "sidebar",
+        "nextButtonDisableTime": 25000
+      },
+      "area": {
+        "type": "image",
+        "path": "libraries/vlat/assets/VLAT8.png",
+        "style": {
+          "width": "800px"
+        },
+        "nextButtonLocation": "sidebar",
+        "nextButtonDisableTime": 25000
+      },
+      "stackarea": {
+        "type": "image",
+        "path": "libraries/vlat/assets/VLAT9.png",
+        "style": {
+          "width": "800px"
+        },
+        "nextButtonLocation": "sidebar",
+        "nextButtonDisableTime": 25000
+      },
+      "bubble": {
+        "type": "image",
+        "path": "libraries/vlat/assets/VLAT10.png",
+        "style": {
+          "width": "800px"
+        },
+        "nextButtonLocation": "sidebar",
+        "nextButtonDisableTime": 25000
+      },
+      "map": {
+        "type": "image",
+        "path": "libraries/vlat/assets/VLAT11.png",
+        "style": {
+          "width": "800px"
+        },
+        "nextButtonLocation": "sidebar",
+        "nextButtonDisableTime": 25000
+      },
+      "treemap": {
+        "type": "image",
+        "path": "libraries/vlat/assets/VLAT12.png",
+        "style": {
+          "width": "800px"
+        },
+        "nextButtonLocation": "sidebar",
+        "nextButtonDisableTime": 25000
       }
     },
     "components": {
-        "line-value": {
+          "line-value": {
           "baseComponent": "line",
             "meta": {
               "trueAnswer": 2,
@@ -73,6 +172,7 @@
             ]
           },
           "line-range": {
+            "baseComponent": "line",
             "meta": {
               "trueAnswer": 3,
               "chartType": "line",
@@ -84,12 +184,6 @@
             },
             "instruction": "What was the price range of a barrel of oil in 2015?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT1.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-line-range",
@@ -108,6 +202,7 @@
             ]
           },
           "line-trends": {
+            "baseComponent": "line",
             "meta": {
               "trueAnswer": 1,
               "chartType": "line",
@@ -119,12 +214,6 @@
             },
             "instruction": "Over the course of the second half of 2015, the price of a barrel of oil was",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT1.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-line-trends",
@@ -142,6 +231,7 @@
             ]
           },
           "line-comparisons": {
+            "baseComponent": "line",
             "meta": {
               "trueAnswer": 1,
               "chartType": "line",
@@ -153,12 +243,6 @@
             },
             "instruction": "About how much did the price of a barrel of oil fall from April to September in 2015?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT1.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-line-comparisons",
@@ -177,6 +261,7 @@
             ]
           },
           "bar-value": {
+            "baseComponent": "bar",
             "meta": {
               "trueAnswer": 2,
               "chartType": "bar",
@@ -188,12 +273,6 @@
             },
             "instruction": "What is the average internet speed in Japan?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT2.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-bar-value",
@@ -212,6 +291,7 @@
             ]
           },
           "bar-extremum": {
+            "baseComponent": "bar",
             "meta": {
               "trueAnswer": 2,
               "chartType": "bar",
@@ -223,12 +303,6 @@
             },
             "instruction": "In which country is the average internet speed the fastest in Asia?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT2.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-bar-extremum",
@@ -247,6 +321,7 @@
             ]
           },
           "bar-range": {
+            "baseComponent": "bar",
             "meta": {
               "trueAnswer": 1,
               "chartType": "bar",
@@ -258,12 +333,6 @@
             },
             "instruction": "What is the range of the average internet speed in Asia?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT2.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-bar-range",
@@ -282,6 +351,7 @@
             ]
           },
           "bar-comparisons": {
+            "baseComponent": "bar",
             "meta": {
               "trueAnswer": 2,
               "chartType": "bar",
@@ -293,12 +363,6 @@
             },
             "instruction": "How many countries in Asia have an average internet speed that is slower than that of Thailand?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT2.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-bar-comparisons",
@@ -317,6 +381,7 @@
             ]
           },
           "stackbar-value-absolute": {
+            "baseComponent": "stackbar",
             "meta": {
               "trueAnswer": 0,
               "chartType": "stackbar",
@@ -328,12 +393,6 @@
             },
             "instruction": "What is the cost of peanuts in Las Vegas?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT3.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-stackbar-value-absolute",
@@ -352,6 +411,7 @@
             ]
           },
           "stackbar-value-relative": {
+            "baseComponent": "stackbar",
             "meta": {
               "trueAnswer": 2,
               "chartType": "stackbar",
@@ -363,12 +423,6 @@
             },
             "instruction": "About what is the ratio of the cost of a sandwich to the total cost of room service in Seattle?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT3.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-stackbar-value-relative",
@@ -387,6 +441,7 @@
             ]
           },
           "stackbar-extremum": {
+            "baseComponent": "stackbar",
             "meta": {
               "trueAnswer": 3,
               "chartType": "stackbar",
@@ -398,12 +453,6 @@
             },
             "instruction": "In which city is the cost of soda the highest?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT3.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-stackbar-extremum",
@@ -422,6 +471,7 @@
             ]
           },
           "stackbar-comparisons-absolute": {
+            "baseComponent": "stackbar",
             "meta": {
               "trueAnswer": 0,
               "chartType": "stackbar",
@@ -433,12 +483,6 @@
             },
             "instruction": "The cost of vodka in Atlanta is higher than that of Honolulu.",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT3.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-stackbar-comparisons-absolute",
@@ -455,6 +499,7 @@
             ]
           },
           "stackbar-comparisons-relative": {
+            "baseComponent": "stackbar",
             "meta": {
               "trueAnswer": 1,
               "chartType": "stackbar",
@@ -466,12 +511,6 @@
             },
             "instruction": "The ratio of the cost of Soda to the cost of Water in Orlando is higher than in that of Washington D.C.",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT3.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-stackbar-comparisons-relative",
@@ -488,6 +527,7 @@
             ]
           },
           "stackbar100-value-relative": {
+            "baseComponent": "stackbar100",
             "meta": {
               "trueAnswer": 0,
               "chartType": "100% stackbar",
@@ -499,12 +539,6 @@
             },
             "instruction": "What is the approval rating of Republicans among the people who have the education level of Postgraduate Study?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT4.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-stackbar100-value-relative",
@@ -523,6 +557,7 @@
             ]
           },
           "stackbar100-extremum": {
+            "baseComponent": "stackbar100",
             "meta": {
               "trueAnswer": 2,
               "chartType": "100% stackbar",
@@ -534,12 +569,6 @@
             },
             "instruction": "What is the education level of people in which the Democrats have the lowest approval rating?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT4.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-stackbar100-extremum",
@@ -558,6 +587,7 @@
             ]
           },
           "stackbar100-comparisons-relative": {
+            "baseComponent": "stackbar100",
             "meta": {
               "trueAnswer": 1,
               "chartType": "100% stackbar",
@@ -569,12 +599,6 @@
             },
             "instruction": "The approval rating of Republicans for the people who have the education level of Some College Degree is lower than that for the people who have the education level of Postgraduate Study.",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT4.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-stackbar100-comparisons-relative",
@@ -591,6 +615,7 @@
             ]
           },
           "pie-value-relative": {
+            "baseComponent": "pie",
             "meta": {
               "trueAnswer": 1,
               "chartType": "pie",
@@ -602,12 +627,6 @@
             },
             "instruction": "About what is the global smartphone market share of Samsung?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT5.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-pie-value-relative",
@@ -626,6 +645,7 @@
             ]
           },
           "pie-extremum": {
+            "baseComponent": "pie",
             "meta": {
               "trueAnswer": 2,
               "chartType": "pie",
@@ -637,12 +657,6 @@
             },
             "instruction": "In which company is the global smartphone market share the smallest?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT5.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-pie-extremum",
@@ -661,6 +675,7 @@
             ]
           },
           "pie-comparisons-relative": {
+            "baseComponent": "pie",
             "meta": {
               "trueAnswer": 0,
               "chartType": "pie",
@@ -672,12 +687,6 @@
             },
             "instruction": "The global smartphone market share of Apple is larger than that of Huawei.",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT5.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-pie-comparisons-relative",
@@ -694,6 +703,7 @@
             ]
           },
           "histogram-value-derived": {
+            "baseComponent": "histogram",
             "meta": {
               "trueAnswer": 1,
               "chartType": "histogram",
@@ -705,12 +715,6 @@
             },
             "instruction": "How many people have rated the taxi between 4.0 and 4.2?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT6.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-histogram-value-derived",
@@ -729,6 +733,7 @@
             ]
           },
           "histogram-extremum-derived": {
+            "baseComponent": "histogram",
             "meta": {
               "trueAnswer": 1,
               "chartType": "histogram",
@@ -740,12 +745,6 @@
             },
             "instruction": "What is the rating that the people have rated the taxi the most?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT6.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-histogram-extremum-derived",
@@ -764,6 +763,7 @@
             ]
           },
           "histogram-comparisons-derived": {
+            "baseComponent": "histogram",
             "meta": {
               "trueAnswer": 0,
               "chartType": "histogram",
@@ -775,12 +775,6 @@
             },
             "instruction": "More people have rated the taxi between 4.6 and 4.8 than between 4.2 and 4.4.",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT6.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-histogram-comparisons-derived",
@@ -797,6 +791,7 @@
             ]
           },
           "scatterplot-value": {
+            "baseComponent": "scatterplot",
             "meta": {
               "trueAnswer": 2,
               "chartType": "scatterplot",
@@ -808,12 +803,6 @@
             },
             "instruction": "What is the weight for the person who is 165.1 cm tall?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT7.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-scatterplot-value",
@@ -832,6 +821,7 @@
             ]
           },
           "scatterplot-extremum": {
+            "baseComponent": "scatterplot",
             "meta": {
               "trueAnswer": 2,
               "chartType": "scatterplot",
@@ -843,12 +833,6 @@
             },
             "instruction": "What is the height for the tallest person among the 85 males?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT7.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-scatterplot-extremum",
@@ -867,6 +851,7 @@
             ]
           },
           "scatterplot-range": {
+            "baseComponent": "scatterplot",
             "meta": {
               "trueAnswer": 3,
               "chartType": "scatterplot",
@@ -878,12 +863,6 @@
             },
             "instruction": "What is the range in weight for the 85 males?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT7.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-scatterplot-range",
@@ -902,6 +881,7 @@
             ]
           },
           "scatterplot-anomalies": {
+            "baseComponent": "scatterplot",
             "meta": {
               "trueAnswer": 1,
               "chartType": "scatterplot",
@@ -913,12 +893,6 @@
             },
             "instruction": "What is the height for a person who lies outside the others the most?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT7.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-scatterplot-anomalies",
@@ -937,6 +911,7 @@
             ]
           },
           "scatterplot-clusters": {
+            "baseComponent": "scatterplot",
             "meta": {
               "trueAnswer": 0,
               "chartType": "scatterplot",
@@ -948,12 +923,6 @@
             },
             "instruction": "A group of males are gathered around the height of 176 cm and the weight of 70 kg.",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT7.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-scatterplot-clusters",
@@ -970,6 +939,7 @@
             ]
           },
           "scatterplot-correlations": {
+            "baseComponent": "scatterplot",
             "meta": {
               "trueAnswer": 1,
               "chartType": "scatterplot",
@@ -981,12 +951,6 @@
             },
             "instruction": "There is a negative linear relationship between the height and the weight of the 85 males.",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT7.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-scatterplot-correlations",
@@ -1003,6 +967,7 @@
             ]
           },
           "scatterplot-comparisons": {
+            "baseComponent": "scatterplot",
             "meta": {
               "trueAnswer": 1,
               "chartType": "scatterplot",
@@ -1014,12 +979,6 @@
             },
             "instruction": "The weights for males with the height of 188 cm are all the same.",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT7.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-scatterplot-comparisons",
@@ -1036,6 +995,7 @@
             ]
           },
           "area-value": {
+            "baseComponent": "area",
             "meta": {
               "trueAnswer": 2,
               "chartType": "area",
@@ -1047,12 +1007,6 @@
             },
             "instruction": "What was the average price of a pound of coffee beans in September 2013?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT8.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-area-value",
@@ -1071,6 +1025,7 @@
             ]
           },
           "area-extremum": {
+            "baseComponent": "area",
             "meta": {
               "trueAnswer": 3,
               "chartType": "area",
@@ -1082,12 +1037,6 @@
             },
             "instruction": "When was the average price of a pound of coffee beans at minimum?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT8.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-area-extremum",
@@ -1106,6 +1055,7 @@
             ]
           },
           "area-range": {
+            "baseComponent": "area",
             "meta": {
               "trueAnswer": 2,
               "chartType": "area",
@@ -1117,12 +1067,6 @@
             },
             "instruction": "What was the range of the average price of a pound of coffee beans between January 2013 and December 2014?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT8.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-area-range",
@@ -1141,6 +1085,7 @@
             ]
           },
           "area-trends": {
+            "baseComponent": "area",
             "meta": {
               "trueAnswer": 1,
               "chartType": "area",
@@ -1152,12 +1097,6 @@
             },
             "instruction": "Over the course of 2013, the average price of a pound of coffee beans was",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT8.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-area-trends",
@@ -1175,6 +1114,7 @@
             ]
           },
           "stackarea-value-absolute": {
+            "baseComponent": "stackarea",
             "meta": {
               "trueAnswer": 2,
               "chartType": "stackarea",
@@ -1186,12 +1126,6 @@
             },
             "instruction": "What was the number of girls named 'Amelia' in 2010 in the UK?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT9.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-stackarea-value-absolute",
@@ -1210,6 +1144,7 @@
             ]
           },
           "stackarea-value-relative": {
+            "baseComponent": "stackarea",
             "meta": {
               "trueAnswer": 0,
               "chartType": "stackarea",
@@ -1221,12 +1156,6 @@
             },
             "instruction": "About what was the ratio of the number of girls named 'Olivia' to those named 'Isla' in 2014 in the UK?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT9.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-stackarea-value-relative",
@@ -1245,6 +1174,7 @@
             ]
           },
           "stackarea-extremum": {
+            "baseComponent": "stackarea",
             "meta": {
               "trueAnswer": 2,
               "chartType": "stackarea",
@@ -1256,12 +1186,6 @@
             },
             "instruction": "Over the course of years between 2009 and 2014, when was the number of girls named 'Amelia' at the maximum?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT9.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-stackarea-extremum",
@@ -1280,6 +1204,7 @@
             ]
           },
           "stackarea-trends": {
+            "baseComponent": "stackarea",
             "meta": {
               "trueAnswer": 0,
               "chartType": "stackarea",
@@ -1291,12 +1216,6 @@
             },
             "instruction": "The number of girls named 'Isla' was __________ from 2009 to 2012.",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT9.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-stackarea-trends",
@@ -1314,6 +1233,7 @@
             ]
           },
           "stackarea-comparisons": {
+            "baseComponent": "stackarea",
             "meta": {
               "trueAnswer": 1,
               "chartType": "stackarea",
@@ -1325,12 +1245,6 @@
             },
             "instruction": "In the UK, the number of girls named 'Amelia' in 2014 was more than it was in 2013.",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT9.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-stackarea-comparisons",
@@ -1347,6 +1261,7 @@
             ]
           },
           "stackarea-comparisons-relative": {
+            "baseComponent": "stackarea",
             "meta": {
               "trueAnswer": 1,
               "chartType": "stackarea",
@@ -1358,12 +1273,6 @@
             },
             "instruction": "Over the course of years between 2009 and 2014, the number of girls named 'Isla' was always more than 'Olivia'.",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT9.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-stackarea-comparisons-relative",
@@ -1380,6 +1289,7 @@
             ]
           },
           "bubble-value": {
+            "baseComponent": "bubble",
             "meta": {
               "trueAnswer": 2,
               "chartType": "bubble",
@@ -1415,6 +1325,7 @@
             ]
           },
           "bubble-extremum": {
+            "baseComponent": "bubble",
             "meta": {
               "trueAnswer": 2,
               "chartType": "bubble",
@@ -1426,12 +1337,6 @@
             },
             "instruction": "Which city's metro system has the largest number of stations?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT10.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-bubble-extremum",
@@ -1450,6 +1355,7 @@
             ]
           },
           "bubble-range": {
+            "baseComponent": "bubble",
             "meta": {
               "trueAnswer": 3,
               "chartType": "bubble",
@@ -1461,12 +1367,6 @@
             },
             "instruction": "What is the range of the total length of the metro systems?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT10.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-bubble-range",
@@ -1485,6 +1385,7 @@
             ]
           },
           "bubble-anomalies": {
+            "baseComponent": "bubble",
             "meta": {
               "trueAnswer": 1,
               "chartType": "bubble",
@@ -1496,12 +1397,6 @@
             },
             "instruction": "Which city's metro system does lie outside the relationship between the total system length and the number of stations most?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT10.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-bubble-anomalies",
@@ -1520,6 +1415,7 @@
             ]
           },
           "bubble-clusters": {
+            "baseComponent": "bubble",
             "meta": {
               "trueAnswer": 1,
               "chartType": "bubble",
@@ -1531,12 +1427,6 @@
             },
             "instruction": "A group of the metro systems of the world has approximately 300 stations and around a 200 km system length.",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT10.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-bubble-clusters",
@@ -1553,6 +1443,7 @@
             ]
           },
           "bubble-trends": {
+            "baseComponent": "bubble",
             "meta": {
               "trueAnswer": 1,
               "chartType": "bubble",
@@ -1564,12 +1455,6 @@
             },
             "instruction": "In general, the ridership of the metro system increases as the number of stations increases.",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT10.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-bubble-trends",
@@ -1586,6 +1471,7 @@
             ]
           },
           "bubble-comparisons": {
+            "baseComponent": "bubble",
             "meta": {
               "trueAnswer": 1,
               "chartType": "bubble",
@@ -1597,12 +1483,6 @@
             },
             "instruction": "The metro system in Shanghai has more ridership than the metro system in Beijing.",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT10.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-bubble-comparisons",
@@ -1619,6 +1499,7 @@
             ]
           },
           "map-value-approximate": {
+            "baseComponent": "map",
             "meta": {
               "trueAnswer": 2,
               "chartType": "map",
@@ -1630,12 +1511,6 @@
             },
             "instruction": "What was the unemployment rate for Indiana (IN) in 2015?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT11.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-map-value-approximate",
@@ -1654,6 +1529,7 @@
             ]
           },
           "map-extremum": {
+            "baseComponent": "map",
             "meta": {
               "trueAnswer": 1,
               "chartType": "map",
@@ -1665,12 +1541,6 @@
             },
             "instruction": "In which state was the unemployment rate the highest in 2015?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT11.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-map-extremum",
@@ -1689,6 +1559,7 @@
             ]
           },
           "map-comparisons": {
+            "baseComponent": "map",
             "meta": {
               "trueAnswer": 0,
               "chartType": "map",
@@ -1700,12 +1571,6 @@
             },
             "instruction": "In 2015, the unemployment rate for Washington (WA) was higher than that of Wisconsin (WI).",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT11.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-map-comparisons",
@@ -1722,6 +1587,7 @@
             ]
           },
           "treemap-extremum-relative": {
+            "baseComponent": "treemap",
             "meta": {
               "trueAnswer": 3,
               "chartType": "treemap",
@@ -1733,12 +1599,6 @@
             },
             "instruction": "For which website was the number of unique visitors the largest in 2010?",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT12.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-treemap-extremum-relative",
@@ -1757,6 +1617,7 @@
             ]
           },
           "treemap-comparisons-relative": {
+            "baseComponent": "treemap",
             "meta": {
               "trueAnswer": 1,
               "chartType": "treemap",
@@ -1768,12 +1629,6 @@
             },
             "instruction": "The number of unique visitors for Amazon was more than that of Yahoo in 2010.",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT12.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-treemap-comparisons-relative",
@@ -1790,6 +1645,7 @@
             ]
           },
           "treemap-hierarchical": {
+            "baseComponent": "treemap",
             "meta": {
               "trueAnswer": 1,
               "chartType": "treemap",
@@ -1801,12 +1657,6 @@
             },
             "instruction": "Samsung is nested in the Financial category.",
             "instructionLocation": "sidebar",
-            "type": "image",
-            "path": "libraries/vlat/assets/VLAT12.png",
-            "style": {
-              "width": "800px"
-            },
-            "nextButtonLocation": "sidebar",
             "response": [
               {
                 "id": "res-treemap-hierarchical",
@@ -1824,66 +1674,8 @@
           }
     },
     "sequences": {
-      "random": {
-        "order": "random",
-        "components": [
-         "line-value",
-          "line-extremum",
-          "line-range",
-          "line-trends",
-          "line-comparisons",
-          "bar-value",
-          "bar-extremum",
-          "bar-range",
-          "bar-comparisons",
-          "stackbar-value-absolute",
-          "stackbar-value-relative",
-          "stackbar-extremum",
-          "stackbar-comparisons-absolute",
-          "stackbar-comparisons-relative",
-          "stackbar100-value-relative",
-          "stackbar100-extremum",
-          "stackbar100-comparisons-relative",
-          "pie-value-relative",
-          "pie-extremum",
-          "pie-comparisons-relative",
-          "histogram-value-derived",
-          "histogram-extremum-derived",
-          "histogram-comparisons-derived",
-          "scatterplot-value",
-          "scatterplot-extremum",
-          "scatterplot-range",
-          "scatterplot-anomalies",
-          "scatterplot-clusters",
-          "scatterplot-correlations",
-          "scatterplot-comparisons",
-          "area-value",
-          "area-extremum",
-          "area-range",
-          "area-trends",
-          "stackarea-value-absolute",
-          "stackarea-value-relative",
-          "stackarea-extremum",
-          "stackarea-trends",
-          "stackarea-comparisons",
-          "stackarea-comparisons-relative",
-          "bubble-value",
-          "bubble-extremum",
-          "bubble-range",
-          "bubble-anomalies",
-          "bubble-clusters",
-          "bubble-trends",
-          "bubble-comparisons",
-          "map-value-approximate",
-          "map-extremum",
-          "map-comparisons",
-          "treemap-extremum-relative",
-          "treemap-comparisons-relative",
-          "treemap-hierarchical"
-        ]
-      },
-      "fixed": {
-        "order": "fixed",
+      "latinSquare": {
+        "order": "latinSquare",
         "components": [
           {
             "order": "latinSquare",
@@ -1895,54 +1687,345 @@
               "line-comparisons"
             ]
           },
-          "bar-value",
-          "bar-extremum",
-          "bar-range",
-          "bar-comparisons",
-          "stackbar-value-absolute",
-          "stackbar-value-relative",
-          "stackbar-extremum",
-          "stackbar-comparisons-absolute",
-          "stackbar-comparisons-relative",
-          "stackbar100-value-relative",
-          "stackbar100-extremum",
-          "stackbar100-comparisons-relative",
-          "pie-value-relative",
-          "pie-extremum",
-          "pie-comparisons-relative",
-          "histogram-value-derived",
-          "histogram-extremum-derived",
-          "histogram-comparisons-derived",
-          "scatterplot-value",
-          "scatterplot-extremum",
-          "scatterplot-range",
-          "scatterplot-anomalies",
-          "scatterplot-clusters",
-          "scatterplot-correlations",
-          "scatterplot-comparisons",
-          "area-value",
-          "area-extremum",
-          "area-range",
-          "area-trends",
-          "stackarea-value-absolute",
-          "stackarea-value-relative",
-          "stackarea-extremum",
-          "stackarea-trends",
-          "stackarea-comparisons",
-          "stackarea-comparisons-relative",
-          "bubble-value",
-          "bubble-extremum",
-          "bubble-range",
-          "bubble-anomalies",
-          "bubble-clusters",
-          "bubble-trends",
-          "bubble-comparisons",
-          "map-value-approximate",
-          "map-extremum",
-          "map-comparisons",
-          "treemap-extremum-relative",
-          "treemap-comparisons-relative",
-          "treemap-hierarchical"
+          {
+            "order": "latinSquare",
+            "components": [
+              "bar-value",
+              "bar-extremum",
+              "bar-range",
+              "bar-comparisons"
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "components": [
+              "stackbar-value-absolute",
+              "stackbar-value-relative",
+              "stackbar-extremum",
+              "stackbar-comparisons-absolute",
+              "stackbar-comparisons-relative"
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "components": [
+              "stackbar100-value-relative",
+              "stackbar100-extremum",
+              "stackbar100-comparisons-relative"
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "components": [
+              "pie-value-relative",
+              "pie-extremum",
+              "pie-comparisons-relative"
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "components": [
+              "histogram-value-derived",
+              "histogram-extremum-derived",
+              "histogram-comparisons-derived"
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "components": [
+              "scatterplot-value",
+              "scatterplot-extremum",
+              "scatterplot-range",
+              "scatterplot-anomalies",
+              "scatterplot-clusters",
+              "scatterplot-correlations",
+              "scatterplot-comparisons"
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "components": [
+              "area-value",
+              "area-extremum",
+              "area-range",
+              "area-trends"
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "components": [
+              "stackarea-value-absolute",
+              "stackarea-value-relative",
+              "stackarea-extremum",
+              "stackarea-trends",
+              "stackarea-comparisons",
+              "stackarea-comparisons-relative"
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "components": [
+              "bubble-value",
+              "bubble-extremum",
+              "bubble-range",
+              "bubble-anomalies",
+              "bubble-clusters",
+              "bubble-trends",
+              "bubble-comparisons"
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "components": [
+              "map-value-approximate",
+              "map-extremum",
+              "map-comparisons"
+            ]
+          },
+          {
+            "order": "latinSquare",
+            "components": [
+              "treemap-extremum-relative",
+              "treemap-comparisons-relative",
+              "treemap-hierarchical"
+            ]
+          }
+        ]
+      },
+      "fixed": {
+        "order": "fixed",
+        "components": [
+          {
+            "order": "fixed",
+            "components": [
+              "line-value",
+              "line-extremum",
+              "line-range",
+              "line-trends",
+              "line-comparisons"
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "bar-value",
+              "bar-extremum",
+              "bar-range",
+              "bar-comparisons"
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "stackbar-value-absolute",
+              "stackbar-value-relative",
+              "stackbar-extremum",
+              "stackbar-comparisons-absolute",
+              "stackbar-comparisons-relative"
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "stackbar100-value-relative",
+              "stackbar100-extremum",
+              "stackbar100-comparisons-relative"
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "pie-value-relative",
+              "pie-extremum",
+              "pie-comparisons-relative"
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "histogram-value-derived",
+              "histogram-extremum-derived",
+              "histogram-comparisons-derived"
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "scatterplot-value",
+              "scatterplot-extremum",
+              "scatterplot-range",
+              "scatterplot-anomalies",
+              "scatterplot-clusters",
+              "scatterplot-correlations",
+              "scatterplot-comparisons"
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "area-value",
+              "area-extremum",
+              "area-range",
+              "area-trends"
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "stackarea-value-absolute",
+              "stackarea-value-relative",
+              "stackarea-extremum",
+              "stackarea-trends",
+              "stackarea-comparisons",
+              "stackarea-comparisons-relative"
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "bubble-value",
+              "bubble-extremum",
+              "bubble-range",
+              "bubble-anomalies",
+              "bubble-clusters",
+              "bubble-trends",
+              "bubble-comparisons"
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "map-value-approximate",
+              "map-extremum",
+              "map-comparisons"
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "treemap-extremum-relative",
+              "treemap-comparisons-relative",
+              "treemap-hierarchical"
+            ]
+          }
+        ]
+      },
+      "random": {
+        "order": "random",
+        "components": [
+          {
+            "order": "random",
+            "components": [
+              "line-value",
+              "line-extremum",
+              "line-range",
+              "line-trends",
+              "line-comparisons"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "bar-value",
+              "bar-extremum",
+              "bar-range",
+              "bar-comparisons"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stackbar-value-absolute",
+              "stackbar-value-relative",
+              "stackbar-extremum",
+              "stackbar-comparisons-absolute",
+              "stackbar-comparisons-relative"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stackbar100-value-relative",
+              "stackbar100-extremum",
+              "stackbar100-comparisons-relative"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "pie-value-relative",
+              "pie-extremum",
+              "pie-comparisons-relative"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "histogram-value-derived",
+              "histogram-extremum-derived",
+              "histogram-comparisons-derived"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "scatterplot-value",
+              "scatterplot-extremum",
+              "scatterplot-range",
+              "scatterplot-anomalies",
+              "scatterplot-clusters",
+              "scatterplot-correlations",
+              "scatterplot-comparisons"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "area-value",
+              "area-extremum",
+              "area-range",
+              "area-trends"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "stackarea-value-absolute",
+              "stackarea-value-relative",
+              "stackarea-extremum",
+              "stackarea-trends",
+              "stackarea-comparisons",
+              "stackarea-comparisons-relative"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "bubble-value",
+              "bubble-extremum",
+              "bubble-range",
+              "bubble-anomalies",
+              "bubble-clusters",
+              "bubble-trends",
+              "bubble-comparisons"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "map-value-approximate",
+              "map-extremum",
+              "map-comparisons"
+            ]
+          },
+          {
+            "order": "random",
+            "components": [
+              "treemap-extremum-relative",
+              "treemap-comparisons-relative",
+              "treemap-hierarchical"
+            ]
+          }
         ]
       }
     }
