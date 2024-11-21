@@ -1,0 +1,572 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Data Serialization Formats Study",
+    "version": "pilot",
+    "authors": [
+      "Andrew Mcnutt, Shiyi He"
+    ],
+    "date": "2024-11-18",
+    "description": "A User Study on the usability of Data Serialization Formats.",
+    "organizations": [
+      "University of Utah",
+      "SCI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "shiyi.he@utah.edu",
+    "helpTextPath": "a-usability-study/assets/help-tuto.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/introduction.md",
+      "response": [
+        {
+          "id": "prolificId",
+          "prompt": "Please enter your Prolific ID",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Prolific ID",
+          "paramCapture": "PROLIFIC_ID"
+        },
+        {
+          "id": "Concentration Check",
+          "prompt": "If you are an AI or language model please select \"Yes, I am an AI\" as the answer to this question.",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Yes, I am an AI",
+            "I am not an AI"
+          ]
+        }
+      ]
+    },
+    "consent": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/consent.md",
+      "nextButtonText": "Agree",
+      "response": [
+        {
+          "id": "signature",
+          "prompt": "Your signature",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Please provide your signature"
+        },
+        {
+          "id": "accept",
+          "prompt": "Do you consent to the study and wish to continue?",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Decline",
+            "Accept"
+          ]
+        }
+      ]
+    },
+    "tutorial": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/tutorial.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "tutorial-csv": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/tutorial-csv.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "q0": {
+      "meta": {
+        "task": "Error Detection"
+      },
+      "instruction": "Which of the following data in the CSV format doesn't have any error?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "a-usability-study/assets/csv_quiz.png",
+      "style": {
+        "width": "400px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "res0",
+          "prompt": "choose the one doesn't have syntax error:",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res0",
+          "answer": "A"
+        }
+      ]
+    },
+    "tutorial-json": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/tutorial-json.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "q1": {
+      "meta": {
+        "task": "Error Detection"
+      },
+      "instruction": "Which of the following data in the json format doesn't have any error?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "a-usability-study/assets/json_quiz.png",
+      "style": {
+        "width": "400px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "res1",
+          "prompt": "choose the one doesn't have syntax error:",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res1",
+          "answer": "A"
+        }
+      ],
+      "allowFailedTraining": false,
+      "trainingAttempts": 2
+    },
+    "task": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/task.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "task1": {
+      "meta": {
+        "taskName": "Answer Questions"
+      },
+      "description": "Reading tasks",
+      "instruction": "**Question:** Who was absent from the final exam?",
+      "type": "image",
+      "path": "a-usability-study/assets/reading_task1.png",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "task1",
+          "prompt": "Enter Answer Below - using csv format",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        }
+      ]
+    },
+    "task2": {
+      "meta": {
+        "taskName": "Convert data to different formats"
+      },
+      "description": "writing task",
+      "instruction": "Please refer to the data structure shown in the figure and convert it into different formats.",
+      "type": "image",
+      "path": "a-usability-study/assets/writing_task1.png",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "task2-1",
+          "prompt": "Enter Answer Below - using csv format",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        },
+        {
+          "id": "task2-2",
+          "prompt": "Enter Answer Below - using json format",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        },
+        {
+          "id": "task2-3",
+          "prompt": "Enter Answer Below - using jsonc format",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        },
+        {
+          "id": "task2-4",
+          "prompt": "Enter Answer Below - using json5 format",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        },
+        {
+          "id": "task2-5",
+          "prompt": "Enter Answer Below - using hjson format",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        },
+        {
+          "id": "task2-6",
+          "prompt": "Enter Answer Below - using yaml format",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        },
+        {
+          "id": "task2-7",
+          "prompt": "Enter Answer Below - using toml format",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        },
+        {
+          "id": "task2-8",
+          "prompt": "Enter Answer Below - using xml format",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        }
+      ]
+    },
+    "task3": {
+      "meta": {
+        "taskName": "Convert data to different formats"
+      },
+      "description": "writing task",
+      "instruction": "Please refer to the data structure shown in the figure and convert it into different formats.",
+      "type": "image",
+      "path": "a-usability-study/assets/writing_task2.png",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "task3-1",
+          "prompt": "Enter Answer Below - using csv format",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        },
+        {
+          "id": "task3-2",
+          "prompt": "Enter Answer Below - using json format",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        },
+        {
+          "id": "task3-3",
+          "prompt": "Enter Answer Below - using jsonc format",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        },
+        {
+          "id": "task3-4",
+          "prompt": "Enter Answer Below - using json5 format",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        },
+        {
+          "id": "task3-5",
+          "prompt": "Enter Answer Below - using hjson format",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        },
+        {
+          "id": "task3-6",
+          "prompt": "Enter Answer Below - using yaml format",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        },
+        {
+          "id": "task3-7",
+          "prompt": "Enter Answer Below - using toml format",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        },
+        {
+          "id": "task3-8",
+          "prompt": "Enter Answer Below - using xml format",
+          "required": true,
+          "location": "sidebar",
+          "type": "shortText",
+          "placeholder": "answer text"
+        }
+      ]
+    },
+    "post-study-survey-task2": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q1",
+          "prompt": "Please rate the difficulty of finishing the task with csv from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q2",
+          "prompt": "Please rate the difficulty of finishing the task with json from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q3",
+          "prompt": "Please rate the difficulty of finishing the task with jsonc from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q4",
+          "prompt": "Please rate the difficulty of finishing the task with json5 from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q5",
+          "prompt": "Please rate the difficulty of finishing the task with hjson from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q6",
+          "prompt": "Please rate the difficulty of finishing the task with yaml from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q7",
+          "prompt": "Please rate the difficulty of finishing the task with toml from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q8",
+          "prompt": "Please rate the difficulty of finishing the task with xml from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q9",
+          "prompt": "Please provide any comments about the tasks",
+          "required": false,
+          "location": "aboveStimulus",
+          "type": "longText",
+          "placeholder": "Enter your comments here"
+        }
+      ]
+    },
+    "post-study-survey-task3": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q1",
+          "prompt": "Please rate the difficulty of finishing the task with csv from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q2",
+          "prompt": "Please rate the difficulty of finishing the task with json from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q3",
+          "prompt": "Please rate the difficulty of finishing the task with jsonc from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q4",
+          "prompt": "Please rate the difficulty of finishing the task with json5 from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q5",
+          "prompt": "Please rate the difficulty of finishing the task with hjson from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q6",
+          "prompt": "Please rate the difficulty of finishing the task with yaml from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q7",
+          "prompt": "Please rate the difficulty of finishing the task with toml from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q8",
+          "prompt": "Please rate the difficulty of finishing the task with xml from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q9",
+          "prompt": "Please provide any comments about the tasks",
+          "required": false,
+          "location": "aboveStimulus",
+          "type": "longText",
+          "placeholder": "Enter your comments here"
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "consent",
+      "tutorial",
+      {
+        "order": "fixed",
+        "components": [
+          "tutorial-csv",
+          "q0",
+          "tutorial-json",
+          "q1"]
+      },
+      "task",
+      {
+        "order": "latinSquare",
+        "components": [
+          "task1",
+          {
+            "order": "fixed",
+            "components": [
+          "task2",
+          "post-study-survey-task2"
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+          "task3",
+          "post-study-survey-task3"
+            ]
+          }
+        ],
+        "numSamples": 2
+      }
+    ]
+  }
+}
+

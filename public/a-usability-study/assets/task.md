@@ -1,0 +1,3 @@
+Now you will complete several tasks related to the data serialization formats you just learned. These tasks include reading data in those formats and answering questions, converting data into specific formats, and modifying or debugging data in those formats.
+
+We understand that you may forget some rules since you have limited experience with them, so feel free to click the help button at the top right to review syntax rules in the tutorial.
