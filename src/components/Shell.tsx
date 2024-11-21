@@ -30,6 +30,7 @@ import { getStudyConfig } from '../utils/fetchConfig';
 import { ParticipantMetadata } from '../store/types';
 import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import ResourceNotFound from '../ResourceNotFound';
+import { SequenceVis } from './sequenceVis/SequenceVis';
 
 export function Shell({ globalConfig }: {
   globalConfig: GlobalConfig;
@@ -90,6 +91,10 @@ export function Shell({ globalConfig }: {
           {
             path: '/',
             element: <NavigateWithParams to="0" replace />,
+          },
+          {
+            path: '/sequenceVis',
+            element: <SequenceVis />,
           },
           {
             path: '/:index/:participantId?',
