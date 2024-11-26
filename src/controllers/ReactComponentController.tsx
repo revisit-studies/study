@@ -18,6 +18,8 @@ function ReactComponentController({ currentConfig }: { currentConfig: ReactCompo
   const reactPath = `../public/${currentConfig.path}`;
   const StimulusComponent = reactPath in modules ? (modules[reactPath] as ModuleNamespace).default : null;
 
+  console.log(StimulusComponent)
+  console.log(reactPath, modules,  'in here')
   const storeDispatch = useStoreDispatch();
   const { updateResponseBlockValidation, setIframeAnswers } = useStoreActions();
   function setAnswer({ status, provenanceGraph, answers }: Parameters<StimulusParams<unknown>['setAnswer']>[0]) {

@@ -45,6 +45,8 @@ export default function ComponentController() {
     }
   }, [setAlertModal, storageEngine, storeDispatch]);
 
+  console.log(currentComponent)
+
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.
   if (currentComponent === 'end') {
@@ -59,6 +61,8 @@ export default function ComponentController() {
   if (currentComponent === 'Notfound') {
     return <ResourceNotFound email={studyConfig.uiConfig.contactEmail} />;
   }
+
+  console.log('past here')
 
   const currentConfig = isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
   const instruction = (currentConfig.instruction || '');

@@ -48,6 +48,24 @@
         }
       ]
     },
+    "trial": {
+      "description": "Code writing task",
+      "instruction": "Write a JavaScript function that does X",
+      "type": "react-component",
+      "path": "a-usability-study/assets/CodeEditor.tsx",
+      "parameters": {
+        "initialCode": "// Optional initial code",
+        "taskId": "code-writing"
+      },
+      "response": [
+        {
+          "id": "code-submission",
+          "prompt": "Your submitted code",
+          "type": "iframe",
+          "required": true
+        }
+      ]
+    },
     "consent": {
       "type": "markdown",
       "path": "a-usability-study/assets/consent.md",
@@ -76,13 +94,13 @@
     },
     "tutorial": {
       "type": "markdown",
-      "path": "a-usability-study/assets/tutorial.md",
+      "path": "a-usability-study/assets/tutorial/tutorial.md",
       "nextButtonText": "",
       "response": []
     },
     "tutorial-csv": {
       "type": "markdown",
-      "path": "a-usability-study/assets/tutorial-csv.md",
+      "path": "a-usability-study/assets/tutorial/csv/tutorial-csv.md",
       "nextButtonText": "",
       "response": []
     },
@@ -92,8 +110,9 @@
       },
       "instruction": "Which of the following data in the CSV format doesn't have any error?",
       "instructionLocation": "sidebar",
+      "provideFeedback": true,
       "type": "image",
-      "path": "a-usability-study/assets/csv_quiz.png",
+      "path": "a-usability-study/assets/tutorial/csv/csv_quiz.png",
       "style": {
         "width": "400px"
       },
@@ -119,11 +138,13 @@
           "id": "res0",
           "answer": "A"
         }
-      ]
+      ],
+      "allowFailedTraining": false,
+      "trainingAttempts": 5
     },
     "tutorial-json": {
       "type": "markdown",
-      "path": "a-usability-study/assets/tutorial-json.md",
+      "path": "a-usability-study/assets/tutorial/json/tutorial-json.md",
       "nextButtonText": "",
       "response": []
     },
@@ -134,7 +155,7 @@
       "instruction": "Which of the following data in the json format doesn't have any error?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "a-usability-study/assets/json_quiz.png",
+      "path": "a-usability-study/assets/tutorial/json/json_quiz.png",
       "style": {
         "width": "400px"
       },
@@ -163,7 +184,43 @@
         }
       ],
       "allowFailedTraining": false,
-      "trainingAttempts": 2
+      "trainingAttempts": 5
+    },
+    "tutorial-jsonc": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/tutorial/jsonc/tutorial-jsonc.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "tutorial-json5": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/tutorial/json5/tutorial-json5.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "tutorial-hjson": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/tutorial/hjson/tutorial-hjson.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "tutorial-yaml": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/tutorial/yaml/tutorial-yaml.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "tutorial-toml": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/tutorial/toml/tutorial-toml.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "tutorial-xml": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/tutorial/xml/tutorial-xml.md",
+      "nextButtonText": "",
+      "response": []
     },
     "task": {
       "type": "markdown",
@@ -534,6 +591,7 @@
     "order": "fixed",
     "components": [
       "introduction",
+      "trial",
       "consent",
       "tutorial",
       {
@@ -542,7 +600,13 @@
           "tutorial-csv",
           "q0",
           "tutorial-json",
-          "q1"]
+          "q1",
+          "tutorial-jsonc",
+          "tutorial-json5",
+          "tutorial-hjson",
+          "tutorial-yaml",
+          "tutorial-toml",
+          "tutorial-xml"]
       },
       "task",
       {

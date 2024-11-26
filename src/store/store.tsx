@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   createSlice, configureStore, type PayloadAction, createSelector,
 } from '@reduxjs/toolkit';
@@ -164,8 +165,8 @@ export function useAreResponsesValid(id: string) {
 }
 
 const flatSequenceSelector = createSelector(
-  (state) => state.sequence,
-  (sequence) => getSequenceFlatMap(sequence),
+  (state: any) => state.sequence,
+  (sequence: any) => getSequenceFlatMap(sequence),
 );
 
 export function useFlatSequence() {
