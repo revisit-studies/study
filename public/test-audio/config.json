@@ -1,13 +1,13 @@
 {
     "$schema": "https://raw.githubusercontent.com/revisit-studies/study/zc/audioOnly/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
-      "title": "Using library imports",
+      "title": "Using audio recording",
       "version": "pilot",
       "authors": [
         "The reVISit Team"
       ],
       "date": "2023-04-14",
-      "description": "This is a test for library imports.",
+      "description": "This is a test for audio",
       "organizations": [
         "University of Utah",
         "WPI",
