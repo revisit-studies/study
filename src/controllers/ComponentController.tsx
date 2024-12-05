@@ -1,4 +1,6 @@
-import { Suspense, useEffect, useState } from 'react';
+import {
+  Suspense, useEffect, useMemo, useRef, useState,
+} from 'react';
 import merge from 'lodash.merge';
 import ResponseBlock from '../components/response/ResponseBlock';
 import IframeController from './IframeController';
@@ -19,14 +21,6 @@ import { TrainingFailed } from '../components/TrainingFailed';
 import ResourceNotFound from '../ResourceNotFound';
 import { TimedOut } from '../components/TimedOut';
 import { findBlockForStep } from '../utils/getSequenceFlatMap';
-import { useAsync } from '../store/hooks/useAsync';
-
-async function createAudioStream() {
-  const stream = await navigator.mediaDevices.getUserMedia({
-    audio: true,
-  });
-  return new MediaRecorder(stream);
-}
 
 // current active stimuli presented to the user
 export default function ComponentController() {
@@ -37,7 +31,8 @@ export default function ComponentController() {
   const stepConfig = studyConfig.components[currentComponent];
   const { storageEngine } = useStorageEngine();
 
-  const { value: audioStream, status: audioStreamStatus } = useAsync(createAudioStream, []);
+  const audioStream = useRef<MediaRecorder | null>(null);
+
   const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
 
   const { setIsRecording } = useStoreActions();
@@ -65,28 +60,41 @@ export default function ComponentController() {
       return;
     }
 
-    if (audioStream && prevTrialName) {
-      storageEngine.saveAudio(audioStream, prevTrialName);
+    if (audioStream.current && prevTrialName) {
+      // storageEngine.saveAudio(audioStream.current, prevTrialName);
+    }
+
+    if (audioStream.current) {
+      audioStream.current.stream.getTracks().forEach((track) => { track.stop(); audioStream.current?.stream.removeTrack(track); });
+      audioStream.current.stream.getAudioTracks().forEach((track) => { track.stop(); audioStream.current?.stream.removeTrack(track); });
+      audioStream.current.stop();
+      audioStream.current = null;
+
+      // setAudioStream(null);
     }
 
     if ((stepConfig && stepConfig.recordAudio !== undefined && !stepConfig.recordAudio) || currentComponent === 'end') {
       setPrevTrialName(null);
       storeDispatch(setIsRecording(false));
-      if (audioStream && audioStream.state !== 'inactive') {
-        audioStream.pause();
-      }
-    } else if (audioStream) {
-      if (audioStream.state === 'inactive') {
-        audioStream.start();
-      } else {
-        audioStream.resume();
-      }
-      storeDispatch(setIsRecording(true));
+    } else {
+      navigator.mediaDevices.getUserMedia({
+        audio: true,
+      }).then((s) => {
+        const recorder = new MediaRecorder(s);
+        audioStream.current = recorder;
 
-      setPrevTrialName(`${currentComponent}_${currentStep}`);
+        // audioStream.current.start();
+
+        storeDispatch(setIsRecording(true));
+
+        // setPrevTrialName(`${currentComponent}_${currentStep}`);
+
+        return recorder;
+      });
     }
+
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentComponent, audioStreamStatus, currentStep]);
+  }, [currentComponent, currentStep]);
 
   // Find current block, if it has an ID, add it as a participant tag
   const [blockForStep, setBlockForStep] = useState<string[]>([]);
@@ -110,6 +118,8 @@ export default function ComponentController() {
     addParticipantTag();
   }, [blockForStep, storageEngine]);
 
+  const currentConfig = useMemo(() => (isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent), [stepConfig, studyConfig]);
+
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.
   if (currentComponent === 'end') {
@@ -130,7 +140,6 @@ export default function ComponentController() {
     return <ResourceNotFound email={studyConfig.uiConfig.contactEmail} />;
   }
 
-  const currentConfig = isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
   const instruction = (currentConfig.instruction || '');
   const { instructionLocation } = currentConfig;
   const instructionInSideBar = studyConfig.uiConfig.sidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
