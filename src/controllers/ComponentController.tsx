@@ -32,9 +32,7 @@ export default function ComponentController() {
   const { storageEngine } = useStorageEngine();
 
   const audioStream = useRef<MediaRecorder | null>(null);
-
   const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
-
   const { setIsRecording } = useStoreActions();
 
   // If we have a trial, use that config to render the right component else use the step
@@ -69,8 +67,6 @@ export default function ComponentController() {
       audioStream.current.stream.getAudioTracks().forEach((track) => { track.stop(); audioStream.current?.stream.removeTrack(track); });
       audioStream.current.stop();
       audioStream.current = null;
-
-      // setAudioStream(null);
     }
 
     if ((stepConfig && stepConfig.recordAudio !== undefined && !stepConfig.recordAudio) || currentComponent === 'end') {
@@ -82,11 +78,8 @@ export default function ComponentController() {
       }).then((s) => {
         const recorder = new MediaRecorder(s);
         audioStream.current = recorder;
-
         audioStream.current.start();
-
         storeDispatch(setIsRecording(true));
-
         setPrevTrialName(`${currentComponent}_${currentStep}`);
       });
     }
@@ -116,6 +109,7 @@ export default function ComponentController() {
     addParticipantTag();
   }, [blockForStep, storageEngine]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const currentConfig = useMemo(() => (currentComponent !== 'end' && isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent), [stepConfig, studyConfig]);
 
   // We're not using hooks below here, so we can return early if we're at the end of the study.

@@ -338,8 +338,6 @@ export class FirebaseStorageEngine extends StorageEngine {
     setTimeout(() => {
       audioStream.removeEventListener('dataavailable', listener);
     }, 0);
-
-    // audioStream.removeEventListener('dataavailable', listener);
   }
 
   async saveAnswers(answers: Record<string, StoredAnswer>) {

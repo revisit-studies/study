@@ -1606,16 +1606,16 @@
           "description": "The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents.",
           "type": "object"
         },
-        "recordStudyAudio": {
-          "description": "Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.",
-          "type": "boolean"
-        },
         "importedLibraries": {
           "description": "A list of libraries that are used in the study. This is used to import external libraries into the study. Library names are valid namespaces to be used later.",
           "items": {
             "type": "string"
           },
           "type": "array"
+        },
+        "recordStudyAudio": {
+          "description": "Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.",
+          "type": "boolean"
         },
         "sequence": {
           "$ref": "#/definitions/ComponentBlock",
