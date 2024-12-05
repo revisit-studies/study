@@ -1,7 +1,7 @@
 {
     "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
     "components": {
-      "use-frequently": {
+      "SUS": {
         "type": "questionnaire",
         "response": [
           {
@@ -13,27 +13,17 @@
             "numItems": 5,
             "rightLabel": "Strongly Agree",
             "leftLabel": "Strongly Disagree"
-          }
-        ]
-      },
-      "unnecessarily-complex": {
-        "type": "questionnaire",
-        "response": [
+          },
           {
             "id": "unnecessarily-complex",
             "prompt": "I found the system unnecessarily complex",
             "required": true,
             "location": "aboveStimulus",
-            "type": "likert", 
+            "type": "likert",
             "numItems": 5,
             "rightLabel": "Strongly Agree",
             "leftLabel": "Strongly Disagree"
-          }
-        ]
-      },
-      "easy-to-use": {
-        "type": "questionnaire",
-        "response": [
+          },
           {
             "id": "easy-to-use",
             "prompt": "I thought the system was easy to use",
@@ -43,12 +33,7 @@
             "numItems": 5,
             "rightLabel": "Strongly Agree",
             "leftLabel": "Strongly Disagree"
-          }
-        ]
-      },
-      "need-technical-support": {
-        "type": "questionnaire",
-        "response": [
+          },
           {
             "id": "need-technical-support",
             "prompt": "I think that I would need the support of a technical person to be able to use this system",
@@ -58,12 +43,7 @@
             "numItems": 5,
             "rightLabel": "Strongly Agree",
             "leftLabel": "Strongly Disagree"
-          }
-        ]
-      },
-      "well-integrated": {
-        "type": "questionnaire",
-        "response": [
+          },
           {
             "id": "well-integrated",
             "prompt": "I found the various functions in this system were well integrated",
@@ -73,12 +53,7 @@
             "numItems": 5,
             "rightLabel": "Strongly Agree",
             "leftLabel": "Strongly Disagree"
-          }
-        ]
-      },
-      "too-inconsistent": {
-        "type": "questionnaire",
-        "response": [
+          },
           {
             "id": "too-inconsistent",
             "prompt": "I thought there was too much inconsistency in this system",
@@ -88,12 +63,7 @@
             "numItems": 5,
             "rightLabel": "Strongly Agree",
             "leftLabel": "Strongly Disagree"
-          }
-        ]
-      },
-      "quick-to-learn": {
-        "type": "questionnaire",
-        "response": [
+          },
           {
             "id": "quick-to-learn",
             "prompt": "I would imagine that most people would learn to use this system very quickly",
@@ -103,12 +73,7 @@
             "numItems": 5,
             "rightLabel": "Strongly Agree",
             "leftLabel": "Strongly Disagree"
-          }
-        ]
-      },
-      "cumbersome-to-use": {
-        "type": "questionnaire",
-        "response": [
+          },
           {
             "id": "cumbersome-to-use",
             "prompt": "I found the system very cumbersome to use",
@@ -118,12 +83,7 @@
             "numItems": 5,
             "rightLabel": "Strongly Agree",
             "leftLabel": "Strongly Disagree"
-          }
-        ]
-      },
-      "confident-using": {
-        "type": "questionnaire",
-        "response": [
+          },
           {
             "id": "confident-using",
             "prompt": "I felt very confident using the system",
@@ -133,12 +93,7 @@
             "numItems": 5,
             "rightLabel": "Strongly Agree",
             "leftLabel": "Strongly Disagree"
-          }
-        ]
-      },
-      "needed-to-learn-lot": {
-        "type": "questionnaire",
-        "response": [
+          },
           {
             "id": "needed-to-learn-lot",
             "prompt": "I needed to learn a lot of things before I could get going with this system",
@@ -156,16 +111,7 @@
       "SUS": {
         "order": "fixed",
         "components": [
-          "use-frequently",
-          "unnecessarily-complex",
-          "easy-to-use",
-          "need-technical-support",
-          "well-integrated",
-          "too-inconsistent",
-          "quick-to-learn",
-          "cumbersome-to-use",
-          "confident-using",
-          "needed-to-learn-lot"
+          "SUS"
         ]
       }
     }
