@@ -61,7 +61,7 @@ export default function ComponentController() {
     }
 
     if (audioStream.current && prevTrialName) {
-      // storageEngine.saveAudio(audioStream.current, prevTrialName);
+      storageEngine.saveAudio(audioStream.current, prevTrialName);
     }
 
     if (audioStream.current) {
@@ -83,13 +83,11 @@ export default function ComponentController() {
         const recorder = new MediaRecorder(s);
         audioStream.current = recorder;
 
-        // audioStream.current.start();
+        audioStream.current.start();
 
         storeDispatch(setIsRecording(true));
 
-        // setPrevTrialName(`${currentComponent}_${currentStep}`);
-
-        return recorder;
+        setPrevTrialName(`${currentComponent}_${currentStep}`);
       });
     }
 
