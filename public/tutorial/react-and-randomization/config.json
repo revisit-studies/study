@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Interactive Selections in Scatterplots",
+    "title": "TUTORIAL - Interactive Selections in Scatterplots",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
@@ -488,40 +488,18 @@
       "consent",
       "tutorial",
       {
-        "order": "latinSquare",
-        "numSamples": 2,
+        "order": "random",
         "components": [
-          {
-            "order": "latinSquare",
-            "components": [
-              "paintBrush_q1",
-              "paintBrush_q2"
-            ]
-          },
-          {
-            "order": "latinSquare",
-            "components": [
-              "rectangleBrush_q1",
-              "rectangleBrush_q2"
-            ]
-          },
-          {
-            "order": "latinSquare",
-            "components": [
-              "axisBrush_q1",
-              "axisBrush_q2"
-            ]
-          },
-          {
-            "order": "latinSquare",
-            "components": [
-              "sliderBrush_q1",
-              "sliderBrush_q2"
-            ]
-          },
+          "paintBrush_q1",
+          "paintBrush_q2",
+          "rectangleBrush_q1",
+          "rectangleBrush_q2",
+          "axisBrush_q1",
+          "axisBrush_q2",
+          "sliderBrush_q1",
+          "sliderBrush_q2"
         ]
       },
-
       "post-study-survey",
       "survey"
     ]
