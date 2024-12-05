@@ -41,6 +41,7 @@ export function Login() {
     if (!user.determiningStatus && !user.isAdmin && user.adminVerification) {
       showNotification({ title: 'Unauthorized', message: 'You are not authorized to use this application.', color: 'red' });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.adminVerification]);
 
   if (!user.determiningStatus && user.isAdmin) {

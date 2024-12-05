@@ -154,6 +154,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
     return () => {
       cleanupPromise.then((cleanup) => cleanup());
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageEngine, enableAuthTrigger]);
 
   const value = useMemo(() => ({
@@ -161,6 +162,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
     triggerAuth,
     logout,
     verifyAdminStatus,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [user]);
 
   return (

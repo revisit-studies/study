@@ -31,6 +31,7 @@ export default function RecordingAudioWaveform({ width = 70, height = 36 }: { wi
         wavesurferRef.current.destroy();
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMounted]);
 
   const handleWSMount = useCallback((waveSurfer: WaveSurferRef | null) => {
