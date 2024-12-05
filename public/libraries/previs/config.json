@@ -1,0 +1,29 @@
+{
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
+    "components": {
+      "enjoyable":{
+        "type": "questionnaire",
+        "response": [
+          {
+            "id": "",
+            "prompt": "Likert scale example",
+            "required": true,
+            "location": "aboveStimulus",
+            "type": "likert",
+            "numItems": 9,
+            "rightLabel": "Like",
+            "leftLabel": "Dislike"
+          }
+      ]
+      }
+      
+    },
+    "sequences": {
+      "latinSquare": {
+        "order": "latinSquare",
+        "components": [
+          "enjoyable"
+        ]
+      }
+    }
+  }

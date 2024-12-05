@@ -20,32 +20,14 @@
     "withProgressBar": false,
     "sidebar": true
   },
-  "importedLibraries": ["test", "vlat"],
+  "importedLibraries": ["SUS","mini-vlat"],
   "components": {
-    "my-test": {
-      "baseComponent": "$test.components.test-md",
-      "response": [
-        {"id": "test-response", "type": "shortText", "prompt": "What did you think of the test?", "required": true}
-      ]
-    },
-    "my-test2": {
-      "baseComponent": "$test.co.test-md",
-      "response": [
-        {"id": "test-response", "type": "shortText", "prompt": "What did you think of the test?", "required": true}
-      ]
-    }
   },
   "sequence": {
     "order": "fixed",
     "components": [
-      "$test.sequences.small",
-      "$vlat.se.fixed",
-      "$test.se.long",
-      "$test.components.test-md",
-      "$test.co.test-react",
-      "my-test",
-      "my-test2",
-      "$test.components.test-inherited"
+      "$SUS.se.SUS",
+      "$mini-vlat.se.fixed"
     ]
   }
 }
