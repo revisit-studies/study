@@ -60,6 +60,14 @@
             "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
             "type": "object"
           },
+          "nextButtonDisableTime": {
+            "description": "A timeout (in ms) after which the next button will be disabled.",
+            "type": "number"
+          },
+          "nextButtonEnableTime": {
+            "description": "A timer (in ms) after which the next button will be enabled.",
+            "type": "number"
+          },
           "nextButtonLocation": {
             "$ref": "#/definitions/ResponseBlockLocation",
             "description": "The location of the next button."
@@ -486,6 +494,14 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
+        "nextButtonDisableTime": {
+          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "type": "number"
+        },
+        "nextButtonEnableTime": {
+          "description": "A timer (in ms) after which the next button will be enabled.",
+          "type": "number"
+        },
         "nextButtonLocation": {
           "$ref": "#/definitions/ResponseBlockLocation",
           "description": "The location of the next button."
@@ -657,6 +673,14 @@
           "additionalProperties": {},
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
+        },
+        "nextButtonDisableTime": {
+          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "type": "number"
+        },
+        "nextButtonEnableTime": {
+          "description": "A timer (in ms) after which the next button will be enabled.",
+          "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ResponseBlockLocation",
@@ -908,6 +932,14 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
+        "nextButtonDisableTime": {
+          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "type": "number"
+        },
+        "nextButtonEnableTime": {
+          "description": "A timer (in ms) after which the next button will be enabled.",
+          "type": "number"
+        },
         "nextButtonLocation": {
           "$ref": "#/definitions/ResponseBlockLocation",
           "description": "The location of the next button."
@@ -1061,6 +1093,14 @@
           "additionalProperties": {},
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
+        },
+        "nextButtonDisableTime": {
+          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "type": "number"
+        },
+        "nextButtonEnableTime": {
+          "description": "A timer (in ms) after which the next button will be enabled.",
+          "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ResponseBlockLocation",
@@ -1230,6 +1270,14 @@
           "additionalProperties": {},
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
+        },
+        "nextButtonDisableTime": {
+          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "type": "number"
+        },
+        "nextButtonEnableTime": {
+          "description": "A timer (in ms) after which the next button will be enabled.",
+          "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ResponseBlockLocation",
@@ -1652,6 +1700,10 @@
           "description": "The message to display when the study ends.",
           "type": "string"
         },
+        "timeoutReject": {
+          "description": "Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set.",
+          "type": "boolean"
+        },
         "urlParticipantIdParam": {
           "description": "If the participant ID is passed in the URL, this is the name of the querystring parameter that is used to capture the participant ID (e.g. PROLIFIC_ID). This will allow a user to continue a study on different devices and browsers.",
           "type": "string"
@@ -1704,6 +1756,14 @@
           "additionalProperties": {},
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
+        },
+        "nextButtonDisableTime": {
+          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "type": "number"
+        },
+        "nextButtonEnableTime": {
+          "description": "A timer (in ms) after which the next button will be enabled.",
+          "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ResponseBlockLocation",

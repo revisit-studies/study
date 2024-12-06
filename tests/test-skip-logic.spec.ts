@@ -1,5 +1,5 @@
 /* eslint-disable no-await-in-loop */
-import { test, expect } from '@playwright/test';
+import { test, expect, Page } from '@playwright/test';
 
 async function answerTrial1(page, q1, q2) {
   await page.getByLabel(q1).check();
@@ -131,11 +131,42 @@ async function goToCheck(page, check: 'response' | 'responses' | 'attention-chec
   }
 }
 
+async function getTags(page: Page) {
+  return page.evaluate(async () => {
+    let db;
+    const request = indexedDB.open('test-skip-logic');
+
+    return new Promise((resolve) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      request.onsuccess = async (event: any) => {
+        db = event.target.result;
+        const transaction = db.transaction(['keyvaluepairs'], 'readonly');
+        const store = transaction.objectStore('keyvaluepairs');
+        // const sequenceArrayInternal = store.get('sequenceArray');
+        // sequenceArrayInternal.onsuccess = () => resolve(sequenceArrayInternal.result);
+        const currentParticipant = store.get('currentParticipant');
+        currentParticipant.onsuccess = () => {
+          const participantData = store.get(currentParticipant.result);
+          participantData.onsuccess = () => {
+            const { participantTags } = participantData.result;
+            resolve(participantTags);
+          };
+        };
+      };
+    });
+  });
+}
+
 test('test', async ({ page }) => {
   await page.goto('/test-skip-logic');
 
   // ***** All questions are correct *****
   await goToCheck(page, 'end');
+  // Verify that the participant data has the block id as a tag
+  const tags = await getTags(page);
+  expect(tags).toContain('testBlockId');
+  expect(tags).toContain('targetBlock');
+  expect(tags).toHaveLength(2);
   await getNextParticipant(page);
 
   // ***** block-incorrect, block requires 2 incorrect to skip *****
@@ -191,4 +222,6 @@ test('test', async ({ page }) => {
   await answerTrial1(page, 'Red', 'Cat'); // incorrect
   await verifyTargetComponent(page);
   await verifyStudyEnd(page);
+  const tags2 = await getTags(page);
+  expect(tags2).toHaveLength(0);
 });
