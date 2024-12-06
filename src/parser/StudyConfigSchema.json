@@ -116,6 +116,10 @@
             "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
             "type": "boolean"
           },
+          "recordAudio": {
+            "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
+            "type": "boolean"
+          },
           "response": {
             "description": "The responses to the component",
             "items": {
@@ -518,6 +522,10 @@
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
         },
+        "recordAudio": {
+          "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -728,6 +736,10 @@
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "recordAudio": {
+          "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
           "type": "boolean"
         },
         "response": {
@@ -956,6 +968,10 @@
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
         },
+        "recordAudio": {
+          "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
+          "type": "boolean"
+        },
         "response": {
           "description": "The responses to the component",
           "items": {
@@ -1112,6 +1128,10 @@
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "recordAudio": {
+          "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
           "type": "boolean"
         },
         "response": {
@@ -1298,6 +1318,10 @@
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "recordAudio": {
+          "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
           "type": "boolean"
         },
         "response": {
@@ -1589,6 +1613,10 @@
           },
           "type": "array"
         },
+        "recordStudyAudio": {
+          "description": "Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.",
+          "type": "boolean"
+        },
         "sequence": {
           "$ref": "#/definitions/ComponentBlock",
           "description": "The order of the components in the study. This might include some randomness."
@@ -1784,6 +1812,10 @@
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "recordAudio": {
+          "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
           "type": "boolean"
         },
         "response": {

@@ -52,6 +52,7 @@ export function ProtectedRoute({ children, paramToCheck, paramCallback }: Protec
     };
 
     verifyUser();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.isAdmin, isEnabled]);
 
   if (user.determiningStatus || !storageEngine) {

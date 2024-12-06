@@ -40,6 +40,7 @@ export async function studyStoreCreator(
 
   const initialState: StoreState = {
     studyId,
+    isRecording: false,
     answers: Object.keys(answers).length > 0 ? answers : emptyAnswers,
     sequence,
     config,
@@ -58,6 +59,9 @@ export async function studyStoreCreator(
     reducers: {
       setConfig(state, payload: PayloadAction<StudyConfig>) {
         state.config = payload.payload;
+      },
+      setIsRecording(state, payload: PayloadAction<boolean>) {
+        state.isRecording = payload.payload;
       },
       toggleStudyBrowser: (state) => {
         state.showStudyBrowser = !state.showStudyBrowser;

@@ -88,6 +88,8 @@ export abstract class StorageEngine {
 
   abstract validateUser(user: UserWrapped | null): Promise<boolean>;
 
+  abstract saveAudio(audioStream: MediaRecorder, taskName: string): Promise<void>;
+
   abstract rejectParticipant(studyId: string, participantID: string, reason: string): Promise<void>;
 
   abstract rejectCurrentParticipant(studyId: string, reason: string): Promise<void>;

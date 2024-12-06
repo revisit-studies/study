@@ -1,4 +1,6 @@
-import { Suspense, useEffect, useState } from 'react';
+import {
+  Suspense, useEffect, useMemo, useRef, useState,
+} from 'react';
 import merge from 'lodash.merge';
 import ResponseBlock from '../components/response/ResponseBlock';
 import IframeController from './IframeController';
@@ -27,6 +29,11 @@ export default function ComponentController() {
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent() || 'Notfound';
   const stepConfig = studyConfig.components[currentComponent];
+  const { storageEngine } = useStorageEngine();
+
+  const audioStream = useRef<MediaRecorder | null>(null);
+  const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
+  const { setIsRecording } = useStoreActions();
 
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
@@ -35,7 +42,6 @@ export default function ComponentController() {
   useDisableBrowserBack();
 
   // Check if we have issues connecting to the database, if so show alert modal
-  const { storageEngine } = useStorageEngine();
   const storeDispatch = useStoreDispatch();
   const { setAlertModal } = useStoreActions();
   useEffect(() => {
@@ -46,6 +52,40 @@ export default function ComponentController() {
       }));
     }
   }, [setAlertModal, storageEngine, storeDispatch]);
+
+  useEffect(() => {
+    if (!studyConfig || !studyConfig.recordStudyAudio || !storageEngine || storageEngine.getEngine() !== 'firebase') {
+      return;
+    }
+
+    if (audioStream.current && prevTrialName) {
+      storageEngine.saveAudio(audioStream.current, prevTrialName);
+    }
+
+    if (audioStream.current) {
+      audioStream.current.stream.getTracks().forEach((track) => { track.stop(); audioStream.current?.stream.removeTrack(track); });
+      audioStream.current.stream.getAudioTracks().forEach((track) => { track.stop(); audioStream.current?.stream.removeTrack(track); });
+      audioStream.current.stop();
+      audioStream.current = null;
+    }
+
+    if ((stepConfig && stepConfig.recordAudio !== undefined && !stepConfig.recordAudio) || currentComponent === 'end') {
+      setPrevTrialName(null);
+      storeDispatch(setIsRecording(false));
+    } else {
+      navigator.mediaDevices.getUserMedia({
+        audio: true,
+      }).then((s) => {
+        const recorder = new MediaRecorder(s);
+        audioStream.current = recorder;
+        audioStream.current.start();
+        storeDispatch(setIsRecording(true));
+        setPrevTrialName(`${currentComponent}_${currentStep}`);
+      });
+    }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentComponent, currentStep]);
 
   // Find current block, if it has an ID, add it as a participant tag
   const [blockForStep, setBlockForStep] = useState<string[]>([]);
@@ -69,6 +109,9 @@ export default function ComponentController() {
     addParticipantTag();
   }, [blockForStep, storageEngine]);
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const currentConfig = useMemo(() => (currentComponent !== 'end' && isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent), [stepConfig, studyConfig]);
+
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.
   if (currentComponent === 'end') {
@@ -89,7 +132,6 @@ export default function ComponentController() {
     return <ResourceNotFound email={studyConfig.uiConfig.contactEmail} />;
   }
 
-  const currentConfig = isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent;
   const instruction = (currentConfig.instruction || '');
   const { instructionLocation } = currentConfig;
   const instructionInSideBar = studyConfig.uiConfig.sidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);

@@ -34,6 +34,7 @@
     "@trrack/vis-react": "^1.5.0",
     "@types/hjson": "^2.4.3",
     "@types/lodash": "^4.14.199",
+    "@types/node": "^22.7.6",
     "ajv": "^8.16.0",
     "arquero": "^5.4.0",
     "d3": "^7.9.0",
@@ -58,7 +59,9 @@
     "use-deep-compare-effect": "^1.8.1",
     "uuid": "^10.0.0",
     "vega": "^5.28.0",
-    "vega-lite": "^5.17.0"
+    "vega-lite": "^5.17.0",
+    "wavesurfer-react": "^3.0.4",
+    "wavesurfer.js": "^7.8.8"
   },
   "devDependencies": {
     "@playwright/test": "^1.44.0",
@@ -68,7 +71,7 @@
     "@types/uuid": "^9.0.7",
     "@typescript-eslint/eslint-plugin": "^7.13.0",
     "@typescript-eslint/parser": "^7.13.0",
-    "@vitejs/plugin-react-swc": "^3.7.0",
+    "@vitejs/plugin-react-swc": "^3.7.1",
     "eslint": "^8.56.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-jsx-a11y": "^6.8.0",
