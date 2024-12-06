@@ -59,13 +59,13 @@ export function useNextStep() {
 
   const [dataCollectionEnabled, setDataCollectionEnabled] = useState(true);
   useEffect(() => {
-    const checkStudyNavigatorEnabled = async () => {
+    const checkDataCollectionEnabled = async () => {
       if (storageEngine) {
         const modes = await storageEngine.getModes(studyId);
         setDataCollectionEnabled(modes.dataCollectionEnabled);
       }
     };
-    checkStudyNavigatorEnabled();
+    checkDataCollectionEnabled();
   }, [storageEngine, studyId]);
 
   const areResponsesValid = useAreResponsesValid(identifier);
