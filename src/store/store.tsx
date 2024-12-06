@@ -54,6 +54,7 @@ export async function studyStoreCreator(
     iframeProvenance: null,
     metadata,
     modes,
+    matrixAnswers: {},
   };
 
   const storeSlice = createSlice({
@@ -80,6 +81,53 @@ export async function studyStoreCreator(
       },
       setIframeProvenance: (state, action: PayloadAction<TrrackedProvenance | null>) => {
         state.iframeProvenance = action.payload;
+      },
+      setMatrixAnswersRadio: (state, action: PayloadAction<{ questionKey: string, responseId: string, val: string }>) => {
+        const { responseId, questionKey, val } = action.payload;
+        return {
+          ...state,
+          matrixAnswers: {
+            ...state.matrixAnswers,
+            [responseId]: {
+              ...state.matrixAnswers[responseId],
+              [questionKey]: val,
+            },
+          },
+        };
+      },
+      setMatrixAnswersCheckbox: (state, action: PayloadAction<{ questionKey: string, responseId: string, choiceIndex: number, choicesLength: number }>) => {
+        // Checkbox answers are currently stored as a string of true false values separated by a dash
+        // This is to simplify the data structure of matrix responses, even though it complicates this action.
+        const {
+          responseId, questionKey, choiceIndex, choicesLength,
+        } = action.payload;
+        if (!state.matrixAnswers[responseId] || !state.matrixAnswers[responseId][questionKey]) {
+          return {
+            ...state,
+            matrixAnswers: {
+              ...state.matrixAnswers,
+              [responseId]: {
+                ...state.matrixAnswers[responseId],
+                [questionKey]: Array(choicesLength).fill(false).map((entry, idx) => idx === choiceIndex).join('-'),
+              },
+            },
+          };
+        }
+        return {
+          ...state,
+          matrixAnswers: {
+            ...state.matrixAnswers,
+            [responseId]: {
+              ...state.matrixAnswers[responseId],
+              [questionKey]: state.matrixAnswers[responseId][questionKey].split('-').map((entry, idx) => {
+                if (idx === choiceIndex) {
+                  return !(entry === 'true');
+                }
+                return entry === 'true';
+              }).join('-'),
+            },
+          },
+        };
       },
       updateResponseBlockValidation: (
         state,
@@ -157,16 +205,17 @@ export function useAreResponsesValid(id: string) {
     if (id.includes('reviewer-')) {
       return true;
     }
-
     const valid = Object.values(state.trialValidation[id]).every((x) => {
       if (typeof x === 'object' && 'valid' in x) {
         return x.valid;
       }
       return true;
     });
-
     if (!valid) return false;
 
+    // Valid seems to not be an object, just a boolean (you're using 'every').
+    // Was this originally something else? Should just be "return valid"
+    // instead of "if (!valid) return false" and then the stuff below
     return Object.values(valid).every((x) => x);
   });
 }

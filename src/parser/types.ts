@@ -283,6 +283,13 @@ export interface LikertResponse extends BaseResponse {
   rightLabel?: string;
 }
 
+export interface MatrixResponse extends BaseResponse {
+  type: 'matrix-radio' | 'matrix-checkbox';
+  answerOptions: string[] | string;
+  questionOptions: string[];
+  desc?: string;
+}
+
 /**
  * The DropdownResponse interface is used to define the properties of a dropdown response.
  * DropdownResponses render as a select input with user specified options.
@@ -406,7 +413,7 @@ export interface IFrameResponse extends BaseResponse {
   type: 'iframe';
 }
 
-export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | IFrameResponse;
+export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | IFrameResponse | MatrixResponse;
 
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.

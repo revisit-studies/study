@@ -1,6 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/GlobalConfigSchema.json",
   "configsList": [
+    "test-likert-matrix",
     "tutorial-simple-study",
     "tutorial-react-and-randomization",
     "tutorial-advanced-react",
@@ -87,6 +88,9 @@
     "test-skip-logic": {
       "path": "test-skip-logic/config.json",
       "test": true
+    },
+    "test-likert-matrix": {
+      "path": "test-likert-matrix/config.json"
     }
   }
 }
