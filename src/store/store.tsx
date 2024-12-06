@@ -8,6 +8,7 @@ import {
   StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata,
 } from './types';
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
+import { REVISIT_MODE } from '../storage/engines/StorageEngine';
 
 export async function studyStoreCreator(
   studyId: string,
@@ -15,6 +16,7 @@ export async function studyStoreCreator(
   sequence: Sequence,
   metadata: ParticipantMetadata,
   answers: Record<string, StoredAnswer>,
+  modes: Record<REVISIT_MODE, boolean>,
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
 
@@ -51,6 +53,7 @@ export async function studyStoreCreator(
     iframeAnswers: {},
     iframeProvenance: null,
     metadata,
+    modes,
   };
 
   const storeSlice = createSlice({
