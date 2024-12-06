@@ -6,8 +6,8 @@ import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 import { useStoreDispatch, useStoreActions } from '../../store/store';
 
 interface Option {
-    value: string,
-    label: string
+  value: string,
+  label: string
 }
 
 function CheckboxComponent({
@@ -18,12 +18,12 @@ function CheckboxComponent({
   answer,
   onChange,
 }: {
-    _choices: Option[],
-    _n: number,
-    idx: number,
-    question: Option,
-    answer: { value: Record<string, string> },
-    onChange: (questionKey: string, choiceIndex: number, length: number) => void
+  _choices: Option[],
+  _n: number,
+  idx: number,
+  question: Option,
+  answer: { value: Record<string, string> },
+  onChange: (questionKey: string, choiceIndex: number, length: number) => void
 }) {
   return (
     <div
@@ -53,20 +53,20 @@ function RadioGroupComponent({
   answer,
   onChange,
 }: {
-    _choices: Option[],
-    _n: number,
-    idx: number,
-    question: Option,
-    response: MatrixResponse,
-    answer: { value: Record<string, string> },
-    onChange: (val: string, questionKey: string) => void
+  _choices: Option[],
+  _n: number,
+  idx: number,
+  question: Option,
+  response: MatrixResponse,
+  answer: { value: Record<string, string> },
+  onChange: (val: string, questionKey: string) => void
 
 }) {
   return (
     <Radio.Group
       name={`radioInput${response.id}-${idx}`}
       key={`${response.id}-${idx}`}
-            // error={generateErrorMessage(response, answer, _choices)}
+      // error={generateErrorMessage(response, answer, _choices)}
       style={{
         '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))',
         flex: 1,
@@ -99,10 +99,10 @@ export default function MatrixInput({
   index,
   enumerateQuestions,
 }: {
-    response: MatrixResponse;
-    answer: { value: Record<string, string> };
-    index: number;
-    enumerateQuestions: boolean;
+  response: MatrixResponse;
+  answer: { value: Record<string, string> };
+  index: number;
+  enumerateQuestions: boolean;
 }) {
   const { setMatrixAnswersRadio, setMatrixAnswersCheckbox } = useStoreActions();
   const storeDispatch = useStoreDispatch();

@@ -130,7 +130,6 @@ export default function ResponseSwitcher({
       {(response.type === 'matrix-radio' || response.type === 'matrix-checkbox') && (
         <MatrixInput
           response={response}
-          disabled={isDisabled}
           answer={ans as { value: Record<string, string> }}
           index={index}
           enumerateQuestions={enumerateQuestions}
