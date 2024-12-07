@@ -11,12 +11,14 @@ export default function RadioInput({
   answer,
   index,
   enumerateQuestions,
+  stretch,
 }: {
   response: RadioResponse;
   disabled: boolean;
   answer: object;
   index: number;
   enumerateQuestions: boolean;
+  stretch?: boolean
 }) {
   const {
     prompt,
@@ -56,8 +58,15 @@ export default function RadioInput({
         {/*
         Optional: If we do not like the horizontal spread, we can remove the 'space-around'.
          */}
-        <Group mt="md" style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-around' }}>
-          {leftLabel ? <Text style={{ textAlign: 'center', fontWeight: 'bold' }}>{leftLabel}</Text> : null}
+        <Group
+          mt="md"
+          style={{
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: stretch ? 'space-around' : 'inherit',
+          }}
+        >
+          {leftLabel ? <Text>{leftLabel}</Text> : null}
           {optionsAsStringOptions.map((radio) => (
             <div
               key={radio.label}
@@ -74,7 +83,7 @@ export default function RadioInput({
               />
             </div>
           ))}
-          <Text style={{ fontWeight: 'bold' }}>{rightLabel}</Text>
+          <Text>{rightLabel}</Text>
         </Group>
       </Radio.Group>
     </div>
