@@ -115,7 +115,8 @@ export default function ComponentController() {
     }
 
     updateBlockForStep().then(addParticipantTag);
-  }, [currentStep, storageEngine, blockForStep, sequence]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep, storageEngine, sequence]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const currentConfig = useMemo(() => (currentComponent !== 'end' && isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent), [stepConfig, studyConfig]);
