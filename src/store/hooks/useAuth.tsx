@@ -89,7 +89,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
 
   const verifyAdminStatus = async (inputUser: UserWrapped) => {
     if (storageEngine) {
-      return await storageEngine.validateUser(inputUser);
+      return await storageEngine.validateUser(inputUser, true);
     }
     return false;
   };

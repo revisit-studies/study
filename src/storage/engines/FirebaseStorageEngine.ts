@@ -603,26 +603,35 @@ export class FirebaseStorageEngine extends StorageEngine {
     return true;
   }
 
+  private userManagementData: Record<string, unknown> = {};
+
   // Gets data from the user-management collection based on the inputted string
-  async getUserManagementData(key: string) {
-    // Get the user-management collection in Firestore
-    const userManagementCollection = collection(
-      this.firestore,
-      'user-management',
-    );
-    // Grabs all user-management data and returns data based on key
-    const querySnapshot = await getDocs(userManagementCollection);
-    // Converts querySnapshot data to Object
-    const docsObject = Object.fromEntries(
-      querySnapshot.docs.map((queryDoc) => [queryDoc.id, queryDoc.data()]),
-    );
-    if (key in docsObject) {
-      return docsObject[key];
+  async getUserManagementData<T extends 'authentication' | 'adminUsers'>(key: T): Promise<(T extends 'authentication' ? { isEnabled: boolean } : { adminUsersList: StoredUser[] }) | null> {
+    if (Object.keys(this.userManagementData).length === 0) {
+      // Get the user-management collection in Firestore
+      const userManagementCollection = collection(
+        this.firestore,
+        'user-management',
+      );
+      // Grabs all user-management data and returns data based on key
+      const querySnapshot = await getDocs(userManagementCollection);
+      // Converts querySnapshot data to Object
+      const docsObject = Object.fromEntries(
+        querySnapshot.docs.map((queryDoc) => [queryDoc.id, queryDoc.data()]),
+      );
+      this.userManagementData = docsObject;
+    }
+    if (key in this.userManagementData) {
+      return this.userManagementData[key] as T extends 'authentication' ? { isEnabled: boolean } : { adminUsersList: StoredUser[] };
     }
     return null;
   }
 
-  async validateUser(user: UserWrapped | null) {
+  async validateUser(user: UserWrapped | null, refresh = false) {
+    if (refresh) {
+      this.userManagementData = {};
+    }
+
     if (user?.user) {
       // Case 1: Database exists
       const authInfo = await this.getUserManagementData('authentication');
