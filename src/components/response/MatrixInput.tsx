@@ -156,8 +156,8 @@ export default function MatrixInput({
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: '100px 1fr',
-          gridTemplateRows: '100px 1fr',
+          gridTemplateColumns: 'auto 1fr',
+          gridTemplateRows: 'auto 1fr',
           margin: '40px 100px 100px 100px',
         }}
       >
@@ -187,8 +187,10 @@ export default function MatrixInput({
                 fontWeight: 'bold',
                 textAlign: 'center',
                 fontSize: '0.8em',
-                margin: '0px 5px',
               }}
+              mb="sm"
+              ml="xs"
+              mr="xs"
             >
               {entry.label}
             </Text>
