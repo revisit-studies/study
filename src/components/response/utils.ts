@@ -61,12 +61,6 @@ const generateValidation = (responses: Response[]) => {
         ...validateObj,
         [response.id]: (value: string | string[] | object) => {
           if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
-            if (response.type === 'matrix-checkbox') {
-              // Checkbox matrix initializes as '', but is not reset to this when unchecking all.
-              // Instead, each value will be a string of "false"s joined by a "-" character.
-              // This means the same as and empty string, but is a special case.
-              return Object.values(value).every((val) => val !== '' && val.includes('true')) ? null : 'Empty Input';
-            }
             return Object.values(value).every((val) => val !== '') ? null : 'Empty Input';
           }
           if (Array.isArray(value)) {

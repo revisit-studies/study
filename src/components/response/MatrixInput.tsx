@@ -1,14 +1,10 @@
 import {
   Box, Flex, Radio, Text, Checkbox,
 } from '@mantine/core';
-import { MatrixResponse } from '../../parser/types';
+import { ChangeEvent } from 'react';
+import { MatrixResponse, StringOption } from '../../parser/types';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 import { useStoreDispatch, useStoreActions } from '../../store/store';
-
-interface Option {
-  value: string,
-  label: string
-}
 
 function CheckboxComponent({
   _choices,
@@ -18,12 +14,12 @@ function CheckboxComponent({
   answer,
   onChange,
 }: {
-  _choices: Option[],
+  _choices: StringOption[],
   _n: number,
   idx: number,
-  question: Option,
+  question: StringOption,
   answer: { value: Record<string, string> },
-  onChange: (questionKey: string, choiceIndex: number, length: number) => void
+  onChange: (event: ChangeEvent<HTMLInputElement>, questionKey: string, option: StringOption) => void
 }) {
   return (
     <div
@@ -34,11 +30,11 @@ function CheckboxComponent({
         justifyItems: 'center',
       }}
     >
-      {_choices.map((checkbox: Option, idy: number) => (
+      {_choices.map((checkbox: StringOption) => (
         <Checkbox
           key={`${checkbox.label}-${idx}`}
-          checked={answer.value[question.label].split('-')[idy] === 'true'}
-          onChange={() => onChange(question.label, idy, _n)}
+          checked={answer.value[question.label].includes(checkbox.value)}
+          onChange={(event) => onChange(event, question.label, checkbox)}
         />
       ))}
     </div>
@@ -53,10 +49,10 @@ function RadioGroupComponent({
   answer,
   onChange,
 }: {
-  _choices: Option[],
+  _choices: StringOption[],
   _n: number,
   idx: number,
-  question: Option,
+  question: StringOption,
   response: MatrixResponse,
   answer: { value: Record<string, string> },
   onChange: (val: string, questionKey: string) => void
@@ -66,7 +62,6 @@ function RadioGroupComponent({
     <Radio.Group
       name={`radioInput${response.id}-${idx}`}
       key={`${response.id}-${idx}`}
-      // error={generateErrorMessage(response, answer, _choices)}
       style={{
         '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))',
         flex: 1,
@@ -82,7 +77,7 @@ function RadioGroupComponent({
           justifyItems: 'center',
         }}
       >
-        {_choices.map((radio: Option) => (
+        {_choices.map((radio: StringOption) => (
           <Radio
             value={radio.value}
             key={`${radio.label}-${idx}`}
@@ -121,9 +116,10 @@ export default function MatrixInput({
     satisfaction7: ['Highly Unsatisfied', 'Unsatisfied', 'Slightly Unsatisfied', 'Neutral', 'Slightly Satisfied', 'Satisfied', 'Highly Satisfied'],
   };
 
-  const _choices = typeof answerOptions === 'string' ? _choiceStringToColumns[answerOptions].map((entry) => ({ value: entry, label: entry })) : answerOptions.map((option): Option => (typeof option === 'string' ? { value: option, label: option } : option));
-  const _questions = questionOptions.map((option): Option => (typeof option === 'string' ? { value: option, label: option } : option));
-  // Re-define on change function
+  const _choices = typeof answerOptions === 'string' ? _choiceStringToColumns[answerOptions].map((entry) => ({ value: entry, label: entry })) : answerOptions.map((option): StringOption => (typeof option === 'string' ? { value: option, label: option } : option));
+  const _questions = questionOptions.map((option): StringOption => (typeof option === 'string' ? { value: option, label: option } : option));
+
+  // Re-define on change functions. Dispatch answers to store.
   const onChangeRadio = (val: string, questionKey: string) => {
     const payload = {
       type: 'radio',
@@ -134,19 +130,21 @@ export default function MatrixInput({
     storeDispatch(setMatrixAnswersRadio(payload));
   };
 
-  const onChangeCheckbox = (questionKey: string, choiceIndex: number, length: number) => {
+  const onChangeCheckbox = (event: ChangeEvent<HTMLInputElement>, questionKey: string, option: StringOption) => {
+    const isChecked = event.target.checked;
     const payload = {
       questionKey,
-      choiceIndex,
       responseId: response.id,
-      choicesLength: length,
+      value: option.value,
+      label: option.label,
+      isChecked,
+      choiceOptions: _choices,
     };
     storeDispatch(setMatrixAnswersCheckbox(payload));
   };
 
   const _n = _choices.length;
   const _m = _questions.length;
-
   return (
     <>
       <Flex direction="row" wrap="nowrap" gap={0}>

@@ -3,7 +3,7 @@ import {
 } from '@reduxjs/toolkit';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
-import { ResponseBlockLocation, StudyConfig } from '../parser/types';
+import { ResponseBlockLocation, StudyConfig, StringOption } from '../parser/types';
 import {
   StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata,
 } from './types';
@@ -95,36 +95,22 @@ export async function studyStoreCreator(
           },
         };
       },
-      setMatrixAnswersCheckbox: (state, action: PayloadAction<{ questionKey: string, responseId: string, choiceIndex: number, choicesLength: number }>) => {
-        // Checkbox answers are currently stored as a string of true false values separated by a dash
-        // This is to simplify the data structure of matrix responses, even though it complicates this action.
+      setMatrixAnswersCheckbox: (state, action: PayloadAction<{ questionKey: string, responseId: string, value: string, label: string, isChecked: boolean, choiceOptions: StringOption[] }>) => {
         const {
-          responseId, questionKey, choiceIndex, choicesLength,
+          responseId, questionKey, value, isChecked, choiceOptions,
         } = action.payload;
-        if (!state.matrixAnswers[responseId] || !state.matrixAnswers[responseId][questionKey]) {
-          return {
-            ...state,
-            matrixAnswers: {
-              ...state.matrixAnswers,
-              [responseId]: {
-                ...state.matrixAnswers[responseId],
-                [questionKey]: Array(choicesLength).fill(false).map((entry, idx) => idx === choiceIndex).join('-'),
-              },
-            },
-          };
-        }
+
+        const currentAnswer = state.matrixAnswers[responseId]?.[questionKey] ?? '';
+        const newAnswer = isChecked
+          ? choiceOptions.map((entry) => entry.value).filter((entry) => currentAnswer.includes(entry) || entry === value).join('|')
+          : currentAnswer.split('|').filter((entry) => entry !== value).join('|');
+
         return {
           ...state,
           matrixAnswers: {
-            ...state.matrixAnswers,
             [responseId]: {
               ...state.matrixAnswers[responseId],
-              [questionKey]: state.matrixAnswers[responseId][questionKey].split('-').map((entry, idx) => {
-                if (idx === choiceIndex) {
-                  return !(entry === 'true');
-                }
-                return entry === 'true';
-              }).join('-'),
+              [questionKey]: newAnswer,
             },
           },
         };

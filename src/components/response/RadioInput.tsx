@@ -55,11 +55,9 @@ export default function RadioInput({
         error={generateErrorMessage(response, answer, optionsAsStringOptions)}
         style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
       >
-        {/*
-        Optional: If we do not like the horizontal spread, we can remove the 'space-around'.
-         */}
         <Group
           mt="md"
+          gap="lg"
           style={{
             display: 'flex',
             alignItems: 'flex-end',
