@@ -48,24 +48,6 @@
         }
       ]
     },
-    "trial": {
-      "description": "Code writing task",
-      "instruction": "Write a JavaScript function that does X",
-      "type": "react-component",
-      "path": "a-usability-study/assets/CodeEditor.tsx",
-      "parameters": {
-        "initialCode": "// Optional initial code",
-        "taskId": "code-writing"
-      },
-      "response": [
-        {
-          "id": "code-submission",
-          "prompt": "Your submitted code",
-          "type": "iframe",
-          "required": true
-        }
-      ]
-    },
     "consent": {
       "type": "markdown",
       "path": "a-usability-study/assets/consent.md",
@@ -154,6 +136,7 @@
       },
       "instruction": "Which of the following data in the json format doesn't have any error?",
       "instructionLocation": "sidebar",
+      "provideFeedback": true,
       "type": "image",
       "path": "a-usability-study/assets/tutorial/json/json_quiz.png",
       "style": {
@@ -192,11 +175,85 @@
       "nextButtonText": "",
       "response": []
     },
+    "q2": {
+      "meta": {
+        "task": "Error Detection"
+      },
+      "instruction": "Which of the following data in the jsonc format doesn't have any error?",
+      "instructionLocation": "sidebar",
+      "provideFeedback": true,
+      "type": "image",
+      "path": "a-usability-study/assets/tutorial/jsonc/jsonc_quiz.png",
+      "style": {
+        "width": "600px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "res1",
+          "prompt": "choose the one doesn't have syntax error:",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res1",
+          "answer": "A"
+        }
+      ],
+      "allowFailedTraining": false,
+      "trainingAttempts": 5
+    },
     "tutorial-json5": {
       "type": "markdown",
       "path": "a-usability-study/assets/tutorial/json5/tutorial-json5.md",
       "nextButtonText": "",
       "response": []
+    },
+    "q3": {
+      "meta": {
+        "task": "Error Detection"
+      },
+      "instruction": "Which of the following data in the json5 format doesn't have any error?",
+      "instructionLocation": "sidebar",
+      "provideFeedback": true,
+      "type": "image",
+      "path": "a-usability-study/assets/tutorial/json5/json5_quiz.png",
+      "style": {
+        "width": "600px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "res1",
+          "prompt": "choose the one doesn't have syntax error:",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res1",
+          "answer": "A"
+        }
+      ],
+      "allowFailedTraining": false,
+      "trainingAttempts": 5
     },
     "tutorial-hjson": {
       "type": "markdown",
@@ -204,11 +261,85 @@
       "nextButtonText": "",
       "response": []
     },
+    "q4": {
+      "meta": {
+        "task": "Error Detection"
+      },
+      "instruction": "Which of the following data in the hjson format doesn't have any error?",
+      "instructionLocation": "sidebar",
+      "provideFeedback": true,
+      "type": "image",
+      "path": "a-usability-study/assets/tutorial/hjson/hjson_quiz.png",
+      "style": {
+        "width": "600px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "res1",
+          "prompt": "choose the one doesn't have syntax error:",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res1",
+          "answer": "A"
+        }
+      ],
+      "allowFailedTraining": false,
+      "trainingAttempts": 5
+    },
     "tutorial-yaml": {
       "type": "markdown",
       "path": "a-usability-study/assets/tutorial/yaml/tutorial-yaml.md",
       "nextButtonText": "",
       "response": []
+    },
+    "q5": {
+      "meta": {
+        "task": "Error Detection"
+      },
+      "instruction": "Which of the following data in the yaml format doesn't have any error?",
+      "instructionLocation": "sidebar",
+      "provideFeedback": true,
+      "type": "image",
+      "path": "a-usability-study/assets/tutorial/yaml/yaml_quiz.png",
+      "style": {
+        "width": "600px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "res1",
+          "prompt": "choose the one doesn't have syntax error:",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res1",
+          "answer": "A"
+        }
+      ],
+      "allowFailedTraining": false,
+      "trainingAttempts": 5
     },
     "tutorial-toml": {
       "type": "markdown",
@@ -216,11 +347,85 @@
       "nextButtonText": "",
       "response": []
     },
+    "q6": {
+      "meta": {
+        "task": "Error Detection"
+      },
+      "instruction": "Which of the following data in the toml format doesn't have any error?",
+      "instructionLocation": "sidebar",
+      "provideFeedback": true,
+      "type": "image",
+      "path": "a-usability-study/assets/tutorial/toml/toml_quiz.png",
+      "style": {
+        "width": "600px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "res1",
+          "prompt": "choose the one doesn't have syntax error:",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res1",
+          "answer": "A"
+        }
+      ],
+      "allowFailedTraining": false,
+      "trainingAttempts": 5
+    },
     "tutorial-xml": {
       "type": "markdown",
       "path": "a-usability-study/assets/tutorial/xml/tutorial-xml.md",
       "nextButtonText": "",
       "response": []
+    },
+    "q7": {
+      "meta": {
+        "task": "Error Detection"
+      },
+      "instruction": "Which of the following data in the xml format doesn't have any error?",
+      "instructionLocation": "sidebar",
+      "provideFeedback": true,
+      "type": "image",
+      "path": "a-usability-study/assets/tutorial/xml/xml_quiz.png",
+      "style": {
+        "width": "600px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "res1",
+          "prompt": "choose the one doesn't have syntax error:",
+          "required": true,
+          "location": "sidebar",
+          "type": "radio",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "res1",
+          "answer": "A"
+        }
+      ],
+      "allowFailedTraining": false,
+      "trainingAttempts": 5
     },
     "task": {
       "type": "markdown",
@@ -250,155 +455,113 @@
     },
     "task2": {
       "meta": {
-        "taskName": "Convert data to different formats"
+        "taskName": "Convert data to Json format"
       },
-      "description": "writing task",
-      "instruction": "Please refer to the data structure shown in the figure and convert it into different formats.",
-      "type": "image",
-      "path": "a-usability-study/assets/writing_task1.png",
+      "description": "writing task, tabular data with complexity level 3",
+      "instruction": "Please refer to the data structure shown in the figure and convert it into json format.",
+      "type": "react-component",
       "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/CodeEditor_wtl3.tsx",
+      "parameters": {
+        "taskid": "code-submission"
+      },
       "response": [
         {
-          "id": "task2-1",
-          "prompt": "Enter Answer Below - using csv format",
-          "required": true,
+          "id": "code-submission",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
           "location": "sidebar",
-          "type": "shortText",
-          "placeholder": "answer text"
-        },
-        {
-          "id": "task2-2",
-          "prompt": "Enter Answer Below - using json format",
           "required": true,
-          "location": "sidebar",
-          "type": "shortText",
-          "placeholder": "answer text"
-        },
-        {
-          "id": "task2-3",
-          "prompt": "Enter Answer Below - using jsonc format",
-          "required": true,
-          "location": "sidebar",
-          "type": "shortText",
-          "placeholder": "answer text"
-        },
-        {
-          "id": "task2-4",
-          "prompt": "Enter Answer Below - using json5 format",
-          "required": true,
-          "location": "sidebar",
-          "type": "shortText",
-          "placeholder": "answer text"
-        },
-        {
-          "id": "task2-5",
-          "prompt": "Enter Answer Below - using hjson format",
-          "required": true,
-          "location": "sidebar",
-          "type": "shortText",
-          "placeholder": "answer text"
-        },
-        {
-          "id": "task2-6",
-          "prompt": "Enter Answer Below - using yaml format",
-          "required": true,
-          "location": "sidebar",
-          "type": "shortText",
-          "placeholder": "answer text"
-        },
-        {
-          "id": "task2-7",
-          "prompt": "Enter Answer Below - using toml format",
-          "required": true,
-          "location": "sidebar",
-          "type": "shortText",
-          "placeholder": "answer text"
-        },
-        {
-          "id": "task2-8",
-          "prompt": "Enter Answer Below - using xml format",
-          "required": true,
-          "location": "sidebar",
-          "type": "shortText",
-          "placeholder": "answer text"
+          "options": [
+            "Yes"
+          ]
         }
-      ]
+      ],
+      "correctAnswer": [
+        {
+          "id": "code-submission",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
     },
     "task3": {
       "meta": {
-        "taskName": "Convert data to different formats"
+        "taskName": "Convert data to YAML format"
       },
-      "description": "writing task",
-      "instruction": "Please refer to the data structure shown in the figure and convert it into different formats.",
-      "type": "image",
-      "path": "a-usability-study/assets/writing_task2.png",
+      "description": "writing task, tabular data with complexity level 2",
+      "instruction": "Please refer to the data structure shown in the figure and convert it into YAML format.",
+      "type": "react-component",
       "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/CodeEditor_wtl2.tsx",
+      "parameters": {
+        "taskid": "code-submission"
+      },
       "response": [
         {
-          "id": "task3-1",
-          "prompt": "Enter Answer Below - using csv format",
-          "required": true,
+          "id": "code-submission",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
           "location": "sidebar",
-          "type": "shortText",
-          "placeholder": "answer text"
-        },
-        {
-          "id": "task3-2",
-          "prompt": "Enter Answer Below - using json format",
           "required": true,
-          "location": "sidebar",
-          "type": "shortText",
-          "placeholder": "answer text"
-        },
-        {
-          "id": "task3-3",
-          "prompt": "Enter Answer Below - using jsonc format",
-          "required": true,
-          "location": "sidebar",
-          "type": "shortText",
-          "placeholder": "answer text"
-        },
-        {
-          "id": "task3-4",
-          "prompt": "Enter Answer Below - using json5 format",
-          "required": true,
-          "location": "sidebar",
-          "type": "shortText",
-          "placeholder": "answer text"
-        },
-        {
-          "id": "task3-5",
-          "prompt": "Enter Answer Below - using hjson format",
-          "required": true,
-          "location": "sidebar",
-          "type": "shortText",
-          "placeholder": "answer text"
-        },
-        {
-          "id": "task3-6",
-          "prompt": "Enter Answer Below - using yaml format",
-          "required": true,
-          "location": "sidebar",
-          "type": "shortText",
-          "placeholder": "answer text"
-        },
-        {
-          "id": "task3-7",
-          "prompt": "Enter Answer Below - using toml format",
-          "required": true,
-          "location": "sidebar",
-          "type": "shortText",
-          "placeholder": "answer text"
-        },
-        {
-          "id": "task3-8",
-          "prompt": "Enter Answer Below - using xml format",
-          "required": true,
-          "location": "sidebar",
-          "type": "shortText",
-          "placeholder": "answer text"
+          "options": [
+            "Yes"
+          ]
         }
-      ]
+      ],
+      "correctAnswer": [
+        {
+          "id": "code-submission",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "task4": {
+      "meta": {
+        "taskName": "Modifying Data as Required by the Sidebar."
+      },
+      "description": "modifying task, tabular data with complexity level 3",
+      "instruction": "Please modify Data as Required.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/CodeEditor_jtl3.tsx",
+      "parameters": {
+        "taskid": "code-submission"
+      },
+      "response": [
+        {
+          "id": "task4_q1",
+          "prompt": "1. Change vivian's department into CS.",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "task4_q2",
+          "prompt": "2. Add an object instructor under class, with value James. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "code-submission",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "code-submission",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
     },
     "post-study-survey-task2": {
       "type": "questionnaire",
@@ -591,7 +754,6 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "trial",
       "consent",
       "tutorial",
       {
@@ -602,11 +764,17 @@
           "tutorial-json",
           "q1",
           "tutorial-jsonc",
+          "q2",
           "tutorial-json5",
+          "q3",
           "tutorial-hjson",
+          "q4",
           "tutorial-yaml",
+          "q5",
           "tutorial-toml",
-          "tutorial-xml"]
+          "q6",
+          "tutorial-xml",
+          "q7"]
       },
       "task",
       {
@@ -620,15 +788,16 @@
           "post-study-survey-task2"
             ]
           },
+          "task3",
           {
             "order": "fixed",
             "components": [
-          "task3",
+          "task4",
           "post-study-survey-task3"
             ]
           }
         ],
-        "numSamples": 2
+        "numSamples": 4
       }
     ]
   }

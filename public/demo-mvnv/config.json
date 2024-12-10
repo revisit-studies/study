@@ -278,7 +278,7 @@
         "taskName": "Node Attr. Comparison."
       },
       "description": "Noeska's neighbor more friends than followers",
-      "instruction": "**Question:** Select all of Noeska’s neighbors that are people and have more friends than followers",
+      "instruction": "**Question:** Select all of Noeska's neighbors that are people and have more friends than followers",
       "type": "website",
       "path": "demo-mvnv/assets/index.html",
       "nextButtonLocation": "sidebar",
