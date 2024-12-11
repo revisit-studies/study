@@ -1,6 +1,4 @@
-import {
-  useCallback, useEffect, useMemo, useState,
-} from 'react';
+import { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   useStoreSelector,
@@ -50,6 +48,7 @@ export function useNextStep() {
   const trialValidation = useStoreSelector((state) => state.trialValidation);
   const sequence = useStoreSelector((state) => state.sequence);
   const answers = useStoreSelector((state) => state.answers);
+  const modes = useStoreSelector((state) => state.modes);
 
   const storeDispatch = useStoreDispatch();
   const { saveTrialAnswer, setIframeAnswers } = useStoreActions();
@@ -57,16 +56,7 @@ export function useNextStep() {
 
   const studyId = useStudyId();
 
-  const [dataCollectionEnabled, setDataCollectionEnabled] = useState(true);
-  useEffect(() => {
-    const checkStudyNavigatorEnabled = async () => {
-      if (storageEngine) {
-        const modes = await storageEngine.getModes(studyId);
-        setDataCollectionEnabled(modes.dataCollectionEnabled);
-      }
-    };
-    checkStudyNavigatorEnabled();
-  }, [storageEngine, studyId]);
+  const dataCollectionEnabled = useMemo(() => modes.dataCollectionEnabled, [modes]);
 
   const areResponsesValid = useAreResponsesValid(identifier);
 

@@ -158,26 +158,24 @@ function StepItem({
       </Popover.Target>
       {task && (task.description || task.meta) && (
         <Popover.Dropdown onMouseLeave={close}>
-          <Text size="sm">
+          <Box>
+            {task.description && (
             <Box>
-              {task.description && (
-                <Box>
-                  <Text fw={900} display="inline-block" mr={2}>
-                    Description:
-                  </Text>
-                  <Text fw={400} component="span">
-                    {task.description}
-                  </Text>
-                </Box>
-              )}
-              {task.meta && (
-                <Text>
-                  <Text fw="900" component="span">Task Meta: </Text>
-                  <Text component="pre" style={{ margin: 0, padding: 0 }}>{`${JSON.stringify(task.meta, null, 2)}`}</Text>
-                </Text>
-              )}
+              <Text fw={900} display="inline-block" mr={2}>
+                Description:
+              </Text>
+              <Text fw={400} component="span">
+                {task.description}
+              </Text>
             </Box>
-          </Text>
+            )}
+            {task.meta && (
+            <Box>
+              <Text fw="900" component="span">Task Meta: </Text>
+              <Text component="pre" style={{ margin: 0, padding: 0 }}>{`${JSON.stringify(task.meta, null, 2)}`}</Text>
+            </Box>
+            )}
+          </Box>
         </Popover.Dropdown>
       )}
     </Popover>

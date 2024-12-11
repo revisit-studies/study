@@ -2,6 +2,7 @@
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 // eslint-disable-next-line import/no-cycle
 import { SkipConditions, StudyConfig } from '../parser/types';
+import { type REVISIT_MODE } from '../storage/engines/StorageEngine';
 
 /**
  * The ParticipantMetadata object contains metadata about the participant. This includes the user agent, resolution, language, and IP address. This object is used to store information about the participant that is not directly related to the study itself.
@@ -138,4 +139,5 @@ export interface StoreState {
   analysisParticipantName: string | null;
   analysisProvState: unknown | null;
   analysisWaveformTime: number;
+  modes: Record<REVISIT_MODE, boolean>;
 }

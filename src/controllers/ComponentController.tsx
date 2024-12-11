@@ -33,14 +33,13 @@ export default function ComponentController() {
   const { storageEngine } = useStorageEngine();
 
   const audioStream = useRef<MediaRecorder | null>(null);
-
   const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
-
   const { setIsRecording } = useStoreActions();
   const { analysisProvState } = useStoreSelector((state) => state);
 
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
+  const sequence = useStoreSelector((state) => state.sequence);
 
   // Disable browser back button from all stimuli
   useDisableBrowserBack();
@@ -63,7 +62,7 @@ export default function ComponentController() {
     }
 
     if (audioStream.current && prevTrialName) {
-      // storageEngine.saveAudio(audioStream.current, prevTrialName);
+      storageEngine.saveAudio(audioStream.current, prevTrialName);
     }
 
     if (audioStream.current) {
@@ -71,8 +70,6 @@ export default function ComponentController() {
       audioStream.current.stream.getAudioTracks().forEach((track) => { track.stop(); audioStream.current?.stream.removeTrack(track); });
       audioStream.current.stop();
       audioStream.current = null;
-
-      // setAudioStream(null);
     }
 
     if ((stepConfig && stepConfig.recordAudio !== undefined && !stepConfig.recordAudio) || currentComponent === 'end') {
@@ -84,14 +81,9 @@ export default function ComponentController() {
       }).then((s) => {
         const recorder = new MediaRecorder(s);
         audioStream.current = recorder;
-
-        // audioStream.current.start();
-
+        audioStream.current.start();
         storeDispatch(setIsRecording(true));
-
-        // setPrevTrialName(`${currentComponent}_${currentStep}`);
-
-        return recorder;
+        setPrevTrialName(`${currentComponent}_${currentStep}`);
       });
     }
 
@@ -100,27 +92,36 @@ export default function ComponentController() {
 
   // Find current block, if it has an ID, add it as a participant tag
   const [blockForStep, setBlockForStep] = useState<string[]>([]);
+  const prevBlockForStepRef = useRef<string[]>([]);
   useEffect(() => {
-    async function getBlockForStep() {
-      const participantData = await storageEngine?.getParticipantData();
-      if (participantData) {
-        // Get all nested block IDs
-        const blockIds = findBlockForStep(participantData.sequence, currentStep)?.map((block) => block.currentBlock.id).filter((blockId) => blockId !== undefined) as string[] | undefined || [];
-        setBlockForStep(blockIds);
-      }
+    async function updateBlockForStep() {
+      // Get all nested block IDs
+      const blockIds = findBlockForStep(sequence, currentStep)
+        ?.map((block) => block.currentBlock.id)
+        .filter((blockId) => blockId !== undefined) as string[] | undefined || [];
+      setBlockForStep(blockIds);
     }
-    getBlockForStep();
-  }, [currentStep, storageEngine]);
-  useEffect(() => {
-    async function addParticipantTag() {
-      if (blockForStep && storageEngine) {
-        storageEngine.addParticipantTags(blockForStep);
-      }
-    }
-    addParticipantTag();
-  }, [blockForStep, storageEngine]);
 
-  const currentConfig = useMemo(() => (isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent), [stepConfig, studyConfig]);
+    async function addParticipantTag() {
+      const prevBlockForStep = prevBlockForStepRef.current;
+
+      // Check if blockForStep has actually changed
+      const hasChanged = JSON.stringify(prevBlockForStep) !== JSON.stringify(blockForStep);
+
+      if (hasChanged && blockForStep.length > 0 && storageEngine) {
+        await storageEngine.addParticipantTags(blockForStep);
+      }
+
+      // Update the ref with the current value
+      prevBlockForStepRef.current = blockForStep;
+    }
+
+    updateBlockForStep().then(addParticipantTag);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep, storageEngine, sequence]);
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const currentConfig = useMemo(() => (currentComponent !== 'end' && isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent), [stepConfig, studyConfig]);
 
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.

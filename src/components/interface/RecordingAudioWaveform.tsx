@@ -10,7 +10,7 @@ import { WaveForm, WaveSurfer } from 'wavesurfer-react';
 import WaveSurferRef from 'wavesurfer.js';
 import RecordPlugin from 'wavesurfer.js/dist/plugins/record';
 
-export default function RecordingAudioWaveform({ width = 70, height = 36 }: {width?: number, height?: number}) {
+export default function RecordingAudioWaveform({ width = 70, height = 36 }: { width?: number, height?: number }) {
   const wavesurferRef = useRef<WaveSurferRef | null>(null);
   const recording = useRef<RecordPlugin | null>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -31,15 +31,13 @@ export default function RecordingAudioWaveform({ width = 70, height = 36 }: {wid
         wavesurferRef.current.destroy();
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMounted]);
 
-  const handleWSMount = useCallback(
-    (waveSurfer: WaveSurferRef | null) => {
-      wavesurferRef.current = waveSurfer;
-      setIsMounted(true);
-    },
-    [],
-  );
+  const handleWSMount = useCallback((waveSurfer: WaveSurferRef | null) => {
+    wavesurferRef.current = waveSurfer;
+    setIsMounted(true);
+  }, []);
 
   return (
     <Box id="waveformDiv" style={{ width: `${width}px`, height: `${height}px` }}>

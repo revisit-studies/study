@@ -86,7 +86,7 @@ export abstract class StorageEngine {
 
   abstract verifyCompletion(answers: Record<string, StoredAnswer>): Promise<boolean>;
 
-  abstract validateUser(user: UserWrapped | null): Promise<boolean>;
+  abstract validateUser(user: UserWrapped | null, refresh?: boolean): Promise<boolean>;
 
   abstract saveAudio(audioStream: MediaRecorder, taskName: string): Promise<void>;
 
