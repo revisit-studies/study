@@ -31,8 +31,6 @@ export default function ResponseSwitcher({
 
   const [searchParams] = useSearchParams();
 
-  // console.log('render')
-
   const studyConfig = useStudyConfig();
   const enumerateQuestions = studyConfig.uiConfig.enumerateQuestions ?? false;
 
