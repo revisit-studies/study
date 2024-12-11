@@ -33,7 +33,7 @@ function CheckboxComponent({
       {_choices.map((checkbox: StringOption) => (
         <Checkbox
           key={`${checkbox.label}-${idx}`}
-          checked={answer.value[question.label].includes(checkbox.value)}
+          checked={answer.value[question.label].split('|').includes(checkbox.value)}
           onChange={(event) => onChange(event, question.label, checkbox)}
         />
       ))}

@@ -101,9 +101,17 @@ export async function studyStoreCreator(
         } = action.payload;
 
         const currentAnswer = state.matrixAnswers[responseId]?.[questionKey] ?? '';
-        const newAnswer = isChecked
-          ? choiceOptions.map((entry) => entry.value).filter((entry) => currentAnswer.includes(entry) || entry === value).join('|')
-          : currentAnswer.split('|').filter((entry) => entry !== value).join('|');
+        let newAnswer = '';
+        if (isChecked) {
+          if (currentAnswer.length > 0) {
+            newAnswer = [...currentAnswer.split('|'), value].sort((a, b) => choiceOptions.map((entry) => entry.value).indexOf(a) - choiceOptions.map((entry) => entry.value).indexOf(b))
+              .join('|');
+          } else {
+            newAnswer = `${value}`;
+          }
+        } else {
+          newAnswer = currentAnswer.split('|').filter((entry) => entry !== value).join('|');
+        }
 
         return {
           ...state,
