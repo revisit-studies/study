@@ -78,6 +78,7 @@ export default function RadioInput({
               <Radio
                 disabled={disabled}
                 value={radio.value}
+                label={radio.label}
               />
             </div>
           ))}
