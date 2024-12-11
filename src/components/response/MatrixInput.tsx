@@ -116,8 +116,8 @@ export default function MatrixInput({
     satisfaction7: ['Highly Unsatisfied', 'Unsatisfied', 'Slightly Unsatisfied', 'Neutral', 'Slightly Satisfied', 'Satisfied', 'Highly Satisfied'],
   };
 
-  const _choices = typeof answerOptions === 'string' ? _choiceStringToColumns[answerOptions].map((entry) => ({ value: entry, label: entry })) : answerOptions.map((option): StringOption => (typeof option === 'string' ? { value: option, label: option } : option));
-  const _questions = questionOptions.map((option): StringOption => (typeof option === 'string' ? { value: option, label: option } : option));
+  const _choices = typeof answerOptions === 'string' ? _choiceStringToColumns[answerOptions].map((entry) => ({ value: entry, label: entry })) : answerOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+  const _questions = questionOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
 
   // Re-define on change functions. Dispatch answers to store.
   const onChangeRadio = (val: string, questionKey: string) => {
