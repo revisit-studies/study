@@ -15,7 +15,7 @@ import { isInheritedComponent } from '../parser/utils';
 import { IndividualComponent } from '../parser/types';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
-import { useStoreActions, useStoreDispatch } from '../store/store';
+import { useStoreActions, useStoreDispatch, useStoreSelector } from '../store/store';
 import { StudyEnd } from '../components/StudyEnd';
 import { TrainingFailed } from '../components/TrainingFailed';
 import ResourceNotFound from '../ResourceNotFound';
@@ -37,6 +37,7 @@ export default function ComponentController() {
 
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
+  const sequence = useStoreSelector((state) => state.sequence);
 
   // Disable browser back button from all stimuli
   useDisableBrowserBack();
@@ -89,25 +90,33 @@ export default function ComponentController() {
 
   // Find current block, if it has an ID, add it as a participant tag
   const [blockForStep, setBlockForStep] = useState<string[]>([]);
+  const prevBlockForStepRef = useRef<string[]>([]);
   useEffect(() => {
-    async function getBlockForStep() {
-      const participantData = await storageEngine?.getParticipantData();
-      if (participantData) {
-        // Get all nested block IDs
-        const blockIds = findBlockForStep(participantData.sequence, currentStep)?.map((block) => block.currentBlock.id).filter((blockId) => blockId !== undefined) as string[] | undefined || [];
-        setBlockForStep(blockIds);
-      }
+    async function updateBlockForStep() {
+      // Get all nested block IDs
+      const blockIds = findBlockForStep(sequence, currentStep)
+        ?.map((block) => block.currentBlock.id)
+        .filter((blockId) => blockId !== undefined) as string[] | undefined || [];
+      setBlockForStep(blockIds);
     }
-    getBlockForStep();
-  }, [currentStep, storageEngine]);
-  useEffect(() => {
+
     async function addParticipantTag() {
-      if (blockForStep && storageEngine) {
-        storageEngine.addParticipantTags(blockForStep);
+      const prevBlockForStep = prevBlockForStepRef.current;
+
+      // Check if blockForStep has actually changed
+      const hasChanged = JSON.stringify(prevBlockForStep) !== JSON.stringify(blockForStep);
+
+      if (hasChanged && blockForStep.length > 0 && storageEngine) {
+        await storageEngine.addParticipantTags(blockForStep);
       }
+
+      // Update the ref with the current value
+      prevBlockForStepRef.current = blockForStep;
     }
-    addParticipantTag();
-  }, [blockForStep, storageEngine]);
+
+    updateBlockForStep().then(addParticipantTag);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep, storageEngine, sequence]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const currentConfig = useMemo(() => (currentComponent !== 'end' && isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent), [stepConfig, studyConfig]);

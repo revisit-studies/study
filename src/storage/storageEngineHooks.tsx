@@ -1,4 +1,6 @@
-import React, { ReactNode, createContext, useContext } from 'react';
+import {
+  ReactNode, createContext, useContext, useMemo, useState,
+} from 'react';
 
 import { StorageEngine } from './engines/StorageEngine';
 
@@ -16,9 +18,9 @@ const StorageEngineContext = createContext<StorageContextValue>({
 export const useStorageEngine = () => useContext(StorageEngineContext);
 
 export function StorageEngineProvider({ children }: { children: ReactNode}) {
-  const [storageEngine, setStorageEngine] = React.useState<StorageEngine | undefined>(undefined);
+  const [storageEngine, setStorageEngine] = useState<StorageEngine | undefined>(undefined);
 
-  const value = React.useMemo(() => ({
+  const value = useMemo(() => ({
     storageEngine,
     setStorageEngine,
   }), [storageEngine]);
