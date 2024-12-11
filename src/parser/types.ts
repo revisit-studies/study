@@ -285,7 +285,7 @@ export interface LikertResponse extends BaseResponse {
 
 export interface MatrixResponse extends BaseResponse {
   type: 'matrix-radio' | 'matrix-checkbox';
-  answerOptions: string[] | string;
+  answerOptions: string[] | `likely${5|7}` | `satisfaction${5|7}`;
   questionOptions: string[];
   desc?: string;
 }
