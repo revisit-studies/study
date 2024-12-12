@@ -134,4 +134,5 @@ export interface StoreState {
   iframeProvenance: TrrackedProvenance | null;
   metadata: ParticipantMetadata;
   modes: Record<REVISIT_MODE, boolean>;
+  matrixAnswers: Record<string, Record<string, string>>;
 }

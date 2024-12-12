@@ -11,12 +11,14 @@ export default function RadioInput({
   answer,
   index,
   enumerateQuestions,
+  stretch,
 }: {
   response: RadioResponse;
   disabled: boolean;
   answer: object;
   index: number;
   enumerateQuestions: boolean;
+  stretch?: boolean
 }) {
   const {
     prompt,
@@ -43,19 +45,39 @@ export default function RadioInput({
       description={secondaryText}
       key={response.id}
       {...answer}
-        // This overrides the answers error. Which..is bad?
+      // This overrides the answers error. Which..is bad?
       error={generateErrorMessage(response, answer, optionsAsStringOptions)}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
-      <Group mt="xs">
-        {leftLabel ? <Text style={{ textAlign: 'center' }}>{leftLabel}</Text> : null}
+      <Group
+        mt="md"
+        gap="lg"
+        style={{
+          display: 'flex',
+          alignItems: 'flex-end',
+          justifyContent: stretch ? 'space-around' : 'inherit',
+        }}
+      >
+        {leftLabel ? <Text>{leftLabel}</Text> : null}
         {optionsAsStringOptions.map((radio) => (
-          <Radio
-            disabled={disabled}
-            value={radio.value}
-            label={radio.label}
+          <div
             key={radio.label}
-          />
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+            }}
+          >
+            <Text>{radio.label}</Text>
+            <Radio
+              disabled={disabled}
+              value={radio.value}
+              label={radio.label}
+              styles={{
+                label: { display: 'none' },
+              }}
+            />
+          </div>
         ))}
         <Text>{rightLabel}</Text>
       </Group>

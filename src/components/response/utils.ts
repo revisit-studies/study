@@ -31,11 +31,22 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
 
   responses.forEach((response) => {
     const answer = storedAnswer ? storedAnswer[response.id] : {};
+
     if (answer) {
       initObj = { ...initObj, [response.id]: answer };
     } else {
-      const initField = response.paramCapture ? queryParameters.get(response.paramCapture) : '';
-      initObj = { ...initObj, [response.id]: response.type === 'iframe' ? [] : initField };
+      let initField: string | string[] | object | null = '';
+      if (response.paramCapture) {
+        initField = queryParameters.get(response.paramCapture);
+      } else if (response.type === 'iframe') {
+        initField = [];
+      } else if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
+        initField = Object.fromEntries(
+          response.questionOptions.map((entry) => [entry, '']),
+        );
+      }
+
+      initObj = { ...initObj, [response.id]: initField };
     }
   });
 
@@ -48,7 +59,10 @@ const generateValidation = (responses: Response[]) => {
     if (response.required) {
       validateObj = {
         ...validateObj,
-        [response.id]: (value: string | string[]) => {
+        [response.id]: (value: string | string[] | object) => {
+          if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
+            return Object.values(value).every((val) => val !== '') ? null : 'Empty Input';
+          }
           if (Array.isArray(value)) {
             if (response.requiredValue != null && !Array.isArray(response.requiredValue)) {
               return 'Incorrect required value. Contact study administrator.';
@@ -112,7 +126,7 @@ export function areAnswersEqual(
 
 export function generateErrorMessage(
   response: Response,
-  answer: { value?: string | string[]; checked?: string[] },
+  answer: { value?: string | string[] | Record<string, string>; checked?: string[] },
   options?: (StringOption | NumberOption)[],
 ) {
   const { requiredValue, requiredLabel } = response;
