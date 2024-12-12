@@ -73,6 +73,9 @@ export default function RadioInput({
               disabled={disabled}
               value={radio.value}
               label={radio.label}
+              styles={{
+                label: { display: 'none' },
+              }}
             />
           </div>
         ))}
