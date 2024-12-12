@@ -1,7 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/GlobalConfigSchema.json",
   "configsList": [
-    "test-likert-matrix",
     "tutorial-simple-study",
     "tutorial-react-and-randomization",
     "tutorial-advanced-react",
@@ -19,6 +18,7 @@
     "demo-image",
     "test-audio",
     "test-library",
+    "test-likert-matrix",
     "test-parser-errors",
     "test-randomization",
     "test-skip-logic"
@@ -77,6 +77,9 @@
       "path": "test-library/config.json",
       "test": true
     },
+    "test-likert-matrix": {
+      "path": "test-likert-matrix/config.json"
+    },
     "test-parser-errors": {
       "path": "test-parser-errors/config.json",
       "test": true
@@ -88,9 +91,6 @@
     "test-skip-logic": {
       "path": "test-skip-logic/config.json",
       "test": true
-    },
-    "test-likert-matrix": {
-      "path": "test-likert-matrix/config.json"
     }
   }
 }
