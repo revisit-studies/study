@@ -19,6 +19,7 @@ import { useStudyConfig } from './useStudyConfig';
 import {
   Answer, IndividualComponent, InheritedComponent, StudyConfig,
 } from '../../parser/types';
+import { encryptIndex } from '../../utils/encryptDecryptIndex';
 
 function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: string, componentConfig: IndividualComponent | InheritedComponent, studyConfig: StudyConfig) {
   const componentName = componentId.slice(0, componentId.lastIndexOf('_'));
@@ -195,7 +196,7 @@ export function useNextStep() {
       });
     }
 
-    navigate(`/${studyId}/${nextStep}${window.location.search}`);
+    navigate(`/${studyId}/${encryptIndex(nextStep)}${window.location.search}`);
   }, [currentStep, trialValidation, identifier, windowEvents, dataCollectionEnabled, storedAnswer?.endTime, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setIframeAnswers, studyConfig, participantSequence]);
 
   return {
