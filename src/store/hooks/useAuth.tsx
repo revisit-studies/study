@@ -89,7 +89,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
 
   const verifyAdminStatus = async (inputUser: UserWrapped) => {
     if (storageEngine) {
-      return await storageEngine.validateUser(inputUser);
+      return await storageEngine.validateUser(inputUser, true);
     }
     return false;
   };
@@ -154,6 +154,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
     return () => {
       cleanupPromise.then((cleanup) => cleanup());
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageEngine, enableAuthTrigger]);
 
   const value = useMemo(() => ({
@@ -161,6 +162,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
     triggerAuth,
     logout,
     verifyAdminStatus,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [user]);
 
   return (

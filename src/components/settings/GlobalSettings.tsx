@@ -38,7 +38,7 @@ export function GlobalSettings() {
       setLoading(true);
       if (storageEngine instanceof FirebaseStorageEngine) {
         const authInfo = await storageEngine?.getUserManagementData('authentication');
-        setAuthEnabled(authInfo?.isEnabled);
+        setAuthEnabled(authInfo?.isEnabled || false);
         const adminUsers = await storageEngine?.getUserManagementData('adminUsers');
         if (adminUsers && adminUsers.adminUsersList) {
           setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email));
@@ -88,7 +88,7 @@ export function GlobalSettings() {
     if (storageEngine instanceof FirebaseStorageEngine) {
       await storageEngine.addAdminUser({ email: form.values.email, uid: null });
       const adminUsers = await storageEngine.getUserManagementData('adminUsers');
-      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email));
+      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email) || []);
     }
     setLoading(false);
     setModalAddOpened(false);
@@ -107,7 +107,7 @@ export function GlobalSettings() {
     if (storageEngine instanceof FirebaseStorageEngine) {
       await storageEngine.removeAdminUser(userToRemove);
       const adminUsers = await storageEngine.getUserManagementData('adminUsers');
-      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email));
+      setAuthenticatedUsers(adminUsers?.adminUsersList.map((storedUser: StoredUser) => storedUser.email) || []);
     }
     setModalRemoveOpened(false);
     setLoading(false);

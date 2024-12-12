@@ -11,7 +11,8 @@ import { LoadingOverlay, Title } from '@mantine/core';
 import {
   GlobalConfig,
   Nullable,
-  ParsedStudyConfig,
+  ParsedConfig,
+  StudyConfig,
 } from '../parser/types';
 import { useStudyId } from '../routes/utils';
 import {
@@ -35,7 +36,7 @@ export function Shell({ globalConfig }: {
 }) {
   // Pull study config
   const studyId = useStudyId();
-  const [activeConfig, setActiveConfig] = useState<ParsedStudyConfig | null>(null);
+  const [activeConfig, setActiveConfig] = useState<ParsedConfig<StudyConfig> | null>(null);
   const isValidStudyId = globalConfig.configsList.includes(studyId);
 
   useEffect(() => {
@@ -78,8 +79,10 @@ export function Shell({ globalConfig }: {
 
       const participantSession = await storageEngine.initializeParticipantSession(studyId, searchParamsObject, activeConfig, metadata, urlParticipantId);
 
+      const modes = await storageEngine.getModes(studyId);
+
       // Initialize the redux stores
-      const newStore = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, metadata, participantSession.answers);
+      const newStore = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, metadata, participantSession.answers, modes);
       setStore(newStore);
 
       // Initialize the routing

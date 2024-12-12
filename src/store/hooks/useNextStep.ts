@@ -1,6 +1,4 @@
-import {
-  useCallback, useEffect, useMemo, useState,
-} from 'react';
+import { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   useStoreSelector,
@@ -50,6 +48,7 @@ export function useNextStep() {
   const trialValidation = useStoreSelector((state) => state.trialValidation);
   const sequence = useStoreSelector((state) => state.sequence);
   const answers = useStoreSelector((state) => state.answers);
+  const modes = useStoreSelector((state) => state.modes);
 
   const storeDispatch = useStoreDispatch();
   const { saveTrialAnswer, setIframeAnswers } = useStoreActions();
@@ -57,16 +56,7 @@ export function useNextStep() {
 
   const studyId = useStudyId();
 
-  const [dataCollectionEnabled, setDataCollectionEnabled] = useState(true);
-  useEffect(() => {
-    const checkStudyNavigatorEnabled = async () => {
-      if (storageEngine) {
-        const modes = await storageEngine.getModes(studyId);
-        setDataCollectionEnabled(modes.dataCollectionEnabled);
-      }
-    };
-    checkStudyNavigatorEnabled();
-  }, [storageEngine, studyId]);
+  const dataCollectionEnabled = useMemo(() => modes.dataCollectionEnabled, [modes]);
 
   const areResponsesValid = useAreResponsesValid(identifier);
 
@@ -82,7 +72,7 @@ export function useNextStep() {
   const startTime = useMemo(() => Date.now(), []);
 
   const windowEvents = useWindowEvents();
-  const goToNextStep = useCallback(() => {
+  const goToNextStep = useCallback((collectData = true) => {
     if (typeof currentStep !== 'number') {
       return;
     }
@@ -101,14 +91,18 @@ export function useNextStep() {
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
 
     if (dataCollectionEnabled && storedAnswer.endTime === -1) { // === -1 means the answer has not been saved yet
+      const toSave = {
+        answer: collectData ? answer : {},
+        startTime,
+        endTime,
+        provenanceGraph,
+        windowEvents: currentWindowEvents,
+        timedOut: !collectData,
+      };
       storeDispatch(
         saveTrialAnswer({
           identifier,
-          answer,
-          startTime,
-          endTime,
-          provenanceGraph,
-          windowEvents: currentWindowEvents,
+          ...toSave,
         }),
       );
       // Update database
@@ -116,9 +110,7 @@ export function useNextStep() {
         storageEngine.saveAnswers(
           {
             ...answers,
-            [identifier]: {
-              answer, startTime, endTime, provenanceGraph, windowEvents: currentWindowEvents,
-            },
+            [identifier]: toSave,
           },
         );
       }

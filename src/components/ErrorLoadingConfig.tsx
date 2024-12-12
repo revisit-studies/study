@@ -1,7 +1,7 @@
 import ReactMarkdownWrapper from './ReactMarkdownWrapper';
-import { ParsedStudyConfig } from '../parser/types';
+import { ParsedConfig, StudyConfig } from '../parser/types';
 
-export function ErrorLoadingConfig({ issues, type }: { issues: ParsedStudyConfig['errors'], type: 'error' | 'warning'}) {
+export function ErrorLoadingConfig({ issues, type }: { issues: ParsedConfig<StudyConfig>['errors'], type: 'error' | 'warning'}) {
   const text = `
     ${type === 'error'
     ? 'There was an issue loading the study config. Please check the following issues:'

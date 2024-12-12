@@ -2,7 +2,7 @@ import {
   Badge, Box, NavLink, Popover, Text,
 } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router-dom';
-import { IconArrowsShuffle, IconBrain } from '@tabler/icons-react';
+import { IconArrowsShuffle, IconBrain, IconPackageImport } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import { useCallback } from 'react';
 import { ComponentBlock, StudyConfig } from '../../parser/types';
@@ -123,6 +123,12 @@ function StepItem({
   const studyNavigateTo = () => (participantView ? navigate(`/${studyId}/${stepIndex}`) : navigate(`/${studyId}/reviewer-${step}`));
   const navigateTo = analysisNavigation ? analysisNavigateTo : studyNavigateTo;
 
+  // eslint-disable-next-line no-nested-ternary
+  const coOrComponents = step.includes('.co.')
+    ? '.co.'
+    : (step.includes('.components.') ? '.components.' : false);
+  const cleanedStep = step.includes('$') && coOrComponents && step.includes(coOrComponents) ? step.split(coOrComponents).at(-1) : step;
+
   return (
     <Popover withinPortal position="left" withArrow arrowSize={10} shadow="md" opened={opened} offset={20}>
       <Popover.Target>
@@ -139,7 +145,10 @@ function StepItem({
             label={(
               <Box>
                 {interruption && <IconBrain size={16} style={{ marginRight: 4, marginBottom: -2 }} color="orange" />}
-                {active ? <Text size="sm" span fw="700" display="inline">{step}</Text> : <Text size="sm" display="inline">{step}</Text>}
+                {step !== cleanedStep && (
+                  <IconPackageImport size={16} style={{ marginRight: 4, marginBottom: -2 }} color="var(--mantine-color-blue-outline)" />
+                )}
+                <Text size="sm" span={active} fw={active ? '700' : undefined} display="inline">{cleanedStep}</Text>
               </Box>
             )}
             onClick={navigateTo}
@@ -149,26 +158,24 @@ function StepItem({
       </Popover.Target>
       {task && (task.description || task.meta) && (
         <Popover.Dropdown onMouseLeave={close}>
-          <Text size="sm">
+          <Box>
+            {task.description && (
             <Box>
-              {task.description && (
-                <Box>
-                  <Text fw={900} display="inline-block" mr={2}>
-                    Description:
-                  </Text>
-                  <Text fw={400} component="span">
-                    {task.description}
-                  </Text>
-                </Box>
-              )}
-              {task.meta && (
-                <Text>
-                  <Text fw="900" component="span">Task Meta: </Text>
-                  <Text component="pre" style={{ margin: 0, padding: 0 }}>{`${JSON.stringify(task.meta, null, 2)}`}</Text>
-                </Text>
-              )}
+              <Text fw={900} display="inline-block" mr={2}>
+                Description:
+              </Text>
+              <Text fw={400} component="span">
+                {task.description}
+              </Text>
             </Box>
-          </Text>
+            )}
+            {task.meta && (
+            <Box>
+              <Text fw="900" component="span">Task Meta: </Text>
+              <Text component="pre" style={{ margin: 0, padding: 0 }}>{`${JSON.stringify(task.meta, null, 2)}`}</Text>
+            </Box>
+            )}
+          </Box>
         </Popover.Dropdown>
       )}
     </Popover>

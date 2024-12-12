@@ -2,6 +2,7 @@
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 // eslint-disable-next-line import/no-cycle
 import { SkipConditions, StudyConfig } from '../parser/types';
+import { type REVISIT_MODE } from '../storage/engines/StorageEngine';
 
 /**
  * The ParticipantMetadata object contains metadata about the participant. This includes the user agent, resolution, language, and IP address. This object is used to store information about the participant that is not directly related to the study itself.
@@ -102,6 +103,8 @@ export interface StoredAnswer {
 ```
    */
   windowEvents: EventType[];
+  /** A boolean value that indicates whether the participant timed out on this question. */
+  timedOut: boolean;
 }
 
 export interface StimulusParams<T> {
@@ -119,6 +122,7 @@ export interface Sequence {
 
 export interface StoreState {
   studyId: string;
+  isRecording: boolean;
   answers: Record<string, StoredAnswer>;
   sequence: Sequence;
   config: StudyConfig;
@@ -129,4 +133,6 @@ export interface StoreState {
   iframeAnswers: Record<string, unknown>;
   iframeProvenance: TrrackedProvenance | null;
   metadata: ParticipantMetadata;
+  modes: Record<REVISIT_MODE, boolean>;
+  matrixAnswers: Record<string, Record<string, string>>;
 }

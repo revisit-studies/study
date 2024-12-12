@@ -44,6 +44,11 @@ export class LocalStorageEngine extends StorageEngine {
     });
   }
 
+  async saveAudio(audioStream: MediaRecorder): Promise<void> {
+    console.warn('not yet implemented', audioStream);
+    return Promise.resolve();
+  }
+
   async initializeParticipantSession(studyId: string, searchParams: Record<string, string>, config: StudyConfig, metadata: ParticipantMetadata, urlParticipantId?: string) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
@@ -76,6 +81,7 @@ export class LocalStorageEngine extends StorageEngine {
       metadata,
       completed: false,
       rejected: false,
+      participantTags: [],
     };
 
     if (modes.dataCollectionEnabled) {
@@ -246,6 +252,47 @@ export class LocalStorageEngine extends StorageEngine {
     }
 
     return await this.studyDatabase.getItem(participantId) as ParticipantData | null;
+  }
+
+  async getParticipantTags(): Promise<string[]> {
+    if (!this._verifyStudyDatabase(this.studyDatabase)) {
+      throw new Error('Study database not initialized');
+    }
+
+    const participantData = await this.getParticipantData();
+    if (!participantData) {
+      throw new Error('Participant not initialized');
+    }
+
+    return participantData.participantTags;
+  }
+
+  async addParticipantTags(tags: string[]): Promise<void> {
+    if (!this._verifyStudyDatabase(this.studyDatabase)) {
+      throw new Error('Study database not initialized');
+    }
+
+    const participantData = await this.getParticipantData();
+    if (!participantData) {
+      throw new Error('Participant not initialized');
+    }
+
+    participantData.participantTags = [...new Set([...participantData.participantTags, ...tags])];
+    await this.studyDatabase.setItem(this.currentParticipantId as string, participantData);
+  }
+
+  async removeParticipantTags(tags: string[]): Promise<void> {
+    if (!this._verifyStudyDatabase(this.studyDatabase)) {
+      throw new Error('Study database not initialized');
+    }
+
+    const participantData = await this.getParticipantData();
+    if (!participantData) {
+      throw new Error('Participant not initialized');
+    }
+
+    participantData.participantTags = participantData.participantTags.filter((tag) => !tags.includes(tag));
+    await this.studyDatabase.setItem(this.currentParticipantId as string, participantData);
   }
 
   async nextParticipant() {

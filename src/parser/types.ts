@@ -114,6 +114,8 @@ export interface UIConfig {
    * Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar.
    */
   enumerateQuestions?: boolean;
+  /** Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set. */
+  timeoutReject?: boolean;
 }
 
 /**
@@ -273,12 +275,66 @@ export interface LikertResponse extends BaseResponse {
   type: 'likert';
   /** The number of options to render. */
   numItems: number;
-  /** The description of the likert scale. */
-  desc?: string;
   /** The left label of the likert scale. E.g Strongly Disagree */
   leftLabel?: string;
   /** The right label of the likert scale. E.g Strongly Agree */
   rightLabel?: string;
+}
+
+/**
+ * The MatrixResponse interface is used to define the properties of a matrix radio or matrix checkbox response.
+ * Question options are rendered as rows of the matrix, each row containing its own radio/checkbox group.
+ * Answer options are rendered as column headers of the matrix. These can be customized by passing in the custom strings into the answer options. Alternatively, `answerOptions` can be set to one of the following custom strings: 'satisfaction5','satisfaction7', 'likely5', 'likely7'. This will automatically generate the appropriate headers for the matrix.
+ *
+ * Example for a 5-scale satisfaction matrix with three questions:
+ *
+```js
+{
+  "id": "multi-satisfaction",
+  "prompt": "Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable) for the following items.",
+  "required": true,
+  "location": "aboveStimulus",
+  "type": "matrix-radio",
+  "answerOptions": "satisfaction5",
+  "questionOptions": [
+    "The tool we created",
+    "The technique we developed",
+    "The authors of the tools"
+  ]
+}
+```
+
+Here's an example using custom columns (answerOptions):
+
+```js
+{
+  "id": "multi-custom",
+  "prompt": "Which categories do the following items belong to?",
+  "required": true,
+  "location": "aboveStimulus",
+  "type": "matrix-checkbox",
+  "answerOptions": [
+    "Has Legs",
+    "Has Wings",
+    "Can Swim"
+  ],
+  "questionOptions": [
+    "Dog",
+    "Snake",
+    "Eagle",
+    "Salmon",
+    "Platypus"
+  ]
+
+}
+```
+ */
+export interface MatrixResponse extends BaseResponse {
+  type: 'matrix-radio' | 'matrix-checkbox';
+  /** The answer options (columns). We provide some shortcuts for a likelihood scale (ranging from highly unlikely to highly likely) and a satisfaction scale (ranging from highly unsatisfied to highly satisfied) with either 5 or 7 options to choose from. */
+  answerOptions: string[] | `likely${5 | 7}` | `satisfaction${5 | 7}`;
+  /** The question options (rows) are the prompts for each response you'd like to record. */
+  questionOptions: string[];
 }
 
 /**
@@ -404,7 +460,7 @@ export interface IFrameResponse extends BaseResponse {
   type: 'iframe';
 }
 
-export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | IFrameResponse;
+export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | IFrameResponse | MatrixResponse;
 
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.
@@ -480,6 +536,12 @@ export interface BaseIndividualComponent {
   description?: string;
   /** The instruction of the component. This is used to identify and provide additional information for the component in the admin panel. */
   instruction?: string;
+  /** Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.  */
+  recordAudio?: boolean;
+  /** A timeout (in ms) after which the next button will be disabled. */
+  nextButtonDisableTime?: number;
+  /** A timer (in ms) after which the next button will be enabled. */
+  nextButtonEnableTime?: number;
 }
 
 /**
@@ -1131,8 +1193,12 @@ export interface StudyConfig {
   $schema: string;
   /** The metadata for the study. This is used to identify the study and version in the data file. */
   studyMetadata: StudyMetadata;
+  /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.  */
+  recordStudyAudio?: boolean;
   /** The UI configuration for the study. This is used to configure the UI of the app. */
   uiConfig: UIConfig;
+  /** A list of libraries that are used in the study. This is used to import external libraries into the study. Library names are valid namespaces to be used later. */
+  importedLibraries?: string[];
   /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */
   baseComponents?: BaseComponents;
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
@@ -1141,13 +1207,53 @@ export interface StudyConfig {
   sequence: ComponentBlock;
 }
 
+/**  LibraryConfig is used to define the properties of a library configuration. This is a JSON object with three main components: baseComponents, components, and the sequences. Libraries are useful for defining components and sequences of these components that are to be reused across multiple studies. We (the reVISit team) provide several libraries that can be used in your study configurations. Check the public/libraries folder in the reVISit-studies repository for available libraries. We also plan to accept community contributions for libraries. If you have a library that you think would be useful for others, please reach out to us. We would love to include it in our repository.
+ *
+ * Below is the general template that should be followed when constructing a Library configuration file.
+ *
+ * ```js
+ * {
+ *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/LibraryConfigSchema.json",
+ *   "baseComponents": {
+ *     // BaseComponents here are defined exactly as is in the StudyConfig
+ *   },
+ *   "components": {
+ *     // Components here are defined exactly as is in the StudyConfig
+ *   },
+ *   "sequences": {
+ *    // Sequences here are defined as "key": "value" pairs where the key is the name of the sequence and the value is a ComponentBlock, just like in the StudyConfig
+ *   }
+ * }
+ * ```
+ */
+export interface LibraryConfig {
+  /** A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information */
+  $schema: string;
+  /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */
+  baseComponents?: BaseComponents;
+  /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
+  components: Record<string, IndividualComponent | InheritedComponent>
+  /** The order of the components in the study. This might include some randomness. */
+  sequences: Record<string, ComponentBlock>;
+}
+
+/**
+ * @ignore
+ * Helper error type to make reading the error messages easier
+ */
+export type ParserErrorWarning = {
+  instancePath: string;
+  message?: string;
+  params: object;
+}
+
 /**
  * @ignore
  * Helper type to write the study config with with errors key
  */
-export type ParsedStudyConfig = StudyConfig & {
-  errors: { instancePath: string, message?: string, params: object }[]
-  warnings: { instancePath: string, message?: string, params: object }[]
+export type ParsedConfig<T> = T & {
+  errors: ParserErrorWarning[]
+  warnings: ParserErrorWarning[]
 }
 
 /**

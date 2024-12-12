@@ -60,6 +60,14 @@
             "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
             "type": "object"
           },
+          "nextButtonDisableTime": {
+            "description": "A timeout (in ms) after which the next button will be disabled.",
+            "type": "number"
+          },
+          "nextButtonEnableTime": {
+            "description": "A timer (in ms) after which the next button will be enabled.",
+            "type": "number"
+          },
           "nextButtonLocation": {
             "$ref": "#/definitions/ResponseBlockLocation",
             "description": "The location of the next button."
@@ -106,6 +114,10 @@
           },
           "provideFeedback": {
             "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+            "type": "boolean"
+          },
+          "recordAudio": {
+            "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
             "type": "boolean"
           },
           "response": {
@@ -486,6 +498,14 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
+        "nextButtonDisableTime": {
+          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "type": "number"
+        },
+        "nextButtonEnableTime": {
+          "description": "A timer (in ms) after which the next button will be enabled.",
+          "type": "number"
+        },
         "nextButtonLocation": {
           "$ref": "#/definitions/ResponseBlockLocation",
           "description": "The location of the next button."
@@ -500,6 +520,10 @@
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "recordAudio": {
+          "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
           "type": "boolean"
         },
         "response": {
@@ -658,6 +682,14 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
+        "nextButtonDisableTime": {
+          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "type": "number"
+        },
+        "nextButtonEnableTime": {
+          "description": "A timer (in ms) after which the next button will be enabled.",
+          "type": "number"
+        },
         "nextButtonLocation": {
           "$ref": "#/definitions/ResponseBlockLocation",
           "description": "The location of the next button."
@@ -704,6 +736,10 @@
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "recordAudio": {
+          "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
           "type": "boolean"
         },
         "response": {
@@ -755,10 +791,6 @@
       "additionalProperties": false,
       "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likert Scale:\n\n```js { \"id\": \"q-satisfaction\", \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"likert\", \"leftLabel\": \"Not Enjoyable\", \"rightLabel\": \"Very Enjoyable\", \"numItems\": 5 } ```",
       "properties": {
-        "desc": {
-          "description": "The description of the likert scale.",
-          "type": "string"
-        },
         "hidden": {
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
@@ -908,6 +940,14 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
+        "nextButtonDisableTime": {
+          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "type": "number"
+        },
+        "nextButtonEnableTime": {
+          "description": "A timer (in ms) after which the next button will be enabled.",
+          "type": "number"
+        },
         "nextButtonLocation": {
           "$ref": "#/definitions/ResponseBlockLocation",
           "description": "The location of the next button."
@@ -922,6 +962,10 @@
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "recordAudio": {
+          "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
           "type": "boolean"
         },
         "response": {
@@ -943,6 +987,97 @@
       "required": [
         "path",
         "response",
+        "type"
+      ],
+      "type": "object"
+    },
+    "MatrixResponse": {
+      "additionalProperties": false,
+      "description": "The MatrixResponse interface is used to define the properties of a matrix radio or matrix checkbox response. Question options are rendered as rows of the matrix, each row containing its own radio/checkbox group. Answer options are rendered as column headers of the matrix. These can be customized by passing in the custom strings into the answer options. Alternatively, `answerOptions` can be set to one of the following custom strings: 'satisfaction5','satisfaction7', 'likely5', 'likely7'. This will automatically generate the appropriate headers for the matrix.\n\nExample for a 5-scale satisfaction matrix with three questions:\n\n```js { \"id\": \"multi-satisfaction\", \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable) for the following items.\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"matrix-radio\", \"answerOptions\": \"satisfaction5\", \"questionOptions\": [  \"The tool we created\",  \"The technique we developed\",  \"The authors of the tools\" ] } ```\n\nHere's an example using custom columns (answerOptions):\n\n```js { \"id\": \"multi-custom\", \"prompt\": \"Which categories do the following items belong to?\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"matrix-checkbox\", \"answerOptions\": [  \"Has Legs\",  \"Has Wings\",  \"Can Swim\" ], \"questionOptions\": [  \"Dog\",  \"Snake\",  \"Eagle\",  \"Salmon\",  \"Platypus\" ]\n\n} ```",
+      "properties": {
+        "answerOptions": {
+          "anyOf": [
+            {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "const": "likely5",
+              "type": "string"
+            },
+            {
+              "const": "likely7",
+              "type": "string"
+            },
+            {
+              "const": "satisfaction5",
+              "type": "string"
+            },
+            {
+              "const": "satisfaction7",
+              "type": "string"
+            }
+          ],
+          "description": "The answer options (columns). We provide some shortcuts for a likelihood scale (ranging from highly unlikely to highly likely) and a satisfaction scale (ranging from highly unsatisfied to highly satisfied) with either 5 or 7 options to choose from."
+        },
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "questionOptions": {
+          "description": "The question options (rows) are the prompts for each response you'd like to record.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "type": {
+          "enum": [
+            "matrix-radio",
+            "matrix-checkbox"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "answerOptions",
+        "id",
+        "prompt",
+        "questionOptions",
+        "required",
         "type"
       ],
       "type": "object"
@@ -1062,6 +1197,14 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
+        "nextButtonDisableTime": {
+          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "type": "number"
+        },
+        "nextButtonEnableTime": {
+          "description": "A timer (in ms) after which the next button will be enabled.",
+          "type": "number"
+        },
         "nextButtonLocation": {
           "$ref": "#/definitions/ResponseBlockLocation",
           "description": "The location of the next button."
@@ -1072,6 +1215,10 @@
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "recordAudio": {
+          "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
           "type": "boolean"
         },
         "response": {
@@ -1231,6 +1378,14 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
+        "nextButtonDisableTime": {
+          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "type": "number"
+        },
+        "nextButtonEnableTime": {
+          "description": "A timer (in ms) after which the next button will be enabled.",
+          "type": "number"
+        },
         "nextButtonLocation": {
           "$ref": "#/definitions/ResponseBlockLocation",
           "description": "The location of the next button."
@@ -1250,6 +1405,10 @@
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "recordAudio": {
+          "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
           "type": "boolean"
         },
         "response": {
@@ -1342,6 +1501,9 @@
         },
         {
           "$ref": "#/definitions/IFrameResponse"
+        },
+        {
+          "$ref": "#/definitions/MatrixResponse"
         }
       ]
     },
@@ -1534,6 +1696,17 @@
           "description": "The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents.",
           "type": "object"
         },
+        "importedLibraries": {
+          "description": "A list of libraries that are used in the study. This is used to import external libraries into the study. Library names are valid namespaces to be used later.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "recordStudyAudio": {
+          "description": "Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.",
+          "type": "boolean"
+        },
         "sequence": {
           "$ref": "#/definitions/ComponentBlock",
           "description": "The order of the components in the study. This might include some randomness."
@@ -1645,6 +1818,10 @@
           "description": "The message to display when the study ends.",
           "type": "string"
         },
+        "timeoutReject": {
+          "description": "Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set.",
+          "type": "boolean"
+        },
         "urlParticipantIdParam": {
           "description": "If the participant ID is passed in the URL, this is the name of the querystring parameter that is used to capture the participant ID (e.g. PROLIFIC_ID). This will allow a user to continue a study on different devices and browsers.",
           "type": "string"
@@ -1698,6 +1875,14 @@
           "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "object"
         },
+        "nextButtonDisableTime": {
+          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "type": "number"
+        },
+        "nextButtonEnableTime": {
+          "description": "A timer (in ms) after which the next button will be enabled.",
+          "type": "number"
+        },
         "nextButtonLocation": {
           "$ref": "#/definitions/ResponseBlockLocation",
           "description": "The location of the next button."
@@ -1717,6 +1902,10 @@
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "recordAudio": {
+          "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
           "type": "boolean"
         },
         "response": {

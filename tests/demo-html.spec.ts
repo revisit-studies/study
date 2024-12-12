@@ -29,6 +29,11 @@ test('html demo works as intended', async ({ page }) => {
   // Click on the next button
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
+  const iframeContent = await page.frameLocator('iframe').getByRole('link', { name: 'Try The Demo' });
+  await expect(iframeContent).toBeVisible();
+
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+
   // Check that the end of study text renders
   const endText = await page.getByText('Please wait while your answers are uploaded.');
   await expect(endText).toBeVisible();
