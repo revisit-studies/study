@@ -275,19 +275,66 @@ export interface LikertResponse extends BaseResponse {
   type: 'likert';
   /** The number of options to render. */
   numItems: number;
-  /** The description of the likert scale. */
-  desc?: string;
   /** The left label of the likert scale. E.g Strongly Disagree */
   leftLabel?: string;
   /** The right label of the likert scale. E.g Strongly Agree */
   rightLabel?: string;
 }
 
+/**
+ * The MatrixResponse interface is used to define the properties of a matrix radio or matrix checkbox response.
+ * Question options are rendered as rows of the matrix, each row containing its own radio/checkbox group.
+ * Answer options are rendered as column headers of the matrix. These can be customized by passing in the custom strings into the answer options. Alternatively, `answerOptions` can be set to one of the following custom strings: 'satisfaction5','satisfaction7', 'likely5', 'likely7'. This will automatically generate the appropriate headers for the matrix.
+ *
+ * Example for a 5-scale satisfaction matrix with three questions:
+ *
+```js
+{
+  "id": "multi-satisfaction",
+  "prompt": "Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable) for the following items.",
+  "required": true,
+  "location": "aboveStimulus",
+  "type": "matrix-radio",
+  "answerOptions": "satisfaction5",
+  "questionOptions": [
+    "The tool we created",
+    "The technique we developed",
+    "The authors of the tools"
+  ]
+}
+```
+
+Here's an example using custom columns (answerOptions):
+
+```js
+{
+  "id": "multi-custom",
+  "prompt": "Which categories do the following items belong to?",
+  "required": true,
+  "location": "aboveStimulus",
+  "type": "matrix-checkbox",
+  "answerOptions": [
+    "Has Legs",
+    "Has Wings",
+    "Can Swim"
+  ],
+  "questionOptions": [
+    "Dog",
+    "Snake",
+    "Eagle",
+    "Salmon",
+    "Platypus"
+  ]
+
+}
+```
+ */
 export interface MatrixResponse extends BaseResponse {
   type: 'matrix-radio' | 'matrix-checkbox';
-  answerOptions: string[] | `likely${5|7}` | `satisfaction${5|7}`;
+  /** The answer options (columns). We provide some shortcuts for a likelihood scale (ranging from highly unlikely to highly likely) and a satisfaction scale (ranging from highly unsatisfied to highly satisfied) with either 5 or 7 options to choose from. */
+  answerOptions: string[] | `likely${5 | 7}` | `satisfaction${5 | 7}`;
+  /** The question options (rows) are the prompts for each response you'd like to record. */
   questionOptions: string[];
-  desc?: string;
 }
 
 /**
