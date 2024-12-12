@@ -10,6 +10,7 @@ import { Sequence } from '../../store/types';
 import { deepCopy } from '../../utils/deepCopy';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+import { encryptIndex } from '../../utils/encryptDecryptIndex';
 
 export type ComponentBlockWithOrderPath = Omit<ComponentBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]};
 
@@ -120,7 +121,7 @@ function StepItem({
   const active = analysisNavigation ? analysisActive : studyActive;
 
   const analysisNavigateTo = useCallback(() => (trialId ? navigate(`./../${step}`) : navigate(`./${step}`)), [navigate, step, trialId]);
-  const studyNavigateTo = () => (participantView ? navigate(`/${studyId}/${stepIndex}`) : navigate(`/${studyId}/reviewer-${step}`));
+  const studyNavigateTo = () => (participantView ? navigate(`/${studyId}/${encryptIndex(stepIndex)}`) : navigate(`/${studyId}/reviewer-${step}`));
   const navigateTo = analysisNavigation ? analysisNavigateTo : studyNavigateTo;
 
   // eslint-disable-next-line no-nested-ternary
