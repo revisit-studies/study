@@ -13,6 +13,7 @@ function CheckboxComponent({
   question,
   answer,
   onChange,
+  disabled,
 }: {
   _choices: StringOption[],
   _n: number,
@@ -20,6 +21,7 @@ function CheckboxComponent({
   question: StringOption,
   answer: { value: Record<string, string> },
   onChange: (event: ChangeEvent<HTMLInputElement>, questionKey: string, option: StringOption) => void
+  disabled: boolean
 }) {
   return (
     <div
@@ -32,6 +34,7 @@ function CheckboxComponent({
     >
       {_choices.map((checkbox: StringOption) => (
         <Checkbox
+          disabled={disabled}
           key={`${checkbox.label}-${idx}`}
           checked={answer.value[question.label].split('|').includes(checkbox.value)}
           onChange={(event) => onChange(event, question.label, checkbox)}
@@ -48,6 +51,7 @@ function RadioGroupComponent({
   response,
   answer,
   onChange,
+  disabled,
 }: {
   _choices: StringOption[],
   _n: number,
@@ -55,7 +59,8 @@ function RadioGroupComponent({
   question: StringOption,
   response: MatrixResponse,
   answer: { value: Record<string, string> },
-  onChange: (val: string, questionKey: string) => void
+  onChange: (val: string, questionKey: string) => void,
+  disabled: boolean
 
 }) {
   return (
@@ -79,6 +84,7 @@ function RadioGroupComponent({
       >
         {_choices.map((radio: StringOption) => (
           <Radio
+            disabled={disabled}
             value={radio.value}
             key={`${radio.label}-${idx}`}
           />
@@ -92,11 +98,13 @@ export default function MatrixInput({
   response,
   answer,
   index,
+  disabled,
   enumerateQuestions,
 }: {
   response: MatrixResponse;
   answer: { value: Record<string, string> };
   index: number;
+  disabled: boolean;
   enumerateQuestions: boolean;
 }) {
   const { setMatrixAnswersRadio, setMatrixAnswersCheckbox } = useStoreActions();
@@ -241,6 +249,7 @@ export default function MatrixInput({
               {response.type === 'matrix-radio'
                 ? (
                   <RadioGroupComponent
+                    disabled={disabled}
                     idx={idx}
                     question={question}
                     answer={answer}
@@ -252,6 +261,7 @@ export default function MatrixInput({
                 )
                 : (
                   <CheckboxComponent
+                    disabled={disabled}
                     idx={idx}
                     question={question}
                     answer={answer}

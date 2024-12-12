@@ -84,14 +84,13 @@ export async function studyStoreCreator(
       },
       setMatrixAnswersRadio: (state, action: PayloadAction<{ questionKey: string, responseId: string, val: string }>) => {
         const { responseId, questionKey, val } = action.payload;
-        return {
-          ...state,
-          matrixAnswers: {
-            ...state.matrixAnswers,
-            [responseId]: {
-              ...state.matrixAnswers[responseId],
-              [questionKey]: val,
-            },
+
+        // Set state
+        state.matrixAnswers = {
+          ...state.matrixAnswers,
+          [responseId]: {
+            ...state.matrixAnswers[responseId],
+            [questionKey]: val,
           },
         };
       },
@@ -113,13 +112,12 @@ export async function studyStoreCreator(
           newAnswer = currentAnswer.split('|').filter((entry) => entry !== value).join('|');
         }
 
-        return {
-          ...state,
-          matrixAnswers: {
-            [responseId]: {
-              ...state.matrixAnswers[responseId],
-              [questionKey]: newAnswer,
-            },
+        // Set state
+        state.matrixAnswers = {
+          ...state.matrixAnswers,
+          [responseId]: {
+            ...state.matrixAnswers[responseId],
+            [questionKey]: newAnswer,
           },
         };
       },
