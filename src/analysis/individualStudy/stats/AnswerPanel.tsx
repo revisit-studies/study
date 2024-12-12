@@ -6,16 +6,16 @@ import { VegaLite, VisualizationSpec } from 'react-vega';
 import { useResizeObserver } from '@mantine/hooks';
 import { IndividualComponent, InheritedComponent, RadioResponse } from '../../../parser/types';
 
-export default function AnswerPanel({ data, config }: { data: Record<string, Record<string, unknown>>, config: IndividualComponent | InheritedComponent | undefined}) {
+export default function AnswerPanel({ data, config }: { data: Record<string, Record<string, unknown>>, config: IndividualComponent | InheritedComponent | undefined }) {
   const [correctUser, setCorrectUser] = useState<string[]>([]);
   const [incorrectUser, setIncorrectUser] = useState<string[]>([]);
-  const [categoricalStats, setCategoricalStats] = useState<{option:string, count:number, correct:boolean}[]>([]);
+  const [categoricalStats, setCategoricalStats] = useState<{ option: string, count: number, correct: boolean }[]>([]);
   const [ref, dms] = useResizeObserver();
 
   useEffect(() => {
     const responses = config?.response;
-    const correct:string[] = [];
-    const incorrect:string[] = [];
+    const correct: string[] = [];
+    const incorrect: string[] = [];
     if (responses) {
       responses.forEach((response) => {
         const { correctAnswer } = config;
@@ -33,7 +33,7 @@ export default function AnswerPanel({ data, config }: { data: Record<string, Rec
           if (response.type === 'radio') {
             const map = new Map<string, number>();
             for (const answers of Object.values(data)) {
-              const ans:string = answers[id] as string;
+              const ans: string = answers[id] as string;
               if (map.has(ans)) {
                 map.set(ans, map.get(ans) as number + 1);
               } else {
