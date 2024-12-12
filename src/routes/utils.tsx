@@ -8,7 +8,6 @@ export function useStudyId(): string {
   return `${studyId}`;
 }
 
-// TODO: Handle reviewer-
 export function useCurrentStep() {
   const { index } = useParams();
   if (index === undefined) {
