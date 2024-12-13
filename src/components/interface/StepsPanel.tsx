@@ -113,14 +113,15 @@ function StepItem({
 
   const stepIndex = subSequence && subSequence.components.slice(startIndex).includes(step) ? findTaskIndexInSequence(fullSequence, step, startIndex, subSequence.orderPath) : -1;
 
-  const { trialId } = useParams();
+  const { trialId, participantId } = useParams();
 
   const analysisActive = trialId === step;
   const studyActive = participantView ? currentStep === stepIndex : currentStep === `reviewer-${step}`;
   const active = analysisNavigation ? analysisActive : studyActive;
 
   const analysisNavigateTo = useCallback(() => (trialId ? navigate(`./../${step}`) : navigate(`./${step}`)), [navigate, step, trialId]);
-  const studyNavigateTo = () => (participantView ? navigate(`/${studyId}/${stepIndex}`) : navigate(`/${studyId}/reviewer-${step}`));
+  // eslint-disable-next-line no-nested-ternary
+  const studyNavigateTo = () => (participantView ? participantId ? navigate(`/${studyId}/${participantId}/${stepIndex}/`) : navigate(`/${studyId}/${stepIndex}`) : navigate(`/${studyId}/reviewer-${step}`));
   const navigateTo = analysisNavigation ? analysisNavigateTo : studyNavigateTo;
 
   // eslint-disable-next-line no-nested-ternary

@@ -23,6 +23,10 @@ export function BrushPlot({ parameters, setAnswer, provenanceState }: StimulusPa
   useEffect(() => {
     if (provenanceState) {
       setBrushState(provenanceState.all.brush || provenanceState.all);
+    } else {
+      setBrushState({
+        hasBrush: false, x1: 0, y1: 0, x2: 0, y2: 0, ids: null,
+      });
     }
   }, [provenanceState]);
 

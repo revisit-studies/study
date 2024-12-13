@@ -1,7 +1,6 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-
   ActionIcon,
   Box, Center, Group, Loader, Select, Stack,
 } from '@mantine/core';
@@ -22,14 +21,13 @@ import { IconPlayerPauseFilled, IconPlayerPlayFilled } from '@tabler/icons-react
 import { PluginDictionary } from 'wavesurfer-react/dist/hooks/useWavesurfer';
 import { GenericPlugin } from 'wavesurfer.js/dist/base-plugin';
 import { StorageEngine } from '../../storage/engines/StorageEngine';
-import { useCurrentComponent } from '../../routes/utils';
+import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useAsync } from '../../store/hooks/useAsync';
 import { useStoreActions, useStoreDispatch } from '../../store/store';
 import { deepCopy } from '../../utils/deepCopy';
 import { useEvent } from '../../store/hooks/useEvent';
 import { SingleTaskTimeline } from './SingleTaskTimeline';
-import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 
 const margin = {
   left: 0, top: 0, right: 5, bottom: 0,
@@ -53,26 +51,27 @@ function getAllParticipantIds(storageEngine: StorageEngine | undefined) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void}) {
-  const { participantId, index } = useParams();
-
-  const _trialFilter = useCurrentComponent();
-
-  const totalAudioLength = useRef<number>(0);
-  const trialFilter = useMemo(() => (index ? _trialFilter : null), [_trialFilter, index]);
-
+  const { participantId } = useParams();
   const { storageEngine } = useStorageEngine();
+
+  const { saveAnalysisState } = useStoreActions();
+  const storeDispatch = useStoreDispatch();
+
+  const currentComponent = useCurrentComponent();
+  const currentStep = useCurrentStep();
+  useEffect(() => { storeDispatch(saveAnalysisState(null)); }, [currentStep, saveAnalysisState, storeDispatch]);
 
   const [ref, { width }] = useResizeObserver();
   const [waveSurferWidth, setWaveSurferWidth] = useState<number>(0);
 
   const [currentNode, setCurrentNode] = useState<string | null>(null);
+  const totalAudioLength = useRef<number>(0);
 
   const { value: participant, status } = useAsync(getParticipantData, [participantId, storageEngine]);
 
   const { value: allParticipants } = useAsync(getAllParticipantIds, [storageEngine]);
 
-  const { saveAnalysisState } = useStoreActions();
-  const storeDispatch = useStoreDispatch();
+  const [hasAudio, setHasAudio] = useState<boolean>(false);
 
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [playTime, setPlayTime] = useThrottledState<number>(0, 200);
@@ -83,46 +82,40 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
 
   const trrackForTrial = useRef<Trrack<object, string> | null>(null);
 
-  const trialFilterAnswersName = useMemo(() => {
-    if (!trialFilter || !participant) {
-      return null;
-    }
-
-    return Object.keys(participant.answers).find((key) => key.startsWith(trialFilter)) || null;
-  }, [participant, trialFilter]);
+  const componentAndIndex = useMemo(() => `${currentComponent}_${currentStep}`, [currentComponent, currentStep]);
 
   // Create an instance of trrack to ensure getState works, incase the saved state is not a full state node.
   useEffect(() => {
-    if (trialFilterAnswersName && participant) {
+    if (componentAndIndex && participant && participant.answers[componentAndIndex]?.provenanceGraph) {
       const reg = Registry.create();
 
       const trrack = initializeTrrack({ registry: reg, initialState: {} });
 
-      if (participant.answers[trialFilterAnswersName].provenanceGraph) {
-        trrack.importObject(deepCopy(participant.answers[trialFilterAnswersName].provenanceGraph!));
+      if (participant.answers[componentAndIndex].provenanceGraph) {
+        trrack.importObject(deepCopy(participant.answers[componentAndIndex].provenanceGraph!));
 
         trrackForTrial.current = trrack;
       }
     }
-  }, [participant, trialFilterAnswersName]);
+  }, [participant, componentAndIndex]);
 
   const _setCurrentNode = useCallback((node: string | undefined) => {
     if (!node) {
       return;
     }
 
-    if (trialFilterAnswersName && participant && trrackForTrial.current) {
-      storeDispatch(saveAnalysisState(trrackForTrial.current.getState(participant.answers[trialFilterAnswersName].provenanceGraph?.nodes[node])));
+    if (componentAndIndex && participant && trrackForTrial.current) {
+      storeDispatch(saveAnalysisState(trrackForTrial.current.getState(participant.answers[componentAndIndex].provenanceGraph?.nodes[node])));
 
       trrackForTrial.current.to(node);
     }
 
     setCurrentNode(node);
-  }, [participant, saveAnalysisState, storeDispatch, trialFilterAnswersName]);
+  }, [participant, saveAnalysisState, storeDispatch, componentAndIndex]);
 
   const timeUpdate = useEvent((t: number) => {
-    if (participant && trialFilter && trialFilterAnswersName) {
-      const { startTime } = participant.answers[trialFilterAnswersName];
+    if (participant && currentComponent && componentAndIndex) {
+      const { startTime } = participant.answers[componentAndIndex];
       setPlayTime(t * 1000 + startTime);
 
       setPercent((t / totalAudioLength.current) * 100);
@@ -131,10 +124,10 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
 
   // use effect to control the current provenance node based on the changing playtime.
   useEffect(() => {
-    if (!trialFilterAnswersName || !participant || !trrackForTrial.current) {
+    if (!componentAndIndex || !participant || !trrackForTrial.current || !participant.answers[componentAndIndex]?.provenanceGraph) {
       return;
     }
-    const provGraph = participant.answers[trialFilterAnswersName].provenanceGraph;
+    const provGraph = participant.answers[componentAndIndex].provenanceGraph;
 
     if (!provGraph) {
       return;
@@ -153,9 +146,7 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
         if (!isRootNode(tempNode)) {
           const parentNode = tempNode.parent;
 
-          if (playTime < provGraph.nodes[parentNode].createdOn) {
-            tempNode = provGraph.nodes[parentNode];
-          } else break;
+          tempNode = provGraph.nodes[parentNode];
         } else break;
       } else if (tempNode.children.length > 0) {
         const child = tempNode.children[0];
@@ -169,33 +160,34 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
     if (tempNode.id !== currentNode) {
       _setCurrentNode(tempNode.id);
     }
-  }, [_setCurrentNode, currentNode, participant, participantId, playTime, trialFilterAnswersName]);
+  }, [_setCurrentNode, currentNode, participant, participantId, playTime, componentAndIndex]);
 
   const handleWSMount = useCallback(
     (waveSurfer: WaveSurfer | null) => {
-      if (waveSurfer && participant && participantId && trialFilterAnswersName) {
+      if (waveSurfer && participant && participantId && componentAndIndex) {
         const crunker = new Crunker();
 
-        storageEngine?.getAudio([trialFilterAnswersName], participantId).then((urls) => {
+        storageEngine?.getAudio([componentAndIndex], participantId).then((urls) => {
           if (waveSurfer) {
             crunker
               .fetchAudio(...urls)
               .then((buffers) => crunker.concatAudio(buffers))
               .then((merged) => crunker.export(merged, 'audio/mp3'))
-              .then((output) => waveSurfer.loadBlob(output.blob).then(() => { setWaveSurferLoading(false); }))
-              .catch((error) => {
-                throw new Error(error);
-              });
+              .then((output) => waveSurfer.loadBlob(output.blob).then(() => { setWaveSurferLoading(false); setHasAudio(true); }));
           }
 
           totalAudioLength.current = waveSurfer.getDuration();
           setWaveSurferWidth(waveSurfer.getWidth());
+          waveSurfer.seekTo(0);
           waveSurfer.on('timeupdate', timeUpdate);
           waveSurfer.on('redrawcomplete', () => setWaveSurferWidth(waveSurfer.getWidth()));
+        }).catch((error) => {
+          setHasAudio(false);
+          throw new Error(error);
         });
       }
     },
-    [participant, participantId, trialFilterAnswersName, storageEngine, timeUpdate],
+    [participant, participantId, componentAndIndex, storageEngine, timeUpdate],
   );
 
   const plugins = useMemo(() => [], []);
@@ -229,7 +221,7 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
   }, [wavesurfer]);
 
   const xScale = useMemo(() => {
-    if (!participant) {
+    if (!participant || !participant.answers[componentAndIndex]?.startTime || !participant.answers[componentAndIndex]?.endTime) {
       return null;
     }
 
@@ -237,10 +229,10 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
 
     const extent = d3.extent(allStartTimes) as [number, number];
 
-    const scale = d3.scaleLinear([margin.left, width + margin.left + margin.right]).domain(trialFilterAnswersName ? [participant.answers[trialFilterAnswersName].startTime, participant.answers[trialFilterAnswersName].endTime] : extent).clamp(true);
+    const scale = d3.scaleLinear([margin.left, width + margin.left + margin.right]).domain(componentAndIndex ? [participant.answers[componentAndIndex].startTime, participant.answers[componentAndIndex].endTime] : extent).clamp(true);
 
     return scale;
-  }, [participant, trialFilterAnswersName, width]);
+  }, [participant, componentAndIndex, width]);
 
   useEffect(() => {
     handleWSMount(wavesurfer);
@@ -255,13 +247,14 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
       <Stack ref={ref} style={{ width: '100%' }} gap={0}>
         <Group wrap="nowrap">
           <Center />
-          { xScale && participant !== null && (trialFilterAnswersName ? participant.answers[trialFilterAnswersName] !== undefined : true)
+          { xScale && participant !== null && (componentAndIndex ? participant.answers[componentAndIndex] !== undefined : true)
             ? (
               <Box
                 ref={waveSurferDiv}
                 style={{
-                  overflow: 'visible', width: `${(xScale.range()[1] - xScale.range()[0])}px`,
+                  overflow: 'visible', width: '100%',
                 }}
+                display={hasAudio ? 'block' : 'none'}
               >
                 <WaveSurferContext.Provider value={fullWaveSurferObj}>
                   <WaveForm id="waveform" />
@@ -271,37 +264,29 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
             ) : null }
         </Group>
 
-        {status === 'success' && participant && xScale && trialFilterAnswersName && participant.answers[trialFilterAnswersName].provenanceGraph
+        {status === 'success' && participant && xScale && componentAndIndex && participant.answers[componentAndIndex].provenanceGraph
           ? (
             <SingleTaskTimeline
               xScale={xScale}
-              trialName={trialFilterAnswersName}
+              trialName={componentAndIndex}
               setPlayTime={_setPlayTime}
               currentNode={currentNode}
               setCurrentNode={_setCurrentNode}
               participantData={participant}
-              width={waveSurferWidth}
+              width={waveSurferWidth || width}
               height={50}
             />
           ) : null}
         <Center>
           <Group>
             <ActionIcon variant="light" size={50} onClick={() => _setIsPlaying(!isPlaying)}>{isPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}</ActionIcon>
-
             <Select
               style={{ width: '300px' }}
-              value={participant?.participantId}
+              value={participant?.participantId || ''}
               onChange={(e) => {
-                navigate(`../${e}`, { relative: 'path' });
+                navigate(`../../${e}/0`, { relative: 'path' });
               }}
-              data={allParticipants ? allParticipants?.map((part) => part.participantId) : []}
-            />
-            <Select
-              style={{ width: '300px' }}
-              clearable
-              value={trialFilter}
-              data={participant ? [...getSequenceFlatMap(participant.sequence)] : []}
-              onChange={(val) => navigate(`../../reviewer-${val || ''}/${participantId}`, { relative: 'path' })}
+              data={allParticipants ? [...new Set(allParticipants.map((part) => part.participantId))] : []}
             />
           </Group>
         </Center>

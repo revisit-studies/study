@@ -211,7 +211,7 @@ export function TableView({
 
       <Table.Td>
         <Flex direction="column" miw={100}>
-          {record.participantTags.map((tag) => (
+          {record.participantTags?.map((tag) => (
             <Text key={`tag-${tag}`} fz={10}>
               -
               {' '}

@@ -5,7 +5,7 @@ import {
 } from 'react';
 import { Provider } from 'react-redux';
 import {
-  RouteObject, useRoutes, useSearchParams,
+  RouteObject, useParams, useRoutes, useSearchParams,
 } from 'react-router-dom';
 import { LoadingOverlay, Title } from '@mantine/core';
 import {
@@ -49,6 +49,8 @@ export function Shell({ globalConfig }: {
   const [store, setStore] = useState<Nullable<StudyStore>>(null);
   const { storageEngine } = useStorageEngine();
   const [searchParams] = useSearchParams();
+  const { participantId } = useParams();
+
   useEffect(() => {
     async function initializeUserStoreRouting() {
       // Check that we have a storage engine and active config (studyId is set for config, but typescript complains)
@@ -77,7 +79,7 @@ export function Shell({ globalConfig }: {
         ip: ip.ip,
       };
 
-      const participantSession = await storageEngine.initializeParticipantSession(studyId, searchParamsObject, activeConfig, metadata, urlParticipantId);
+      const participantSession = await storageEngine.initializeParticipantSession(studyId, searchParamsObject, activeConfig, metadata, participantId || urlParticipantId);
 
       const modes = await storageEngine.getModes(studyId);
 
@@ -94,7 +96,16 @@ export function Shell({ globalConfig }: {
             element: <NavigateWithParams to="0" replace />,
           },
           {
-            path: '/:index/:participantId?',
+            path: '/:participantId/:index',
+            element: activeConfig.errors.length > 0 ? (
+              <>
+                <Title order={2} mb={8}>Error loading config</Title>
+                <ErrorLoadingConfig issues={activeConfig.errors} type="error" />
+              </>
+            ) : <ComponentController />,
+          },
+          {
+            path: '/:index',
             element: activeConfig.errors.length > 0 ? (
               <>
                 <Title order={2} mb={8}>Error loading config</Title>
@@ -106,7 +117,7 @@ export function Shell({ globalConfig }: {
       }]);
     }
     initializeUserStoreRouting();
-  }, [storageEngine, activeConfig, studyId, searchParams]);
+  }, [storageEngine, activeConfig, studyId, searchParams, participantId]);
 
   const routing = useRoutes(routes);
 

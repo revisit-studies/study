@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import {
   useStoreSelector,
   useStoreActions,
@@ -61,7 +61,8 @@ export function useNextStep() {
   const areResponsesValid = useAreResponsesValid(identifier);
 
   // Status of the next button. If false, the next button should be disabled
-  const isNextDisabled = typeof currentStep !== 'number' || !areResponsesValid;
+  const { participantId } = useParams();
+  const isNextDisabled = typeof currentStep !== 'number' || participantId !== undefined || !areResponsesValid;
 
   const storedAnswer = useStoredAnswer();
 

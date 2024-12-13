@@ -6,8 +6,13 @@ import {
 
 import { animated, useSpring } from 'react-spring';
 import { useDebouncedState, useResizeObserver } from '@mantine/hooks';
-import { useCallback, useEffect, useState } from 'react';
+import {
+  useCallback, useEffect, useState,
+} from 'react';
+import { useParams } from 'react-router-dom';
 import { AnalysisPopout } from '../components/audioAnalysis/AnalysisPopout';
+import { useStorageEngine } from '../storage/storageEngineHooks';
+
 // current active stimuli presented to the user
 export default function ReplayCard() {
   const [faded, setFaded] = useDebouncedState(true, 100, { leading: true });
@@ -18,7 +23,10 @@ export default function ReplayCard() {
 
   const [percent, setPercent] = useState<number>(0);
 
+  const { storageEngine } = useStorageEngine();
+
   const [ref, { width }] = useResizeObserver();
+  const { participantId } = useParams();
 
   useEffect(() => {
     const mainDiv = document.getElementsByClassName('mantine-AppShell-main') as HTMLCollectionOf<HTMLDivElement>;
@@ -38,6 +46,12 @@ export default function ReplayCard() {
   const _setPercent = useCallback((n: number) => {
     setPercent(n);
   }, []);
+
+  useEffect(() => {
+    if (storageEngine && participantId) {
+      storageEngine.getCurrentParticipantId(participantId);
+    }
+  }, [participantId, storageEngine]);
 
   return (
     <Stack ref={ref} style={{ width: '100%' }}>

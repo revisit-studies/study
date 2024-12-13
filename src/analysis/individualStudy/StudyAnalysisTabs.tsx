@@ -20,6 +20,7 @@ import ManageAccordion from './management/ManageAccordion';
 import { useAuth } from '../../store/hooks/useAuth';
 import { ParticipantStatusBadges } from '../interface/ParticipantStatusBadges';
 import { StatsView } from './stats/StatsView';
+import AllReplays from './replay/AllReplays';
 
 export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig; }) {
   const { studyId } = useParams();
@@ -75,7 +76,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               <Tabs.Tab value="table" leftSection={<IconTable size={16} />}>Table View</Tabs.Tab>
               <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
               <Tooltip label="Coming soon" position="bottom">
-                <Tabs.Tab value="replay" leftSection={<IconPlayerPlay size={16} />} disabled>Participant Replay</Tabs.Tab>
+                <Tabs.Tab value="replay" leftSection={<IconPlayerPlay size={16} />}>Participant Replay</Tabs.Tab>
               </Tooltip>
               <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
             </Tabs.List>
@@ -87,7 +88,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               {studyConfig && <StatsView studyConfig={studyConfig} completed={completed} inprogress={inProgress} rejected={rejected} />}
             </Tabs.Panel>
             <Tabs.Panel value="replay" pt="xs">
-              Replay Tab Content
+              <AllReplays />
             </Tabs.Panel>
             <Tabs.Panel value="manage" pt="xs">
               {studyId && user.isAdmin ? <ManageAccordion studyId={studyId} refresh={getData} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}

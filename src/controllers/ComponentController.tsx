@@ -2,6 +2,7 @@ import {
   Suspense, useEffect, useMemo, useRef, useState,
 } from 'react';
 import merge from 'lodash.merge';
+import { useParams } from 'react-router-dom';
 import ResponseBlock from '../components/response/ResponseBlock';
 import IframeController from './IframeController';
 import ImageController from './ImageController';
@@ -36,6 +37,7 @@ export default function ComponentController() {
   const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
   const { setIsRecording } = useStoreActions();
   const { analysisProvState } = useStoreSelector((state) => state);
+  const { participantId } = useParams();
 
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
@@ -57,7 +59,7 @@ export default function ComponentController() {
   }, [setAlertModal, storageEngine, storeDispatch]);
 
   useEffect(() => {
-    if (!studyConfig || !studyConfig.recordStudyAudio || !storageEngine || storageEngine.getEngine() !== 'firebase') {
+    if (!studyConfig || !studyConfig.recordStudyAudio || !storageEngine || storageEngine.getEngine() !== 'firebase' || status.endTime > 0 || participantId !== undefined) {
       return;
     }
 
@@ -173,7 +175,7 @@ export default function ComponentController() {
         location="belowStimulus"
       />
 
-      {currentStep.toString().startsWith('reviewer-') ? (
+      {participantId ? (
         <ReplayCard />
       ) : null }
     </>
