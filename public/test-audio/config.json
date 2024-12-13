@@ -1,17 +1,17 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Interactive Selections in Scatterplots",
-    "version": "pilot",
-    "authors": [
-      "The reVISit Team"
-    ],
-    "date": "2023-11-03",
-    "description": "A study comparing different selection mechanisms on scatterplots.",
-    "organizations": [
-      "University of Utah",
-      "WPI",
-      "University of Toronto"
+      "title": "Using audio recording",
+      "version": "pilot",
+      "authors": [
+        "The reVISit Team"
+      ],
+      "date": "2023-04-14",
+      "description": "This is a test for audio",
+      "organizations": [
+        "University of Utah",
+        "WPI",
+        "University of Toronto"
     ]
   },
   "uiConfig": {

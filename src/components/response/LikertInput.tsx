@@ -35,6 +35,7 @@ export default function LikertInput({
       answer={answer}
       index={index}
       enumerateQuestions={enumerateQuestions}
+      stretch
     />
   );
 }

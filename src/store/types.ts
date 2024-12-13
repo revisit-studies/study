@@ -140,4 +140,5 @@ export interface StoreState {
   analysisProvState: unknown | null;
   analysisWaveformTime: number;
   modes: Record<REVISIT_MODE, boolean>;
+  matrixAnswers: Record<string, Record<string, string>>;
 }
