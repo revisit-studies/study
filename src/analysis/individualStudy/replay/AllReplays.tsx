@@ -18,7 +18,7 @@ function getAllParticipantData(storageEngine: StorageEngine | undefined, studyId
   return null;
 }
 // current active stimuli presented to the user
-export default function ReplayCard() {
+export default function AllReplays() {
   const { studyId } = useParams();
 
   const { storageEngine } = useStorageEngine();

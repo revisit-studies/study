@@ -3,10 +3,11 @@ import * as d3 from 'd3';
 import {
   Anchor, Center, Group, Stack, Tooltip, Text,
 } from '@mantine/core';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { ParticipantData } from '../../../storage/types';
 import { SingleTaskLabelLines } from '../../../components/audioAnalysis/SingleTaskLabelLines';
 import { SingleTask } from '../../../components/audioAnalysis/SingleTask';
+import { encryptIndex } from '../../../utils/encryptDecryptIndex';
 
 const LABEL_GAP = 25;
 const CHARACTER_SIZE = 8;
@@ -115,11 +116,8 @@ export function AllTasksTimeline({
       <Stack gap={25} style={{ width: '100%' }}>
         <Group justify="space-between">
           <Anchor
-            size="25px"
-            component={Link}
-            target="_blank"
-            to=""
-            onClick={() => navigate(`/${studyId}/${participantData.participantId}/0`)}
+            href=""
+            onClick={() => navigate(`/${studyId}/${participantData.participantId}/${encryptIndex(0)}`)}
           >
             {participantData.participantId}
           </Anchor>
