@@ -28,25 +28,74 @@
       "path": "demo-vega/assets/introduction.md",
       "response": []
     },
-    "vegademo": {
+    "vegademo1": {
       "meta": {
         "metadata": 1
       },
-      "description": "vega test",
-      "instruction": "vega test",
+      "description": "Select the highest bar.",
+      "instruction": "Click on the bar with the highest value.",
       "type": "vega",
-      "path": "demo-vega/assets/vega.json",
+      "path": "demo-vega/specs/vegademo1.specs.json",
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "demo-vega/assets-response",
-          "prompt": "Answer:",
+          "id": "vegaDemoResponse1",
+          "prompt": "You selected:",
           "required": true,
           "location": "sidebar",
-          "type": "radio",
+          "type": "iframe"
+        },
+        {
+          "id": "vegaDemoConfidence1",
+          "prompt": "How confident are you with your answer?",
+          "required": true,
+          "location": "sidebar",
+          "type": "slider",
           "options": [
-            "Yes",
-            "No"
+            {
+              "label": "Low",
+              "value": 0
+            },
+            {
+              "label": "High",
+              "value": 100
+            }
+          ]
+        }
+      ]
+    },
+    "vegademo2": {
+      "meta": {
+        "metadata": 1
+      },
+      "description": "Select the highest value.",
+      "instruction": "Select the movie with highest World Wide Gross.",
+      "type": "vega",
+      "path": "demo-vega/specs/vegademo2.specs.json",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "vegaDemoResponse1",
+          "prompt": "You selected:",
+          "required": true,
+          "location": "sidebar",
+          "type": "iframe"
+        },
+        {
+          "id": "vegaDemoConfidence1",
+          "prompt": "How confident are you with your answer?",
+          "required": true,
+          "location": "sidebar",
+          "type": "slider",
+          "options": [
+            {
+              "label": "Low",
+              "value": 0
+            },
+            {
+              "label": "High",
+              "value": 100
+            }
           ]
         }
       ]
@@ -56,8 +105,8 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "vegademo"
-
+      "vegademo1",
+      "vegademo2"
     ]
   }
 }
