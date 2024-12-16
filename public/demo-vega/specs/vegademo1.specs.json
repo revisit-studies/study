@@ -16,7 +16,8 @@
     }
   ],
 
-  "signals": [
+  "config":{
+    "signals": [
     {
       "name": "tooltip",
       "value": {},
@@ -35,7 +36,9 @@
         }
       ]
     }
-  ],
+  ]
+  },
+
 
   "scales": [
     {

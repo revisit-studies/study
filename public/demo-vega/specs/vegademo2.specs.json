@@ -6,25 +6,28 @@
   "padding": 5,
   "autosize": {"type": "fit", "resize": true},
 
-  "signals": [
-    { "name": "yField", "value": "IMDB Rating",
-      "bind": {"input": "select", "options": ["IMDB Rating", "Rotten Tomatoes Rating", "US Gross", "Worldwide Gross"]} },
-    { "name": "xField", "value": "Rotten Tomatoes Rating",
-      "bind": {"input": "select", "options": ["IMDB Rating", "Rotten Tomatoes Rating", "US Gross", "Worldwide Gross"]} },
-    { "name": "nullSize", "value": 8 },
-    { "name": "nullGap", "update": "nullSize + 10" },
-    {
-      "name": "revisitAnswer",
-      "value": {},
-      "on": [
-        {
-          "events": "symbol:click",
-          "update": "{responseId: 'vegaDemoResponse1', response: datum.Title}"
-        }
-      ]
-    }
+  "config": {
+    "signals": [
+      { "name": "yField", "value": "IMDB Rating",
+        "bind": {"input": "select", "options": ["IMDB Rating", "Rotten Tomatoes Rating", "US Gross", "Worldwide Gross"]} },
+      { "name": "xField", "value": "Rotten Tomatoes Rating",
+        "bind": {"input": "select", "options": ["IMDB Rating", "Rotten Tomatoes Rating", "US Gross", "Worldwide Gross"]} },
+      { "name": "nullSize", "value": 8 },
+      { "name": "nullGap", "update": "nullSize + 10" },
+      {
+        "name": "revisitAnswer",
+        "value": {},
+        "on": [
+          {
+            "events": "symbol:click",
+            "update": "{responseId: 'vegaDemoResponse1', response: datum.Title}"
+          }
+        ]
+      }
 
-  ],
+    ]
+  },
+
 
   "data": [
     {
