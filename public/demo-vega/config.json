@@ -1,0 +1,112 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Demo of use Vega-Lite as stimuli",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2024-11-16",
+    "description": "A demo of vega-lite stimuli",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-vega/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-vega/assets/introduction.md",
+      "response": []
+    },
+    "vegademo1": {
+      "meta": {
+        "metadata": 1
+      },
+      "description": "Select the highest bar.",
+      "instruction": "Click on the bar with the highest value.",
+      "type": "vega",
+      "path": "demo-vega/specs/vegademo1.specs.json",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "vegaDemoResponse1",
+          "prompt": "You selected:",
+          "required": true,
+          "location": "sidebar",
+          "type": "iframe"
+        },
+        {
+          "id": "vegaDemoConfidence1",
+          "prompt": "How confident are you with your answer?",
+          "required": true,
+          "location": "sidebar",
+          "type": "slider",
+          "options": [
+            {
+              "label": "Low",
+              "value": 0
+            },
+            {
+              "label": "High",
+              "value": 100
+            }
+          ]
+        }
+      ]
+    },
+    "vegademo2": {
+      "meta": {
+        "metadata": 1
+      },
+      "description": "Select the highest value.",
+      "instruction": "Select the movie with highest World Wide Gross.",
+      "type": "vega",
+      "path": "demo-vega/specs/vegademo2.specs.json",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "vegaDemoResponse1",
+          "prompt": "You selected:",
+          "required": true,
+          "location": "sidebar",
+          "type": "iframe"
+        },
+        {
+          "id": "vegaDemoConfidence1",
+          "prompt": "How confident are you with your answer?",
+          "required": true,
+          "location": "sidebar",
+          "type": "slider",
+          "options": [
+            {
+              "label": "Low",
+              "value": 0
+            },
+            {
+              "label": "High",
+              "value": 100
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "vegademo1",
+      "vegademo2"
+    ]
+  }
+}

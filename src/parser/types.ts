@@ -601,8 +601,8 @@ export default function CoolComponent({ parameters, setAnswer }: StimulusParams<
 ```
  *
  * For in depth examples, see the following studies, and their associated codebases.
- * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/v1.0.6/src/public/demo-click-accuracy-test/assets)
- * https://revisit.dev/study/demo-brush-interactions (https://github.com/revisit-studies/study/v1.0.6/src/public/demo-brush-interactions/assets)
+ * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v1.0.6/src/public/demo-click-accuracy-test/assets)
+ * https://revisit.dev/study/demo-brush-interactions (https://github.com/revisit-studies/study/tree/v1.0.6/src/public/demo-brush-interactions/assets)
  */
 export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
@@ -723,7 +723,13 @@ export interface QuestionnaireComponent extends BaseIndividualComponent {
   type: 'questionnaire';
 }
 
-export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent;
+export interface VegaComponent extends BaseIndividualComponent {
+  type: 'vega';
+  /** The path to the vega file. This should be a relative path from the public folder. */
+  path: string;
+}
+
+export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent | VegaComponent;
 
 /** The DeterministicInterruption interface is used to define an interruption that will be shown at a specific location in the block.
  *

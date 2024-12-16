@@ -48,6 +48,7 @@ Responses are provided as form elements. ReVISit supports the following form ele
 - [NumericalResponse](interfaces/NumericalResponse.md)
 - [NumberOption](interfaces/NumberOption.md)
 - [StringOption](interfaces/StringOption.md)
+- [MatrixResponse](interfaces/MatrixResponse.md)
 - [RadioResponse](interfaces/RadioResponse.md)
 - [ShortTextResponse](interfaces/ShortTextResponse.md)
 - [SliderResponse](interfaces/SliderResponse.md)
