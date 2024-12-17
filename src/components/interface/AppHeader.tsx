@@ -68,7 +68,7 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
   const { participantId } = useParams();
 
   return (
-    <AppShell.Header p={participantId ? 'xs' : 'md'}>
+    <AppShell.Header p={participantId ? '0.5rem' : '1rem'}>
       <Grid mt={-7} align="center">
         <Grid.Col span={4}>
           <Flex align="center">

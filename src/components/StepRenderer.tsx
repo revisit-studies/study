@@ -107,9 +107,9 @@ export function StepRenderer() {
         navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !studyConfig.uiConfig.sidebar, mobile: !studyConfig.uiConfig.sidebar } }}
         aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
         styles={participantId ? {
-          navbar: { borderLeft: '10px solid var(--mantine-color-blue-2)' },
-          header: { borderLeft: '10px solid var(--mantine-color-blue-2)', borderTop: '10px solid var(--mantine-color-blue-2)', borderRight: '10px solid var(--mantine-color-blue-2)' },
-          aside: { borderRight: '10px solid var(--mantine-color-blue-2)' },
+          navbar: { borderLeft: '0.5rem solid var(--mantine-color-blue-2)' },
+          header: { borderLeft: '0.5rem solid var(--mantine-color-blue-2)', borderTop: '0.5rem solid var(--mantine-color-blue-2)', borderRight: '0.5rem solid var(--mantine-color-blue-2)' },
+          aside: { borderRight: '0.5rem solid var(--mantine-color-blue-2)' },
         } : undefined}
       >
         <AppNavBar />
