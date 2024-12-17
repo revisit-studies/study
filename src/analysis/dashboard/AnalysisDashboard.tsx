@@ -65,7 +65,10 @@ export function AnalysisDashboard({ globalConfig }: { globalConfig: GlobalConfig
   ));
 
   return (
-    <>
+    <AppShell
+      padding="md"
+      header={{ height: 70 }}
+    >
       <AppHeader studyIds={globalConfig.configsList} />
       <AppShell.Main>
         <Container fluid>
@@ -78,6 +81,6 @@ export function AnalysisDashboard({ globalConfig }: { globalConfig: GlobalConfig
           </Box>
         </Container>
       </AppShell.Main>
-    </>
+    </AppShell>
   );
 }

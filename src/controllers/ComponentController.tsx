@@ -2,6 +2,7 @@ import {
   Suspense, useEffect, useMemo, useRef, useState,
 } from 'react';
 import merge from 'lodash.merge';
+import { useParams } from 'react-router-dom';
 import ResponseBlock from '../components/response/ResponseBlock';
 import IframeController from './IframeController';
 import ImageController from './ImageController';
@@ -21,6 +22,7 @@ import { TrainingFailed } from '../components/TrainingFailed';
 import ResourceNotFound from '../ResourceNotFound';
 import { TimedOut } from '../components/TimedOut';
 import { findBlockForStep } from '../utils/getSequenceFlatMap';
+import ReplayCard from './ReplayCard';
 
 // current active stimuli presented to the user
 export default function ComponentController() {
@@ -34,6 +36,8 @@ export default function ComponentController() {
   const audioStream = useRef<MediaRecorder | null>(null);
   const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
   const { setIsRecording } = useStoreActions();
+  const { analysisProvState } = useStoreSelector((state) => state);
+  const { participantId } = useParams();
 
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
@@ -55,7 +59,7 @@ export default function ComponentController() {
   }, [setAlertModal, storageEngine, storeDispatch]);
 
   useEffect(() => {
-    if (!studyConfig || !studyConfig.recordStudyAudio || !storageEngine || storageEngine.getEngine() !== 'firebase') {
+    if (!studyConfig || !studyConfig.recordStudyAudio || !storageEngine || storageEngine.getEngine() !== 'firebase' || status.endTime > 0 || participantId !== undefined) {
       return;
     }
 
@@ -159,7 +163,8 @@ export default function ComponentController() {
         {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
         {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} />}
         {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
-        {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} />}
+        {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} />}
+
       </Suspense>
 
       {(instructionLocation === 'belowStimulus' || (instructionLocation === undefined && !instructionInSideBar)) && <ReactMarkdownWrapper text={instruction} />}
@@ -169,6 +174,10 @@ export default function ComponentController() {
         config={currentConfig}
         location="belowStimulus"
       />
+
+      {participantId ? (
+        <ReplayCard />
+      ) : null }
     </>
   );
 }

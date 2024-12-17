@@ -11,7 +11,7 @@ import {
 } from '@mantine/core';
 import React, { useMemo, useState } from 'react';
 import { IconInfoCircle, IconUserPlus } from '@tabler/icons-react';
-import { useHref } from 'react-router-dom';
+import { useHref, useParams } from 'react-router-dom';
 import { ComponentBlockWithOrderPath, StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import {
@@ -54,10 +54,15 @@ export default function AppAside() {
 
   const [activeTab, setActiveTab] = useState<string | null>('participant');
 
+  const { participantId } = useParams();
+
   return (
     <AppShell.Aside p="0">
-      <AppShell.Section>
-        <Flex direction="row" p="sm" justify="space-between" pb="xs">
+      <AppShell.Section
+        p="md"
+        pr={participantId ? '0.5rem' : '1rem'}
+      >
+        <Flex direction="row" justify="space-between">
           <Text size="md" fw={700} pt={3}>
             Study Browser
           </Text>
@@ -77,7 +82,12 @@ export default function AppAside() {
         </Flex>
       </AppShell.Section>
 
-      <AppShell.Section grow component={ScrollArea} p="xs" pt={0}>
+      <AppShell.Section
+        grow
+        component={ScrollArea}
+        p="md"
+        pr={participantId ? '0.5rem' : '1rem'}
+      >
         <Tabs value={activeTab} onChange={setActiveTab}>
           <Box style={{
             position: 'sticky',

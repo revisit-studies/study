@@ -5,13 +5,14 @@ import { StimulusParams } from '../store/types';
 import ResourceNotFound from '../ResourceNotFound';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
+import { ErrorBoundary } from './ErrorBoundary';
 
 const modules = import.meta.glob(
   '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
   { eager: true },
 );
 
-function ReactComponentController({ currentConfig }: { currentConfig: ReactComponent; }) {
+function ReactComponentController({ currentConfig, provState }: { currentConfig: ReactComponent; provState?: unknown }) {
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
 
@@ -36,11 +37,14 @@ function ReactComponentController({ currentConfig }: { currentConfig: ReactCompo
     <Suspense fallback={<div>Loading...</div>}>
       {StimulusComponent
         ? (
-          <StimulusComponent
-            parameters={currentConfig.parameters}
+          <ErrorBoundary>
+            <StimulusComponent
+              parameters={currentConfig.parameters}
             // eslint-disable-next-line react/jsx-no-bind
-            setAnswer={setAnswer}
-          />
+              setAnswer={setAnswer}
+              provenanceState={provState}
+            />
+          </ErrorBoundary>
         )
         : <ResourceNotFound path={currentConfig.path} />}
     </Suspense>

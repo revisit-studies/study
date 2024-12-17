@@ -53,6 +53,10 @@ export async function studyStoreCreator(
     iframeAnswers: {},
     iframeProvenance: null,
     metadata,
+    analysisTrialName: null,
+    analysisProvState: null,
+    analysisParticipantName: null,
+    analysisWaveformTime: 0,
     modes,
     matrixAnswers: {},
   };
@@ -81,6 +85,9 @@ export async function studyStoreCreator(
       },
       setIframeProvenance: (state, action: PayloadAction<TrrackedProvenance | null>) => {
         state.iframeProvenance = action.payload;
+      },
+      saveAnalysisState(state, { payload } : PayloadAction<unknown>) {
+        state.analysisProvState = payload;
       },
       setMatrixAnswersRadio: (state, action: PayloadAction<{ questionKey: string, responseId: string, val: string }>) => {
         const { responseId, questionKey, val } = action.payload;

@@ -70,7 +70,7 @@ export abstract class StorageEngine {
 
   abstract getAllParticipantsDataByStudy(studyId:string): Promise<ParticipantData[]>;
 
-  abstract getParticipantData(): Promise<ParticipantData | null>;
+  abstract getParticipantData(participantid?: string): Promise<ParticipantData | null>;
 
   abstract getParticipantTags(): Promise<string[]>;
 
@@ -95,6 +95,8 @@ export abstract class StorageEngine {
   abstract rejectCurrentParticipant(studyId: string, reason: string): Promise<void>;
 
   abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
+
+  abstract getAudio(task: string, participantId?: string): Promise<string>;
 
   abstract getModes(studyId: string): Promise<Record<REVISIT_MODE, boolean>>;
 }

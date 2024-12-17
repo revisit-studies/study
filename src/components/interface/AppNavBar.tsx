@@ -1,5 +1,6 @@
 import { AppShell, Text } from '@mantine/core';
 import { useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
@@ -30,12 +31,15 @@ export default function AppNavBar() {
   const instructionInSideBar = currentConfig?.instructionLocation === 'sidebar'
     || currentConfig?.instructionLocation === undefined;
 
+  const { participantId } = useParams();
+
   return trialHasSideBar && currentConfig ? (
     <AppShell.Navbar bg="gray.1" display="block" style={{ zIndex: 0, overflowY: 'scroll' }}>
       {instructionInSideBar && instruction !== '' && (
         <AppShell.Section
           bg="gray.3"
           p="md"
+          pl={participantId ? '0.5rem' : '1rem'}
         >
           <Text c="gray.9">
             <Text span c="orange.8" fw={700} inherit>
@@ -47,7 +51,7 @@ export default function AppNavBar() {
       )}
 
       {trialHasSideBarResponses && (
-        <AppShell.Section p="md">
+        <AppShell.Section p="md" pl={participantId ? '0.5rem' : '1rem'}>
           <ResponseBlock
             key={`${currentComponent}-sidebar-response-block`}
             status={status}
