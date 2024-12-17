@@ -1,5 +1,5 @@
-import { AppShell } from '@mantine/core';
-import { Outlet } from 'react-router-dom';
+import { AppShell, Box } from '@mantine/core';
+import { Outlet, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useRef } from 'react';
 import debounce from 'lodash.debounce';
 import AppAside from './interface/AppAside';
@@ -97,6 +97,8 @@ export function StepRenderer() {
 
   const asideOpen = useMemo(() => studyNavigatorEnabled && showStudyBrowser, [studyNavigatorEnabled, showStudyBrowser]);
 
+  const { participantId } = useParams();
+
   return (
     <WindowEventsContext.Provider value={windowEvents}>
       <AppShell
@@ -104,6 +106,11 @@ export function StepRenderer() {
         header={{ height: 70 }}
         navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !studyConfig.uiConfig.sidebar, mobile: !studyConfig.uiConfig.sidebar } }}
         aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
+        styles={participantId ? {
+          navbar: { borderLeft: '10px solid var(--mantine-color-blue-2)' },
+          header: { borderLeft: '10px solid var(--mantine-color-blue-2)', borderTop: '10px solid var(--mantine-color-blue-2)', borderRight: '10px solid var(--mantine-color-blue-2)' },
+          aside: { borderRight: '10px solid var(--mantine-color-blue-2)' },
+        } : undefined}
       >
         <AppNavBar />
         <AppAside />
@@ -113,6 +120,15 @@ export function StepRenderer() {
         <AppShell.Main>
           <Outlet />
         </AppShell.Main>
+        {participantId && (
+        <AppShell.Footer zIndex={101} withBorder={false}>
+          <Box style={{ backgroundColor: 'var(--mantine-color-blue-2)' }}>
+            Analyzing participant:
+            {' '}
+            { participantId }
+          </Box>
+        </AppShell.Footer>
+        )}
       </AppShell>
     </WindowEventsContext.Provider>
   );

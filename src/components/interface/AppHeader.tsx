@@ -21,7 +21,7 @@ import {
   IconUserPlus,
 } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
-import { useHref } from 'react-router-dom';
+import { useHref, useParams } from 'react-router-dom';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,
@@ -65,8 +65,10 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
     }
   }, [studyConfig]);
 
+  const { participantId } = useParams();
+
   return (
-    <AppShell.Header p="md">
+    <AppShell.Header p={participantId ? 'xs' : 'md'}>
       <Grid mt={-7} align="center">
         <Grid.Col span={4}>
           <Flex align="center">
