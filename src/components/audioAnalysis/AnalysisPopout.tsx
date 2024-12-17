@@ -11,7 +11,6 @@ import {
 import { useResizeObserver, useThrottledState } from '@mantine/hooks';
 import { WaveForm, useWavesurfer } from 'wavesurfer-react';
 import WaveSurferContext from 'wavesurfer-react/dist/contexts/WaveSurferContext';
-import Crunker from 'crunker';
 import * as d3 from 'd3';
 import {
   Registry, Trrack, initializeTrrack, isRootNode,
@@ -163,28 +162,23 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
   }, [_setCurrentNode, currentNode, participant, participantId, playTime, componentAndIndex]);
 
   const handleWSMount = useCallback(
-    (waveSurfer: WaveSurfer | null) => {
-      if (waveSurfer && participant && participantId && componentAndIndex) {
-        const crunker = new Crunker();
-
-        storageEngine?.getAudio([componentAndIndex], participantId).then((urls) => {
-          if (waveSurfer) {
-            crunker
-              .fetchAudio(...urls)
-              .then((buffers) => crunker.concatAudio(buffers))
-              .then((merged) => crunker.export(merged, 'audio/mp3'))
-              .then((output) => waveSurfer.loadBlob(output.blob).then(() => { setWaveSurferLoading(false); setHasAudio(true); }));
-          }
+    async (waveSurfer: WaveSurfer | null) => {
+      if (waveSurfer && participant && participantId && componentAndIndex && storageEngine) {
+        try {
+          const url = await storageEngine.getAudio(componentAndIndex, participantId);
+          await waveSurfer.load(url);
+          setWaveSurferLoading(false);
+          setHasAudio(true);
 
           totalAudioLength.current = waveSurfer.getDuration();
           setWaveSurferWidth(waveSurfer.getWidth());
           waveSurfer.seekTo(0);
           waveSurfer.on('timeupdate', timeUpdate);
           waveSurfer.on('redrawcomplete', () => setWaveSurferWidth(waveSurfer.getWidth()));
-        }).catch((error) => {
+        } catch (error: any) {
           setHasAudio(false);
           throw new Error(error);
-        });
+        }
       }
     },
     [participant, participantId, componentAndIndex, storageEngine, timeUpdate],

@@ -494,14 +494,14 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   async getAudio(
-    taskList: string[],
+    task: string,
     participantId: string,
   ) {
     const storage = getStorage();
 
-    const urlList = await Promise.all(taskList.map(async (task) => await getDownloadURL(ref(storage, `${this.collectionPrefix}${this.studyId}/audio/${participantId}_${task}`))));
+    const url = await getDownloadURL(ref(storage, `${this.collectionPrefix}${this.studyId}/audio/${participantId}_${task}`));
 
-    const allAudioList = Promise.all(urlList.map((url) => new Promise<string>((resolve) => {
+    const allAudioList = new Promise<string>((resolve) => {
       const xhr = new XMLHttpRequest();
       xhr.responseType = 'blob';
       xhr.onload = () => {
@@ -513,7 +513,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       };
       xhr.open('GET', url);
       xhr.send();
-    })));
+    });
 
     return allAudioList;
   }

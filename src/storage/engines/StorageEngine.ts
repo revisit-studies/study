@@ -96,7 +96,7 @@ export abstract class StorageEngine {
 
   abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
 
-  abstract getAudio(taskList: string[], participantId?: string): Promise<string[]>;
+  abstract getAudio(task: string, participantId?: string): Promise<string>;
 
   abstract getModes(studyId: string): Promise<Record<REVISIT_MODE, boolean>>;
 }
