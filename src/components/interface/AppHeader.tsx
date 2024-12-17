@@ -6,7 +6,6 @@ import {
   Flex,
   Grid,
   Group,
-  Image,
   Menu,
   Progress,
   Space,
@@ -27,7 +26,7 @@ import {
   useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,
 } from '../../store/store';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { PREFIX } from '../../utils/Prefix';
+// import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import RecordingAudioWaveform from './RecordingAudioWaveform';
 
@@ -47,7 +46,7 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
 
   const [menuOpened, setMenuOpened] = useState(false);
 
-  const logoPath = studyConfig?.uiConfig.logoPath;
+  // const logoPath = studyConfig?.uiConfig.logoPath;
   const withProgressBar = studyConfig?.uiConfig.withProgressBar;
 
   const studyId = useStudyId();
@@ -70,7 +69,7 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
       <Grid mt={-7} align="center">
         <Grid.Col span={4}>
           <Flex align="center">
-            <Image w={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" />
+            {/* <Image w={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" /> */}
             <Space w="md" />
             <Title
               ref={titleRef}

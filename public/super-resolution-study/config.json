@@ -1,0 +1,199 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Super resolution image evaluation for cancer detection",
+    "version": "development",
+    "authors": [
+      "The Magic-Scan Team"
+    ],
+    "date": "2024-12-09",
+    "description": "This is a study to evaluate the effectiveness of super resolution images for cancer detection.",
+    "organizations": [
+      "University of Utah",
+      "CEDMAV"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "ishratjahan.eliza@utah.edu",
+    "helpTextPath": "super-resolution-study/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "studyEndMsg": "**Thank you for participating. Your responses have been recorded. If you have any questions feel free to contact us at [ishratjahan.eliza@utah.edu](mailto:ishratjahan.eliza@utah.edu) or [Sampad.Banik@utah.edu](mailto:Sampad.Banik@utah.edu)**",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true
+  }, 
+  "baseComponents": {
+      "super":{
+        "type": "website",
+        "response": [
+          {
+            "id": "q1",
+            "type": "radio",
+            "secondaryText": "Consider cellular abnormalities, tissue organization, and structural changes",
+            "required": true,
+            "location": "sidebar",
+            "prompt": "Which image preseve more detailed pathological features?",
+            "options": ["left", "same", "right"]
+          },
+          {
+            "id": "q2",
+            "type": "radio",
+            "secondaryText": "Consider nuclear details, membrane boundaries, and cytoplasmic features",
+            "required": true,
+            "location": "sidebar",
+            "prompt": "In which image you can distinguish invididual cellular structures better?",
+            "options": [
+              "left", "same", "right"
+            ]
+          },
+          {
+            "id": "q3",
+            "type": "radio",
+            "secondaryText": "Consider whether any artifacts or artificial patterns are present",
+            "required": true,
+            "location": "sidebar",
+            "prompt": "Which image preserve more natural tissue textures?",
+            "options": [
+              "left", "same", "right"
+            ]
+          },
+          {
+            "id": "q4",
+            "type": "radio",
+            "secondaryText": "Consider the transitions between cellular structures",
+            "required": true,
+            "location": "sidebar",
+            "prompt": "Which image well defines the bundaries between tissue regions?",
+            "options": [
+              "left", "same", "right"
+            ]
+          },
+          {
+            "id": "q5",
+            "type": "radio",
+            "secondaryText": "Consider the clarity and usefulness of details at higher magnification",
+            "required": true,
+            "location": "sidebar",
+            "prompt": "Which image maintains better zooming quality?",
+            "options": [
+              "left", "same", "right"
+            ]
+          },
+          {
+            "id": "q6",
+            "type":"longText",
+            "required": false,
+            "location": "sidebar",
+            "prompt": "Please provide any additional comments or rationale behind choosing your answers.",
+            "placeholder": "Type your comments here"
+            
+          }
+        ]
+      }
+    },
+  "components": {
+    "welcome": {
+      "type": "markdown",
+      "path": "super-resolution-study/assets/welcome.md",
+      "response": []
+    },
+    "consent": {
+      "type": "markdown",
+      "path": "super-resolution-study/assets/consent.md",
+      "nextButtonText": "I agree",
+      "response": []
+    },
+    "pair1":{
+      "baseComponent": "super",
+      "nextButtonLocation": "belowStimulus",
+      "path": "super-resolution-study/assets/11771.html"  
+    },
+    "pair2":{
+      "baseComponent": "super",
+      "path": "super-resolution-study/assets/11772.html"  
+    },
+    "pair3":{
+      "baseComponent": "super",
+      "path": "super-resolution-study/assets/11773.html"  
+    },
+    "pair4":{
+      "baseComponent": "super",
+      "path": "super-resolution-study/assets/11774.html"  
+    },
+    "post-study": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q1",
+          "type": "likert",
+          "required": true,
+          "location": "aboveStimulus",
+          "prompt": "How confident would you feel making a diagnosis based on the super-resolution image?",
+          "numItems": 5,
+          "leftLabel": "Not",
+          "rightLabel": "Very"
+
+        },
+        {
+          "id": "q2",
+          "type": "likert",
+          "required": true,
+          "location": "aboveStimulus",
+          "prompt": "How likely are you to use super-resolution images in your practice?",
+          "numItems": 5,
+          "leftLabel": "Not",
+          "rightLabel": "Very"
+        },
+        {
+          "id": "q3",
+          "type": "longText",
+          "required": false,
+          "location": "aboveStimulus",
+          "prompt": "What specific features or details are more visible in the super-resolution image compared to the original?"
+        },
+        {
+          "id": "q4",
+          "type": "longText",
+          "required": false,
+          "location": "aboveStimulus",
+          "prompt": "Are there any artifacts or distortions in the super-resolution image that could potentially interfere with diagnosis?"
+        },
+        {
+          "id": "q5",
+          "type":"checkbox",
+          "secondaryText": "Please select all that apply",
+          "required": true,
+          "location": "aboveStimulus",
+          "prompt": "Which image would you prefer to use for initial diagnosis?",
+          "options": [
+            "Original", "Super-resolution", "None"
+          ]
+        },
+        {
+          "id": "q6",
+          "type":"checkbox",
+          "secondaryText": "Please select all that apply",
+          "required": true,
+          "location": "aboveStimulus",
+          "prompt": "Which image would you prefer to use for detailed analysis?",
+          "options": [
+            "Original", "Super-resolution", "None"
+          ]
+        }
+      ]
+    }
+  },
+
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "welcome",
+      "consent",
+      "pair1",
+      "pair2",
+      "pair3",
+      "pair4",
+      "post-study"
+    ]
+  }
+}

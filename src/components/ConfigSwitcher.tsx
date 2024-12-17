@@ -91,9 +91,9 @@ function ConfigSwitcher({
                           onClick={(e) => e.stopPropagation()}
                           href={`${REVISIT_GITHUB_PUBLIC}${url}`}
                         >
-                          View source:
+                          {/* View source:
                           {' '}
-                          {url}
+                          {url} */}
                         </Anchor>
                       </Text>
                     </>

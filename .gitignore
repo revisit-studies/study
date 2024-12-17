@@ -29,3 +29,7 @@ dist-ssr
 /playwright/.cache/
 
 docs/
+public/super-resolution-study/assets/test.html
+public/super-resolution-study/assets/test2.html
+public/super-resolution-study/assets/test3.html
+public/super-resolution-study/assets/test4.html
