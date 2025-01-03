@@ -17,7 +17,7 @@
     "contactEmail": "ishratjahan.eliza@utah.edu",
     "helpTextPath": "super-resolution-study/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
-    "studyEndMsg": "**Thank you for participating. Your responses have been recorded. If you have any questions feel free to contact us at [ishratjahan.eliza@utah.edu](mailto:ishratjahan.eliza@utah.edu) or [Sampad.Banik@utah.edu](mailto:Sampad.Banik@utah.edu)**",
+    "studyEndMsg": "**Thank you for your participation. Your responses have been recorded. If you have any questions feel free to contact us at [ishratjahan.eliza@utah.edu](mailto:ishratjahan.eliza@utah.edu)**",
     "withProgressBar": true,
     "autoDownloadStudy": false,
     "sidebar": true
