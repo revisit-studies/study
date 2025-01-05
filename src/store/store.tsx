@@ -24,7 +24,7 @@ export async function studyStoreCreator(
     .map((id, idx) => [
       `${id}_${idx}`,
       {
-        answer: {}, startTime: 0, endTime: -1, provenanceGraph: undefined, windowEvents: [], timedOut: false,
+        answer: {}, incorrectAnswers: {}, startTime: 0, endTime: -1, provenanceGraph: undefined, windowEvents: [], timedOut: false,
       },
     ]));
   const emptyValidation: TrialValidation = Object.assign(
@@ -154,9 +154,10 @@ export async function studyStoreCreator(
         }: PayloadAction<{ identifier: string } & StoredAnswer>,
       ) {
         const {
-          identifier, answer, startTime, endTime, provenanceGraph, windowEvents, timedOut,
+          identifier, answer, startTime, endTime, provenanceGraph, windowEvents, timedOut, incorrectAnswers,
         } = payload;
         state.answers[identifier] = {
+          incorrectAnswers,
           answer,
           startTime,
           endTime,
@@ -164,6 +165,26 @@ export async function studyStoreCreator(
           windowEvents,
           timedOut,
         };
+      },
+      saveIncorrectAnswer(
+        state,
+        {
+          payload,
+        }: PayloadAction<{ question: string, identifier: string, answer: unknown }>,
+      ) {
+        const {
+          identifier, answer, question,
+        } = payload;
+
+        if (!state.answers[question].incorrectAnswers) {
+          state.answers[question].incorrectAnswers = {};
+        }
+
+        if (!state.answers[question].incorrectAnswers[identifier]) {
+          state.answers[question].incorrectAnswers[identifier] = { id: identifier, value: [] };
+        }
+
+        state.answers[question].incorrectAnswers[identifier].value.push(answer);
       },
     },
   });

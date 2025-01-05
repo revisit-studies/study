@@ -88,6 +88,8 @@ export function useNextStep() {
     const { provenanceGraph } = trialValidationCopy;
     const endTime = Date.now();
 
+    const { incorrectAnswers } = storedAnswer;
+
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
 
@@ -96,6 +98,7 @@ export function useNextStep() {
         answer: collectData ? answer : {},
         startTime,
         endTime,
+        incorrectAnswers,
         provenanceGraph,
         windowEvents: currentWindowEvents,
         timedOut: !collectData,

@@ -36,7 +36,7 @@ export default function ResponseBlock({
 }: Props) {
   const { storageEngine } = useStorageEngine();
   const storeDispatch = useStoreDispatch();
-  const { updateResponseBlockValidation, toggleShowHelpText } = useStoreActions();
+  const { updateResponseBlockValidation, toggleShowHelpText, saveIncorrectAnswer } = useStoreActions();
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
   const storedAnswer = status?.answer;
@@ -149,6 +149,7 @@ export default function ResponseBlock({
         if (correctAnswers[response.id] && !alertConfig[response.id]?.message.includes('You\'ve failed to answer this question correctly')) {
           updateAlertConfig(response.id, true, 'Correct Answer', 'You have answered the question correctly.', 'green');
         } else {
+          storeDispatch(saveIncorrectAnswer({ question: `${currentComponent}_${currentStep}`, identifier: response.id, answer: (answerValidator.values as Record<string, unknown>)[response.id] }));
           let message = '';
           if (newAttemptsUsed >= trainingAttempts) {
             message = `You didn't answer this question correctly after ${trainingAttempts} attempts. ${allowFailedTraining ? 'You can continue to the next question.' : 'Unfortunately you have not met the criteria for continuing this study.'}`;

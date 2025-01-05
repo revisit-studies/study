@@ -67,6 +67,8 @@ Each item in the window event is given a time, a position an event name, and som
 export interface StoredAnswer {
   /** Object whose keys are the "id"s in the Response list of the component in the StudyConfiguration and whose value is the inputted value from the participant. */
   answer: Record<string, { id: string, value: unknown }>;
+  /** Object whose keys are the "id"s in the Response list of the component in the StudyConfiguration and whose value is a list of incorrect inputted values from the participant. Only relevant for trials with `provideFeedback` and correct answers enabled. */
+  incorrectAnswers: Record<string, { id: string, value: unknown[] }>;
   /** Time that the user began interacting with the component in epoch milliseconds. */
   startTime: number;
   /** Time that the user ended interaction with the component in epoch milliseconds. */
