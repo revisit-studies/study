@@ -36,7 +36,9 @@ export default function ResponseBlock({
 }: Props) {
   const { storageEngine } = useStorageEngine();
   const storeDispatch = useStoreDispatch();
-  const { updateResponseBlockValidation, toggleShowHelpText, saveIncorrectAnswer } = useStoreActions();
+  const {
+    updateResponseBlockValidation, toggleShowHelpText, saveIncorrectAnswer, incrementHelpCounter,
+  } = useStoreActions();
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
   const storedAnswer = status?.answer;
@@ -218,7 +220,7 @@ export default function ResponseBlock({
                       <>
                         Please
                         {' '}
-                        <Anchor style={{ fontSize: 14 }} onClick={() => storeDispatch(toggleShowHelpText())}>click here</Anchor>
+                        <Anchor style={{ fontSize: 14 }} onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier: `${currentComponent}_${currentStep}` })); }}>click here</Anchor>
                         {' '}
                         and read the help text carefully.
                       </>

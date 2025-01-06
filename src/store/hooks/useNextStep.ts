@@ -88,7 +88,7 @@ export function useNextStep() {
     const { provenanceGraph } = trialValidationCopy;
     const endTime = Date.now();
 
-    const { incorrectAnswers } = storedAnswer;
+    const { incorrectAnswers, helpButtonClickedCount } = storedAnswer;
 
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
@@ -102,6 +102,7 @@ export function useNextStep() {
         provenanceGraph,
         windowEvents: currentWindowEvents,
         timedOut: !collectData,
+        helpButtonClickedCount,
       };
       storeDispatch(
         saveTrialAnswer({
@@ -200,7 +201,7 @@ export function useNextStep() {
     }
 
     navigate(`/${studyId}/${encryptIndex(nextStep)}${window.location.search}`);
-  }, [currentStep, trialValidation, identifier, windowEvents, dataCollectionEnabled, storedAnswer?.endTime, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setIframeAnswers, studyConfig, participantSequence]);
+  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setIframeAnswers, studyConfig, participantSequence]);
 
   return {
     isNextDisabled,

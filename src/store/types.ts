@@ -107,6 +107,9 @@ export interface StoredAnswer {
   windowEvents: EventType[];
   /** A boolean value that indicates whether the participant timed out on this question. */
   timedOut: boolean;
+  /** A counter indicating how many times participants opened the help tab during a task. Clicking help, or accessing the tab via answer feedback on an incorrect answer both are included in the counter. */
+  helpButtonClickedCount: number;
+
 }
 
 export interface StimulusParams<T> {
