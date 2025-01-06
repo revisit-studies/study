@@ -30,7 +30,7 @@ export default function AllReplays() {
   return (
     <Stack ref={ref} style={{ width: '100%' }}>
       { participants
-        ? participants.filter((part) => part.completed).map((part) => <AllTasksTimeline studyId={studyId || ''} key={part.participantId} height={200} participantData={part} setSelectedTask={() => null} width={width} />) : null}
+        ? participants.filter((part) => part.completed).map((part) => <AllTasksTimeline studyId={studyId || ''} key={part.participantId} height={200} participantData={part} width={width} />) : null}
     </Stack>
   );
 }
