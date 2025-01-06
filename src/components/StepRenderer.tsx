@@ -1,4 +1,4 @@
-import { AppShell, Box } from '@mantine/core';
+import { AppShell } from '@mantine/core';
 import { Outlet, useParams } from 'react-router-dom';
 import { useEffect, useMemo, useRef } from 'react';
 import debounce from 'lodash.debounce';
@@ -11,6 +11,7 @@ import { EventType } from '../store/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { WindowEventsContext } from '../store/hooks/useWindowEvents';
 import { useStoreSelector } from '../store/store';
+import { AnalysisFooter } from './interface/AnalysisFooter';
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
@@ -121,13 +122,7 @@ export function StepRenderer() {
           <Outlet />
         </AppShell.Main>
         {participantId && (
-        <AppShell.Footer zIndex={101} withBorder={false}>
-          <Box style={{ backgroundColor: 'var(--mantine-color-blue-2)' }}>
-            Analyzing participant:
-            {' '}
-            { participantId }
-          </Box>
-        </AppShell.Footer>
+        <AnalysisFooter />
         )}
       </AppShell>
     </WindowEventsContext.Provider>

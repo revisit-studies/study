@@ -56,7 +56,7 @@ export default function ReplayCard() {
   return (
     <Stack ref={ref} style={{ width: '100%' }}>
       <animated.div style={styles}>
-        <Card onMouseEnter={() => setInsideVideoView(true)} onMouseLeave={() => setInsideVideoView(false)} mx={10} style={{ bottom: '15px', position: 'absolute', width: width - 20 }} radius="xl" shadow="sm" withBorder>
+        <Card onMouseEnter={() => setInsideVideoView(true)} onMouseLeave={() => setInsideVideoView(false)} mx={10} style={{ bottom: '35px', position: 'absolute', width: width - 20 }} radius="xl" shadow="sm" withBorder>
           <AnalysisPopout setPercent={_setPercent} />
         </Card>
       </animated.div>
