@@ -27,6 +27,7 @@ import { useStoreActions, useStoreDispatch } from '../../store/store';
 import { deepCopy } from '../../utils/deepCopy';
 import { useEvent } from '../../store/hooks/useEvent';
 import { SingleTaskTimeline } from './SingleTaskTimeline';
+import { encryptIndex } from '../../utils/encryptDecryptIndex';
 
 const margin = {
   left: 0, top: 0, right: 5, bottom: 0,
@@ -278,7 +279,7 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
               style={{ width: '300px' }}
               value={participant?.participantId || ''}
               onChange={(e) => {
-                navigate(`../../${e}/0`, { relative: 'path' });
+                navigate(`../../${e}/${encryptIndex(0)}`, { relative: 'path' });
               }}
               data={allParticipants ? [...new Set(allParticipants.map((part) => part.participantId))] : []}
             />

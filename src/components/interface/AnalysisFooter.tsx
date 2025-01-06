@@ -40,7 +40,7 @@ export function AnalysisFooter() {
       return 0;
     }
 
-    const answersSorted = Object.values(participant.answers).sort((a, b) => a.startTime - b.startTime);
+    const answersSorted = Object.values(participant.answers).filter((data) => data.startTime).sort((a, b) => a.startTime - b.startTime);
 
     return new Date(answersSorted[answersSorted.length - 1].endTime - (answersSorted[1] ? answersSorted[1].startTime : 0)).getTime();
   }, [participant]);

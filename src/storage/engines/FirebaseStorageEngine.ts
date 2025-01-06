@@ -94,7 +94,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   private firestore: Firestore;
 
-  private collectionPrefix = 'prod-';
+  private collectionPrefix = import.meta.env.DEV ? 'dev-' : 'prod-';
 
   private studyCollection:
     | CollectionReference<DocumentData, DocumentData>

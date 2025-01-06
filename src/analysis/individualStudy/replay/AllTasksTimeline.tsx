@@ -73,9 +73,9 @@ export function AllTasksTimeline({
       return 0;
     }
 
-    const answersSorted = Object.values(participantData.answers).sort((a, b) => a.startTime - b.startTime);
+    const answersSorted = Object.values(participantData.answers).filter((data) => data.startTime).sort((a, b) => a.startTime - b.startTime);
 
-    return new Date(answersSorted[answersSorted.length - 1].endTime - (answersSorted[1] ? answersSorted[1].startTime : 0)).getTime();
+    return new Date(answersSorted[answersSorted.length - 1].endTime - (answersSorted[0] ? answersSorted[0].startTime : 0)).getTime();
   }, [participantData]);
 
   // Find entries of someone browsing away. Show them
@@ -125,7 +125,7 @@ export function AllTasksTimeline({
           <Text size="xl">{`${humanReadableDuration(duration)}`}</Text>
         </Group>
 
-        { participantData.completed && duration < 10000000 ? (
+        { participantData.completed ? (
           <svg style={{ width, height, overflow: 'visible' }}>
             {tasks.map((t) => t.line)}
             {tasks.map((t) => t.label)}

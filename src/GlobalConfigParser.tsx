@@ -99,7 +99,7 @@ export function GlobalConfigParser() {
             )}
             />
             <Route
-              path="/:studyId/*"
+              path="/:studyId/:participantId?/*"
               element={(
                 <>
                   <PageTitle title="ReVISit | Study" />
