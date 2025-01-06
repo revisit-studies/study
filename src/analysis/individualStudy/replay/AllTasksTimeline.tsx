@@ -1,7 +1,8 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
 import {
   Anchor, Center, Group, Stack, Tooltip, Text,
+  Divider,
 } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 import { ParticipantData } from '../../../storage/types';
@@ -30,9 +31,16 @@ function humanReadableDuration(msDuration: number): string {
 }
 
 export function AllTasksTimeline({
-  participantData, width, height, setSelectedTask, selectedTask, studyId,
-} : {participantData: ParticipantData, width: number, studyId: string, height: number, setSelectedTask: (task: string) => void, selectedTask?: string | null }) {
+  participantData, width, height, selectedTask, studyId,
+} : {participantData: ParticipantData, width: number, studyId: string, height: number, selectedTask?: string | null }) {
   const navigate = useNavigate();
+
+  const clickTask = useCallback((task: string) => {
+    const split = task.split('_');
+    const index = +split[split.length - 1];
+
+    navigate(`/${studyId}/${participantData.participantId}/${encryptIndex(index)}`);
+  }, [navigate, participantData.participantId, studyId]);
 
   const xScale = useMemo(() => {
     const allStartTimes = Object.values(participantData.answers || {}).map((answer) => [answer.startTime, answer.endTime]).flat();
@@ -63,10 +71,10 @@ export function AllTasksTimeline({
 
       return {
         line: <SingleTaskLabelLines key={name} labelHeight={currentHeight * LABEL_GAP} answer={answer} height={height} xScale={xScale} />,
-        label: <SingleTask key={name} labelHeight={currentHeight * LABEL_GAP} isSelected={selectedTask === name} setSelectedTask={setSelectedTask} answer={answer} height={height} name={name} xScale={xScale} />,
+        label: <SingleTask key={name} labelHeight={currentHeight * LABEL_GAP} isSelected={selectedTask === name} setSelectedTask={clickTask} answer={answer} height={height} name={name} xScale={xScale} />,
       };
     });
-  }, [height, participantData.answers, selectedTask, setSelectedTask, xScale]);
+  }, [height, participantData.answers, selectedTask, clickTask, xScale]);
 
   const duration = useMemo(() => {
     if (!participantData.answers || Object.entries(participantData.answers).length === 0) {
@@ -114,14 +122,15 @@ export function AllTasksTimeline({
   return (
     <Center>
       <Stack gap={25} style={{ width: '100%' }}>
-        <Group justify="space-between">
+        <Divider size="md" />
+        <Group justify="center">
           <Anchor
             href=""
             onClick={() => navigate(`/${studyId}/${participantData.participantId}/${encryptIndex(0)}`)}
           >
             {participantData.participantId}
           </Anchor>
-          {participantData.completed || duration > 10000000 ? null : <Text size="xl" color="red">Not completed</Text>}
+          {participantData.completed ? null : <Text size="xl" c="red">Not completed</Text>}
           <Text size="xl">{`${humanReadableDuration(duration)}`}</Text>
         </Group>
 
