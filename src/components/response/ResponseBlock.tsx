@@ -153,7 +153,9 @@ export default function ResponseBlock({
         } else {
           storeDispatch(saveIncorrectAnswer({ question: `${currentComponent}_${currentStep}`, identifier: response.id, answer: (answerValidator.values as Record<string, unknown>)[response.id] }));
           let message = '';
-          if (newAttemptsUsed >= trainingAttempts) {
+          if (trainingAttempts === -1) {
+            message = 'Please try again.';
+          } else if (newAttemptsUsed >= trainingAttempts) {
             message = `You didn't answer this question correctly after ${trainingAttempts} attempts. ${allowFailedTraining ? 'You can continue to the next question.' : 'Unfortunately you have not met the criteria for continuing this study.'}`;
 
             // If the user has failed the training, wait 5 seconds and redirect to a fail page
@@ -227,7 +229,7 @@ export default function ResponseBlock({
                     )}
                     <br />
                     <br />
-                    {attemptsUsed >= trainingAttempts && configCorrectAnswer && ` The correct answer was: ${configCorrectAnswer}.`}
+                    {attemptsUsed >= trainingAttempts && trainingAttempts >= 0 && configCorrectAnswer && ` The correct answer was: ${configCorrectAnswer}.`}
                   </Alert>
                 )}
               </>
@@ -240,7 +242,7 @@ export default function ResponseBlock({
         {hasCorrectAnswerFeedback && showNextBtn && (
           <Button
             onClick={() => checkAnswerProvideFeedback()}
-            disabled={!answerValidator.isValid() || attemptsUsed >= trainingAttempts}
+            disabled={!answerValidator.isValid() || (attemptsUsed >= trainingAttempts && trainingAttempts >= 0)}
           >
             Check Answer
           </Button>
