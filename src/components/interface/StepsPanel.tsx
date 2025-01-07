@@ -1,10 +1,10 @@
 import {
   Badge, Box, NavLink, Popover, Text,
 } from '@mantine/core';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { IconArrowsShuffle, IconBrain, IconPackageImport } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { ComponentBlock, StudyConfig } from '../../parser/types';
 import { Sequence } from '../../store/types';
 import { deepCopy } from '../../utils/deepCopy';
@@ -114,7 +114,9 @@ function StepItem({
 
   const stepIndex = subSequence && subSequence.components.slice(startIndex).includes(step) ? findTaskIndexInSequence(fullSequence, step, startIndex, subSequence.orderPath) : -1;
 
-  const { trialId, participantId } = useParams();
+  const { trialId } = useParams();
+  const [searchParams] = useSearchParams();
+  const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
 
   const analysisActive = trialId === step;
   const studyActive = participantView ? currentStep === stepIndex : currentStep === `reviewer-${step}`;

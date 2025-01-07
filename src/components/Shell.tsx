@@ -2,10 +2,11 @@ import {
   ReactNode,
   useEffect,
   useState,
+  useMemo,
 } from 'react';
 import { Provider } from 'react-redux';
 import {
-  RouteObject, useParams, useRoutes, useSearchParams,
+  RouteObject, useRoutes, useSearchParams,
 } from 'react-router-dom';
 import { LoadingOverlay, Title } from '@mantine/core';
 import {
@@ -50,7 +51,8 @@ export function Shell({ globalConfig }: {
   const [store, setStore] = useState<Nullable<StudyStore>>(null);
   const { storageEngine } = useStorageEngine();
   const [searchParams] = useSearchParams();
-  const { participantId } = useParams();
+
+  const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
 
   useEffect(() => {
     async function initializeUserStoreRouting() {
@@ -95,15 +97,6 @@ export function Shell({ globalConfig }: {
           {
             path: '/',
             element: <NavigateWithParams to={encryptIndex(0)} replace />,
-          },
-          {
-            path: '/:participantId/:index',
-            element: activeConfig.errors.length > 0 ? (
-              <>
-                <Title order={2} mb={8}>Error loading config</Title>
-                <ErrorLoadingConfig issues={activeConfig.errors} type="error" />
-              </>
-            ) : <ComponentController />,
           },
           {
             path: '/:index',

@@ -39,7 +39,7 @@ export function AllTasksTimeline({
     const split = task.split('_');
     const index = +split[split.length - 1];
 
-    navigate(`/${studyId}/${participantData.participantId}/${encryptIndex(index)}`);
+    navigate(`/${studyId}/${encryptIndex(index)}?participantId=${participantData.participantId}`);
   }, [navigate, participantData.participantId, studyId]);
 
   const xScale = useMemo(() => {
@@ -126,7 +126,7 @@ export function AllTasksTimeline({
         <Group justify="center">
           <Anchor
             href=""
-            onClick={() => navigate(`/${studyId}/${participantData.participantId}/${encryptIndex(0)}`)}
+            onClick={() => navigate(`/${studyId}/${encryptIndex(0)}?participantId=${participantData.participantId}`)}
           >
             {participantData.participantId}
           </Anchor>

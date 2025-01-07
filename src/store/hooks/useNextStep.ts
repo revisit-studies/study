@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   useStoreSelector,
   useStoreActions,
@@ -20,6 +20,7 @@ import {
   Answer, IndividualComponent, InheritedComponent, StudyConfig,
 } from '../../parser/types';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import { useIsAnalysis } from './useIsAnalysis';
 
 function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: string, componentConfig: IndividualComponent | InheritedComponent, studyConfig: StudyConfig) {
   const componentName = componentId.slice(0, componentId.lastIndexOf('_'));
@@ -62,8 +63,8 @@ export function useNextStep() {
   const areResponsesValid = useAreResponsesValid(identifier);
 
   // Status of the next button. If false, the next button should be disabled
-  const { participantId } = useParams();
-  const isNextDisabled = typeof currentStep !== 'number' || participantId !== undefined || !areResponsesValid;
+  const isAnalysis = useIsAnalysis();
+  const isNextDisabled = typeof currentStep !== 'number' || isAnalysis || !areResponsesValid;
 
   const storedAnswer = useStoredAnswer();
 

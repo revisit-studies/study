@@ -7,9 +7,9 @@ import {
 import { animated, useSpring } from 'react-spring';
 import { useDebouncedState, useResizeObserver } from '@mantine/hooks';
 import {
-  useCallback, useEffect, useState,
+  useCallback, useEffect, useState, useMemo,
 } from 'react';
-import { useParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { AnalysisPopout } from '../components/audioAnalysis/AnalysisPopout';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 
@@ -26,7 +26,8 @@ export default function ReplayCard() {
   const { storageEngine } = useStorageEngine();
 
   const [ref, { width }] = useResizeObserver();
-  const { participantId } = useParams();
+  const [searchParams] = useSearchParams();
+  const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
 
   useEffect(() => {
     const mainDiv = document.getElementsByClassName('mantine-AppShell-main') as HTMLCollectionOf<HTMLDivElement>;

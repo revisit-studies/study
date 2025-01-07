@@ -1,5 +1,5 @@
 import { AppShell } from '@mantine/core';
-import { Outlet, useParams } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { useEffect, useMemo, useRef } from 'react';
 import debounce from 'lodash.debounce';
 import AppAside from './interface/AppAside';
@@ -12,6 +12,7 @@ import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { WindowEventsContext } from '../store/hooks/useWindowEvents';
 import { useStoreSelector } from '../store/store';
 import { AnalysisFooter } from './interface/AnalysisFooter';
+import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
@@ -98,7 +99,7 @@ export function StepRenderer() {
 
   const asideOpen = useMemo(() => studyNavigatorEnabled && showStudyBrowser, [studyNavigatorEnabled, showStudyBrowser]);
 
-  const { participantId } = useParams();
+  const isAnalysis = useIsAnalysis();
 
   return (
     <WindowEventsContext.Provider value={windowEvents}>
@@ -107,7 +108,7 @@ export function StepRenderer() {
         header={{ height: 70 }}
         navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !studyConfig.uiConfig.sidebar, mobile: !studyConfig.uiConfig.sidebar } }}
         aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
-        styles={participantId ? {
+        styles={isAnalysis ? {
           navbar: { borderLeft: '0.5rem solid var(--mantine-color-blue-2)' },
           header: { borderLeft: '0.5rem solid var(--mantine-color-blue-2)', borderTop: '0.5rem solid var(--mantine-color-blue-2)', borderRight: '0.5rem solid var(--mantine-color-blue-2)' },
           aside: { borderRight: '0.5rem solid var(--mantine-color-blue-2)' },
@@ -121,7 +122,7 @@ export function StepRenderer() {
         <AppShell.Main>
           <Outlet />
         </AppShell.Main>
-        {participantId && (
+        {isAnalysis && (
         <AnalysisFooter />
         )}
       </AppShell>

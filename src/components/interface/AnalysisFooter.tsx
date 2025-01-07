@@ -2,11 +2,13 @@
 import {
   AppShell, Box, Group, Text,
 } from '@mantine/core';
-import { useParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useMemo } from 'react';
 import { useAsync } from '../../store/hooks/useAsync';
+
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { StorageEngine } from '../../storage/engines/StorageEngine';
+import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
 
 function getParticipantData(trrackId: string | undefined, storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
@@ -30,7 +32,15 @@ function humanReadableDuration(msDuration: number): string {
 }
 
 export function AnalysisFooter() {
-  const { participantId } = useParams();
+  const [searchParams] = useSearchParams();
+
+  const participantId = useMemo(() => {
+    searchParams.get('participantId');
+  }, [searchParams]);
+
+  const currentComponent = useCurrentComponent();
+  const currentStep = useCurrentStep();
+
   const { storageEngine } = useStorageEngine();
 
   const { value: participant } = useAsync(getParticipantData, [participantId, storageEngine]);
@@ -45,15 +55,26 @@ export function AnalysisFooter() {
     return new Date(answersSorted[answersSorted.length - 1].endTime - (answersSorted[1] ? answersSorted[1].startTime : 0)).getTime();
   }, [participant]);
 
+  const taskDuration = useMemo(() => {
+    if (!participant || !participant.answers || Object.entries(participant.answers).length === 0) {
+      return 0;
+    }
+
+    return new Date(participant.answers[`${currentComponent}_${currentStep}`].endTime - participant.answers[`${currentComponent}_${currentStep}`].startTime).getTime();
+  }, [participant, currentComponent, currentStep]);
+
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
       <Box style={{ backgroundColor: 'var(--mantine-color-blue-2)' }}>
         <Group>
           <Text mx="sm">
-            {`Analyzing participant ${participant?.participantId}`}
+            {`Analyzing participant: ${participant?.participantId}`}
           </Text>
           <Text mx="sm">
-            {`Duration: ${humanReadableDuration(duration)}`}
+            {`Total Duration: ${humanReadableDuration(duration)}`}
+          </Text>
+          <Text mx="sm">
+            {`Task Duration: ${humanReadableDuration(taskDuration)}`}
           </Text>
           <Text mx="sm">
             {`Status: ${participant?.rejected ? 'Rejected' : participant?.completed ? 'Completed' : 'Incomplete'}`}

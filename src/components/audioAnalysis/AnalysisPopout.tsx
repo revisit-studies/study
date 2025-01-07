@@ -4,7 +4,7 @@ import {
   ActionIcon,
   Box, Center, Group, Loader, Select, Stack,
 } from '@mantine/core';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
@@ -28,6 +28,7 @@ import { deepCopy } from '../../utils/deepCopy';
 import { useEvent } from '../../store/hooks/useEvent';
 import { SingleTaskTimeline } from './SingleTaskTimeline';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 
 const margin = {
   left: 0, top: 0, right: 5, bottom: 0,
@@ -51,7 +52,9 @@ function getAllParticipantIds(storageEngine: StorageEngine | undefined) {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void}) {
-  const { participantId } = useParams();
+  const [searchParams] = useSearchParams();
+  const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
+
   const { storageEngine } = useStorageEngine();
 
   const { saveAnalysisState } = useStoreActions();
@@ -162,9 +165,11 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
     }
   }, [_setCurrentNode, currentNode, participant, participantId, playTime, componentAndIndex]);
 
+  const isAnalysis = useIsAnalysis();
+
   const handleWSMount = useCallback(
     async (waveSurfer: WaveSurfer | null) => {
-      if (waveSurfer && participant && participantId && componentAndIndex && storageEngine) {
+      if (waveSurfer && participant && isAnalysis && componentAndIndex && storageEngine) {
         try {
           const url = await storageEngine.getAudio(componentAndIndex, participantId);
           await waveSurfer.load(url);
@@ -182,7 +187,7 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
         }
       }
     },
-    [participant, participantId, componentAndIndex, storageEngine, timeUpdate],
+    [participant, isAnalysis, componentAndIndex, storageEngine, participantId, timeUpdate],
   );
 
   const plugins = useMemo(() => [], []);

@@ -21,7 +21,7 @@ import {
   IconUserPlus,
 } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
-import { useHref, useParams } from 'react-router-dom';
+import { useHref } from 'react-router-dom';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,
@@ -30,6 +30,7 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import RecordingAudioWaveform from './RecordingAudioWaveform';
+import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 
 export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
@@ -65,10 +66,10 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
     }
   }, [studyConfig]);
 
-  const { participantId } = useParams();
+  const isAnalysis = useIsAnalysis();
 
   return (
-    <AppShell.Header p={participantId ? '0.5rem' : '1rem'}>
+    <AppShell.Header p={isAnalysis ? '0.5rem' : '1rem'}>
       <Grid mt={-7} align="center">
         <Grid.Col span={4}>
           <Flex align="center">

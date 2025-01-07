@@ -2,7 +2,6 @@ import {
   Suspense, useEffect, useMemo, useRef, useState,
 } from 'react';
 import merge from 'lodash.merge';
-import { useParams } from 'react-router-dom';
 import ResponseBlock from '../components/response/ResponseBlock';
 import IframeController from './IframeController';
 import ImageController from './ImageController';
@@ -23,6 +22,7 @@ import ResourceNotFound from '../ResourceNotFound';
 import { TimedOut } from '../components/TimedOut';
 import { findBlockForStep } from '../utils/getSequenceFlatMap';
 import ReplayCard from './ReplayCard';
+import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 
 // current active stimuli presented to the user
 export default function ComponentController() {
@@ -37,7 +37,8 @@ export default function ComponentController() {
   const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
   const { setIsRecording } = useStoreActions();
   const { analysisProvState } = useStoreSelector((state) => state);
-  const { participantId } = useParams();
+
+  const isAnalysis = useIsAnalysis();
 
   // If we have a trial, use that config to render the right component else use the step
   const status = useStoredAnswer();
@@ -59,7 +60,7 @@ export default function ComponentController() {
   }, [setAlertModal, storageEngine, storeDispatch]);
 
   useEffect(() => {
-    if (!studyConfig || !studyConfig.recordStudyAudio || !storageEngine || storageEngine.getEngine() !== 'firebase' || status.endTime > 0 || participantId !== undefined) {
+    if (!studyConfig || !studyConfig.recordStudyAudio || !storageEngine || storageEngine.getEngine() !== 'firebase' || status.endTime > 0 || isAnalysis) {
       return;
     }
 
@@ -175,7 +176,7 @@ export default function ComponentController() {
         location="belowStimulus"
       />
 
-      {participantId ? (
+      {isAnalysis ? (
         <ReplayCard />
       ) : null }
     </>
