@@ -1,80 +1,61 @@
-## TOML tutorial
-### **Syntax Rules**
+## TOML Basic Syntax Tutorial
+TOML (**Tom's Obvious, Minimal Language**) is a simple, easy-to-read, and easy-to-write configuration file format. It is designed to be human-friendly and easy to parse, making it ideal for configuration files.
+<br><br>
 
----
-TOML (Tom's Obvious, Minimal Language) is a configuration file format designed to be easy to read and write. It is often used for software configuration due to its simplicity and structure.
+### 1. Key-Value Pairs
+Key-value pairs are separated by an equals sign =; keys are on the left, and values are on the right.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/toml/toml_KVPairs.png" width="450px" height="auto">
+<br>
 
----
-**Key-Value Pairs**
-Key-value pairs are the foundation of TOML.
-Keys are case-sensitive and must be unique within a table.
-Values can be strings, numbers, booleans, arrays, dates, or inline tables.
 
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/toml/toml_example_1.png" width="400px" height="auto">
+### 2. Strings
+**Basic strings** are enclosed in double quotes <strong style="color:green;">""</strong>.
+**Multi-line strings** use triple double quotes <strong style="color:green;">"""</strong> for multiple lines.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/toml/toml_strings.png" width="450px" height="auto">
+<br>
 
----
-**Strings**
-Strings must be enclosed in double quotes (").
-Multi-line strings use triple double quotes (""").
-Escape sequences (e.g., \n, \", \\) are supported in basic strings.
+### 3. Numbers and Booleans
+Supports integers, floating-point numbers, and booleans.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/toml/toml_numbers.png" width="450px" height="auto">
+<br>
 
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/toml/toml_example_2.png" width="400px" height="auto">
+### 4. Arrays
+Arrays are defined using square brackets <strong style="color:green;">[]</strong>, with items separated by commas <strong style="color:green;">,</strong>.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/toml/toml_arrays.png" width="450px" height="auto">
+<br>
 
----
-**Numbers**
-Numbers can be integers, floating-point, or hexadecimal.
-Underscores (_) are allowed for readability (e.g., 1_000).
+### 5. Tables
+Tables are defined using square brackets <strong style="color:green;">[]</strong> and create hierarchical structures.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/toml/toml_table.png" width="450px" height="auto">
+<br>
 
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/toml/toml_example_3.png" width="400px" height="auto">
+### 6. Inline Tables
+Inline tables use <strong style="color:green;">{}</strong> and are suitable for simple objects.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/toml/toml_intable.png" width="450px" height="auto">
+<br>
 
----
-**Booleans**
-Booleans are true or false (case-sensitive).
+### 7. Dates and Times
+TOML explicitly supports time and date formats based on the **RFC 3339** standard.
+- Date (Full Date)
+   Format: <strong style="color:green;">YYYY-MM-DD</strong>
+- Local Date-Time (No Time Zone)
+   Format: <strong style="color:green;">YYYY-MM-DDTHH:MM:SS</strong>
+- Date-Time with Time Zone
+   Format:
+   <strong style="color:green;">YYYY-MM-DDTHH:MM:SSZ</strong> (UTC time, where Z indicates the zero offset).
+   <strong style="color:green;">YYYY-MM-DDTHH:MM:SS±HH:MM</strong> (Time offset).
+- Time Only (Local Time)
+   Format: <strong style="color:green;">HH:MM:SS</strong>
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/toml/toml_date.png" width="450px" height="auto">
+<br>
 
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/toml/toml_example_4.png" width="400px" height="auto">
-
----
-**Dates and Times**
-TOML supports:
-Local dates (YYYY-MM-DD)
-Local times (HH:MM:SS)
-Datetimes with offsets (YYYY-MM-DDTHH:MM:SSZ).
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/toml/toml_example_5.png" width="400px" height="auto">
-
----
-**Arrays**
-Arrays are enclosed in square brackets ([]) and can contain values of the same type.
-Inline arrays are separated by commas, while multi-line arrays are allowed for readability.
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/toml/toml_example_6.png" width="400px" height="auto">
-
----
-**Tables**
-Tables group related key-value pairs.
-They are defined using square brackets ([]).
-Nested tables are created using dot notation or additional brackets.
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/toml/toml_example_7.png" width="400px" height="auto">
-
----
-**Inline Tables**
-Inline tables are enclosed in curly braces ({}) and must be written on a single line.
-Use them for small tables.
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/toml/toml_example_8.png" width="400px" height="auto">
-
----
-**Comments**
-Comments start with # and can be placed anywhere in the file.
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/toml/toml_example_9.png" width="400px" height="auto">
+### Full TOML Example
+   <img src="./assets/tutorial/toml/toml_example.png" width="450px" height="auto">
+<br>

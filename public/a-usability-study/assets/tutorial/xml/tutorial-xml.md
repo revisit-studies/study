@@ -1,90 +1,51 @@
-## XML tutorial
-### **Syntax Rules**
+## XML Basic Syntax Tutorial
+XML (**eXtensible Markup Language**) is a markup language used to store and transport data. It is a structured text format similar to HTML but more flexible because it allows for custom tags.
+<br><br>
 
----
+### 1. Declaration
+An XML document starts with a declaration that specifies the XML version and character encoding.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/xml/xml_declaration.png" width="450px" height="auto">
+<br>
 
-XML (Extensible Markup Language) is a markup language designed to store and transport data in a structured and hierarchical format. It is widely used in web development, data exchange, and configuration files due to its flexibility and readability.
+### 2. Elements
+XML uses elements to represent data, which include start tags and end tags.
+Tag names are case-sensitive.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/xml/xml_elements.png" width="450px" height="auto">
+<br>
 
+### 3. Attributes
+Elements can include attributes to provide additional information.
+Attributes are written inside the start tag as key-value pairs.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/xml/xml_attributes.png" width="450px" height="auto">
+<br>
 
----
-Key Features of XML
-- Tags and Elements: XML uses tags to define data and organize it hierarchically.
-- Attributes: Additional metadata can be provided for elements using attributes.
-- Self-Descriptive: XML allows you to create custom tags to suit your data needs.
-- Cross-Platform: XML is both human-readable and machine-readable, making it ideal for data exchange.
+### 4. Empty Elements
+Empty elements have no content and can use self-closing tags.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/xml/xml_empty.png" width="450px" height="auto">
+<br>
 
+### 5. Comments
+Comments in XML are enclosed in <strong style="color:green;"><!-- --></strong>.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/xml/xml_comments.png" width="450px" height="auto">
+<br>
 
-Basic Syntax Rules
-- Root Element: An XML document must have a single root element that contains all other elements.
-- Opening and Closing Tags: Tags must be properly opened and closed.
-Case Sensitivity: XML is case-sensitive.
-- Well-Formed Structure: Elements must be properly nested and follow a hierarchical structure.
-- Attributes: Attribute values must always be enclosed in double or single quotes.
-Comments: XML supports comments, which start with <!-- and end with -->.
+### 6. Text Content
+The content between elements can be plain text.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/xml/xml_text.png" width="450px" height="auto">
+<br>
 
-Basic XML Structure：
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/xml/xml_example_1.png" width="400px" height="auto">
+### 7. Nested Elements
+XML supports nested elements, forming a hierarchical structure.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/xml/xml_nested.png" width="450px" height="auto">
+<br>
 
----
-**Tags and Elements**
-Tags define the structure of an XML document. Each element has an opening tag <tag> and a closing tag </tag>.
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/xml/xml_example_2.png" width="400px" height="auto">
-
-
----
-**Root Element**
-Every XML document must have a single root element that contains all other elements.
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/xml/xml_example_3.png" width="400px" height="auto">
-
----
-**Attributes**
-Attributes provide metadata for elements and must be enclosed in quotes
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/xml/xml_example_4.png" width="400px" height="auto">
-
----
-**Self-Closing Tags**
-Empty elements can be self-closed using />.
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/xml/xml_example_5.png" width="400px" height="auto">
-
----
-**Comments**
-Comments in XML are enclosed within <!-- and -->.
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/xml/xml_example_6.png" width="400px" height="auto">
-
----
-**Nesting and Hierarchy**
-Elements must be properly nested and follow a hierarchical structure.
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/xml/xml_example_7.png" width="400px" height="auto">
-
-###### <u>Wrong Format Example</u> 
-   <img src="./assets/tutorial/xml/xml_example_8.png" width="400px" height="auto">
-
-
----
-**Prolog**
-The prolog declares the XML version and encoding.
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/xml/xml_example_9.png" width="400px" height="auto">
-
----
-**CDATA Sections**
-CDATA is used to include raw text that should not be parsed as XML.
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/xml/xml_example_10.png" width="400px" height="auto">
-
-
+### Full XML Example
+   <img src="./assets/tutorial/xml/xml_example.png" width="450px" height="auto">
+<br>

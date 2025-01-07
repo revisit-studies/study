@@ -50,7 +50,6 @@ HJSON allows human-friendly booleans and null values:
 <br>
 
 
-### HJSON Example
-###### <u>Correct Example</u> 
+### Full HJSON Example
    <img src="./assets/tutorial/hjson/hjson_example.png" width="450px" height="auto">
 <br>

@@ -291,14 +291,16 @@
             "A",
             "B",
             "C",
-            "D"
+            "D",
+            "E",
+            "F"
           ]
         }
       ],
       "correctAnswer": [
         {
           "id": "quiz-yaml",
-          "answer": "A"
+          "answer": ["A","B","C","D","E"]
         }
       ],
       "allowFailedTraining": false,
@@ -334,14 +336,16 @@
             "A",
             "B",
             "C",
-            "D"
+            "D",
+            "E",
+            "F"
           ]
         }
       ],
       "correctAnswer": [
         {
           "id": "quiz-toml",
-          "answer": "A"
+          "answer": ["A","C","D","F"]
         }
       ],
       "allowFailedTraining": false,
@@ -377,14 +381,16 @@
             "A",
             "B",
             "C",
-            "D"
+            "D",
+            "E",
+            "F"
           ]
         }
       ],
       "correctAnswer": [
         {
           "id": "quiz-xml",
-          "answer": "A"
+          "answer": ["A","C","D","F"]
         }
       ],
       "allowFailedTraining": false,

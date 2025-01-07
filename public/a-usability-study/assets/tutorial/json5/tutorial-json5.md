@@ -43,9 +43,7 @@ JSON5 supports additional number formats:
    <img src="./assets/tutorial/json5/json5_number.png" width="450px" height="auto">
 <br>
 
-### JSON5 Example
-
-###### <u>Correct Example</u> 
+### Full JSON5 Example
    <img src="./assets/tutorial/json5/json5_example.png" width="450px" height="auto">
 <br>
 
