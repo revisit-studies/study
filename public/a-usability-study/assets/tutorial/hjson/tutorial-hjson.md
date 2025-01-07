@@ -1,61 +1,56 @@
+## HJSON Basic Syntax Tutorial
+HJSON (**Human JSON**) is a human-friendly version of JSON. Unlike standard JSON, HJSON **does not require** <strong style="color:green;">{}</strong> and <strong style="color:green;">[]</strong> to enclose objects and arrays, making it much simpler and more intuitive for configuration files.
+HJSON has the same data structure as JSON, supporting objects, arrays, strings, numbers, booleans, and <strong style="color:green;">{}</strong>null</strong>.
 
-## HJSON tutorial
-### **Syntax Rules**
+HJSON extends standard JSON with the following unique features:
+<br><br>
 
----
-
-HJSON (Human JSON) is a JSON variant designed to make JSON files more human-friendly and easier to edit. It relaxes some of JSON's strict syntax rules and introduces features to improve readability, such as comments, simplified syntax, and better support for configuration files.
-
----
-
-**Comments**
-HJSON supports both single-line (//) and multi-line (/* */) comments.
-Comments can appear anywhere in the document.
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/hjson/hjson_example_1.png" width="400px" height="auto">
-
----
-
-**Keys Without Quotes**
-Key names can be unquoted if they are valid JavaScript identifiers (letters, digits, _, $).
-Keys can still be quoted if needed.
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/hjson/hjson_example_2.png" width="400px" height="auto">
+### 1. No Requirement for {} and []
+In HJSON, **objects** and **arrays** do not require <strong style="color:green;">{}</strong> and <strong style="color:green;">[]</strong>.
+- **Objects**: Key-value pairs are listed line by line, with no enclosing curly braces <strong style="color:green;">{}</strong>.
+- **Arrays**: Each array item is placed on a new line, using indentation to indicate hierarchy.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/hjson/hjson_NoRequirement.png" width="450px" height="auto">
+<br>
 
 
----
+### 2. Support for Comments
+HJSON supports **single-line comments** (<strong style="color:green;">#</strong> and <strong style="color:green;">//</strong>) and **multi-line comments**.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/hjson/hjson_comments.png" width="450px" height="auto">
+<br>
 
-**Multi-Line Strings**
-Multi-line strings can use triple quotes (''' or """) for easier editing.
-No need for \n in multi-line strings.
 
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/hjson/hjson_example_3.png" width="400px" height="auto">
+### 3. Simplified Key-Value Pairs
+In HJSON, keys do not require quotes, and values can be separated using a colon <strong style="color:green;">:</strong> or just a space.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/hjson/hjson_KVPairs.png" width="450px" height="auto">
+<br>
 
----
+### 4. Flexible Strings
+Strings can **omit quotes** unless they contain special characters.
+**Multi-line strings** are written with indentation, avoiding escape characters.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/hjson/hjson_Flexible.png" width="450px" height="auto">
+<br>
 
-**Flexible Commas**
-Trailing commas are optional after the last key-value pair or array element.
 
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/hjson/hjson_example_4.png" width="400px" height="auto">
+### 5. Support for Trailing Commas
+HJSON allows trailing commas after the last item in objects and arrays.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/hjson/hjson_Commas.png" width="450px" height="auto">
+<br>
 
----
+### 6. Human-Friendly Booleans and Null
+HJSON allows human-friendly booleans and null values:
+- **Booleans**: use <strong style="color:green;">true</strong> /<strong style="color:green;">yes</strong>  or <strong style="color:green;">false</strong> /<strong style="color:green;">no</strong>.
+- **Null**: use <strong style="color:green;">null</strong>  or <strong style="color:green;">~</strong> .
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/hjson/hjson_Booleans.png" width="450px" height="auto">
+<br>
 
-**Bare Values**
-HJSON allows bare values like booleans, numbers, and null without requiring them to be in quotes.
 
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/hjson/hjson_example_5.png" width="400px" height="auto">
-
----
-
-**Arrays can have a simplified format**
-Elements can be written on separate lines without commas.
-Commas are optional.
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/hjson/hjson_example_6.png" width="400px" height="auto">
-
+### HJSON Example
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/hjson/hjson_example.png" width="450px" height="auto">
+<br>

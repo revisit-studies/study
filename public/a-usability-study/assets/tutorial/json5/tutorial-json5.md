@@ -1,60 +1,52 @@
-## JSON5 tutorial
-### **Syntax Rules**
+## JSON5 Basic Syntax Tutorial
+JSON5 is an extension of standard JSON, designed to improve JSON's readability and usability. JSON5 retains most of JSON's core features but adds flexibility, such as support for comments, single quotes, and trailing commas.
+- JSON5 still uses **key-value** pairs, where keys and values are separated by a colon <strong style="color:green;">:</strong>.
+- JSON5 supports the same data types as JSON: Strings, Numbers, Booleans, Objects, Arrays, <strong style="color:green;">null</strong>
+- JSON5 uses <strong style="color:green;">{}</strong> for objects and <strong style="color:green;">[]</strong> for arrays, identical to JSON.
 
----
-Like JSONC, JSON5 is another variant of JSON that aims to enhance the readability and usability of JSON. The main differences between its syntax rules and those of JSON are as follows:
+JSON5 extends standard JSON with the following unique features:
+<br><br>
 
----
+### 1. Support for Comments
+JSON5 allows comments, which JSON does not.
+Single-Line Comments use  <strong style="color:green;">//</strong>
+Multi-Line Comments use  <strong style="color:green;">/* */</strong>
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/json5/json5_comments.png" width="450px" height="auto">
+<br>
 
-**Comments**
-JSON5 supports single-line (//) and multi-line (/* */) comments.
+### 2. Support for Single-Quoted Strings
+JSON5 allows single quotes <strong style="color:green;">'</strong> for strings, in addition to double quotes <strong style="color:green;">""</strong>.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/json5/json5_strings.png" width="450px" height="auto">
+<br>
 
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/json5/json5_example_1.png" width="400px" height="auto">
+### 3. Support for Trailing Commas
+JSON5 allows a trailing comma <strong style="color:green;">,</strong> after the last element in objects and arrays.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/json5/json5_commas.png" width="450px" height="auto">
+<br>
+
+### 4. Support for Unquoted Keys
+JSON5 allows unquoted keys if they are valid identifiers (e.g., letters, numbers, and underscores).
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/json5/json5_unquote.png" width="450px" height="auto">
+<br>
+
+### 5. Flexible Number Formats
+JSON5 supports additional number formats:
+- **Hexadecimal numbers**: Example: <strong style="color:green;">0xFF</strong>
+- **Leading decimals**: Example: <strong style="color:green;">.5</strong>
+- **Trailing decimals**: Example: <strong style="color:green;">5.</strong>
+- **Positive numbers with** <strong style="color:green;">+</strong> **sign**: Example: <strong style="color:green;">+25</strong>
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/json5/json5_number.png" width="450px" height="auto">
+<br>
+
+### JSON5 Example
+
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/json5/json5_example.png" width="450px" height="auto">
+<br>
 
 
----
-
-**Keys Without Quotes**
-Key names can be unquoted if they are valid JavaScript identifiers.
-Keys can still be enclosed in double quotes for compatibility.
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/json5/json5_example_2.png" width="400px" height="auto">
-
----
-
-**Strings**
-Strings can use single quotes (') or double quotes (").
-Multi-line strings are supported using a backslash (\) as the line continuation character.
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/json5/json5_example_3.png" width="400px" height="auto">
-
----
-
-**Numbers**
-JSON5 supports:
-- Leading decimal points (e.g., .5 instead of 0.5).
-- Hexadecimal numbers (e.g., 0xFF).
-- Special numeric values like Infinity and NaN.
-- Optional + sign for positive numbers.
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/json5/json5_example_4.png" width="400px" height="auto">
-
----
-
-**Trailing Commas and Whitespace**
-Arrays and objects can have trailing commas after the last element or key-value pair.
-The file can end with additional whitespace.
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/json5/json5_example_5.png" width="400px" height="auto">
-
----
-**Unescaped Unicode Characters**
-Unicode characters can appear directly in strings without requiring escape sequences (though escapes are still valid).
-
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/json5/json5_example_6.png" width="400px" height="auto">

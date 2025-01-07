@@ -67,6 +67,7 @@
     "firebase": "^10.12.2",
     "glob": "^11.0.0",
     "highlight.js": "^11.10.0",
+    "hjson": "^3.2.2",
     "js-yaml": "^4.1.0",
     "json5": "^2.2.3",
     "jsonc-parser": "^3.3.1",

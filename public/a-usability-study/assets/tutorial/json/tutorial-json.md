@@ -1,79 +1,86 @@
-## JSON tutorial
-### **Syntax Rules**
+## JSON Basic Syntax Tutorial
+JSON (JavaScript Object Notation) is a lightweight data-interchange format that is easy for humans to read and write, and easy for machines to parse and generate.
+<br><br>
 
----
-**Elements**
-- **Objects**: 
-Objects are enclosed in {}.
-- **Arrays**: 
-Arrays are enclosed in [].
-- **Keys**: 
-Keys must be strings enclosed in double quotes.
-- **Values**: 
-Values can be strings (in double quotes), numbers, booleans, arrays, objects, or null.
-- **Key-Value Pairs**: 
-Key-value pairs and array elements are separated by ",".
+### 1. JSON Basic Structure
+JSON consists of **key-value** pairs and **data types**, and it primarily has two structures:
+- **Object**: Denoted with curly braces <strong style="color:green;">{}</strong>, it contains an unordered collection of key-value pairs.
+- **Array**: Denoted with square brackets <strong style="color:green;">[]</strong>, it contains an ordered list of values.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/json/json_BasicStructure.png" width="450px" height="auto">
+<br>
 
-###### <u>Correct Format Example</u> 
-   <img src="./assets/tutorial/json/json_example_1.png" width="400px" height="auto">
+### 2. Rules for Key-Value Pairs
+- Keys and values are separated by a colon <strong style="color:green;">:</strong>.
+- Keys must be strings and must be enclosed in double quotes <strong style="color:green;">""</strong>.
+- Key-value pairs are separated by commas <strong style="color:green;">,</strong>.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/json/json_KVPair.png" width="450px" height="auto">
+<br>
 
----
+### 3. JSON Data Types
+- **String**: Strings must be enclosed in double quotes <strong style="color:green;">""</strong>.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/json/json_string.png" width="450px" height="auto">
 
-**No comments**: No comments allowed in a json file.
+**Number**: Includes **integers** and **floating-point numbers**, but leading zeros and hexadecimal formats are not supported.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/json/json_number.png" width="450px" height="auto">
 
-######   <u>Correct Format Example</u>
-   <img src="./assets/tutorial/json/json_example_2.png" width="400px" height="auto">
+**Boolean**: The values can be <strong style="color:green;">true</strong> or <strong style="color:green;">false</strong>.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/json/json_boolean.png" width="450px" height="auto">
 
-######   <u>Wrong Format Example</u>
-   <img src="./assets/tutorial/json/json_example_3.png" width="400px" height="auto">
+**Null**: Represented by <strong style="color:green;">null</strong> for empty or unknown values.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/json/json_null.png" width="450px" height="auto">
 
----
+**Object**: Denoted by curly braces <strong style="color:green;">{}</strong>, it contains key-value pairs.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/json/json_object.png" width="450px" height="auto">
 
-**No trailing comma**：
-In an object, key-value pairs within an object must be separated by commas, but there should be no trailing comma after the last key-value pair. 
+**Array**: Denoted by square brackets <strong style="color:green;">[]</strong>, it can contain multiple values.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/json/json_array.png" width="450px" height="auto">
+<br>
 
-######   <u>Correct Format Example</u>
-   <img src="./assets/tutorial/json/json_example_4.png" width="400px" height="auto">
+### 4. JSON Format Requirements
+**Comma Rules**: There must be **no trailing commas** after the last key-value pair or array item.
+###### <strong style="color:red;"><u>Incorrect Example</u></strong>
+   <img src="./assets/tutorial/json/json_comma_IC.png" width="450px" height="auto">
 
-######   <u>Wrong Format Example</u>
-   <img src="./assets/tutorial/json/json_example_5.png" width="400px" height="auto">
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/json/json_comma_C.png" width="450px" height="auto">
 
-In an array, elements in an array must be separated by commas, but there should be no trailing comma after the last element. 
+**Quotation Rules**: Keys and string values must be enclosed in **double quotes** <strong style="color:green;">""</strong>.
+###### <strong style="color:red;"><u>Incorrect Example</u></strong>
+   <img src="./assets/tutorial/json/json_quot_IC.png" width="450px" height="auto">
 
-######   <u>Correct Format Example</u>
-   <img src="./assets/tutorial/json/json_example_6.png" width="400px" height="auto">
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/json/json_quot_C.png" width="450px" height="auto">
 
-######   <u>Wrong Format Example</u>
-   <img src="./assets/tutorial/json/json_example_7.png" width="400px" height="auto">
+**Escape Characters**: JSON supports the following escape characters: 
+- <span style="color:green;">`\"`</span> (Double quote)
+- <span style="color:green;">`\\`</span> (Backslash)
+- <span style="color:green;">`\/`</span> (Forward slash)
+- <span style="color:green;">`\b`</span> (Backspace)
+- <span style="color:green;">`\f`</span> (Form feed)
+- <span style="color:green;">`\n`</span> (New line)
+- <span style="color:green;">`\r`</span> (Carriage return)
+- <span style="color:green;">`\t`</span> (Tab)
 
----
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/json/json_Escape.png" width="450px" height="auto">
+<br>
 
-**Numeric values**:
-  - Supports integers and decimals, such as 42 or 3.14.
-  - Supports positive and negative numbers. Negative numbers use a minus sign (-), while positive numbers do not require a plus sign (+).
-  - Leading zeros are not allowed except for the number 0. For example, 0123 is invalid.
-  - Does not support special values like NaN, Infinity, or -Infinity. It is recommended to use null to represent non-numeric values.
+### 5. Nested Structures
+JSON supports nested objects and arrays, enabling the construction of complex data structures.
 
-######   <u>Correct Format Example</u>
-   <img src="./assets/tutorial/json/json_example_8.png" width="400px" height="auto">
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/json/json_nested.png" width="450px" height="auto">
+<br>
 
-######   <u>Wrong Format Example</u>
-   <img src="./assets/tutorial/json/json_example_9.png" width="400px" height="auto">
-
-
----
-
-**Strings**:
-  - Be enclosed in double quotes (single quotes are invalid).
-  - Support Unicode characters for text representation in any language.
-  - Allow escape characters like \", \\, \n, and \t for special formatting.
-  - Not contain direct line breaks, which must be represented using \n.
-
-######   <u>Correct Format Example</u>
-   <img src="./assets/tutorial/json/json_example_10.png" width="400px" height="auto">
-
-######   <u>Wrong Format Example</u>
-   <img src="./assets/tutorial/json/json_example_11.png" width="400px" height="auto">
-
-
-
+### 6.Not Support Comments
+JSON Does Not Support Comments.
+###### <strong style="color:red;"><u>Incorrect Example</u></strong> 
+   <img src="./assets/tutorial/json/json_comments.png" width="450px" height="auto">

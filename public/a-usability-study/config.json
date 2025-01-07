@@ -80,76 +80,78 @@
       "nextButtonText": "",
       "response": []
     },
-    "tutorial-csv": {
-      "type": "markdown",
-      "path": "a-usability-study/assets/tutorial/csv/tutorial-csv.md",
-      "nextButtonText": "",
-      "response": []
-    },
-    "q0": {
-      "meta": {
-        "task": "Error Detection"
-      },
-      "instruction": "Which of the following data in the CSV format doesn't have any error?",
-      "instructionLocation": "sidebar",
-      "provideFeedback": true,
-      "type": "image",
-      "path": "a-usability-study/assets/tutorial/csv/csv_quiz.png",
-      "style": {
-        "width": "400px"
-      },
-      "nextButtonLocation": "sidebar",
-      "response": [
-        {
-          "id": "res0",
-          "prompt": "choose the one doesn't have syntax error:",
-          "required": true,
-          "location": "sidebar",
-          "type": "radio",
-          "options": [
-            "A",
-            "B",
-            "C",
-            "D",
-            "E"
-          ]
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "res0",
-          "answer": "A"
-        }
-      ],
-      "allowFailedTraining": false,
-      "trainingAttempts": 5
-    },
     "tutorial-json": {
       "type": "markdown",
       "path": "a-usability-study/assets/tutorial/json/tutorial-json.md",
       "nextButtonText": "",
       "response": []
     },
-    "q1": {
+    "quiz-json": {
       "meta": {
         "task": "Error Detection"
       },
-      "instruction": "Which of the following data in the json format doesn't have any error?",
+      "instruction": "Which of the following JSON formats are correctly written?",
       "instructionLocation": "sidebar",
       "provideFeedback": true,
       "type": "image",
       "path": "a-usability-study/assets/tutorial/json/json_quiz.png",
       "style": {
-        "width": "400px"
+        "width": "8000px"
       },
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "res1",
-          "prompt": "choose the one doesn't have syntax error:",
+          "id": "quiz-json",
+          "prompt": "Choose all that apply has no syntax errors.",
           "required": true,
           "location": "sidebar",
-          "type": "radio",
+          "type": "checkbox",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F",
+            "G"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "quiz-json",
+          "answer": ["A","D","E"]
+        }
+      ],
+      "allowFailedTraining": false,
+      "trainingAttempts": 5
+    },
+    "tutorial-jsonc": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/tutorial/jsonc/tutorial-jsonc.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "quiz-jsonc": {
+      "meta": {
+        "task": "Error Detection"
+      },
+      "instruction": "Which of the following JSONC formats are correctly written?",
+      "instructionLocation": "sidebar",
+      "provideFeedback": true,
+      "type": "image",
+      "path": "a-usability-study/assets/tutorial/jsonc/jsonc_quiz.png",
+      "style": {
+        "width": "8000px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "quiz-jsonc",
+          "prompt": "Choose all that apply has no syntax errors.",
+          "required": true,
+          "location": "sidebar",
+          "type": "checkbox",
           "options": [
             "A",
             "B",
@@ -162,51 +164,8 @@
       ],
       "correctAnswer": [
         {
-          "id": "res1",
-          "answer": "A"
-        }
-      ],
-      "allowFailedTraining": false,
-      "trainingAttempts": 5
-    },
-    "tutorial-jsonc": {
-      "type": "markdown",
-      "path": "a-usability-study/assets/tutorial/jsonc/tutorial-jsonc.md",
-      "nextButtonText": "",
-      "response": []
-    },
-    "q2": {
-      "meta": {
-        "task": "Error Detection"
-      },
-      "instruction": "Which of the following data in the jsonc format doesn't have any error?",
-      "instructionLocation": "sidebar",
-      "provideFeedback": true,
-      "type": "image",
-      "path": "a-usability-study/assets/tutorial/jsonc/jsonc_quiz.png",
-      "style": {
-        "width": "600px"
-      },
-      "nextButtonLocation": "sidebar",
-      "response": [
-        {
-          "id": "res1",
-          "prompt": "choose the one doesn't have syntax error:",
-          "required": true,
-          "location": "sidebar",
-          "type": "radio",
-          "options": [
-            "A",
-            "B",
-            "C",
-            "D"
-          ]
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "res1",
-          "answer": "A"
+          "id": "quiz-jsonc",
+          "answer": ["A","C","D","E"]
         }
       ],
       "allowFailedTraining": false,
@@ -218,38 +177,40 @@
       "nextButtonText": "",
       "response": []
     },
-    "q3": {
+    "quiz-json5": {
       "meta": {
         "task": "Error Detection"
       },
-      "instruction": "Which of the following data in the json5 format doesn't have any error?",
+      "instruction": "Which of the following JSON5 formats are correctly written?",
       "instructionLocation": "sidebar",
       "provideFeedback": true,
       "type": "image",
       "path": "a-usability-study/assets/tutorial/json5/json5_quiz.png",
       "style": {
-        "width": "600px"
+        "width": "8000px"
       },
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "res1",
-          "prompt": "choose the one doesn't have syntax error:",
+          "id": "quiz-json5",
+          "prompt": "Choose all that apply has no syntax errors.",
           "required": true,
           "location": "sidebar",
-          "type": "radio",
+          "type": "checkbox",
           "options": [
             "A",
             "B",
             "C",
-            "D"
+            "D",
+            "E",
+            "F"
           ]
         }
       ],
       "correctAnswer": [
         {
-          "id": "res1",
-          "answer": "A"
+          "id": "quiz-json5",
+          "answer": ["A","B","C","D","F"]
         }
       ],
       "allowFailedTraining": false,
@@ -261,38 +222,40 @@
       "nextButtonText": "",
       "response": []
     },
-    "q4": {
+    "quiz-hjson": {
       "meta": {
         "task": "Error Detection"
       },
-      "instruction": "Which of the following data in the hjson format doesn't have any error?",
+      "instruction": "Which of the following HJSON formats are correctly written?",
       "instructionLocation": "sidebar",
       "provideFeedback": true,
       "type": "image",
       "path": "a-usability-study/assets/tutorial/hjson/hjson_quiz.png",
       "style": {
-        "width": "600px"
+        "width": "8000px"
       },
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "res1",
-          "prompt": "choose the one doesn't have syntax error:",
+          "id": "quiz-hjson",
+          "prompt": "Choose all that apply has no syntax errors.",
           "required": true,
           "location": "sidebar",
-          "type": "radio",
+          "type": "checkbox",
           "options": [
             "A",
             "B",
             "C",
-            "D"
+            "D",
+            "E",
+            "F"
           ]
         }
       ],
       "correctAnswer": [
         {
-          "id": "res1",
-          "answer": "A"
+          "id": "quiz-hjson",
+          "answer": ["A","B","C","D"]
         }
       ],
       "allowFailedTraining": false,
@@ -304,26 +267,26 @@
       "nextButtonText": "",
       "response": []
     },
-    "q5": {
+    "quiz-yaml": {
       "meta": {
         "task": "Error Detection"
       },
-      "instruction": "Which of the following data in the yaml format doesn't have any error?",
+      "instruction": "Which of the following YAML formats are correctly written?",
       "instructionLocation": "sidebar",
       "provideFeedback": true,
       "type": "image",
       "path": "a-usability-study/assets/tutorial/yaml/yaml_quiz.png",
       "style": {
-        "width": "600px"
+        "width": "8000px"
       },
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "res1",
-          "prompt": "choose the one doesn't have syntax error:",
+          "id": "quiz-yaml",
+          "prompt": "Choose all that apply has no syntax errors.",
           "required": true,
           "location": "sidebar",
-          "type": "radio",
+          "type": "checkbox",
           "options": [
             "A",
             "B",
@@ -334,7 +297,7 @@
       ],
       "correctAnswer": [
         {
-          "id": "res1",
+          "id": "quiz-yaml",
           "answer": "A"
         }
       ],
@@ -347,26 +310,26 @@
       "nextButtonText": "",
       "response": []
     },
-    "q6": {
+    "quiz-toml": {
       "meta": {
         "task": "Error Detection"
       },
-      "instruction": "Which of the following data in the toml format doesn't have any error?",
+      "instruction": "Which of the following TOML formats are correctly written?",
       "instructionLocation": "sidebar",
       "provideFeedback": true,
       "type": "image",
       "path": "a-usability-study/assets/tutorial/toml/toml_quiz.png",
       "style": {
-        "width": "600px"
+        "width": "8000px"
       },
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "res1",
-          "prompt": "choose the one doesn't have syntax error:",
+          "id": "quiz-toml",
+          "prompt": "Choose all that apply has no syntax errors.",
           "required": true,
           "location": "sidebar",
-          "type": "radio",
+          "type": "checkbox",
           "options": [
             "A",
             "B",
@@ -377,7 +340,7 @@
       ],
       "correctAnswer": [
         {
-          "id": "res1",
+          "id": "quiz-toml",
           "answer": "A"
         }
       ],
@@ -390,26 +353,26 @@
       "nextButtonText": "",
       "response": []
     },
-    "q7": {
+    "quiz-xml": {
       "meta": {
         "task": "Error Detection"
       },
-      "instruction": "Which of the following data in the xml format doesn't have any error?",
+      "instruction": "Which of the following XML formats are correctly written?",
       "instructionLocation": "sidebar",
       "provideFeedback": true,
       "type": "image",
       "path": "a-usability-study/assets/tutorial/xml/xml_quiz.png",
       "style": {
-        "width": "600px"
+        "width": "8000px"
       },
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "res1",
-          "prompt": "choose the one doesn't have syntax error:",
+          "id": "quiz-xml",
+          "prompt": "Choose all that apply has no syntax errors.",
           "required": true,
           "location": "sidebar",
-          "type": "radio",
+          "type": "checkbox",
           "options": [
             "A",
             "B",
@@ -420,7 +383,7 @@
       ],
       "correctAnswer": [
         {
-          "id": "res1",
+          "id": "quiz-xml",
           "answer": "A"
         }
       ],
@@ -759,22 +722,20 @@
       {
         "order": "fixed",
         "components": [
-          "tutorial-csv",
-          "q0",
           "tutorial-json",
-          "q1",
+          "quiz-json",
           "tutorial-jsonc",
-          "q2",
+          "quiz-jsonc",
           "tutorial-json5",
-          "q3",
+          "quiz-json5",
           "tutorial-hjson",
-          "q4",
+          "quiz-hjson",
           "tutorial-yaml",
-          "q5",
+          "quiz-yaml",
           "tutorial-toml",
-          "q6",
+          "quiz-toml",
           "tutorial-xml",
-          "q7"]
+          "quiz-xml"]
       },
       "task",
       {
