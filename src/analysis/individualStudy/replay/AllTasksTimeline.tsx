@@ -14,7 +14,7 @@ const LABEL_GAP = 25;
 const CHARACTER_SIZE = 8;
 
 const margin = {
-  left: 20, top: 0, right: 0, bottom: 0,
+  left: 20, top: 0, right: 20, bottom: 0,
 };
 
 function humanReadableDuration(msDuration: number): string {
@@ -43,11 +43,11 @@ export function AllTasksTimeline({
   }, [navigate, participantData.participantId, studyId]);
 
   const xScale = useMemo(() => {
-    const allStartTimes = Object.values(participantData.answers || {}).map((answer) => [answer.startTime, answer.endTime]).flat();
+    const allStartTimes = Object.values(participantData.answers || {}).filter((answer) => answer.startTime).map((answer) => [answer.startTime, answer.endTime]).flat();
 
     const extent = d3.extent(allStartTimes) as [number, number];
 
-    const scale = d3.scaleLinear([margin.left, width + margin.left + margin.right]).domain(extent).clamp(true);
+    const scale = d3.scaleLinear([margin.left, width - margin.left - margin.right]).domain(extent).clamp(true);
 
     return scale;
   }, [participantData, width]);
@@ -56,7 +56,7 @@ export function AllTasksTimeline({
   const tasks = useMemo(() => {
     let currentHeight = 0;
 
-    const sortedEntries = Object.entries(participantData.answers || {}).sort((a, b) => a[1].startTime - b[1].startTime);
+    const sortedEntries = Object.entries(participantData.answers || {}).filter((answer) => !!(answer[1].startTime)).sort((a, b) => a[1].startTime - b[1].startTime);
 
     return sortedEntries.map((entry, i) => {
       const [name, answer] = entry;
