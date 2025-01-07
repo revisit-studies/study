@@ -1,7 +1,7 @@
 import { Stack } from '@mantine/core';
 import { useResizeObserver } from '@mantine/hooks';
 import {
-  useCallback, useEffect, useMemo, useState,
+  useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
 import seedrandom from 'seedrandom';
 import * as d3 from 'd3';
@@ -37,21 +37,11 @@ function findMaxDepth(seq: ComponentBlock, depth: number) : number {
   return newDepth;
 }
 
-function traverseSequenceRec(sequence: ComponentBlock, blocks: TraversedSequence[], arrows: Arrows[], seeds: number[], depth: number, width: number, maxWidth: number, active: boolean, parentCenter: number, path: string) {
+function traverseSequenceRec(sequence: ComponentBlock, blocks: TraversedSequence[], arrows: Arrows[], depth: number, width: number, maxWidth: number, active: boolean, parentCenter: number, path: string) {
   const blockSize = findBlockWidth(sequence, maxWidth);
-
-  const randomizer = seedrandom(`${seeds[depth]}`);
-  const moveRandomizer = seedrandom(`${seeds[depth]}`);
-  const copyRandomizer = seedrandom(`${seeds[depth]}`);
 
   const usedComponents = deepCopy(sequence.components);
   const originalIndices = d3.range(sequence.components.length);
-
-  let activeNumbers: number[] = [];
-
-  if (sequence.numSamples) {
-    activeNumbers = sequence.components.map((s, i) => i).sort(() => randomizer() - randomizer()).slice(0, sequence.numSamples);
-  }
 
   if (sequence.order !== 'fixed') {
     // usedComponents.sort(() => moveRandomizer() - moveRandomizer());
@@ -59,71 +49,110 @@ function traverseSequenceRec(sequence: ComponentBlock, blocks: TraversedSequence
   }
 
   let currWidth = width;
+
+  const isLastChild = usedComponents.filter((comp) => {
+    if (typeof comp === 'string') {
+      return false;
+    }
+    return true;
+  }).length === 0;
   usedComponents.forEach((seq, i) => {
-    const isActive = active && (!sequence.numSamples || activeNumbers.includes(i));
+    const isActive = active && (!sequence.numSamples || sequence.numSamples > i);
     if (typeof seq === 'string') {
       blocks.push({
-        component: seq, depth, start: currWidth, width: WIDTH_INCREMENT_CIRCLE, active: isActive, id: `${seq + depth + path}_${originalIndices[i]}`,
+        component: seq, depth: isLastChild ? (depth + (i / 4)) : depth, start: isLastChild ? currWidth + (maxWidth / 2) - (WIDTH_INCREMENT_CIRCLE / 2) : currWidth, width: WIDTH_INCREMENT_CIRCLE, active: isActive, id: seq, order: i,
       });
-      currWidth += WIDTH_INCREMENT_CIRCLE + MARGIN_BETWEEN;
+      if (!isLastChild) {
+        currWidth += WIDTH_INCREMENT_CIRCLE + MARGIN_BETWEEN;
+      }
     } else {
       blocks.push({
-        component: seq, depth, start: currWidth - WIDTH_INCREMENT_CIRCLE / 2, width: blockSize, active: isActive, id: `${depth + path}_${originalIndices[i]}`,
+        component: seq, depth, start: currWidth - WIDTH_INCREMENT_CIRCLE / 2, width: blockSize, active: isActive, id: seq.id || '', order: i,
       });
       if (isActive && sequence.numSamples) {
         arrows.push({ topDepth: depth - 1, x1: parentCenter, x2: (currWidth - WIDTH_INCREMENT_CIRCLE / 2) + (blockSize / 2) });
       }
-      traverseSequenceRec(seq, blocks, arrows, seeds, depth + 1, currWidth, blockSize, isActive, (currWidth - WIDTH_INCREMENT_CIRCLE / 2) + (blockSize / 2), `${path}_${originalIndices[i]}`);
+      traverseSequenceRec(seq, blocks, arrows, depth + 1, currWidth, blockSize, isActive, (currWidth - WIDTH_INCREMENT_CIRCLE / 2) + (blockSize / 2), `${path}_${originalIndices[i]}`);
 
       currWidth += blockSize + MARGIN_BETWEEN;
     }
   });
 }
 
-function traverseSequence(sequence: ComponentBlock, maxWidth: number, seeds: number[]) : [TraversedSequence[], Arrows[] ] {
+function traverseSequence(sequence: ComponentBlock, maxWidth: number, fakeCounter: number, assignedIds: boolean) : [TraversedSequence[], Arrows[] ] {
   const blocks: TraversedSequence[] = [];
   const arrows: Arrows[] = [];
-  traverseSequenceRec(sequence, blocks, arrows, seeds, 1, WIDTH_INCREMENT_CIRCLE, maxWidth, true, maxWidth / 2, '0');
+
+  if (assignedIds) {
+    traverseSequenceRec(sequence, blocks, arrows, 1, WIDTH_INCREMENT_CIRCLE, maxWidth, true, maxWidth / 2, '0');
+  }
 
   return [blocks, arrows];
+}
+
+function getAllBlocks(sequence: ComponentBlock, blocks: ComponentBlock[]) {
+  sequence.components.forEach((seq) => {
+    if (typeof seq !== 'string') {
+      blocks.push(seq);
+      getAllBlocks(seq, blocks);
+    }
+  });
+}
+
+function assignIds(sequence: ComponentBlock, path: string) {
+  sequence.components.forEach((seq, i) => {
+    if (typeof seq !== 'string' && !seq.id) {
+      seq.id = `${path}_${i}`;
+      assignIds(seq, `${path}_${i}`);
+    } else if (typeof seq === 'string') {
+      sequence.components[i] = `${seq}___${path}`;
+    }
+  });
+}
+
+function getAllBlocksRecursively(sequence: ComponentBlock) {
+  const blocks: ComponentBlock[] = [];
+
+  getAllBlocks(sequence, blocks);
+  return blocks;
+}
+
+function switchOneOrder(sequence: ComponentBlock) {
+  const allBlocks = getAllBlocksRecursively(sequence).filter((block) => block.order !== 'fixed');
+
+  const randomBlock = allBlocks[Math.floor(Math.random() * allBlocks.length)];
+
+  randomBlock.components.sort(() => Math.random() - Math.random());
+
+  return allBlocks;
 }
 
 export function SequenceVis() {
   const { sequence } = useStudyConfig();
 
-  const [randomSeeds, setRandomSeeds] = useState<number[]>([]);
+  const currentSequence = useRef<ComponentBlock>(deepCopy(sequence));
+  const [assignedIds, setAssignedIds] = useState<boolean>(false);
 
-  const setSeed = useEvent((index: number, newSeed: number) => {
-    setRandomSeeds(randomSeeds.map((seed, i) => (i === index ? newSeed : seed)));
-  });
+  useEffect(() => {
+    assignIds(currentSequence.current, '0');
+    setAssignedIds(true);
+  }, []);
+
+  console.log(currentSequence.current);
 
   const [fakeCounter, setFakeCounter] = useState<number>(0);
 
   const [ref, { width }] = useResizeObserver();
 
-  const maxDepth = useMemo(() => findMaxDepth(sequence, 1), [sequence]);
+  useEffect(() => {
+    setTimeout(() => {
+      switchOneOrder(currentSequence.current);
+      console.log('switchingOrder');
+      setFakeCounter(fakeCounter + 1);
+    }, 200);
+  }, [fakeCounter]);
 
-  //   useEffect(() => {
-  //     if (randomSeeds.length === 0) {
-  //       setRandomSeeds(d3.range(maxDepth));
-  //       setFakeCounter(fakeCounter + 1);
-  //     } else {
-  //       for (let i = 0; i < randomSeeds.length; i += 1) {
-  //         setTimeout(() => {
-  //           setSeed(i, Math.random() * 1000);
-  //         }, 7000 + i * 1000);
-  //       }
-  //     }
-  //   }, [maxDepth, fakeCounter]);
-
-  //   useEffect(() => {
-  //     setTimeout(() => {
-  //       setFakeCounter(fakeCounter + 1);
-  //     }, 7000);
-  //   }, [fakeCounter]);
-
-  const [blocks, arrows] = useMemo(() => traverseSequence(sequence, width - MARGIN_BETWEEN, randomSeeds), [sequence, width, randomSeeds]);
-  console.log(blocks);
+  const [blocks, arrows] = useMemo(() => traverseSequence(currentSequence.current, width - MARGIN_BETWEEN, fakeCounter, assignedIds), [currentSequence, width, fakeCounter, assignedIds]);
 
   return (
     <Stack ref={ref} style={{ height: '100%' }}>
