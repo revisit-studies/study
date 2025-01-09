@@ -13,6 +13,7 @@
       "CEDMAV"
     ]
   },
+  "recordStudyAudio": true,
   "uiConfig": {
     "contactEmail": "ishratjahan.eliza@utah.edu",
     "helpTextPath": "super-resolution-study/assets/help.md",
@@ -21,11 +22,13 @@
     "withProgressBar": true,
     "autoDownloadStudy": false,
     "sidebar": true,
-    "sidebarWidth": 400
+    "enumerateQuestions": true,
+    "sidebarWidth": 408
   }, 
   "baseComponents": {
       "super":{
         "type": "website",
+        "recordAudio": true,
         "response": [
           {
             "id": "q1",
@@ -106,14 +109,41 @@
   "components": {
     "welcome": {
       "type": "markdown",
+      "recordAudio": false,
       "path": "super-resolution-study/assets/welcome.md",
       "response": []
     },
     "consent": {
       "type": "markdown",
+      "recordAudio": false,
       "path": "super-resolution-study/assets/consent.md",
-      "nextButtonText": "I agree",
-      "response": []
+      "response": [
+          {
+                    "id": "name",
+                    "prompt": "Please enter your name",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "shortText",
+                    "placeholder": "Name"
+          },
+          {
+                    "id": "consent",
+                    "prompt": "Do you consent to the study and wish to continue?",
+                    "required": true,
+                    "location": "belowStimulus",
+                    "type": "radio",
+                    "options": [
+                        {
+                            "label": "Decline",
+                            "value": "no"
+                        },
+                        {
+                            "label": "Accept",
+                            "value": "yes"
+                        }
+                    ]
+          }
+      ]
     },
     "pair1":{
       "baseComponent": "super",
@@ -134,6 +164,7 @@
     },
     "post-study": {
       "type": "questionnaire",
+      "recordAudio": true,
       "response": [
         {
           "id": "q1",
@@ -198,6 +229,17 @@
 
   "sequence": {
     "order": "fixed",
+    "skip":[
+        {
+          "name": "Consent",
+          "check": "response",
+          "responseId": "consent",
+          "value": "yes",
+          "comparison": "notEqual",
+          "to": "end"
+
+      }
+    ],
     "components": [
       "welcome",
       "consent",
