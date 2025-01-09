@@ -1,56 +1,11 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/GlobalConfigSchema.json",
   "configsList": [
-    "super-resolution-study",
-    "test-likert-matrix",
-    "tutorial-simple-study",
-    "tutorial-react-and-randomization",
-    "tutorial-advanced-react",
-    "demo-brush-interactions",
-    "demo-html-input",
-    "demo-html-trrack",
-    "demo-click-accuracy-test",
-    "test-audio",
-    "test-library",
-    "test-parser-errors"
+    "super-resolution-study"
   ],
   "configs": {
     "super-resolution-study": {
       "path": "super-resolution-study/config.json"
-    },
-    "tutorial-simple-study": {
-      "path": "tutorial/simple-study/config.json"
-    },
-    "tutorial-react-and-randomization": {
-      "path": "tutorial/react-and-randomization/config.json"
-    },
-    "tutorial-advanced-react": {
-      "path": "tutorial/advanced-react-component/config.json"
-    },
-    "demo-brush-interactions": {
-      "path": "demo-brush-interactions/config.json"
-    },
-    "demo-html-input": {
-      "path": "demo-html-input/config.json"
-    },
-    "demo-html-trrack": {
-      "path": "demo-html-trrack/config.json"
-    },
-    "demo-click-accuracy-test": {
-      "path": "demo-click-accuracy-test/config.json"
-    },
-    "test-audio": {
-      "path": "test-audio/config.json"
-    },
-    "test-library": {
-      "path": "test-library/config.json"
-    },
-    "test-parser-errors": {
-      "path": "test-parser-errors/config.json",
-      "test": true
-    },
-    "test-likert-matrix": {
-      "path": "test-likert-matrix/config.json"
     }
   }
 }

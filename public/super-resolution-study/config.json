@@ -37,7 +37,7 @@
             "secondaryText": "Consider cellular abnormalities, tissue organization, and structural changes",
             "required": true,
             "location": "sidebar",
-            "prompt": "Which image preseve more detailed pathological features?",
+            "prompt": "Which image more accurately represents detailed pathological features?",
             "options": ["left", "same", "right"]
           },
           {
@@ -46,7 +46,7 @@
             "secondaryText": "Consider nuclear details, membrane boundaries, and cytoplasmic features",
             "required": true,
             "location": "sidebar",
-            "prompt": "In which image you can distinguish invididual cellular structures better?",
+            "prompt": "Which image helps you to distinguish individual cellular structures better?",
             "options": [
               {
                 "label": "left",
@@ -65,10 +65,10 @@
           {
             "id": "q3",
             "type": "radio",
-            "secondaryText": "Consider whether any artifacts or artificial patterns are present",
+            "secondaryText": "Consider whether any artifacts or artificial patterns are present that are not natural",
             "required": true,
             "location": "sidebar",
-            "prompt": "Which image preserve more natural tissue textures?",
+            "prompt": "Which image better represents informative tissue textures?",
             "options": [
               "left", "same", "right"
             ]
@@ -76,16 +76,27 @@
           {
             "id": "q4",
             "type": "radio",
-            "secondaryText": "Consider the transitions between cellular structures",
+            "secondaryText": "Consider whether any artifacts or artificial patterns are present that are not natural",
             "required": true,
             "location": "sidebar",
-            "prompt": "Which image well defines the bundaries between tissue regions?",
+            "prompt": "Which image, if any, reports false tissue textures?",
             "options": [
               "left", "same", "right"
             ]
           },
           {
             "id": "q5",
+            "type": "radio",
+            "secondaryText": "Consider the transitions between cellular structures",
+            "required": true,
+            "location": "sidebar",
+            "prompt": "Which image better defines the bundaries between tissue regions?",
+            "options": [
+              "left", "same", "right"
+            ]
+          },
+          {
+            "id": "q6",
             "type": "radio",
             "secondaryText": "Consider the clarity and usefulness of details at higher magnification",
             "required": true,
@@ -96,7 +107,7 @@
             ]
           },
           {
-            "id": "q6",
+            "id": "q7",
             "type":"longText",
             "required": false,
             "location": "sidebar",
@@ -172,57 +183,44 @@
           "type": "likert",
           "required": true,
           "location": "aboveStimulus",
-          "prompt": "How confident would you feel making a diagnosis based on the super-resolution image?",
+          "prompt": "To what extent do the super-resolution images make you confident in detecting cancerous regions?",
           "numItems": 5,
-          "leftLabel": "Not",
-          "rightLabel": "Very"
+          "leftLabel": "Less",
+          "rightLabel": "More"
 
         },
         {
           "id": "q2",
-          "type": "likert",
-          "required": true,
-          "location": "aboveStimulus",
-          "prompt": "How likely are you to use super-resolution images in your practice?",
-          "numItems": 5,
-          "leftLabel": "Not",
-          "rightLabel": "Very"
-        },
-        {
-          "id": "q3",
           "type": "longText",
           "required": false,
           "location": "aboveStimulus",
           "prompt": "What specific features or details are more visible in the super-resolution image compared to the original?"
         },
         {
-          "id": "q4",
+          "id": "q3",
           "type": "longText",
           "required": false,
           "location": "aboveStimulus",
-          "prompt": "Are there any artifacts or distortions in the super-resolution image that could potentially interfere with diagnosis?"
+          "prompt": "Are there any artifacts or distortions in the super-resolution image that could potentially interfere with detection?"
+        },
+        {
+          "id": "q4",
+          "type":"checkbox",
+          "secondaryText": "Please select all that apply",
+          "required": true,
+          "location": "aboveStimulus",
+          "prompt": "Which image would you prefer to use in practice?",
+          "options": [
+            "Original", "Super-resolution", "Neutral"
+          ]
         },
         {
           "id": "q5",
-          "type":"checkbox",
+          "type":"longText",
           "secondaryText": "Please select all that apply",
           "required": true,
           "location": "aboveStimulus",
-          "prompt": "Which image would you prefer to use for initial diagnosis?",
-          "options": [
-            "Original", "Super-resolution", "None"
-          ]
-        },
-        {
-          "id": "q6",
-          "type":"checkbox",
-          "secondaryText": "Please select all that apply",
-          "required": true,
-          "location": "aboveStimulus",
-          "prompt": "Which image would you prefer to use for detailed analysis?",
-          "options": [
-            "Original", "Super-resolution", "None"
-          ]
+          "prompt": "Please write in detail the rationale behind your choice in question 4?"
         }
       ]
     }
