@@ -3,7 +3,7 @@ name: Lint and build
 on: 
   pull_request:
     branches:
-      - '**'
+      - '**'             
   
   push:
     branches:

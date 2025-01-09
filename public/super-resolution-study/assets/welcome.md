@@ -11,6 +11,7 @@ You will be presented with ten pairs of cancer images side by side. In some imag
 - Right: Super-resolution version of the same image -->
 
 ![Demo comparison image](./assets/demo/demo1.jpeg)
+![Demo comparison image2](./assets/demo/demo2.jpeg)
 
 The original and the super-resolution images are synchronized, meaning any interaction you perform (such as zooming or panning) will affect both images simultaneously. Before proceeding with the evaluation, we encourage you to:
 - Utilize the zoom-in and zoom-out features

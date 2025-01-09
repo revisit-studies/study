@@ -20,7 +20,8 @@
     "studyEndMsg": "**Thank you for your participation. Your responses have been recorded. If you have any questions feel free to contact us at [ishratjahan.eliza@utah.edu](mailto:ishratjahan.eliza@utah.edu)**",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": true
+    "sidebar": true,
+    "sidebarWidth": 400
   }, 
   "baseComponents": {
       "super":{
@@ -37,13 +38,24 @@
           },
           {
             "id": "q2",
-            "type": "radio",
+            "type": "slider",
             "secondaryText": "Consider nuclear details, membrane boundaries, and cytoplasmic features",
             "required": true,
             "location": "sidebar",
             "prompt": "In which image you can distinguish invididual cellular structures better?",
             "options": [
-              "left", "same", "right"
+              {
+                "label": "left",
+                "value": 0
+              },
+              {
+                "label": "same",
+                "value": 50
+              },
+              {
+                "label": "right",
+                "value": 100
+              }
             ]
           },
           {

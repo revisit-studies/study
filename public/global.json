@@ -40,12 +40,10 @@
       "path": "demo-click-accuracy-test/config.json"
     },
     "test-audio": {
-      "path": "test-audio/config.json",
-      "test": true
+      "path": "test-audio/config.json"
     },
     "test-library": {
-      "path": "test-library/config.json",
-      "test": true
+      "path": "test-library/config.json"
     },
     "test-parser-errors": {
       "path": "test-parser-errors/config.json",
