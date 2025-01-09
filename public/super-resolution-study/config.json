@@ -29,6 +29,7 @@
       "super":{
         "type": "website",
         "recordAudio": true,
+        "instruction": "Please zoom-in, pan, zoom-out as needed before answering the questions:",
         "response": [
           {
             "id": "q1",
@@ -231,7 +232,7 @@
     "order": "fixed",
     "skip":[
         {
-          "name": "Consent",
+          "name": "consent",
           "check": "response",
           "responseId": "consent",
           "value": "yes",
