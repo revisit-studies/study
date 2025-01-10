@@ -188,6 +188,7 @@ export async function studyStoreCreator(
           identifier, answer, question,
         } = payload;
 
+        // This handles the case that we import a participants answers from an old config version
         if (!state.answers[question].incorrectAnswers) {
           state.answers[question].incorrectAnswers = {};
         }
