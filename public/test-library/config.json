@@ -42,8 +42,7 @@
       "$vlat.se.latinSquare",      
       "$previs.se.previs",
       "$mini-vlat.se.fixed",
-      "$nasa-tlx.se.latinSquare",
-      "$color-blindness.se.color-blindness"
+      "$nasa-tlx.se.latinSquare"
     ]
   }
 }

@@ -22,6 +22,7 @@
     "test-library-mic-check",
     "test-library-color-blindness",
     "test-library-demographics",
+    "test-library-beauvis",
     "test-likert-matrix",
     "test-parser-errors",
     "test-randomization",
@@ -95,6 +96,10 @@
     },
     "test-library-demographics": {
       "path": "test-library-demographics/config.json",
+      "test": true
+    },
+    "test-library-beauvis": {
+      "path": "test-library-beauvis/config.json",
       "test": true
     },
     "test-likert-matrix": {

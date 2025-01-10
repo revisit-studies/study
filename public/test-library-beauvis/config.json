@@ -21,14 +21,16 @@
     "sidebar": true
   },
   "importedLibraries": [
-                        "vlat"
+                       "beauvis"
                       ],
   "components": {
   },
   "sequence": {
-    "order": "random",
+    "order": "fixed",
     "components": [
-      "$vlat.se.latinSquare"
+      "$beauvis.se.5items",
+      "$beauvis.se.4items",
+      "$beauvis.se.3items"
     ]
   }
 }
