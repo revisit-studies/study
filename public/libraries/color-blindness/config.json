@@ -834,7 +834,8 @@
       "meta": {
         "plateNumber": 22,
         "normal-color-vision-see": "a blue-grenn/yellow-green wiggly line",
-        "red-green-color-blindness-see":"a blue-green and red wiggle line",
+        "red-color-blindness-see":"a blue-green and red wiggle line",
+        "green-color-blindness-see":"a blue-green and red wiggle line",
         "total-color-blindness-see":"nothing",
         "plateType": "transformation"
       },
