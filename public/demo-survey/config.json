@@ -34,6 +34,7 @@
         {
           "id": "q1",
           "prompt": "Dropdown example",
+          "secondaryText": "You can specify secondary text to clarify your question.",
           "required": true,
           "location": "aboveStimulus",
           "type": "dropdown",
@@ -47,7 +48,8 @@
         },
         {
           "id": "q2",
-          "prompt": "Numerical example",
+          "prompt": "Numerical example, required",
+          "secondaryText": "A numeric ex",
           "required": true,
           "location": "aboveStimulus",
           "type": "numerical",
@@ -58,6 +60,7 @@
         {
           "id": "q3",
           "prompt": "Likert scale example",
+          "secondaryText": "A likert example with 9 items",
           "required": true,
           "location": "aboveStimulus",
           "type": "likert",
@@ -65,9 +68,48 @@
           "rightLabel": "Like",
           "leftLabel": "Dislike"
         },
+
+        {
+          "id": "multi-satisfaction",
+          "prompt": "Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable) for the following items.",
+          "secondaryText": "A simple matrix of Likert responses with predefined options for satisfaction.",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "matrix-radio",
+          "answerOptions": "satisfaction5",
+          "questionOptions": [
+            "The tool we created",
+            "The technique we developed",
+            "The authors of the tools"
+          ]
+         }, 
+
+         {
+          "id": "multi-custom",
+          "prompt": "Which categories do the following items belong to?",
+          "secondaryText": "A matrix of checkboxes with custom options for categorization.",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "matrix-checkbox",
+          "answerOptions": [
+            "Has Legs",
+            "Has Wings",
+            "Can Swim"
+          ],
+          "questionOptions": [
+            "Dog",
+            "Snake",
+            "Eagle",
+            "Salmon",
+            "Platypus"
+          ]
+         
+         },
+
         {
           "id": "q4",
           "prompt": "Short text example",
+          "secondaryText": "A short text example",
           "required": true,
           "location": "aboveStimulus",
           "type": "shortText",
@@ -76,6 +118,7 @@
         {
           "id": "q5",
           "prompt": "Long text example",
+          "secondaryText": "A text box for long text",
           "required": true,
           "location": "aboveStimulus",
           "type": "longText",
@@ -84,6 +127,7 @@
         {
           "id": "q7",
           "prompt": "Checkbox example",
+          "secondaryText": "Checkboxes for multi-selection",
           "required": true,
           "minSelections": 2,
           "maxSelections": 2,
@@ -98,6 +142,7 @@
         {
           "id": "q-radio",
           "prompt": "Radio button example",
+          "secondaryText": "Radio buttons for single selection",
           "required": true,
           "location": "aboveStimulus",
           "type": "radio",
@@ -109,6 +154,7 @@
         {
           "id": "q6",
           "prompt": "Slider example",
+          "secondaryText": "A slider for 0-100",
           "location": "aboveStimulus",
           "required": true,
           "type": "slider",
