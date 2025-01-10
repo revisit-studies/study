@@ -5,7 +5,7 @@ test('parser errors are shown correctly', async ({ page }) => {
 
   await page.getByRole('button', { name: 'Using library imports Authors' }).click();
 
-  expect(await page.getByText('test md file')).toBeVisible();
+  expect(await page.getByText('test md file')).toBeVisible({ timeout: 3000 });
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   expect(await page.getByText('test react file')).toBeVisible();
