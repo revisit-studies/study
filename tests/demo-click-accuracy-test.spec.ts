@@ -8,7 +8,7 @@ test('test', async ({ page }) => {
 
   // Check for introduction page
   const introText = await page.getByRole('heading', { name: 'Introduction' });
-  await expect(introText).toBeVisible();
+  await expect(introText).toBeVisible({ timeout: 5000 });
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check click accuracy test

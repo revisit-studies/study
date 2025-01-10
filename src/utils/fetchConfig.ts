@@ -21,14 +21,15 @@ export async function getStudyConfig(studyId: string, globalConfig: GlobalConfig
 
 export async function fetchStudyConfigs(globalConfig: GlobalConfig) {
   const studyConfigs: Record<string, ParsedConfig<StudyConfig> | null> = {};
-  const configPromises = globalConfig.configsList
-    .filter((configId) => (import.meta.env.VITE_CI === 'true' ? true : !globalConfig.configs[configId].test))
+  const configsList = globalConfig.configsList.filter((configId) => (import.meta.env.VITE_CI === 'true' ? true : !globalConfig.configs[configId].test));
+  const configPromises = configsList
     .map(async (configId) => getStudyConfig(configId, globalConfig));
 
   const configs = await Promise.all(configPromises);
 
-  globalConfig.configsList.forEach((configId, idx) => {
+  configsList.forEach((configId, idx) => {
     studyConfigs[configId] = configs[idx];
   });
+
   return studyConfigs;
 }

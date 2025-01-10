@@ -9,7 +9,7 @@ test('test', async ({ page }) => {
 
   // Check that the page contains the introduction text
   const introText = await page.getByText('Welcome to our study. This is a more complex example to show how to embed React.js');
-  await expect(introText).toBeVisible();
+  await expect(introText).toBeVisible({ timeout: 5000 });
 
   // Click on the next button
   await page.getByRole('button', { name: 'Next', exact: true }).click();
