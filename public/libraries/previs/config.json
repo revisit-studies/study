@@ -1,29 +1,146 @@
 {
     "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
     "components": {
-      "enjoyable":{
+      "Understand": {
         "type": "questionnaire",
         "response": [
           {
-            "id": "",
-            "prompt": "Likert scale example",
+            "id": "obvious",
+            "prompt": "It is **obvious** for me how to read this visualization",
             "required": true,
             "location": "aboveStimulus",
             "type": "likert",
-            "numItems": 9,
-            "rightLabel": "Like",
-            "leftLabel": "Dislike"
+            "numItems": 7,
+            "rightLabel": "Strongly agree",
+            "leftLabel": "Strongly disagree"
+          },
+          {
+            "id": "represent",
+            "prompt": "I can easily understand **how the data is represented** in this visualization",
+            "required": true,
+            "location": "aboveStimulus",
+            "type": "likert",
+            "numItems": 7,
+            "rightLabel": "Strongly agree",
+            "leftLabel": "Strongly disagree"
+          },
+          {
+            "id": "understand",
+            "prompt": "I can **easily understand** this visualization",
+            "required": true,
+            "location": "aboveStimulus",
+            "type": "likert",
+            "numItems": 7,
+            "rightLabel": "Strongly agree",
+            "leftLabel": "Strongly disagree"
           }
-      ]
+        ]
+      },
+      "Layout": {
+        "type": "questionnaire",
+        "response": [
+          {
+            "id": "messy",
+            "prompt": "I don't find this visualization **messy**",
+            "required": true,
+            "location": "aboveStimulus",
+            "type": "likert",
+            "numItems": 7,
+            "rightLabel": "Strongly agree",
+            "leftLabel": "Strongly disagree"
+          },
+          {
+            "id": "crowd",
+            "prompt": "I don't find this visualization **crowded**",
+            "required": true,
+            "location": "aboveStimulus",
+            "type": "likert",
+            "numItems": 7,
+            "rightLabel": "Strongly agree",
+            "leftLabel": "Strongly disagree"
+          },
+          {
+            "id": "distract",
+            "prompt": "I don't find **distracting parts** in this visualization",
+            "required": true,
+            "location": "aboveStimulus",
+            "type": "likert",
+            "numItems": 7,
+            "rightLabel": "Strongly agree",
+            "leftLabel": "Strongly disagree"
+          }
+        ]
+      },
+      "DataRead": {
+        "type": "questionnaire",
+        "response": [
+          {
+            "id": "find",
+            "prompt": "I can easily **find specific** elements in this visualization",
+            "required": true,
+            "location": "aboveStimulus",
+            "type": "likert",
+            "numItems": 7,
+            "rightLabel": "Strongly agree",
+            "leftLabel": "Strongly disagree"
+          },
+          {
+            "id": "identify",
+            "prompt": "I can easily **identify relevant information** in this visualization",
+            "required": true,
+            "location": "aboveStimulus",
+            "type": "likert",
+            "numItems": 7,
+            "rightLabel": "Strongly agree",
+            "leftLabel": "Strongly disagree"
+          },
+          {
+            "id": "information",
+            "prompt": "I can easily **retrieve information** from this visualization",
+            "required": true,
+            "location": "aboveStimulus",
+            "type": "likert",
+            "numItems": 7,
+            "rightLabel": "Strongly agree",
+            "leftLabel": "Strongly disagree"
+          }
+        ]
+      },
+      "DataFeat": {
+        "type": "questionnaire",
+        "response": [
+          {
+            "id": "visible",
+            "prompt": "I find data features (for example, a minimum, or an outlier, or a trend) **visible** in this visualization",
+            "required": true,
+            "location": "aboveStimulus",
+            "type": "likert",
+            "numItems": 7,
+            "rightLabel": "Strongly agree",
+            "leftLabel": "Strongly disagree"
+          },
+          {
+            "id": "see",
+            "prompt": "I can **clearly see** data features (for example, a minimum, or an outlier, or a trend) in this visualization",
+            "required": true,
+            "location": "aboveStimulus",
+            "type": "likert",
+            "numItems": 7,
+            "rightLabel": "Strongly agree",
+            "leftLabel": "Strongly disagree"
+          }
+        ]
       }
-      
     },
     "sequences": {
-      "latinSquare": {
+      "previs": {
         "order": "latinSquare",
         "components": [
-          "enjoyable"
+          "Understand",
+          "Layout", 
+          "DataRead",
+          "DataFeat"
         ]
       }
     }
-  }
+}

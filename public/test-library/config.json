@@ -20,14 +20,30 @@
     "withProgressBar": false,
     "sidebar": true
   },
-  "importedLibraries": ["SUS","mini-vlat"],
+  "importedLibraries": ["demographics", 
+                        "SUS", 
+                        "previs", 
+                        "mini-vlat", 
+                        "vlat", 
+                        "berlin-num", 
+                        "nasa-tlx", 
+                        "color-blindness",
+                        "mic-check"
+                      ],
   "components": {
   },
   "sequence": {
     "order": "fixed",
     "components": [
+      "$mic-check.co.audioTest",
+      "$demographics.se.demographics",
+      "$berlin-num.se.berlin-num",
       "$SUS.se.SUS",
-      "$mini-vlat.se.fixed"
+      "$vlat.se.latinSquare",      
+      "$previs.se.previs",
+      "$mini-vlat.se.fixed",
+      "$nasa-tlx.se.latinSquare",
+      "$color-blindness.se.color-blindness"
     ]
   }
 }

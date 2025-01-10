@@ -108,6 +108,7 @@ export interface StoredAnswer {
 
 export interface StimulusParams<T> {
   parameters: T;
+  provenanceState?: TrrackedProvenance;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
 }

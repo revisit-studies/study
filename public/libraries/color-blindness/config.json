@@ -1,0 +1,709 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
+  "components": {
+    "plate1": {
+      "meta": {
+        "plateNumber": 1
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image", 
+      "path": "libraries/color-blindness/assets/Ishihara1.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate1-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate1-response",
+          "answer": "12"
+        }
+      ]
+    },
+    "plate2": {
+      "meta": {
+        "plateNumber": 2
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar", 
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara2.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate2-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate2-response",
+          "answer": "8"
+        }
+      ]
+    },
+    "plate3": {
+      "meta": {
+        "plateNumber": 3
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara3.png", 
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate3-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate3-response",
+          "answer": "6"
+        }
+      ]
+    },
+    "plate4": {
+      "meta": {
+        "plateNumber": 4
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara4.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar", 
+      "response": [
+        {
+          "id": "plate4-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate4-response",
+          "answer": "29"
+        }
+      ]
+    },
+    "plate5": {
+      "meta": {
+        "plateNumber": 5
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara5.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate5-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate5-response",
+          "answer": "57"
+        }
+      ]
+    },
+    "plate6": {
+      "meta": {
+        "plateNumber": 6
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara6.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",  
+      "response": [
+        {
+          "id": "plate6-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate6-response",
+          "answer": "5"
+        }
+      ]
+    },
+    "plate7": {
+      "meta": {
+        "plateNumber": 7
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara7.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate7-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate7-response",
+          "answer": "3"
+        }
+      ]
+    },
+    "plate8": {
+      "meta": {
+        "plateNumber": 8
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara8.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate8-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate8-response",
+          "answer": "15"
+        }
+      ]
+    },
+    "plate9": {
+      "meta": {
+        "plateNumber": 9
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara9.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate9-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate9-response",
+          "answer": "74"
+        }
+      ]
+    },
+    "plate10": {
+      "meta": {
+        "plateNumber": 10
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara10.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate10-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate10-response",
+          "answer": "2"
+        }
+      ]
+    },
+    "plate11": {
+      "meta": {
+        "plateNumber": 11
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara11.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate11-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate11-response",
+          "answer": "6"
+        }
+      ]
+    },
+    "plate12": {
+      "meta": {
+        "plateNumber": 12
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara12.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate12-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate12-response",
+          "answer": "97"
+        }
+      ]
+    },
+    "plate13": {
+      "meta": {
+        "plateNumber": 13
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara13.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate13-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate13-response",
+          "answer": "45"
+        }
+      ]
+    },
+    "plate14": {
+      "meta": {
+        "plateNumber": 14
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara14.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate14-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate14-response",
+          "answer": "5"
+        }
+      ]
+    },
+    "plate15": {
+      "meta": {
+        "plateNumber": 15
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara15.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate15-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate15-response",
+          "answer": "7"
+        }
+      ]
+    },
+    "plate16": {
+      "meta": {
+        "plateNumber": 16
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara16.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate16-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate16-response",
+          "answer": "16"
+        }
+      ]
+    },
+    "plate17": {
+      "meta": {
+        "plateNumber": 17
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara17.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate17-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate17-response",
+          "answer": "73"
+        }
+      ]
+    },
+    "plate18": {
+      "meta": {
+        "plateNumber": 18
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara18.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate18-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate18-response",
+          "answer": "26"
+        }
+      ]
+    },
+    "plate19": {
+      "meta": {
+        "plateNumber": 19
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara19.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate19-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate19-response",
+          "answer": "42"
+        }
+      ]
+    },
+    "plate20": {
+      "meta": {
+        "plateNumber": 20
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara20.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate20-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate20-response",
+          "answer": "35"
+        }
+      ]
+    },
+    "plate21": {
+      "meta": {
+        "plateNumber": 21
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara21.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate21-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate21-response",
+          "answer": "96"
+        }
+      ]
+    },
+    "plate22": {
+      "meta": {
+        "plateNumber": 22
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara22.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate22-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate22-response",
+          "answer": "62"
+        }
+      ]
+    },
+    "plate23": {
+      "meta": {
+        "plateNumber": 23
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara23.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate23-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate23-response",
+          "answer": "6"
+        }
+      ]
+    },
+    "plate24": {
+      "meta": {
+        "plateNumber": 24
+      },
+      "instruction": "What number do you see in this image?",
+      "instructionLocation": "sidebar",
+      "type": "image",
+      "path": "libraries/color-blindness/assets/Ishihara24.png",
+      "style": {
+        "width": "500px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "plate24-response",
+          "prompt": "Enter the number you see:",
+          "required": true,
+          "location": "sidebar",
+          "type": "numerical"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "plate24-response",
+          "answer": "8"
+        }
+      ]
+    }
+  },
+  "sequences": {
+        "color-blindness": {
+            "order": "fixed",
+            "components": [
+                "plate1",
+                "plate2",
+                "plate3", 
+                "plate4",
+                "plate5",
+                "plate6",
+                "plate7",
+                "plate8",
+                "plate9",
+                "plate10",
+                "plate11",
+                "plate12",
+                "plate13",
+                "plate14", 
+                "plate15",
+                "plate16",
+                "plate17",
+                "plate18",
+                "plate19",
+                "plate20",
+                "plate21",
+                "plate22",
+                "plate23",
+                "plate24"
+            ]
+        }
+    }
+}
+

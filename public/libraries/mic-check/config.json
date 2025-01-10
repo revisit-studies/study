@@ -1,0 +1,22 @@
+{
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
+    "components": {
+        "audioTest": {
+            "description": "Audio test",
+            "type": "react-component", 
+            "path": "libraries/mic-check/assets/AudioTest.tsx",
+            "nextButtonLocation": "belowStimulus",
+            "nextButtonText": "Continue",
+            "response": [{
+                "id": "audioResponse",
+                "type": "radio",
+                "required": true,
+                "hidden": true,
+                "location": "sidebar", 
+                "prompt": "Found Audio",
+                "options": [{"label": "Yes", "value": "Yes"}]
+            }]
+        }
+    },
+    "sequences": {}
+}
