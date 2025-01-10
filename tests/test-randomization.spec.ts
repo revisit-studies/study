@@ -5,6 +5,8 @@ import { ParticipantData } from '../src/storage/types';
 test('test', async ({ page }) => {
   await page.goto('/test-randomization');
 
+  await page.getByRole('tab', { name: 'Tests' }).click();
+
   // Check for introduction page
   const introText = await page.getByText('This is a test file for the introduction of the project.');
   await expect(introText).toBeVisible({ timeout: 5000 });

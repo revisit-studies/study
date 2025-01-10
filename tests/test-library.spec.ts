@@ -3,6 +3,8 @@ import { expect, test } from '@playwright/test';
 test('parser errors are shown correctly', async ({ page }) => {
   await page.goto('/');
 
+  await page.getByRole('tab', { name: 'Tests' }).click();
+
   await page.getByRole('button', { name: 'Using library imports Authors' }).click();
 
   await page.waitForSelector('text=test md file', { state: 'visible', timeout: 5000 });

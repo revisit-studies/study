@@ -30,6 +30,7 @@ async function goToTraining(page) {
 
 test('test', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('tab', { name: 'Tests' }).click();
 
   // Click on cleveland
   await page.getByRole('button', { name: 'Dynamic React.js Stimuli: A Graphical Perception Experiment' }).click();

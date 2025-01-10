@@ -2,6 +2,8 @@ import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
   await page.goto('/');
+  await page.getByRole('tab', { name: 'Tests' }).click();
+
   await page.getByRole('button', { name: 'HTML as a Stimulus' }).click();
   await page.getByRole('tab', { name: 'All Trials View' }).click();
 

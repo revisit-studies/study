@@ -4,6 +4,8 @@ import { test, expect } from '@playwright/test';
 test('test', async ({ page }) => {
   await page.goto('/');
 
+  await page.getByRole('tab', { name: 'Example Studies' }).click();
+
   // Click on mvnv study
   await page.getByRole('button', { name: 'MVNV Study Replication' }).click();
 
