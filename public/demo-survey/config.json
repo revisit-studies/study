@@ -179,7 +179,6 @@
   "sequence": {
     "order": "fixed",
     "components": [
-      "introduction",
       "survey"
     ]
   }
