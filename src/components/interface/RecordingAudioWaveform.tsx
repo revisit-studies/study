@@ -38,6 +38,8 @@ export default function RecordingAudioWaveform({ width = 70, height = 36 }: { wi
     setIsMounted(true);
   }, []);
 
+  // console.log('isMounted', isMounted);
+
   return (
     <Box id="waveformDiv" style={{ width: `${width}px`, height: `${height}px` }}>
       <WaveSurfer onMount={handleWSMount} plugins={[]} container="#waveformDiv" height={height}>
