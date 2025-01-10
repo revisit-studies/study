@@ -24,6 +24,7 @@
     "test-library-demographics",
     "test-library-beauvis",
     "test-library-previs",
+    "test-library-mini-vlat",
     "test-likert-matrix",
     "test-parser-errors",
     "test-randomization",
@@ -105,6 +106,10 @@
     },
     "test-library-previs": {
       "path": "test-library-previs/config.json",
+      "test": true
+    },
+    "test-library-mini-vlat": {
+      "path": "test-library-mini-vlat/config.json",
       "test": true
     },
     "test-likert-matrix": {
