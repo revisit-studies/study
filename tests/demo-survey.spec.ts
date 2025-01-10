@@ -6,7 +6,7 @@ test('test', async ({ page }) => {
 
   // Check for introduction page
   const introText = await page.getByText('Welcome to our study. This is an example survey study. It asks basic questions o');
-  await expect(introText).toBeVisible();
+  await expect(introText).toBeVisible({ timeout: 5000 });
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Fill the survey

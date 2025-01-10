@@ -160,6 +160,10 @@ async function getTags(page: Page) {
 test('test', async ({ page }) => {
   await page.goto('/test-skip-logic');
 
+  // Make sure that we loaded in
+  const introText = await page.getByText('Please answer the following questions');
+  await expect(introText).toBeVisible();
+
   // ***** All questions are correct *****
   await goToCheck(page, 'end');
   // Verify that the participant data has the block id as a tag
