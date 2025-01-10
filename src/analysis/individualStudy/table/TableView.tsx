@@ -28,9 +28,18 @@ function AnswerCell({ cellData }: { cellData: StoredAnswer }) {
                 {' '}
                 {`${key}: `}
               </Text>
-              <Text span>
-                {`${storedAnswer}`}
-              </Text>
+              {/* Checks for stored answer being an object (which is answer type of Matrix responses) */}
+              {typeof storedAnswer === 'object'
+                ? (
+                  <Text size="xs" component="pre" span>
+                    {`${JSON.stringify(storedAnswer, null, 2)}`}
+                  </Text>
+                )
+                : (
+                  <Text span>
+                    {storedAnswer}
+                  </Text>
+                )}
             </Box>
           ))}
       </Stack>
@@ -64,7 +73,7 @@ function DurationCell({ cellData }: { cellData: StoredAnswer }) {
   );
 }
 
-function MetaCell(props:{metaData: ParticipantMetadata}) {
+function MetaCell(props: { metaData: ParticipantMetadata }) {
   const { metaData } = props;
   return (
     <Table.Td>
@@ -195,10 +204,10 @@ export function TableView({
                   : <Tooltip label="In Progress"><IconProgress size={16} color="orange" style={{ marginBottom: -3 }} /></Tooltip>
             }
             {(!record.completed) && (
-            <Text size="sm" mb={-1} ml={4}>
-              {((Object.entries(record.answers).filter(([_, entry]) => entry.endTime !== -1 && entry.endTime !== undefined).length / (getSequenceFlatMap(record.sequence).length - 1)) * 100).toFixed(2)}
-              %
-            </Text>
+              <Text size="sm" mb={-1} ml={4}>
+                {((Object.entries(record.answers).filter(([_, entry]) => entry.endTime !== -1 && entry.endTime !== undefined).length / (getSequenceFlatMap(record.sequence).length - 1)) * 100).toFixed(2)}
+                %
+              </Text>
             )}
           </Flex>
           {record.rejected && (
@@ -211,7 +220,7 @@ export function TableView({
 
       <Table.Td>
         <Flex direction="column" miw={100}>
-          {record.participantTags.map((tag) => (
+          {(record.participantTags || []).map((tag) => (
             <Text key={`tag-${tag}`} fz={10}>
               -
               {' '}
@@ -302,7 +311,7 @@ export function TableView({
               {checked.length}
               )
             </Text>
-)}
+          )}
         >
           <TextInput
             label="Please enter the reason for rejection."

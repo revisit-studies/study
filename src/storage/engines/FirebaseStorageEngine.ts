@@ -74,15 +74,15 @@ export interface SnapshotNameItem {
   alternateName: string;
 }
 
-type FirebaseStorageObjectType = 'sequenceArray' | 'participantData' | 'config';
+type FirebaseStorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
 type FirebaseStorageObject<T extends FirebaseStorageObjectType> =
   T extends 'sequenceArray'
-    ? Sequence[] | object
+    ? Sequence[]
     : T extends 'participantData'
-    ? ParticipantData | object
+    ? ParticipantData
     : T extends 'config'
-    ? StudyConfig | object
-    : never;
+    ? StudyConfig
+    : object; // Fallback for any random string
 
 function isParticipantData(obj: unknown): obj is ParticipantData {
   const potentialParticipantData = obj as ParticipantData;
@@ -321,6 +321,23 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   async clearCurrentParticipantId() {
     return await this.localForage.removeItem('currentParticipantId');
+  }
+
+  async saveAudio(
+    audioStream: MediaRecorder,
+    taskName: string,
+  ) {
+    const listener = (data: BlobEvent) => {
+      this._pushToFirebaseStorage(`/audio/${this.currentParticipantId}`, taskName, data.data);
+    };
+
+    audioStream.addEventListener('dataavailable', listener);
+    audioStream.requestData();
+
+    // The 0 timeout is to ensure that we let the event get sent before removing the event listener
+    setTimeout(() => {
+      audioStream.removeEventListener('dataavailable', listener);
+    }, 0);
   }
 
   async saveAnswers(answers: Record<string, StoredAnswer>) {
@@ -586,26 +603,35 @@ export class FirebaseStorageEngine extends StorageEngine {
     return true;
   }
 
+  private userManagementData: Record<string, unknown> = {};
+
   // Gets data from the user-management collection based on the inputted string
-  async getUserManagementData(key: string) {
-    // Get the user-management collection in Firestore
-    const userManagementCollection = collection(
-      this.firestore,
-      'user-management',
-    );
-    // Grabs all user-management data and returns data based on key
-    const querySnapshot = await getDocs(userManagementCollection);
-    // Converts querySnapshot data to Object
-    const docsObject = Object.fromEntries(
-      querySnapshot.docs.map((queryDoc) => [queryDoc.id, queryDoc.data()]),
-    );
-    if (key in docsObject) {
-      return docsObject[key];
+  async getUserManagementData<T extends 'authentication' | 'adminUsers'>(key: T): Promise<(T extends 'authentication' ? { isEnabled: boolean } : { adminUsersList: StoredUser[] }) | null> {
+    if (Object.keys(this.userManagementData).length === 0) {
+      // Get the user-management collection in Firestore
+      const userManagementCollection = collection(
+        this.firestore,
+        'user-management',
+      );
+      // Grabs all user-management data and returns data based on key
+      const querySnapshot = await getDocs(userManagementCollection);
+      // Converts querySnapshot data to Object
+      const docsObject = Object.fromEntries(
+        querySnapshot.docs.map((queryDoc) => [queryDoc.id, queryDoc.data()]),
+      );
+      this.userManagementData = docsObject;
+    }
+    if (key in this.userManagementData) {
+      return this.userManagementData[key] as T extends 'authentication' ? { isEnabled: boolean } : { adminUsersList: StoredUser[] };
     }
     return null;
   }
 
-  async validateUser(user: UserWrapped | null) {
+  async validateUser(user: UserWrapped | null, refresh = false) {
+    if (refresh) {
+      this.userManagementData = {};
+    }
+
     if (user?.user) {
       // Case 1: Database exists
       const authInfo = await this.getUserManagementData('authentication');
@@ -1274,11 +1300,14 @@ export class FirebaseStorageEngine extends StorageEngine {
     type: T,
     objectToUpload: FirebaseStorageObject<T>,
   ) {
-    if (Object.keys(objectToUpload).length > 0) {
-      const storageRef = ref(
-        this.storage,
-        `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
-      );
+    const storageRef = ref(
+      this.storage,
+      `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
+    );
+
+    if (objectToUpload instanceof Blob) {
+      await uploadBytes(storageRef, objectToUpload);
+    } else if (Object.keys(objectToUpload).length > 0) {
       const blob = new Blob([JSON.stringify(objectToUpload)], {
         type: 'application/json',
       });

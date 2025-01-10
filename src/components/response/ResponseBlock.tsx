@@ -5,7 +5,6 @@ import {
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { IconAlertTriangle, IconInfoCircle } from '@tabler/icons-react';
 import {
   IndividualComponent,
   ResponseBlockLocation,
@@ -21,8 +20,6 @@ import { useAnswerField } from './utils';
 import ResponseSwitcher from './ResponseSwitcher';
 import { StoredAnswer, TrrackedProvenance } from '../../store/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import { useStudyConfig } from '../../store/hooks/useStudyConfig';
-import { useNextStep } from '../../store/hooks/useNextStep';
 
 type Props = {
   status?: StoredAnswer;
@@ -45,7 +42,6 @@ export default function ResponseBlock({
   const storedAnswer = status?.answer;
 
   const studyId = useStudyId();
-  const studyConfig = useStudyConfig();
 
   const navigate = useNavigate();
 
@@ -57,6 +53,7 @@ export default function ResponseBlock({
   const [provenanceGraph, setProvenanceGraph] = useState<TrrackedProvenance | undefined>(undefined);
   const iframeAnswers = useStoreSelector((state) => state.iframeAnswers);
   const iframeProvenance = useStoreSelector((state) => state.iframeProvenance);
+  const matrixAnswers = useStoreSelector((state) => state.matrixAnswers);
 
   const hasCorrectAnswerFeedback = configInUse?.provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
   const allowFailedTraining = configInUse?.allowFailedTraining === undefined ? true : configInUse.allowFailedTraining;
@@ -65,26 +62,6 @@ export default function ResponseBlock({
   const [enableNextButton, setEnableNextButton] = useState(false);
 
   const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
-
-  const nextButtonDisableTime = configInUse?.nextButtonDisableTime;
-  const nextButtonEnableTime = configInUse?.nextButtonEnableTime || 0;
-  const [timer, setTimer] = useState<number | undefined>(undefined);
-  // Start a timer on first render, update timer every 100ms
-  useEffect(() => {
-    let time = 0;
-    const interval = setInterval(() => {
-      time += 100;
-      setTimer(time);
-    }, 500);
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
-  useEffect(() => {
-    if (timer && nextButtonDisableTime && timer >= nextButtonDisableTime && studyConfig.uiConfig.timeoutReject) {
-      navigate('./__timeout');
-    }
-  }, [nextButtonDisableTime, timer, navigate, studyConfig.uiConfig.timeoutReject]);
 
   useEffect(() => {
     const iframeResponse = responses.find((r) => r.type === 'iframe');
@@ -100,6 +77,26 @@ export default function ResponseBlock({
       setProvenanceGraph(iframeProvenance);
     }
   }, [iframeProvenance]);
+
+  useEffect(() => {
+    // Checks if there are any matrix responses.
+    const matrixResponse = responses.filter((r) => r.type === 'matrix-radio' || r.type === 'matrix-checkbox');
+    if (matrixAnswers && matrixResponse.length > 0) {
+      // Create blank object with current values
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const updatedValues: Record<string, any> = { ...answerValidator.values };
+      // Adjust object to have new matrix response values
+      matrixResponse.forEach((r) => {
+        const { id } = r;
+        updatedValues[id] = {
+          ...answerValidator.getInputProps(id).value,
+          ...matrixAnswers[id],
+        };
+      });
+      // update answerValidator
+      answerValidator.setValues(updatedValues);
+    }
+  }, [matrixAnswers]);
 
   useEffect(() => {
     storeDispatch(
@@ -191,17 +188,6 @@ export default function ResponseBlock({
     }
   };
 
-  const buttonTimerSatisfied = useMemo(
-    () => {
-      const nextButtonDisableSatisfied = nextButtonDisableTime && timer ? timer <= nextButtonDisableTime : true;
-      const nextButtonEnableSatisfied = timer ? timer >= nextButtonEnableTime : true;
-      return nextButtonDisableSatisfied && nextButtonEnableSatisfied;
-    },
-    [nextButtonDisableTime, nextButtonEnableTime, timer],
-  );
-
-  const { goToNextStep } = useNextStep();
-
   return (
     <div style={style}>
       {responses.map((response, index) => {
@@ -226,8 +212,8 @@ export default function ResponseBlock({
                 {alertConfig[response.id].visible && (
                   <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>
                     {alertConfig[response.id].message}
-                      {' '}
-                      {alertConfig[response.id].message.includes('Please try again') && (
+                    {' '}
+                    {alertConfig[response.id].message.includes('Please try again') && (
                       <>
                         Please
                         {' '}
@@ -235,7 +221,7 @@ export default function ResponseBlock({
                         {' '}
                         and read the help text carefully.
                       </>
-                      )}
+                    )}
                     <br />
                     <br />
                     {attemptsUsed >= trainingAttempts && configCorrectAnswer && ` The correct answer was: ${configCorrectAnswer}.`}
@@ -258,38 +244,11 @@ export default function ResponseBlock({
         )}
         {showNextBtn && (
           <NextButton
-            disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid() || !buttonTimerSatisfied}
+            disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
             label={configInUse.nextButtonText || 'Next'}
           />
         )}
       </Group>
-      {showNextBtn && nextButtonEnableTime > 0 && timer && timer < nextButtonEnableTime && (
-      <Alert mt="md" title="Please wait" color="blue" icon={<IconInfoCircle />}>
-        The next button will be enabled in
-        {' '}
-        {Math.ceil((nextButtonEnableTime - timer) / 1000)}
-        {' '}
-        seconds.
-      </Alert>
-      )}
-      {showNextBtn && nextButtonDisableTime && timer && (nextButtonDisableTime - timer) < 10000 && (
-        (nextButtonDisableTime - timer) > 0
-          ? (
-            <Alert mt="md" title="Next button disables soon" color="yellow" icon={<IconAlertTriangle />}>
-              The next button disables in
-              {' '}
-              {Math.ceil((nextButtonDisableTime - timer) / 1000)}
-              {' '}
-              seconds.
-            </Alert>
-          ) : !studyConfig.uiConfig.timeoutReject && (
-            <Alert mt="md" title="Next button disabled" color="red" icon={<IconAlertTriangle />}>
-              The next button has timed out and is now disabled.
-              <Group justify="right" mt="sm">
-                <Button onClick={() => goToNextStep(false)} variant="link" color="red">Proceed</Button>
-              </Group>
-            </Alert>
-          ))}
     </div>
   );
 }

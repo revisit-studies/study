@@ -1,0 +1,43 @@
+{
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+      "title": "Using audio recording",
+      "version": "pilot",
+      "authors": [
+        "The reVISit Team"
+      ],
+      "date": "2023-04-14",
+      "description": "This is a test for audio",
+      "organizations": [
+        "University of Utah",
+        "WPI",
+        "University of Toronto"
+      ]
+    },
+    "recordStudyAudio": true,
+    "uiConfig": {
+      "contactEmail": "",
+      "logoPath": "revisitAssets/revisitLogoSquare.svg",
+      "withProgressBar": false,
+      "sidebar": true
+    },
+    "importedLibraries": ["test"],
+    "components": {
+      "my-test": {
+        "baseComponent": "$test.components.test-md",
+        "recordAudio": false,
+        "response": [
+          {"id": "test-response", "type": "shortText", "prompt": "What did you think of the test?", "required": true}
+        ]
+      }
+    },
+    "sequence": {
+      "order": "fixed",
+      "components": [
+        "$test.sequences.small",
+        "$test.sequences.small",
+        "my-test"
+      ]
+    }
+  }
+  

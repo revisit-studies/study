@@ -3,11 +3,12 @@ import {
 } from '@reduxjs/toolkit';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
-import { ResponseBlockLocation, StudyConfig } from '../parser/types';
+import { ResponseBlockLocation, StudyConfig, StringOption } from '../parser/types';
 import {
   StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata,
 } from './types';
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
+import { REVISIT_MODE } from '../storage/engines/StorageEngine';
 
 export async function studyStoreCreator(
   studyId: string,
@@ -15,6 +16,7 @@ export async function studyStoreCreator(
   sequence: Sequence,
   metadata: ParticipantMetadata,
   answers: Record<string, StoredAnswer>,
+  modes: Record<REVISIT_MODE, boolean>,
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
 
@@ -40,6 +42,7 @@ export async function studyStoreCreator(
 
   const initialState: StoreState = {
     studyId,
+    isRecording: false,
     answers: Object.keys(answers).length > 0 ? answers : emptyAnswers,
     sequence,
     config,
@@ -50,6 +53,8 @@ export async function studyStoreCreator(
     iframeAnswers: {},
     iframeProvenance: null,
     metadata,
+    modes,
+    matrixAnswers: {},
   };
 
   const storeSlice = createSlice({
@@ -58,6 +63,9 @@ export async function studyStoreCreator(
     reducers: {
       setConfig(state, payload: PayloadAction<StudyConfig>) {
         state.config = payload.payload;
+      },
+      setIsRecording(state, payload: PayloadAction<boolean>) {
+        state.isRecording = payload.payload;
       },
       toggleStudyBrowser: (state) => {
         state.showStudyBrowser = !state.showStudyBrowser;
@@ -73,6 +81,45 @@ export async function studyStoreCreator(
       },
       setIframeProvenance: (state, action: PayloadAction<TrrackedProvenance | null>) => {
         state.iframeProvenance = action.payload;
+      },
+      setMatrixAnswersRadio: (state, action: PayloadAction<{ questionKey: string, responseId: string, val: string }>) => {
+        const { responseId, questionKey, val } = action.payload;
+
+        // Set state
+        state.matrixAnswers = {
+          ...state.matrixAnswers,
+          [responseId]: {
+            ...state.matrixAnswers[responseId],
+            [questionKey]: val,
+          },
+        };
+      },
+      setMatrixAnswersCheckbox: (state, action: PayloadAction<{ questionKey: string, responseId: string, value: string, label: string, isChecked: boolean, choiceOptions: StringOption[] }>) => {
+        const {
+          responseId, questionKey, value, isChecked, choiceOptions,
+        } = action.payload;
+
+        const currentAnswer = state.matrixAnswers[responseId]?.[questionKey] ?? '';
+        let newAnswer = '';
+        if (isChecked) {
+          if (currentAnswer.length > 0) {
+            newAnswer = [...currentAnswer.split('|'), value].sort((a, b) => choiceOptions.map((entry) => entry.value).indexOf(a) - choiceOptions.map((entry) => entry.value).indexOf(b))
+              .join('|');
+          } else {
+            newAnswer = `${value}`;
+          }
+        } else {
+          newAnswer = currentAnswer.split('|').filter((entry) => entry !== value).join('|');
+        }
+
+        // Set state
+        state.matrixAnswers = {
+          ...state.matrixAnswers,
+          [responseId]: {
+            ...state.matrixAnswers[responseId],
+            [questionKey]: newAnswer,
+          },
+        };
       },
       updateResponseBlockValidation: (
         state,
@@ -150,16 +197,17 @@ export function useAreResponsesValid(id: string) {
     if (id.includes('reviewer-')) {
       return true;
     }
-
     const valid = Object.values(state.trialValidation[id]).every((x) => {
       if (typeof x === 'object' && 'valid' in x) {
         return x.valid;
       }
       return true;
     });
-
     if (!valid) return false;
 
+    // Valid seems to not be an object, just a boolean (you're using 'every').
+    // Was this originally something else? Should just be "return valid"
+    // instead of "if (!valid) return false" and then the stuff below
     return Object.values(valid).every((x) => x);
   });
 }

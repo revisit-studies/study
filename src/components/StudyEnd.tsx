@@ -82,13 +82,13 @@ export function StudyEnd() {
   const studyId = useStudyId();
   const [dataCollectionEnabled, setDataCollectionEnabled] = useState(false);
   useEffect(() => {
-    const checkStudyNavigatorEnabled = async () => {
+    const checkDataCollectionEnabled = async () => {
       if (storageEngine) {
         const modes = await storageEngine.getModes(studyId);
         setDataCollectionEnabled(modes.dataCollectionEnabled);
       }
     };
-    checkStudyNavigatorEnabled();
+    checkDataCollectionEnabled();
   }, [storageEngine, studyId]);
 
   return (

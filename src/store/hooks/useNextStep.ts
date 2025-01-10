@@ -1,6 +1,4 @@
-import {
-  useCallback, useEffect, useMemo, useState,
-} from 'react';
+import { useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   useStoreSelector,
@@ -21,6 +19,7 @@ import { useStudyConfig } from './useStudyConfig';
 import {
   Answer, IndividualComponent, InheritedComponent, StudyConfig,
 } from '../../parser/types';
+import { encryptIndex } from '../../utils/encryptDecryptIndex';
 
 function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: string, componentConfig: IndividualComponent | InheritedComponent, studyConfig: StudyConfig) {
   const componentName = componentId.slice(0, componentId.lastIndexOf('_'));
@@ -50,6 +49,7 @@ export function useNextStep() {
   const trialValidation = useStoreSelector((state) => state.trialValidation);
   const sequence = useStoreSelector((state) => state.sequence);
   const answers = useStoreSelector((state) => state.answers);
+  const modes = useStoreSelector((state) => state.modes);
 
   const storeDispatch = useStoreDispatch();
   const { saveTrialAnswer, setIframeAnswers } = useStoreActions();
@@ -57,16 +57,7 @@ export function useNextStep() {
 
   const studyId = useStudyId();
 
-  const [dataCollectionEnabled, setDataCollectionEnabled] = useState(true);
-  useEffect(() => {
-    const checkStudyNavigatorEnabled = async () => {
-      if (storageEngine) {
-        const modes = await storageEngine.getModes(studyId);
-        setDataCollectionEnabled(modes.dataCollectionEnabled);
-      }
-    };
-    checkStudyNavigatorEnabled();
-  }, [storageEngine, studyId]);
+  const dataCollectionEnabled = useMemo(() => modes.dataCollectionEnabled, [modes]);
 
   const areResponsesValid = useAreResponsesValid(identifier);
 
@@ -205,7 +196,7 @@ export function useNextStep() {
       });
     }
 
-    navigate(`/${studyId}/${nextStep}${window.location.search}`);
+    navigate(`/${studyId}/${encryptIndex(nextStep)}${window.location.search}`);
   }, [currentStep, trialValidation, identifier, windowEvents, dataCollectionEnabled, storedAnswer?.endTime, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setIframeAnswers, studyConfig, participantSequence]);
 
   return {
