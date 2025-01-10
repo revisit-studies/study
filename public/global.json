@@ -21,6 +21,7 @@
     "test-library-vlat",
     "test-library-mic-check",
     "test-library-color-blindness",
+    "test-library-demographics",
     "test-likert-matrix",
     "test-parser-errors",
     "test-randomization",
@@ -90,6 +91,10 @@
     },
     "test-library-color-blindness": {
       "path": "test-library-color-blindness/config.json",
+      "test": true
+    },
+    "test-library-demographics": {
+      "path": "test-library-demographics/config.json",
       "test": true
     },
     "test-likert-matrix": {
