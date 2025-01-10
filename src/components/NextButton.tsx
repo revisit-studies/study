@@ -41,7 +41,7 @@ export function NextButton({
     const interval = setInterval(() => {
       time += 100;
       setTimer(time);
-    }, 500);
+    }, 100);
     return () => {
       clearInterval(interval);
     };

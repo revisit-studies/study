@@ -23,6 +23,7 @@
     "test-library-color-blindness",
     "test-library-demographics",
     "test-library-beauvis",
+    "test-library-previs",
     "test-likert-matrix",
     "test-parser-errors",
     "test-randomization",
@@ -100,6 +101,10 @@
     },
     "test-library-beauvis": {
       "path": "test-library-beauvis/config.json",
+      "test": true
+    },
+    "test-library-previs": {
+      "path": "test-library-previs/config.json",
       "test": true
     },
     "test-likert-matrix": {

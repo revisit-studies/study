@@ -133,7 +133,7 @@
       }
     },
     "sequences": {
-      "previs": {
+      "4dimensions": {
         "order": "latinSquare",
         "components": [
           "Understand",

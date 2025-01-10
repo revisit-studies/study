@@ -273,6 +273,7 @@
             },
             "instruction": "What is the average internet speed in Japan?",
             "instructionLocation": "sidebar",
+            "nextButtonDisableTime": 5000,
             "response": [
               {
                 "id": "res-bar-value",
