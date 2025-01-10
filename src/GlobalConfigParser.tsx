@@ -13,7 +13,6 @@ import { PREFIX } from './utils/Prefix';
 import { ProtectedRoute } from './ProtectedRoute';
 import { Login } from './Login';
 import { AuthProvider } from './store/hooks/useAuth';
-import { AnalysisDashboard } from './analysis/dashboard/AnalysisDashboard';
 import { GlobalSettings } from './components/settings/GlobalSettings';
 import { NavigateWithParams } from './utils/NavigateWithParams';
 import AppHeader from './analysis/interface/AppHeader';
@@ -105,22 +104,6 @@ export function GlobalConfigParser() {
                     <Shell globalConfig={globalConfig} />
                   </>
                 )}
-              />
-              <Route
-                path="/analysis/dashboard"
-                element={(
-                  <>
-                    <PageTitle title="ReVISit | Analysis" />
-                    <AnalysisDashboard
-                      globalConfig={globalConfig}
-                    />
-                  </>
-
-              )}
-              />
-              <Route
-                path="/analysis"
-                element={<NavigateWithParams to="/analysis/dashboard" />}
               />
               <Route
                 path="/analysis/stats/:studyId/:tab/:trialId?"
