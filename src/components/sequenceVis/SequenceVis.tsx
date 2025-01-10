@@ -1,10 +1,17 @@
-import { Stack } from '@mantine/core';
+import {
+  Box, Divider, Group, Stack,
+} from '@mantine/core';
 import { useResizeObserver } from '@mantine/hooks';
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
 import seedrandom from 'seedrandom';
 import * as d3 from 'd3';
+import Editor, {
+  DiffEditor, useMonaco, loader,
+} from '@monaco-editor/react';
+
+import { editor } from 'monaco-editor';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { SequenceComponent } from './SequenceComponent';
 import { ComponentBlock } from '../../parser/types';
@@ -130,6 +137,8 @@ function switchOneOrder(sequence: ComponentBlock) {
 export function SequenceVis() {
   const { sequence } = useStudyConfig();
 
+  const monacoEditorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+
   const currentSequence = useRef<ComponentBlock>(deepCopy(sequence));
   const [assignedIds, setAssignedIds] = useState<boolean>(false);
 
@@ -138,8 +147,6 @@ export function SequenceVis() {
     setAssignedIds(true);
   }, []);
 
-  console.log(currentSequence.current);
-
   const [fakeCounter, setFakeCounter] = useState<number>(0);
 
   const [ref, { width }] = useResizeObserver();
@@ -147,18 +154,67 @@ export function SequenceVis() {
   useEffect(() => {
     setTimeout(() => {
       switchOneOrder(currentSequence.current);
-      console.log('switchingOrder');
       setFakeCounter(fakeCounter + 1);
     }, 200);
   }, [fakeCounter]);
 
-  const [blocks, arrows] = useMemo(() => traverseSequence(currentSequence.current, width - MARGIN_BETWEEN, fakeCounter, assignedIds), [currentSequence, width, fakeCounter, assignedIds]);
+  const [blocks, arrows] = useMemo(() => traverseSequence(currentSequence.current, width - MARGIN_BETWEEN - 600, fakeCounter, assignedIds), [currentSequence, width, fakeCounter, assignedIds]);
+
+  const handleEditorChange = useCallback((value: string | undefined) => {
+    if (value) {
+      currentSequence.current = JSON.parse(value);
+    }
+  }, []);
+
+  console.log(monacoEditorRef.current);
+
+  useEffect(() => {
+
+  }, []);
 
   return (
     <Stack ref={ref} style={{ height: '100%' }}>
-      <svg style={{ height: '1000px', width, fontFamily: 'var(--mantine-font-family)' }}>
-        <SequenceComponent components={blocks} arrows={arrows} />
-      </svg>
+      <Group wrap="nowrap">
+        <Box
+          style={{ width: '600px', height: '1200px' }}
+          onKeyDown={(press) => {
+            if (press.key === 's' && (press.ctrlKey || press.metaKey)) {
+              if (monacoEditorRef.current) {
+                monacoEditorRef.current?.getAction('editor.action.formatDocument')?.run();
+                setFakeCounter(fakeCounter + 1);
+              }
+              press.preventDefault();
+              press.stopPropagation();
+            }
+          }}
+        >
+          <Editor
+            onMount={(editorRef) => {
+              monacoEditorRef.current = editorRef;
+            }}
+            onChange={handleEditorChange}
+            height="1200px"
+            defaultLanguage="json"
+            options={{
+              scrollbar: {
+                horizontal: 'visible',
+              },
+              wordWrap: 'off',
+              wordWrapOverride1: 'off',
+              wordWrapOverride2: 'off',
+              automaticLayout: true,
+              autoIndent: 'full',
+
+            }}
+            defaultValue={JSON.stringify(sequence)}
+          />
+        </Box>
+        <Divider orientation="vertical" size="lg" />
+        <svg style={{ height: '1200px', width: width - 400, fontFamily: 'var(--mantine-font-family)' }}>
+          <SequenceComponent components={blocks} arrows={arrows} />
+        </svg>
+      </Group>
+
     </Stack>
   );
 }
