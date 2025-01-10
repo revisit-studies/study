@@ -23,11 +23,6 @@
     "sidebar": true
   },
   "components": {
-    "introduction": {
-      "type": "markdown",
-      "path": "demo-survey/assets/introduction.md",
-      "response": []
-    },
     "survey": {
       "type": "questionnaire",
       "response": [
