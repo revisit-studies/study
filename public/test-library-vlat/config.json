@@ -1,0 +1,49 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Using library imports",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-14",
+    "description": "This is a test for library imports.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": false,
+    "sidebar": true
+  },
+  "importedLibraries": ["demographics", 
+                        "SUS", 
+                        "previs", 
+                        "mini-vlat", 
+                        "vlat", 
+                        "berlin-num", 
+                        "nasa-tlx", 
+                        "color-blindness",
+                        "mic-check"
+                      ],
+  "components": {
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "$mic-check.co.audioTest",
+      "$demographics.se.demographics",
+      "$berlin-num.se.berlin-num",
+      "$SUS.se.SUS",
+      "$vlat.se.latinSquare",      
+      "$previs.se.previs",
+      "$mini-vlat.se.fixed",
+      "$nasa-tlx.se.latinSquare",
+      "$color-blindness.se.color-blindness"
+    ]
+  }
+}

@@ -18,6 +18,9 @@
     "demo-image",
     "test-audio",
     "test-library",
+    "test-library-vlat",
+    "test-library-mic-check",
+    "test-library-color-blindness",
     "test-likert-matrix",
     "test-parser-errors",
     "test-randomization",
@@ -75,6 +78,18 @@
     },
     "test-library": {
       "path": "test-library/config.json",
+      "test": true
+    },
+    "test-library-vlat": {
+      "path": "test-library-vlat/config.json",
+      "test": true
+    },
+    "test-library-mic-check": {
+      "path": "test-library-mic-check/config.json",
+      "test": true
+    },
+    "test-library-color-blindness": {
+      "path": "test-library-color-blindness/config.json",
       "test": true
     },
     "test-likert-matrix": {
