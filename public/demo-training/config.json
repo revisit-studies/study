@@ -52,7 +52,6 @@
       "allowFailedTraining": false,
       "trainingAttempts": 4
     },
-    
     "slider-range": {
       "type": "questionnaire",
       "nextButtonLocation": "sidebar",
@@ -60,7 +59,7 @@
         {
           "id": "slider-question",
           "prompt": "Pick a value half-way.",
-          "secondaryText": "Hint: it's not round.",
+          "secondaryText": "Try to get the middle value",
           "required": true,
           "location": "sidebar",
           "type": "slider",
@@ -88,7 +87,6 @@
       "allowFailedTraining": false,
       "trainingAttempts": 4
     },
-
     "main-page-text-field": {
       "type": "questionnaire",
       "nextButtonLocation": "belowStimulus",
@@ -101,7 +99,7 @@
           "location": "belowStimulus",
           "type": "shortText",
           "placeholder": "Enter a single vowel."
-        }
+        },
         {
           "id": "consonant-question",
           "prompt": "Respond with a consonant",
