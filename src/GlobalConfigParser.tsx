@@ -78,76 +78,91 @@ export function GlobalConfigParser() {
     <BrowserRouter basename={PREFIX}>
       <AuthProvider>
         <ModalsProvider>
-          <AppShell
-            padding="md"
-            header={{ height: 70 }}
-          >
-            <Routes>
-              <Route
-                path="/"
-                element={(
-                  <>
-                    <PageTitle title="ReVISit | Home" />
+          <Routes>
+            <Route
+              path="/"
+              element={(
+                <>
+                  <PageTitle title="ReVISit | Home" />
+                  <AppShell
+                    padding="md"
+                    header={{ height: 70 }}
+                  >
                     <AppHeader studyIds={globalConfig.configsList} />
                     <ConfigSwitcher
                       globalConfig={globalConfig}
                       studyConfigs={studyConfigs}
                     />
-                  </>
+                  </AppShell>
+                </>
             )}
-              />
-              <Route
-                path="/:studyId/*"
-                element={(
-                  <>
-                    <PageTitle title="ReVISit | Study" />
-                    <Shell globalConfig={globalConfig} />
-                  </>
+            />
+            <Route
+              path="/:studyId/*"
+              element={(
+                <>
+                  <PageTitle title="ReVISit | Study" />
+                  <Shell globalConfig={globalConfig} />
+                </>
                 )}
-              />
-              <Route
-                path="/analysis/stats/:studyId/:tab/:trialId?"
-                element={(
-                  <>
-                    <PageTitle title="ReVISit | Analysis" />
-                    <ProtectedRoute paramToCheck="studyId" paramCallback={analysisProtectedCallback}>
+            />
+            <Route
+              path="/analysis/stats/:studyId/:tab/:trialId?"
+              element={(
+                <>
+                  <PageTitle title="ReVISit | Analysis" />
+                  <ProtectedRoute paramToCheck="studyId" paramCallback={analysisProtectedCallback}>
+                    <AppShell
+                      padding="md"
+                      header={{ height: 70 }}
+                    >
                       <StudyAnalysisTabs
                         globalConfig={globalConfig}
                       />
-                    </ProtectedRoute>
-                  </>
+                    </AppShell>
+                  </ProtectedRoute>
+                </>
             )}
-              />
-              <Route
-                path="/analysis/stats/:studyId"
-                element={<NavigateWithParams to="./table" replace />}
-              />
-              <Route
-                path="/settings"
-                element={(
-                  <ProtectedRoute>
-                    <PageTitle title="ReVISit | Settings" />
+            />
+            <Route
+              path="/analysis/stats/:studyId"
+              element={<NavigateWithParams to="./table" replace />}
+            />
+            <Route
+              path="/settings"
+              element={(
+                <ProtectedRoute>
+                  <PageTitle title="ReVISit | Settings" />
+                  <AppShell
+                    padding="md"
+                    header={{ height: 70 }}
+                  >
                     <AppHeader studyIds={globalConfig.configsList} />
                     <AppShell.Main>
                       <GlobalSettings />
                     </AppShell.Main>
-                  </ProtectedRoute>
+                  </AppShell>
+                </ProtectedRoute>
             )}
-              />
-              <Route
-                path="/login"
-                element={(
-                  <>
-                    <PageTitle title="ReVISit | Login" />
-                    <AppHeader studyIds={globalConfig.configsList} />
+            />
+            <Route
+              path="/login"
+              element={(
+                <>
+                  <PageTitle title="ReVISit | Login" />
+                  <AppHeader studyIds={globalConfig.configsList} />
+                  <AppShell
+                    padding="md"
+                    header={{ height: 70 }}
+                  >
                     <AppShell.Main>
                       <Login />
                     </AppShell.Main>
-                  </>
+                  </AppShell>
+                </>
             )}
-              />
-            </Routes>
-          </AppShell>
+            />
+          </Routes>
         </ModalsProvider>
       </AuthProvider>
     </BrowserRouter>

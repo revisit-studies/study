@@ -500,17 +500,42 @@ export class FirebaseStorageEngine extends StorageEngine {
     return participantsData;
   }
 
-  async getParticipantData() {
+  async getAudio(
+    task: string,
+    participantId: string,
+  ) {
+    const storage = getStorage();
+
+    const url = await getDownloadURL(ref(storage, `${this.collectionPrefix}${this.studyId}/audio/${participantId}_${task}`));
+
+    const allAudioList = new Promise<string>((resolve) => {
+      const xhr = new XMLHttpRequest();
+      xhr.responseType = 'blob';
+      xhr.onload = () => {
+        const blob = xhr.response;
+
+        const _url = URL.createObjectURL(blob);
+
+        resolve(_url);
+      };
+      xhr.open('GET', url);
+      xhr.send();
+    });
+
+    return allAudioList;
+  }
+
+  async getParticipantData(participantId?: string) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
 
-    if (this.currentParticipantId === null) {
+    if (this.currentParticipantId === null && !participantId) {
       throw new Error('Participant not initialized');
     }
 
     const participantData = await this._getFromFirebaseStorage(
-      `participants/${this.currentParticipantId}`,
+      `participants/${participantId || this.currentParticipantId}`,
       'participantData',
     );
 
