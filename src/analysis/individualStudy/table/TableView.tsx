@@ -260,6 +260,8 @@ export function TableView({
           startTime: Math.min(...Object.values(record.answers).filter((a) => a.endTime !== -1 && a.endTime !== undefined).map((a) => a.startTime)),
           endTime: Math.max(...Object.values(record.answers).filter((a) => a.endTime !== -1 && a.endTime !== undefined).map((a) => a.endTime)),
           answer: {},
+          helpButtonClickedCount: 0, // not used
+          incorrectAnswers: {}, // not used
           windowEvents: Object.values(record.answers).flatMap((a) => a.windowEvents),
           timedOut: false, // not used
         }}
@@ -278,7 +280,7 @@ export function TableView({
               w={350}
               variant="filled"
               placeholder="Search for a participant ID"
-              data={allParticipants.map((record) => ({ value: record.participantId, label: record.participantId }))}
+              data={[...new Set(allParticipants.map((part) => part.participantId))]}
               searchable
               value={null}
               leftSection={<IconSearch size={14} />}

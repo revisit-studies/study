@@ -16,7 +16,7 @@
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-cleveland/assets/help.md",
+    "helpTextPath": "example-cleveland/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -27,7 +27,7 @@
       "description": "A bubble chart with correct answer of 0.66",
       "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
       "type": "react-component",
-      "path": "demo-cleveland/assets/BubbleChart.tsx",
+      "path": "example-cleveland/assets/BubbleChart.tsx",
       "parameters": {
         "data": [
           {
@@ -79,7 +79,7 @@
       "description": "A chart with correct answer of 0.66",
       "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
       "type": "react-component",
-      "path": "demo-cleveland/assets/StackedBarChart.tsx",
+      "path": "example-cleveland/assets/StackedBarChart.tsx",
       "parameters": {
         "data": [
           {
@@ -131,7 +131,7 @@
       "description": "A chart with correct answer of 0.66",
       "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
       "type": "react-component",
-      "path": "demo-cleveland/assets/BarChart.tsx",
+      "path": "example-cleveland/assets/BarChart.tsx",
       "parameters": {
         "data": [
           {
@@ -183,7 +183,7 @@
       "description": "Pie chart",
       "instruction": "Two values are marked with dots. \n\nWhat percentage do you believe the smaller value represents relative to the larger value?",
       "type": "react-component",
-      "path": "demo-cleveland/assets/PieChart.tsx",
+      "path": "example-cleveland/assets/PieChart.tsx",
       "parameters": {
         "data": [
           {
@@ -231,12 +231,12 @@
   "components": {
     "introduction": {
       "type": "markdown",
-      "path": "demo-cleveland/assets/introduction.md",
+      "path": "example-cleveland/assets/introduction.md",
       "response": []
     },
     "consent": {
       "type": "markdown",
-      "path": "demo-cleveland/assets/consent-cm.md",
+      "path": "example-cleveland/assets/consent-cm.md",
       "nextButtonText": "Agree",
       "response": [
         {
@@ -263,7 +263,7 @@
     },
     "training1": {
       "type": "image",
-      "path": "demo-cleveland/assets/cm-training.png",
+      "path": "example-cleveland/assets/cm-training.png",
       "response": []
     },
     "trainingBubbleChart1": {
