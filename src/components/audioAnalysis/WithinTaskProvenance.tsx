@@ -5,7 +5,7 @@ import { StoredAnswer } from '../../store/types';
 const RECT_HEIGHT = 15;
 const RECT_WIDTH = 3;
 
-export function SingleTaskProvenance({
+export function WithinTaskProvenance({
   xScale, answer, height, currentNode, setCurrentNode, taskName,
 } : {answer: StoredAnswer, height: number, xScale: d3.ScaleLinear<number, number>, currentNode: string | null, setCurrentNode: (node: string, nodeTime: number, t: string) => void, taskName: string}) {
   return (

@@ -21,7 +21,7 @@ import { useAsync } from '../../store/hooks/useAsync';
 import { useStoreActions, useStoreDispatch, useStoreSelector } from '../../store/store';
 import { deepCopy } from '../../utils/deepCopy';
 import { useEvent } from '../../store/hooks/useEvent';
-import { SingleTaskTimeline } from './SingleTaskTimeline';
+import { WithinTaskTimeline } from './WithinTaskTimeline';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 
 const margin = {
@@ -43,7 +43,7 @@ export function AnalysisPopout() {
 
   const { storageEngine } = useStorageEngine();
 
-  const { analysisIsPlaying } = useStoreSelector((state) => state);
+  const analysisIsPlaying = useStoreSelector((state) => state.analysisIsPlaying);
   const { saveAnalysisState, setAnalysisHasAudio, setAnalysisHasProvenance } = useStoreActions();
   const storeDispatch = useStoreDispatch();
 
@@ -243,7 +243,7 @@ export function AnalysisPopout() {
 
         {status === 'success' && participant && xScale && componentAndIndex && participant.answers[componentAndIndex].provenanceGraph
           ? (
-            <SingleTaskTimeline
+            <WithinTaskTimeline
               xScale={xScale}
               trialName={componentAndIndex}
               setPlayTime={_setPlayTime}

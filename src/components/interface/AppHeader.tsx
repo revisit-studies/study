@@ -30,7 +30,6 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import RecordingAudioWaveform from './RecordingAudioWaveform';
-import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 
 export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
@@ -68,10 +67,8 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
     }
   }, [studyConfig]);
 
-  const isAnalysis = useIsAnalysis();
-
   return (
-    <AppShell.Header p={isAnalysis ? '0.5rem' : '1rem'}>
+    <AppShell.Header p="md">
       <Grid mt={-7} align="center">
         <Grid.Col span={4}>
           <Flex align="center">

@@ -1,5 +1,5 @@
 import * as d3 from 'd3';
-import { StoredAnswer } from '../../store/types';
+import { StoredAnswer } from '../../../store/types';
 
 export function SingleTaskLabelLines({
   xScale, answer, height, labelHeight = 0,

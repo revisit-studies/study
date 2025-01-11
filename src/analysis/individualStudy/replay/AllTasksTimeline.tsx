@@ -6,8 +6,8 @@ import {
 } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 import { ParticipantData } from '../../../storage/types';
-import { SingleTaskLabelLines } from '../../../components/audioAnalysis/SingleTaskLabelLines';
-import { SingleTask } from '../../../components/audioAnalysis/SingleTask';
+import { SingleTaskLabelLines } from './SingleTaskLabelLines';
+import { SingleTask } from './SingleTask';
 import { encryptIndex } from '../../../utils/encryptDecryptIndex';
 
 const LABEL_GAP = 25;

@@ -100,7 +100,6 @@ export function Shell({ globalConfig }: {
           },
           {
             path: '/:index',
-            // eslint-disable-next-line no-nested-ternary
             element: activeConfig.errors.length > 0 ? (
               <>
                 <Title order={2} mb={8}>Error loading config</Title>

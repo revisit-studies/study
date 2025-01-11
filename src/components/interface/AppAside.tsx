@@ -22,7 +22,6 @@ import { deepCopy } from '../../utils/deepCopy';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
-import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 
 // eslint-disable-next-line react/display-name
 function InfoHover({ text }: { text: string }) {
@@ -55,13 +54,10 @@ export default function AppAside() {
 
   const [activeTab, setActiveTab] = useState<string | null>('participant');
 
-  const isAnalysis = useIsAnalysis();
-
   return (
     <AppShell.Aside p="0">
       <AppShell.Section
         p="md"
-        pr={isAnalysis ? '0.5rem' : '1rem'}
       >
         <Flex direction="row" justify="space-between">
           <Text size="md" fw={700} pt={3}>
@@ -87,7 +83,6 @@ export default function AppAside() {
         grow
         component={ScrollArea}
         p="md"
-        pr={isAnalysis ? '0.5rem' : '1rem'}
       >
         <Tabs value={activeTab} onChange={setActiveTab}>
           <Box style={{

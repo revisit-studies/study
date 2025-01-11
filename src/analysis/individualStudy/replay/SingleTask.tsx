@@ -3,7 +3,7 @@ import { Center, Text } from '@mantine/core';
 import * as d3 from 'd3';
 
 import { useResizeObserver } from '@mantine/hooks';
-import { StoredAnswer } from '../../store/types';
+import { StoredAnswer } from '../../../store/types';
 
 const LABEL_MARGIN = 3;
 const TIMELINE_HEIGHT = 25;

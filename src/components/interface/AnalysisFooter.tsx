@@ -22,15 +22,13 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Storage
   if (storageEngine) {
     return storageEngine.getParticipantData(trrackId);
   }
-
   return null;
 }
 
-function getAllParticipantIds(storageEngine: StorageEngine | undefined) {
+function getAllParticipantsData(storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
     return storageEngine.getAllParticipantsData();
   }
-
   return null;
 }
 
@@ -46,12 +44,12 @@ export function AnalysisFooter() {
   const { setAnalysisIsPlaying } = useStoreActions();
   const storeDispatch = useStoreDispatch();
 
-  const { analysisIsPlaying } = useStoreSelector((state) => state);
+  const analysisIsPlaying = useStoreSelector((state) => state.analysisIsPlaying);
 
   const { storageEngine } = useStorageEngine();
 
   const { value: participant, status: loadingPartStatus } = useAsync(getParticipantData, [participantId, storageEngine]);
-  const { value: allParticipants } = useAsync(getAllParticipantIds, [storageEngine]);
+  const { value: allParticipants } = useAsync(getAllParticipantsData, [storageEngine]);
 
   const nextParticipantNameAndIndex: [string, number] = useMemo(() => {
     if (allParticipants && participant && participantId && currentComponent) {
@@ -110,7 +108,6 @@ export function AnalysisFooter() {
             <Button onClick={() => navigate(`./${encryptIndex(nextParticipantNameAndIndex[1])}?participantId=${nextParticipantNameAndIndex[0]}`)}>
               Next Participant
             </Button>
-
           </Group>
         </Center>
       </Box>
