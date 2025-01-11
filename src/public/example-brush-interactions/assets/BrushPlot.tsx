@@ -34,7 +34,7 @@ export function BrushPlot({ parameters, setAnswer, provenanceState }: StimulusPa
 
   // load data
   useEffect(() => {
-    d3.csv(`./../data/${parameters.dataset}.csv`).then((_data) => {
+    d3.csv(`./data/${parameters.dataset}.csv`).then((_data) => {
       setData(_data);
     });
   }, [parameters]);
