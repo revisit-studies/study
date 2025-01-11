@@ -123,7 +123,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   }, [currentConfig]);
 
   useEffect(() => {
-    if (view && provState && provState.event) {
+    if (view && provState && provState.event && provState.event.key) {
       view!.signal(provState.event.key, provState.event.value).run();
     }
   }, [view, provState]);
