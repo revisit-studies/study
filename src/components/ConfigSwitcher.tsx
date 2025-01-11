@@ -1,7 +1,6 @@
 import {
   Anchor, AppShell, Button, Card, Container, Divider, Flex, Image, rem, Tabs, Text,
 } from '@mantine/core';
-import { useNavigate } from 'react-router-dom';
 import {
   IconAlertTriangle, IconChartHistogram, IconExternalLink, IconListCheck,
 } from '@tabler/icons-react';
@@ -70,8 +69,6 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
 
     return null;
   }, [modes, studyStatusAndTiming]);
-
-  const navigate = useNavigate();
 
   return (
     <Card key={configName} shadow="sm" radius="md" my="sm" withBorder>
@@ -159,8 +156,22 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
             )}
 
             <Flex direction="row" align="end" gap="sm" mt="md">
-              <Button leftSection={<IconChartHistogram />} style={{ marginLeft: 'auto' }} variant="default" onClick={() => navigate(`/analysis/stats/${url}`)}>Analyze & Manage Study</Button>
-              <Button leftSection={<IconListCheck />} onClick={() => navigate(`/${url}`)}>Go to Study</Button>
+              <Button
+                leftSection={<IconChartHistogram />}
+                style={{ marginLeft: 'auto' }}
+                variant="default"
+                component="a"
+                href={`/analysis/stats/${url}`}
+              >
+                Analyze & Manage Study
+              </Button>
+              <Button
+                leftSection={<IconListCheck />}
+                component="a"
+                href={`/${url}`}
+              >
+                Go to Study
+              </Button>
             </Flex>
           </>
         )}

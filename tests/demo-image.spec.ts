@@ -5,8 +5,7 @@ test('test', async ({ page }) => {
 
   // Click on image-demo
   await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations' })
-    .getByRole('button')
-    .nth(1)
+    .getByText('Go to Study')
     .click();
 
   // Check that the page contains the introduction text

@@ -8,8 +8,7 @@ test('test', async ({ page }) => {
 
   // Click on cleveland
   await page.getByLabel('Example Studies').locator('div').filter({ hasText: 'Dynamic React.js Stimuli: A Graphical Perception Experiment' })
-    .getByRole('button')
-    .nth(1)
+    .getByText('Go to Study')
     .click();
 
   // Check that the page contains the introduction text

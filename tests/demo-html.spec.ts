@@ -5,8 +5,7 @@ test('html demo works as intended', async ({ page }) => {
 
   // Click on html-demo
   await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'HTML as a Stimulus' })
-    .getByRole('button')
-    .nth(1)
+    .getByText('Go to Study')
     .click();
 
   // Check that the page contains the introduction text

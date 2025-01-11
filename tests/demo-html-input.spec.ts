@@ -5,8 +5,7 @@ test('test', async ({ page }) => {
 
   // Click on html-input
   await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'Passing Data from reVISit to HTML and back' })
-    .getByRole('button')
-    .nth(1)
+    .getByText('Go to Study')
     .click();
 
   // Check that the page contains the introduction text

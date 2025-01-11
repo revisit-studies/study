@@ -6,8 +6,7 @@ test('test', async ({ page }) => {
   await page.goto('/');
 
   await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'Dynamic React Stimuli and Provenance Tracking' })
-    .getByRole('button')
-    .nth(1)
+    .getByText('Go to Study')
     .click();
 
   // Check for introduction page

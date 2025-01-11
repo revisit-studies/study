@@ -98,6 +98,7 @@ export default function ResponseBlock({
       // update answerValidator
       answerValidator.setValues(updatedValues);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matrixAnswers]);
 
   useEffect(() => {

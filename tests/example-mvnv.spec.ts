@@ -8,8 +8,7 @@ test('test', async ({ page }) => {
 
   // Click on mvnv study
   await page.getByLabel('Example Studies').locator('div').filter({ hasText: 'MVNV Study Replication' })
-    .getByRole('button')
-    .nth(1)
+    .getByText('Go to Study')
     .click();
 
   // Check for introduction page

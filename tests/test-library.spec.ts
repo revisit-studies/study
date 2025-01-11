@@ -6,8 +6,7 @@ test('parser errors are shown correctly', async ({ page }) => {
   await page.getByRole('tab', { name: 'Tests' }).click();
 
   await page.getByLabel('Tests').locator('div').filter({ hasText: 'Using library imports' })
-    .getByRole('button')
-    .nth(1)
+    .getByText('Go to Study')
     .click();
 
   await page.waitForSelector('text=test md file', { state: 'visible', timeout: 5000 });
