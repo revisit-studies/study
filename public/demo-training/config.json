@@ -22,7 +22,7 @@
     "sidebar": true
   },
   "components": {
-    "survey": {
+    "simple-dropbox": {
       "type": "questionnaire",
       "nextButtonLocation": "sidebar",
       "response": [
@@ -51,12 +51,49 @@
       "provideFeedback": true,
       "allowFailedTraining": false,
       "trainingAttempts": 4
+    },
+    
+    "slider-range": {
+      "type": "questionnaire",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "slider-question",
+          "prompt": "Pick a value half-way.",
+          "secondaryText": "Hint: it's not round.",
+          "required": true,
+          "location": "sidebar",
+          "type": "slider",
+          "options": [
+            {
+              "label": "0",
+              "value": 0
+            },
+            {
+              "label": "50",
+              "value": 50
+            }
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "slider-question",
+          "answer": 25,
+          "acceptableLow": 22,
+          "acceptableHigh": 28
+        }
+      ],
+      "provideFeedback": true,
+      "allowFailedTraining": false,
+      "trainingAttempts": 4
     }
   },
   "sequence": {
     "order": "fixed",
     "components": [
-      "survey"
+      "simple-dropbox",
+      "slider-range"
     ]
   }
 }
