@@ -1,4 +1,10 @@
-import { ReactNode, useEffect, useState } from 'react';
+
+import {
+  ReactNode,
+  useEffect,
+  useState,
+  useMemo,
+} from 'react';
 import { Provider } from 'react-redux';
 import { RouteObject, useRoutes, useSearchParams } from 'react-router-dom';
 import { LoadingOverlay, Title } from '@mantine/core';
@@ -66,6 +72,9 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   const [store, setStore] = useState<Nullable<StudyStore>>(null);
   const { storageEngine } = useStorageEngine();
   const [searchParams] = useSearchParams();
+
+  const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
+
   useEffect(() => {
     async function initializeUserStoreRouting() {
       // Check that we have a storage engine and active config (studyId is set for config, but typescript complains)
@@ -112,7 +121,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         searchParamsObject,
         activeConfig,
         metadata,
-        urlParticipantId,
+        participantId || urlParticipantId,
       );
 
       const modes = await storageEngine.getModes(studyId);
@@ -125,6 +134,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
         metadata,
         participantSession.answers,
         modes,
+        participantSession.participantId,
       );
       setStore(newStore);
 
@@ -159,7 +169,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       ]);
     }
     initializeUserStoreRouting();
-  }, [storageEngine, activeConfig, studyId, searchParams]);
+  }, [storageEngine, activeConfig, studyId, searchParams, participantId]);
 
   const routing = useRoutes(routes);
 

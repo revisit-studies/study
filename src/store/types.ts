@@ -111,8 +111,9 @@ export interface StoredAnswer {
   helpButtonClickedCount: number;
 }
 
-export interface StimulusParams<T> {
+export interface StimulusParams<T, S = never> {
   parameters: T;
+  provenanceState?: S;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
 }
@@ -126,6 +127,7 @@ export interface Sequence {
 
 export interface StoreState {
   studyId: string;
+  participantId: string;
   isRecording: boolean;
   answers: Record<string, StoredAnswer>;
   sequence: Sequence;
@@ -137,6 +139,10 @@ export interface StoreState {
   iframeAnswers: Record<string, unknown>;
   iframeProvenance: TrrackedProvenance | null;
   metadata: ParticipantMetadata;
+  analysisProvState: unknown | null;
+  analysisIsPlaying: boolean;
+  analysisHasAudio: boolean;
+  analysisHasProvenance: boolean;
   modes: Record<REVISIT_MODE, boolean>;
   matrixAnswers: Record<string, Record<string, string>>;
 }

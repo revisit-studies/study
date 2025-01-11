@@ -280,7 +280,7 @@ export function TableView({
               w={350}
               variant="filled"
               placeholder="Search for a participant ID"
-              data={allParticipants.map((record) => ({ value: record.participantId, label: record.participantId }))}
+              data={[...new Set(allParticipants.map((part) => part.participantId))]}
               searchable
               value={null}
               leftSection={<IconSearch size={14} />}

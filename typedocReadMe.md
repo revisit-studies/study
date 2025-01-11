@@ -68,7 +68,6 @@ You can specify numerical and textual responses through those interfaces:
 - [NumberOption](interfaces/NumberOption.md)
 - [StringOption](interfaces/StringOption.md)
 
-
 ## Sequencing
 
 Sequencing determines the order in which components appear.

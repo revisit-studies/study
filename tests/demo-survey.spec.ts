@@ -3,7 +3,10 @@ import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Question Types and Form Elements Demo' }).click();
+  await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'Question Types and Form Elements Demo' })
+    .getByRole('button')
+    .nth(1)
+    .click();
 
   // Fill the survey
   await page.getByPlaceholder('Enter your preference').click();

@@ -3,6 +3,8 @@ import { expect, test } from '@playwright/test';
 test('parser errors are shown correctly', async ({ page }) => {
   await page.goto('/');
 
+  await page.getByRole('tab', { name: 'Tests' }).click();
+
   const errors = [
     'You have an error at /importedLibraries/: Could not find library test-missing - {"action":"make sure the library is in the correct location"}',
     'You have an error at /components/missingBaseComponent: Base component missingBaseComponent is not defined in baseComponents object - {"action":"add the base component to the baseComponents object"}',
@@ -34,6 +36,8 @@ test('parser errors are shown correctly', async ({ page }) => {
     await expect(w).toBeVisible();
   }
 
-  const count = await page.getByRole('button', { name: 'test-parser-errors Errors' }).getByRole('list').locator('li').count();
+  const count = await page.getByLabel('Tests').locator('div').filter({ hasText: 'test-parser-errors' }).getByRole('list')
+    .locator('li')
+    .count();
   expect(count).toBe(errors.length + warnings.length);
 });

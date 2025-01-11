@@ -44,6 +44,11 @@ export class LocalStorageEngine extends StorageEngine {
     });
   }
 
+  getAudio(taskList: string, participantId?: string | undefined) {
+    console.warn('not yet implemented', participantId);
+    return Promise.resolve('not yet implemented');
+  }
+
   async saveAudio(audioStream: MediaRecorder): Promise<void> {
     console.warn('not yet implemented', audioStream);
     return Promise.resolve();
@@ -241,12 +246,12 @@ export class LocalStorageEngine extends StorageEngine {
     return returnArray;
   }
 
-  async getParticipantData() {
+  async getParticipantData(participantIdInput?: string) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
 
-    const participantId = await this.studyDatabase.getItem('currentParticipant') as string | null;
+    const participantId = participantIdInput || await this.studyDatabase.getItem('currentParticipant') as string | null;
     if (!participantId) {
       return null;
     }
@@ -414,6 +419,25 @@ export class LocalStorageEngine extends StorageEngine {
     };
     this.studyDatabase.setItem('modes', defaults);
     return defaults;
+  }
+
+  async getParticipantsStatusCounts(studyId: string) {
+    const participants = await this.getAllParticipantsDataByStudy(studyId);
+
+    const completed = participants.filter((p) => p.completed && !p.rejected).length;
+    const rejected = participants.filter((p) => p.rejected).length;
+    const inProgress = participants.filter((p) => !p.completed && !p.rejected).length;
+
+    const minTime = Math.min(...participants.map((p) => Math.min(...Object.values(p.answers).map((s) => s.startTime))));
+    const maxTime = Math.max(...participants.map((p) => Math.max(...Object.values(p.answers).map((s) => s.endTime))));
+
+    return {
+      completed,
+      rejected,
+      inProgress,
+      minTime: minTime === Infinity ? null : minTime,
+      maxTime: maxTime === -Infinity ? null : maxTime,
+    };
   }
 
   private _verifyStudyDatabase(db: LocalForage | undefined): db is LocalForage {
