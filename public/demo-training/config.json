@@ -1,0 +1,62 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "How To Do Training Demo",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2025-01-10",
+    "description": "A demo of how to do training.",
+    "organizations": [
+      "University of Utah",
+      "WPI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-training/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true
+  },
+  "components": {
+    "survey": {
+      "type": "questionnaire",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "q1",
+          "prompt": "What is the most efficient visual mark?",
+          "secondaryText": "Hint: it's not round.",
+          "required": true,
+          "location": "sidebar",
+          "type": "dropdown",
+          "placeholder": "Choose mark",
+          "options": [
+            "Bar",
+            "Bubble",
+            "Pie",
+            "Stacked Bar"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q1",
+          "answer": "Bar"
+        }
+      ],
+      "provideFeedback": true,
+      "allowFailedTraining": false,
+      "trainingAttempts": 4
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "survey"
+    ]
+  }
+}

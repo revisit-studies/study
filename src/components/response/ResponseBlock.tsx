@@ -215,11 +215,12 @@ export default function ResponseBlock({
                     {' '}
                     {alertConfig[response.id].message.includes('Please try again') && (
                       <>
-                        Please
+                        <br />
+                        <br />
+                        If you&apos;re unsure
                         {' '}
-                        <Anchor style={{ fontSize: 14 }} onClick={() => storeDispatch(toggleShowHelpText())}>click here</Anchor>
+                        <Anchor style={{ fontSize: 14 }} onClick={() => storeDispatch(toggleShowHelpText())}>review the help text.</Anchor>
                         {' '}
-                        and read the help text carefully.
                       </>
                     )}
                     <br />
