@@ -45,7 +45,7 @@ export default function AppHeader({ studyIds }: { studyIds: string[] }) {
             />
             )}
 
-            <IconSettings onClick={() => navigate('/settings')} style={{ cursor: 'pointer' }} />
+            <IconSettings onClick={() => navigate('/settings')} style={{ cursor: 'pointer', marginTop: inAnalysis ? 6 : undefined }} />
           </Flex>
         </Grid.Col>
       </Grid>
