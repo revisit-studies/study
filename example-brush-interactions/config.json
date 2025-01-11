@@ -16,7 +16,7 @@
   },
   "uiConfig": {
     "contactEmail": "cnobre@cs.toronto.edu",
-    "helpTextPath": "demo-brush-interactions/assets/tutorial.md",
+    "helpTextPath": "example-brush-interactions/assets/tutorial.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -28,7 +28,7 @@
     "scatterPlot": {
       "description": "A scatterplot and accompanying bar chart.",
       "type": "react-component",
-      "path": "demo-brush-interactions/assets/BrushPlot.tsx",
+      "path": "example-brush-interactions/assets/BrushPlot.tsx",
       "nextButtonLocation": "sidebar",
       "instructionLocation": "sidebar",
       "response": []
@@ -37,7 +37,7 @@
   "components": {
     "introduction": {
       "type": "markdown",
-      "path": "demo-brush-interactions/assets/introduction.md",
+      "path": "example-brush-interactions/assets/introduction.md",
       "response": [
         {
           "id": "prolificId",
@@ -52,7 +52,7 @@
     },
     "consent": {
       "type": "markdown",
-      "path": "demo-brush-interactions/assets/consent.md",
+      "path": "example-brush-interactions/assets/consent.md",
       "nextButtonText": "Agree",
       "response": [
         {
@@ -79,7 +79,7 @@
     },
     "tutorial": {
       "type": "markdown",
-      "path": "demo-brush-interactions/assets/tutorial.md",
+      "path": "example-brush-interactions/assets/tutorial.md",
       "nextButtonText": "",
       "response": []
     },
@@ -452,7 +452,7 @@
     },
     "survey": {
       "type": "markdown",
-      "path": "demo-VLAT-mini-randomized/assets/survey.md",
+      "path": "example-VLAT-mini-randomized/assets/survey.md",
       "response": [
         {
           "id": "surveyExperience",
