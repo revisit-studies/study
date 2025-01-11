@@ -871,7 +871,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     const sequenceAssignments = await getDocs(sequenceAssignmentsQuery);
     const sequenceAssignmentsData = sequenceAssignments.docs.map((d) => d.data());
 
-    const completed = sequenceAssignmentsData.filter((assignment) => assignment.completed).length;
+    const completed = sequenceAssignmentsData.filter((assignment) => assignment.completed && !assignment.rejected).length;
     const rejected = sequenceAssignmentsData.filter((assignment) => assignment.rejected).length;
     const inProgress = sequenceAssignmentsData.length - completed - rejected;
     const minTime = sequenceAssignmentsData.length > 0 ? sequenceAssignmentsData[0].timestamp : null;

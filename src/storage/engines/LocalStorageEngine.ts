@@ -419,7 +419,7 @@ export class LocalStorageEngine extends StorageEngine {
   async getParticipantsStatusCounts(studyId: string) {
     const participants = await this.getAllParticipantsDataByStudy(studyId);
 
-    const completed = participants.filter((p) => p.completed).length;
+    const completed = participants.filter((p) => p.completed && !p.rejected).length;
     const rejected = participants.filter((p) => p.rejected).length;
     const inProgress = participants.filter((p) => !p.completed && !p.rejected).length;
 
