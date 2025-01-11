@@ -416,6 +416,25 @@ export class LocalStorageEngine extends StorageEngine {
     return defaults;
   }
 
+  async getParticipantsStatusCounts(studyId: string) {
+    const participants = await this.getAllParticipantsDataByStudy(studyId);
+
+    const completed = participants.filter((p) => p.completed && !p.rejected).length;
+    const rejected = participants.filter((p) => p.rejected).length;
+    const inProgress = participants.filter((p) => !p.completed && !p.rejected).length;
+
+    const minTime = Math.min(...participants.map((p) => Math.min(...Object.values(p.answers).map((s) => s.startTime))));
+    const maxTime = Math.max(...participants.map((p) => Math.max(...Object.values(p.answers).map((s) => s.endTime))));
+
+    return {
+      completed,
+      rejected,
+      inProgress,
+      minTime: minTime === Infinity ? null : minTime,
+      maxTime: maxTime === -Infinity ? null : maxTime,
+    };
+  }
+
   private _verifyStudyDatabase(db: LocalForage | undefined): db is LocalForage {
     return db !== undefined;
   }

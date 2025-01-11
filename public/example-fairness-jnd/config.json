@@ -16,7 +16,7 @@
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-fairness-jnd/assets/help.md",
+    "helpTextPath": "example-fairness-jnd/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -31,7 +31,7 @@
       "description": "A chart with correct answer of 0.66",
       "instruction": "Two rankings with two groups (colored red and blue) are displayed. \n Select the ranking which you think is fairer.",
       "type": "react-component",
-      "path": "demo-fairness-jnd/assets/FairnessJND.tsx",
+      "path": "example-fairness-jnd/assets/FairnessJND.tsx",
       "parameters": {
         "data": {
           "r1": 0.0,
@@ -96,7 +96,7 @@
   "components": {
     "introduction": {
       "type": "markdown",
-      "path": "demo-fairness-jnd/assets/introduction.md",
+      "path": "example-fairness-jnd/assets/introduction.md",
       "response": []
     },
     "s1": {
