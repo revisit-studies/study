@@ -11,6 +11,7 @@
     "demo-html",
     "demo-html-input",
     "demo-survey",
+    "demo-training",
     "demo-VLAT-full-randomized",
     "demo-VLAT-mini-randomized",
     "demo-html-trrack",
@@ -53,6 +54,9 @@
     },
     "demo-survey": {
       "path": "demo-survey/config.json"
+    },
+    "demo-training": {
+      "path": "demo-training/config.json"
     },
     "demo-VLAT-full-randomized": {
       "path": "demo-VLAT-full-randomized/config.json"

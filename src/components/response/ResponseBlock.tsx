@@ -220,11 +220,12 @@ export default function ResponseBlock({
                     {' '}
                     {alertConfig[response.id].message.includes('Please try again') && (
                       <>
-                        Please
+                        <br />
+                        <br />
+                        If you&apos;re unsure
                         {' '}
-                        <Anchor style={{ fontSize: 14 }} onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier: `${currentComponent}_${currentStep}` })); }}>click here</Anchor>
+                        <Anchor style={{ fontSize: 14 }} onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier: `${currentComponent}_${currentStep}` })); }}>review the help text.</Anchor>
                         {' '}
-                        and read the help text carefully.
                       </>
                     )}
                     <br />
