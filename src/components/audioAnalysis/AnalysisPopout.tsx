@@ -1,37 +1,31 @@
 /* eslint-disable no-nested-ternary */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  ActionIcon,
-  Box, Center, Group, Loader, Select, Stack,
+  Box, Center, Group, Loader, Stack,
 } from '@mantine/core';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { useResizeObserver, useThrottledState } from '@mantine/hooks';
-import { WaveForm, useWavesurfer } from 'wavesurfer-react';
-import WaveSurferContext from 'wavesurfer-react/dist/contexts/WaveSurferContext';
+import { WaveForm, WaveSurfer } from 'wavesurfer-react';
 import * as d3 from 'd3';
 import {
   Registry, Trrack, initializeTrrack, isRootNode,
 } from '@trrack/core';
-import WaveSurfer from 'wavesurfer.js';
-import { IconPlayerPauseFilled, IconPlayerPlayFilled } from '@tabler/icons-react';
-import { PluginDictionary } from 'wavesurfer-react/dist/hooks/useWavesurfer';
-import { GenericPlugin } from 'wavesurfer.js/dist/base-plugin';
+import WaveSurferType from 'wavesurfer.js';
 import { StorageEngine } from '../../storage/engines/StorageEngine';
 import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useAsync } from '../../store/hooks/useAsync';
-import { useStoreActions, useStoreDispatch } from '../../store/store';
+import { useStoreActions, useStoreDispatch, useStoreSelector } from '../../store/store';
 import { deepCopy } from '../../utils/deepCopy';
 import { useEvent } from '../../store/hooks/useEvent';
 import { SingleTaskTimeline } from './SingleTaskTimeline';
-import { encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 
 const margin = {
-  left: 0, top: 0, right: 5, bottom: 0,
+  left: 0, top: 0, right: 0, bottom: 0,
 };
 
 function getParticipantData(trrackId: string | undefined, storageEngine: StorageEngine | undefined) {
@@ -42,22 +36,15 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Storage
   return null;
 }
 
-function getAllParticipantIds(storageEngine: StorageEngine | undefined) {
-  if (storageEngine) {
-    return storageEngine.getAllParticipantsData();
-  }
-
-  return null;
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void}) {
+export function AnalysisPopout() {
   const [searchParams] = useSearchParams();
-  const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
+  const participantId = useMemo(() => searchParams.get('participantId') || undefined, [searchParams]);
 
   const { storageEngine } = useStorageEngine();
 
-  const { saveAnalysisState } = useStoreActions();
+  const { analysisIsPlaying } = useStoreSelector((state) => state);
+  const { saveAnalysisState, setAnalysisHasAudio, setAnalysisHasProvenance } = useStoreActions();
   const storeDispatch = useStoreDispatch();
 
   const currentComponent = useCurrentComponent();
@@ -68,15 +55,12 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
   const [waveSurferWidth, setWaveSurferWidth] = useState<number>(0);
 
   const [currentNode, setCurrentNode] = useState<string | null>(null);
-  const totalAudioLength = useRef<number>(0);
+  const [totalAudioLength, setTotalAudioLength] = useState<number>(0);
 
   const { value: participant, status } = useAsync(getParticipantData, [participantId, storageEngine]);
 
-  const { value: allParticipants } = useAsync(getAllParticipantIds, [storageEngine]);
-
   const [hasAudio, setHasAudio] = useState<boolean>(false);
 
-  const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [playTime, setPlayTime] = useThrottledState<number>(0, 200);
 
   const waveSurferDiv = useRef(null);
@@ -96,11 +80,14 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
 
       if (participant.answers[componentAndIndex].provenanceGraph) {
         trrack.importObject(deepCopy(participant.answers[componentAndIndex].provenanceGraph!));
+        storeDispatch(setAnalysisHasProvenance(true));
 
         trrackForTrial.current = trrack;
       }
+    } else {
+      storeDispatch(setAnalysisHasProvenance(false));
     }
-  }, [participant, componentAndIndex]);
+  }, [participant, componentAndIndex, storeDispatch, setAnalysisHasProvenance]);
 
   const _setCurrentNode = useCallback((node: string | undefined) => {
     if (!node) {
@@ -120,8 +107,6 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
     if (participant && currentComponent && componentAndIndex) {
       const { startTime } = participant.answers[componentAndIndex];
       setPlayTime(t * 1000 + startTime);
-
-      setPercent((t / totalAudioLength.current) * 100);
     }
   });
 
@@ -166,103 +151,95 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
   }, [_setCurrentNode, currentNode, participant, participantId, playTime, componentAndIndex]);
 
   const isAnalysis = useIsAnalysis();
+  const wavesurfer = useRef<WaveSurferType | null>(null);
 
   const handleWSMount = useCallback(
-    async (waveSurfer: WaveSurfer | null) => {
+    async (waveSurfer: WaveSurferType | null) => {
+      wavesurfer.current = waveSurfer;
       if (waveSurfer && participant && isAnalysis && componentAndIndex && storageEngine) {
         try {
           const url = await storageEngine.getAudio(componentAndIndex, participantId);
           await waveSurfer.load(url);
           setWaveSurferLoading(false);
           setHasAudio(true);
+          storeDispatch(setAnalysisHasAudio(true));
 
-          totalAudioLength.current = waveSurfer.getDuration();
+          setTotalAudioLength(waveSurfer.getDuration());
           setWaveSurferWidth(waveSurfer.getWidth());
           waveSurfer.seekTo(0);
           waveSurfer.on('timeupdate', timeUpdate);
           waveSurfer.on('redrawcomplete', () => setWaveSurferWidth(waveSurfer.getWidth()));
         } catch (error: any) {
           setHasAudio(false);
+          setTotalAudioLength(0);
+
+          storeDispatch(setAnalysisHasAudio(false));
           throw new Error(error);
         }
+      } else {
+        storeDispatch(setAnalysisHasAudio(false));
+        setTotalAudioLength(0);
       }
     },
-    [participant, isAnalysis, componentAndIndex, storageEngine, participantId, timeUpdate],
+    [participant, isAnalysis, componentAndIndex, storageEngine, participantId, storeDispatch, setAnalysisHasAudio, timeUpdate],
   );
-
-  const plugins = useMemo(() => [], []);
-
-  const [wavesurfer] = useWavesurfer({
-    container: waveSurferDiv.current!, plugins, onMount: handleWSMount, progressColor: 'cornflowerblue', waveColor: 'lightgray',
-  } as any);
 
   const _setPlayTime = useCallback((n: number, percent: number) => {
     setPlayTime(n);
 
-    setPercent(percent);
-
-    if (wavesurfer && percent) {
+    if (wavesurfer.current && percent) {
       setTimeout(() => {
-        wavesurfer.seekTo(percent);
+        wavesurfer.current?.seekTo(percent);
       });
     }
-  }, [setPercent, setPlayTime, wavesurfer]);
+  }, [setPlayTime, wavesurfer]);
 
-  const _setIsPlaying = useCallback((b: boolean) => {
-    setIsPlaying(b);
-
-    if (wavesurfer) {
-      if (b) {
-        wavesurfer.play();
+  useEffect(() => {
+    if (wavesurfer.current) {
+      if (analysisIsPlaying) {
+        wavesurfer.current.play();
       } else {
-        wavesurfer.pause();
+        wavesurfer.current.pause();
       }
     }
-  }, [wavesurfer]);
+  }, [wavesurfer, analysisIsPlaying]);
 
   const xScale = useMemo(() => {
     if (!participant || !participant.answers[componentAndIndex]?.startTime || !participant.answers[componentAndIndex]?.endTime) {
       return null;
     }
 
-    const allStartTimes = Object.values(participant.answers || {}).map((answer) => [answer.startTime, answer.endTime]).flat();
+    const endTime = totalAudioLength > 0 ? participant.answers[componentAndIndex].startTime + totalAudioLength * 1000 : participant.answers[componentAndIndex].endTime;
 
-    const extent = d3.extent(allStartTimes) as [number, number];
-
-    const scale = d3.scaleLinear([margin.left, width + margin.left + margin.right]).domain(componentAndIndex ? [participant.answers[componentAndIndex].startTime, participant.answers[componentAndIndex].endTime] : extent).clamp(true);
+    const scale = d3.scaleLinear([margin.left, width + margin.left + margin.right]).domain([participant.answers[componentAndIndex].startTime, endTime]).clamp(true);
 
     return scale;
-  }, [participant, componentAndIndex, width]);
+  }, [participant, componentAndIndex, width, totalAudioLength]);
 
   useEffect(() => {
-    handleWSMount(wavesurfer);
+    handleWSMount(wavesurfer.current);
   }, [handleWSMount, participant, participantId, wavesurfer]);
 
-  const navigate = useNavigate();
-
-  const fullWaveSurferObj: [WaveSurfer, PluginDictionary<GenericPlugin>, GenericPlugin[]] = useMemo(() => [wavesurfer, {}, []], [wavesurfer]);
-
   return (
-    <Group wrap="nowrap" gap={25}>
+    <Group wrap="nowrap" gap={10} mx={10}>
       <Stack ref={ref} style={{ width: '100%' }} gap={0}>
-        <Group wrap="nowrap">
-          <Center />
-          { xScale && participant !== null && (componentAndIndex ? participant.answers[componentAndIndex] !== undefined : true)
-            ? (
-              <Box
-                ref={waveSurferDiv}
-                style={{
-                  overflow: 'visible', width: '100%',
-                }}
-                display={hasAudio ? 'block' : 'none'}
-              >
-                <WaveSurferContext.Provider value={fullWaveSurferObj}>
-                  <WaveForm id="waveform" />
-                </WaveSurferContext.Provider>
-                {waveSurferLoading ? <Loader /> : null}
-              </Box>
-            ) : null }
-        </Group>
+        <Center />
+        { participant !== null && componentAndIndex
+          ? (
+            <Box
+              ref={waveSurferDiv}
+              style={{
+                overflow: 'hidden', width: '100%',
+              }}
+              display={hasAudio ? 'block' : 'none'}
+              id="waveformDiv"
+            >
+              <WaveSurfer onMount={handleWSMount} plugins={[]} container="#waveformDiv" height={50} waveColor="#484848" progressColor="#e15759">
+                <WaveForm id="waveform" height={50} />
+              </WaveSurfer>
+              {waveSurferLoading ? <Loader /> : null}
+            </Box>
+          ) : null }
 
         {status === 'success' && participant && xScale && componentAndIndex && participant.answers[componentAndIndex].provenanceGraph
           ? (
@@ -274,22 +251,9 @@ export function AnalysisPopout({ setPercent } : {setPercent: (n: number) => void
               setCurrentNode={_setCurrentNode}
               participantData={participant}
               width={waveSurferWidth || width}
-              height={50}
+              height={25}
             />
           ) : null}
-        <Center>
-          <Group>
-            <ActionIcon variant="light" size={50} onClick={() => _setIsPlaying(!isPlaying)}>{isPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}</ActionIcon>
-            <Select
-              style={{ width: '300px' }}
-              value={participant?.participantId || ''}
-              onChange={(e) => {
-                navigate(`../../${e}/${encryptIndex(0)}`, { relative: 'path' });
-              }}
-              data={allParticipants ? [...new Set(allParticipants.map((part) => part.participantId))] : []}
-            />
-          </Group>
-        </Center>
       </Stack>
     </Group>
   );

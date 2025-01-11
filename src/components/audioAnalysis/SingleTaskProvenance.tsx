@@ -13,9 +13,9 @@ export function SingleTaskProvenance({
       {answer.provenanceGraph ? Object.entries(answer.provenanceGraph.nodes).map((entry) => {
         const [nodeId, node] = entry;
 
-        return <g key={nodeId} onClick={() => setCurrentNode(nodeId, node.createdOn, taskName)}><rect fill={nodeId === currentNode ? 'cornflowerblue' : 'lightgray'} x={xScale(node.createdOn) - RECT_WIDTH / 2} y={height / 2 - RECT_HEIGHT / 2} width={RECT_WIDTH} height={RECT_HEIGHT} /></g>;
+        return <g key={nodeId} onClick={() => setCurrentNode(nodeId, node.createdOn, taskName)}><rect fill={nodeId === currentNode ? '#e15759' : '#484848'} x={xScale(node.createdOn) - RECT_WIDTH / 2} y={height / 2 - RECT_HEIGHT / 2} width={RECT_WIDTH} height={RECT_HEIGHT} /></g>;
       }) : null}
-      {currentNode && answer.provenanceGraph && answer.provenanceGraph.nodes[currentNode] ? <rect fill="cornflowerblue" cx={xScale(answer.provenanceGraph.nodes[currentNode].createdOn)} cy={height / 2} r={5} /> : null}
+      {currentNode && answer.provenanceGraph && answer.provenanceGraph.nodes[currentNode] ? <rect fill="var(--mantine-color-blue-filled)" cx={xScale(answer.provenanceGraph.nodes[currentNode].createdOn)} cy={height / 2} r={5} /> : null}
     </g>
   );
 }

@@ -2,6 +2,8 @@ import {
   Suspense, useEffect, useMemo, useRef, useState,
 } from 'react';
 import merge from 'lodash.merge';
+import { useSearchParams } from 'react-router-dom';
+import { Center, Loader } from '@mantine/core';
 import ResponseBlock from '../components/response/ResponseBlock';
 import IframeController from './IframeController';
 import ImageController from './ImageController';
@@ -15,13 +17,14 @@ import { isInheritedComponent } from '../parser/utils';
 import { IndividualComponent } from '../parser/types';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
-import { useStoreActions, useStoreDispatch, useStoreSelector } from '../store/store';
+import {
+  useStoreActions, useStoreDispatch, useStoreSelector,
+} from '../store/store';
 import { StudyEnd } from '../components/StudyEnd';
 import { TrainingFailed } from '../components/TrainingFailed';
 import ResourceNotFound from '../ResourceNotFound';
 import { TimedOut } from '../components/TimedOut';
 import { findBlockForStep } from '../utils/getSequenceFlatMap';
-import ReplayCard from './ReplayCard';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 
 // current active stimuli presented to the user
@@ -44,6 +47,11 @@ export default function ComponentController() {
   const status = useStoredAnswer();
   const sequence = useStoreSelector((state) => state.sequence);
 
+  const [searchParams] = useSearchParams();
+
+  const storePartId = useStoreSelector((state) => state.participantId);
+  const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
+
   // Disable browser back button from all stimuli
   useDisableBrowserBack();
 
@@ -60,7 +68,7 @@ export default function ComponentController() {
   }, [setAlertModal, storageEngine, storeDispatch]);
 
   useEffect(() => {
-    if (!studyConfig || !studyConfig.recordStudyAudio || !storageEngine || storageEngine.getEngine() !== 'firebase' || status.endTime > 0 || isAnalysis) {
+    if (!studyConfig || !studyConfig.recordStudyAudio || !storageEngine || storageEngine.getEngine() !== 'firebase' || (status && status.endTime > 0) || isAnalysis) {
       return;
     }
 
@@ -146,6 +154,14 @@ export default function ComponentController() {
     return <ResourceNotFound email={studyConfig.uiConfig.contactEmail} />;
   }
 
+  if (participantId && storePartId !== participantId) {
+    return (
+      <Center style={{ height: '80vh' }}>
+        <Loader />
+      </Center>
+    );
+  }
+
   const instruction = (currentConfig.instruction || '');
   const { instructionLocation } = currentConfig;
   const instructionInSideBar = studyConfig.uiConfig.sidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
@@ -175,10 +191,6 @@ export default function ComponentController() {
         config={currentConfig}
         location="belowStimulus"
       />
-
-      {isAnalysis ? (
-        <ReplayCard />
-      ) : null }
     </>
   );
 }

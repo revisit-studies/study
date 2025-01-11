@@ -124,6 +124,7 @@ export interface Sequence {
 
 export interface StoreState {
   studyId: string;
+  participantId: string;
   isRecording: boolean;
   answers: Record<string, StoredAnswer>;
   sequence: Sequence;
@@ -139,6 +140,9 @@ export interface StoreState {
   analysisParticipantName: string | null;
   analysisProvState: unknown | null;
   analysisWaveformTime: number;
+  analysisIsPlaying: boolean;
+  analysisHasAudio: boolean;
+  analysisHasProvenance: boolean;
   modes: Record<REVISIT_MODE, boolean>;
   matrixAnswers: Record<string, Record<string, string>>;
 }

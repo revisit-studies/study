@@ -1,14 +1,22 @@
 /* eslint-disable no-nested-ternary */
 import {
-  AppShell, Box, Group, Text,
+  ActionIcon,
+  AppShell, Box, Button, Center, Group, LoadingOverlay, Select, Text,
 } from '@mantine/core';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMemo } from 'react';
+import { IconPlayerPauseFilled, IconPlayerPlayFilled } from '@tabler/icons-react';
 import { useAsync } from '../../store/hooks/useAsync';
 
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { StorageEngine } from '../../storage/engines/StorageEngine';
 import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
+import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import {
+  useStoreActions, useStoreDispatch, useStoreSelector,
+} from '../../store/store';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+import { AnalysisPopout } from '../audioAnalysis/AnalysisPopout';
 
 function getParticipantData(trrackId: string | undefined, storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
@@ -18,68 +26,93 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Storage
   return null;
 }
 
-function humanReadableDuration(msDuration: number): string {
-  const h = Math.floor(msDuration / 1000 / 60 / 60);
-  const m = Math.floor((msDuration / 1000 / 60 / 60 - h) * 60);
-  const s = Math.floor(((msDuration / 1000 / 60 / 60 - h) * 60 - m) * 60);
+function getAllParticipantIds(storageEngine: StorageEngine | undefined) {
+  if (storageEngine) {
+    return storageEngine.getAllParticipantsData();
+  }
 
-  // To get time format 00:00:00
-  const seconds: string = s < 10 ? `0${s}` : `${s}`;
-  const minutes: string = m < 10 ? `0${m}` : `${m}`;
-  const hours: string = h < 10 ? `0${h}` : `${h}`;
-
-  return `${hours}h ${minutes}m ${seconds}s`;
+  return null;
 }
 
 export function AnalysisFooter() {
   const [searchParams] = useSearchParams();
 
-  const participantId = useMemo(() => {
-    searchParams.get('participantId');
-  }, [searchParams]);
+  const participantId = useMemo(() => searchParams.get('participantId') || undefined, [searchParams]);
 
   const currentComponent = useCurrentComponent();
   const currentStep = useCurrentStep();
+  const navigate = useNavigate();
+
+  const { setAnalysisIsPlaying } = useStoreActions();
+  const storeDispatch = useStoreDispatch();
+
+  const { analysisIsPlaying } = useStoreSelector((state) => state);
 
   const { storageEngine } = useStorageEngine();
 
-  const { value: participant } = useAsync(getParticipantData, [participantId, storageEngine]);
+  const { value: participant, status: loadingPartStatus } = useAsync(getParticipantData, [participantId, storageEngine]);
+  const { value: allParticipants } = useAsync(getAllParticipantIds, [storageEngine]);
 
-  const duration = useMemo(() => {
-    if (!participant || !participant.answers || Object.entries(participant.answers).length === 0) {
-      return 0;
+  const nextParticipantNameAndIndex: [string, number] = useMemo(() => {
+    if (allParticipants && participant && participantId && currentComponent) {
+      const filteredParticipants = allParticipants.filter((part) => part.participantConfigHash === participant.participantConfigHash);
+      const index = filteredParticipants.findIndex((part) => part.participantId === participantId);
+      const nextPart = index < filteredParticipants.length - 1 ? filteredParticipants[index + 1] : filteredParticipants[0];
+
+      return [nextPart.participantId, getSequenceFlatMap(nextPart.sequence).indexOf(currentComponent)];
     }
+    return ['', 0];
+  }, [allParticipants, currentComponent, participant, participantId]);
 
-    const answersSorted = Object.values(participant.answers).filter((data) => data.startTime).sort((a, b) => a.startTime - b.startTime);
+  const selectData = useMemo(() => {
+    const configHashMap: Record<string, Set<string>> = {};
+    allParticipants?.forEach((part) => {
+      if (!configHashMap[part.participantConfigHash]) {
+        configHashMap[part.participantConfigHash] = new Set();
+      }
+      configHashMap[part.participantConfigHash].add(part.participantId);
+    });
 
-    return new Date(answersSorted[answersSorted.length - 1].endTime - (answersSorted[1] ? answersSorted[1].startTime : 0)).getTime();
-  }, [participant]);
-
-  const taskDuration = useMemo(() => {
-    if (!participant || !participant.answers || Object.entries(participant.answers).length === 0) {
-      return 0;
-    }
-
-    return new Date(participant.answers[`${currentComponent}_${currentStep}`].endTime - participant.answers[`${currentComponent}_${currentStep}`].startTime).getTime();
-  }, [participant, currentComponent, currentStep]);
+    return Object.keys(configHashMap).sort((groupA, groupB) => (groupA === participant?.participantConfigHash ? -1 : groupB === participant?.participantConfigHash ? 1 : 0)).map((key) => ({
+      group: `Config version: ${key}`,
+      items: [...configHashMap[key]].map((k) => ({ value: k, label: k, disabled: key !== participant?.participantConfigHash })),
+    }));
+  }, [allParticipants, participant?.participantConfigHash]);
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
-      <Box style={{ backgroundColor: 'var(--mantine-color-blue-2)' }}>
-        <Group>
-          <Text mx="sm">
-            {`Analyzing participant: ${participant?.participantId}`}
-          </Text>
-          <Text mx="sm">
-            {`Total Duration: ${humanReadableDuration(duration)}`}
-          </Text>
-          <Text mx="sm">
-            {`Task Duration: ${humanReadableDuration(taskDuration)}`}
-          </Text>
-          <Text mx="sm">
-            {`Status: ${participant?.rejected ? 'Rejected' : participant?.completed ? 'Completed' : 'Incomplete'}`}
-          </Text>
-        </Group>
+      <Box style={{ backgroundColor: 'var(--mantine-color-blue-2)', height: '150px' }}>
+        <LoadingOverlay visible={loadingPartStatus !== 'success'} overlayProps={{ backgroundOpacity: 0.4 }} />
+
+        <AnalysisPopout />
+        <Center>
+          <Group style={{ height: '50px' }}>
+            <ActionIcon variant="filled" size={30} onClick={() => storeDispatch(setAnalysisIsPlaying(!analysisIsPlaying))}>
+              {analysisIsPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}
+            </ActionIcon>
+            <Text mx="sm">
+              Participant:
+            </Text>
+            <Select
+              style={{ width: '300px' }}
+              value={participant?.participantId || ''}
+              onChange={(e) => {
+                navigate(`./${encryptIndex(0)}?participantId=${e}`, { relative: 'path' });
+              }}
+              data={selectData}
+            />
+            <Button onClick={() => navigate(`./${encryptIndex(+currentStep - 1)}?participantId=${participantId}`, { relative: 'path' })}>
+              Previous Task
+            </Button>
+            <Button onClick={() => navigate(`./${encryptIndex(+currentStep + 1)}?participantId=${participantId}`, { relative: 'path' })}>
+              Next Task
+            </Button>
+            <Button onClick={() => navigate(`./${encryptIndex(nextParticipantNameAndIndex[1])}?participantId=${nextParticipantNameAndIndex[0]}`)}>
+              Next Participant
+            </Button>
+
+          </Group>
+        </Center>
       </Box>
     </AppShell.Footer>
   );

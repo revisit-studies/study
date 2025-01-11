@@ -87,7 +87,7 @@ export function Shell({ globalConfig }: {
       const modes = await storageEngine.getModes(studyId);
 
       // Initialize the redux stores
-      const newStore = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, metadata, participantSession.answers, modes);
+      const newStore = await studyStoreCreator(studyId, activeConfig, participantSession.sequence, metadata, participantSession.answers, modes, participantSession.participantId);
       setStore(newStore);
 
       // Initialize the routing
@@ -100,6 +100,7 @@ export function Shell({ globalConfig }: {
           },
           {
             path: '/:index',
+            // eslint-disable-next-line no-nested-ternary
             element: activeConfig.errors.length > 0 ? (
               <>
                 <Title order={2} mb={8}>Error loading config</Title>

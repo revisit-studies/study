@@ -17,6 +17,7 @@ export async function studyStoreCreator(
   metadata: ParticipantMetadata,
   answers: Record<string, StoredAnswer>,
   modes: Record<REVISIT_MODE, boolean>,
+  participantId: string,
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
 
@@ -57,8 +58,12 @@ export async function studyStoreCreator(
     analysisProvState: null,
     analysisParticipantName: null,
     analysisWaveformTime: 0,
+    analysisIsPlaying: false,
+    analysisHasAudio: false,
+    analysisHasProvenance: false,
     modes,
     matrixAnswers: {},
+    participantId,
   };
 
   const storeSlice = createSlice({
@@ -88,6 +93,15 @@ export async function studyStoreCreator(
       },
       saveAnalysisState(state, { payload } : PayloadAction<unknown>) {
         state.analysisProvState = payload;
+      },
+      setAnalysisIsPlaying(state, { payload } : PayloadAction<boolean>) {
+        state.analysisIsPlaying = payload;
+      },
+      setAnalysisHasAudio(state, { payload } : PayloadAction<boolean>) {
+        state.analysisHasAudio = payload;
+      },
+      setAnalysisHasProvenance(state, { payload } : PayloadAction<boolean>) {
+        state.analysisHasProvenance = payload;
       },
       setMatrixAnswersRadio: (state, action: PayloadAction<{ questionKey: string, responseId: string, val: string }>) => {
         const { responseId, questionKey, val } = action.payload;

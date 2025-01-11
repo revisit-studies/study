@@ -27,7 +27,7 @@ export function SingleTaskTimeline({
   }), [currentNode, currentNodeCallback, height, participantData.answers, trialName, xScale]);
 
   return (
-    <svg style={{ width, height, marginLeft: 'auto' }}>
+    <svg style={{ width, height }}>
       <line stroke="black" strokeWidth={1} x1={margin.left} x2={width + margin.left} y1={height / 2} y2={height / 2} />
       {circles}
     </svg>
