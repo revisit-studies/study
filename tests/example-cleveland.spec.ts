@@ -4,12 +4,17 @@ import { test, expect } from '@playwright/test';
 test('test', async ({ page }) => {
   await page.goto('/');
 
+  await page.getByRole('tab', { name: 'Example Studies' }).click();
+
   // Click on cleveland
-  await page.getByRole('button', { name: 'Dynamic React.js Stimuli: A Graphical Perception Experiment' }).click();
+  await page.getByLabel('Example Studies').locator('div').filter({ hasText: 'Dynamic React.js Stimuli: A Graphical Perception Experiment' })
+    .getByRole('button')
+    .nth(1)
+    .click();
 
   // Check that the page contains the introduction text
   const introText = await page.getByText('Welcome to our study. This is a more complex example to show how to embed React.js');
-  await expect(introText).toBeVisible();
+  await expect(introText).toBeVisible({ timeout: 5000 });
 
   // Click on the next button
   await page.getByRole('button', { name: 'Next', exact: true }).click();

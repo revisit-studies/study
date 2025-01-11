@@ -3,6 +3,7 @@ import {
   Flex,
   Input, Slider, SliderProps,
 } from '@mantine/core';
+import { useMemo } from 'react';
 import { SliderResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
@@ -27,6 +28,8 @@ export default function SliderInput({
     secondaryText,
   } = response;
 
+  const [min, max] = useMemo(() => [Math.min(...options.map((opt) => opt.value)), Math.max(...options.map((opt) => opt.value))], [options]);
+
   const errorMessage = generateErrorMessage(response, answer);
   return (
     <Input.Wrapper
@@ -45,6 +48,8 @@ export default function SliderInput({
       <Slider
         disabled={disabled}
         marks={options as SliderProps['marks']}
+        min={min}
+        max={max}
         {...answer}
         h={40}
       />

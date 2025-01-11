@@ -4,7 +4,7 @@ import {
 } from 'react';
 import { Box, Slider } from '@mantine/core';
 import { initializeTrrack, Registry } from '@trrack/core';
-import { useChartDimensions } from '../../demo-cleveland/assets/hooks/useChartDimensions';
+import { useChartDimensions } from '../../example-cleveland/assets/hooks/useChartDimensions';
 import { StimulusParams } from '../../../store/types';
 
 const chartSettings = {
