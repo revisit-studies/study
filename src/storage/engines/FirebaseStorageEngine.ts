@@ -763,6 +763,10 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   async rejectParticipant(studyId: string, participantId: string, reason: string) {
+    const studyCollection = collection(
+      this.firestore,
+      `${this.collectionPrefix}${studyId}`,
+    );
     const participantRef = ref(
       this.storage,
       `${this.collectionPrefix}${studyId}/participants/${participantId}_participantData`,
@@ -771,10 +775,6 @@ export class FirebaseStorageEngine extends StorageEngine {
       participantRef,
       'participantData',
     );
-
-    if (!this._verifyStudyDatabase(this.studyCollection)) {
-      throw new Error('Study database not initialized');
-    }
 
     try {
       // If the user doesn't exist or is already rejected, return
@@ -798,7 +798,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       );
 
       // set sequence assignment to empty string, keep the timestamp
-      const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
+      const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
       const sequenceAssignmentCollection = collection(
         sequenceAssignmentDoc,
         'sequenceAssignment',
