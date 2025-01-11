@@ -104,30 +104,41 @@ function VegaController({ currentConfig, provState }: { currentConfig: VegaCompo
   useEffect(() => {
     async function fetchVega() {
       setLoading(true);
-      const asset = await getJsonAssetByPath(currentConfig.path);
-      if (asset !== undefined) {
-        setVegaConfig(asset);
+
+      let config: VisualizationSpec | undefined;
+      if ('path' in currentConfig) {
+        config = await getJsonAssetByPath(currentConfig.path);
+      } else {
+        config = currentConfig.config as VisualizationSpec;
+      }
+      if (config !== undefined) {
+        setVegaConfig(config);
       }
       setLoading(false);
     }
 
-    fetchVega();
+    if (currentConfig) {
+      fetchVega();
+    }
   }, [currentConfig]);
 
   useEffect(() => {
     if (view && provState && provState.event) {
       view!.signal(provState.event.key, provState.event.value).run();
     }
-  }, [provState]);
+  }, [view, provState]);
 
   if (loading) {
     return <div>Loading...</div>;
   }
-  if (!vegaConfig) {
+  if ('path' in currentConfig && !vegaConfig) {
     return <ResourceNotFound path={currentConfig.path} />;
   }
+  if (!vegaConfig) {
+    return <div>Failed to load vega config</div>;
+  }
 
-  return (<Vega spec={vegaConfig} signalListeners={signalListeners} onNewView={(v) => setView(v)} />);
+  return (<Vega spec={structuredClone(vegaConfig)} signalListeners={signalListeners} onNewView={(v) => setView(v)} />);
 }
 
 export default VegaController;

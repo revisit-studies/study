@@ -723,11 +723,19 @@ export interface QuestionnaireComponent extends BaseIndividualComponent {
   type: 'questionnaire';
 }
 
-export interface VegaComponent extends BaseIndividualComponent {
+export interface VegaComponentPath extends BaseIndividualComponent {
   type: 'vega';
   /** The path to the vega file. This should be a relative path from the public folder. */
   path: string;
 }
+
+export interface VegaComponentConfig extends BaseIndividualComponent {
+  type: 'vega';
+  /** The vega-lite configuration. */
+  config: object;
+}
+
+export type VegaComponent = VegaComponentPath | VegaComponentConfig;
 
 export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent | VegaComponent;
 
