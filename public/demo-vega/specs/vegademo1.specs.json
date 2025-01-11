@@ -72,11 +72,11 @@
           "y2": { "scale": "yscale", "value": 0 }
         },
         "update": {
-          "fill": { "value": "steelblue" }
-        },
-        "hover": {
-          "fill": { "value": "red" }
+          "fill": [
+            { "test": "datum.category === tooltip.category", "value": "red"},
+            { "value": "steelblue" }]
         }
+
       }
     },
     {
@@ -92,7 +92,7 @@
           "y": { "scale": "yscale", "signal": "tooltip.amount", "offset": -2 },
           "text": { "signal": "tooltip.category" },
           "fillOpacity": [
-            { "test": "datum === tooltip", "value": 0 },
+            { "test": "datum.category === tooltip.category", "value": 0 },
             { "value": 1 }
           ]
         }

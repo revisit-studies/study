@@ -23,6 +23,14 @@
             "update": "{responseId: 'vegaDemoResponse1', response: datum.Title}"
           }
         ]
+      },
+      {
+        "name": "hoveredSymbol",
+        "value": null,
+        "on": [
+          {"events": "symbol:mouseover", "update": "datum"},
+          {"events": "symbol:mouseout", "update": "null"}
+        ]
       }
 
     ]
@@ -115,81 +123,85 @@
   "marks": [
     {
       "type": "symbol",
-      "from": {"data": "valid"},
+      "from": { "data": "valid" },
       "encode": {
         "enter": {
-          "size": {"value": 50},
-          "tooltip": {"field": "tooltip"}
+          "size": { "value": 50 },
+          "tooltip": { "field": "tooltip" }
         },
         "update": {
-          "x": {"scale": "xscale", "field": {"signal": "xField"}},
-          "y": {"scale": "yscale", "field": {"signal": "yField"}},
-          "fill": {"value": "steelblue"},
-          "fillOpacity": {"value": 0.5},
-          "zindex": {"value": 0}
-        },
-        "hover": {
-          "fill": {"value": "firebrick"},
-          "fillOpacity": {"value": 1},
-          "zindex": {"value": 1}
+          "x": { "scale": "xscale", "field": { "signal": "xField" } },
+          "y": { "scale": "yscale", "field": { "signal": "yField" } },
+          "fill": [
+            { "test": "hoveredSymbol && datum.Title === hoveredSymbol.Title", "value": "firebrick" },
+            { "value": "steelblue" }
+          ],
+          "fillOpacity": [
+            { "test": "hoveredSymbol && datum.Title === hoveredSymbol.Title", "value": 1 },
+            { "value": 0.5 }
+          ],
+          "zindex": { "value": 0 }
         }
       }
     },
     {
       "type": "symbol",
-      "from": {"data": "nullY"},
+      "from": { "data": "nullY" },
       "encode": {
         "enter": {
-          "size": {"value": 50},
-          "tooltip": {"field": "tooltip"}
+          "size": { "value": 50 },
+          "tooltip": { "field": "tooltip" }
         },
         "update": {
-          "x": {"scale": "xscale", "field": {"signal": "xField"}},
-          "y": {"signal": "height - nullSize/2"},
-          "fill": {"value": "#aaa"},
-          "fillOpacity": {"value": 0.2}
-        },
-        "hover": {
-          "fill": {"value": "firebrick"},
-          "fillOpacity": {"value": 1}
+          "x": { "scale": "xscale", "field": { "signal": "xField" } },
+          "y": { "signal": "height - nullSize/2" },
+          "fill": [
+            { "test": "hoveredSymbol && datum.Title === hoveredSymbol.Title", "value": "firebrick" },
+            { "value": "#aaa" }
+          ],
+          "fillOpacity": [
+            { "test": "hoveredSymbol && datum.Title === hoveredSymbol.Title", "value": 1 },
+            { "value": 0.2 }
+          ]
         }
       }
     },
     {
       "type": "symbol",
-      "from": {"data": "nullX"},
+      "from": { "data": "nullX" },
       "encode": {
         "enter": {
-          "size": {"value": 50},
-          "tooltip": {"field": "tooltip"}
+          "size": { "value": 50 },
+          "tooltip": { "field": "tooltip" }
         },
         "update": {
-          "x": {"signal": "nullSize/2"},
-          "y": {"scale": "yscale", "field": {"signal": "yField"}},
-          "fill": {"value": "#aaa"},
-          "fillOpacity": {"value": 0.2},
-          "zindex": {"value": 0}
-        },
-        "hover": {
-          "fill": {"value": "firebrick"},
-          "fillOpacity": {"value": 1},
-          "zindex": {"value": 1}
+          "x": { "signal": "nullSize/2" },
+          "y": { "scale": "yscale", "field": { "signal": "yField" } },
+          "fill": [
+            { "test": "hoveredSymbol && datum.Title === hoveredSymbol.Title", "value": "firebrick" },
+            { "value": "#aaa" }
+          ],
+          "fillOpacity": [
+            { "test": "hoveredSymbol && datum.Title === hoveredSymbol.Title", "value": 1 },
+            { "value": 0.2 }
+          ],
+          "zindex": { "value": 0 }
         }
       }
     },
     {
       "type": "text",
       "interactive": false,
-      "from": {"data": "nullXY"},
+      "from": { "data": "nullXY" },
       "encode": {
         "update": {
-          "x": {"signal": "nullSize", "offset": -4},
-          "y": {"signal": "height", "offset": 13},
-          "text": {"signal": "datum.count + ' null'"},
-          "align": {"value": "right"},
-          "baseline": {"value": "top"},
-          "fill": {"value": "#999"},
-          "fontSize": {"value": 9}
+          "x": { "signal": "nullSize", "offset": -4 },
+          "y": { "signal": "height", "offset": 13 },
+          "text": { "signal": "datum.count + ' null'" },
+          "align": { "value": "right" },
+          "baseline": { "value": "top" },
+          "fill": { "value": "#999" },
+          "fontSize": { "value": 9 }
         }
       }
     }
