@@ -1,5 +1,6 @@
 {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/vlat-library/src/parser/LibraryConfigSchema.json",
+    "description": "This is a library for testing the microphone.",
     "components": {
         "audioTest": {
             "description": "Audio test",

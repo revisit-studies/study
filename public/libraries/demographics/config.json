@@ -1,8 +1,11 @@
 {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/vlat-library/src/parser/LibraryConfigSchema.json",
+    "name": "demographics",
+    "description": "This is a library for demographic questions. It contains one component with three questions: demographics.",
     "components": {
         "demographics": {
             "type": "questionnaire",
+            "description": "Basic demographic questions including gender, age, and education",
             "response": [
                 {
                     "id": "gender",
@@ -53,11 +56,5 @@
         }
     },
     "sequences": {
-        "demographics": {
-            "order": "fixed",
-            "components": [
-                "demographics"
-            ]
-        }
     }
 }
