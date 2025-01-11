@@ -44,6 +44,7 @@ export function AnalysisPopout() {
   const { storageEngine } = useStorageEngine();
 
   const analysisIsPlaying = useStoreSelector((state) => state.analysisIsPlaying);
+  const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
   const { saveAnalysisState, setAnalysisHasAudio, setAnalysisHasProvenance } = useStoreActions();
   const storeDispatch = useStoreDispatch();
 
@@ -58,8 +59,6 @@ export function AnalysisPopout() {
   const [totalAudioLength, setTotalAudioLength] = useState<number>(0);
 
   const { value: participant, status } = useAsync(getParticipantData, [participantId, storageEngine]);
-
-  const [hasAudio, setHasAudio] = useState<boolean>(false);
 
   const [playTime, setPlayTime] = useThrottledState<number>(0, 200);
 
@@ -161,7 +160,6 @@ export function AnalysisPopout() {
           const url = await storageEngine.getAudio(componentAndIndex, participantId);
           await waveSurfer.load(url);
           setWaveSurferLoading(false);
-          setHasAudio(true);
           storeDispatch(setAnalysisHasAudio(true));
 
           setTotalAudioLength(waveSurfer.getDuration());
@@ -170,7 +168,6 @@ export function AnalysisPopout() {
           waveSurfer.on('timeupdate', timeUpdate);
           waveSurfer.on('redrawcomplete', () => setWaveSurferWidth(waveSurfer.getWidth()));
         } catch (error: any) {
-          setHasAudio(false);
           setTotalAudioLength(0);
 
           storeDispatch(setAnalysisHasAudio(false));
@@ -231,7 +228,7 @@ export function AnalysisPopout() {
               style={{
                 overflow: 'hidden', width: '100%',
               }}
-              display={hasAudio ? 'block' : 'none'}
+              display={analysisHasAudio ? 'block' : 'none'}
               id="waveformDiv"
             >
               <WaveSurfer onMount={handleWSMount} plugins={[]} container="#waveformDiv" height={50} waveColor="#484848" progressColor="#e15759">
