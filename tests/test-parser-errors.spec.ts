@@ -36,6 +36,8 @@ test('parser errors are shown correctly', async ({ page }) => {
     await expect(w).toBeVisible();
   }
 
-  const count = await page.getByRole('button', { name: 'test-parser-errors Errors' }).getByRole('list').locator('li').count();
+  const count = await page.getByLabel('Tests').locator('div').filter({ hasText: 'test-parser-errors' }).getByRole('list')
+    .locator('li')
+    .count();
   expect(count).toBe(errors.length + warnings.length);
 });

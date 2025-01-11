@@ -84,6 +84,15 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
               <Text fw="bold" ml={8} color="red">Errors</Text>
             </Flex>
             <ErrorLoadingConfig issues={config.errors} type="error" />
+            {config.warnings.length > 0 && (
+              <>
+                <Flex align="center" direction="row">
+                  <IconAlertTriangle color="orange" />
+                  <Text fw="bold" ml={8} color="orange">Warnings</Text>
+                </Flex>
+                <ErrorLoadingConfig issues={config.warnings} type="warning" />
+              </>
+            )}
           </>
         )
         : (

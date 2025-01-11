@@ -4,7 +4,11 @@ import { test, expect } from '@playwright/test';
 test('test', async ({ page }) => {
   const trialLen = 2;
   await page.goto('/');
-  await page.getByRole('button', { name: 'Dynamic React Stimuli and Provenance Tracking' }).click();
+
+  await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'Dynamic React Stimuli and Provenance Tracking' })
+    .getByRole('button')
+    .nth(1)
+    .click();
 
   // Check for introduction page
   const introText = await page.getByRole('heading', { name: 'Introduction' });
