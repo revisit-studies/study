@@ -1,12 +1,15 @@
 {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/vlat-library/src/parser/LibraryConfigSchema.json",
+    "name": "sus",
+    "description": "The System Usability Scale (SUS) is a 10-item questionnaire that measures perceived ease of use, perceived usefulness, and overall satisfaction with a system. The SUS has been widely used in usability studies and is considered a standard measure of usability. This library contains one component with 10 questions. The component is a questionnaire with 10 questions. The user is asked to rate their agreement with each question on a 5-point Likert scale.",
+    "reference": "J. Brooke, “SUS: A ‘Quick and Dirty’ Usability Scale,” Usability Evaluation In Industry, pp. 207–212, Jun. 1996, doi: 10.1201/9781498710411-35.",
     "components": {
-      "SUS": {
+      "10questions": {
         "type": "questionnaire",
         "response": [
           {
             "id": "use-frequently",
-            "prompt": "I think that I would like to use this system frequently",
+            "prompt": "I think that I would like to use this system **frequently**",
             "required": true,
             "location": "aboveStimulus",
             "type": "likert",
@@ -16,7 +19,7 @@
           },
           {
             "id": "unnecessarily-complex",
-            "prompt": "I found the system unnecessarily complex",
+            "prompt": "I found the system **unnecessarily complex**",
             "required": true,
             "location": "aboveStimulus",
             "type": "likert",
@@ -26,7 +29,7 @@
           },
           {
             "id": "easy-to-use",
-            "prompt": "I thought the system was easy to use",
+            "prompt": "I thought the system was **easy to use**",
             "required": true,
             "location": "aboveStimulus",
             "type": "likert",
@@ -36,7 +39,7 @@
           },
           {
             "id": "need-technical-support",
-            "prompt": "I think that I would need the support of a technical person to be able to use this system",
+            "prompt": "I think that I would **need the support of a technical person** to be able to use this system",
             "required": true,
             "location": "aboveStimulus",
             "type": "likert",
@@ -46,7 +49,7 @@
           },
           {
             "id": "well-integrated",
-            "prompt": "I found the various functions in this system were well integrated",
+            "prompt": "I found the various functions in this system were **well integrated**",
             "required": true,
             "location": "aboveStimulus",
             "type": "likert",
@@ -56,7 +59,7 @@
           },
           {
             "id": "too-inconsistent",
-            "prompt": "I thought there was too much inconsistency in this system",
+            "prompt": "I thought there was **too much inconsistency** in this system",
             "required": true,
             "location": "aboveStimulus",
             "type": "likert",
@@ -66,7 +69,7 @@
           },
           {
             "id": "quick-to-learn",
-            "prompt": "I would imagine that most people would learn to use this system very quickly",
+            "prompt": "I would imagine that most people would **learn to use this system very quickly**",
             "required": true,
             "location": "aboveStimulus",
             "type": "likert",
@@ -76,7 +79,7 @@
           },
           {
             "id": "cumbersome-to-use",
-            "prompt": "I found the system very cumbersome to use",
+            "prompt": "I found the system **very cumbersome** to use",
             "required": true,
             "location": "aboveStimulus",
             "type": "likert",
@@ -86,7 +89,7 @@
           },
           {
             "id": "confident-using",
-            "prompt": "I felt very confident using the system",
+            "prompt": "I felt **very confident** using the system",
             "required": true,
             "location": "aboveStimulus",
             "type": "likert",
@@ -96,7 +99,7 @@
           },
           {
             "id": "needed-to-learn-lot",
-            "prompt": "I needed to learn a lot of things before I could get going with this system",
+            "prompt": "I needed to **learn a lot of things** before I could get going with this system",
             "required": true,
             "location": "aboveStimulus",
             "type": "likert",
@@ -108,11 +111,5 @@
       }
     },
     "sequences": {
-      "SUS": {
-        "order": "fixed",
-        "components": [
-          "SUS"
-        ]
-      }
     }
 }

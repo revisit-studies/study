@@ -25,6 +25,7 @@
     "test-library-beauvis",
     "test-library-previs",
     "test-library-mini-vlat",
+    "test-library-sus",
     "test-likert-matrix",
     "test-parser-errors",
     "test-randomization",
@@ -110,6 +111,10 @@
     },
     "test-library-mini-vlat": {
       "path": "test-library-mini-vlat/config.json",
+      "test": true
+    },
+    "test-library-sus": {
+      "path": "test-library-sus/config.json",
       "test": true
     },
     "test-likert-matrix": {

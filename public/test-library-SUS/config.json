@@ -21,16 +21,14 @@
     "sidebar": true
   },
   "importedLibraries": [
-                       "SUS"
+                       "sus"
                       ],
   "components": {
   },
   "sequence": {
     "order": "fixed",
     "components": [
-      "$beauvis.se.5items",
-      "$beauvis.se.4items",
-      "$beauvis.se.3items"
+      "$sus.co.10questions"
     ]
   }
 }
