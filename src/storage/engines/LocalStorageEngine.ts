@@ -309,7 +309,7 @@ export class LocalStorageEngine extends StorageEngine {
     const newParticipantId = uuidv4();
 
     // Set current participant id
-    this.studyDatabase.setItem('currentParticipant', newParticipantId);
+    await this.studyDatabase.setItem('currentParticipant', newParticipantId);
   }
 
   async verifyCompletion() {

@@ -22,7 +22,7 @@ import {
 } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
 import { useHref } from 'react-router-dom';
-import { useCurrentStep, useStudyId } from '../../routes/utils';
+import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,
 } from '../../store/store';
@@ -38,8 +38,10 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
 
   const flatSequence = useFlatSequence();
   const storeDispatch = useStoreDispatch();
-  const { toggleShowHelpText, toggleStudyBrowser } = useStoreActions();
+  const { toggleShowHelpText, toggleStudyBrowser, incrementHelpCounter } = useStoreActions();
   const { storageEngine } = useStorageEngine();
+
+  const currentComponent = useCurrentComponent();
 
   const currentStep = useCurrentStep();
 
@@ -104,7 +106,7 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"
-                onClick={() => storeDispatch(toggleShowHelpText())}
+                onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier: `${currentComponent}_${currentStep}` })); }}
               >
                 Help
               </Button>

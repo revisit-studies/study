@@ -8,7 +8,7 @@ test('html demo works as intended', async ({ page }) => {
 
   // Check that the page contains the introduction text
   const introText = await page.getByText('Welcome to our study. This is an example study to show how to embed html element');
-  await expect(introText).toBeVisible();
+  await expect(introText).toBeVisible({ timeout: 5000 });
 
   // Click on the next button
   await page.getByRole('button', { name: 'Next', exact: true }).click();

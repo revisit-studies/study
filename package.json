@@ -67,7 +67,7 @@
     "wavesurfer.js": "^7.8.8"
   },
   "devDependencies": {
-    "@playwright/test": "^1.44.0",
+    "@playwright/test": "^1.49.1",
     "@types/d3": "^7.4.0",
     "@types/react": "^18.0.24",
     "@types/react-dom": "^18.0.8",

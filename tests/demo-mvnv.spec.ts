@@ -9,7 +9,7 @@ test('test', async ({ page }) => {
 
   // Check for introduction page
   const introText = await page.getByText('Welcome to our study. This is a more complex example to show how to embed HTML');
-  await expect(introText).toBeVisible();
+  await expect(introText).toBeVisible({ timeout: 5000 });
 
   // Click on next button
   await page.getByRole('button', { name: 'Next', exact: true }).click();
