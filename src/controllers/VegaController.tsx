@@ -11,13 +11,13 @@ import { StimulusParams } from '../store/types';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
 
 export interface VegaProvState {
-    event: {
-        key: string;
-        value: string | object;
-    };
+  event: {
+    key: string;
+    value: string | object;
+  };
 }
 
-function VegaController({ currentConfig, provState }: { currentConfig: VegaComponent; provState?: VegaProvState }) {
+export function VegaController({ currentConfig, provState }: { currentConfig: VegaComponent; provState?: VegaProvState }) {
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
   const storeDispatch = useStoreDispatch();
@@ -67,15 +67,15 @@ function VegaController({ currentConfig, provState }: { currentConfig: VegaCompo
     storeDispatch(setIframeAnswers(answers));
   }, [currentComponent, currentStep, storeDispatch, setIframeAnswers, updateResponseBlockValidation]);
 
-  const handleSignalEvt = useCallback((key: string, value:unknown) => {
+  const handleSignalEvt = useCallback((key: string, value: unknown) => {
     trrack.apply(key, actions.signalAction({
       key,
       value,
     }));
-  }, []);
+  }, [actions, trrack]);
 
   const handleRevisitAnswer = useCallback((key: string, value: unknown) => {
-    const { responseId, response } = value as {responseId: string, response: unknown};
+    const { responseId, response } = value as { responseId: string, response: unknown };
 
     setAnswer({
       status: true,
@@ -84,13 +84,14 @@ function VegaController({ currentConfig, provState }: { currentConfig: VegaCompo
         [responseId]: response,
       },
     });
-  }, [setAnswer]);
+  }, [setAnswer, trrack.graph.backend]);
 
+  type Listeners = { [key: string]: (key: string, value: unknown) => void };
   const signalListeners = useMemo(() => {
     const signals = vegaConfig?.config?.signals;
     if (!signals) return {};
-    type Listeners = { [key: string]: (key: string, value: unknown) => void };
-    const listenerList = signals.reduce((listeners, signal) => {
+
+    return signals.reduce((listeners, signal) => {
       if (signal.name === 'revisitAnswer') {
         listeners[signal.name] = handleRevisitAnswer;
       } else {
@@ -98,7 +99,6 @@ function VegaController({ currentConfig, provState }: { currentConfig: VegaCompo
       }
       return listeners;
     }, {} as Listeners);
-    return listenerList;
   }, [handleRevisitAnswer, handleSignalEvt, vegaConfig]);
 
   useEffect(() => {
@@ -140,5 +140,3 @@ function VegaController({ currentConfig, provState }: { currentConfig: VegaCompo
 
   return (<Vega spec={structuredClone(vegaConfig)} signalListeners={signalListeners} onNewView={(v) => setView(v)} />);
 }
-
-export default VegaController;
