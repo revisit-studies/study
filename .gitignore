@@ -29,3 +29,6 @@ dist-ssr
 /playwright/.cache/
 
 docs/
+
+public/revisitWidget
+src/public/revisitWidget
