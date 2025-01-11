@@ -36,7 +36,9 @@ export default function ResponseBlock({
 }: Props) {
   const { storageEngine } = useStorageEngine();
   const storeDispatch = useStoreDispatch();
-  const { updateResponseBlockValidation, toggleShowHelpText } = useStoreActions();
+  const {
+    updateResponseBlockValidation, toggleShowHelpText, saveIncorrectAnswer, incrementHelpCounter,
+  } = useStoreActions();
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
   const storedAnswer = status?.answer;
@@ -96,6 +98,7 @@ export default function ResponseBlock({
       // update answerValidator
       answerValidator.setValues(updatedValues);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matrixAnswers]);
 
   useEffect(() => {
@@ -149,8 +152,11 @@ export default function ResponseBlock({
         if (correctAnswers[response.id] && !alertConfig[response.id]?.message.includes('You\'ve failed to answer this question correctly')) {
           updateAlertConfig(response.id, true, 'Correct Answer', 'You have answered the question correctly.', 'green');
         } else {
+          storeDispatch(saveIncorrectAnswer({ question: `${currentComponent}_${currentStep}`, identifier: response.id, answer: (answerValidator.values as Record<string, unknown>)[response.id] }));
           let message = '';
-          if (newAttemptsUsed >= trainingAttempts) {
+          if (trainingAttempts === -1) {
+            message = 'Please try again.';
+          } else if (newAttemptsUsed >= trainingAttempts) {
             message = `You didn't answer this question correctly after ${trainingAttempts} attempts. ${allowFailedTraining ? 'You can continue to the next question.' : 'Unfortunately you have not met the criteria for continuing this study.'}`;
 
             // If the user has failed the training, wait 5 seconds and redirect to a fail page
@@ -215,16 +221,17 @@ export default function ResponseBlock({
                     {' '}
                     {alertConfig[response.id].message.includes('Please try again') && (
                       <>
-                        Please
+                        <br />
+                        <br />
+                        If you&apos;re unsure
                         {' '}
-                        <Anchor style={{ fontSize: 14 }} onClick={() => storeDispatch(toggleShowHelpText())}>click here</Anchor>
+                        <Anchor style={{ fontSize: 14 }} onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier: `${currentComponent}_${currentStep}` })); }}>review the help text.</Anchor>
                         {' '}
-                        and read the help text carefully.
                       </>
                     )}
                     <br />
                     <br />
-                    {attemptsUsed >= trainingAttempts && configCorrectAnswer && ` The correct answer was: ${configCorrectAnswer}.`}
+                    {attemptsUsed >= trainingAttempts && trainingAttempts >= 0 && configCorrectAnswer && ` The correct answer was: ${configCorrectAnswer}.`}
                   </Alert>
                 )}
               </>
@@ -237,7 +244,7 @@ export default function ResponseBlock({
         {hasCorrectAnswerFeedback && showNextBtn && (
           <Button
             onClick={() => checkAnswerProvideFeedback()}
-            disabled={!answerValidator.isValid() || attemptsUsed >= trainingAttempts}
+            disabled={!answerValidator.isValid() || (attemptsUsed >= trainingAttempts && trainingAttempts >= 0)}
           >
             Check Answer
           </Button>

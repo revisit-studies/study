@@ -1,5 +1,6 @@
 import { useParams } from 'react-router-dom';
 import { useFlatSequence } from '../store/store';
+import { decryptIndex } from '../utils/encryptDecryptIndex';
 
 export function useStudyId(): string {
   const { studyId } = useParams();
@@ -7,12 +8,17 @@ export function useStudyId(): string {
   return `${studyId}`;
 }
 
-export function useCurrentStep(): string | number {
+export function useCurrentStep() {
   const { index } = useParams();
+  if (index === undefined) {
+    return 0;
+  }
 
-  const indexOrStep = parseInt(index || '0', 10);
+  if (index.startsWith('reviewer-')) {
+    return index;
+  }
 
-  return Number.isNaN(indexOrStep) ? index as string : indexOrStep;
+  return decryptIndex(index);
 }
 
 export function useCurrentComponent(): string {

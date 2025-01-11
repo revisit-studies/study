@@ -38,6 +38,7 @@ function CheckboxComponent({
           key={`${checkbox.label}-${idx}`}
           checked={answer.value[question.label].split('|').includes(checkbox.value)}
           onChange={(event) => onChange(event, question.label, checkbox)}
+          value={checkbox.value}
         />
       ))}
     </div>

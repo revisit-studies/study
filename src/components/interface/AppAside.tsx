@@ -56,8 +56,10 @@ export default function AppAside() {
 
   return (
     <AppShell.Aside p="0">
-      <AppShell.Section>
-        <Flex direction="row" p="sm" justify="space-between" pb="xs">
+      <AppShell.Section
+        p="md"
+      >
+        <Flex direction="row" justify="space-between">
           <Text size="md" fw={700} pt={3}>
             Study Browser
           </Text>
@@ -77,7 +79,11 @@ export default function AppAside() {
         </Flex>
       </AppShell.Section>
 
-      <AppShell.Section grow component={ScrollArea} p="xs" pt={0}>
+      <AppShell.Section
+        grow
+        component={ScrollArea}
+        p="md"
+      >
         <Tabs value={activeTab} onChange={setActiveTab}>
           <Box style={{
             position: 'sticky',

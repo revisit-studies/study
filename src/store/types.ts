@@ -65,8 +65,10 @@ The `answer` object here uses the "id" in the [Response](../BaseResponse) list o
 Each item in the window event is given a time, a position an event name, and some extra information for the event (for mouse events, this is the location).
 */
 export interface StoredAnswer {
-  /** Object whose keys are the "id"s in the Response list of the component in the StudyConfiguration and whose value is the inputted value from the participant. */
+  /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is the inputted value from the participant. */
   answer: Record<string, { id: string, value: unknown }>;
+  /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is a list of incorrect inputted values from the participant. Only relevant for trials with `provideFeedback` and correct answers enabled. */
+  incorrectAnswers: Record<string, { id: string, value: unknown[] }>;
   /** Time that the user began interacting with the component in epoch milliseconds. */
   startTime: number;
   /** Time that the user ended interaction with the component in epoch milliseconds. */
@@ -105,10 +107,13 @@ export interface StoredAnswer {
   windowEvents: EventType[];
   /** A boolean value that indicates whether the participant timed out on this question. */
   timedOut: boolean;
+  /** A counter indicating how many times participants opened the help tab during a task. Clicking help, or accessing the tab via answer feedback on an incorrect answer both are included in the counter. */
+  helpButtonClickedCount: number;
 }
 
-export interface StimulusParams<T> {
+export interface StimulusParams<T, S = never> {
   parameters: T;
+  provenanceState?: S;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
 }
@@ -122,6 +127,7 @@ export interface Sequence {
 
 export interface StoreState {
   studyId: string;
+  participantId: string;
   isRecording: boolean;
   answers: Record<string, StoredAnswer>;
   sequence: Sequence;
@@ -133,6 +139,10 @@ export interface StoreState {
   iframeAnswers: Record<string, unknown>;
   iframeProvenance: TrrackedProvenance | null;
   metadata: ParticipantMetadata;
+  analysisProvState: unknown | null;
+  analysisIsPlaying: boolean;
+  analysisHasAudio: boolean;
+  analysisHasProvenance: boolean;
   modes: Record<REVISIT_MODE, boolean>;
   matrixAnswers: Record<string, Record<string, string>>;
 }
