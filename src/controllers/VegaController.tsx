@@ -3,7 +3,6 @@ import {
 } from 'react';
 import { Vega, VisualizationSpec, View } from 'react-vega';
 import { initializeTrrack, Registry } from '@trrack/core';
-import { Button } from '@mantine/core';
 import { VegaComponent } from '../parser/types';
 import { getJsonAssetByPath } from '../utils/getStaticAsset';
 import ResourceNotFound from '../ResourceNotFound';
@@ -11,7 +10,14 @@ import { useStoreActions, useStoreDispatch } from '../store/store';
 import { StimulusParams } from '../store/types';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
 
-function VegaController({ currentConfig }: { currentConfig: VegaComponent }) {
+export interface VegaProvState {
+    event: {
+        key: string;
+        value: string | object;
+    };
+}
+
+function VegaController({ currentConfig, provState }: { currentConfig: VegaComponent; provState?: VegaProvState }) {
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
   const storeDispatch = useStoreDispatch();
@@ -19,43 +25,7 @@ function VegaController({ currentConfig }: { currentConfig: VegaComponent }) {
   const [loading, setLoading] = useState(true);
   const { updateResponseBlockValidation, setIframeAnswers } = useStoreActions();
   const [view, setView] = useState<View>();
-  // for demo 1
-  const interactionCache1 = [
-    { label: 'tooltip', datum: { category: 'A', amount: 28 } },
-    { label: 'tooltip', datum: { category: 'B', amount: 55 } },
-    { label: 'tooltip', datum: { category: 'C', amount: 43 } },
-    { label: 'tooltip', datum: { category: 'D', amount: 91 } },
-    { label: 'tooltip', datum: { category: 'E', amount: 81 } },
-  ];
 
-  // for demo 2
-  const interactionCache2 = [
-    {
-      label: 'hoveredSymbol',
-      datum: {
-        Title: 'Swimfan',
-        'US Gross': 28563926,
-        'Worldwide Gross': 28563926,
-        'US DVD Sales': null,
-        'Production Budget': 10000000,
-        'Release Date': 'Sep 06 2002',
-        'MPAA Rating': 'PG-13',
-        'Running Time min': 86,
-        Distributor: '20th Century Fox',
-        Source: 'Original Screenplay',
-        'Major Genre': 'Drama',
-        'Creative Type': 'Contemporary Fiction',
-        Director: null,
-        'Rotten Tomatoes Rating': 15,
-        'IMDB Rating': 4.6,
-        'IMDB Votes': 9577,
-        tooltip: 'Swimfan (2002)',
-      },
-    },
-    { label: 'yField', datum: 'US Gross' },
-    { label: 'yField', datum: 'IMDB Rating' },
-    { label: 'xField', datum: 'Worldwide Gross' },
-  ];
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
 
@@ -114,7 +84,6 @@ function VegaController({ currentConfig }: { currentConfig: VegaComponent }) {
         [responseId]: response,
       },
     });
-    setReplay(true);
   }, [setAnswer]);
 
   const signalListeners = useMemo(() => {
@@ -145,11 +114,11 @@ function VegaController({ currentConfig }: { currentConfig: VegaComponent }) {
     fetchVega();
   }, [currentConfig]);
 
-  let idx = 0;
-  const replayInteraction = (cache) => {
-    view!.signal(cache[idx].label, cache[idx].datum).runAsync();
-    idx = (idx + 1) % cache.length;
-  };
+  useEffect(() => {
+    if (view && provState && provState.event) {
+      view!.signal(provState.event.key, provState.event.value).run();
+    }
+  }, [provState]);
 
   if (loading) {
     return <div>Loading...</div>;
@@ -158,14 +127,7 @@ function VegaController({ currentConfig }: { currentConfig: VegaComponent }) {
     return <ResourceNotFound path={currentConfig.path} />;
   }
 
-  return (
-    <>
-      <Vega spec={vegaConfig} signalListeners={signalListeners} onNewView={(v) => setView(v)} />
-      <Button onClick={() => replayInteraction(interactionCache1)}>replay demo 1</Button>
-      <Button onClick={() => replayInteraction(interactionCache2)}>replay demo 2</Button>
-
-    </>
-  );
+  return (<Vega spec={vegaConfig} signalListeners={signalListeners} onNewView={(v) => setView(v)} />);
 }
 
 export default VegaController;
