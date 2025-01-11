@@ -30,5 +30,5 @@ dist-ssr
 
 docs/
 
-public/revisitWidget
-src/public/revisitWidget
+public/__revisit-widget
+src/public/__revisit-widget
