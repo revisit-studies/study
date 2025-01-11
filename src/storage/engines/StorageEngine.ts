@@ -1,4 +1,5 @@
 import { User } from '@firebase/auth';
+import { Timestamp } from 'firebase/firestore';
 import { StudyConfig } from '../../parser/types';
 import { ParticipantMetadata, Sequence, StoredAnswer } from '../../store/types';
 import { ParticipantData } from '../types';
@@ -99,4 +100,6 @@ export abstract class StorageEngine {
   abstract getAudio(task: string, participantId?: string): Promise<string>;
 
   abstract getModes(studyId: string): Promise<Record<REVISIT_MODE, boolean>>;
+
+  abstract getParticipantsStatusCounts(studyId: string): Promise<{completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null}>;
 }

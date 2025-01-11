@@ -4,8 +4,13 @@ import { test, expect } from '@playwright/test';
 test('test', async ({ page }) => {
   await page.goto('/');
 
+  await page.getByRole('tab', { name: 'Example Studies' }).click();
+
   // Click on mvnv study
-  await page.getByRole('button', { name: 'MVNV Study Replication' }).click();
+  await page.getByLabel('Example Studies').locator('div').filter({ hasText: 'MVNV Study Replication' })
+    .getByRole('button')
+    .nth(1)
+    .click();
 
   // Check for introduction page
   const introText = await page.getByText('Welcome to our study. This is a more complex example to show how to embed HTML');

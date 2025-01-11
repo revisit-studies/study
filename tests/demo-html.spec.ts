@@ -4,7 +4,10 @@ test('html demo works as intended', async ({ page }) => {
   await page.goto('/');
 
   // Click on html-demo
-  await page.getByRole('button', { name: 'HTML as a Stimulus' }).click();
+  await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'HTML as a Stimulus' })
+    .getByRole('button')
+    .nth(1)
+    .click();
 
   // Check that the page contains the introduction text
   const introText = await page.getByText('Welcome to our study. This is an example study to show how to embed html element');

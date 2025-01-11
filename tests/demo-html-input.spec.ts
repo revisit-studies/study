@@ -4,7 +4,10 @@ test('test', async ({ page }) => {
   await page.goto('/');
 
   // Click on html-input
-  await page.getByRole('button', { name: 'Passing Data from reVISit to HTML and back' }).click();
+  await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'Passing Data from reVISit to HTML and back' })
+    .getByRole('button')
+    .nth(1)
+    .click();
 
   // Check that the page contains the introduction text
   const introText = await page.getByText('Welcome to our study. This is an example study to show how to embed html element');
