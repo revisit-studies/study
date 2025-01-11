@@ -19,6 +19,7 @@ import { useAuth } from '../../store/hooks/useAuth';
 import { ParticipantStatusBadges } from '../interface/ParticipantStatusBadges';
 import { StatsView } from './stats/StatsView';
 import AllReplays from './replay/AllReplays';
+import { parseStudyConfig } from '../../parser/parser';
 
 export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig; }) {
   const { studyId } = useParams();
@@ -30,18 +31,41 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const { tab } = useParams();
   const { user } = useAuth();
 
+  useEffect(() => {
+    if (!studyId) return () => { };
+    if (studyId === 'revisit-widget') {
+      const messageListener = async (event: MessageEvent) => {
+        if (event.data.type === 'revisitWidget/CONFIG' && storageEngine) {
+          const cf = await parseStudyConfig(event.data.payload);
+          setStudyConfig(cf);
+        }
+      };
+
+      window.addEventListener('message', messageListener);
+      window.parent.postMessage({ type: 'revisitWidget/READY' }, '*');
+      return () => {
+        window.removeEventListener('message', messageListener);
+      };
+    }
+    getStudyConfig(studyId, globalConfig).then((cf) => {
+      if (cf) {
+        setStudyConfig(cf);
+      }
+    });
+
+    return () => { };
+  }, [studyId, globalConfig, storageEngine]);
+
   const getData = useCallback(async () => {
     setLoading(true);
     if (studyId) {
-      const cf = await getStudyConfig(studyId, globalConfig);
-      if (!cf || !storageEngine) return;
-      await storageEngine.initializeStudyDb(studyId, cf);
+      if (!studyConfig || !storageEngine) return;
+      await storageEngine.initializeStudyDb(studyId, studyConfig);
       const data = (await storageEngine.getAllParticipantsData());
       setExpData(data);
-      setStudyConfig(cf);
       setLoading(false);
     }
-  }, [globalConfig, storageEngine, studyId]);
+  }, [storageEngine, studyId, studyConfig]);
 
   useEffect(() => {
     getData();
