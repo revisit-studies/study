@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/defaults/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Dynamic React.js Stimuli: A Graphical Perception Experiment",
     "version": "pilot",
@@ -60,7 +60,6 @@
         {
           "id": "cm-response",
           "prompt": "Answer:",
-          "required": true,
           "location": "sidebar",
           "type": "numerical",
           "placeholder": "0-100",
@@ -112,7 +111,6 @@
         {
           "id": "cm-response",
           "prompt": "Answer:",
-          "required": true,
           "location": "sidebar",
           "type": "numerical",
           "placeholder": "0-100",
@@ -164,7 +162,6 @@
         {
           "id": "cm-response",
           "prompt": "Answer:",
-          "required": true,
           "location": "sidebar",
           "type": "numerical",
           "placeholder": "0-100",
@@ -216,7 +213,6 @@
         {
           "id": "cm-response",
           "prompt": "Answer:",
-          "required": true,
           "location": "sidebar",
           "type": "numerical",
           "placeholder": "0-100",
@@ -242,7 +238,6 @@
         {
           "id": "signature",
           "prompt": "Your signature",
-          "required": true,
           "location": "belowStimulus",
           "type": "shortText",
           "placeholder": "Please provide your signature"
@@ -250,7 +245,6 @@
         {
           "id": "accept",
           "prompt": "Do you consent to the study and wish to continue?",
-          "required": true,
           "requiredValue": "Accept",
           "location": "belowStimulus",
           "type": "radio",
@@ -450,7 +444,6 @@
         {
           "id": "q1",
           "prompt": "Which chart type you think is the most difficult",
-          "required": true,
           "location": "aboveStimulus",
           "type": "dropdown",
           "placeholder": "Enter your preference",
@@ -464,7 +457,6 @@
         {
           "id": "q2",
           "prompt": "Your age",
-          "required": true,
           "location": "aboveStimulus",
           "type": "numerical",
           "placeholder": "Enter your age here, range from 0 - 100",
@@ -474,7 +466,6 @@
         {
           "id": "q3",
           "prompt": "From scale 1-5 how much do you like this study",
-          "required": true,
           "location": "aboveStimulus",
           "type": "likert",
           "numItems": 5,
@@ -484,7 +475,6 @@
         {
           "id": "q5",
           "prompt": "Any other comments?",
-          "required": true,
           "location": "aboveStimulus",
           "type": "longText",
           "placeholder": "Enter your comments here"

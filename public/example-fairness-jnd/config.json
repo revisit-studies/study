@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/defaults/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Fairness JND",
     "version": "pilot",
@@ -43,7 +43,6 @@
         {
           "id": "choice",
           "prompt": "Which ranking do you think is fairer?",
-          "required": true,
           "location": "sidebar",
           "type": "shortText",
           "hidden": true
@@ -51,7 +50,6 @@
         {
           "id": "leftARP",
           "prompt": "leftARP",
-          "required": true,
           "location": "sidebar",
           "type": "shortText",
           "hidden": true
@@ -59,7 +57,6 @@
         {
           "id": "rightARP",
           "prompt": "rightARP",
-          "required": true,
           "location": "sidebar",
           "type": "shortText",
           "hidden": true
@@ -67,7 +64,6 @@
         {
           "id": "leftRanking",
           "prompt": "leftRanking",
-          "required": true,
           "location": "sidebar",
           "type": "shortText",
           "hidden": true
@@ -75,7 +71,6 @@
         {
           "id": "rightRanking",
           "prompt": "rightRanking",
-          "required": true,
           "location": "sidebar",
           "type": "shortText",
           "hidden": true
@@ -83,7 +78,6 @@
         {
           "id": "correctChoice",
           "prompt": "correctChoice",
-          "required": true,
           "location": "sidebar",
           "type": "shortText",
           "hidden": true
