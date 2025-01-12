@@ -434,7 +434,7 @@
     },
     "survey": {
       "type": "markdown",
-      "path": "demo-VLAT-mini-randomized/assets/survey.md",
+      "path": "example-VLAT-mini-randomized/assets/survey.md",
       "response": [
         {
           "id": "surveyExperience",

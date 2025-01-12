@@ -16,7 +16,7 @@
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-VLAT-full-randomized/assets/help.md",
+    "helpTextPath": "example-VLAT-full-randomized/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -27,7 +27,7 @@
   "components": {
     "introduction": {
       "type": "markdown",
-      "path": "demo-VLAT-full-randomized/assets/introduction.md",
+      "path": "example-VLAT-full-randomized/assets/introduction.md",
       "response": [
         {
           "id": "prolificId",
@@ -41,7 +41,7 @@
     },
     "consent": {
       "type": "markdown",
-      "path": "demo-VLAT-full-randomized/assets/consent.md",
+      "path": "example-VLAT-full-randomized/assets/consent.md",
       "response": [
         {
           "id": "userInitials",
@@ -92,7 +92,7 @@
       "instruction": "What was the price of a barrel of oil in February 2015?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT1.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT1.png",
       "style": {
         "width": "800px"
       },
@@ -126,7 +126,7 @@
       "instruction": "In which month was the price of a barrel of oil the lowest in 2015?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT1.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT1.png",
       "style": {
         "width": "800px"
       },
@@ -160,7 +160,7 @@
       "instruction": "What was the price range of a barrel of oil in 2015?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT1.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT1.png",
       "style": {
         "width": "800px"
       },
@@ -194,7 +194,7 @@
       "instruction": "Over the course of the second half of 2015, the price of a barrel of oil was",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT1.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT1.png",
       "style": {
         "width": "800px"
       },
@@ -227,7 +227,7 @@
       "instruction": "About how much did the price of a barrel of oil fall from April to September in 2015?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT1.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT1.png",
       "style": {
         "width": "800px"
       },
@@ -261,7 +261,7 @@
       "instruction": "What is the average internet speed in Japan?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT2.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT2.png",
       "style": {
         "width": "800px"
       },
@@ -295,7 +295,7 @@
       "instruction": "In which country is the average internet speed the fastest in Asia?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT2.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT2.png",
       "style": {
         "width": "800px"
       },
@@ -329,7 +329,7 @@
       "instruction": "What is the range of the average internet speed in Asia?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT2.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT2.png",
       "style": {
         "width": "800px"
       },
@@ -363,7 +363,7 @@
       "instruction": "How many countries in Asia have an average internet speed that is slower than that of Thailand?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT2.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT2.png",
       "style": {
         "width": "800px"
       },
@@ -397,7 +397,7 @@
       "instruction": "What is the cost of peanuts in Las Vegas?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT3.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT3.png",
       "style": {
         "width": "800px"
       },
@@ -431,7 +431,7 @@
       "instruction": "About what is the ratio of the cost of a sandwich to the total cost of room service in Seattle?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT3.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT3.png",
       "style": {
         "width": "800px"
       },
@@ -465,7 +465,7 @@
       "instruction": "In which city is the cost of soda the highest?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT3.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT3.png",
       "style": {
         "width": "800px"
       },
@@ -499,7 +499,7 @@
       "instruction": "The cost of vodka in Atlanta is higher than that of Honolulu.",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT3.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT3.png",
       "style": {
         "width": "800px"
       },
@@ -531,7 +531,7 @@
       "instruction": "The ratio of the cost of Soda to the cost of Water in Orlando is higher than in that of Washington D.C.",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT3.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT3.png",
       "style": {
         "width": "800px"
       },
@@ -563,7 +563,7 @@
       "instruction": "What is the approval rating of Republicans among the people who have the education level of Postgraduate Study?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT4.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT4.png",
       "style": {
         "width": "800px"
       },
@@ -597,7 +597,7 @@
       "instruction": "What is the education level of people in which the Democrats have the lowest approval rating?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT4.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT4.png",
       "style": {
         "width": "800px"
       },
@@ -631,7 +631,7 @@
       "instruction": "The approval rating of Republicans for the people who have the education level of Some College Degree is lower than that for the people who have the education level of Postgraduate Study.",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT4.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT4.png",
       "style": {
         "width": "800px"
       },
@@ -663,7 +663,7 @@
       "instruction": "About what is the global smartphone market share of Samsung?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT5.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT5.png",
       "style": {
         "width": "800px"
       },
@@ -697,7 +697,7 @@
       "instruction": "In which company is the global smartphone market share the smallest?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT5.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT5.png",
       "style": {
         "width": "800px"
       },
@@ -731,7 +731,7 @@
       "instruction": "The global smartphone market share of Apple is larger than that of Huawei.",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT5.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT5.png",
       "style": {
         "width": "800px"
       },
@@ -763,7 +763,7 @@
       "instruction": "How many people have rated the taxi between 4.0 and 4.2?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT6.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT6.png",
       "style": {
         "width": "800px"
       },
@@ -797,7 +797,7 @@
       "instruction": "What is the rating that the people have rated the taxi the most?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT6.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT6.png",
       "style": {
         "width": "800px"
       },
@@ -831,7 +831,7 @@
       "instruction": "More people have rated the taxi between 4.6 and 4.8 than between 4.2 and 4.4.",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT6.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT6.png",
       "style": {
         "width": "800px"
       },
@@ -863,7 +863,7 @@
       "instruction": "What is the weight for the person who is 165.1 cm tall?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT7.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT7.png",
       "style": {
         "width": "800px"
       },
@@ -897,7 +897,7 @@
       "instruction": "What is the height for the tallest person among the 85 males?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT7.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT7.png",
       "style": {
         "width": "800px"
       },
@@ -931,7 +931,7 @@
       "instruction": "What is the range in weight for the 85 males?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT7.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT7.png",
       "style": {
         "width": "800px"
       },
@@ -965,7 +965,7 @@
       "instruction": "What is the height for a person who lies outside the others the most?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT7.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT7.png",
       "style": {
         "width": "800px"
       },
@@ -999,7 +999,7 @@
       "instruction": "A group of males are gathered around the height of 176 cm and the weight of 70 kg.",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT7.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT7.png",
       "style": {
         "width": "800px"
       },
@@ -1031,7 +1031,7 @@
       "instruction": "There is a negative linear relationship between the height and the weight of the 85 males.",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT7.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT7.png",
       "style": {
         "width": "800px"
       },
@@ -1063,7 +1063,7 @@
       "instruction": "The weights for males with the height of 188 cm are all the same.",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT7.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT7.png",
       "style": {
         "width": "800px"
       },
@@ -1095,7 +1095,7 @@
       "instruction": "What was the average price of a pound of coffee beans in September 2013?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT8.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT8.png",
       "style": {
         "width": "800px"
       },
@@ -1129,7 +1129,7 @@
       "instruction": "When was the average price of a pound of coffee beans at minimum?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT8.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT8.png",
       "style": {
         "width": "800px"
       },
@@ -1163,7 +1163,7 @@
       "instruction": "What was the range of the average price of a pound of coffee beans between January 2013 and December 2014?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT8.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT8.png",
       "style": {
         "width": "800px"
       },
@@ -1197,7 +1197,7 @@
       "instruction": "Over the course of 2013, the average price of a pound of coffee beans was",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT8.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT8.png",
       "style": {
         "width": "800px"
       },
@@ -1230,7 +1230,7 @@
       "instruction": "What was the number of girls named 'Amelia' in 2010 in the UK?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT9.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT9.png",
       "style": {
         "width": "800px"
       },
@@ -1264,7 +1264,7 @@
       "instruction": "About what was the ratio of the number of girls named 'Olivia' to those named 'Isla' in 2014 in the UK?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT9.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT9.png",
       "style": {
         "width": "800px"
       },
@@ -1298,7 +1298,7 @@
       "instruction": "Over the course of years between 2009 and 2014, when was the number of girls named 'Amelia' at the maximum?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT9.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT9.png",
       "style": {
         "width": "800px"
       },
@@ -1332,7 +1332,7 @@
       "instruction": "The number of girls named 'Isla' was __________ from 2009 to 2012.",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT9.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT9.png",
       "style": {
         "width": "800px"
       },
@@ -1365,7 +1365,7 @@
       "instruction": "In the UK, the number of girls named 'Amelia' in 2014 was more than it was in 2013.",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT9.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT9.png",
       "style": {
         "width": "800px"
       },
@@ -1397,7 +1397,7 @@
       "instruction": "Over the course of years between 2009 and 2014, the number of girls named 'Isla' was always more than 'Olivia'.",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT9.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT9.png",
       "style": {
         "width": "800px"
       },
@@ -1429,7 +1429,7 @@
       "instruction": "What is the total length of the metro system in Beijing?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT10.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT10.png",
       "style": {
         "width": "800px"
       },
@@ -1463,7 +1463,7 @@
       "instruction": "Which city's metro system has the largest number of stations?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT10.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT10.png",
       "style": {
         "width": "800px"
       },
@@ -1497,7 +1497,7 @@
       "instruction": "What is the range of the total length of the metro systems?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT10.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT10.png",
       "style": {
         "width": "800px"
       },
@@ -1531,7 +1531,7 @@
       "instruction": "Which city's metro system does lie outside the relationship between the total system length and the number of stations most?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT10.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT10.png",
       "style": {
         "width": "800px"
       },
@@ -1565,7 +1565,7 @@
       "instruction": "A group of the metro systems of the world has approximately 300 stations and around a 200 km system length.",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT10.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT10.png",
       "style": {
         "width": "800px"
       },
@@ -1597,7 +1597,7 @@
       "instruction": "In general, the ridership of the metro system increases as the number of stations increases.",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT10.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT10.png",
       "style": {
         "width": "800px"
       },
@@ -1629,7 +1629,7 @@
       "instruction": "The metro system in Shanghai has more ridership than the metro system in Beijing.",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT10.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT10.png",
       "style": {
         "width": "800px"
       },
@@ -1661,7 +1661,7 @@
       "instruction": "What was the unemployment rate for Indiana (IN) in 2015?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT11.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT11.png",
       "style": {
         "width": "800px"
       },
@@ -1695,7 +1695,7 @@
       "instruction": "In which state was the unemployment rate the highest in 2015?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT11.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT11.png",
       "style": {
         "width": "800px"
       },
@@ -1729,7 +1729,7 @@
       "instruction": "In 2015, the unemployment rate for Washington (WA) was higher than that of Wisconsin (WI).",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT11.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT11.png",
       "style": {
         "width": "800px"
       },
@@ -1761,7 +1761,7 @@
       "instruction": "For which website was the number of unique visitors the largest in 2010?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT12.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT12.png",
       "style": {
         "width": "800px"
       },
@@ -1795,7 +1795,7 @@
       "instruction": "The number of unique visitors for Amazon was more than that of Yahoo in 2010.",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT12.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT12.png",
       "style": {
         "width": "800px"
       },
@@ -1827,7 +1827,7 @@
       "instruction": "Samsung is nested in the Financial category.",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-full-randomized/assets/VLAT12.png",
+      "path": "example-VLAT-full-randomized/assets/VLAT12.png",
       "style": {
         "width": "800px"
       },

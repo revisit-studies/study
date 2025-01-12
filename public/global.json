@@ -12,8 +12,8 @@
     "demo-html-input",
     "demo-survey",
     "demo-training",
-    "demo-VLAT-full-randomized",
-    "demo-VLAT-mini-randomized",
+    "example-VLAT-full-randomized",
+    "example-VLAT-mini-randomized",
     "demo-html-trrack",
     "demo-click-accuracy-test",
     "demo-image",
@@ -59,11 +59,11 @@
     "demo-training": {
       "path": "demo-training/config.json"
     },
-    "demo-VLAT-full-randomized": {
-      "path": "demo-VLAT-full-randomized/config.json"
+    "example-VLAT-full-randomized": {
+      "path": "example-VLAT-full-randomized/config.json"
     },
-    "demo-VLAT-mini-randomized": {
-      "path": "demo-VLAT-mini-randomized/config.json"
+    "example-VLAT-mini-randomized": {
+      "path": "example-VLAT-mini-randomized/config.json"
     },
     "demo-html-trrack": {
       "path": "demo-html-trrack/config.json"

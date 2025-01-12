@@ -37,7 +37,7 @@
             "type": "boolean"
           },
           "config": {
-            "description": "The vega-lite configuration.",
+            "description": "The vega or vega-lite configuration.",
             "type": "object"
           },
           "correctAnswer": {
@@ -668,7 +668,7 @@
           "type": "string"
         },
         "config": {
-          "description": "The vega-lite configuration.",
+          "description": "The vega or vega-lite configuration.",
           "type": "object"
         },
         "correctAnswer": {
@@ -1872,7 +1872,7 @@
           "type": "boolean"
         },
         "config": {
-          "description": "The vega-lite configuration.",
+          "description": "The vega or vega-lite configuration.",
           "type": "object"
         },
         "correctAnswer": {

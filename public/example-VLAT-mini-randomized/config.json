@@ -16,7 +16,7 @@
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-VLAT-mini-randomized/assets/help.md",
+    "helpTextPath": "example-VLAT-mini-randomized/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -27,7 +27,7 @@
   "components": {
     "introduction": {
       "type": "markdown",
-      "path": "demo-VLAT-mini-randomized/assets/introduction.md",
+      "path": "example-VLAT-mini-randomized/assets/introduction.md",
       "response": [
         {
           "id": "prolificId",
@@ -41,7 +41,7 @@
     },
     "consent": {
       "type": "markdown",
-      "path": "demo-VLAT-mini-randomized/assets/consent.md",
+      "path": "example-VLAT-mini-randomized/assets/consent.md",
       "response": [
         {
           "id": "userInitials",
@@ -54,7 +54,7 @@
     },
     "survey": {
       "type": "markdown",
-      "path": "demo-VLAT-mini-randomized/assets/survey.md",
+      "path": "example-VLAT-mini-randomized/assets/survey.md",
       "response": [
         {
           "id": "surveyExperience",
@@ -87,7 +87,7 @@
       "instruction": "eBay is nested in the Software category.",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-mini-randomized/assets/TreeMap.png",
+      "path": "example-VLAT-mini-randomized/assets/TreeMap.png",
       "style": {
         "width": "500px"
       },
@@ -120,7 +120,7 @@
       "instruction": "Which country has the lowest proportion of Gold medals?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-mini-randomized/assets/Stacked100.png",
+      "path": "example-VLAT-mini-randomized/assets/Stacked100.png",
       "style": {
         "width": "600px"
       },
@@ -155,7 +155,7 @@
       "instruction": "What distance have customers traveled in the taxi the most?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-mini-randomized/assets/Histogram.png",
+      "path": "example-VLAT-mini-randomized/assets/Histogram.png",
       "style": {
         "width": "500px"
       },
@@ -190,7 +190,7 @@
       "instruction": "In 2020, the unemployment rate for Washington (WA) was higher than that of Wisconsin (WI)?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-mini-randomized/assets/Choropleth.png",
+      "path": "example-VLAT-mini-randomized/assets/Choropleth.png",
       "style": {
         "width": "500px"
       },
@@ -223,7 +223,7 @@
       "instruction": "What is the approximate global smartphone market share of Samsung?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-mini-randomized/assets/PieChart.png",
+      "path": "example-VLAT-mini-randomized/assets/PieChart.png",
       "style": {
         "width": "500px"
       },
@@ -258,7 +258,7 @@
       "instruction": "Which city's metro system has the largest number of stations?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-mini-randomized/assets/BubbleChart.png",
+      "path": "example-VLAT-mini-randomized/assets/BubbleChart.png",
       "style": {
         "width": "500px"
       },
@@ -293,7 +293,7 @@
       "instruction": "What is the cost of peanuts in Seoul?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-mini-randomized/assets/StackedBar.png",
+      "path": "example-VLAT-mini-randomized/assets/StackedBar.png",
       "style": {
         "width": "600px"
       },
@@ -328,7 +328,7 @@
       "instruction": "What was the price of a barrel of oil in February 2020?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-mini-randomized/assets/LineChart.png",
+      "path": "example-VLAT-mini-randomized/assets/LineChart.png",
       "style": {
         "width": "550px"
       },
@@ -363,7 +363,7 @@
       "instruction": "What is the average internet speed in Japan?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-mini-randomized/assets/BarChart.png",
+      "path": "example-VLAT-mini-randomized/assets/BarChart.png",
       "style": {
         "width": "500px"
       },
@@ -398,7 +398,7 @@
       "instruction": "What was the average price of a pound of coffee in October 2019?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-mini-randomized/assets/AreaChart.png",
+      "path": "example-VLAT-mini-randomized/assets/AreaChart.png",
       "style": {
         "width": "500px"
       },
@@ -433,7 +433,7 @@
       "instruction": "What was the ratio of girls named \"Isla\" to girls named \"Amelia\" in 2012 in the UK?",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-mini-randomized/assets/StackedArea.png",
+      "path": "example-VLAT-mini-randomized/assets/StackedArea.png",
       "style": {
         "width": "500px"
       },
@@ -468,7 +468,7 @@
       "instruction": "There is a negative relationship between the height and the weight of the 85 males.",
       "instructionLocation": "sidebar",
       "type": "image",
-      "path": "demo-VLAT-mini-randomized/assets/Scatterplot.png",
+      "path": "example-VLAT-mini-randomized/assets/Scatterplot.png",
       "style": {
         "width": "500px"
       },

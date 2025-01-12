@@ -1,13 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/properties/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Demo of use Vega-Lite as stimuli",
+    "title": "Demo of use Vega as stimuli",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
     "date": "2024-11-16",
-    "description": "A demo of vega-lite stimuli",
+    "description": "A demo of vega stimuli",
     "organizations": [
       "University of Utah",
       "WPI",

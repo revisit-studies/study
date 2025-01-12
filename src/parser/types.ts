@@ -719,7 +719,7 @@ export interface VegaComponentPath extends BaseIndividualComponent {
 
 export interface VegaComponentConfig extends BaseIndividualComponent {
   type: 'vega';
-  /** The vega-lite configuration. */
+  /** The vega or vega-lite configuration. */
   config: object;
 }
 
