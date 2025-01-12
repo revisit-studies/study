@@ -15,6 +15,7 @@ import {
   Text,
 } from '@mantine/core';
 import {
+  IconChartHistogram,
   IconDotsVertical,
   IconMail,
   IconSchema,
@@ -130,7 +131,6 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
                     Study Browser
                   </Menu.Item>
                 )}
-
                 <Menu.Item
                   component="a"
                   href={
@@ -142,13 +142,21 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
                 >
                   Contact
                 </Menu.Item>
-
                 {studyNavigatorEnabled && (
                   <Menu.Item
                     leftSection={<IconUserPlus size={14} />}
                     onClick={() => getNewParticipant(storageEngine, studyConfig, metadata, studyHref)}
                   >
                     Next Participant
+                  </Menu.Item>
+                )}
+                {studyNavigatorEnabled && (
+                  <Menu.Item
+                    leftSection={<IconChartHistogram size={14} />}
+                    component="a"
+                    href={`${PREFIX}analysis/stats/${studyId}`}
+                  >
+                    Analyze & Manage
                   </Menu.Item>
                 )}
               </Menu.Dropdown>
