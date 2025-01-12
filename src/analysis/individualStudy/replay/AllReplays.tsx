@@ -1,36 +1,20 @@
 import {
   Stack,
 } from '@mantine/core';
-
 import { useResizeObserver } from '@mantine/hooks';
-
 import { useParams } from 'react-router-dom';
-import { StorageEngine } from '../../../storage/engines/StorageEngine';
-import { useStorageEngine } from '../../../storage/storageEngineHooks';
-import { useAsync } from '../../../store/hooks/useAsync';
 import { AllTasksTimeline } from './AllTasksTimeline';
+import { ParticipantData } from '../../../storage/types';
 
-function getAllParticipantData(storageEngine: StorageEngine | undefined, studyId: string | undefined) {
-  if (storageEngine && studyId) {
-    return storageEngine.getAllParticipantsDataByStudy(studyId);
-  }
-
-  return null;
-}
 // current active stimuli presented to the user
-export default function AllReplays() {
+export default function AllReplays({ visibleParticipants }: {visibleParticipants : ParticipantData[]}) {
   const { studyId } = useParams();
-
-  const { storageEngine } = useStorageEngine();
 
   const [ref, { width }] = useResizeObserver();
 
-  const { value: participants } = useAsync(getAllParticipantData, [storageEngine, studyId]);
-
   return (
     <Stack ref={ref} style={{ width: '100%' }}>
-      { participants
-        ? participants.filter((part) => part.completed).map((part) => <AllTasksTimeline studyId={studyId || ''} key={part.participantId} height={200} participantData={part} width={width} />) : null}
+      { visibleParticipants.map((part) => <AllTasksTimeline studyId={studyId || ''} key={part.participantId} height={200} participantData={part} width={width} />)}
     </Stack>
   );
 }
