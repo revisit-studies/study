@@ -1167,7 +1167,7 @@ export type BaseComponents = Record<string, Partial<IndividualComponent>>;
 
 ```js
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/defaults/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/properties/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     ...
   },
