@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/properties/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Dynamic React Stimuli and Provenance Tracking",
     "version": "pilot",
@@ -33,7 +33,6 @@
         {
           "id": "accuracy",
           "prompt": "Your click distance to circle center",
-          "required": true,
           "location": "sidebar",
           "type": "iframe"
         }

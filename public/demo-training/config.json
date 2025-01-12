@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/properties/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "How To Do Training Demo",
     "version": "pilot",
@@ -30,7 +30,6 @@
           "id": "q1",
           "prompt": "What is the most efficient visual mark?",
           "secondaryText": "Hint: it's not round.",
-          "required": true,
           "location": "sidebar",
           "type": "dropdown",
           "placeholder": "Choose mark",
@@ -60,7 +59,6 @@
           "id": "slider-question",
           "prompt": "Pick a value half-way.",
           "secondaryText": "Try to get the middle value",
-          "required": true,
           "location": "sidebar",
           "type": "slider",
           "options": [
@@ -95,7 +93,6 @@
           "id": "vowel-question",
           "prompt": "Respond with a vowel",
           "secondaryText": "Just one! Right now, only a works.",
-          "required": true,
           "location": "belowStimulus",
           "type": "shortText",
           "placeholder": "Enter a single vowel."
@@ -104,7 +101,6 @@
           "id": "consonant-question",
           "prompt": "Respond with a consonant",
           "secondaryText": "Just one! Right now, only s works.",
-          "required": true,
           "location": "belowStimulus",
           "type": "shortText",
           "placeholder": "Enter a single consonant."

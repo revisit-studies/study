@@ -43,13 +43,11 @@
         {
           "id": "age",
           "type": "numerical",
-          "required": true,
           "prompt": "What is your age?"
         },
         {
           "id": "height",
           "type": "numerical",
-          "required": true,
           "prompt": "What is your height in inches?"
         }
       ]
@@ -62,7 +60,6 @@
         {
           "id": "women",
           "type": "radio",
-          "required": true,
           "prompt": "For which profession did AI generate women the least compared to US census data?",
           "location": "sidebar",
           "options": [
@@ -75,7 +72,6 @@
         {
           "id": "men",
           "type": "radio",
-          "required": true,
           "prompt": "For which profession did AI generate men the least compared to US census data?",
           "location": "sidebar",
           "options": [
