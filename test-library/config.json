@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/properties/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Using library imports",
     "version": "pilot",
@@ -20,18 +20,28 @@
     "withProgressBar": false,
     "sidebar": true
   },
-  "importedLibraries": ["test"],
+  "importedLibraries": [
+    "test"
+  ],
   "components": {
     "my-test": {
       "baseComponent": "$test.components.test-md",
       "response": [
-        {"id": "test-response", "type": "shortText", "prompt": "What did you think of the test?", "required": true}
+        {
+          "id": "test-response",
+          "type": "shortText",
+          "prompt": "What did you think of the test?"
+        }
       ]
     },
     "my-test2": {
       "baseComponent": "$test.co.test-md",
       "response": [
-        {"id": "test-response", "type": "shortText", "prompt": "What did you think of the test?", "required": true}
+        {
+          "id": "test-response",
+          "type": "shortText",
+          "prompt": "What did you think of the test?"
+        }
       ]
     }
   },

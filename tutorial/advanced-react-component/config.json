@@ -38,7 +38,6 @@
         {
           "id": "click",
           "prompt": "Your click distance to circle center",
-          "required": true,
           "location": "sidebar",
           "type": "iframe"
         }

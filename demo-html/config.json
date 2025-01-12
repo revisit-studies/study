@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/properties/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "HTML as a Stimulus",
     "version": "pilot",
@@ -42,7 +42,6 @@
         {
           "id": "html-response",
           "prompt": "Answer:",
-          "required": true,
           "location": "sidebar",
           "type": "numerical",
           "placeholder": "0-7",
