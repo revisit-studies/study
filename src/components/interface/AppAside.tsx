@@ -54,6 +54,8 @@ export default function AppAside() {
 
   const [activeTab, setActiveTab] = useState<string | null>('participant');
 
+  const nextParticipantDisabled = useMemo(() => activeTab === 'allTrials', [activeTab]);
+
   return (
     <AppShell.Aside p="0">
       <AppShell.Section
@@ -63,15 +65,17 @@ export default function AppAside() {
           <Text size="md" fw={700} pt={3}>
             Study Browser
           </Text>
-          <Button
-            variant="light"
-            leftSection={<IconUserPlus size={14} />}
-            onClick={() => getNewParticipant(storageEngine, studyConfig, metadata, studyHref)}
-            size="xs"
-            disabled={activeTab === 'allTrials'}
-          >
-            Next Participant
-          </Button>
+          <Tooltip label="Go to the sequence of the next participant in the experiment. Sequences can be different between participants due to randomization, etc." w={280} multiline disabled={nextParticipantDisabled}>
+            <Button
+              variant="light"
+              leftSection={<IconUserPlus size={14} />}
+              onClick={() => getNewParticipant(storageEngine, studyConfig, metadata, studyHref)}
+              size="xs"
+              disabled={nextParticipantDisabled}
+            >
+              Next Participant
+            </Button>
+          </Tooltip>
           <CloseButton
             onClick={() => dispatch(toggleStudyBrowser())}
             mt={1}
