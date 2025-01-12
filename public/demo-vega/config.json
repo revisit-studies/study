@@ -1,13 +1,13 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/properties/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Demo of use Vega-Lite as stimuli",
+    "title": "Demo of use Vega as stimuli",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
     "date": "2024-11-16",
-    "description": "A demo of vega-lite stimuli",
+    "description": "A demo of vega stimuli",
     "organizations": [
       "University of Utah",
       "WPI",
@@ -224,20 +224,17 @@
           }
         ]
       },
-      //      "path": "demo-vega/specs/vegademo1.specs.json",
       "nextButtonLocation": "sidebar",
       "response": [
         {
           "id": "vegaDemoResponse1",
           "prompt": "You selected:",
-          "required": true,
           "location": "sidebar",
           "type": "iframe"
         },
         {
           "id": "vegaDemoConfidence1",
           "prompt": "How confident are you with your answer?",
-          "required": true,
           "location": "sidebar",
           "type": "slider",
           "options": [
@@ -266,14 +263,12 @@
         {
           "id": "vegaDemoResponse1",
           "prompt": "You selected:",
-          "required": true,
           "location": "sidebar",
           "type": "iframe"
         },
         {
           "id": "vegaDemoConfidence1",
           "prompt": "How confident are you with your answer?",
-          "required": true,
           "location": "sidebar",
           "type": "slider",
           "options": [

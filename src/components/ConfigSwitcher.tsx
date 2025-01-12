@@ -161,14 +161,14 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
                 style={{ marginLeft: 'auto' }}
                 variant="default"
                 component="a"
-                href={`${PREFIX}/analysis/stats/${url}`}
+                href={`${PREFIX}analysis/stats/${url}`}
               >
                 Analyze & Manage Study
               </Button>
               <Button
                 leftSection={<IconListCheck />}
                 component="a"
-                href={`${PREFIX}/${url}`}
+                href={`${PREFIX}${url}`}
               >
                 Go to Study
               </Button>

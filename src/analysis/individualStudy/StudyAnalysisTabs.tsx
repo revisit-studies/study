@@ -1,5 +1,5 @@
 import {
-  Alert, AppShell, Container, Flex, LoadingOverlay, Space, Tabs, Title,
+  Alert, AppShell, Checkbox, Container, Flex, Group, LoadingOverlay, Space, Tabs, Text, Title,
 } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
@@ -16,7 +16,6 @@ import { TableView } from './table/TableView';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import ManageAccordion from './management/ManageAccordion';
 import { useAuth } from '../../store/hooks/useAuth';
-import { ParticipantStatusBadges } from '../interface/ParticipantStatusBadges';
 import { StatsView } from './stats/StatsView';
 import AllReplays from './replay/AllReplays';
 import { parseStudyConfig } from '../../parser/parser';
@@ -71,12 +70,28 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     getData();
   }, [globalConfig, storageEngine, studyId, getData]);
 
+  const [visibleParticipants, setVisibleParticipants] = useState<ParticipantData[]>([]);
   const [completed, inProgress, rejected] = useMemo(() => {
     const comp = expData.filter((d) => !d.rejected && d.completed);
     const prog = expData.filter((d) => !d.rejected && !d.completed);
     const rej = expData.filter((d) => d.rejected);
+    setVisibleParticipants([...comp, ...prog, ...rej]);
     return [comp, prog, rej];
   }, [expData]);
+
+  const handleCheckboxChange = useCallback((value: string[]) => {
+    const participants = [];
+    if (value.includes('completed')) {
+      participants.push(...completed);
+    }
+    if (value.includes('inprogress')) {
+      participants.push(...inProgress);
+    }
+    if (value.includes('rejected')) {
+      participants.push(...rejected);
+    }
+    setVisibleParticipants(participants);
+  }, [completed, inProgress, rejected]);
 
   return (
     <>
@@ -86,9 +101,24 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
         <Container fluid style={{ height: '100%', position: 'relative' }}>
           <LoadingOverlay visible={loading} />
 
-          <Flex direction="row" align="center">
+          <Flex direction="row" align="center" justify="space-between">
             <Title order={5}>{studyId}</Title>
-            <ParticipantStatusBadges completed={completed.length} inProgress={inProgress.length} rejected={rejected.length} />
+            <Flex direction="row" align="center">
+              <Text mt={-2} size="sm">Participants: </Text>
+              <Checkbox.Group
+                defaultValue={['completed', 'inprogress', 'rejected']}
+                onChange={handleCheckboxChange}
+                mb="xs"
+                mt={8}
+                ml="xs"
+              >
+                <Group>
+                  <Checkbox value="completed" label="Completed" />
+                  <Checkbox value="inprogress" label="In Progress" />
+                  <Checkbox value="rejected" label="Rejected" />
+                </Group>
+              </Checkbox.Group>
+            </Flex>
           </Flex>
 
           <Space h="xs" />
@@ -101,13 +131,13 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="table" pt="xs">
-              {studyConfig && <TableView completed={completed} inProgress={inProgress} rejected={rejected} studyConfig={studyConfig} refresh={getData} />}
+              {studyConfig && <TableView visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={getData} />}
             </Tabs.Panel>
             <Tabs.Panel value="stats" pt="xs">
-              {studyConfig && <StatsView studyConfig={studyConfig} completed={completed} inprogress={inProgress} rejected={rejected} />}
+              {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
             </Tabs.Panel>
             <Tabs.Panel value="replay" pt="xs">
-              <AllReplays />
+              <AllReplays visibleParticipants={visibleParticipants} />
             </Tabs.Panel>
             <Tabs.Panel value="manage" pt="xs">
               {studyId && user.isAdmin ? <ManageAccordion studyId={studyId} refresh={getData} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}
