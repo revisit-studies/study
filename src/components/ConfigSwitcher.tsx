@@ -257,7 +257,7 @@ export function ConfigSwitcher({
           </Tabs.Panel>
 
           <Tabs.Panel value="Libraries">
-            <Text c="dimmed" mt="sm">These studies exist for testing purposes.</Text>
+            <Text c="dimmed" mt="sm">Here you can see an example of every library that we publish</Text>
             <StudyCards configNames={libraries} studyConfigs={studyConfigs} />
           </Tabs.Panel>
         </Tabs>
