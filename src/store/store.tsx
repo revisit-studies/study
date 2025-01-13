@@ -88,56 +88,64 @@ export async function studyStoreCreator(
       setIframeProvenance: (state, action: PayloadAction<TrrackedProvenance | null>) => {
         state.iframeProvenance = action.payload;
       },
-      saveAnalysisState(state, { payload } : PayloadAction<unknown>) {
+      saveAnalysisState(state, { payload }: PayloadAction<unknown>) {
         state.analysisProvState = payload;
       },
-      setAnalysisIsPlaying(state, { payload } : PayloadAction<boolean>) {
+      setAnalysisIsPlaying(state, { payload }: PayloadAction<boolean>) {
         state.analysisIsPlaying = payload;
       },
-      setAnalysisHasAudio(state, { payload } : PayloadAction<boolean>) {
+      setAnalysisHasAudio(state, { payload }: PayloadAction<boolean>) {
         state.analysisHasAudio = payload;
       },
-      setAnalysisHasProvenance(state, { payload } : PayloadAction<boolean>) {
+      setAnalysisHasProvenance(state, { payload }: PayloadAction<boolean>) {
         state.analysisHasProvenance = payload;
       },
-      setMatrixAnswersRadio: (state, action: PayloadAction<{ questionKey: string, responseId: string, val: string }>) => {
-        const { responseId, questionKey, val } = action.payload;
+      setMatrixAnswersRadio: (state, action: PayloadAction<{ questionKey: string, responseId: string, val: string } | null>) => {
+        if (action.payload) {
+          const { responseId, questionKey, val } = action.payload;
 
-        // Set state
-        state.matrixAnswers = {
-          ...state.matrixAnswers,
-          [responseId]: {
-            ...state.matrixAnswers[responseId],
-            [questionKey]: val,
-          },
-        };
-      },
-      setMatrixAnswersCheckbox: (state, action: PayloadAction<{ questionKey: string, responseId: string, value: string, label: string, isChecked: boolean, choiceOptions: StringOption[] }>) => {
-        const {
-          responseId, questionKey, value, isChecked, choiceOptions,
-        } = action.payload;
-
-        const currentAnswer = state.matrixAnswers[responseId]?.[questionKey] ?? '';
-        let newAnswer = '';
-        if (isChecked) {
-          if (currentAnswer.length > 0) {
-            newAnswer = [...currentAnswer.split('|'), value].sort((a, b) => choiceOptions.map((entry) => entry.value).indexOf(a) - choiceOptions.map((entry) => entry.value).indexOf(b))
-              .join('|');
-          } else {
-            newAnswer = `${value}`;
-          }
+          // Set state
+          state.matrixAnswers = {
+            ...state.matrixAnswers,
+            [responseId]: {
+              ...state.matrixAnswers[responseId],
+              [questionKey]: val,
+            },
+          };
         } else {
-          newAnswer = currentAnswer.split('|').filter((entry) => entry !== value).join('|');
+          state.matrixAnswers = {};
         }
+      },
+      setMatrixAnswersCheckbox: (state, action: PayloadAction<{ questionKey: string, responseId: string, value: string, label: string, isChecked: boolean, choiceOptions: StringOption[] } | null>) => {
+        if (action.payload) {
+          const {
+            responseId, questionKey, value, isChecked, choiceOptions,
+          } = action.payload;
 
-        // Set state
-        state.matrixAnswers = {
-          ...state.matrixAnswers,
-          [responseId]: {
-            ...state.matrixAnswers[responseId],
-            [questionKey]: newAnswer,
-          },
-        };
+          const currentAnswer = state.matrixAnswers[responseId]?.[questionKey] ?? '';
+          let newAnswer = '';
+          if (isChecked) {
+            if (currentAnswer.length > 0) {
+              newAnswer = [...currentAnswer.split('|'), value].sort((a, b) => choiceOptions.map((entry) => entry.value).indexOf(a) - choiceOptions.map((entry) => entry.value).indexOf(b))
+                .join('|');
+            } else {
+              newAnswer = `${value}`;
+            }
+          } else {
+            newAnswer = currentAnswer.split('|').filter((entry) => entry !== value).join('|');
+          }
+
+          // Set state
+          state.matrixAnswers = {
+            ...state.matrixAnswers,
+            [responseId]: {
+              ...state.matrixAnswers[responseId],
+              [questionKey]: newAnswer,
+            },
+          };
+        } else {
+          state.matrixAnswers = {};
+        }
       },
       updateResponseBlockValidation: (
         state,

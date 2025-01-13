@@ -53,7 +53,9 @@ export function useNextStep() {
   const modes = useStoreSelector((state) => state.modes);
 
   const storeDispatch = useStoreDispatch();
-  const { saveTrialAnswer, setIframeAnswers } = useStoreActions();
+  const {
+    saveTrialAnswer, setIframeAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox,
+  } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
   const studyId = useStudyId();
@@ -122,6 +124,8 @@ export function useNextStep() {
         );
       }
       storeDispatch(setIframeAnswers({}));
+      storeDispatch(setMatrixAnswersCheckbox(null));
+      storeDispatch(setMatrixAnswersRadio(null));
     }
 
     let nextStep = currentStep + 1;
@@ -203,7 +207,7 @@ export function useNextStep() {
     }
 
     navigate(`/${studyId}/${encryptIndex(nextStep)}${window.location.search}`);
-  }, [currentStep, trialValidation, identifier, windowEvents, dataCollectionEnabled, storedAnswer, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setIframeAnswers, studyConfig, participantSequence]);
+  }, [currentStep, trialValidation, identifier, windowEvents, dataCollectionEnabled, storedAnswer, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setIframeAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, studyConfig, participantSequence]);
 
   return {
     isNextDisabled,
