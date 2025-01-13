@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Using library imports",
     "version": "pilot",
@@ -20,18 +20,18 @@
     "withProgressBar": false,
     "sidebar": true
   },
-  "importedLibraries": ["demographics", 
-                        "SUS", 
-                        "previs", 
-                        "mini-vlat", 
-                        "vlat", 
-                        "berlin-num", 
-                        "nasa-tlx", 
-                        "color-blindness",
-                        "mic-check"
-                      ],
-  "components": {
-  },
+  "importedLibraries": [
+    "demographics",
+    "SUS",
+    "previs",
+    "mini-vlat",
+    "vlat",
+    "berlin-num",
+    "nasa-tlx",
+    "color-blindness",
+    "mic-check"
+  ],
+  "components": {},
   "sequence": {
     "order": "fixed",
     "components": [
@@ -39,7 +39,7 @@
       "$demographics.se.demographics",
       "$berlin-num.se.berlin-num",
       "$SUS.se.SUS",
-      "$vlat.se.latinSquare",      
+      "$vlat.se.latinSquare",
       "$previs.se.previs",
       "$mini-vlat.se.latinSquare",
       "$nasa-tlx.se.latinSquare"

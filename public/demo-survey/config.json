@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Question Types and Form Elements Demo",
     "version": "pilot",
@@ -23,18 +23,13 @@
     "sidebar": true
   },
   "components": {
-    "introduction": {
-      "type": "markdown",
-      "path": "demo-survey/assets/introduction.md",
-      "response": []
-    },
     "survey": {
       "type": "questionnaire",
       "response": [
         {
           "id": "q1",
           "prompt": "Dropdown example",
-          "required": true,
+          "secondaryText": "You can specify secondary text to clarify your question.",
           "location": "aboveStimulus",
           "type": "dropdown",
           "placeholder": "Enter your preference",
@@ -47,8 +42,8 @@
         },
         {
           "id": "q2",
-          "prompt": "Numerical example",
-          "required": true,
+          "prompt": "Numerical example, required",
+          "secondaryText": "A numeric example",
           "location": "aboveStimulus",
           "type": "numerical",
           "placeholder": "Enter your age here, range from 0 - 100",
@@ -58,17 +53,53 @@
         {
           "id": "q3",
           "prompt": "Likert scale example",
-          "required": true,
+          "secondaryText": "A likert example with 9 items",
           "location": "aboveStimulus",
           "type": "likert",
           "numItems": 9,
           "rightLabel": "Like",
           "leftLabel": "Dislike"
         },
+
+        {
+          "id": "multi-satisfaction",
+          "prompt": "Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable) for the following items.",
+          "secondaryText": "A simple matrix of Likert responses with predefined options for satisfaction.",
+          "location": "aboveStimulus",
+          "type": "matrix-radio",
+          "answerOptions": "satisfaction5",
+          "questionOptions": [
+            "The tool we created",
+            "The technique we developed",
+            "The authors of the tools"
+          ]
+         }, 
+
+         {
+          "id": "multi-custom",
+          "prompt": "Which categories do the following items belong to?",
+          "secondaryText": "A matrix of checkboxes with custom options for categorization.",
+          "location": "aboveStimulus",
+          "type": "matrix-checkbox",
+          "answerOptions": [
+            "Has Legs",
+            "Has Wings",
+            "Can Swim"
+          ],
+          "questionOptions": [
+            "Dog",
+            "Snake",
+            "Eagle",
+            "Salmon",
+            "Platypus"
+          ]
+         
+         },
+
         {
           "id": "q4",
           "prompt": "Short text example",
-          "required": true,
+          "secondaryText": "A short text example",
           "location": "aboveStimulus",
           "type": "shortText",
           "placeholder": "Enter your answer here"
@@ -76,7 +107,7 @@
         {
           "id": "q5",
           "prompt": "Long text example",
-          "required": true,
+          "secondaryText": "A text box for long text",
           "location": "aboveStimulus",
           "type": "longText",
           "placeholder": "Enter your long comments here"
@@ -84,7 +115,7 @@
         {
           "id": "q7",
           "prompt": "Checkbox example",
-          "required": true,
+          "secondaryText": "Checkboxes for multi-selection",
           "minSelections": 2,
           "maxSelections": 2,
           "location": "aboveStimulus",
@@ -98,7 +129,7 @@
         {
           "id": "q-radio",
           "prompt": "Radio button example",
-          "required": true,
+          "secondaryText": "Radio buttons for single selection",
           "location": "aboveStimulus",
           "type": "radio",
           "options": [
@@ -109,8 +140,8 @@
         {
           "id": "q6",
           "prompt": "Slider example",
+          "secondaryText": "A slider for 0-100 with 3 breakpoints for bad, mid, and good",
           "location": "aboveStimulus",
-          "required": true,
           "type": "slider",
           "options": [
             {
@@ -133,7 +164,6 @@
   "sequence": {
     "order": "fixed",
     "components": [
-      "introduction",
       "survey"
     ]
   }

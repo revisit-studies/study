@@ -11,6 +11,8 @@ import { EventType } from '../store/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { WindowEventsContext } from '../store/hooks/useWindowEvents';
 import { useStoreSelector } from '../store/store';
+import { AnalysisFooter } from './interface/AnalysisFooter';
+import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
@@ -19,6 +21,8 @@ export function StepRenderer() {
   const windowEventDebounceTime = studyConfig.uiConfig.windowEventDebounceTime ?? 100;
 
   const showStudyBrowser = useStoreSelector((state) => state.showStudyBrowser);
+  const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
+  const analysisHasProvenance = useStoreSelector((state) => state.analysisHasProvenance);
   const modes = useStoreSelector((state) => state.modes);
 
   // Attach event listeners
@@ -97,6 +101,8 @@ export function StepRenderer() {
 
   const asideOpen = useMemo(() => studyNavigatorEnabled && showStudyBrowser, [studyNavigatorEnabled, showStudyBrowser]);
 
+  const isAnalysis = useIsAnalysis();
+
   return (
     <WindowEventsContext.Provider value={windowEvents}>
       <AppShell
@@ -104,6 +110,7 @@ export function StepRenderer() {
         header={{ height: 70 }}
         navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !studyConfig.uiConfig.sidebar, mobile: !studyConfig.uiConfig.sidebar } }}
         aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
+        footer={{ height: (isAnalysis ? 50 : 0) + (analysisHasAudio ? 50 : 0) + (analysisHasProvenance ? 25 : 0) }}
       >
         <AppNavBar />
         <AppAside />
@@ -113,6 +120,9 @@ export function StepRenderer() {
         <AppShell.Main>
           <Outlet />
         </AppShell.Main>
+        {isAnalysis && (
+        <AnalysisFooter />
+        )}
       </AppShell>
     </WindowEventsContext.Provider>
   );

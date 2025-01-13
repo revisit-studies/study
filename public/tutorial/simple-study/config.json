@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "A simple study for our tutorial",
     "version": "development",
@@ -8,7 +8,7 @@
       "The reVISit Community",
       "You :)"
     ],
-    "date": "2023-10-13",
+    "date": "2025-01-13",
     "description": "This is a simple study to demonstrate how to create a study using reVISit.",
     "organizations": [
       "University of Utah",
@@ -26,15 +26,9 @@
     "sidebar": true
   },
   "components": {
-    "welcome": {
-    },
-    "consent": {
-    },
-    "demographics": {
-    },
-    "stimulus_1": {
-    }
   },
   "sequence": {
+    "order": "fixed",
+    "components": []
   }
 }

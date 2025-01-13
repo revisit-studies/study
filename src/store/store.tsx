@@ -17,6 +17,7 @@ export async function studyStoreCreator(
   metadata: ParticipantMetadata,
   answers: Record<string, StoredAnswer>,
   modes: Record<REVISIT_MODE, boolean>,
+  participantId: string,
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
 
@@ -24,7 +25,7 @@ export async function studyStoreCreator(
     .map((id, idx) => [
       `${id}_${idx}`,
       {
-        answer: {}, startTime: 0, endTime: -1, provenanceGraph: undefined, windowEvents: [], timedOut: false,
+        answer: {}, incorrectAnswers: {}, startTime: 0, endTime: -1, provenanceGraph: undefined, windowEvents: [], timedOut: false, helpButtonClickedCount: 0,
       },
     ]));
   const emptyValidation: TrialValidation = Object.assign(
@@ -53,8 +54,13 @@ export async function studyStoreCreator(
     iframeAnswers: {},
     iframeProvenance: null,
     metadata,
+    analysisProvState: null,
+    analysisIsPlaying: false,
+    analysisHasAudio: false,
+    analysisHasProvenance: false,
     modes,
     matrixAnswers: {},
+    participantId,
   };
 
   const storeSlice = createSlice({
@@ -81,6 +87,18 @@ export async function studyStoreCreator(
       },
       setIframeProvenance: (state, action: PayloadAction<TrrackedProvenance | null>) => {
         state.iframeProvenance = action.payload;
+      },
+      saveAnalysisState(state, { payload } : PayloadAction<unknown>) {
+        state.analysisProvState = payload;
+      },
+      setAnalysisIsPlaying(state, { payload } : PayloadAction<boolean>) {
+        state.analysisIsPlaying = payload;
+      },
+      setAnalysisHasAudio(state, { payload } : PayloadAction<boolean>) {
+        state.analysisHasAudio = payload;
+      },
+      setAnalysisHasProvenance(state, { payload } : PayloadAction<boolean>) {
+        state.analysisHasProvenance = payload;
       },
       setMatrixAnswersRadio: (state, action: PayloadAction<{ questionKey: string, responseId: string, val: string }>) => {
         const { responseId, questionKey, val } = action.payload;
@@ -154,16 +172,50 @@ export async function studyStoreCreator(
         }: PayloadAction<{ identifier: string } & StoredAnswer>,
       ) {
         const {
-          identifier, answer, startTime, endTime, provenanceGraph, windowEvents, timedOut,
+          identifier, answer, startTime, endTime, provenanceGraph, windowEvents, timedOut, incorrectAnswers, helpButtonClickedCount,
         } = payload;
         state.answers[identifier] = {
+          incorrectAnswers,
           answer,
           startTime,
           endTime,
           provenanceGraph,
           windowEvents,
           timedOut,
+          helpButtonClickedCount,
         };
+      },
+      incrementHelpCounter(
+        state,
+        {
+          payload,
+        }: PayloadAction<{ identifier: string }>,
+      ) {
+        const {
+          identifier,
+        } = payload;
+        state.answers[identifier].helpButtonClickedCount += 1;
+      },
+      saveIncorrectAnswer(
+        state,
+        {
+          payload,
+        }: PayloadAction<{ question: string, identifier: string, answer: unknown }>,
+      ) {
+        const {
+          identifier, answer, question,
+        } = payload;
+
+        // This handles the case that we import a participants answers from an old config version
+        if (!state.answers[question].incorrectAnswers) {
+          state.answers[question].incorrectAnswers = {};
+        }
+
+        if (!state.answers[question].incorrectAnswers[identifier]) {
+          state.answers[question].incorrectAnswers[identifier] = { id: identifier, value: [] };
+        }
+
+        state.answers[question].incorrectAnswers[identifier].value.push(answer);
       },
     },
   });

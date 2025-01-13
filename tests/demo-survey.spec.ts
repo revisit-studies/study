@@ -1,13 +1,11 @@
+/* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Question Types and Form Elements Demo' }).click();
-
-  // Check for introduction page
-  const introText = await page.getByText('Welcome to our study. This is an example survey study. It asks basic questions o');
-  await expect(introText).toBeVisible();
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'Question Types and Form Elements Demo' })
+    .getByText('Go to Study')
+    .click();
 
   // Fill the survey
   await page.getByPlaceholder('Enter your preference').click();
@@ -28,6 +26,21 @@ test('test', async ({ page }) => {
   await page.getByRole('checkbox', { name: 'Option 1' }).click();
 
   await page.getByRole('radio', { name: 'Option 2' }).click();
+
+  const radios = await page.locator('input[value="Highly Unsatisfied"]');
+  for (let i = 0; i < await radios.count(); i += 1) {
+    await radios.nth(i).click();
+  }
+
+  const checkboxes1 = await page.locator('input[value="Has Legs"]');
+  const checkboxes2 = await page.locator('input[value="Has Wings"]');
+  for (let i = 0; i < await checkboxes1.count(); i += 1) {
+    await checkboxes1.nth(i).click();
+  }
+  for (let i = 0; i < 2; i += 1) {
+    await checkboxes2.nth(i).click();
+  }
+
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check that the thank you message is displayed

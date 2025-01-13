@@ -6,7 +6,7 @@ import {
   IconSearch,
   IconX,
 } from '@tabler/icons-react';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { ParticipantData, StoredAnswer, StudyConfig } from '../../../parser/types';
 import { ParticipantMetadata } from '../../../store/types';
@@ -105,15 +105,11 @@ function MetaCell(props: { metaData: ParticipantMetadata }) {
   );
 }
 export function TableView({
-  completed,
-  inProgress,
-  rejected,
+  visibleParticipants,
   studyConfig,
   refresh,
 }: {
-  completed: ParticipantData[];
-  inProgress: ParticipantData[];
-  rejected: ParticipantData[];
+  visibleParticipants: ParticipantData[];
   studyConfig: StudyConfig;
   refresh: () => Promise<void>;
 }) {
@@ -146,14 +142,12 @@ export function TableView({
     setLoading(false);
   };
 
-  const allParticipants = useMemo(() => [...completed, ...inProgress, ...rejected], [completed, inProgress, rejected]);
-
   function handleSelect(value: string) {
     if (value === 'all') {
-      if (checked.length === allParticipants.length) {
+      if (checked.length === visibleParticipants.length) {
         setChecked([]);
       } else {
-        setChecked(allParticipants.map((record) => record.participantId));
+        setChecked(visibleParticipants.map((record) => record.participantId));
       }
     } else if (!checked.includes(value)) {
       setChecked([...checked, value]);
@@ -165,7 +159,7 @@ export function TableView({
   const headers = [
     <Table.Th key="action">
       <Flex justify="center">
-        <Checkbox mb={-4} checked={checked.length === allParticipants.length} onChange={() => handleSelect('all')} />
+        <Checkbox mb={-4} checked={checked.length === visibleParticipants.length} onChange={() => handleSelect('all')} />
       </Flex>
     </Table.Th>,
     <Table.Th key="ID">ID</Table.Th>,
@@ -183,7 +177,7 @@ export function TableView({
     <Table.Th key="total-duration">Total Duration (clean)</Table.Th>,
   ];
 
-  const rows = allParticipants.map((record) => (
+  const rows = visibleParticipants.map((record) => (
     <Table.Tr key={record.participantId}>
       <Table.Td>
         <Flex justify="center">
@@ -260,6 +254,8 @@ export function TableView({
           startTime: Math.min(...Object.values(record.answers).filter((a) => a.endTime !== -1 && a.endTime !== undefined).map((a) => a.startTime)),
           endTime: Math.max(...Object.values(record.answers).filter((a) => a.endTime !== -1 && a.endTime !== undefined).map((a) => a.endTime)),
           answer: {},
+          helpButtonClickedCount: 0, // not used
+          incorrectAnswers: {}, // not used
           windowEvents: Object.values(record.answers).flatMap((a) => a.windowEvents),
           timedOut: false, // not used
         }}
@@ -269,7 +265,7 @@ export function TableView({
   ));
 
   return (
-    allParticipants.length > 0 ? (
+    visibleParticipants.length > 0 ? (
       <>
         <LoadingOverlay visible={loading} overlayProps={{ blur: 2 }} />
         <Flex justify="space-between" mb={8} p={8}>
@@ -278,7 +274,7 @@ export function TableView({
               w={350}
               variant="filled"
               placeholder="Search for a participant ID"
-              data={allParticipants.map((record) => ({ value: record.participantId, label: record.participantId }))}
+              data={[...new Set(visibleParticipants.map((part) => part.participantId))]}
               searchable
               value={null}
               leftSection={<IconSearch size={14} />}
@@ -286,7 +282,7 @@ export function TableView({
             />
           </Group>
           <Group>
-            <DownloadButtons allParticipants={allParticipants} studyId={studyId || ''} />
+            <DownloadButtons visibleParticipants={visibleParticipants} studyId={studyId || ''} />
             <Button disabled={checked.length === 0 || !user.isAdmin} onClick={() => setModalRejectParticipantsOpened(true)} color="red">
               Reject Participants (
               {checked.length}

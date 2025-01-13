@@ -4,11 +4,13 @@ test('test', async ({ page }) => {
   await page.goto('/');
 
   // Click on image-demo
-  await page.getByRole('button', { name: 'Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations' }).click();
+  await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations' })
+    .getByText('Go to Study')
+    .click();
 
   // Check that the page contains the introduction text
   const introText = await page.getByText('Welcome to our study. This is a replication of a study by Padilla et al., publis');
-  await expect(introText).toBeVisible();
+  await expect(introText).toBeVisible({ timeout: 5000 });
 
   // Click on the next button
   await page.getByRole('button', { name: 'Next', exact: true }).click();

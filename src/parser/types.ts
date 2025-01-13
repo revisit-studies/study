@@ -165,8 +165,8 @@ export interface BaseResponse {
   prompt: string;
   /** The secondary text that is displayed to the participant under the prompt. This does not accept markdown. */
   secondaryText?: string;
-  /** Controls whether the response is required to be answered. */
-  required: boolean;
+  /** Controls whether the response is required to be answered. Defaults to true. */
+  required?: boolean;
   /** Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus` */
   location?: ResponseBlockLocation;
   /** You can provide a required value, which makes it so a participant has to answer with that value. */
@@ -188,7 +188,6 @@ export interface BaseResponse {
 {
   "id": "q-numerical",
   "prompt": "Numerical example",
-  "required": true,
   "location": "aboveStimulus",
   "type": "numerical",
   "placeholder": "Enter your age, range from 0 - 120",
@@ -215,7 +214,6 @@ export interface NumericalResponse extends BaseResponse {
 {
   "id": "q-short-text",
   "prompt": "Short text example",
-  "required": true,
   "location": "aboveStimulus",
   "type": "shortText",
   "placeholder": "Enter your answer here"
@@ -236,7 +234,6 @@ export interface ShortTextResponse extends BaseResponse {
 {
   "id": "q-name",
   "prompt": "What is your first name?",
-  "required": true,
   "location": "aboveStimulus",
   "type": "longText",
   "placeholder": "Please enter your first name"
@@ -262,7 +259,6 @@ export interface LongTextResponse extends BaseResponse {
 {
   "id": "q-satisfaction",
   "prompt": "Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).",
-  "required": true,
   "location": "aboveStimulus",
   "type": "likert",
   "leftLabel": "Not Enjoyable",
@@ -292,7 +288,6 @@ export interface LikertResponse extends BaseResponse {
 {
   "id": "multi-satisfaction",
   "prompt": "Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable) for the following items.",
-  "required": true,
   "location": "aboveStimulus",
   "type": "matrix-radio",
   "answerOptions": "satisfaction5",
@@ -310,7 +305,6 @@ Here's an example using custom columns (answerOptions):
 {
   "id": "multi-custom",
   "prompt": "Which categories do the following items belong to?",
-  "required": true,
   "location": "aboveStimulus",
   "type": "matrix-checkbox",
   "answerOptions": [
@@ -346,7 +340,6 @@ export interface MatrixResponse extends BaseResponse {
 {
   "id": "q-color",
   "prompt": "What is your favorite color?",
-  "required": true,
   "location": "aboveStimulus",
   "type": "dropdown",
   "placeholder": "Please choose your favorite color",
@@ -374,7 +367,6 @@ export interface DropdownResponse extends BaseResponse {
   "id": "q-slider",
   "prompt": "How are you feeling?",
   "location": "aboveStimulus",
-  "required": true,
   "type": "slider",
   "options": [
     {
@@ -409,7 +401,6 @@ export interface SliderResponse extends BaseResponse {
 {
   "id": "q-radio",
   "prompt": "Radio button example",
-  "required": true,
   "location": "aboveStimulus",
   "type": "radio",
   "options": ["Option 1", "Option 2"]
@@ -477,7 +468,6 @@ export type Response = NumericalResponse | ShortTextResponse | LongTextResponse 
     {
       "id": "response1",
       "prompt": "What is 2 + 2?",
-      "required": true,
       "location": "belowStimulus",
       "type": "numerical"
     }
@@ -601,8 +591,8 @@ export default function CoolComponent({ parameters, setAnswer }: StimulusParams<
 ```
  *
  * For in depth examples, see the following studies, and their associated codebases.
- * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v1.0.6/src/public/demo-click-accuracy-test/assets)
- * https://revisit.dev/study/demo-brush-interactions (https://github.com/revisit-studies/study/tree/v1.0.6/src/public/demo-brush-interactions/assets)
+ * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v2.0.0-rc2/src/public/demo-click-accuracy-test/assets)
+ * https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.0.0-rc2/src/public/example-brush-interactions/assets)
  */
 export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
@@ -657,7 +647,6 @@ export interface ImageComponent extends BaseIndividualComponent {
     {
       "id": "barChart",
       "prompt": "Your selected answer:",
-      "required": true,
       "location": "belowStimulus",
       "type": "iframe"
     }
@@ -710,7 +699,6 @@ export interface WebsiteComponent extends BaseIndividualComponent {
     {
       "id": "gender",
       "prompt": "Gender:",
-      "required": true,
       "location": "belowStimulus",
       "type": "checkbox",
       "options": ["Man", "Woman", "Genderqueer", "Third-gender", ...]
@@ -723,7 +711,21 @@ export interface QuestionnaireComponent extends BaseIndividualComponent {
   type: 'questionnaire';
 }
 
-export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent;
+export interface VegaComponentPath extends BaseIndividualComponent {
+  type: 'vega';
+  /** The path to the vega file. This should be a relative path from the public folder. */
+  path: string;
+}
+
+export interface VegaComponentConfig extends BaseIndividualComponent {
+  type: 'vega';
+  /** The vega or vega-lite configuration. */
+  config: object;
+}
+
+export type VegaComponent = VegaComponentPath | VegaComponentConfig;
+
+export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent | VegaComponent;
 
 /** The DeterministicInterruption interface is used to define an interruption that will be shown at a specific location in the block.
  *
@@ -1165,7 +1167,7 @@ export type BaseComponents = Record<string, Partial<IndividualComponent>>;
 
 ```js
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     ...
   },
@@ -1213,7 +1215,7 @@ export interface StudyConfig {
  *
  * ```js
  * {
- *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/LibraryConfigSchema.json",
+ *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc2/src/parser/LibraryConfigSchema.json",
  *   "baseComponents": {
  *     // BaseComponents here are defined exactly as is in the StudyConfig
  *   },
