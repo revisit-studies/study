@@ -257,6 +257,7 @@ export default function ResponseBlock({
           <NextButton
             disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
             label={configInUse.nextButtonText || 'Next'}
+            configInUse={configInUse}
           />
         )}
       </Group>

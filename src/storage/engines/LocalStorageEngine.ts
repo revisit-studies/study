@@ -46,7 +46,7 @@ export class LocalStorageEngine extends StorageEngine {
 
   getAudio(taskList: string, participantId?: string | undefined) {
     console.warn('not yet implemented', participantId);
-    return Promise.resolve('not yet implemented');
+    return Promise.resolve(undefined);
   }
 
   async saveAudio(audioStream: MediaRecorder): Promise<void> {

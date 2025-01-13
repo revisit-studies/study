@@ -4,8 +4,10 @@ import {
   AppShell, Box, Button, Center, Group, LoadingOverlay, Select, Text,
 } from '@mantine/core';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { useMemo } from 'react';
-import { IconPlayerPauseFilled, IconPlayerPlayFilled } from '@tabler/icons-react';
+import { useMemo, useState } from 'react';
+import {
+  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled, IconUser,
+} from '@tabler/icons-react';
 import { useAsync } from '../../store/hooks/useAsync';
 
 import { useStorageEngine } from '../../storage/storageEngineHooks';
@@ -16,7 +18,7 @@ import {
   useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../../store/store';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
-import { AnalysisPopout } from '../audioAnalysis/AnalysisPopout';
+import { AnalysisPopout } from '../audioAnalysis/AudioProvenanceVis';
 
 function getParticipantData(trrackId: string | undefined, storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
@@ -51,15 +53,16 @@ export function AnalysisFooter() {
   const { value: participant, status: loadingPartStatus } = useAsync(getParticipantData, [participantId, storageEngine]);
   const { value: allParticipants } = useAsync(getAllParticipantsData, [storageEngine]);
 
-  const nextParticipantNameAndIndex: [string, number] = useMemo(() => {
+  const [nextParticipantNameAndIndex, prevParticipantNameAndIndex]: [[string, number], [string, number]] = useMemo(() => {
     if (allParticipants && participant && participantId && currentComponent) {
       const filteredParticipants = allParticipants.filter((part) => part.participantConfigHash === participant.participantConfigHash);
       const index = filteredParticipants.findIndex((part) => part.participantId === participantId);
       const nextPart = index < filteredParticipants.length - 1 ? filteredParticipants[index + 1] : filteredParticipants[0];
+      const prevPart = index > 0 ? filteredParticipants[index - 1] : filteredParticipants[filteredParticipants.length - 1];
 
-      return [nextPart.participantId, getSequenceFlatMap(nextPart.sequence).indexOf(currentComponent)];
+      return [[nextPart.participantId, getSequenceFlatMap(nextPart.sequence).indexOf(currentComponent)], [prevPart.participantId, getSequenceFlatMap(prevPart.sequence).indexOf(currentComponent)]];
     }
-    return ['', 0];
+    return [['', 0], ['', 0]];
   }, [allParticipants, currentComponent, participant, participantId]);
 
   const selectData = useMemo(() => {
@@ -77,18 +80,24 @@ export function AnalysisFooter() {
     }));
   }, [allParticipants, participant?.participantConfigHash]);
 
+  const [timeString, setTimeString] = useState<string>('');
+
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
-      <Box style={{ backgroundColor: 'var(--mantine-color-blue-2)', height: '150px' }}>
+      <Box style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '150px' }}>
         <LoadingOverlay visible={loadingPartStatus !== 'success'} overlayProps={{ backgroundOpacity: 0.4 }} />
 
-        <AnalysisPopout />
+        <AnalysisPopout setTimeString={setTimeString} />
         <Center>
-          <Group style={{ height: '50px' }}>
+          <Group gap="xs" style={{ height: '50px' }}>
+            <Text size="sm" ff="monospace">
+              {timeString}
+            </Text>
             <ActionIcon variant="filled" size={30} onClick={() => storeDispatch(setAnalysisIsPlaying(!analysisIsPlaying))}>
               {analysisIsPlaying ? <IconPlayerPauseFilled /> : <IconPlayerPlayFilled />}
             </ActionIcon>
-            <Text mx="sm">
+
+            <Text mx="0">
               Participant:
             </Text>
             <Select
@@ -100,13 +109,18 @@ export function AnalysisFooter() {
               data={selectData}
             />
             <Button onClick={() => navigate(`./${encryptIndex(+currentStep - 1)}?participantId=${participantId}`, { relative: 'path' })}>
-              Previous Task
+              <IconArrowLeft />
             </Button>
             <Button onClick={() => navigate(`./${encryptIndex(+currentStep + 1)}?participantId=${participantId}`, { relative: 'path' })}>
-              Next Task
+              <IconArrowRight />
             </Button>
-            <Button onClick={() => navigate(`./${encryptIndex(nextParticipantNameAndIndex[1])}?participantId=${nextParticipantNameAndIndex[0]}`)}>
-              Next Participant
+            <Button px="xs" disabled={!participant || nextParticipantNameAndIndex[0] === participant.participantId} onClick={() => navigate(`./${encryptIndex(prevParticipantNameAndIndex[1])}?participantId=${prevParticipantNameAndIndex[0]}`)}>
+              <IconArrowLeft />
+              <IconUser />
+            </Button>
+            <Button px="xs" disabled={!participant || nextParticipantNameAndIndex[0] === participant.participantId} onClick={() => navigate(`./${encryptIndex(nextParticipantNameAndIndex[1])}?participantId=${nextParticipantNameAndIndex[0]}`)}>
+              <IconUser />
+              <IconArrowRight />
             </Button>
           </Group>
         </Center>

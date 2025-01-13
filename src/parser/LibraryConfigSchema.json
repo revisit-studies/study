@@ -831,6 +831,18 @@
           "description": "The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents.",
           "type": "object"
         },
+        "description": {
+          "description": "A description of the library.",
+          "type": "string"
+        },
+        "name": {
+          "description": "The name of the library.",
+          "type": "string"
+        },
+        "reference": {
+          "description": "The reference to the paper where the content of the library is based on.",
+          "type": "string"
+        },
         "sequences": {
           "additionalProperties": {
             "$ref": "#/definitions/ComponentBlock"

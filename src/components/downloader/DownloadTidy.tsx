@@ -13,7 +13,9 @@ import {
   Table,
   Text,
 } from '@mantine/core';
-import { IconLayoutColumns, IconTableExport, IconX } from '@tabler/icons-react';
+import {
+  IconBrandPython, IconLayoutColumns, IconTableExport, IconX,
+} from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 import merge from 'lodash.merge';
 import { ParticipantData } from '../../storage/types';
@@ -26,6 +28,7 @@ import { StorageEngine } from '../../storage/engines/StorageEngine';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useAsync } from '../../store/hooks/useAsync';
 import { getCleanedDuration } from '../../utils/getCleanedDuration';
+import { showNotification } from '../../utils/notifications';
 
 export const OPTIONAL_COMMON_PROPS = [
   'status',
@@ -84,7 +87,7 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
       answer: JSON.stringify(participant.participantTags),
     },
     ...Object.entries(participant.answers).map(([trialIdentifier, trialAnswer]) => {
-    // Get the whole component, including the base component if there is inheritance
+      // Get the whole component, including the base component if there is inheritance
       const trialId = trialIdentifier.split('_').slice(0, -1).join('_');
       const trialOrder = parseInt(`${trialIdentifier.split('_').at(-1)}`, 10);
       const trialConfig = studyConfig.components[trialId];
@@ -105,7 +108,7 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
 
         const response = completeComponent.response.find((resp) => resp.id === key);
         if (properties.includes('status')) {
-        // eslint-disable-next-line no-nested-ternary
+          // eslint-disable-next-line no-nested-ternary
           tidyRow.status = participant.rejected ? 'rejected' : (participant.completed ? 'completed' : 'in progress');
         }
         if (properties.includes('rejectReason')) {
@@ -115,7 +118,7 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
           tidyRow.rejectTime = participant.rejected ? new Date(participant.rejected.timestamp).toISOString() : undefined;
         }
         if (properties.includes('configHash')) {
-        // eslint-disable-next-line no-nested-ternary
+          // eslint-disable-next-line no-nested-ternary
           tidyRow.configHash = participant.participantConfigHash;
         }
         if (properties.includes('percentComplete')) {
@@ -223,6 +226,15 @@ export function DownloadTidy({
     download(csv, filename);
   }, [filename, tableData]);
 
+  const handlePythonExportTIDY = useCallback(() => {
+    if (!tableData) {
+      return;
+    }
+
+    window.parent.postMessage({ type: 'revisitWidget/PYTHON_EXPORT_TIDY', payload: tableData }, '*');
+    showNotification({ title: 'Success', message: 'Data sent to python notebook', color: 'green' });
+  }, [tableData]);
+
   const caption = useMemo(() => {
     if (!tableData) {
       return '';
@@ -272,9 +284,9 @@ export function DownloadTidy({
                       <Flex direction="row" justify="space-between" align="center">
                         {header}
                         {!REQUIRED_PROPS.includes(header as never) && (
-                        <ActionIcon onClick={() => setSelectedProperties(selectedProperties.filter((prop) => prop !== header))} style={{ marginBottom: -3, marginLeft: 8 }} variant="subtle" color="gray">
-                          <IconX size={16} />
-                        </ActionIcon>
+                          <ActionIcon onClick={() => setSelectedProperties(selectedProperties.filter((prop) => prop !== header))} style={{ marginBottom: -3, marginLeft: 8 }} variant="subtle" color="gray">
+                            <IconX size={16} />
+                          </ActionIcon>
                         )}
                       </Flex>
                     </Table.Th>
@@ -316,11 +328,18 @@ export function DownloadTidy({
         </Button>
         <Button
           leftSection={<IconTableExport />}
-          onClick={() => downloadTidy()}
+          onClick={downloadTidy}
           data-autofocus
         >
           Download
         </Button>
+        {studyId === '__revisit-widget' && (
+          <Button
+            onClick={handlePythonExportTIDY}
+          >
+            <IconBrandPython />
+          </Button>
+        )}
       </Group>
     </Modal>
   );

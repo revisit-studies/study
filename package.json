@@ -52,6 +52,7 @@
     "react-markdown": "^9.0.0",
     "react-redux": "^9.1.2",
     "react-router-dom": "^6.23.1",
+    "react-timer-hook": "^3.0.8",
     "react-vega": "^7.6.0",
     "rehype-raw": "^7.0.0",
     "ts-json-schema-generator": "^2.3.0",
@@ -63,7 +64,7 @@
     "vega": "^5.28.0",
     "vega-lite": "^5.17.0",
     "wavesurfer-react": "^3.0.4",
-    "wavesurfer.js": "^7.8.8"
+    "wavesurfer.js": "^7.8.15"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1",

@@ -32,7 +32,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
   useEffect(() => {
     if (!studyId) return () => { };
-    if (studyId === 'revisit-widget') {
+    if (studyId === '__revisit-widget') {
       const messageListener = async (event: MessageEvent) => {
         if (event.data.type === 'revisitWidget/CONFIG' && storageEngine) {
           const cf = await parseStudyConfig(event.data.payload);
