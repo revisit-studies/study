@@ -20,9 +20,10 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useAsync } from '../../store/hooks/useAsync';
 import { useStoreActions, useStoreDispatch, useStoreSelector } from '../../store/store';
 import { deepCopy } from '../../utils/deepCopy';
-import { useEvent } from '../../store/hooks/useEvent';
 import { WithinTaskTimeline } from './WithinTaskTimeline';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
+import { Timer } from './Timer';
+import { humanReadableDuration } from '../../utils/humanReadableDuration';
 
 const margin = {
   left: 0, top: 0, right: 0, bottom: 0,
@@ -37,7 +38,7 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Storage
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function AnalysisPopout() {
+export function AnalysisPopout({ setTimeString } : {setTimeString: (time: string) => void}) {
   const [searchParams] = useSearchParams();
   const participantId = useMemo(() => searchParams.get('participantId') || undefined, [searchParams]);
 
@@ -45,6 +46,8 @@ export function AnalysisPopout() {
 
   const analysisIsPlaying = useStoreSelector((state) => state.analysisIsPlaying);
   const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
+  const analysisHasProvenance = useStoreSelector((state) => state.analysisHasProvenance);
+
   const { saveAnalysisState, setAnalysisHasAudio, setAnalysisHasProvenance } = useStoreActions();
   const storeDispatch = useStoreDispatch();
 
@@ -72,7 +75,7 @@ export function AnalysisPopout() {
 
   // Create an instance of trrack to ensure getState works, incase the saved state is not a full state node.
   useEffect(() => {
-    if (componentAndIndex && participant && participant.answers[componentAndIndex]?.provenanceGraph) {
+    if (componentAndIndex && participant && participant.answers[componentAndIndex]?.provenanceGraph && Object.keys(participant.answers[componentAndIndex].provenanceGraph.nodes).length > 1) {
       const reg = Registry.create();
 
       const trrack = initializeTrrack({ registry: reg, initialState: {} });
@@ -102,12 +105,12 @@ export function AnalysisPopout() {
     setCurrentNode(node);
   }, [participant, saveAnalysisState, storeDispatch, componentAndIndex]);
 
-  const timeUpdate = useEvent((t: number) => {
-    if (participant && currentComponent && componentAndIndex) {
-      const { startTime } = participant.answers[componentAndIndex];
-      setPlayTime(t * 1000 + startTime);
-    }
-  });
+  // const timeUpdate = useEvent((t: number) => {
+  //   if (participant && currentComponent && componentAndIndex) {
+  //     const { startTime } = participant.answers[componentAndIndex];
+  //     setPlayTime(t * 1000 + startTime);
+  //   }
+  // });
 
   // use effect to control the current provenance node based on the changing playtime.
   useEffect(() => {
@@ -149,6 +152,14 @@ export function AnalysisPopout() {
     }
   }, [_setCurrentNode, currentNode, participant, participantId, playTime, componentAndIndex]);
 
+  const startTime = useMemo(() => participant?.answers[componentAndIndex].startTime || 0, [participant, componentAndIndex]);
+
+  useEffect(() => {
+    if (playTime !== 0) {
+      setTimeString(`${humanReadableDuration(playTime - startTime)} / ${humanReadableDuration(totalAudioLength * 1000)}`);
+    }
+  }, [componentAndIndex, participant, playTime, setTimeString, startTime, totalAudioLength]);
+
   const isAnalysis = useIsAnalysis();
   const wavesurfer = useRef<WaveSurferType | null>(null);
 
@@ -165,7 +176,6 @@ export function AnalysisPopout() {
           setTotalAudioLength(waveSurfer.getDuration());
           setWaveSurferWidth(waveSurfer.getWidth());
           waveSurfer.seekTo(0);
-          waveSurfer.on('timeupdate', timeUpdate);
           waveSurfer.on('redrawcomplete', () => setWaveSurferWidth(waveSurfer.getWidth()));
         } catch (error: any) {
           setTotalAudioLength(0);
@@ -178,10 +188,10 @@ export function AnalysisPopout() {
         setTotalAudioLength(0);
       }
     },
-    [participant, isAnalysis, componentAndIndex, storageEngine, participantId, storeDispatch, setAnalysisHasAudio, timeUpdate],
+    [participant, isAnalysis, componentAndIndex, storageEngine, participantId, storeDispatch, setAnalysisHasAudio],
   );
 
-  const _setPlayTime = useCallback((n: number, percent: number) => {
+  const _setPlayTime = useCallback((n: number, percent: number | undefined) => {
     setPlayTime(n);
 
     if (wavesurfer.current && percent) {
@@ -215,7 +225,7 @@ export function AnalysisPopout() {
 
   useEffect(() => {
     handleWSMount(wavesurfer.current);
-  }, [handleWSMount, participant, participantId, wavesurfer]);
+  }, [_setPlayTime, handleWSMount, participant, participantId, wavesurfer]);
 
   return (
     <Group wrap="nowrap" gap={10} mx={10}>
@@ -226,12 +236,12 @@ export function AnalysisPopout() {
             <Box
               ref={waveSurferDiv}
               style={{
-                overflow: 'hidden', width: '100%',
+                overflow: 'hidden', width: '100%', pointerEvents: 'none',
               }}
               display={analysisHasAudio ? 'block' : 'none'}
               id="waveformDiv"
             >
-              <WaveSurfer onMount={handleWSMount} plugins={[]} container="#waveformDiv" height={50} waveColor="#484848" progressColor="#e15759">
+              <WaveSurfer onMount={handleWSMount} plugins={[]} container="#waveformDiv" height={50} waveColor="#484848" progressColor="#e15759" barHeight={0} cursorColor="rgba(0, 0, 0, 0)">
                 <WaveForm id="waveform" height={50} />
               </WaveSurfer>
               {waveSurferLoading ? <Loader /> : null}
@@ -251,6 +261,7 @@ export function AnalysisPopout() {
               height={25}
             />
           ) : null}
+        {xScale && participant && (analysisHasAudio || analysisHasProvenance) ? <Timer duration={totalAudioLength * 1000} height={(analysisHasAudio ? 50 : 0) + (analysisHasProvenance ? 25 : 0)} isPlaying={analysisIsPlaying} startTime={participant.answers[componentAndIndex].startTime} width={width} xScale={xScale} updateTimer={_setPlayTime} /> : null }
       </Stack>
     </Group>
   );
