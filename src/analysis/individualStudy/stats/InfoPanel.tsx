@@ -21,7 +21,7 @@ export interface BasicStats {
   maxUser: string;
   minUser: string;
 }
-export default function InfoPanel(props: { data: Record<string, StoredAnswer>, trialName: string, config: IndividualComponent | InheritedComponent | undefined }) {
+export function InfoPanel(props: { data: Record<string, StoredAnswer>, trialName: string, config: IndividualComponent | InheritedComponent | undefined }) {
   const { data, trialName, config } = props;
   const [timeStats, setTimeStats] = useState<BasicStats>({
     max: 0,

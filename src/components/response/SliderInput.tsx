@@ -6,9 +6,9 @@ import {
 import { useMemo } from 'react';
 import { SliderResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
-import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 
-export default function SliderInput({
+export function SliderInput({
   response,
   disabled,
   answer,

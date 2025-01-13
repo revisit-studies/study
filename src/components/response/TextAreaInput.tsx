@@ -1,9 +1,9 @@
 import { Box, Flex, Textarea } from '@mantine/core';
 import { LongTextResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
-import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 
-export default function TextAreaInput({
+export function TextAreaInput({
   response,
   disabled,
   answer,

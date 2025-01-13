@@ -1,7 +1,7 @@
 import { LikertResponse, RadioResponse } from '../../parser/types';
-import RadioInput from './RadioInput';
+import { RadioInput } from './RadioInput';
 
-export default function LikertInput({
+export function LikertInput({
   response,
   disabled,
   answer,

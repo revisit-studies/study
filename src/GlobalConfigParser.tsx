@@ -15,12 +15,12 @@ import { Login } from './Login';
 import { AuthProvider } from './store/hooks/useAuth';
 import { GlobalSettings } from './components/settings/GlobalSettings';
 import { NavigateWithParams } from './utils/NavigateWithParams';
-import AppHeader from './analysis/interface/AppHeader';
+import { AppHeader } from './analysis/interface/AppHeader';
 import { fetchStudyConfigs } from './utils/fetchConfig';
 import { initializeStorageEngine } from './storage/initialize';
 import { useStorageEngine } from './storage/storageEngineHooks';
 import { FirebaseStorageEngine } from './storage/engines/FirebaseStorageEngine';
-import PageTitle from './utils/PageTitle';
+import { PageTitle } from './utils/PageTitle';
 
 async function fetchGlobalConfigArray() {
   const globalFile = await fetch(`${PREFIX}global.json`);

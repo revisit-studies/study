@@ -1,9 +1,9 @@
 import { Box, Flex, TextInput } from '@mantine/core';
 import { ShortTextResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
-import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 
-export default function StringInput({
+export function StringInput({
   response,
   disabled,
   answer,

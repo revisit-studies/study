@@ -3,7 +3,7 @@ import {
 } from '@mantine/core';
 import { ChangeEvent } from 'react';
 import { MatrixResponse, StringOption } from '../../parser/types';
-import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { useStoreDispatch, useStoreActions } from '../../store/store';
 
 function CheckboxComponent({
@@ -95,7 +95,7 @@ function RadioGroupComponent({
   );
 }
 
-export default function MatrixInput({
+export function MatrixInput({
   response,
   answer,
   index,

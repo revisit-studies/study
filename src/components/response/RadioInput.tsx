@@ -3,9 +3,9 @@ import {
 } from '@mantine/core';
 import { RadioResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
-import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 
-export default function RadioInput({
+export function RadioInput({
   response,
   disabled,
   answer,

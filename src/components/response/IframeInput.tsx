@@ -2,9 +2,9 @@ import {
   Box, Flex, Input, List,
 } from '@mantine/core';
 import { IFrameResponse } from '../../parser/types';
-import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 
-export default function IframeInput({
+export function IframeInput({
   response,
   answer,
   index,

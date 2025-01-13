@@ -3,9 +3,9 @@ import {
 } from '@mantine/core';
 import { CheckboxResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
-import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 
-export default function CheckBoxInput({
+export function CheckBoxInput({
   response,
   disabled,
   answer,

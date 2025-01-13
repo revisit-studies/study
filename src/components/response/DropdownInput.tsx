@@ -3,9 +3,9 @@ import {
 } from '@mantine/core';
 import { DropdownResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
-import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 
-export default function DropdownInput({
+export function DropdownInput({
   response,
   disabled,
   answer,

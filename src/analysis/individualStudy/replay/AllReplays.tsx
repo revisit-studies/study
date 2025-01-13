@@ -7,7 +7,7 @@ import { AllTasksTimeline } from './AllTasksTimeline';
 import { ParticipantData } from '../../../storage/types';
 
 // current active stimuli presented to the user
-export default function AllReplays({ visibleParticipants }: {visibleParticipants : ParticipantData[]}) {
+export function AllReplays({ visibleParticipants }: {visibleParticipants : ParticipantData[]}) {
   const { studyId } = useParams();
 
   const [ref, { width }] = useResizeObserver();

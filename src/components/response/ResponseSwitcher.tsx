@@ -2,19 +2,19 @@ import { Box } from '@mantine/core';
 import { useSearchParams } from 'react-router-dom';
 import { useMemo } from 'react';
 import { Response } from '../../parser/types';
-import CheckBoxInput from './CheckBoxInput';
-import DropdownInput from './DropdownInput';
-import IframeInput from './IframeInput';
-import LikertInput from './LikertInput';
-import NumericInput from './NumericInput';
-import RadioInput from './RadioInput';
-import SliderInput from './SliderInput';
-import StringInput from './StringInput';
-import TextAreaInput from './TextAreaInput';
+import { CheckBoxInput } from './CheckBoxInput';
+import { DropdownInput } from './DropdownInput';
+import { IframeInput } from './IframeInput';
+import { LikertInput } from './LikertInput';
+import { NumericInput } from './NumericInput';
+import { RadioInput } from './RadioInput';
+import { SliderInput } from './SliderInput';
+import { StringInput } from './StringInput';
+import { TextAreaInput } from './TextAreaInput';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
-import MatrixInput from './MatrixInput';
+import { MatrixInput } from './MatrixInput';
 
-export default function ResponseSwitcher({
+export function ResponseSwitcher({
   response,
   answer,
   storedAnswer,

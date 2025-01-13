@@ -1,9 +1,9 @@
 import { Box, Flex, NumberInput } from '@mantine/core';
 import { NumericalResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
-import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 
-export default function NumericInput({
+export function NumericInput({
   response,
   disabled,
   answer,
