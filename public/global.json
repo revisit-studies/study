@@ -19,14 +19,14 @@
     "demo-image",
     "test-audio",
     "test-library",
-    "library-vlat",
-    "library-mic-check",
+    "library-beauvis",
     "library-color-blindness",
     "library-demographics",
-    "library-beauvis",
-    "library-previs",
+    "library-mic-check",
     "library-mini-vlat",
+    "library-previs",
     "library-sus",
+    "library-vlat",
     "test-likert-matrix",
     "test-parser-errors",
     "demo-vega",
@@ -90,12 +90,8 @@
       "path": "test-library/config.json",
       "test": true
     },
-    "library-vlat": {
-      "path": "library-vlat/config.json",
-      "test": true
-    },
-    "library-mic-check": {
-      "path": "library-mic-check/config.json",
+    "library-beauvis": {
+      "path": "library-beauvis/config.json",
       "test": true
     },
     "library-color-blindness": {
@@ -106,20 +102,24 @@
       "path": "library-demographics/config.json",
       "test": true
     },
-    "library-beauvis": {
-      "path": "library-beauvis/config.json",
-      "test": true
-    },
-    "library-previs": {
-      "path": "library-previs/config.json",
+    "library-mic-check": {
+      "path": "library-mic-check/config.json",
       "test": true
     },
     "library-mini-vlat": {
       "path": "library-mini-vlat/config.json",
       "test": true
     },
+    "library-previs": {
+      "path": "library-previs/config.json",
+      "test": true
+    },
     "library-sus": {
       "path": "library-sus/config.json",
+      "test": true
+    },
+    "library-vlat": {
+      "path": "library-vlat/config.json",
       "test": true
     },
     "test-likert-matrix": {

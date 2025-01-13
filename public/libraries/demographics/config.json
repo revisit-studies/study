@@ -28,6 +28,7 @@
                     "location": "aboveStimulus",
                     "type": "radio",
                     "options": [
+                        "Under 18 years",
                         "18-24 years",
                         "25-34 years",
                         "35-44 years",
