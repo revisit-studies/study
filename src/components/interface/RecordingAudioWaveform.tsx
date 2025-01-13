@@ -3,8 +3,7 @@ import {
 } from '@mantine/core';
 
 import {
-  useCallback, useEffect, useRef,
-  useState,
+  useCallback, useEffect, useRef, useState,
 } from 'react';
 import { WaveForm, WaveSurfer } from 'wavesurfer-react';
 import WaveSurferRef from 'wavesurfer.js';

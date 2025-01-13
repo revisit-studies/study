@@ -19,6 +19,14 @@
     "demo-image",
     "test-audio",
     "test-library",
+    "library-beauvis",
+    "library-color-blindness",
+    "library-demographics",
+    "library-mic-check",
+    "library-mini-vlat",
+    "library-previs",
+    "library-sus",
+    "library-vlat",
     "test-likert-matrix",
     "test-parser-errors",
     "demo-vega",
@@ -80,6 +88,38 @@
     },
     "test-library": {
       "path": "test-library/config.json",
+      "test": true
+    },
+    "library-beauvis": {
+      "path": "library-beauvis/config.json",
+      "test": true
+    },
+    "library-color-blindness": {
+      "path": "library-color-blindness/config.json",
+      "test": true
+    },
+    "library-demographics": {
+      "path": "library-demographics/config.json",
+      "test": true
+    },
+    "library-mic-check": {
+      "path": "library-mic-check/config.json",
+      "test": true
+    },
+    "library-mini-vlat": {
+      "path": "library-mini-vlat/config.json",
+      "test": true
+    },
+    "library-previs": {
+      "path": "library-previs/config.json",
+      "test": true
+    },
+    "library-sus": {
+      "path": "library-sus/config.json",
+      "test": true
+    },
+    "library-vlat": {
+      "path": "library-vlat/config.json",
       "test": true
     },
     "test-likert-matrix": {

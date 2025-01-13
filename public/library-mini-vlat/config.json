@@ -1,0 +1,34 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "mini-vlat library example",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-14",
+    "description": "This is a test for library imports.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": false,
+    "sidebar": true
+  },
+  "importedLibraries": [
+                        "mini-vlat"
+                      ],
+  "components": {
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "$mini-vlat.se.latinSquare"
+    ]
+  }
+}

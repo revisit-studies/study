@@ -1,0 +1,61 @@
+{
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/vlat-library/src/parser/LibraryConfigSchema.json",
+    "name": "demographics",
+    "description": "This is a library for demographic questions. It contains one component with three questions: demographics.",
+    "components": {
+        "demographics": {
+            "type": "questionnaire",
+            "description": "Basic demographic questions including gender, age, and education",
+            "response": [
+                {
+                    "id": "gender",
+                    "prompt": "What is your gender?",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "radio",
+                    "options": [
+                        "Man",
+                        "Woman",
+                        "Non-binary", 
+                        "Prefer to self-describe",
+                        "Prefer not to say"
+                    ]
+                },
+                {
+                    "id": "age", 
+                    "prompt": "What is your age?",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "radio",
+                    "options": [
+                        "Under 18 years",
+                        "18-24 years",
+                        "25-34 years",
+                        "35-44 years",
+                        "45-54 years", 
+                        "55-64 years",
+                        "65 years or older",
+                        "Prefer not to say"
+                    ]
+                },
+                {
+                    "id": "education",
+                    "prompt": "What is the highest degree or level of education you have completed?",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "radio",
+                    "options": [
+                        "Less than high school",
+                        "High school diploma or equivalent",
+                        "Bachelor's degree or equivalent",
+                        "Master's degree or equivalent",
+                        "Doctoral degree or equivalent",
+                        "Other, please specify"
+                    ]
+                }
+            ]
+        }
+    },
+    "sequences": {
+    }
+}
