@@ -162,13 +162,7 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
       if (waveSurfer && participant && isAnalysis && componentAndIndex && storageEngine) {
         try {
           const url = await storageEngine.getAudio(componentAndIndex, participantId);
-          if (!url) {
-            storeDispatch(setAnalysisHasAudio(false));
-            const length = participant.answers[componentAndIndex].endTime - participant.answers[componentAndIndex].startTime;
-            setTotalAudioLength(length / 1000);
-            return;
-          }
-          await waveSurfer.load(url);
+          await waveSurfer.load(url!);
           setWaveSurferLoading(false);
           storeDispatch(setAnalysisHasAudio(true));
 
@@ -177,7 +171,9 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
           waveSurfer.seekTo(0);
           waveSurfer.on('redrawcomplete', () => setWaveSurferWidth(waveSurfer.getWidth()));
         } catch (error: any) {
-          setTotalAudioLength(0);
+          storeDispatch(setAnalysisHasAudio(false));
+          const length = participant.answers[componentAndIndex].endTime - participant.answers[componentAndIndex].startTime;
+          setTotalAudioLength(length / 1000);
 
           storeDispatch(setAnalysisHasAudio(false));
           throw new Error(error);
