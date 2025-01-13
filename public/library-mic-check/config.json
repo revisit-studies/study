@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Using library imports",
+    "title": "mic-check library example",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
