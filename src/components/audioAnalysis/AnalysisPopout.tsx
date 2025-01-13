@@ -63,7 +63,7 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
 
   const { value: participant, status } = useAsync(getParticipantData, [participantId, storageEngine]);
 
-  const [playTime, setPlayTime] = useThrottledState<number>(0, 200);
+  const [playTime, setPlayTime] = useThrottledState<number>(0, 100); // 100ms throttle to prevent re-rendering the AnalysisPopout too often
 
   const waveSurferDiv = useRef(null);
 
@@ -162,6 +162,12 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
       if (waveSurfer && participant && isAnalysis && componentAndIndex && storageEngine) {
         try {
           const url = await storageEngine.getAudio(componentAndIndex, participantId);
+          if (!url) {
+            storeDispatch(setAnalysisHasAudio(false));
+            const length = participant.answers[componentAndIndex].endTime - participant.answers[componentAndIndex].startTime;
+            setTotalAudioLength(length / 1000);
+            return;
+          }
           await waveSurfer.load(url);
           setWaveSurferLoading(false);
           storeDispatch(setAnalysisHasAudio(true));
