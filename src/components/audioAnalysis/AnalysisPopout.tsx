@@ -38,7 +38,7 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Storage
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function AnalysisPopout({ setTimeString } : {setTimeString: (time: string) => void}) {
+export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string) => void }) {
   const [searchParams] = useSearchParams();
   const participantId = useMemo(() => searchParams.get('participantId') || undefined, [searchParams]);
 
@@ -224,7 +224,7 @@ export function AnalysisPopout({ setTimeString } : {setTimeString: (time: string
     <Group wrap="nowrap" gap={10} mx={10}>
       <Stack ref={ref} style={{ width: '100%' }} gap={0}>
         <Center />
-        { participant !== null && componentAndIndex
+        {participant !== null && componentAndIndex
           ? (
             <Box
               ref={waveSurferDiv}
@@ -239,7 +239,7 @@ export function AnalysisPopout({ setTimeString } : {setTimeString: (time: string
               </WaveSurfer>
               {waveSurferLoading ? <Loader /> : null}
             </Box>
-          ) : null }
+          ) : null}
 
         {status === 'success' && participant && xScale && componentAndIndex && participant.answers[componentAndIndex].provenanceGraph
           ? (
@@ -254,7 +254,7 @@ export function AnalysisPopout({ setTimeString } : {setTimeString: (time: string
               height={25}
             />
           ) : null}
-        {xScale && participant && (analysisHasAudio || analysisHasProvenance) ? <Timer duration={totalAudioLength * 1000} height={(analysisHasAudio ? 50 : 0) + (analysisHasProvenance ? 25 : 0)} isPlaying={analysisIsPlaying} startTime={participant.answers[componentAndIndex].startTime} width={width} xScale={xScale} updateTimer={_setPlayTime} /> : null }
+        {xScale && participant && (analysisHasAudio || analysisHasProvenance) ? <Timer duration={totalAudioLength * 1000} height={(analysisHasAudio ? 50 : 0) + (analysisHasProvenance ? 25 : 0)} isPlaying={analysisIsPlaying} startTime={participant.answers[componentAndIndex].startTime} width={width} xScale={xScale} updateTimer={_setPlayTime} /> : null}
       </Stack>
     </Group>
   );

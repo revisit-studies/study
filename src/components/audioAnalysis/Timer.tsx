@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import * as d3 from 'd3';
 import {
   useCallback, useEffect, useRef, useState,
@@ -7,10 +6,10 @@ import { useEvent } from '../../store/hooks/useEvent';
 
 export function Timer({
   width, height, updateTimer, duration, isPlaying, xScale, startTime,
-} : {width: number, height: number, updateTimer: (time: number, percent: number | undefined) => void, duration: number, isPlaying: boolean, xScale: d3.ScaleLinear<number, number>, startTime: number}) {
+}: { width: number, height: number, updateTimer: (time: number, percent: number | undefined) => void, duration: number, isPlaying: boolean, xScale: d3.ScaleLinear<number, number>, startTime: number }) {
   const timer = useRef<number>(0);
   const startDate = useRef<number>(Date.now());
-  const [fakeTimeCounter, setFakeTimeCounter] = useState<number>(0);
+  const [forceRerenderInt, setForceRerenderInt] = useState<number>(0);
 
   useEffect(() => {
     if (startTime) {
@@ -28,7 +27,7 @@ export function Timer({
 
     timer.current = temp - startDate.current;
     updateTimer(startTime + timer.current, undefined);
-    setFakeTimeCounter(fakeTimeCounter + 1);
+    setForceRerenderInt(forceRerenderInt + 1);
   });
 
   useEffect(() => {
@@ -53,10 +52,10 @@ export function Timer({
   const clickOnSvg = useCallback((e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
     timer.current = xScale.invert(e.clientX - 10) - xScale.domain()[0];
     startDate.current = Date.now() - timer.current;
-    setFakeTimeCounter(fakeTimeCounter + 1);
+    setForceRerenderInt(forceRerenderInt + 1);
 
     updateTimer(startTime + timer.current, timer.current / duration);
-  }, [duration, fakeTimeCounter, startTime, updateTimer, xScale]);
+  }, [duration, forceRerenderInt, startTime, updateTimer, xScale]);
 
   return (
     <svg

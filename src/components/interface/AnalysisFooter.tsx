@@ -6,8 +6,7 @@ import {
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useMemo, useState } from 'react';
 import {
-  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled,
-  IconUser,
+  IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled, IconUser,
 } from '@tabler/icons-react';
 import { useAsync } from '../../store/hooks/useAsync';
 
