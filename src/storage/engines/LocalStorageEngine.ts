@@ -46,7 +46,7 @@ export class LocalStorageEngine extends StorageEngine {
 
   getAudio(taskList: string, participantId?: string | undefined) {
     console.warn('not yet implemented', participantId);
-    return Promise.resolve('not yet implemented');
+    return Promise.resolve(undefined);
   }
 
   async saveAudio(audioStream: MediaRecorder): Promise<void> {
@@ -321,6 +321,10 @@ export class LocalStorageEngine extends StorageEngine {
     const participantData = await this.getParticipantData();
     if (!participantData) {
       throw new Error('Participant not initialized');
+    }
+
+    if (participantData.completed) {
+      return true;
     }
 
     // Set the participant as completed

@@ -9,6 +9,7 @@ import { ParticipantData } from '../../../storage/types';
 import { SingleTaskLabelLines } from './SingleTaskLabelLines';
 import { SingleTask } from './SingleTask';
 import { encryptIndex } from '../../../utils/encryptDecryptIndex';
+import { humanReadableDuration } from '../../../utils/humanReadableDuration';
 
 const LABEL_GAP = 25;
 const CHARACTER_SIZE = 8;
@@ -16,19 +17,6 @@ const CHARACTER_SIZE = 8;
 const margin = {
   left: 20, top: 0, right: 20, bottom: 0,
 };
-
-function humanReadableDuration(msDuration: number): string {
-  const h = Math.floor(msDuration / 1000 / 60 / 60);
-  const m = Math.floor((msDuration / 1000 / 60 / 60 - h) * 60);
-  const s = Math.floor(((msDuration / 1000 / 60 / 60 - h) * 60 - m) * 60);
-
-  // To get time format 00:00:00
-  const seconds: string = s < 10 ? `0${s}` : `${s}`;
-  const minutes: string = m < 10 ? `0${m}` : `${m}`;
-  const hours: string = h < 10 ? `0${h}` : `${h}`;
-
-  return `${hours}h ${minutes}m ${seconds}s`;
-}
 
 export function AllTasksTimeline({
   participantData, width, height, selectedTask, studyId,

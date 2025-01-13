@@ -179,7 +179,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         await this.clearCurrentParticipantId();
       }
 
-      await this.setcurrentConfigHash(configHash);
+      await this._setCurrentConfigHash(configHash);
 
       return Promise.resolve();
     } catch (error) {
@@ -256,7 +256,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return configHashDocData.exists() ? configHashDocData.data().configHash : null;
   }
 
-  async setcurrentConfigHash(configHash: string) {
+  async _setCurrentConfigHash(configHash: string) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -622,6 +622,10 @@ export class FirebaseStorageEngine extends StorageEngine {
 
     // Get modes
     const modes = await this.getModes(this.studyId);
+
+    if (this.participantData.completed) {
+      return true;
+    }
 
     this.participantData.completed = true;
     if (modes.dataCollectionEnabled) {
