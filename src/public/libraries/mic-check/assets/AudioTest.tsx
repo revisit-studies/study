@@ -1,6 +1,3 @@
-/* eslint-disable no-nested-ternary */
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import {
   Center, Stack, Text,
 } from '@mantine/core';
@@ -8,10 +5,9 @@ import {
   useEffect,
 } from 'react';
 import { StimulusParams } from '../../../../store/types';
-import { BrushParams } from './types';
 import RecordingAudioWaveform from '../../../../components/interface/RecordingAudioWaveform';
 
-export function AudioTest({ setAnswer }: StimulusParams<BrushParams>) {
+export function AudioTest({ setAnswer }: StimulusParams<undefined>) {
   useEffect(() => {
     const _stream = navigator.mediaDevices.getUserMedia({
       audio: true,

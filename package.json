@@ -35,7 +35,6 @@
     "@types/crypto-js": "^4.2.2",
     "@types/hjson": "^2.4.3",
     "@types/lodash": "^4.14.199",
-    "@types/wavesurfer.js": "^6.0.12",
     "@types/node": "^22.7.6",
     "ajv": "^8.16.0",
     "arquero": "^5.4.0",
@@ -64,7 +63,7 @@
     "vega": "^5.28.0",
     "vega-lite": "^5.17.0",
     "wavesurfer-react": "^3.0.4",
-    "wavesurfer.js": "^7.8.14"
+    "wavesurfer.js": "^7.8.15"
   },
   "devDependencies": {
     "@playwright/test": "^1.49.1",
