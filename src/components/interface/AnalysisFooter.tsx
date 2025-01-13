@@ -18,7 +18,7 @@ import {
   useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../../store/store';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
-import { AnalysisPopout } from '../audioAnalysis/AnalysisPopout';
+import { AnalysisPopout } from '../audioAnalysis/AudioProvenanceVis';
 
 function getParticipantData(trrackId: string | undefined, storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
