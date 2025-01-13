@@ -105,13 +105,6 @@ export function AnalysisPopout({ setTimeString } : {setTimeString: (time: string
     setCurrentNode(node);
   }, [participant, saveAnalysisState, storeDispatch, componentAndIndex]);
 
-  // const timeUpdate = useEvent((t: number) => {
-  //   if (participant && currentComponent && componentAndIndex) {
-  //     const { startTime } = participant.answers[componentAndIndex];
-  //     setPlayTime(t * 1000 + startTime);
-  //   }
-  // });
-
   // use effect to control the current provenance node based on the changing playtime.
   useEffect(() => {
     if (!componentAndIndex || !participant || !trrackForTrial.current || !participant.answers[componentAndIndex]?.provenanceGraph) {
