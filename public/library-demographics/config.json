@@ -20,14 +20,14 @@
     "withProgressBar": false,
     "sidebar": true
   },
-  "importedLibraries": ["demographics"
-                      ],
-  "components": {
-  },
+  "importedLibraries": [
+    "demographics"
+  ],
+  "components": {},
   "sequence": {
     "order": "fixed",
     "components": [
-      "$demographics.se.demographics"
+      "$demographics.co.demographics"
     ]
   }
 }
