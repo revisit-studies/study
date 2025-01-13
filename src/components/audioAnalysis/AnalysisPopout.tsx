@@ -75,7 +75,7 @@ export function AnalysisPopout({ setTimeString } : {setTimeString: (time: string
 
   // Create an instance of trrack to ensure getState works, incase the saved state is not a full state node.
   useEffect(() => {
-    if (componentAndIndex && participant && participant.answers[componentAndIndex]?.provenanceGraph && Object.keys(participant.answers[componentAndIndex].provenanceGraph.nodes).length > 1) {
+    if (componentAndIndex && participant && participant.answers[componentAndIndex]?.provenanceGraph) {
       const reg = Registry.create();
 
       const trrack = initializeTrrack({ registry: reg, initialState: {} });
