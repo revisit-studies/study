@@ -177,6 +177,8 @@ export interface BaseResponse {
   paramCapture?: string;
   /** Controls whether the response is hidden. */
   hidden?: boolean;
+  /** Renders the response with a trailing divider. */
+  withDivider?: boolean;
 }
 
 /**
@@ -536,6 +538,8 @@ export interface BaseIndividualComponent {
   nextButtonDisableTime?: number;
   /** A timer (in ms) after which the next button will be enabled. */
   nextButtonEnableTime?: number;
+  /** Whether to show the response dividers. Defaults to false. */
+  responseDividers?: boolean;
 }
 
 /**
