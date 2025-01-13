@@ -323,6 +323,10 @@ export class LocalStorageEngine extends StorageEngine {
       throw new Error('Participant not initialized');
     }
 
+    if (participantData.completed) {
+      return true;
+    }
+
     // Set the participant as completed
     participantData.completed = true;
 
