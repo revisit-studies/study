@@ -36,10 +36,10 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
   const studyId = useStudyId();
   const [activeConfig, setActiveConfig] = useState<ParsedConfig<StudyConfig> | null>(null);
-  const isValidStudyId = globalConfig.configsList.includes(studyId) || studyId === 'revisit-widget';
+  const isValidStudyId = globalConfig.configsList.includes(studyId) || studyId === '__revisit-widget';
 
   useEffect(() => {
-    if (studyId !== 'revisit-widget') {
+    if (studyId !== '__revisit-widget') {
       getStudyConfig(studyId, globalConfig).then((config) => {
         setActiveConfig(config);
       });

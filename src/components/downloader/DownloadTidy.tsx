@@ -333,7 +333,7 @@ export function DownloadTidy({
         >
           Download
         </Button>
-        {studyId === 'revisit-widget' && (
+        {studyId === '__revisit-widget' && (
           <Button
             onClick={handlePythonExportTIDY}
           >
