@@ -1,33 +1,12 @@
 # Introduction
 
-Welcome to our study. This is a replication of a study by Padilla et al., published in  Frontiers in Psychology, 2021.
+Welcome to our study. This is a demo study that uses stimuli built by [Vega](https://vega.github.io/vega/). reVISit support both Vega and Vega-lite stimuli.
+With Vega, reVISit can also track user interactions. To track interactions, define them in in [Signals](https://vega.github.io/vega/docs/signals/). 
 
-## Instructions
+## Vega Demo 1
+The first demo is a basic bar chart with hover interaction to show tooltips. Participants need to click on the chart to answer the question.
 
-The following instructions describe the tasks you will see and how to complete them. If you need to refer to these instructions during the experiment, please click on help at the top of the page.
+## Vega Demo 2
+The second demo is a more complex visualization. It uses a movie dataset, participants can select which attributes to use for the scatter plot axis.
 
-**Scenario**: Alpacas may need blankets. Assume that
-you work at the Red Cross, and your job is to manage
-resources for farms in Peru. In previous years, alpacas have
-died in Peru from cold temperatures. Alpacas can typically
-withstand the cold unless the temperature drops below 32°F.
 
-**Budget**: You are in charge of the Red Cross's blanket
-budget, and it is your job to issue blankets to the alpacas
-when temperatures fall below 32°F, which will help them
-withstand the cold.
-
-**Budget Constraints**: You have a budget for 48 days of
-$48,000. Purchasing and delivering blankets to farmers
-costs $1,000 (per night). If you fail to issue blankets to the
-farmers and the temperature drops below 32°F, it will cost
-$6,000 from your budget.
-
-**Task**: In the experiment, you will be shown a nighttime
-temperature forecast like the one below. In the forecast, each
-dot represents a 1 out of 20 chance the nighttime low will
-be that temperature. You will be asked some questions about
-this forecast, including if you will issue blankets to the alpacas.
-Compensation: Please respond to the best of your ability.
-You will receive an extra $0.15 cents for every $1,000 that
-you have in your budget at the end of 48 days.
