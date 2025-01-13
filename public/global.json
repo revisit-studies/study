@@ -19,14 +19,14 @@
     "demo-image",
     "test-audio",
     "test-library",
-    "test-library-vlat",
-    "test-library-mic-check",
-    "test-library-color-blindness",
-    "test-library-demographics",
-    "test-library-beauvis",
-    "test-library-previs",
-    "test-library-mini-vlat",
-    "test-library-sus",
+    "library-vlat",
+    "library-mic-check",
+    "library-color-blindness",
+    "library-demographics",
+    "library-beauvis",
+    "library-previs",
+    "library-mini-vlat",
+    "library-sus",
     "test-likert-matrix",
     "test-parser-errors",
     "demo-vega",
@@ -90,36 +90,36 @@
       "path": "test-library/config.json",
       "test": true
     },
-    "test-library-vlat": {
-      "path": "test-library-vlat/config.json",
+    "library-vlat": {
+      "path": "library-vlat/config.json",
       "test": true
     },
-    "test-library-mic-check": {
-      "path": "test-library-mic-check/config.json",
+    "library-mic-check": {
+      "path": "library-mic-check/config.json",
       "test": true
     },
-    "test-library-color-blindness": {
-      "path": "test-library-color-blindness/config.json",
+    "library-color-blindness": {
+      "path": "library-color-blindness/config.json",
       "test": true
     },
-    "test-library-demographics": {
-      "path": "test-library-demographics/config.json",
+    "library-demographics": {
+      "path": "library-demographics/config.json",
       "test": true
     },
-    "test-library-beauvis": {
-      "path": "test-library-beauvis/config.json",
+    "library-beauvis": {
+      "path": "library-beauvis/config.json",
       "test": true
     },
-    "test-library-previs": {
-      "path": "test-library-previs/config.json",
+    "library-previs": {
+      "path": "library-previs/config.json",
       "test": true
     },
-    "test-library-mini-vlat": {
-      "path": "test-library-mini-vlat/config.json",
+    "library-mini-vlat": {
+      "path": "library-mini-vlat/config.json",
       "test": true
     },
-    "test-library-sus": {
-      "path": "test-library-sus/config.json",
+    "library-sus": {
+      "path": "library-sus/config.json",
       "test": true
     },
     "test-likert-matrix": {

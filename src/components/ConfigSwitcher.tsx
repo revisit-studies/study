@@ -204,7 +204,8 @@ export function ConfigSwitcher({
   const tutorials = configsList.filter((configName) => configName.startsWith('tutorial-'));
   const examples = configsList.filter((configName) => configName.startsWith('example-'));
   const tests = configsList.filter((configName) => configName.startsWith('test-'));
-  const others = configsList.filter((configName) => !configName.startsWith('demo-') && !configName.startsWith('tutorial-') && !configName.startsWith('example-') && !configName.startsWith('test-'));
+  const libraries = configsList.filter((configName) => configName.startsWith('library-'));
+  const others = configsList.filter((configName) => !configName.startsWith('demo-') && !configName.startsWith('tutorial-') && !configName.startsWith('example-') && !configName.startsWith('test-') && !configName.startsWith('library-'));
 
   return (
     <AppShell.Main>
@@ -226,6 +227,7 @@ export function ConfigSwitcher({
             <Tabs.Tab value="Examples">Example Studies</Tabs.Tab>
             <Tabs.Tab value="Tutorials">Tutorials</Tabs.Tab>
             <Tabs.Tab value="Tests">Tests</Tabs.Tab>
+            <Tabs.Tab value="Libraries">Libraries</Tabs.Tab>
           </Tabs.List>
 
           {others.length > 0 && (
@@ -252,6 +254,11 @@ export function ConfigSwitcher({
           <Tabs.Panel value="Tests">
             <Text c="dimmed" mt="sm">These studies exist for testing purposes.</Text>
             <StudyCards configNames={tests} studyConfigs={studyConfigs} />
+          </Tabs.Panel>
+
+          <Tabs.Panel value="Libraries">
+            <Text c="dimmed" mt="sm">These studies exist for testing purposes.</Text>
+            <StudyCards configNames={libraries} studyConfigs={studyConfigs} />
           </Tabs.Panel>
         </Tabs>
       </Container>

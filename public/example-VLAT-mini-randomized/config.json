@@ -24,7 +24,7 @@
     "studyEndMsg": "**Thank you for completing the study. You may click this link and return to Prolific**: [https://app.prolific.com/submissions/complete?cc=CE96X7ST](https://app.prolific.com/submissions/complete?cc=CE96X7ST)",
     "urlParticipantIdParam": "PROLIFIC_ID"
   },
-  "importedLibraries": ["vlat"],
+  "importedLibraries": ["mini-vlat"],
   "components": {
     "introduction": {
       "type": "markdown",
@@ -86,7 +86,7 @@
     "components": [
       "introduction",
       "consent",
-      "$vlat.sequences.mini",
+      "$vlat.sequences.latinSquare",
       "survey"
     ]
   }
