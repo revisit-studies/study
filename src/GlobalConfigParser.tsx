@@ -150,11 +150,12 @@ export function GlobalConfigParser() {
               element={(
                 <>
                   <PageTitle title="ReVISit | Login" />
-                  <AppHeader studyIds={globalConfig.configsList} />
                   <AppShell
                     padding="md"
                     header={{ height: 70 }}
                   >
+                    <AppHeader studyIds={globalConfig.configsList} />
+
                     <AppShell.Main>
                       <Login />
                     </AppShell.Main>
