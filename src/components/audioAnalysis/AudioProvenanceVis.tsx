@@ -173,7 +173,7 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
         } catch (error: any) {
           storeDispatch(setAnalysisHasAudio(false));
           const length = participant.answers[componentAndIndex].endTime - participant.answers[componentAndIndex].startTime;
-          setTotalAudioLength(length / 1000);
+          setTotalAudioLength(length > -1 ? length / 1000 : 0);
 
           storeDispatch(setAnalysisHasAudio(false));
           throw new Error(error);
