@@ -227,6 +227,10 @@
         "type": {
           "const": "checkbox",
           "type": "string"
+        },
+        "vertical": {
+          "description": "Whether to render the checkboxes vertically. Defaults to false, so they render horizontally.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1374,6 +1378,10 @@
         "type": {
           "const": "radio",
           "type": "string"
+        },
+        "vertical": {
+          "description": "Whether to render the radio buttons vertically. Defaults to false, so they render horizontally.",
+          "type": "boolean"
         }
       },
       "required": [

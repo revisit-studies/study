@@ -416,6 +416,8 @@ export interface RadioResponse extends BaseResponse {
   leftLabel?: string;
   /** The right label of the radio group. Used in Likert scales for example */
   rightLabel?: string;
+  /** Whether to render the radio buttons vertically. Defaults to false, so they render horizontally. */
+  vertical?: boolean;
 }
 
 /**
@@ -441,6 +443,8 @@ export interface CheckboxResponse extends BaseResponse {
   minSelections?: number;
   /** The maximum number of selections that are required. */
   maxSelections?: number;
+  /** Whether to render the checkboxes vertically. Defaults to false, so they render horizontally. */
+  vertical?: boolean;
 }
 
 /**
