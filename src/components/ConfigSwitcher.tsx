@@ -101,7 +101,7 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
             </Flex>
             <Text c="dimmed">
               <Text span fw={500}>Authors: </Text>
-              {config.studyMetadata.authors}
+              {config.studyMetadata.authors.join(', ')}
             </Text>
             <Text c="dimmed">{config.studyMetadata.description}</Text>
             <Text c="dimmed" ta="right" style={{ paddingRight: 5 }}>
