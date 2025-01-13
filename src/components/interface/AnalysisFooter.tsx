@@ -85,7 +85,7 @@ export function AnalysisFooter() {
 
   return (
     <AppShell.Footer zIndex={101} withBorder={false}>
-      <Box style={{ backgroundColor: 'var(--mantine-color-blue-2)', height: '150px' }}>
+      <Box style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '150px' }}>
         <LoadingOverlay visible={loadingPartStatus !== 'success'} overlayProps={{ backgroundOpacity: 0.4 }} />
 
         <AnalysisPopout setTimeString={setTimeString} />
