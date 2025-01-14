@@ -1,6 +1,5 @@
 import {
-  Badge, Box, NavLink, Popover, Text,
-  Tooltip,
+  Badge, Box, NavLink, Popover, Text, Tooltip,
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { IconArrowsShuffle, IconBrain, IconPackageImport } from '@tabler/icons-react';
