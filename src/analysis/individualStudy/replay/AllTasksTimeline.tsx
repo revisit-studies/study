@@ -1,10 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
 import {
-  Center, Group, Stack, Tooltip, Text,
-  Divider,
-  Button,
-  Badge,
+  Center, Group, Stack, Tooltip, Text, Divider, Button, Badge,
 } from '@mantine/core';
 import {
   IconCheck, IconExternalLink, IconHourglassEmpty, IconX,
@@ -45,13 +42,13 @@ export function AllTasksTimeline({
   }, [maxLength, participantData.answers, width]);
 
   // Creating labels for the tasks
-  const [correctAnswersCount, totalAnswersWithCorrectCount, tasks] : [number, number, {line: JSX.Element, label: JSX.Element}[]] = useMemo(() => {
+  const [numComponentsAnsweredCorrectly, numComponentsWithCorrectAnswer, tasks] : [number, number, {line: JSX.Element, label: JSX.Element}[]] = useMemo(() => {
     let currentHeight = 0;
 
     const sortedEntries = Object.entries(participantData.answers || {}).filter((answer) => !!(answer[1].startTime)).sort((a, b) => a[1].startTime - b[1].startTime);
 
-    let _correctAnswersCount = 0;
-    let _totalAnswersWithCorrectCount = 0;
+    let _numComponentsAnsweredCorrectly = 0;
+    let _numComponentsWithCorrectAnswer = 0;
 
     const allElements = sortedEntries.map((entry, i) => {
       const [name, answer] = entry;
@@ -76,9 +73,6 @@ export function AllTasksTimeline({
         component.correctAnswer.forEach((a) => {
           const { id, answer: componentCorrectAnswer } = a;
 
-          if (!answer.answer[id]) {
-            hasCorrect = false;
-          }
           if (!component || !component.correctAnswer || answer.answer[id] !== componentCorrectAnswer) {
             isCorrect = false;
           }
@@ -89,11 +83,12 @@ export function AllTasksTimeline({
         hasCorrect = false;
       }
 
-      if (isCorrect && hasCorrect) {
-        _correctAnswersCount += 1;
-      }
       if (hasCorrect) {
-        _totalAnswersWithCorrectCount += 1;
+        _numComponentsWithCorrectAnswer += 1;
+
+        if (isCorrect) {
+          _numComponentsAnsweredCorrectly += 1;
+        }
       }
 
       return {
@@ -123,7 +118,7 @@ export function AllTasksTimeline({
       };
     });
 
-    return [_correctAnswersCount, _totalAnswersWithCorrectCount, allElements];
+    return [_numComponentsAnsweredCorrectly, _numComponentsWithCorrectAnswer, allElements];
   }, [participantData.answers, xScale, studyConfig?.components, height, selectedTask, clickTask]);
 
   const duration = useMemo(() => {
@@ -186,9 +181,6 @@ export function AllTasksTimeline({
       <Stack gap={15} style={{ width: '100%' }}>
         <Divider size="md" />
         <Group justify="space-between">
-          {/* dummy box to make the group justify space-between work */ }
-          {/* <Box style={{ width: '120px' }} /> */}
-
           <Group justify="center">
             {participantData.participantIndex
               ? (
@@ -211,7 +203,7 @@ export function AllTasksTimeline({
                 leftSection={<IconCheck width={18} height={18} style={{ paddingTop: 1 }} />}
                 pb={1}
               >
-                {correctAnswersCount}
+                {numComponentsAnsweredCorrectly}
               </Badge>
               <Badge
                 variant="light"
@@ -220,7 +212,7 @@ export function AllTasksTimeline({
                 leftSection={<IconX width={18} height={18} style={{ paddingTop: 1 }} />}
                 pb={1}
               >
-                {totalAnswersWithCorrectCount - correctAnswersCount}
+                {numComponentsWithCorrectAnswer - numComponentsAnsweredCorrectly}
               </Badge>
               <Badge
                 variant="light"

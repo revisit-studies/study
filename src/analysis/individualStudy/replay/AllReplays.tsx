@@ -1,12 +1,7 @@
-import {
-  Group,
-  Stack,
-  Switch,
-} from '@mantine/core';
+import { Group, Stack, Switch } from '@mantine/core';
 import { useResizeObserver } from '@mantine/hooks';
 import { useParams } from 'react-router-dom';
 import { useMemo, useState } from 'react';
-import * as d3 from 'd3';
 import { AllTasksTimeline } from './AllTasksTimeline';
 import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
@@ -23,7 +18,7 @@ export function AllReplays({ visibleParticipants, studyConfig }: {visiblePartici
       return undefined;
     }
 
-    return d3.max(visibleParticipants.map((part) => {
+    return Math.max(...visibleParticipants.map((part) => {
       const minStart = Math.min(...Object.values(part.answers).map((answer) => answer.startTime || 0));
       const maxEnd = Math.max(...Object.values(part.answers).map((answer) => answer.endTime || 0));
 
@@ -40,7 +35,7 @@ export function AllReplays({ visibleParticipants, studyConfig }: {visiblePartici
           onChange={(event) => setScaleByTime(event.currentTarget.checked)}
         />
       </Group>
-      { visibleParticipants.map((part) => <AllTasksTimeline maxLength={maxLength} studyConfig={studyConfig} studyId={studyId || ''} key={part.participantId} height={200} participantData={part} width={width} />)}
+      {visibleParticipants.map((part) => <AllTasksTimeline maxLength={maxLength} studyConfig={studyConfig} studyId={studyId || ''} key={part.participantId} height={200} participantData={part} width={width} />)}
     </Stack>
   );
 }

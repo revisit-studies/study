@@ -145,7 +145,7 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
     }
   }, [_setCurrentNode, currentNode, participant, participantId, playTime, componentAndIndex]);
 
-  const startTime = useMemo(() => participant?.answers[componentAndIndex]?.startTime || 0, [participant, componentAndIndex]);
+  const startTime = useMemo(() => participant?.answers[componentAndIndex].startTime || 0, [participant, componentAndIndex]);
 
   useEffect(() => {
     if (totalAudioLength === 0) {
