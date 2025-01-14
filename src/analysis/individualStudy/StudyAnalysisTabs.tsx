@@ -137,7 +137,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
             </Tabs.Panel>
             <Tabs.Panel value="replay" pt="xs">
-              <AllReplays visibleParticipants={visibleParticipants} />
+              <AllReplays visibleParticipants={visibleParticipants} studyConfig={studyConfig} />
             </Tabs.Panel>
             <Tabs.Panel value="manage" pt="xs">
               {studyId && user.isAdmin ? <ManageAccordion studyId={studyId} refresh={getData} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}

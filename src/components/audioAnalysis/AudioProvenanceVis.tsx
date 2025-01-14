@@ -155,6 +155,13 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
     }
   }, [componentAndIndex, participant, playTime, setTimeString, startTime, totalAudioLength]);
 
+  useEffect(() => {
+    if (!analysisHasAudio && analysisHasProvenance && participant) {
+      const length = participant.answers[componentAndIndex].endTime - participant.answers[componentAndIndex].startTime;
+      setTotalAudioLength(length > -1 ? length / 1000 : 0);
+    }
+  }, [analysisHasAudio, analysisHasProvenance, componentAndIndex, participant]);
+
   const isAnalysis = useIsAnalysis();
   const wavesurfer = useRef<WaveSurferType | null>(null);
 
@@ -173,10 +180,6 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
           waveSurfer.seekTo(0);
           waveSurfer.on('redrawcomplete', () => setWaveSurferWidth(waveSurfer.getWidth()));
         } catch (error: any) {
-          storeDispatch(setAnalysisHasAudio(false));
-          const length = participant.answers[componentAndIndex].endTime - participant.answers[componentAndIndex].startTime;
-          setTotalAudioLength(length > -1 ? length / 1000 : 0);
-
           storeDispatch(setAnalysisHasAudio(false));
           throw new Error(error);
         }

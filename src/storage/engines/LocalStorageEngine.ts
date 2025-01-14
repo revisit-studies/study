@@ -77,10 +77,12 @@ export class LocalStorageEngine extends StorageEngine {
 
     // Initialize participant
     const participantConfigHash = await hash(JSON.stringify(config));
+    const { currentRow, creationIndex } = await this.getSequence();
     const participantData: ParticipantData = {
       participantId: this.currentParticipantId,
       participantConfigHash,
-      sequence: await this.getSequence(),
+      sequence: currentRow,
+      participantIndex: creationIndex,
       answers: {},
       searchParams,
       metadata,
@@ -203,7 +205,7 @@ export class LocalStorageEngine extends StorageEngine {
       await this.studyDatabase.setItem('sequenceArray', sequenceArray);
     }
 
-    return currentRow;
+    return { currentRow, creationIndex: 1000 - sequenceArray.length };
   }
 
   async getSequenceArray() {
