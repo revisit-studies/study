@@ -170,7 +170,7 @@ export function AllTasksTimeline({
       const fullTaskName = Object.keys(participantData.answers).find((a) => a.startsWith(task));
 
       if (fullTaskName) {
-        return participantData.answers[fullTaskName].answer[response];
+        return `${participantData.answers[fullTaskName].answer[response]}`;
       }
     }
     return null;

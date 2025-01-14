@@ -240,6 +240,10 @@
           "description": "Renders the response with a trailing divider.",
           "type": "boolean"
         },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
         "withOther": {
           "description": "Whether to render the checkboxes with an \"other\" option.",
           "type": "boolean"
@@ -431,6 +435,10 @@
         "withDivider": {
           "description": "Renders the response with a trailing divider.",
           "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -486,6 +494,10 @@
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
           "type": "boolean"
         }
       },
@@ -948,6 +960,10 @@
         "withDivider": {
           "description": "Renders the response with a trailing divider.",
           "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1007,6 +1023,10 @@
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
           "type": "boolean"
         }
       },
@@ -1187,6 +1207,10 @@
         "withDivider": {
           "description": "Renders the response with a trailing divider.",
           "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1274,6 +1298,10 @@
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
           "type": "boolean"
         }
       },
@@ -1437,6 +1465,10 @@
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
           "type": "boolean"
         },
         "withOther": {
@@ -1703,6 +1735,10 @@
         "withDivider": {
           "description": "Renders the response with a trailing divider.",
           "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1784,6 +1820,10 @@
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
           "type": "boolean"
         }
       },

@@ -467,6 +467,7 @@
       "consent",
       "tutorial",
       {
+        "id": "studyContent",
         "order": "random",
         "components": [
           "paintBrush_q1",

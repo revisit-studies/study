@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc3/src/parser/LibraryConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/ui-updates/src/parser/LibraryConfigSchema.json",
   "name": "color-blindness",
   "description": "This library is the Ishihara color blindness test. Each component contains an image of an Ishihara plate. The meta attribute of each plate describe what normal vision people, red color blind people, green color blind people, and total color blind people see from this plate. The user is asked to identify the number or pattern in the image. The library also contains two sequences: a short test and a full test. The short test contains 4 components and the full test contains all 24 components. The short test follows a random order and the full test follows a fixed order.",
   "reference": "https://www.colour-blindness.com/colour-blindness-tests/ishihara-colour-test-plates/",
@@ -25,17 +25,10 @@
         {
           "id": "plate1-response",
           "prompt": "Enter the number you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate1-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -66,17 +59,10 @@
         {
           "id": "plate2-response",
           "prompt": "Enter the number you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate2-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [

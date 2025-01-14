@@ -181,6 +181,8 @@ export interface BaseResponse {
   hidden?: boolean;
   /** Renders the response with a trailing divider. */
   withDivider?: boolean;
+  /** Renders the response with an option for "I don't know". This counts as a completed answer for the validation. */
+  withDontKnow?: boolean;
 }
 
 /**
