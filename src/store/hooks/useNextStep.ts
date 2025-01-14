@@ -96,6 +96,9 @@ export function useNextStep() {
         answer[key] = answer[key].filter((item) => item !== '__other');
         answer[key].push(`other:${value}`);
       }
+      if (typeof answer[key] === 'string' && answer[key] === '__other') {
+        answer[key] = `other:${value}`;
+      }
     });
     const { provenanceGraph } = trialValidationCopy;
     const endTime = Date.now();

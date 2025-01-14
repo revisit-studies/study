@@ -1,10 +1,12 @@
 import {
-  Box, Flex, Group, Radio, rem, Text,
+  Box, Flex, Group, Input, Radio, rem, Text,
 } from '@mantine/core';
+import { useEffect, useState } from 'react';
 import { RadioResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { HorizontalHandler } from './HorizontalHandler';
+import { useStoreActions, useStoreDispatch } from '../../store/store';
 
 export function RadioInput({
   response,
@@ -29,9 +31,19 @@ export function RadioInput({
     rightLabel,
     secondaryText,
     horizontal,
+    withOther,
   } = response;
 
   const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+
+  const [otherSelected, setOtherSelected] = useState(false);
+  const [otherValue, setOtherValue] = useState('');
+
+  const { setOtherText } = useStoreActions();
+  const storeDispatch = useStoreDispatch();
+  useEffect(() => {
+    storeDispatch(setOtherText({ key: response.id, value: otherValue }));
+  }, [otherValue, response.id, setOtherText, storeDispatch]);
 
   return (
     <Radio.Group
@@ -73,10 +85,21 @@ export function RadioInput({
                 styles={{
                   label: { display: 'none' },
                 }}
+                onChange={() => setOtherSelected(false)}
               />
               {!horizontal && <Text size="sm">{radio.label}</Text>}
             </div>
           ))}
+          {withOther && (
+          <Radio
+            key="__other"
+            disabled={disabled}
+            value="__other"
+            checked={otherSelected}
+            onClick={(event) => setOtherSelected(event.currentTarget.checked)}
+            label={<Input mt={-8} placeholder="Other" disabled={!otherSelected} value={otherValue} onChange={(event) => setOtherValue(event.currentTarget.value)} />}
+          />
+          )}
         </HorizontalHandler>
         <Text>{rightLabel}</Text>
       </Group>
