@@ -51,10 +51,11 @@ export function useNextStep() {
   const sequence = useStoreSelector((state) => state.sequence);
   const answers = useStoreSelector((state) => state.answers);
   const modes = useStoreSelector((state) => state.modes);
+  const otherTexts = useStoreSelector((state) => state.otherTexts);
 
   const storeDispatch = useStoreDispatch();
   const {
-    saveTrialAnswer, setIframeAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox,
+    saveTrialAnswer, setIframeAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox, resetOtherText,
   } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
@@ -88,7 +89,14 @@ export function useNextStep() {
         return { ...acc, ...(curr as ValidationStatus).values };
       }
       return acc;
-    }, {});
+    }, {}) as StoredAnswer['answer'];
+    // Set the other text in the answer
+    Object.entries(otherTexts).forEach(([key, value]) => {
+      if (Array.isArray(answer[key]) && answer[key].includes('__other')) {
+        answer[key] = answer[key].filter((item) => item !== '__other');
+        answer[key].push(`other:${value}`);
+      }
+    });
     const { provenanceGraph } = trialValidationCopy;
     const endTime = Date.now();
 
@@ -124,6 +132,7 @@ export function useNextStep() {
         );
       }
       storeDispatch(setIframeAnswers({}));
+      storeDispatch(resetOtherText());
       storeDispatch(setMatrixAnswersCheckbox(null));
       storeDispatch(setMatrixAnswersRadio(null));
     }

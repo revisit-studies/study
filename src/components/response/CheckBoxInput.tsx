@@ -1,10 +1,13 @@
 import {
   Box, Checkbox, Flex, Group,
+  Input,
 } from '@mantine/core';
+import { useEffect, useState } from 'react';
 import { CheckboxResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { HorizontalHandler } from './HorizontalHandler';
+import { useStoreActions, useStoreDispatch } from '../../store/store';
 
 export function CheckBoxInput({
   response,
@@ -25,9 +28,19 @@ export function CheckBoxInput({
     options,
     secondaryText,
     horizontal,
+    withOther,
   } = response;
 
   const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+
+  const [otherSelected, setOtherSelected] = useState(false);
+  const [otherValue, setOtherValue] = useState('');
+
+  const { setOtherText } = useStoreActions();
+  const storeDispatch = useStoreDispatch();
+  useEffect(() => {
+    storeDispatch(setOtherText({ key: response.id, value: otherValue }));
+  }, [otherValue, response.id, setOtherText, storeDispatch]);
 
   return (
     <Checkbox.Group
@@ -54,6 +67,16 @@ export function CheckBoxInput({
               label={option.label}
             />
           ))}
+          {withOther && (
+            <Checkbox
+              key="__other"
+              disabled={disabled}
+              value="__other"
+              checked={otherSelected}
+              onClick={(event) => setOtherSelected(event.currentTarget.checked)}
+              label={<Input mt={-8} placeholder="Other" disabled={!otherSelected} value={otherValue} onChange={(event) => setOtherValue(event.currentTarget.value)} />}
+            />
+          )}
         </HorizontalHandler>
       </Group>
     </Checkbox.Group>
