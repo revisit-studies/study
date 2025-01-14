@@ -1897,6 +1897,10 @@
           "description": "The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000.",
           "type": "number"
         },
+        "participantNameField": {
+          "description": "The default name field for a participant. Directs revisit to use the task and response id as a name in UI elements. For example, if you wanted the response 'prolificId' from the task 'introduction' to be the name, this field would be 'introduction.prolificId'",
+          "type": "string"
+        },
         "sidebar": {
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question.",
           "type": "boolean"

@@ -116,6 +116,8 @@ export interface UIConfig {
   enumerateQuestions?: boolean;
   /** Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set. */
   timeoutReject?: boolean;
+  /** The default name field for a participant. Directs revisit to use the task and response id as a name in UI elements. For example, if you wanted the response 'prolificId' from the task 'introduction' to be the name, this field would be 'introduction.prolificId' */
+  participantNameField?: string;
 }
 
 /**
