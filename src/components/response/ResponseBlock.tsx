@@ -210,7 +210,7 @@ export function ResponseBlock({
             ) : (
               <>
                 <ResponseSwitcher
-                  storedAnswer={storedAnswer ? storedAnswer[response.id] : undefined}
+                  storedAnswer={storedAnswer}
                   answer={{
                     ...answerValidator.getInputProps(response.id, {
                       type: response.type === 'checkbox' ? 'checkbox' : 'input',
@@ -219,6 +219,7 @@ export function ResponseBlock({
                   response={response}
                   index={index + 1}
                   configInUse={configInUse}
+                  form={answerValidator}
                 />
                 {alertConfig[response.id].visible && (
                   <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>
