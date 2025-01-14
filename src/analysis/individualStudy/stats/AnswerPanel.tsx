@@ -6,7 +6,7 @@ import { VegaLite, VisualizationSpec } from 'react-vega';
 import { useResizeObserver } from '@mantine/hooks';
 import { IndividualComponent, InheritedComponent, RadioResponse } from '../../../parser/types';
 
-export default function AnswerPanel({ data, config }: { data: Record<string, Record<string, unknown>>, config: IndividualComponent | InheritedComponent | undefined }) {
+export function AnswerPanel({ data, config }: { data: Record<string, Record<string, unknown>>, config: IndividualComponent | InheritedComponent | undefined }) {
   const [correctUser, setCorrectUser] = useState<string[]>([]);
   const [incorrectUser, setIncorrectUser] = useState<string[]>([]);
   const [categoricalStats, setCategoricalStats] = useState<{ option: string, count: number, correct: boolean }[]>([]);

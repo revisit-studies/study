@@ -53,6 +53,7 @@ export async function studyStoreCreator(
     trialValidation: answers ? allValid : emptyValidation,
     iframeAnswers: {},
     iframeProvenance: null,
+    otherTexts: {},
     metadata,
     analysisProvState: null,
     analysisIsPlaying: false,
@@ -87,6 +88,12 @@ export async function studyStoreCreator(
       },
       setIframeProvenance: (state, action: PayloadAction<TrrackedProvenance | null>) => {
         state.iframeProvenance = action.payload;
+      },
+      setOtherText: (state, action: PayloadAction<{ key: string, value: string }>) => {
+        state.otherTexts[action.payload.key] = action.payload.value;
+      },
+      resetOtherText: (state) => {
+        state.otherTexts = {};
       },
       saveAnalysisState(state, { payload }: PayloadAction<unknown>) {
         state.analysisProvState = payload;

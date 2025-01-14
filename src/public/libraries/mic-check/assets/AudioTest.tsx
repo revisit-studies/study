@@ -5,7 +5,7 @@ import {
   useEffect,
 } from 'react';
 import { StimulusParams } from '../../../../store/types';
-import RecordingAudioWaveform from '../../../../components/interface/RecordingAudioWaveform';
+import { RecordingAudioWaveform } from '../../../../components/interface/RecordingAudioWaveform';
 
 export function AudioTest({ setAnswer }: StimulusParams<undefined>) {
   useEffect(() => {

@@ -2,7 +2,7 @@ import { Suspense, useCallback } from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
 import { ReactComponent } from '../parser/types';
 import { StimulusParams } from '../store/types';
-import ResourceNotFound from '../ResourceNotFound';
+import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
 import { ErrorBoundary } from './ErrorBoundary';
@@ -12,7 +12,7 @@ const modules = import.meta.glob(
   { eager: true },
 );
 
-function ReactComponentController({ currentConfig, provState }: { currentConfig: ReactComponent; provState?: unknown }) {
+export function ReactComponentController({ currentConfig, provState }: { currentConfig: ReactComponent; provState?: unknown }) {
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
 
@@ -49,5 +49,3 @@ function ReactComponentController({ currentConfig, provState }: { currentConfig:
     </Suspense>
   );
 }
-
-export default ReactComponentController;
