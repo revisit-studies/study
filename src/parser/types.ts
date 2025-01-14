@@ -420,6 +420,8 @@ export interface RadioResponse extends BaseResponse {
   rightLabel?: string;
   /** Whether to render the radio buttons horizontally. Defaults to false, so they render horizontally. */
   horizontal?: boolean;
+  /** Whether to render the radios with an "other" option. */
+  withOther?: boolean;
 }
 
 /**
@@ -447,6 +449,8 @@ export interface CheckboxResponse extends BaseResponse {
   maxSelections?: number;
   /** Whether to render the checkboxes horizontally. Defaults to false, so they render horizontally. */
   horizontal?: boolean;
+  /** Whether to render the checkboxes with an "other" option. */
+  withOther?: boolean;
 }
 
 /**

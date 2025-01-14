@@ -239,6 +239,10 @@
         "withDivider": {
           "description": "Renders the response with a trailing divider.",
           "type": "boolean"
+        },
+        "withOther": {
+          "description": "Whether to render the checkboxes with an \"other\" option.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1380,6 +1384,10 @@
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withOther": {
+          "description": "Whether to render the radios with an \"other\" option.",
           "type": "boolean"
         }
       },
