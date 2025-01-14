@@ -175,6 +175,10 @@
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
+        "horizontal": {
+          "description": "Whether to render the checkboxes horizontally. Defaults to false, so they render horizontally.",
+          "type": "boolean"
+        },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
@@ -231,10 +235,6 @@
         "type": {
           "const": "checkbox",
           "type": "string"
-        },
-        "vertical": {
-          "description": "Whether to render the checkboxes vertically. Defaults to false, so they render horizontally.",
-          "type": "boolean"
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider.",
@@ -1317,6 +1317,10 @@
           "description": "Controls whether the response is hidden.",
           "type": "boolean"
         },
+        "horizontal": {
+          "description": "Whether to render the radio buttons horizontally. Defaults to false, so they render horizontally.",
+          "type": "boolean"
+        },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
@@ -1373,10 +1377,6 @@
         "type": {
           "const": "radio",
           "type": "string"
-        },
-        "vertical": {
-          "description": "Whether to render the radio buttons vertically. Defaults to false, so they render horizontally.",
-          "type": "boolean"
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider.",

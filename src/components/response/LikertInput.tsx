@@ -26,6 +26,7 @@ export function LikertInput({
     ...response,
     type: 'radio',
     options,
+    horizontal: true,
   };
 
   return (

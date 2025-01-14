@@ -4,7 +4,7 @@ import {
 import { RadioResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
-import { VerticalHandler } from './VerticalHandler';
+import { HorizontalHandler } from './HorizontalHandler';
 
 export function RadioInput({
   response,
@@ -28,7 +28,7 @@ export function RadioInput({
     leftLabel,
     rightLabel,
     secondaryText,
-    vertical,
+    horizontal,
   } = response;
 
   const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
@@ -51,21 +51,21 @@ export function RadioInput({
       error={generateErrorMessage(response, answer, optionsAsStringOptions)}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
-      <Group gap="lg" align="flex-end" mt={vertical ? 'sm' : 0}>
+      <Group gap="lg" align="flex-end" mt={horizontal ? 0 : 'sm'}>
         {leftLabel ? <Text>{leftLabel}</Text> : null}
-        <VerticalHandler vertical={!!vertical} style={{ flexGrow: 1 }}>
+        <HorizontalHandler horizontal={!!horizontal} style={{ flexGrow: 1 }}>
           {optionsAsStringOptions.map((radio) => (
             <div
               key={radio.label}
               style={{
                 display: 'flex',
-                flexDirection: vertical ? 'row' : 'column',
-                gap: vertical ? rem(12) : 'unset',
+                flexDirection: horizontal ? 'column' : 'row',
+                gap: horizontal ? 'unset' : rem(12),
                 flex: stretch ? 1 : 'unset',
                 alignItems: 'center',
               }}
             >
-              {!vertical && <Text size="sm">{radio.label}</Text>}
+              {horizontal && <Text size="sm">{radio.label}</Text>}
               <Radio
                 disabled={disabled}
                 value={radio.value}
@@ -74,10 +74,10 @@ export function RadioInput({
                   label: { display: 'none' },
                 }}
               />
-              {vertical && <Text size="sm">{radio.label}</Text>}
+              {!horizontal && <Text size="sm">{radio.label}</Text>}
             </div>
           ))}
-        </VerticalHandler>
+        </HorizontalHandler>
         <Text>{rightLabel}</Text>
       </Group>
     </Radio.Group>
