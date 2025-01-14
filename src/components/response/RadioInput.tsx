@@ -1,9 +1,10 @@
 import {
-  Box, Flex, Group, Radio, Text,
+  Box, Flex, Group, Radio, rem, Text,
 } from '@mantine/core';
 import { RadioResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
+import { VerticalHandler } from './VerticalHandler';
 
 export function RadioInput({
   response,
@@ -27,6 +28,7 @@ export function RadioInput({
     leftLabel,
     rightLabel,
     secondaryText,
+    vertical,
   } = response;
 
   const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
@@ -49,36 +51,33 @@ export function RadioInput({
       error={generateErrorMessage(response, answer, optionsAsStringOptions)}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
-      <Group
-        mt="md"
-        gap="lg"
-        style={{
-          display: 'flex',
-          alignItems: 'flex-end',
-          justifyContent: stretch ? 'space-around' : 'inherit',
-        }}
-      >
+      <Group gap="lg" align="flex-end" mt={vertical ? 'sm' : 0}>
         {leftLabel ? <Text>{leftLabel}</Text> : null}
-        {optionsAsStringOptions.map((radio) => (
-          <div
-            key={radio.label}
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-            }}
-          >
-            <Text>{radio.label}</Text>
-            <Radio
-              disabled={disabled}
-              value={radio.value}
-              label={radio.label}
-              styles={{
-                label: { display: 'none' },
+        <VerticalHandler vertical={!!vertical} style={{ flexGrow: 1 }}>
+          {optionsAsStringOptions.map((radio) => (
+            <div
+              key={radio.label}
+              style={{
+                display: 'flex',
+                flexDirection: vertical ? 'row' : 'column',
+                gap: vertical ? rem(12) : 'unset',
+                flex: stretch ? 1 : 'unset',
+                alignItems: 'center',
               }}
-            />
-          </div>
-        ))}
+            >
+              {!vertical && <Text size="sm">{radio.label}</Text>}
+              <Radio
+                disabled={disabled}
+                value={radio.value}
+                label={radio.label}
+                styles={{
+                  label: { display: 'none' },
+                }}
+              />
+              {vertical && <Text size="sm">{radio.label}</Text>}
+            </div>
+          ))}
+        </VerticalHandler>
         <Text>{rightLabel}</Text>
       </Group>
     </Radio.Group>

@@ -4,6 +4,7 @@ import {
 import { CheckboxResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
+import { VerticalHandler } from './VerticalHandler';
 
 export function CheckBoxInput({
   response,
@@ -23,6 +24,7 @@ export function CheckBoxInput({
     required,
     options,
     secondaryText,
+    vertical,
   } = response;
 
   const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
@@ -43,14 +45,16 @@ export function CheckBoxInput({
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
       <Group mt="xs">
-        {optionsAsStringOptions.map((option) => (
-          <Checkbox
-            key={option.value}
-            disabled={disabled}
-            value={option.value}
-            label={option.label}
-          />
-        ))}
+        <VerticalHandler vertical={!!vertical} style={{ flexGrow: 1 }}>
+          {optionsAsStringOptions.map((option) => (
+            <Checkbox
+              key={option.value}
+              disabled={disabled}
+              value={option.value}
+              label={option.label}
+            />
+          ))}
+        </VerticalHandler>
       </Group>
     </Checkbox.Group>
   );
