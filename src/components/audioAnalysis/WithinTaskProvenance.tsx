@@ -11,9 +11,19 @@ const RECT_WIDTH = 3;
 export function WithinTaskProvenance({
   xScale, answer, height, currentNode, setCurrentNode, taskName,
 } : {answer: StoredAnswer, height: number, xScale: d3.ScaleLinear<number, number>, currentNode: string | null, setCurrentNode: (node: string, nodeTime: number, t: string) => void, taskName: string}) {
-  const colorPlatte = ['var(--mantine-color-yellow-5)', 'var(--mantine-color-green-5)', 'var(--mantine-color-blue-5)', 'var(--mantine-color-violet-5)', 'var(--mantine-color-cyan-5)'];
+  const colorPlatte = [
+    'var(--mantine-color-yellow-8)',
+    'var(--mantine-color-green-8)',
+    'var(--mantine-color-indigo-8)',
+    'var(--mantine-color-violet-8)',
+    'var(--mantine-color-cyan-8)',
+    'var(--mantine-color-orange-3)',
+    'var(--mantine-color-lime-3)',
+    'var(--mantine-color-teal-3)',
+    'var(--mantine-color-pink-3)',
+  ];
   const colorMap = new Map();
-  colorMap.set('Root', 'var(--mantine-color-grape-2)');
+  colorMap.set('Root', 'var(--mantine-color-grape-3)');
   if (answer.provenanceGraph) {
     let idx = 0;
     Object.entries(answer.provenanceGraph.nodes)
