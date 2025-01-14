@@ -10,7 +10,7 @@ const RECT_WIDTH = 3;
 
 export function WithinTaskProvenance({
   xScale, answer, height, currentNode, setCurrentNode, taskName,
-} : {answer: StoredAnswer, height: number, xScale: d3.ScaleLinear<number, number>, currentNode: string | null, setCurrentNode: (node: string, nodeTime: number, t: string) => void, taskName: string}) {
+}: { answer: StoredAnswer, height: number, xScale: d3.ScaleLinear<number, number>, currentNode: string | null, setCurrentNode: (node: string, nodeTime: number, t: string) => void, taskName: string }) {
   const colorPlatte = [
     'var(--mantine-color-yellow-8)',
     'var(--mantine-color-green-8)',
@@ -61,7 +61,6 @@ export function WithinTaskProvenance({
             </Stack>
           </Popover.Dropdown>
         </Popover>
-
       </Affix>
     </g>
   );
