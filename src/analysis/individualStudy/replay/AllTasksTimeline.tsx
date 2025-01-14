@@ -200,11 +200,9 @@ export function AllTasksTimeline({
                 </Text>
               ) : null }
 
-            {partName ? (
-              <Text size="md">
-                {partName}
-              </Text>
-            ) : null}
+            <Text size="md">
+              {partName || participantData.participantId}
+            </Text>
 
             {participantData.completed ? null : <Text size="xl" c="red">Not completed</Text>}
 

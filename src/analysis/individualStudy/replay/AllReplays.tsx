@@ -12,7 +12,7 @@ import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
 
 // current active stimuli presented to the user
-export default function AllReplays({ visibleParticipants, studyConfig }: {visibleParticipants : ParticipantData[], studyConfig: StudyConfig | undefined}) {
+export function AllReplays({ visibleParticipants, studyConfig }: {visibleParticipants : ParticipantData[], studyConfig: StudyConfig | undefined}) {
   const { studyId } = useParams();
 
   const [ref, { width }] = useResizeObserver();
