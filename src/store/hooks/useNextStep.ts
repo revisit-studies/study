@@ -92,9 +92,9 @@ export function useNextStep() {
     }, {}) as StoredAnswer['answer'];
     // Set the other text in the answer
     Object.entries(otherTexts).forEach(([key, value]) => {
-      if (Array.isArray(answer[key]) && answer[key].includes('__other')) {
-        answer[key] = answer[key].filter((item) => item !== '__other');
-        answer[key].push(`other:${value}`);
+      if (Array.isArray(answer[key]) && (answer[key] as string[]).includes('__other')) {
+        (answer[key] as string[]) = (answer[key] as string[]).filter((item) => item !== '__other');
+        (answer[key] as string[]).push(`other:${value}`);
       }
       if (typeof answer[key] === 'string' && answer[key] === '__other') {
         answer[key] = `other:${value}`;
@@ -219,7 +219,7 @@ export function useNextStep() {
     }
 
     navigate(`/${studyId}/${encryptIndex(nextStep)}${window.location.search}`);
-  }, [currentStep, trialValidation, identifier, windowEvents, dataCollectionEnabled, storedAnswer, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setIframeAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, studyConfig, participantSequence]);
+  }, [currentStep, trialValidation, identifier, otherTexts, storedAnswer, windowEvents, dataCollectionEnabled, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setIframeAnswers, resetOtherText, setMatrixAnswersCheckbox, setMatrixAnswersRadio, studyConfig, participantSequence]);
 
   return {
     isNextDisabled,

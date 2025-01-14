@@ -1,7 +1,7 @@
 import { Box, Divider } from '@mantine/core';
 import { useSearchParams } from 'react-router-dom';
 import { useMemo } from 'react';
-import { IndividualComponent, Response } from '../../parser/types';
+import { IndividualComponent, Response, StoredAnswer } from '../../parser/types';
 import { CheckBoxInput } from './CheckBoxInput';
 import { DropdownInput } from './DropdownInput';
 import { IframeInput } from './IframeInput';
@@ -23,7 +23,7 @@ export function ResponseSwitcher({
 }: {
   response: Response;
   answer: { value?: object };
-  storedAnswer?: Record<string, unknown>;
+  storedAnswer?: StoredAnswer['answer'][string];
   index: number;
   configInUse: IndividualComponent;
 }) {
