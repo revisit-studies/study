@@ -145,7 +145,7 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
     }
   }, [_setCurrentNode, currentNode, participant, participantId, playTime, componentAndIndex]);
 
-  const startTime = useMemo(() => participant?.answers[componentAndIndex].startTime || 0, [participant, componentAndIndex]);
+  const startTime = useMemo(() => participant?.answers[componentAndIndex]?.startTime || 0, [participant, componentAndIndex]);
 
   useEffect(() => {
     if (totalAudioLength === 0) {
@@ -154,6 +154,13 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
       setTimeString(`${humanReadableDuration(playTime - startTime)} / ${humanReadableDuration(totalAudioLength * 1000)}`);
     }
   }, [componentAndIndex, participant, playTime, setTimeString, startTime, totalAudioLength]);
+
+  useEffect(() => {
+    if (!analysisHasAudio && analysisHasProvenance && participant) {
+      const length = participant.answers[componentAndIndex].endTime - participant.answers[componentAndIndex].startTime;
+      setTotalAudioLength(length > -1 ? length / 1000 : 0);
+    }
+  }, [analysisHasAudio, analysisHasProvenance, componentAndIndex, participant]);
 
   const isAnalysis = useIsAnalysis();
   const wavesurfer = useRef<WaveSurferType | null>(null);
@@ -173,10 +180,6 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
           waveSurfer.seekTo(0);
           waveSurfer.on('redrawcomplete', () => setWaveSurferWidth(waveSurfer.getWidth()));
         } catch (error: any) {
-          storeDispatch(setAnalysisHasAudio(false));
-          const length = participant.answers[componentAndIndex].endTime - participant.answers[componentAndIndex].startTime;
-          setTotalAudioLength(length > -1 ? length / 1000 : 0);
-
           storeDispatch(setAnalysisHasAudio(false));
           throw new Error(error);
         }

@@ -93,7 +93,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   private firestore: Firestore;
 
-  private collectionPrefix = import.meta.env.DEV ? 'dev-' : 'prod-';
+  private collectionPrefix = 'prod-';
 
   private studyCollection:
     | CollectionReference<DocumentData, DocumentData>
@@ -221,10 +221,12 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
     // Initialize participant
     const participantConfigHash = await hash(JSON.stringify(config));
+    const { currentRow, creationIndex } = await this.getSequence();
     this.participantData = {
       participantId: this.currentParticipantId,
       participantConfigHash,
-      sequence: await this.getSequence(),
+      sequence: currentRow,
+      participantIndex: creationIndex,
       answers: {},
       searchParams,
       metadata,
@@ -434,6 +436,7 @@ export class FirebaseStorageEngine extends StorageEngine {
           rejected: false,
           claimed: false,
           completed: null,
+          createdTime: serverTimestamp(),
         });
       }
     } else if (modes.dataCollectionEnabled) {
@@ -443,6 +446,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         rejected: false,
         claimed: false,
         completed: null,
+        createdTime: serverTimestamp(),
       });
     }
 
@@ -468,7 +472,11 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Latin square is empty');
     }
 
-    return currentRow;
+    const creationSorted = intents.sort((a, b) => a.createdTime - b.createdTime);
+
+    const creationIndex = creationSorted.findIndex((intent) => intent.participantId === this.currentParticipantId) + 1;
+
+    return { currentRow, creationIndex };
   }
 
   async getAllParticipantsData() {
