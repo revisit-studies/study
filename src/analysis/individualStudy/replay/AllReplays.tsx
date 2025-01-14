@@ -18,12 +18,14 @@ export function AllReplays({ visibleParticipants, studyConfig }: {visiblePartici
       return undefined;
     }
 
-    return Math.max(...visibleParticipants.map((part) => {
+    const maxDiff = Math.max(...visibleParticipants.map((part) => {
       const minStart = Math.min(...Object.values(part.answers).map((answer) => answer.startTime || 0));
       const maxEnd = Math.max(...Object.values(part.answers).map((answer) => answer.endTime || 0));
 
-      return maxEnd - minStart;
+      return maxEnd && minStart ? maxEnd - minStart : 0;
     }));
+
+    return maxDiff;
   }, [scaleByTime, visibleParticipants]);
 
   return (
