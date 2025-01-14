@@ -6,7 +6,6 @@ import {
   Button,
   Badge,
 } from '@mantine/core';
-import { useNavigate } from 'react-router-dom';
 import {
   IconCheck, IconExternalLink, IconHourglassEmpty, IconX,
 } from '@tabler/icons-react';
@@ -28,14 +27,12 @@ const margin = {
 export function AllTasksTimeline({
   participantData, width, height, selectedTask, studyId, studyConfig, maxLength,
 } : {participantData: ParticipantData, width: number, studyId: string, height: number, selectedTask?: string | null, studyConfig: StudyConfig | undefined, maxLength: number | undefined}) {
-  const navigate = useNavigate();
-
   const clickTask = useCallback((task: string) => {
     const split = task.split('_');
     const index = +split[split.length - 1];
 
-    navigate(`/${studyId}/${encryptIndex(index)}?participantId=${participantData.participantId}`);
-  }, [navigate, participantData.participantId, studyId]);
+    window.open(`${PREFIX}${studyId}/${encryptIndex(index)}?participantId=${participantData.participantId}`, '_blank');
+  }, [participantData.participantId, studyId]);
 
   const xScale = useMemo(() => {
     const allStartTimes = Object.values(participantData.answers || {}).filter((answer) => answer.startTime).map((answer) => [answer.startTime, answer.endTime]).flat();
@@ -216,7 +213,6 @@ export function AllTasksTimeline({
               >
                 {correctAnswersCount}
               </Badge>
-
               <Badge
                 variant="light"
                 size="lg"
@@ -226,7 +222,6 @@ export function AllTasksTimeline({
               >
                 {totalAnswersWithCorrectCount - correctAnswersCount}
               </Badge>
-
               <Badge
                 variant="light"
                 size="lg"

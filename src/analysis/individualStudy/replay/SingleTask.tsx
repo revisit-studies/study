@@ -33,8 +33,8 @@ export function SingleTask({
             <Text lineClamp={1} ref={ref} mx={0} style={{ width: 'fit-content', fontWeight: 600 }} size="12px">
               {name}
             </Text>
-            {(hasCorrect ? isCorrect ? <IconCheck color="#006A4E" style={{ marginTop: 2, strokeWidth: 4 }} size="14" /> : (
-              <IconX color="#B31B1B" style={{ marginTop: 2, strokeWidth: 4 }} size={14} />
+            {(hasCorrect ? isCorrect ? <IconCheck color="var(--mantine-color-green-6)" style={{ marginTop: 2, strokeWidth: 4 }} size="14" /> : (
+              <IconX color="var(--mantine-color-red-6)" style={{ marginTop: 2, strokeWidth: 4 }} size={14} />
             ) : '')}
           </Group>
 
