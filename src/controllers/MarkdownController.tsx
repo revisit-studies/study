@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../components/ReactMarkdownWrapper';
 import { MarkdownComponent } from '../parser/types';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
-import ResourceNotFound from '../ResourceNotFound';
+import { ResourceNotFound } from '../ResourceNotFound';
 
-export default function MarkdownController({ currentConfig }: { currentConfig: MarkdownComponent; }) {
+export function MarkdownController({ currentConfig }: { currentConfig: MarkdownComponent; }) {
   const [importedText, setImportedText] = useState<string>('');
 
   const [loading, setLoading] = useState(true);

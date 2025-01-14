@@ -5,7 +5,7 @@ import {
 } from '@mantine/core';
 import { useLocation } from 'react-router-dom';
 
-export default function ResourceNotFound({ email, path }: { email?: string, path?: string }) {
+export function ResourceNotFound({ email, path }: { email?: string, path?: string }) {
   const location = useLocation();
   return (
     <Container fluid my={50} maw={800} mx="auto">

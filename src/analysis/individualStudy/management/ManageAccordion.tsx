@@ -3,7 +3,7 @@ import { DataManagementAccordionItem } from './DataManagementAccordionItem';
 import { RevisitModesAccordionItem } from './RevisitModesAccordionItem';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 
-export default function ManageAccordion({ studyId, refresh }: { studyId: string, refresh: () => Promise<void> }) {
+export function ManageAccordion({ studyId, refresh }: { studyId: string, refresh: () => Promise<void> }) {
   const { storageEngine } = useStorageEngine();
 
   return (

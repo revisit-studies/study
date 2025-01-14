@@ -7,7 +7,7 @@ import { StudyConfig } from '../../../parser/types';
 import { studyComponentToIndividualComponent } from '../../../utils/handleComponentInheritance';
 import { ResponseVisualization } from './ResponseVisualization';
 
-export default function TrialVisualization({
+export function TrialVisualization({
   participantData, studyConfig, trialId,
 }: {
   participantData: ParticipantData[]; studyConfig: StudyConfig, trialId?: string;

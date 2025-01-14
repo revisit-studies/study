@@ -1,29 +1,31 @@
-import { Box } from '@mantine/core';
+import { Box, Divider } from '@mantine/core';
 import { useSearchParams } from 'react-router-dom';
 import { useMemo } from 'react';
-import { Response } from '../../parser/types';
-import CheckBoxInput from './CheckBoxInput';
-import DropdownInput from './DropdownInput';
-import IframeInput from './IframeInput';
-import LikertInput from './LikertInput';
-import NumericInput from './NumericInput';
-import RadioInput from './RadioInput';
-import SliderInput from './SliderInput';
-import StringInput from './StringInput';
-import TextAreaInput from './TextAreaInput';
+import { IndividualComponent, Response, StoredAnswer } from '../../parser/types';
+import { CheckBoxInput } from './CheckBoxInput';
+import { DropdownInput } from './DropdownInput';
+import { IframeInput } from './IframeInput';
+import { LikertInput } from './LikertInput';
+import { NumericInput } from './NumericInput';
+import { RadioInput } from './RadioInput';
+import { SliderInput } from './SliderInput';
+import { StringInput } from './StringInput';
+import { TextAreaInput } from './TextAreaInput';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
-import MatrixInput from './MatrixInput';
+import { MatrixInput } from './MatrixInput';
 
-export default function ResponseSwitcher({
+export function ResponseSwitcher({
   response,
   answer,
   storedAnswer,
   index,
+  configInUse,
 }: {
   response: Response;
   answer: { value?: object };
-  storedAnswer?: Record<string, unknown>;
+  storedAnswer?: StoredAnswer['answer'][string];
   index: number;
+  configInUse: IndividualComponent;
 }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ans: { value?: any } = (storedAnswer ? { value: storedAnswer } : answer) || { value: undefined };
@@ -44,7 +46,7 @@ export default function ResponseSwitcher({
   }, [disabled, response.paramCapture, searchParams]);
 
   return (
-    <Box mb="md">
+    <Box mb={response.withDivider || configInUse.responseDividers ? 'xl' : 'lg'}>
       {response.type === 'numerical' && (
         <NumericInput
           response={response}
@@ -134,6 +136,8 @@ export default function ResponseSwitcher({
           enumerateQuestions={enumerateQuestions}
         />
       )}
+
+      {(response.withDivider || configInUse.responseDividers) && <Divider mt="xl" mb="xs" />}
     </Box>
   );
 }

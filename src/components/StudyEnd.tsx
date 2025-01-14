@@ -3,7 +3,7 @@ import {
 } from '@mantine/core';
 import { useEffect, useState, useCallback } from 'react';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
-import ReactMarkdownWrapper from './ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from './ReactMarkdownWrapper';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
 import { useStoreSelector } from '../store/store';

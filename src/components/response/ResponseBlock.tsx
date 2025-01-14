@@ -17,7 +17,7 @@ import {
 import { deepCopy } from '../../utils/deepCopy';
 import { NextButton } from '../NextButton';
 import { useAnswerField } from './utils';
-import ResponseSwitcher from './ResponseSwitcher';
+import { ResponseSwitcher } from './ResponseSwitcher';
 import { StoredAnswer, TrrackedProvenance } from '../../store/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 
@@ -28,7 +28,7 @@ type Props = {
   style?: React.CSSProperties;
 };
 
-export default function ResponseBlock({
+export function ResponseBlock({
   config,
   location,
   status,
@@ -218,6 +218,7 @@ export default function ResponseBlock({
                   }}
                   response={response}
                   index={index + 1}
+                  configInUse={configInUse}
                 />
                 {alertConfig[response.id].visible && (
                   <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>

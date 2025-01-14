@@ -179,6 +179,8 @@ export interface BaseResponse {
   paramCapture?: string;
   /** Controls whether the response is hidden. */
   hidden?: boolean;
+  /** Renders the response with a trailing divider. */
+  withDivider?: boolean;
 }
 
 /**
@@ -418,6 +420,10 @@ export interface RadioResponse extends BaseResponse {
   leftLabel?: string;
   /** The right label of the radio group. Used in Likert scales for example */
   rightLabel?: string;
+  /** Whether to render the radio buttons horizontally. Defaults to false, so they render horizontally. */
+  horizontal?: boolean;
+  /** Whether to render the radios with an "other" option. */
+  withOther?: boolean;
 }
 
 /**
@@ -443,6 +449,10 @@ export interface CheckboxResponse extends BaseResponse {
   minSelections?: number;
   /** The maximum number of selections that are required. */
   maxSelections?: number;
+  /** Whether to render the checkboxes horizontally. Defaults to false, so they render horizontally. */
+  horizontal?: boolean;
+  /** Whether to render the checkboxes with an "other" option. */
+  withOther?: boolean;
 }
 
 /**
@@ -534,6 +544,8 @@ export interface BaseIndividualComponent {
   nextButtonDisableTime?: number;
   /** A timer (in ms) after which the next button will be enabled. */
   nextButtonEnableTime?: number;
+  /** Whether to show the response dividers. Defaults to false. */
+  responseDividers?: boolean;
 }
 
 /**

@@ -9,15 +9,15 @@ import {
 import React, {
   useCallback, useEffect, useMemo, useState,
 } from 'react';
-import AppHeader from '../interface/AppHeader';
+import { AppHeader } from '../interface/AppHeader';
 import { GlobalConfig, ParticipantData, StudyConfig } from '../../parser/types';
 import { getStudyConfig } from '../../utils/fetchConfig';
 import { TableView } from './table/TableView';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import ManageAccordion from './management/ManageAccordion';
+import { ManageAccordion } from './management/ManageAccordion';
 import { useAuth } from '../../store/hooks/useAuth';
 import { StatsView } from './stats/StatsView';
-import AllReplays from './replay/AllReplays';
+import { AllReplays } from './replay/AllReplays';
 import { parseStudyConfig } from '../../parser/parser';
 
 export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig; }) {

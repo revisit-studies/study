@@ -1,11 +1,11 @@
 import { Modal } from '@mantine/core';
 import { useEffect, useState } from 'react';
-import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { useStoreDispatch, useStoreSelector, useStoreActions } from '../../store/store';
 import { getStaticAssetByPath } from '../../utils/getStaticAsset';
-import ResourceNotFound from '../../ResourceNotFound';
+import { ResourceNotFound } from '../../ResourceNotFound';
 
-export default function HelpModal() {
+export function HelpModal() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const showHelpText = useStoreSelector((state) => state.showHelpText);
   const config = useStoreSelector((state) => state.config);
