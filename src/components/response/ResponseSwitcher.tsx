@@ -1,7 +1,7 @@
-import { Box } from '@mantine/core';
+import { Box, Divider } from '@mantine/core';
 import { useSearchParams } from 'react-router-dom';
 import { useMemo } from 'react';
-import { Response } from '../../parser/types';
+import { IndividualComponent, Response } from '../../parser/types';
 import { CheckBoxInput } from './CheckBoxInput';
 import { DropdownInput } from './DropdownInput';
 import { IframeInput } from './IframeInput';
@@ -19,11 +19,13 @@ export function ResponseSwitcher({
   answer,
   storedAnswer,
   index,
+  configInUse,
 }: {
   response: Response;
   answer: { value?: object };
   storedAnswer?: Record<string, unknown>;
   index: number;
+  configInUse: IndividualComponent;
 }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const ans: { value?: any } = (storedAnswer ? { value: storedAnswer } : answer) || { value: undefined };
@@ -44,7 +46,7 @@ export function ResponseSwitcher({
   }, [disabled, response.paramCapture, searchParams]);
 
   return (
-    <Box mb="md">
+    <Box mb={response.withDivider || configInUse.responseDividers ? 'xl' : 'lg'}>
       {response.type === 'numerical' && (
         <NumericInput
           response={response}
@@ -134,6 +136,8 @@ export function ResponseSwitcher({
           enumerateQuestions={enumerateQuestions}
         />
       )}
+
+      {(response.withDivider || configInUse.responseDividers) && <Divider mt="xl" mb="xs" />}
     </Box>
   );
 }

@@ -218,6 +218,7 @@ export function ResponseBlock({
                   }}
                   response={response}
                   index={index + 1}
+                  configInUse={configInUse}
                 />
                 {alertConfig[response.id].visible && (
                   <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>
