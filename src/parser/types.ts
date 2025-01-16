@@ -1247,8 +1247,6 @@ export interface StudyConfig {
 export interface LibraryConfig {
   /** A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information */
   $schema: string;
-  /** The name of the library. */
-  name?: string;
   /** A description of the library. */
   description?: string;
   /** The reference to the paper where the content of the library is based on. */

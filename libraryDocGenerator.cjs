@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 // Loops over the files in public/libraries/*/config.json and outputs a markdown document for each library
-// Each json contains optional keys "name", "description", and "reference" that are used to generate the markdown
+// Each json contains optional keys "description", and "reference" that are used to generate the markdown. Name comes from the folder name
 // The markdown is output to docsLibraries in the root of the project, which can then be copied to the website repo
 
 const fs = require('fs');
@@ -19,14 +19,8 @@ libraries.forEach((library) => {
   const libraryPath = path.join(librariesPath, library, 'config.json');
   const libraryConfig = JSON.parse(fs.readFileSync(libraryPath, 'utf8'));
 
-  if (!libraryConfig.name) {
-    // eslint-disable-next-line no-console
-    console.log(`Library ${library} does not have a name`);
-    return;
-  }
-
   const markdown = `
-# ${libraryConfig.name}
+# ${library}
 
 ${libraryConfig.description || ''}
 
@@ -39,4 +33,5 @@ ${libraryConfig.reference || ''}
   fs.writeFileSync(docsLibraryPath, markdown);
 });
 
+// eslint-disable-next-line no-console
 console.log('Library documentation generated');
