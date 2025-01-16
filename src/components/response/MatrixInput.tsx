@@ -224,12 +224,12 @@ export function MatrixInput({
                 width: '100%',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'center',
+                justifyContent: 'end',
                 borderRight: '1px solid var(--mantine-color-dark-0)',
                 backgroundColor: `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
                 overflowY: 'hidden',
               }}
-              ta="center"
+              ta="right"
               p="sm"
               miw={140}
             >
