@@ -5,7 +5,7 @@ import { Vega, VisualizationSpec, View } from 'react-vega';
 import { initializeTrrack, Registry } from '@trrack/core';
 import { VegaComponent } from '../parser/types';
 import { getJsonAssetByPath } from '../utils/getStaticAsset';
-import ResourceNotFound from '../ResourceNotFound';
+import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { StimulusParams } from '../store/types';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';

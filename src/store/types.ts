@@ -66,7 +66,7 @@ Each item in the window event is given a time, a position an event name, and som
 */
 export interface StoredAnswer {
   /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is the inputted value from the participant. */
-  answer: Record<string, { id: string, value: unknown }>;
+  answer: Record<string, string | number | boolean | string[] | Record<string, string>>;
   /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is a list of incorrect inputted values from the participant. Only relevant for trials with `provideFeedback` and correct answers enabled. */
   incorrectAnswers: Record<string, { id: string, value: unknown[] }>;
   /** Time that the user began interacting with the component in epoch milliseconds. */
@@ -138,6 +138,7 @@ export interface StoreState {
   trialValidation: TrialValidation;
   iframeAnswers: Record<string, unknown>;
   iframeProvenance: TrrackedProvenance | null;
+  otherTexts: Record<string, string>;
   metadata: ParticipantMetadata;
   analysisProvState: unknown | null;
   analysisIsPlaying: boolean;

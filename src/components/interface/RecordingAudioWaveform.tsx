@@ -9,7 +9,7 @@ import { WaveForm, WaveSurfer } from 'wavesurfer-react';
 import WaveSurferRef from 'wavesurfer.js';
 import RecordPlugin from 'wavesurfer.js/dist/plugins/record';
 
-export default function RecordingAudioWaveform({ width = 70, height = 36 }: { width?: number, height?: number }) {
+export function RecordingAudioWaveform({ width = 70, height = 36 }: { width?: number, height?: number }) {
   const wavesurferRef = useRef<WaveSurferRef | null>(null);
   const recording = useRef<RecordPlugin | null>(null);
   const [isMounted, setIsMounted] = useState(false);

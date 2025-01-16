@@ -46,7 +46,7 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
         );
       }
 
-      initObj = { ...initObj, [response.id]: initField };
+      initObj = { ...initObj, [response.id]: initField, [`${response.id}-dontKnow`]: '' };
     }
   });
 
@@ -59,7 +59,7 @@ const generateValidation = (responses: Response[]) => {
     if (response.required) {
       validateObj = {
         ...validateObj,
-        [response.id]: (value: string | string[] | object) => {
+        [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => {
           if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
             return Object.values(value).every((val) => val !== '') ? null : 'Empty Input';
           }
@@ -85,7 +85,7 @@ const generateValidation = (responses: Response[]) => {
             return value.toString() !== response.requiredValue.toString() ? 'Incorrect input' : null;
           }
           if (response.required) {
-            return value === null || value === undefined || value === '' ? 'Empty input' : null;
+            return (value === null || value === undefined || value === '') && !values[`${response.id}-dontKnow`] ? 'Empty input' : null;
           }
           return value === null ? 'Empty input' : null;
         },

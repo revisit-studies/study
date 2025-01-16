@@ -30,9 +30,9 @@ import {
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
-import RecordingAudioWaveform from './RecordingAudioWaveform';
+import { RecordingAudioWaveform } from './RecordingAudioWaveform';
 
-export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
+export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
   const metadata = useStoreSelector((state) => state.metadata);
 

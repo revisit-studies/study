@@ -7,7 +7,7 @@ import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { IconSettings } from '@tabler/icons-react';
 import { PREFIX } from '../../utils/Prefix';
 
-export default function AppHeader({ studyIds }: { studyIds: string[] }) {
+export function AppHeader({ studyIds }: { studyIds: string[] }) {
   const navigate = useNavigate();
   const { studyId } = useParams();
   const location = useLocation();

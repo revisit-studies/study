@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc3/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/updates/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Question Types and Form Elements Demo",
     "version": "pilot",
@@ -20,7 +20,8 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": true
+    "sidebar": true,
+    "enumerateQuestions": true
   },
   "components": {
     "survey": {
@@ -60,7 +61,6 @@
           "rightLabel": "Like",
           "leftLabel": "Dislike"
         },
-
         {
           "id": "multi-satisfaction",
           "prompt": "Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable) for the following items.",
@@ -73,9 +73,8 @@
             "The technique we developed",
             "The authors of the tools"
           ]
-         }, 
-
-         {
+        },
+        {
           "id": "multi-custom",
           "prompt": "Which categories do the following items belong to?",
           "secondaryText": "A matrix of checkboxes with custom options for categorization.",
@@ -93,9 +92,7 @@
             "Salmon",
             "Platypus"
           ]
-         
-         },
-
+        },
         {
           "id": "q4",
           "prompt": "Short text example",
@@ -124,7 +121,8 @@
             "Option 1",
             "Option 2",
             "Option 3"
-          ]
+          ],
+          "withOther": true
         },
         {
           "id": "q-radio",
@@ -135,7 +133,8 @@
           "options": [
             "Option 1",
             "Option 2"
-          ]
+          ],
+          "withOther": true
         },
         {
           "id": "q6",

@@ -9,15 +9,15 @@ import {
 import React, {
   useCallback, useEffect, useMemo, useState,
 } from 'react';
-import AppHeader from '../interface/AppHeader';
+import { AppHeader } from '../interface/AppHeader';
 import { GlobalConfig, ParticipantData, StudyConfig } from '../../parser/types';
 import { getStudyConfig } from '../../utils/fetchConfig';
 import { TableView } from './table/TableView';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
-import ManageAccordion from './management/ManageAccordion';
+import { ManageAccordion } from './management/ManageAccordion';
 import { useAuth } from '../../store/hooks/useAuth';
 import { StatsView } from './stats/StatsView';
-import AllReplays from './replay/AllReplays';
+import { AllReplays } from './replay/AllReplays';
 import { parseStudyConfig } from '../../parser/parser';
 
 export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig; }) {
@@ -137,7 +137,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
             </Tabs.Panel>
             <Tabs.Panel value="replay" pt="xs">
-              <AllReplays visibleParticipants={visibleParticipants} />
+              <AllReplays visibleParticipants={visibleParticipants} studyConfig={studyConfig} />
             </Tabs.Panel>
             <Tabs.Panel value="manage" pt="xs">
               {studyId && user.isAdmin ? <ManageAccordion studyId={studyId} refresh={getData} /> : <Container mt={20}><Alert title="Unauthorized Access" variant="light" color="red" icon={<IconInfoCircle />}>You are not authorized to manage the data for this study.</Alert></Container>}

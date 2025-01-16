@@ -1,5 +1,5 @@
 import {
-  Badge, Box, NavLink, Popover, Text,
+  Badge, Box, NavLink, Popover, Text, Tooltip,
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { IconArrowsShuffle, IconBrain, IconPackageImport } from '@tabler/icons-react';
@@ -251,11 +251,13 @@ export function StepsPanel({
                   opacity: sequenceStepsLength > 0 ? 1 : 0.5,
                 }}
               >
-                <Text size="sm" display="inline">
-                  {step.order}
+                <Text size="sm" display="inline" fw={700}>
+                  {step.id ? step.id : step.order}
                 </Text>
                 {step.order === 'random' || step.order === 'latinSquare' ? (
-                  <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
+                  <Tooltip label={step.order} position="right" withArrow>
+                    <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
+                  </Tooltip>
                 ) : null}
                 {participantView && (
                 <Badge ml={5} variant="light">

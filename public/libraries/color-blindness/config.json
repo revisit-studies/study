@@ -1,6 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc3/src/parser/LibraryConfigSchema.json",
-  "name": "color-blindness",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/ui-updates/src/parser/LibraryConfigSchema.json",
   "description": "This library is the Ishihara color blindness test. Each component contains an image of an Ishihara plate. The meta attribute of each plate describe what normal vision people, red color blind people, green color blind people, and total color blind people see from this plate. The user is asked to identify the number or pattern in the image. The library also contains two sequences: a short test and a full test. The short test contains 4 components and the full test contains all 24 components. The short test follows a random order and the full test follows a fixed order.",
   "reference": "https://www.colour-blindness.com/colour-blindness-tests/ishihara-colour-test-plates/",
   "components": {
@@ -25,17 +24,10 @@
         {
           "id": "plate1-response",
           "prompt": "Enter the number you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate1-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -66,17 +58,10 @@
         {
           "id": "plate2-response",
           "prompt": "Enter the number you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate2-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -107,17 +92,10 @@
         {
           "id": "plate3-response",
           "prompt": "Enter the number you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate3-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -148,17 +126,10 @@
         {
           "id": "plate4-response",
           "prompt": "Enter the number you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate5-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -189,17 +160,10 @@
         {
           "id": "plate5-response",
           "prompt": "Enter the number you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate5-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -232,15 +196,8 @@
           "prompt": "Enter the number you see:",
           "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate6-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -273,15 +230,8 @@
           "prompt": "Enter the number you see:",
           "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate7-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -314,15 +264,8 @@
           "prompt": "Enter the number you see:",
           "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate8-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -353,17 +296,10 @@
         {
           "id": "plate9-response",
           "prompt": "Enter the number you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate9-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -394,17 +330,10 @@
         {
           "id": "plate10-response",
           "prompt": "Enter the number you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate10-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -435,17 +364,10 @@
         {
           "id": "plate11-response",
           "prompt": "Enter the number you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate11-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -476,17 +398,10 @@
         {
           "id": "plate12-response",
           "prompt": "Enter the number you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate12-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -517,17 +432,10 @@
         {
           "id": "plate13-response",
           "prompt": "Enter the number you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate13-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -558,17 +466,10 @@
         {
           "id": "plate14-response",
           "prompt": "Enter the number you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate14-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -597,15 +498,8 @@
           "prompt": "Enter the number you see:",
           "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate15-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -632,17 +526,10 @@
         {
           "id": "plate16-response",
           "prompt": "Enter the number you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate16-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -673,17 +560,10 @@
         {
           "id": "plate17-response",
           "prompt": "Enter the number you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
-          "type": "numerical"
-        },
-        {
-          "id": "plate17-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -702,7 +582,7 @@
         "total-color-blindness-see": "nothing",
         "plateType": "diagnostic"
       },
-      "instruction": "What patterndo you see in this image?",
+      "instruction": "What pattern do you see in this image?",
       "instructionLocation": "sidebar",
       "type": "image",
       "path": "libraries/color-blindness/assets/Ishihara18.png",
@@ -714,17 +594,9 @@
         {
           "id": "plate18-response",
           "prompt": "Enter the pattern you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
           "type": "shortText"
-        },
-        {
-          "id": "plate18-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
         }
       ],
       "correctAnswer": [
@@ -751,17 +623,9 @@
         {
           "id": "plate19-response",
           "prompt": "Enter the pattern you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
           "type": "shortText"
-        },
-        {
-          "id": "plate19-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
         }
       ],
       "correctAnswer": [
@@ -788,17 +652,10 @@
         {
           "id": "plate20-response",
           "prompt": "Enter the number you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
-          "type": "shortText"
-        },
-        {
-          "id": "plate20-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -857,14 +714,6 @@
           "required": true,
           "location": "sidebar",
           "type": "shortText"
-        },
-        {
-          "id": "plate22-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
         }
       ],
       "correctAnswer": [
@@ -891,17 +740,10 @@
         {
           "id": "plate23-response",
           "prompt": "Enter the number you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
-          "type": "shortText"
-        },
-        {
-          "id": "plate23-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
+          "type": "numerical",
+          "withDontKnow": true
         }
       ],
       "correctAnswer": [
@@ -928,17 +770,9 @@
         {
           "id": "plate24-response",
           "prompt": "Enter what you see:",
-          "required": false,
+          "required": true,
           "location": "sidebar",
           "type": "shortText"
-        },
-        {
-          "id": "plate24-response-idk",
-          "prompt": "",
-          "required": false,
-          "location": "sidebar",
-          "type": "radio",
-          "options": ["I don't know"]
         }
       ],
       "correctAnswer": [
