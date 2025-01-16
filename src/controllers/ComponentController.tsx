@@ -4,15 +4,15 @@ import {
 import merge from 'lodash.merge';
 import { useSearchParams } from 'react-router-dom';
 import { Center, Loader } from '@mantine/core';
-import ResponseBlock from '../components/response/ResponseBlock';
-import IframeController from './IframeController';
-import ImageController from './ImageController';
-import ReactComponentController from './ReactComponentController';
-import MarkdownController from './MarkdownController';
+import { ResponseBlock } from '../components/response/ResponseBlock';
+import { IframeController } from './IframeController';
+import { ImageController } from './ImageController';
+import { ReactComponentController } from './ReactComponentController';
+import { MarkdownController } from './MarkdownController';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
 import { useStoredAnswer } from '../store/hooks/useStoredAnswer';
-import ReactMarkdownWrapper from '../components/ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../components/ReactMarkdownWrapper';
 import { isInheritedComponent } from '../parser/utils';
 import { IndividualComponent } from '../parser/types';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
@@ -22,14 +22,14 @@ import {
 } from '../store/store';
 import { StudyEnd } from '../components/StudyEnd';
 import { TrainingFailed } from '../components/TrainingFailed';
-import ResourceNotFound from '../ResourceNotFound';
+import { ResourceNotFound } from '../ResourceNotFound';
 import { TimedOut } from '../components/TimedOut';
 import { findBlockForStep } from '../utils/getSequenceFlatMap';
 import { VegaController, VegaProvState } from './VegaController';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 
 // current active stimuli presented to the user
-export default function ComponentController() {
+export function ComponentController() {
   // Get the config for the current step
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();

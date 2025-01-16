@@ -7,7 +7,7 @@ import {
 import rehypeRaw from 'rehype-raw';
 import { JsxRuntimeComponents } from 'react-markdown/lib';
 
-export default function ReactMarkdownWrapper({ text, required }: { text: string; required?: boolean }) {
+export function ReactMarkdownWrapper({ text, required }: { text: string; required?: boolean }) {
   const components: Partial<JsxRuntimeComponents> = {
     img({
       node, width, height, ...props

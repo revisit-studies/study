@@ -16,7 +16,7 @@ const defaultStyle = {
   border: 0,
 };
 
-export default function IframeController({ currentConfig }: { currentConfig: WebsiteComponent; }) {
+export function IframeController({ currentConfig }: { currentConfig: WebsiteComponent; }) {
   const { setIframeAnswers, setIframeProvenance } = useStoreActions();
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();

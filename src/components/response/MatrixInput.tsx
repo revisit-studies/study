@@ -3,7 +3,7 @@ import {
 } from '@mantine/core';
 import { ChangeEvent } from 'react';
 import { MatrixResponse, StringOption } from '../../parser/types';
-import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { useStoreDispatch, useStoreActions } from '../../store/store';
 
 function CheckboxComponent({
@@ -95,7 +95,7 @@ function RadioGroupComponent({
   );
 }
 
-export default function MatrixInput({
+export function MatrixInput({
   response,
   answer,
   index,
@@ -156,8 +156,8 @@ export default function MatrixInput({
   const _m = _questions.length;
   return (
     <>
-      <Flex direction="row" wrap="nowrap" gap={0}>
-        {enumerateQuestions && <Box style={{ minWidth: 'fit-content' }}>{`${index}. `}</Box>}
+      <Flex direction="row" wrap="nowrap" gap={4}>
+        {enumerateQuestions && <Box style={{ minWidth: 'fit-content', fontSize: 16, fontWeight: 500 }}>{`${index}. `}</Box>}
         <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
           <ReactMarkdownWrapper text={prompt} required={required} />
         </Box>

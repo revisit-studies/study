@@ -116,6 +116,8 @@ export interface UIConfig {
   enumerateQuestions?: boolean;
   /** Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set. */
   timeoutReject?: boolean;
+  /** The default name field for a participant. Directs revisit to use the task and response id as a name in UI elements. For example, if you wanted the response 'prolificId' from the task 'introduction' to be the name, this field would be 'introduction.prolificId' */
+  participantNameField?: string;
 }
 
 /**
@@ -177,6 +179,10 @@ export interface BaseResponse {
   paramCapture?: string;
   /** Controls whether the response is hidden. */
   hidden?: boolean;
+  /** Renders the response with a trailing divider. */
+  withDivider?: boolean;
+  /** Renders the response with an option for "I don't know". This counts as a completed answer for the validation. */
+  withDontKnow?: boolean;
 }
 
 /**
@@ -416,6 +422,10 @@ export interface RadioResponse extends BaseResponse {
   leftLabel?: string;
   /** The right label of the radio group. Used in Likert scales for example */
   rightLabel?: string;
+  /** Whether to render the radio buttons horizontally. Defaults to false, so they render horizontally. */
+  horizontal?: boolean;
+  /** Whether to render the radios with an "other" option. */
+  withOther?: boolean;
 }
 
 /**
@@ -441,6 +451,10 @@ export interface CheckboxResponse extends BaseResponse {
   minSelections?: number;
   /** The maximum number of selections that are required. */
   maxSelections?: number;
+  /** Whether to render the checkboxes horizontally. Defaults to false, so they render horizontally. */
+  horizontal?: boolean;
+  /** Whether to render the checkboxes with an "other" option. */
+  withOther?: boolean;
 }
 
 /**
@@ -532,6 +546,8 @@ export interface BaseIndividualComponent {
   nextButtonDisableTime?: number;
   /** A timer (in ms) after which the next button will be enabled. */
   nextButtonEnableTime?: number;
+  /** Whether to show the response dividers. Defaults to false. */
+  responseDividers?: boolean;
 }
 
 /**

@@ -135,6 +135,10 @@
             },
             "type": "array"
           },
+          "responseDividers": {
+            "description": "Whether to show the response dividers. Defaults to false.",
+            "type": "boolean"
+          },
           "style": {
             "additionalProperties": {
               "type": "string"
@@ -169,6 +173,10 @@
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "horizontal": {
+          "description": "Whether to render the checkboxes horizontally. Defaults to false, so they render horizontally.",
           "type": "boolean"
         },
         "id": {
@@ -227,6 +235,18 @@
         "type": {
           "const": "checkbox",
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withOther": {
+          "description": "Whether to render the checkboxes with an \"other\" option.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -411,6 +431,14 @@
         "type": {
           "const": "dropdown",
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -463,6 +491,14 @@
         "type": {
           "const": "iframe",
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -538,6 +574,10 @@
             "$ref": "#/definitions/Response"
           },
           "type": "array"
+        },
+        "responseDividers": {
+          "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
         },
         "style": {
           "additionalProperties": {
@@ -766,6 +806,10 @@
           },
           "type": "array"
         },
+        "responseDividers": {
+          "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
+        },
         "style": {
           "additionalProperties": {
             "type": "string"
@@ -859,6 +903,14 @@
         "type": {
           "const": "likert",
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -915,6 +967,14 @@
         "type": {
           "const": "longText",
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -990,6 +1050,10 @@
             "$ref": "#/definitions/Response"
           },
           "type": "array"
+        },
+        "responseDividers": {
+          "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
@@ -1086,6 +1150,14 @@
             "matrix-checkbox"
           ],
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1170,6 +1242,14 @@
         "type": {
           "const": "numerical",
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1242,6 +1322,10 @@
           },
           "type": "array"
         },
+        "responseDividers": {
+          "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -1263,6 +1347,10 @@
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "horizontal": {
+          "description": "Whether to render the radio buttons horizontally. Defaults to false, so they render horizontally.",
           "type": "boolean"
         },
         "id": {
@@ -1321,6 +1409,18 @@
         "type": {
           "const": "radio",
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withOther": {
+          "description": "Whether to render the radios with an \"other\" option.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1430,6 +1530,10 @@
             "$ref": "#/definitions/Response"
           },
           "type": "array"
+        },
+        "responseDividers": {
+          "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
@@ -1574,6 +1678,14 @@
         "type": {
           "const": "shortText",
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1652,6 +1764,14 @@
         "type": {
           "const": "slider",
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1817,6 +1937,10 @@
           "description": "The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000.",
           "type": "number"
         },
+        "participantNameField": {
+          "description": "The default name field for a participant. Directs revisit to use the task and response id as a name in UI elements. For example, if you wanted the response 'prolificId' from the task 'introduction' to be the name, this field would be 'introduction.prolificId'",
+          "type": "string"
+        },
         "sidebar": {
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question.",
           "type": "boolean"
@@ -1930,6 +2054,10 @@
           },
           "type": "array"
         },
+        "responseDividers": {
+          "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -2011,6 +2139,10 @@
             "$ref": "#/definitions/Response"
           },
           "type": "array"
+        },
+        "responseDividers": {
+          "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
@@ -2099,6 +2231,10 @@
             "$ref": "#/definitions/Response"
           },
           "type": "array"
+        },
+        "responseDividers": {
+          "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",

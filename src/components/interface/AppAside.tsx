@@ -33,7 +33,7 @@ function InfoHover({ text }: { text: string }) {
   );
 }
 
-export default function AppAside() {
+export function AppAside() {
   const sequence = useStoreSelector((state) => state.sequence);
   const metadata = useStoreSelector((state) => state.metadata);
   const { toggleStudyBrowser } = useStoreActions();
