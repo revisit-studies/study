@@ -1,252 +1,471 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/StudyConfigSchema.json",
-  "studyMetadata": {
-    "title": "Super resolution image evaluation for cancer detection",
-    "version": "development",
-    "authors": [
-      "The Magic-Scan Team"
-    ],
-    "date": "2024-12-30",
-    "description": "This is a study to evaluate the effectiveness of super resolution images for cancer detection.",
-    "organizations": [
-      "University of Utah",
-      "CEDMAV"
-    ]
-  },
-  "recordStudyAudio": true,
-  "uiConfig": {
-    "contactEmail": "ishratjahan.eliza@utah.edu",
-    "helpTextPath": "super-resolution-study/assets/help.md",
-    "logoPath": "revisitAssets/revisitLogoSquare.svg",
-    "studyEndMsg": "**Thank you for your participation. Your responses have been recorded. If you have any questions feel free to contact us at [ishratjahan.eliza@utah.edu](mailto:ishratjahan.eliza@utah.edu)**",
-    "withProgressBar": true,
-    "autoDownloadStudy": false,
-    "sidebar": true,
-    "enumerateQuestions": true,
-    "sidebarWidth": 408
-  }, 
-  "baseComponents": {
-      "super":{
-        "type": "website",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+      "title": "Super resolution image evaluation for cancer detection",
+      "version": "development",
+      "authors": [
+        "The Magic-Scan Team"
+      ],
+      "date": "2024-12-30",
+      "description": "This is a study to evaluate the effectiveness of super resolution images for cancer detection.",
+      "organizations": [
+        "University of Utah",
+        "CEDMAV"
+      ]
+    },
+    "recordStudyAudio": true,
+    "uiConfig": {
+      "contactEmail": "ishratjahan.eliza@utah.edu",
+      "helpTextPath": "super-resolution-study/assets/help.md",
+      "logoPath": "revisitAssets/revisitLogoSquare.svg",
+      "studyEndMsg": "**Thank you for your participation. Your responses have been recorded. If you have any questions feel free to contact us at [ishratjahan.eliza@utah.edu](mailto:ishratjahan.eliza@utah.edu)**",
+      "withProgressBar": false,
+      "autoDownloadStudy": false,
+      "sidebar": false,
+      "enumerateQuestions": true,
+      "sidebarWidth": 408
+    }, 
+    "baseComponents": {
+        "Q1":{
+          "type": "website",
+          "recordAudio": true,
+          "instruction": "Please zoom-in, pan, zoom-out as needed before answering the questions:",
+          "response": [
+            {
+              "id": "q1",
+              "type": "slider",
+              "secondaryText": "Consider cellular abnormalities, tissue organization, and structural changes",
+              "required": true,
+              "location": "belowStimulus",
+              "prompt": "Which image more accurately represents detailed pathological features?",
+              "options": [
+                {
+                  "label": "left",
+                  "value": 0
+                },
+                {
+                  "label": "same",
+                  "value": 50
+                },
+                {
+                  "label": "right",
+                  "value": 100
+                }
+              ]
+            }
+          ]
+        },
+        "Q2":{
+          "type": "website",
+          "recordAudio": true,
+          "instruction": "Please zoom-in, pan, zoom-out as needed before answering the questions:",
+          "response": [
+            {
+              "id": "q2",
+              "type": "slider",
+              "secondaryText": "Consider nuclear details, membrane boundaries, and cytoplasmic features",
+              "required": true,
+              "location": "belowStimulus",
+              "prompt": "Which image helps you to distinguish individual cellular structures better?",
+              "options": [
+                {
+                  "label": "left",
+                  "value": 0
+                },
+                {
+                  "label": "same",
+                  "value": 50
+                },
+                {
+                  "label": "right",
+                  "value": 100
+                }
+              ]
+            }
+          ]
+        },
+        "Q3":{
+          "type": "website",
+          "recordAudio": true,
+          "instruction": "Please zoom-in, pan, zoom-out as needed before answering the questions:",
+          "response": [
+            {
+              "id": "q3",
+              "type": "slider",
+              "secondaryText": "Consider whether any artifacts or artificial patterns are present that are not natural",
+              "required": true,
+              "location": "belowStimulus",
+              "prompt": "Which image better represents informative tissue textures?",
+              "options": [
+                {
+                  "label": "left",
+                  "value": 0
+                },
+                {
+                  "label": "same",
+                  "value": 50
+                },
+                {
+                  "label": "right",
+                  "value": 100
+                }
+              ]
+            }
+          ]
+        },
+        "Q4":{
+          "type": "website",
+          "recordAudio": true,
+          "instruction": "Please zoom-in, pan, zoom-out as needed before answering the questions:",
+          "response": [
+            {
+              "id": "q4",
+              "type": "slider",
+              "secondaryText": "Consider whether any artifacts or artificial patterns are present that are not natural",
+              "required": true,
+              "location": "belowStimulus",
+              "prompt": "Which image, if any, reports false tissue textures?",
+              "options": [
+                {
+                  "label": "left",
+                  "value": 0
+                },
+                {
+                  "label": "same",
+                  "value": 50
+                },
+                {
+                  "label": "right",
+                  "value": 100
+                }
+              ]
+            }
+          ]
+        },
+        "Q5":{
+          "type": "website",
+          "recordAudio": true,
+          "instruction": "Please zoom-in, pan, zoom-out as needed before answering the questions:",
+          "response": [
+            {
+              "id": "q5",
+              "type": "slider",
+              "secondaryText": "Consider the transitions between cellular structures",
+              "required": true,
+              "location": "belowStimulus",
+              "prompt": "Which image better defines the bundaries between tissue regions?",
+              "options": [
+                {
+                  "label": "left",
+                  "value": 0
+                },
+                {
+                  "label": "same",
+                  "value": 50
+                },
+                {
+                  "label": "right",
+                  "value": 100
+                }
+              ]
+            }
+          ]
+        },
+        "Q6":{
+          "type": "website",
+          "recordAudio": true,
+          "instruction": "Please zoom-in, pan, zoom-out as needed before answering the questions:",
+          "response": [
+            {
+              "id": "q6",
+              "type": "slider",
+              "secondaryText": "Consider the clarity and usefulness of details at higher magnification",
+              "required": true,
+              "location": "belowStimulus",
+              "prompt": "Which image maintains better zooming quality?",
+              "options": [
+                {
+                  "label": "left",
+                  "value": 0
+                },
+                {
+                  "label": "same",
+                  "value": 50
+                },
+                {
+                  "label": "right",
+                  "value": 100
+                }
+              ]
+            }
+          ]
+        },
+        "Q7":{
+          "type": "website",
+          "recordAudio": true,
+          "instruction": "Please zoom-in, pan, zoom-out as needed before answering the questions:",
+          "response": [
+            {
+              "id": "q7",
+              "type": "longText",
+              "secondaryText": "Reflect all your answers before making additional comments",
+              "required": false,
+              "location": "belowStimulus",
+              "prompt": "Please provide any additional comments or rationale behind choosing your answers.",
+              "placeholder": "Type your comments here"
+            }
+          ]
+        }
+      },
+      
+    "components": {
+      "welcome": {
+        "type": "markdown",
+        "recordAudio": false,
+        "path": "super-resolution-study/assets/welcome.md",
+        "response": []
+      },
+      "consent": {
+        "type": "markdown",
+        "recordAudio": false,
+        "path": "super-resolution-study/assets/consent.md",
+        "response": [
+            {
+                      "id": "name",
+                      "prompt": "Please enter your name",
+                      "required": true,
+                      "location": "belowStimulus",
+                      "type": "shortText",
+                      "placeholder": "Name"
+            },
+            {
+                      "id": "consent",
+                      "prompt": "Do you consent to the study and wish to continue?",
+                      "required": true,
+                      "location": "belowStimulus",
+                      "type": "radio",
+                      "options": [
+                          {
+                              "label": "Decline",
+                              "value": "no"
+                          },
+                          {
+                              "label": "Accept",
+                              "value": "yes"
+                          }
+                      ]
+            }
+        ]
+      },
+      "pair1-q1":{
+        "baseComponent": "Q1",
+        "path": "super-resolution-study/assets/11771.html"  
+      },
+      "pair1-q2":{
+        "baseComponent": "Q2",
+        "path": "super-resolution-study/assets/11771.html"  
+      },
+      "pair1-q3":{
+        "baseComponent": "Q3",
+        "path": "super-resolution-study/assets/11771.html"  
+      },
+      "pair1-q4":{
+        "baseComponent": "Q4",
+        "path": "super-resolution-study/assets/11771.html"  
+      },
+      "pair1-q5":{
+        "baseComponent": "Q5",
+        "path": "super-resolution-study/assets/11771.html"  
+      },
+      "pair1-q6":{
+        "baseComponent": "Q6",
+        "path": "super-resolution-study/assets/11771.html"  
+      },
+      "pair1-q7":{
+        "baseComponent": "Q7",
+        "path": "super-resolution-study/assets/11771.html"  
+      },
+      "pair2-q1":{
+        "baseComponent": "Q1",
+        "path": "super-resolution-study/assets/11772.html"  
+      },
+      "pair2-q2":{
+        "baseComponent": "Q2",
+        "path": "super-resolution-study/assets/11772.html"  
+      },
+      "pair2-q3":{
+        "baseComponent": "Q3",
+        "path": "super-resolution-study/assets/11772.html"  
+      },
+      "pair2-q4":{
+        "baseComponent": "Q4",
+        "path": "super-resolution-study/assets/11772.html"  
+      },
+      "pair2-q5":{
+        "baseComponent": "Q5",
+        "path": "super-resolution-study/assets/11772.html"  
+      },
+      "pair2-q6":{
+        "baseComponent": "Q6",
+        "path": "super-resolution-study/assets/11772.html"  
+      },
+      "pair2-q7":{
+        "baseComponent": "Q7",
+        "path": "super-resolution-study/assets/11772.html"  
+      },
+      "pair3-q1":{
+        "baseComponent": "Q1",
+        "path": "super-resolution-study/assets/11773.html"  
+      },
+      "pair3-q2":{
+        "baseComponent": "Q2",
+        "path": "super-resolution-study/assets/11773.html"  
+      },
+      "pair3-q3":{
+        "baseComponent": "Q3",
+        "path": "super-resolution-study/assets/11773.html"  
+      },
+      "pair3-q4":{
+        "baseComponent": "Q4",
+        "path": "super-resolution-study/assets/11773.html"  
+      },
+      "pair3-q5":{
+        "baseComponent": "Q5",
+        "path": "super-resolution-study/assets/11773.html"  
+      },
+      "pair3-q6":{
+        "baseComponent": "Q6",
+        "path": "super-resolution-study/assets/11773.html"  
+      },
+      "pair3-q7":{
+        "baseComponent": "Q7",
+        "path": "super-resolution-study/assets/11773.html"  
+      },
+      "pair4-q1":{
+        "baseComponent": "Q1",
+        "path": "super-resolution-study/assets/11774.html"  
+      },
+      "pair4-q2":{
+        "baseComponent": "Q2",
+        "path": "super-resolution-study/assets/11774.html"  
+      },
+      "pair4-q3":{
+        "baseComponent": "Q3",
+        "path": "super-resolution-study/assets/11774.html"  
+      },
+      "pair4-q4":{
+        "baseComponent": "Q4",
+        "path": "super-resolution-study/assets/11774.html"  
+      },
+      "pair4-q5":{
+        "baseComponent": "Q5",
+        "path": "super-resolution-study/assets/11774.html"  
+      },
+      "pair4-q6":{
+        "baseComponent": "Q6",
+        "path": "super-resolution-study/assets/11774.html"  
+      },
+      "pair4-q7":{
+        "baseComponent": "Q7",
+        "path": "super-resolution-study/assets/11774.html"  
+      },
+      "post-study": {
+        "type": "questionnaire",
         "recordAudio": true,
-        "instruction": "Please zoom-in, pan, zoom-out as needed before answering the questions:",
         "response": [
           {
             "id": "q1",
-            "type": "radio",
-            "secondaryText": "Consider cellular abnormalities, tissue organization, and structural changes",
+            "type": "likert",
             "required": true,
-            "location": "sidebar",
-            "prompt": "Which image more accurately represents detailed pathological features?",
-            "options": ["left", "same", "right"]
+            "location": "aboveStimulus",
+            "prompt": "To what extent do the super-resolution images make you confident in detecting cancerous regions?",
+            "numItems": 5,
+            "leftLabel": "Less",
+            "rightLabel": "More"
+  
           },
           {
             "id": "q2",
-            "type": "slider",
-            "secondaryText": "Consider nuclear details, membrane boundaries, and cytoplasmic features",
-            "required": true,
-            "location": "sidebar",
-            "prompt": "Which image helps you to distinguish individual cellular structures better?",
-            "options": [
-              {
-                "label": "left",
-                "value": 0
-              },
-              {
-                "label": "same",
-                "value": 50
-              },
-              {
-                "label": "right",
-                "value": 100
-              }
-            ]
+            "type": "longText",
+            "required": false,
+            "location": "aboveStimulus",
+            "prompt": "What specific features or details are more visible in the super-resolution image compared to the original?"
           },
           {
             "id": "q3",
-            "type": "radio",
-            "secondaryText": "Consider whether any artifacts or artificial patterns are present that are not natural",
-            "required": true,
-            "location": "sidebar",
-            "prompt": "Which image better represents informative tissue textures?",
-            "options": [
-              "left", "same", "right"
-            ]
+            "type": "longText",
+            "required": false,
+            "location": "aboveStimulus",
+            "prompt": "Are there any artifacts or distortions in the super-resolution image that could potentially interfere with detection?"
           },
           {
             "id": "q4",
-            "type": "radio",
-            "secondaryText": "Consider whether any artifacts or artificial patterns are present that are not natural",
+            "type":"checkbox",
+            "secondaryText": "Please select all that apply",
             "required": true,
-            "location": "sidebar",
-            "prompt": "Which image, if any, reports false tissue textures?",
+            "location": "aboveStimulus",
+            "prompt": "Which image would you prefer to use in practice?",
             "options": [
-              "left", "same", "right"
+              "Original", "Super-resolution", "Neutral"
             ]
           },
           {
             "id": "q5",
-            "type": "radio",
-            "secondaryText": "Consider the transitions between cellular structures",
-            "required": true,
-            "location": "sidebar",
-            "prompt": "Which image better defines the bundaries between tissue regions?",
-            "options": [
-              "left", "same", "right"
-            ]
-          },
-          {
-            "id": "q6",
-            "type": "radio",
-            "secondaryText": "Consider the clarity and usefulness of details at higher magnification",
-            "required": true,
-            "location": "sidebar",
-            "prompt": "Which image maintains better zooming quality?",
-            "options": [
-              "left", "same", "right"
-            ]
-          },
-          {
-            "id": "q7",
             "type":"longText",
-            "required": false,
-            "location": "sidebar",
-            "prompt": "Please provide any additional comments or rationale behind choosing your answers.",
-            "placeholder": "Type your comments here"
-            
+            "secondaryText": "Please select all that apply",
+            "required": true,
+            "location": "aboveStimulus",
+            "prompt": "Please write in detail the rationale behind your choice in question 4?"
           }
         ]
       }
     },
-  "components": {
-    "welcome": {
-      "type": "markdown",
-      "recordAudio": false,
-      "path": "super-resolution-study/assets/welcome.md",
-      "response": []
-    },
-    "consent": {
-      "type": "markdown",
-      "recordAudio": false,
-      "path": "super-resolution-study/assets/consent.md",
-      "response": [
+  
+    "sequence": {
+      "order": "fixed",
+      "skip":[
           {
-                    "id": "name",
-                    "prompt": "Please enter your name",
-                    "required": true,
-                    "location": "belowStimulus",
-                    "type": "shortText",
-                    "placeholder": "Name"
-          },
-          {
-                    "id": "consent",
-                    "prompt": "Do you consent to the study and wish to continue?",
-                    "required": true,
-                    "location": "belowStimulus",
-                    "type": "radio",
-                    "options": [
-                        {
-                            "label": "Decline",
-                            "value": "no"
-                        },
-                        {
-                            "label": "Accept",
-                            "value": "yes"
-                        }
-                    ]
-          }
-      ]
-    },
-    "pair1":{
-      "baseComponent": "super",
-      "nextButtonLocation": "belowStimulus",
-      "path": "super-resolution-study/assets/11771.html"  
-    },
-    "pair2":{
-      "baseComponent": "super",
-      "path": "super-resolution-study/assets/11772.html"  
-    },
-    "pair3":{
-      "baseComponent": "super",
-      "path": "super-resolution-study/assets/11773.html"  
-    },
-    "pair4":{
-      "baseComponent": "super",
-      "path": "super-resolution-study/assets/11774.html"  
-    },
-    "post-study": {
-      "type": "questionnaire",
-      "recordAudio": true,
-      "response": [
-        {
-          "id": "q1",
-          "type": "likert",
-          "required": true,
-          "location": "aboveStimulus",
-          "prompt": "To what extent do the super-resolution images make you confident in detecting cancerous regions?",
-          "numItems": 5,
-          "leftLabel": "Less",
-          "rightLabel": "More"
-
-        },
-        {
-          "id": "q2",
-          "type": "longText",
-          "required": false,
-          "location": "aboveStimulus",
-          "prompt": "What specific features or details are more visible in the super-resolution image compared to the original?"
-        },
-        {
-          "id": "q3",
-          "type": "longText",
-          "required": false,
-          "location": "aboveStimulus",
-          "prompt": "Are there any artifacts or distortions in the super-resolution image that could potentially interfere with detection?"
-        },
-        {
-          "id": "q4",
-          "type":"checkbox",
-          "secondaryText": "Please select all that apply",
-          "required": true,
-          "location": "aboveStimulus",
-          "prompt": "Which image would you prefer to use in practice?",
-          "options": [
-            "Original", "Super-resolution", "Neutral"
-          ]
-        },
-        {
-          "id": "q5",
-          "type":"longText",
-          "secondaryText": "Please select all that apply",
-          "required": true,
-          "location": "aboveStimulus",
-          "prompt": "Please write in detail the rationale behind your choice in question 4?"
+            "name": "consent",
+            "check": "response",
+            "responseId": "consent",
+            "value": "yes",
+            "comparison": "notEqual",
+            "to": "end"
+  
         }
+      ],
+      "components": [
+        "welcome",
+        "consent",
+        "pair1-q1",
+        "pair1-q2",
+        "pair1-q3",
+        "pair1-q4",
+        "pair1-q5",
+        "pair1-q6",
+        "pair1-q7",
+        "pair2-q1",
+        "pair2-q2",
+        "pair2-q3",
+        "pair2-q4",
+        "pair2-q5",
+        "pair2-q6",
+        "pair2-q7",
+        "pair3-q1",
+        "pair3-q2",
+        "pair3-q3",
+        "pair3-q4",
+        "pair3-q5",
+        "pair3-q6",
+        "pair3-q7",
+        "pair4-q1",
+        "pair4-q2",
+        "pair4-q3",
+        "pair4-q4",
+        "pair4-q5",
+        "pair4-q6",
+        "pair4-q7",
+        "post-study"
       ]
     }
-  },
-
-  "sequence": {
-    "order": "fixed",
-    "skip":[
-        {
-          "name": "consent",
-          "check": "response",
-          "responseId": "consent",
-          "value": "yes",
-          "comparison": "notEqual",
-          "to": "end"
-
-      }
-    ],
-    "components": [
-      "welcome",
-      "consent",
-      "pair1",
-      "pair2",
-      "pair3",
-      "pair4",
-      "post-study"
-    ]
   }
-}
