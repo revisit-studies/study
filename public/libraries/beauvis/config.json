@@ -1,106 +1,106 @@
 {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc4/src/parser/LibraryConfigSchema.json",
-    "components": {
-      "5items":{
-        "type": "questionnaire",
-        "response": [
-          {
-            "id": "multi-custom",
-            "prompt": "To what extent do you agree that this visual representation is...?",
-            "required": true,
-            "location": "belowStimulus",
-            "type": "matrix-radio",
-            "answerOptions": [
-              "Strongly disagree",
-              "Disagree",
-              "Slightly disagree",
-              "Neutral",
-              "Slightly agree",
-              "Agree",
-              "Strongly agree"
-            ],
-            "questionOptions": [
-              "enjoyable",
-              "likable",
-              "pleasing",
-              "nice",
-              "appealing"
-            ]
-          }
-        ]
-      },
-      "4items":{
-        "type": "questionnaire",
-        "response": [
-          {
-            "id": "multi-custom",
-            "prompt": "To what extent do you agree that this visual representation is...?",
-            "required": true,
-            "location": "belowStimulus",
-            "type": "matrix-radio",
-            "answerOptions": [
-              "Strongly disagree",
-              "Disagree",
-              "Slightly disagree",
-              "Neutral",
-              "Slightly agree",
-              "Agree",
-              "Strongly agree"
-            ],
-            "questionOptions": [
-              "enjoyable",
-              "likable",
-              "pleasing",
-              "nice"
-            ]
-          }
-        ]
-      },
-      "3items":{
-        "type": "questionnaire",
-        "response": [
-          {
-            "id": "multi-custom",
-            "prompt": "To what extent do you agree that this visual representation is...?",
-            "required": true,
-            "location": "belowStimulus",
-            "type": "matrix-radio",
-            "answerOptions": [
-              "Strongly disagree",
-              "Disagree",
-              "Slightly disagree",
-              "Neutral",
-              "Slightly agree",
-              "Agree",
-              "Strongly agree"
-            ],
-            "questionOptions": [
-              "enjoyable",
-              "likable",
-              "pleasing"
-            ]
-          }
-        ]
-      }  
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
+  "components": {
+    "5items": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "multi-custom",
+          "prompt": "To what extent do you agree that this visual representation is...?",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "matrix-radio",
+          "answerOptions": [
+            "Strongly disagree",
+            "Disagree",
+            "Slightly disagree",
+            "Neutral",
+            "Slightly agree",
+            "Agree",
+            "Strongly agree"
+          ],
+          "questionOptions": [
+            "enjoyable",
+            "likable",
+            "pleasing",
+            "nice",
+            "appealing"
+          ]
+        }
+      ]
     },
-    "sequences": {
-      "5items": {
-        "order": "fixed",
-        "components": [
-          "5items"
-        ]
-      },
-      "4items": {
-        "order": "fixed",
-        "components": [
-          "4items"
-        ]
-      },
-      "3items": {
-        "order": "fixed",
-        "components": [
-          "3items"
-        ]
-      }
+    "4items": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "multi-custom",
+          "prompt": "To what extent do you agree that this visual representation is...?",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "matrix-radio",
+          "answerOptions": [
+            "Strongly disagree",
+            "Disagree",
+            "Slightly disagree",
+            "Neutral",
+            "Slightly agree",
+            "Agree",
+            "Strongly agree"
+          ],
+          "questionOptions": [
+            "enjoyable",
+            "likable",
+            "pleasing",
+            "nice"
+          ]
+        }
+      ]
+    },
+    "3items": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "multi-custom",
+          "prompt": "To what extent do you agree that this visual representation is...?",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "matrix-radio",
+          "answerOptions": [
+            "Strongly disagree",
+            "Disagree",
+            "Slightly disagree",
+            "Neutral",
+            "Slightly agree",
+            "Agree",
+            "Strongly agree"
+          ],
+          "questionOptions": [
+            "enjoyable",
+            "likable",
+            "pleasing"
+          ]
+        }
+      ]
+    }
+  },
+  "sequences": {
+    "5items": {
+      "order": "fixed",
+      "components": [
+        "5items"
+      ]
+    },
+    "4items": {
+      "order": "fixed",
+      "components": [
+        "4items"
+      ]
+    },
+    "3items": {
+      "order": "fixed",
+      "components": [
+        "3items"
+      ]
     }
   }
+}

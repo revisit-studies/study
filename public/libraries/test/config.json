@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc4/src/parser/LibraryConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
   "baseComponents": {
     "test-baseComponent": {
       "type": "markdown",
@@ -20,12 +20,14 @@
     },
     "test-inherited": {
       "baseComponent": "test-baseComponent",
-      "response": [{
-        "id": "test-response",
-        "type": "shortText",
-        "prompt": "What did you think of the test?",
-        "required": false
-      }]
+      "response": [
+        {
+          "id": "test-response",
+          "type": "shortText",
+          "prompt": "What did you think of the test?",
+          "required": false
+        }
+      ]
     }
   },
   "sequences": {

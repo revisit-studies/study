@@ -879,6 +879,14 @@
           "description": "A description of the library.",
           "type": "string"
         },
+        "doi": {
+          "description": "The DOI of the paper where the content of the library is based on.",
+          "type": "string"
+        },
+        "externalLink": {
+          "description": "The external link to the paper/website where the content of the library is based on.",
+          "type": "string"
+        },
         "reference": {
           "description": "The reference to the paper where the content of the library is based on.",
           "type": "string"
@@ -893,6 +901,7 @@
       },
       "required": [
         "$schema",
+        "description",
         "components",
         "sequences"
       ],

@@ -22,11 +22,23 @@ libraries.forEach((library) => {
   const markdown = `
 # ${library}
 
-${libraryConfig.description || ''}
+${libraryConfig.description}
 
-${libraryConfig.reference ? '## Reference' : ''}
+## Reference
 
-${libraryConfig.reference || ''}
+${libraryConfig.reference ? `:::note[Reference]\n${libraryConfig.reference}\n:::` : ''}
+
+${libraryConfig.DOI ? `DOI: [${libraryConfig.DOI}](https://doi.org/${libraryConfig.DOI})` : ''}
+
+${libraryConfig.externalLink ? `Link: ${libraryConfig.externalLink}` : ''}
+
+## Available Components
+
+${Object.keys(libraryConfig.components).map((component) => `- ${component}`).sort((a, b) => a.localeCompare(b)).join('\n')}
+
+## Available Sequences
+
+${Object.keys(libraryConfig.sequences).map((sequence) => `- ${sequence}`).sort((a, b) => a.localeCompare(b)).join('\n')}
 `;
 
   const docsLibraryPath = path.join(docsLibrariesPath, `${library}.md`);
