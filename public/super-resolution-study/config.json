@@ -22,7 +22,7 @@
       "withProgressBar": false,
       "autoDownloadStudy": false,
       "sidebar": false,
-      "enumerateQuestions": true,
+      "enumerateQuestions": false,
       "sidebarWidth": 408
     }, 
     "baseComponents": {
@@ -30,6 +30,7 @@
           "type": "website",
           "recordAudio": true,
           "instruction": "Please zoom-in, pan, zoom-out as needed before answering the questions:",
+          "nextButtonEnableTime": 10000,
           "response": [
             {
               "id": "q1",
@@ -257,6 +258,12 @@
             }
         ]
       },
+      "filler-1": {
+        "type": "website",
+        "recordAudio": true,
+        "path": "super-resolution-study/assets/11771.html",
+        "response": []
+      },
       "pair1-q1":{
         "baseComponent": "Q1",
         "path": "super-resolution-study/assets/11771.html"  
@@ -284,6 +291,12 @@
       "pair1-q7":{
         "baseComponent": "Q7",
         "path": "super-resolution-study/assets/11771.html"  
+      },
+      "filler-2": {
+        "type": "website",
+        "recordAudio": true,
+        "path": "super-resolution-study/assets/11772.html",
+        "response": []
       },
       "pair2-q1":{
         "baseComponent": "Q1",
@@ -313,6 +326,12 @@
         "baseComponent": "Q7",
         "path": "super-resolution-study/assets/11772.html"  
       },
+      "filler-3": {
+        "type": "website",
+        "recordAudio": true,
+        "path": "super-resolution-study/assets/11773.html",
+        "response": []
+      },
       "pair3-q1":{
         "baseComponent": "Q1",
         "path": "super-resolution-study/assets/11773.html"  
@@ -340,6 +359,12 @@
       "pair3-q7":{
         "baseComponent": "Q7",
         "path": "super-resolution-study/assets/11773.html"  
+      },
+      "filler-4": {
+        "type": "website",
+        "recordAudio": true,
+        "path": "super-resolution-study/assets/11774.html",
+        "response": []
       },
       "pair4-q1":{
         "baseComponent": "Q1",
@@ -437,6 +462,7 @@
       "components": [
         "welcome",
         "consent",
+        "filler-1",
         "pair1-q1",
         "pair1-q2",
         "pair1-q3",
@@ -444,6 +470,7 @@
         "pair1-q5",
         "pair1-q6",
         "pair1-q7",
+        "filler-2",
         "pair2-q1",
         "pair2-q2",
         "pair2-q3",
@@ -451,6 +478,7 @@
         "pair2-q5",
         "pair2-q6",
         "pair2-q7",
+        "filler-3",
         "pair3-q1",
         "pair3-q2",
         "pair3-q3",
@@ -458,6 +486,7 @@
         "pair3-q5",
         "pair3-q6",
         "pair3-q7",
+        "filler-4",
         "pair4-q1",
         "pair4-q2",
         "pair4-q3",
