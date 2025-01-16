@@ -1,5 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
+  "description": "This is a test library for testing the parser. It is unlikely to be useful for any other purpose.",
   "baseComponents": {
     "test-baseComponent": {
       "type": "markdown",

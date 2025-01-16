@@ -24,11 +24,11 @@ libraries.forEach((library) => {
 
 ${libraryConfig.description}
 
-## Reference
+${libraryConfig.reference || libraryConfig.doi || libraryConfig.externalLink ? '## Reference' : ''}
 
 ${libraryConfig.reference ? `:::note[Reference]\n${libraryConfig.reference}\n:::` : ''}
 
-${libraryConfig.DOI ? `DOI: [${libraryConfig.DOI}](https://doi.org/${libraryConfig.DOI})` : ''}
+${libraryConfig.doi ? `DOI: [${libraryConfig.doi}](https://doi.org/${libraryConfig.doi})` : ''}
 
 ${libraryConfig.externalLink ? `Link: ${libraryConfig.externalLink}` : ''}
 
@@ -38,7 +38,9 @@ ${Object.keys(libraryConfig.components).map((component) => `- ${component}`).sor
 
 ## Available Sequences
 
-${Object.keys(libraryConfig.sequences).map((sequence) => `- ${sequence}`).sort((a, b) => a.localeCompare(b)).join('\n')}
+${Object.keys(libraryConfig.sequences).length > 0
+    ? Object.keys(libraryConfig.sequences).map((sequence) => `- ${sequence}`).sort((a, b) => a.localeCompare(b)).join('\n')
+    : 'None'}
 `;
 
   const docsLibraryPath = path.join(docsLibrariesPath, `${library}.md`);
