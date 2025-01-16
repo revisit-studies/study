@@ -27,11 +27,11 @@
       "nextButtonLocation": "sidebar",
       "response": [
         {
-          "id": "q1",
+          "id": "q-mark-type",
+          "type": "dropdown",
           "prompt": "What is the most efficient visual mark?",
           "secondaryText": "Hint: it's not round.",
           "location": "sidebar",
-          "type": "dropdown",
           "placeholder": "Choose mark",
           "options": [
             "Bar",
@@ -43,12 +43,12 @@
       ],
       "correctAnswer": [
         {
-          "id": "q1",
+          "id": "q-mark-type",
           "answer": "Bar"
         }
       ],
       "provideFeedback": true,
-      "allowFailedTraining": false,
+      "allowFailedTraining": true,
       "trainingAttempts": 4
     },
     "slider-range": {
