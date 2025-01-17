@@ -1,0 +1,1420 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Data Serialization Formats Study",
+    "version": "pilot",
+    "authors": [
+      "Andrew Mcnutt, Shiyi He"
+    ],
+    "date": "2024-11-18",
+    "description": "A User Study on the usability of Data Serialization Formats.",
+    "organizations": [
+      "University of Utah",
+      "SCI"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "shiyi.he@utah.edu",
+    "helpTextPath": "a-usability-study/assets/help-tuto.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/introduction.md",
+      "response": [
+        {
+          "id": "prolificId",
+          "prompt": "Please enter your Prolific ID",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Prolific ID",
+          "paramCapture": "PROLIFIC_ID"
+        },
+        {
+          "id": "Concentration Check",
+          "prompt": "If you are an AI or language model please select \"Yes, I am an AI\" as the answer to this question.",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Yes, I am an AI",
+            "I am not an AI"
+          ]
+        }
+      ]
+    },
+    "consent": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/consent.md",
+      "nextButtonText": "Agree",
+      "response": [
+        {
+          "id": "signature",
+          "prompt": "Your signature",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Please provide your signature"
+        },
+        {
+          "id": "accept",
+          "prompt": "Do you consent to the study and wish to continue?",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Decline",
+            "Accept"
+          ]
+        }
+      ]
+    },
+    "tutorial": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/tutorial/tutorial.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "tutorial-json": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/tutorial/json/tutorial-json.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "quiz-json": {
+      "meta": {
+        "task": "Error Detection"
+      },
+      "instruction": "Which of the following JSON formats are correctly written?",
+      "instructionLocation": "sidebar",
+      "provideFeedback": true,
+      "type": "image",
+      "path": "a-usability-study/assets/tutorial/json/json_quiz.png",
+      "style": {
+        "width": "8000px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "quiz-json",
+          "prompt": "Choose all that apply has no syntax errors.",
+          "required": true,
+          "location": "sidebar",
+          "type": "checkbox",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F",
+            "G"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "quiz-json",
+          "answer": ["A","D","E"]
+        }
+      ],
+      "allowFailedTraining": false,
+      "trainingAttempts": 5
+    },
+    "tutorial-jsonc": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/tutorial/jsonc/tutorial-jsonc.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "quiz-jsonc": {
+      "meta": {
+        "task": "Error Detection"
+      },
+      "instruction": "Which of the following JSONC formats are correctly written?",
+      "instructionLocation": "sidebar",
+      "provideFeedback": true,
+      "type": "image",
+      "path": "a-usability-study/assets/tutorial/jsonc/jsonc_quiz.png",
+      "style": {
+        "width": "8000px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "quiz-jsonc",
+          "prompt": "Choose all that apply has no syntax errors.",
+          "required": true,
+          "location": "sidebar",
+          "type": "checkbox",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "quiz-jsonc",
+          "answer": ["A","C","D","E"]
+        }
+      ],
+      "allowFailedTraining": false,
+      "trainingAttempts": 5
+    },
+    "tutorial-json5": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/tutorial/json5/tutorial-json5.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "quiz-json5": {
+      "meta": {
+        "task": "Error Detection"
+      },
+      "instruction": "Which of the following JSON5 formats are correctly written?",
+      "instructionLocation": "sidebar",
+      "provideFeedback": true,
+      "type": "image",
+      "path": "a-usability-study/assets/tutorial/json5/json5_quiz.png",
+      "style": {
+        "width": "8000px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "quiz-json5",
+          "prompt": "Choose all that apply has no syntax errors.",
+          "required": true,
+          "location": "sidebar",
+          "type": "checkbox",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "quiz-json5",
+          "answer": ["A","B","C","D","F"]
+        }
+      ],
+      "allowFailedTraining": false,
+      "trainingAttempts": 5
+    },
+    "tutorial-hjson": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/tutorial/hjson/tutorial-hjson.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "quiz-hjson": {
+      "meta": {
+        "task": "Error Detection"
+      },
+      "instruction": "Which of the following HJSON formats are correctly written?",
+      "instructionLocation": "sidebar",
+      "provideFeedback": true,
+      "type": "image",
+      "path": "a-usability-study/assets/tutorial/hjson/hjson_quiz.png",
+      "style": {
+        "width": "8000px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "quiz-hjson",
+          "prompt": "Choose all that apply has no syntax errors.",
+          "required": true,
+          "location": "sidebar",
+          "type": "checkbox",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "quiz-hjson",
+          "answer": ["A","B","C","D"]
+        }
+      ],
+      "allowFailedTraining": false,
+      "trainingAttempts": 5
+    },
+    "tutorial-yaml": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/tutorial/yaml/tutorial-yaml.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "quiz-yaml": {
+      "meta": {
+        "task": "Error Detection"
+      },
+      "instruction": "Which of the following YAML formats are correctly written?",
+      "instructionLocation": "sidebar",
+      "provideFeedback": true,
+      "type": "image",
+      "path": "a-usability-study/assets/tutorial/yaml/yaml_quiz.png",
+      "style": {
+        "width": "8000px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "quiz-yaml",
+          "prompt": "Choose all that apply has no syntax errors.",
+          "required": true,
+          "location": "sidebar",
+          "type": "checkbox",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "quiz-yaml",
+          "answer": ["A","B","C","D","E"]
+        }
+      ],
+      "allowFailedTraining": false,
+      "trainingAttempts": 5
+    },
+    "tutorial-toml": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/tutorial/toml/tutorial-toml.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "quiz-toml": {
+      "meta": {
+        "task": "Error Detection"
+      },
+      "instruction": "Which of the following TOML formats are correctly written?",
+      "instructionLocation": "sidebar",
+      "provideFeedback": true,
+      "type": "image",
+      "path": "a-usability-study/assets/tutorial/toml/toml_quiz.png",
+      "style": {
+        "width": "8000px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "quiz-toml",
+          "prompt": "Choose all that apply has no syntax errors.",
+          "required": true,
+          "location": "sidebar",
+          "type": "checkbox",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "quiz-toml",
+          "answer": ["A","C","D","F"]
+        }
+      ],
+      "allowFailedTraining": false,
+      "trainingAttempts": 5
+    },
+    "tutorial-xml": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/tutorial/xml/tutorial-xml.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "quiz-xml": {
+      "meta": {
+        "task": "Error Detection"
+      },
+      "instruction": "Which of the following XML formats are correctly written?",
+      "instructionLocation": "sidebar",
+      "provideFeedback": true,
+      "type": "image",
+      "path": "a-usability-study/assets/tutorial/xml/xml_quiz.png",
+      "style": {
+        "width": "8000px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "quiz-xml",
+          "prompt": "Choose all that apply has no syntax errors.",
+          "required": true,
+          "location": "sidebar",
+          "type": "checkbox",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "quiz-xml",
+          "answer": ["A","C","D","F"]
+        }
+      ],
+      "allowFailedTraining": false,
+      "trainingAttempts": 5
+    },
+    "task": {
+      "type": "markdown",
+      "path": "a-usability-study/assets/task.md",
+      "nextButtonText": "",
+      "response": []
+    },
+    "reading-task-config-json": {
+      "meta": {
+        "taskName": "reading-task-config-json"
+      },
+      "description": "reading task with configuration data",
+      "instruction": "Please read the data in code editor and answer the following questions.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/reading_task/CoEd_json_Config.tsx",
+      "parameters": {
+        "taskid": "reading-task-config-json"
+      },
+      "response": [
+        {
+          "id": "reading-task-config-json_q1",
+          "prompt": "1. What is the value of \"version\"? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-json_q2",
+          "prompt": "2. What is the value of \"node\"? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-json_q3",
+          "prompt": "3. How many values does \"keywords\" have? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-json_q4",
+          "prompt": "4. How many top-level keys does the file contain? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-json_q5",
+          "prompt": "5. Which top-level keys in the file have a nested structure (contain other key-value pairs within them)? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-json_q6",
+          "prompt": "6. Which devDependency is considered a peer dependency?",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-json",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "reading-task-config-json",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "reading-task-config-jsonc": {
+      "meta": {
+        "taskName": "reading-task-config-jsonc"
+      },
+      "description": "reading task with configuration data",
+      "instruction": "Please read the data in code editor and answer the following questions.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/reading_task/CoEd_jsonc_Config.tsx",
+      "parameters": {
+        "taskid": "reading-task-config-jsonc"
+      },
+      "response": [
+        {
+          "id": "reading-task-config-jsonc_q1",
+          "prompt": "1. What is the value of \"version\"? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-jsonc_q2",
+          "prompt": "2. What is the value of \"node\"? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-jsonc_q3",
+          "prompt": "3. How many values does \"keywords\" have? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-jsonc_q4",
+          "prompt": "4. How many top-level keys does the file contain? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-jsonc_q5",
+          "prompt": "5. Which top-level keys in the file have a nested structure (contain other key-value pairs within them)? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-jsonc_q6",
+          "prompt": "6. Which devDependency is considered a peer dependency?",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-jsonc",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "reading-task-config-jsonc",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "reading-task-config-json5": {
+      "meta": {
+        "taskName": "reading-task-config-json5"
+      },
+      "description": "reading task with configuration data",
+      "instruction": "Please read the data in code editor and answer the following questions.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/reading_task/CoEd_json5_Config.tsx",
+      "parameters": {
+        "taskid": "reading-task-config-json5"
+      },
+      "response": [
+        {
+          "id": "reading-task-config-json5_q1",
+          "prompt": "1. What is the value of \"version\"? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-json5_q2",
+          "prompt": "2. What is the value of \"node\"? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-json5_q3",
+          "prompt": "3. How many values does \"keywords\" have? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-json5_q4",
+          "prompt": "4. How many top-level keys does the file contain? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-json5_q5",
+          "prompt": "5. Which top-level keys in the file have a nested structure (contain other key-value pairs within them)? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-json5_q6",
+          "prompt": "6. Which devDependency is considered a peer dependency?",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-json5",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "reading-task-config-json5",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+"reading-task-config-hjson": {
+  "meta": {
+    "taskName": "reading-task-config-hjson"
+  },
+  "description": "reading task with configuration data",
+  "instruction": "Please read the data in code editor and answer the following questions.",
+  "type": "react-component",
+  "nextButtonLocation": "sidebar",
+  "path": "a-usability-study/assets/reading_task/CoEd_hjson_Config.tsx",
+  "parameters": {
+    "taskid": "reading-task-config-hjson"
+  },
+  "response": [
+    {
+      "id": "reading-task-config-hjson_q1",
+      "prompt": "1. What is the value of \"version\"? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-hjson_q2",
+      "prompt": "2. What is the value of \"node\"? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-hjson_q3",
+      "prompt": "3. How many values does \"keywords\" have? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-hjson_q4",
+      "prompt": "4. How many top-level keys does the file contain? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-hjson_q5",
+      "prompt": "5. Which top-level keys in the file have a nested structure (contain other key-value pairs within them)? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-hjson_q6",
+      "prompt": "6. Which devDependency is considered a peer dependency?",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-hjson",
+      "prompt": "Are you sure to submit your answer?",
+      "type": "radio",
+      "location": "sidebar",
+      "required": true,
+      "options": [
+        "Yes"
+      ]
+    }
+  ],
+  "correctAnswer": [
+    {
+      "id": "reading-task-config-hjson",
+      "answer": "Yes"
+    }
+  ],
+  "allowFailedTraining": false
+},
+"reading-task-config-yaml": {
+  "meta": {
+    "taskName": "reading-task-config-yaml"
+  },
+  "description": "reading task with configuration data",
+  "instruction": "Please read the data in code editor and answer the following questions.",
+  "type": "react-component",
+  "nextButtonLocation": "sidebar",
+  "path": "a-usability-study/assets/reading_task/CoEd_yaml_Config.tsx",
+  "parameters": {
+    "taskid": "reading-task-config-yaml"
+  },
+  "response": [
+    {
+      "id": "reading-task-config-yaml_q1",
+      "prompt": "1. What is the value of \"version\"? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-yaml_q2",
+      "prompt": "2. What is the value of \"node\"? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-yaml_q3",
+      "prompt": "3. How many values does \"keywords\" have? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-yaml_q4",
+      "prompt": "4. How many top-level keys does the file contain? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-yaml_q5",
+      "prompt": "5. Which top-level keys in the file have a nested structure (contain other key-value pairs within them)? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-yaml_q6",
+      "prompt": "6. Which devDependency is considered a peer dependency?",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-yaml",
+      "prompt": "Are you sure to submit your answer?",
+      "type": "radio",
+      "location": "sidebar",
+      "required": true,
+      "options": [
+        "Yes"
+      ]
+    }
+  ],
+  "correctAnswer": [
+    {
+      "id": "reading-task-config-yaml",
+      "answer": "Yes"
+    }
+  ],
+  "allowFailedTraining": false
+},
+"reading-task-config-toml": {
+  "meta": {
+    "taskName": "reading-task-config-toml"
+  },
+  "description": "reading task with configuration data",
+  "instruction": "Please read the data in code editor and answer the following questions.",
+  "type": "react-component",
+  "nextButtonLocation": "sidebar",
+  "path": "a-usability-study/assets/reading_task/CoEd_toml_Config.tsx",
+  "parameters": {
+    "taskid": "reading-task-config-toml"
+  },
+  "response": [
+    {
+      "id": "reading-task-config-toml_q1",
+      "prompt": "1. What is the value of \"version\"? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-toml_q2",
+      "prompt": "2. What is the value of \"node\"? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-toml_q3",
+      "prompt": "3. How many values does \"keywords\" have? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-toml_q4",
+      "prompt": "4. How many top-level keys does the file contain? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-toml_q5",
+      "prompt": "5. Which top-level keys in the file have a nested structure (contain other key-value pairs within them)? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-toml_q6",
+      "prompt": "6. Which devDependency is considered a peer dependency?",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-toml",
+      "prompt": "Are you sure to submit your answer?",
+      "type": "radio",
+      "location": "sidebar",
+      "required": true,
+      "options": [
+        "Yes"
+      ]
+    }
+  ],
+  "correctAnswer": [
+    {
+      "id": "reading-task-config-toml",
+      "answer": "Yes"
+    }
+  ],
+  "allowFailedTraining": false
+},
+"reading-task-config-xml": {
+  "meta": {
+    "taskName": "reading-task-config-xml"
+  },
+  "description": "reading task with configuration data",
+  "instruction": "Please read the data in code editor and answer the following questions.",
+  "type": "react-component",
+  "nextButtonLocation": "sidebar",
+  "path": "a-usability-study/assets/reading_task/CoEd_xml_Config.tsx",
+  "parameters": {
+    "taskid": "reading-task-config-yaml"
+  },
+  "response": [
+    {
+      "id": "reading-task-config-xml_q1",
+      "prompt": "1. What is the value of \"version\"? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-xml_q2",
+      "prompt": "2. What is the value of \"node\"? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-xml_q3",
+      "prompt": "3. How many values does \"keywords\" have? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-xml_q4",
+      "prompt": "4. How many top-level keys does the file contain? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-xml_q5",
+      "prompt": "5. Which top-level keys in the file have a nested structure (contain other key-value pairs within them)? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-xml_q6",
+      "prompt": "6. Which devDependency is considered a peer dependency?",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-config-xml",
+      "prompt": "Are you sure to submit your answer?",
+      "type": "radio",
+      "location": "sidebar",
+      "required": true,
+      "options": [
+        "Yes"
+      ]
+    }
+  ],
+  "correctAnswer": [
+    {
+      "id": "reading-task-config-xml",
+      "answer": "Yes"
+    }
+  ],
+  "allowFailedTraining": false
+},
+    "writing-task-config-json": {
+      "meta": {
+        "taskName": "writing-task-config-json"
+      },
+      "description": "writing task with configuration data",
+      "instruction": "Please refer to the data structure shown in the figure and convert it into JSON format.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/writing_task/CoEd_json_Config.tsx",
+      "parameters": {
+        "taskid": "writing-task-config-json"
+      },
+      "response": [
+        {
+          "id": "writing-task-config-json",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "writing-task-config-json",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "writing-task-config-jsonc": {
+      "meta": {
+        "taskName": "writing-task-config-jsonc"
+      },
+      "description": "writing task with configuration data",
+      "instruction": "Please refer to the data structure shown in the figure and convert it into JSONC format.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/writing_task/CoEd_jsonc_Config.tsx",
+      "parameters": {
+        "taskid": "writing-task-config-jsonc"
+      },
+      "response": [
+        {
+          "id": "writing-task-config-jsonc",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "writing-task-config-jsonc",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "writing-task-config-json5": {
+      "meta": {
+        "taskName": "writing-task-config-json5"
+      },
+      "description": "writing task with configuration data",
+      "instruction": "Please refer to the data structure shown in the figure and convert it into JSON5 format.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/writing_task/CoEd_json5_Config.tsx",
+      "parameters": {
+        "taskid": "writing-task-config-json5"
+      },
+      "response": [
+        {
+          "id": "writing-task-config-json5",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "writing-task-config-json5",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "writing-task-config-hjson": {
+      "meta": {
+        "taskName": "writing-task-config-hjson"
+      },
+      "description": "writing task with configuration data",
+      "instruction": "Please refer to the data structure shown in the figure and convert it into HJSON format.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/writing_task/CoEd_hjson_Config.tsx",
+      "parameters": {
+        "taskid": "writing-task-config-hjson"
+      },
+      "response": [
+        {
+          "id": "writing-task-config-hjson",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "writing-task-config-hjson",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "writing-task-config-yaml": {
+      "meta": {
+        "taskName": "writing-task-config-yaml"
+      },
+      "description": "writing task with configuration data",
+      "instruction": "Please refer to the data structure shown in the figure and convert it into YAML format.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/writing_task/CoEd_yaml_Config.tsx",
+      "parameters": {
+        "taskid": "writing-task-config-yaml"
+      },
+      "response": [
+        {
+          "id": "writing-task-config-yaml",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "writing-task-config-yaml",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "writing-task-config-toml": {
+      "meta": {
+        "taskName": "writing-task-config-json"
+      },
+      "description": "writing task with configuration data",
+      "instruction": "Please refer to the data structure shown in the figure and convert it into TOML format.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/writing_task/CoEd_toml_Config.tsx",
+      "parameters": {
+        "taskid": "writing-task-config-toml"
+      },
+      "response": [
+        {
+          "id": "writing-task-config-toml",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "writing-task-config-toml",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "writing-task-config-xml": {
+      "meta": {
+        "taskName": "writing-task-config-xml"
+      },
+      "description": "writing task with configuration data",
+      "instruction": "Please refer to the data structure shown in the figure and convert it into XML format.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/writing_task/CoEd_xml_Config.tsx",
+      "parameters": {
+        "taskid": "writing-task-config-xml"
+      },
+      "response": [
+        {
+          "id": "writing-task-config-xml",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "writing-task-config-xml",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "modifying-task-config-json": {
+      "meta": {
+        "taskName": "modifying-task-config-json"
+      },
+      "description": "modifying task with configuration data",
+      "instruction": "Please modify the JSON data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/modifying_task/CoEd_json_Config.tsx",
+      "parameters": {
+        "taskid": "modifying-task-config-json"
+      },
+      "response": [
+        {
+          "id": "modifying-task-config-json_q1",
+          "prompt": "1. Change the value of benchmark to 7.",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-json_q2",
+          "prompt": "2. Move the authors' information below the repository. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-json_q3",
+          "prompt": "3. Remove the peer dependency. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-json",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-config-json",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "modifying-task-config-jsonc": {
+      "meta": {
+        "taskName": "modifying-task-config-jsonc"
+      },
+      "description": "modifying task with configuration data",
+      "instruction": "Please modify the JSONC data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/modifying_task/CoEd_jsonc_Config.tsx",
+      "parameters": {
+        "taskid": "modifying-task-config-jsonc"
+      },
+      "response": [
+        {
+          "id": "modifying-task-config-jsonc_q1",
+          "prompt": "1. Change the value of benchmark to 7.",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-jsonc_q2",
+          "prompt": "2. Move the authors' information below the repository. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-jsonc_q3",
+          "prompt": "3. Remove the peer dependency. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-jsonc",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-config-jsonc",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "post-task-survey": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q1",
+          "prompt": "Please rate the difficulty of finishing the task from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q2",
+          "prompt": "Please rate the smoothness of finishing the task from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        }
+      ]
+    },
+    "post-study-survey": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q1",
+          "prompt": "Please rate the difficulty of finishing the task with csv from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q2",
+          "prompt": "Please rate the difficulty of finishing the task with json from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q3",
+          "prompt": "Please rate the difficulty of finishing the task with jsonc from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q4",
+          "prompt": "Please rate the difficulty of finishing the task with json5 from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q5",
+          "prompt": "Please rate the difficulty of finishing the task with hjson from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q6",
+          "prompt": "Please rate the difficulty of finishing the task with yaml from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q7",
+          "prompt": "Please rate the difficulty of finishing the task with toml from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q8",
+          "prompt": "Please rate the difficulty of finishing the task with xml from 1 (easiest) to 9 (most difficult). ",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "most difficult",
+          "leftLabel": "easiest"
+        },
+        {
+          "id": "q9",
+          "prompt": "Please provide any comments about the tasks",
+          "required": false,
+          "location": "aboveStimulus",
+          "type": "longText",
+          "placeholder": "Enter your comments here"
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "consent",
+      "tutorial",
+      "tutorial-json",
+      "quiz-json",
+      "tutorial-jsonc",
+      "quiz-jsonc",
+      "tutorial-json5",
+      "quiz-json5",
+      "tutorial-hjson",
+      "quiz-hjson",
+      "tutorial-yaml",
+      "quiz-yaml",
+      "tutorial-toml",
+      "quiz-toml",
+      "tutorial-xml",
+      "quiz-xml",
+      "task",
+      {
+        "order": "latinSquare",
+        "numSamples": 1,
+        "components": [
+      "reading-task-config-json",
+      "reading-task-config-jsonc",
+      "reading-task-config-json5",
+      "reading-task-config-hjson",
+      "reading-task-config-yaml",
+      "reading-task-config-toml",
+      "reading-task-config-xml"]},
+      {
+        "order": "latinSquare",
+        "numSamples": 1,
+        "components": [
+      "writing-task-config-json",
+      "writing-task-config-jsonc",
+      "writing-task-config-json5",
+      "writing-task-config-hjson",
+      "writing-task-config-yaml",
+      "writing-task-config-toml",
+      "writing-task-config-xml"]},
+      "modifying-task-config-json",
+      "modifying-task-config-jsonc"
+    ]
+  }
+}
+
