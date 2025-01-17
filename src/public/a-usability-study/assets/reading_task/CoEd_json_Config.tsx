@@ -91,7 +91,6 @@ function CodeEditorTest(): React.ReactElement {
         lineNumbers: 'on',
         roundedSelection: false,
         wordWrap: 'on',
-        renderIndentGuides: true,
       });
 
       return () => {
