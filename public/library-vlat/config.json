@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc4/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "vlat library example",
+    "title": "vlat: Assessing Visual Literacy",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
