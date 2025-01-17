@@ -2,97 +2,50 @@ import React, { useState, useEffect, useCallback } from 'react';
 import * as monaco from 'monaco-editor';
 import { Box } from '@mantine/core';
 
-// 配置 Monaco Editor
-monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-  validate: true, // 启用验证
-  allowComments: true, // 允许注释
-  allowTrailingComma: true, // 允许尾随逗号
-  allowSingleQuotes: false, // 不允许单引号
-  comments: 'ignore', // 忽略注释
-  trailingCommas: 'ignore', // 忽略尾随逗号
-  enableSchemaRequest: true,
-  schemas: [],
-  schemaValidation: 'error', // schema 验证错误级别
-  schemaRequest: 'error', // schema 请求错误级别
-});
-
-function useJsoncEditor(initialCode: string) {
+function useJsonEditor(initialCode: string) {
   const [code, setCode] = useState(initialCode);
   const [currentErrors, setCurrentErrors] = useState<string[]>([]);
   const [editorInstance, setEditorInstance] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 
-  // 更新错误信息
-  const validateJsonc = useCallback(() => {
+  // JSON 验证
+  const validateJson = useCallback(() => {
     if (!editorInstance) return;
 
-    const model = editorInstance.getModel();
-    if (!model) return;
-
     try {
-      // 首先获取编辑器的标记
-      const markers = monaco.editor.getModelMarkers({ resource: model.uri });
-
-      // 然后尝试解析 JSONC（去除注释后）
-      const codeWithoutComments = code
-        .replace(/\/\*[\s\S]*?\*\//g, '') // 移除多行注释
-        .replace(/\/\/.*/g, ''); // 移除单行注释
-
-      if (codeWithoutComments.trim()) {
-        // 尝试解析，如果有基本语法错误会抛出异常
-        JSON.parse(codeWithoutComments);
-      }
-
-      if (markers.length === 0) {
-        setCurrentErrors(['No errors found. JSONC is valid!']);
-      } else {
-        const errorMessages = markers.map((marker) => `Line ${marker.startLineNumber}: ${marker.message}`);
-        setCurrentErrors(errorMessages);
-      }
+      JSON.parse(code);
+      setCurrentErrors(['No errors found. JSON is valid!']);
+      monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', []);
     } catch (e) {
       if (e instanceof Error) {
-        // 解析错误，更新错误消息
-        setCurrentErrors([`JSON syntax error: ${e.message}`]);
+        const errorMsg = e.message;
+        const lineMatch = code.substring(0, e.message.indexOf('"')).split('\n');
+        const lineNumber = lineMatch.length;
 
-        // 添加错误标记
-        if (model) {
-          monaco.editor.setModelMarkers(model, 'json', [{
-            severity: monaco.MarkerSeverity.Error,
-            message: e.message,
-            startLineNumber: 1,
-            startColumn: 1,
-            endLineNumber: model.getLineCount(),
-            endColumn: model.getLineMaxColumn(model.getLineCount()),
-          }]);
-        }
+        setCurrentErrors([errorMsg]);
+
+        monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', [{
+          startLineNumber: lineNumber,
+          startColumn: 1,
+          endLineNumber: lineNumber,
+          endColumn: Number.MAX_VALUE,
+          message: errorMsg,
+          severity: monaco.MarkerSeverity.Error,
+        }]);
       }
     }
   }, [code, editorInstance]);
 
-  // 监听编辑器内容变化和标记变化
+  // 实时验证
   useEffect(() => {
-    if (!editorInstance) return;
-
-    const model = editorInstance.getModel();
-    if (!model) return;
-
-    const disposables = [
-      editorInstance.onDidChangeModelContent(() => {
-        validateJsonc();
-      }),
-      monaco.editor.onDidChangeMarkers(([uri]) => {
-        if (uri.toString() === model.uri.toString()) {
-          validateJsonc();
-        }
-      }),
-    ];
-
-    // 初始验证
-    validateJsonc();
-
-    return () => {
-      disposables.forEach((d) => d.dispose());
-    };
-  }, [editorInstance, validateJsonc]);
+    if (code.trim()) {
+      validateJson();
+    } else {
+      setCurrentErrors([]);
+      if (editorInstance) {
+        monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', []);
+      }
+    }
+  }, [code, validateJson, editorInstance]);
 
   return {
     code,
@@ -102,27 +55,25 @@ function useJsoncEditor(initialCode: string) {
   };
 }
 
-function JsoncEditorTest(): React.ReactElement {
+function CodeEditorTest(): React.ReactElement {
   const {
     code,
     setCode,
     currentErrors,
     setEditorInstance,
-  } = useJsoncEditor('');
+  } = useJsonEditor('');
 
   const containerRef = useCallback((node: HTMLDivElement) => {
     if (node) {
       const editor = monaco.editor.create(node, {
         value: code,
         language: 'json',
-        theme: 'vs-dark',
+        theme: 'hc-black',
         automaticLayout: true,
         minimap: { enabled: false },
         formatOnPaste: true,
         formatOnType: true,
         scrollBeyondLastLine: false,
-        renderValidationDecorations: 'on',
-        fixedOverflowWidgets: true,
       });
 
       setEditorInstance(editor);
@@ -136,7 +87,9 @@ function JsoncEditorTest(): React.ReactElement {
         editor.dispose();
       };
     }
-  }, [setCode, setEditorInstance]);
+    return undefined;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setCode, setEditorInstance]); // 移除 code 依赖，添加 eslint-disable 注释
 
   return (
     <div style={{
@@ -195,4 +148,4 @@ function JsoncEditorTest(): React.ReactElement {
   );
 }
 
-export default JsoncEditorTest;
+export default CodeEditorTest;

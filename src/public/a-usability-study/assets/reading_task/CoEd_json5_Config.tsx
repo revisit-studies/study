@@ -2,8 +2,8 @@ import React, { useCallback, useEffect } from 'react';
 import * as monaco from 'monaco-editor';
 import { Box } from '@mantine/core';
 
-// JSON5 格式的初始代码
-const initialCode = `{
+// JSON 格式的初始代码
+const initialCode = JSON.stringify({
   name: 'd3-hierarchy',
   version: '3.1.2',
   description: 'Layout algorithms for visualizing hierarchical data.',
@@ -50,97 +50,29 @@ const initialCode = `{
     rollup: '2',
     'rollup-plugin-terser': '7',
   },
-  /* d3-random is a peer dependency.*/
+  comments: 'd3-random is a peer dependency.',
   scripts: {
-    test: 'mocha test/**/*-test.js && eslint src test',
+    test: "mocha 'test/**/*-test.js' && eslint src test",
     prepublishOnly: 'rm -rf dist && yarn test && rollup -c',
-    postpublish: 'git push && \
-      git push --tags && \
-      cd ../d3.github.com && \
-      git pull && \
-      cp ../$npm_package_name/dist/$npm_package_name.js $npm_package_name.v$npm_package_version%.*.js && \
-      cp ../$npm_package_name/dist/$npm_package_name.min.js $npm_package_name.v$npm_package_version%.*.min.js && \
-      git add $npm_package_name.v$npm_package_version%.*.js $npm_package_name.v$npm_package_version%.*.min.js && \
-      git commit -m "$npm_package_name $npm_package_version" && \
-      git push && \
-      cd -',
+    postpublish:
+      'git push && git push --tags && cd ../d3.github.com && git pull && cp ../$npm_package_name/dist/$npm_package_name.js $npm_package_name.v$npm_package_version%%.*.js && cp ../$npm_package_name/dist/$npm_package_name.min.js $npm_package_name.v$npm_package_version%%.*.min.js && git add $npm_package_name.v$npm_package_version%%.*.js $npm_package_name.v$npm_package_version%%.*.min.js && git commit -m "$npm_package_name $npm_package_version" && git push && cd -',
   },
   engines: {
     node: '>=12',
   },
-}`;
+}, null, 2);
 
 function CodeEditorTest(): React.ReactElement {
+  // 配置 Monaco Editor 的语言支持
   useEffect(() => {
-    // 注册 JSON5 语言
-    monaco.languages.register({ id: 'json5' });
-
-    // 设置 JSON5 的语言配置
-    monaco.languages.setMonarchTokensProvider('json5', {
-      tokenizer: {
-        root: [
-          // 注释
-          [/\/\/.*$/, 'comment'],
-          [/\/\*/, 'comment', '@comment'],
-
-          // 键名（支持有引号和无引号）
-          [/([A-Za-z_$][\w$]*)(?=\s*:)/, 'type'],
-          [/'([^']*)'(?=\s*:)/, 'type'],
-          [/"([^"]*)"(?=\s*:)/, 'type'],
-
-          // 分隔符
-          [/:/, 'delimiter.colon'],
-          [/[{}\[\]]/, 'delimiter.bracket'],
-          [/,/, 'delimiter.comma'],
-
-          // 布尔值和 null
-          [/\b(?:true|false|null)\b/, 'keyword'],
-
-          // 数字
-          [/[+-]?(Infinity|\d+\.?\d*([eE][+-]?\d+)?|NaN)/, 'number'],
-          [/0[xX][0-9a-fA-F]+/, 'number'],
-
-          // 字符串
-          [/'([^'\\]|\\.)*'/, 'string'],
-          [/"([^"\\]|\\.)*"/, 'string'],
-          [/`[^`]*`/, 'string'],
-
-          // 空白
-          [/\s+/, 'white'],
-        ],
-
-        comment: [
-          [/[^/*]+/, 'comment'],
-          [/\*\//, 'comment', '@pop'],
-          [/[/*]/, 'comment'],
-        ],
-      },
-    });
-
-    // 配置语言特性
-    monaco.languages.setLanguageConfiguration('json5', {
-      comments: {
-        lineComment: '//',
-        blockComment: ['/*', '*/'],
-      },
-      brackets: [
-        ['{', '}'],
-        ['[', ']'],
-      ],
-      autoClosingPairs: [
-        { open: '{', close: '}' },
-        { open: '[', close: ']' },
-        { open: '"', close: '"' },
-        { open: '\'', close: '\'' },
-        { open: '`', close: '`' },
-      ],
-      surroundingPairs: [
-        { open: '{', close: '}' },
-        { open: '[', close: ']' },
-        { open: '"', close: '"' },
-        { open: '\'', close: '\'' },
-        { open: '`', close: '`' },
-      ],
+    // 配置 JSON 语言特性
+    monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
+      validate: true,
+      allowComments: true,
+      schemas: [],
+      enableSchemaRequest: false,
+      schemaRequest: 'ignore',
+      schemaValidation: 'ignore',
     });
   }, []);
 
@@ -148,7 +80,7 @@ function CodeEditorTest(): React.ReactElement {
     if (node) {
       const editor = monaco.editor.create(node, {
         value: initialCode,
-        language: 'json5',
+        language: 'json',
         theme: 'hc-black',
         automaticLayout: true,
         readOnly: true,

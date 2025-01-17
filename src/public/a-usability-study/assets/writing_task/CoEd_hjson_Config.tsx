@@ -1,186 +1,79 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as monaco from 'monaco-editor';
 import { Box } from '@mantine/core';
-import { parse as parseHjson } from 'hjson';
 
-function useHjsonEditor(initialCode: string) {
+function useJsonEditor(initialCode: string) {
   const [code, setCode] = useState(initialCode);
-  const [errors, setErrors] = useState<string[]>([]);
+  const [currentErrors, setCurrentErrors] = useState<string[]>([]);
   const [editorInstance, setEditorInstance] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 
-  const validateHjson = useCallback(() => {
+  // JSON 验证
+  const validateJson = useCallback(() => {
     if (!editorInstance) return;
-    const model = editorInstance.getModel();
-    if (!model) return;
 
     try {
-      // 使用 Hjson 解析，添加更宽松的解析选项
-      parseHjson(code, { keepWsc: true, separator: true });
-      setErrors(['No errors found. HJSON is valid!']);
-      monaco.editor.setModelMarkers(model, 'hjson', []);
+      JSON.parse(code);
+      setCurrentErrors(['No errors found. JSON is valid!']);
+      monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', []);
     } catch (e) {
       if (e instanceof Error) {
-        setErrors([e.message]);
-        // 尝试从错误消息中提取行号
-        const lineMatch = e.message.match(/line\s+(\d+)/i);
-        let errorLine = 1;
+        const errorMsg = e.message;
+        const lineMatch = code.substring(0, e.message.indexOf('"')).split('\n');
+        const lineNumber = lineMatch.length;
 
-        if (lineMatch) {
-          errorLine = parseInt(lineMatch[1], 10);
-        } else {
-          // 如果没有直接找到行号，尝试通过错误位置计算
-          const posMatch = e.message.match(/at\s+position\s+(\d+)/i);
-          if (posMatch) {
-            const pos = parseInt(posMatch[1], 10);
-            const textBeforeError = code.substring(0, pos);
-            errorLine = textBeforeError.split('\n').length;
-          }
-        }
+        setCurrentErrors([errorMsg]);
 
-        // 设置错误标记
-        monaco.editor.setModelMarkers(model, 'hjson', [{
-          startLineNumber: errorLine,
+        monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', [{
+          startLineNumber: lineNumber,
           startColumn: 1,
-          endLineNumber: errorLine,
-          endColumn: model.getLineLength(errorLine) + 1,
-          message: e.message,
+          endLineNumber: lineNumber,
+          endColumn: Number.MAX_VALUE,
+          message: errorMsg,
           severity: monaco.MarkerSeverity.Error,
         }]);
       }
     }
   }, [code, editorInstance]);
 
+  // 实时验证
+  useEffect(() => {
+    if (code.trim()) {
+      validateJson();
+    } else {
+      setCurrentErrors([]);
+      if (editorInstance) {
+        monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', []);
+      }
+    }
+  }, [code, validateJson, editorInstance]);
+
   return {
-    code, setCode, errors, validateHjson, setEditorInstance,
+    code,
+    setCode,
+    currentErrors,
+    setEditorInstance,
   };
 }
 
-function HjsonEditorTest(): React.ReactElement {
+function CodeEditorTest(): React.ReactElement {
   const {
-    code, setCode, errors, validateHjson, setEditorInstance,
-  } = useHjsonEditor('');
-
-  useEffect(() => {
-    // 注册 HJSON 语言
-    monaco.languages.register({ id: 'hjson' });
-
-    // 设置 HJSON 的语言配置
-    monaco.languages.setMonarchTokensProvider('hjson', {
-      defaultToken: '',
-      tokenPostfix: '.hjson',
-
-      // 转义字符
-      escapes: /\\(?:[bfnrtv\\"']|u[0-9A-Fa-f]{4})/,
-
-      tokenizer: {
-        root: [
-          // 标识符和关键字
-          [/[a-zA-Z_$][\w$]*/, {
-            cases: {
-              '@default': 'identifier',
-            },
-          }],
-
-          // 空格
-          [/[ \t\r\n]+/, ''],
-
-          // 注释
-          [/#.*$/, 'comment'],
-          [/\/\/.*$/, 'comment'],
-          [/\/\*/, 'comment', '@comment'],
-
-          // 数字
-          [/-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?/, 'number'],
-
-          // 分隔符
-          [/[{}\[\],:]/, 'delimiter'],
-
-          // 字符串
-          [/"([^"\\]|\\.)*$/, 'string.invalid'],
-          [/'([^'\\]|\\.)*$/, 'string.invalid'],
-          [/"/, 'string', '@string_double'],
-          [/'/, 'string', '@string_single'],
-          [/'''/, 'string', '@string_multiline'],
-
-          // 键值对中的键
-          [/([a-zA-Z_$][\w$]*)(?=\s*:)/, 'string.key'],
-          [/"([^"]*)"(?=\s*:)/, 'string.key'],
-          [/'([^']*)'(?=\s*:)/, 'string.key'],
-        ],
-
-        comment: [
-          [/[^/*]+/, 'comment'],
-          [/\*\//, 'comment', '@pop'],
-          [/[/*]/, 'comment'],
-        ],
-
-        string_double: [
-          [/[^\\"]+/, 'string'],
-          [/@escapes/, 'string.escape'],
-          [/\\./, 'string.escape.invalid'],
-          [/"/, 'string', '@pop'],
-        ],
-
-        string_single: [
-          [/[^\\']+/, 'string'],
-          [/@escapes/, 'string.escape'],
-          [/\\./, 'string.escape.invalid'],
-          [/'/, 'string', '@pop'],
-        ],
-
-        string_multiline: [
-          [/[^\\']+/, 'string'],
-          [/@escapes/, 'string.escape'],
-          [/\\./, 'string.escape.invalid'],
-          [/'''/, 'string', '@pop'],
-          [/./, 'string'],
-        ],
-      },
-    });
-
-    // 配置语言特性
-    monaco.languages.setLanguageConfiguration('hjson', {
-      comments: {
-        lineComment: '//',
-        blockComment: ['/*', '*/'],
-      },
-      brackets: [
-        ['{', '}'],
-        ['[', ']'],
-      ],
-      autoClosingPairs: [
-        { open: '{', close: '}' },
-        { open: '[', close: ']' },
-        { open: '"', close: '"' },
-        { open: '\'', close: '\'' },
-      ],
-      surroundingPairs: [
-        { open: '{', close: '}' },
-        { open: '[', close: ']' },
-        { open: '"', close: '"' },
-        { open: '\'', close: '\'' },
-      ],
-    });
-  }, []);
+    code,
+    setCode,
+    currentErrors,
+    setEditorInstance,
+  } = useJsonEditor('');
 
   const containerRef = useCallback((node: HTMLDivElement) => {
     if (node) {
       const editor = monaco.editor.create(node, {
         value: code,
-        language: 'hjson',
+        language: 'json',
         theme: 'hc-black',
         automaticLayout: true,
         minimap: { enabled: false },
-        scrollBeyondLastLine: false,
-        renderValidationDecorations: 'on',
         formatOnPaste: true,
         formatOnType: true,
-        wordWrap: 'on',
-        lineNumbers: 'on',
-        glyphMargin: true,
-        folding: true,
-        lineDecorationsWidth: 0,
-        lineNumbersMinChars: 3,
+        scrollBeyondLastLine: false,
       });
 
       setEditorInstance(editor);
@@ -190,15 +83,23 @@ function HjsonEditorTest(): React.ReactElement {
         setCode(rawCode);
       });
 
-      return () => editor.dispose();
+      return () => {
+        editor.dispose();
+      };
     }
-  }, [setCode, setEditorInstance]);
+    return undefined;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setCode, setEditorInstance]); // 移除 code 依赖，添加 eslint-disable 注释
 
   return (
     <div style={{
-      display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '20px',
+      padding: '20px',
     }}
     >
+      {/* 图片与代码编辑器部分 */}
       <div style={{ display: 'flex', width: '100%', gap: '20px' }}>
         <div style={{ flex: '0 0 60%' }}>
           <img
@@ -223,23 +124,7 @@ function HjsonEditorTest(): React.ReactElement {
         />
       </div>
 
-      <div style={{ display: 'flex', gap: '10px' }}>
-        <button
-          type="button"
-          onClick={validateHjson}
-          style={{
-            padding: '10px 20px',
-            borderRadius: '4px',
-            background: '#007bff',
-            color: '#fff',
-            border: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          Validate HJSON
-        </button>
-      </div>
-
+      {/* 验证状态显示 */}
       <Box
         style={{
           background: '#f5f5f5',
@@ -250,26 +135,17 @@ function HjsonEditorTest(): React.ReactElement {
           overflow: 'auto',
         }}
       >
-        <h3>Validation Results:</h3>
-        {errors.length > 0 ? (
-          <ul>
-            {errors.map((error, index) => (
-              <li
-                key={index}
-                style={{
-                  color: error === 'No errors found. HJSON is valid!' ? 'green' : 'red',
-                }}
-              >
-                {error}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>No errors found.</p>
-        )}
+        <h3>Validation Status:</h3>
+        <ul>
+          {currentErrors.map((error, index) => (
+            <li key={index} style={{ color: error.includes('valid') ? 'green' : 'red' }}>
+              {error}
+            </li>
+          ))}
+        </ul>
       </Box>
     </div>
   );
 }
 
-export default HjsonEditorTest;
+export default CodeEditorTest;

@@ -1,138 +1,151 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as monaco from 'monaco-editor';
 import { Box } from '@mantine/core';
-import { XMLValidator } from 'fast-xml-parser'; // 引入 fast-xml-parser 的验证工具
 
-function useXmlEditor(initialCode: string) {
-  const [code, setCode] = useState(initialCode); // 当前编辑器内容
-  const [errors, setErrors] = useState<string[]>([]); // 错误信息
-  const [editorInstance, setEditorInstance] = useState<monaco.editor.IStandaloneCodeEditor | null>(null); // 编辑器实例
+function useJsonEditor(initialCode: string) {
+  const [code, setCode] = useState(initialCode);
+  const [currentErrors, setCurrentErrors] = useState<string[]>([]);
+  const [editorInstance, setEditorInstance] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 
-  // 使用 fast-xml-parser 验证 XML
-  const validateXmlWithFastXmlParser = useCallback(() => {
+  // JSON 验证
+  const validateJson = useCallback(() => {
     if (!editorInstance) return;
 
-    const rawCode = editorInstance.getValue(); // 获取编辑器内容
-    const validationResult = XMLValidator.validate(rawCode); // 验证 XML 语法
+    try {
+      JSON.parse(code);
+      setCurrentErrors(['No errors found. JSON is valid!']);
+      monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', []);
+    } catch (e) {
+      if (e instanceof Error) {
+        const errorMsg = e.message;
+        const lineMatch = code.substring(0, e.message.indexOf('"')).split('\n');
+        const lineNumber = lineMatch.length;
 
-    if (validationResult !== true) {
-      // 如果验证失败，记录错误信息
-      const errorMessage = validationResult.err.msg || 'Unknown XML parsing error';
-      setErrors([`Error at line ${validationResult.err.line}: ${errorMessage}`]);
+        setCurrentErrors([errorMsg]);
 
-      // 设置错误标记
-      monaco.editor.setModelMarkers(editorInstance.getModel()!, 'xml', [
-        {
-          startLineNumber: validationResult.err.line,
-          startColumn: validationResult.err.col || 1,
-          endLineNumber: validationResult.err.line,
-          endColumn: validationResult.err.col || 1,
-          message: errorMessage,
+        monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', [{
+          startLineNumber: lineNumber,
+          startColumn: 1,
+          endLineNumber: lineNumber,
+          endColumn: Number.MAX_VALUE,
+          message: errorMsg,
           severity: monaco.MarkerSeverity.Error,
-        },
-      ]);
-    } else {
-      // 如果验证通过，清空错误信息和标记
-      setErrors([]);
-      monaco.editor.setModelMarkers(editorInstance.getModel()!, 'xml', []);
+        }]);
+      }
     }
-  }, [editorInstance]);
+  }, [code, editorInstance]);
+
+  // 实时验证
+  useEffect(() => {
+    if (code.trim()) {
+      validateJson();
+    } else {
+      setCurrentErrors([]);
+      if (editorInstance) {
+        monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', []);
+      }
+    }
+  }, [code, validateJson, editorInstance]);
 
   return {
-    code, setCode, errors, validateXmlWithFastXmlParser, setEditorInstance,
+    code,
+    setCode,
+    currentErrors,
+    setEditorInstance,
   };
 }
 
-function XmlEditorTest(): React.ReactElement {
+function CodeEditorTest(): React.ReactElement {
   const {
-    code, setCode, errors, validateXmlWithFastXmlParser, setEditorInstance,
-  } = useXmlEditor('<root>\n  <item>Content</item>\n</root>');
-
-  useEffect(() => {
-    // 注册 XML 语言支持
-    monaco.languages.register({ id: 'xml' });
-
-    // 配置 XML 的基本语言特性
-    monaco.languages.setLanguageConfiguration('xml', {
-      autoClosingPairs: [
-        { open: '<', close: '>' },
-        { open: "'", close: "'" },
-        { open: '"', close: '"' },
-      ],
-    });
-  }, []);
+    code,
+    setCode,
+    currentErrors,
+    setEditorInstance,
+  } = useJsonEditor('');
 
   const containerRef = useCallback((node: HTMLDivElement) => {
     if (node) {
       const editor = monaco.editor.create(node, {
-        value: code, // 初始化编辑器内容
-        language: 'xml', // 设置语言为 XML
-        theme: 'vs-light', // 使用浅色主题
-        automaticLayout: true, // 自动调整布局
-        minimap: { enabled: false }, // 禁用迷你地图
+        value: code,
+        language: 'json',
+        theme: 'hc-black',
+        automaticLayout: true,
+        minimap: { enabled: false },
+        formatOnPaste: true,
+        formatOnType: true,
+        scrollBeyondLastLine: false,
       });
 
-      setEditorInstance(editor); // 设置编辑器实例
+      setEditorInstance(editor);
 
-      // 监听内容变化事件
       editor.onDidChangeModelContent(() => {
         const rawCode = editor.getValue();
-        setCode(rawCode); // 更新内容状态
-        validateXmlWithFastXmlParser(); // 实时验证 XML
+        setCode(rawCode);
       });
 
-      return () => editor.dispose(); // 在组件卸载时销毁编辑器实例
+      return () => {
+        editor.dispose();
+      };
     }
-  }, [setCode, validateXmlWithFastXmlParser, setEditorInstance]);
+    return undefined;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setCode, setEditorInstance]); // 移除 code 依赖，添加 eslint-disable 注释
 
   return (
     <div style={{
-      display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '20px',
+      padding: '20px',
     }}
     >
-      <div
-        ref={containerRef}
-        style={{
-          height: '400px',
-          border: '1px solid #ccc',
-          borderRadius: '8px',
-        }}
-      />
-      <button
-        onClick={validateXmlWithFastXmlParser}
-        style={{
-          padding: '10px 20px',
-          borderRadius: '4px',
-          background: '#007bff',
-          color: '#fff',
-          border: 'none',
-          cursor: 'pointer',
-        }}
-      >
-        Validate XML
-      </button>
+      {/* 图片与代码编辑器部分 */}
+      <div style={{ display: 'flex', width: '100%', gap: '20px' }}>
+        <div style={{ flex: '0 0 60%' }}>
+          <img
+            src="/a-usability-study/assets/tasks/fig/config_write.png"
+            alt="Example"
+            style={{
+              width: '100%',
+              height: 'auto',
+              objectFit: 'contain',
+            }}
+          />
+        </div>
+
+        <Box
+          style={{
+            flex: '0 0 40%',
+            height: '500px',
+            border: '1px solid #ccc',
+            borderRadius: '8px',
+          }}
+          ref={containerRef}
+        />
+      </div>
+
+      {/* 验证状态显示 */}
       <Box
         style={{
-          marginTop: '10px',
-          background: '#f9f9f9',
+          background: '#f5f5f5',
           padding: '10px',
           borderRadius: '4px',
           border: '1px solid #ccc',
+          whiteSpace: 'pre-wrap',
+          overflow: 'auto',
         }}
       >
-        <h3>Validation Results:</h3>
-        {errors.length > 0 ? (
-          errors.map((error, index) => (
-            <p key={index} style={{ color: 'red', whiteSpace: 'pre-wrap' }}>
+        <h3>Validation Status:</h3>
+        <ul>
+          {currentErrors.map((error, index) => (
+            <li key={index} style={{ color: error.includes('valid') ? 'green' : 'red' }}>
               {error}
-            </p>
-          ))
-        ) : (
-          <p style={{ color: 'green' }}>No errors found. XML is valid!</p>
-        )}
+            </li>
+          ))}
+        </ul>
       </Box>
     </div>
   );
 }
 
-export default XmlEditorTest;
+export default CodeEditorTest;

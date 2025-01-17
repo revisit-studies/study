@@ -83,9 +83,13 @@ function CodeEditorTest(): React.ReactElement {
         setCode(rawCode);
       });
 
-      return () => editor.dispose();
+      return () => {
+        editor.dispose();
+      };
     }
-  }, [setCode, setEditorInstance]);
+    return undefined;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setCode, setEditorInstance]); // 移除 code 依赖，添加 eslint-disable 注释
 
   return (
     <div style={{
