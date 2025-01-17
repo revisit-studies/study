@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc4/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "sus library example",
+    "title": "sus: System Usability Scale",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
