@@ -93,15 +93,15 @@ function ReadOnlyTomlEditor(): React.ReactElement {
         root: [
           // 注释
           [/#.*$/, 'comment'],
-          
+
           // 表格和数组表格
-          [/^\s*\[\[.*?\]\]/, 'metatag'],  // 数组表格
-          [/^\s*\[.*?\]/, 'metatag'],      // 普通表格
-          
+          [/^\s*\[\[.*?\]\]/, 'metatag'], // 数组表格
+          [/^\s*\[.*?\]/, 'metatag'], // 普通表格
+
           // 键值对
-          [/([A-Za-z_][A-Za-z0-9_\-]*)(?=\s*=)/, 'type'],  // 键名
-          [/=/, 'operators'],                               // 等号
-          
+          [/([A-Za-z_][A-Za-z0-9_\-]*)(?=\s*=)/, 'type'], // 键名
+          [/=/, 'operators'], // 等号
+
           // 多行字符串
           [/'''/, { token: 'string', next: 'mlString' }],
           [/"""/, { token: 'string', next: 'mlStringDouble' }],
@@ -109,13 +109,13 @@ function ReadOnlyTomlEditor(): React.ReactElement {
           // 普通字符串
           [/"([^"\\]|\\.)*"/, 'string'],
           [/'[^']*'/, 'string'],
-          
+
           // 数字
           [/[+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/, 'number'],
-          
+
           // 布尔值
           [/\b(?:true|false)\b/, 'keyword'],
-          
+
           // 分隔符
           [/[{}[\],]/, 'delimiter'],
 
@@ -126,15 +126,15 @@ function ReadOnlyTomlEditor(): React.ReactElement {
         mlString: [
           [/[^']+/, 'string'],
           [/'''/, { token: 'string', next: '@pop' }],
-          [/'/, 'string']
+          [/'/, 'string'],
         ],
 
         mlStringDouble: [
           [/[^"]+/, 'string'],
           [/"""/, { token: 'string', next: '@pop' }],
-          [/"/, 'string']
-        ]
-      }
+          [/"/, 'string'],
+        ],
+      },
     });
 
     // 配置 TOML 语言特性
@@ -145,7 +145,7 @@ function ReadOnlyTomlEditor(): React.ReactElement {
       brackets: [
         ['{', '}'],
         ['[', ']'],
-        ['(', ')']
+        ['(', ')'],
       ],
       autoClosingPairs: [
         { open: '{', close: '}' },
@@ -154,15 +154,15 @@ function ReadOnlyTomlEditor(): React.ReactElement {
         { open: '"', close: '"' },
         { open: '\'', close: '\'' },
         { open: '"""', close: '"""' },
-        { open: '\'\'\'', close: '\'\'\'' }
+        { open: '\'\'\'', close: '\'\'\'' },
       ],
       surroundingPairs: [
         { open: '{', close: '}' },
         { open: '[', close: ']' },
         { open: '(', close: ')' },
         { open: '"', close: '"' },
-        { open: '\'', close: '\'' }
-      ]
+        { open: '\'', close: '\'' },
+      ],
     });
 
     // 创建编辑器实例
@@ -188,13 +188,13 @@ function ReadOnlyTomlEditor(): React.ReactElement {
   }, []); // 空依赖数组确保只运行一次
 
   return (
-    <Box 
-      ref={containerRef} 
-      style={{ 
+    <Box
+      ref={containerRef}
+      style={{
         height: '700px',
         border: '1px solid #ccc',
-        borderRadius: '8px'
-      }} 
+        borderRadius: '8px',
+      }}
     />
   );
 }

@@ -72,7 +72,7 @@ function CodeEditorTest(): React.ReactElement {
       schemas: [],
       enableSchemaRequest: false,
       schemaRequest: 'ignore',
-      schemaValidation: 'ignore'
+      schemaValidation: 'ignore',
     });
   }, []);
 

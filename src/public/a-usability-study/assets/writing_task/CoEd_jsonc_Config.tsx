@@ -4,16 +4,16 @@ import { Box } from '@mantine/core';
 
 // 配置 Monaco Editor
 monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
-  validate: true,                 // 启用验证
-  allowComments: true,           // 允许注释
-  allowTrailingComma: true,      // 允许尾随逗号
-  allowSingleQuotes: false,      // 不允许单引号
-  comments: 'ignore',            // 忽略注释
-  trailingCommas: 'ignore',      // 忽略尾随逗号
+  validate: true, // 启用验证
+  allowComments: true, // 允许注释
+  allowTrailingComma: true, // 允许尾随逗号
+  allowSingleQuotes: false, // 不允许单引号
+  comments: 'ignore', // 忽略注释
+  trailingCommas: 'ignore', // 忽略尾随逗号
   enableSchemaRequest: true,
   schemas: [],
-  schemaValidation: 'error',     // schema 验证错误级别
-  schemaRequest: 'error'         // schema 请求错误级别
+  schemaValidation: 'error', // schema 验证错误级别
+  schemaRequest: 'error', // schema 请求错误级别
 });
 
 function useJsoncEditor(initialCode: string) {
@@ -31,11 +31,11 @@ function useJsoncEditor(initialCode: string) {
     try {
       // 首先获取编辑器的标记
       const markers = monaco.editor.getModelMarkers({ resource: model.uri });
-      
+
       // 然后尝试解析 JSONC（去除注释后）
       const codeWithoutComments = code
         .replace(/\/\*[\s\S]*?\*\//g, '') // 移除多行注释
-        .replace(/\/\/.*/g, '');          // 移除单行注释
+        .replace(/\/\/.*/g, ''); // 移除单行注释
 
       if (codeWithoutComments.trim()) {
         // 尝试解析，如果有基本语法错误会抛出异常
@@ -45,16 +45,14 @@ function useJsoncEditor(initialCode: string) {
       if (markers.length === 0) {
         setCurrentErrors(['No errors found. JSONC is valid!']);
       } else {
-        const errorMessages = markers.map(marker => 
-          `Line ${marker.startLineNumber}: ${marker.message}`
-        );
+        const errorMessages = markers.map((marker) => `Line ${marker.startLineNumber}: ${marker.message}`);
         setCurrentErrors(errorMessages);
       }
     } catch (e) {
       if (e instanceof Error) {
         // 解析错误，更新错误消息
         setCurrentErrors([`JSON syntax error: ${e.message}`]);
-        
+
         // 添加错误标记
         if (model) {
           monaco.editor.setModelMarkers(model, 'json', [{
@@ -63,7 +61,7 @@ function useJsoncEditor(initialCode: string) {
             startLineNumber: 1,
             startColumn: 1,
             endLineNumber: model.getLineCount(),
-            endColumn: model.getLineMaxColumn(model.getLineCount())
+            endColumn: model.getLineMaxColumn(model.getLineCount()),
           }]);
         }
       }
@@ -85,14 +83,14 @@ function useJsoncEditor(initialCode: string) {
         if (uri.toString() === model.uri.toString()) {
           validateJsonc();
         }
-      })
+      }),
     ];
 
     // 初始验证
     validateJsonc();
 
     return () => {
-      disposables.forEach(d => d.dispose());
+      disposables.forEach((d) => d.dispose());
     };
   }, [editorInstance, validateJsonc]);
 
@@ -100,7 +98,7 @@ function useJsoncEditor(initialCode: string) {
     code,
     setCode,
     currentErrors,
-    setEditorInstance
+    setEditorInstance,
   };
 }
 
@@ -109,7 +107,7 @@ function JsoncEditorTest(): React.ReactElement {
     code,
     setCode,
     currentErrors,
-    setEditorInstance
+    setEditorInstance,
   } = useJsoncEditor('');
 
   const containerRef = useCallback((node: HTMLDivElement) => {
@@ -124,7 +122,7 @@ function JsoncEditorTest(): React.ReactElement {
         formatOnType: true,
         scrollBeyondLastLine: false,
         renderValidationDecorations: 'on',
-        fixedOverflowWidgets: true
+        fixedOverflowWidgets: true,
       });
 
       setEditorInstance(editor);
@@ -146,7 +144,8 @@ function JsoncEditorTest(): React.ReactElement {
       flexDirection: 'column',
       gap: '20px',
       padding: '20px',
-    }}>
+    }}
+    >
       {/* 图片与代码编辑器部分 */}
       <div style={{ display: 'flex', width: '100%', gap: '20px' }}>
         <div style={{ flex: '0 0 60%' }}>

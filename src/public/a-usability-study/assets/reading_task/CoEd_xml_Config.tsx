@@ -79,7 +79,7 @@ function CodeEditorXml(): React.ReactElement {
     if (containerRef.current) {
       // 配置 XML 语言支持
       monaco.languages.register({ id: 'xml' });
-      
+
       // 设置 XML 的语法高亮规则
       monaco.languages.setMonarchTokensProvider('xml', {
         tokenizer: {
@@ -87,42 +87,42 @@ function CodeEditorXml(): React.ReactElement {
             // CDATA
             [/(<!\[)(CDATA)(\[)/, ['delimiter.cdata', 'tag', 'delimiter.cdata']],
             [/\]\]>/, 'delimiter.cdata'],
-            
+
             // 注释
             [/<!--/, { token: 'comment', next: '@comment' }],
             [/-->/, 'comment'],
-            
+
             // 开始标签
             [/<(?![\!\[])([a-zA-Z_:][\w.:_-]*)/, 'tag.content'],
             [/>/, 'tag.content'],
-            
+
             // 结束标签
             [/<\/([a-zA-Z_:][\w.:_-]*)>/, 'tag.content'],
-            
+
             // 属性
             [/[a-zA-Z_:][\w.:_-]*(?=\s*=)/, 'attribute.name'],
             [/=/, 'delimiter'],
             [/"[^"]*"|'[^']*'/, 'attribute.value'],
-            
+
             // CDATA 内容处理
             [/\[[\s\S]*?\](?=\]>)/, 'string.content'],
-            
+
             // 一般文本
-            [/[^<>&]+/, 'text']
+            [/[^<>&]+/, 'text'],
           ],
 
           comment: [
             [/-->/, { token: 'comment', next: '@pop' }],
             [/[^-]+/, 'comment'],
-            [/./, 'comment']
+            [/./, 'comment'],
           ],
 
           cdata: [
             [/\[.*?\](?=\]>)/, 'string.content'],
             [/\]\]>/, { token: 'delimiter.cdata', next: '@pop' }],
-            [/[^\]]+/, 'string.content']
-          ]
-        }
+            [/[^\]]+/, 'string.content'],
+          ],
+        },
       });
 
       // 创建并添加自定义主题
@@ -135,12 +135,12 @@ function CodeEditorXml(): React.ReactElement {
           { token: 'comment', foreground: '6A9955' },
           { token: 'delimiter.cdata', foreground: '808080' },
           { token: 'attribute.name', foreground: '9CDCFE' },
-          { token: 'attribute.value', foreground: 'CE9178' }
+          { token: 'attribute.value', foreground: 'CE9178' },
         ],
         colors: {
           'editor.foreground': '#D4D4D4',
           'editor.background': '#000000',
-        }
+        },
       });
 
       // 创建编辑器实例

@@ -66,15 +66,15 @@ function validateJSONC(jsonc: string): { valid: boolean; error?: string } {
   try {
     // 移除单行注释和尾随注释
     let cleanedCode = jsonc.replace(/\/\/.*$/gm, '');
-    
+
     // 移除多行注释 /* */
     cleanedCode = cleanedCode.replace(/\/\*[\s\S]*?\*\//g, '');
-    
+
     // 处理尾随逗号
     cleanedCode = cleanedCode
       // 移除对象和数组中的尾随逗号
-      .replace(/,\s*}/g, '}')   // 对象中的尾随逗号
-      .replace(/,\s*\]/g, ']')  // 数组中的尾随逗号
+      .replace(/,\s*}/g, '}') // 对象中的尾随逗号
+      .replace(/,\s*\]/g, ']') // 数组中的尾随逗号
       .replace(/,\s*(?=\}|\])/g, '') // 另一种尾随逗号处理方式
       .trim();
 
@@ -83,9 +83,9 @@ function validateJSONC(jsonc: string): { valid: boolean; error?: string } {
     return { valid: true };
   } catch (error) {
     // 如果解析失败，返回错误信息
-    return { 
-      valid: false, 
-      error: error instanceof Error ? error.message : 'Unknown parsing error' 
+    return {
+      valid: false,
+      error: error instanceof Error ? error.message : 'Unknown parsing error',
     };
   }
 }
@@ -191,8 +191,8 @@ function CodeEditorTest(): React.ReactElement {
             range: new monaco.Range(e.lineNumber, 1, e.lineNumber, 1000),
             options: {
               className: 'errorLine errorDecoration',
-              hoverMessage: { value: errorMessage }
-            }
+              hoverMessage: { value: errorMessage },
+            },
           }];
 
           editor.deltaDecorations([], decorations);

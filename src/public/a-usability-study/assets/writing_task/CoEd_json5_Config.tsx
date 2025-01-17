@@ -47,11 +47,15 @@ function useJson5Editor(initialCode: string) {
     }
   }, [code, editorInstance]);
 
-  return { code, setCode, errors, validateJson5, setEditorInstance };
+  return {
+    code, setCode, errors, validateJson5, setEditorInstance,
+  };
 }
 
 function Json5EditorTest(): React.ReactElement {
-  const { code, setCode, errors, validateJson5, setEditorInstance } = useJson5Editor('');
+  const {
+    code, setCode, errors, validateJson5, setEditorInstance,
+  } = useJson5Editor('');
 
   useEffect(() => {
     // 注册 JSON5 语言
@@ -92,33 +96,33 @@ function Json5EditorTest(): React.ReactElement {
         comment: [
           [/[^/*]+/, 'comment'],
           [/\*\//, 'comment', '@pop'],
-          [/[/*]/, 'comment']
-        ]
-      }
+          [/[/*]/, 'comment'],
+        ],
+      },
     });
 
     // 配置语言特性
     monaco.languages.setLanguageConfiguration('json5', {
       comments: {
         lineComment: '//',
-        blockComment: ['/*', '*/']
+        blockComment: ['/*', '*/'],
       },
       brackets: [
         ['{', '}'],
-        ['[', ']']
+        ['[', ']'],
       ],
       autoClosingPairs: [
         { open: '{', close: '}' },
         { open: '[', close: ']' },
         { open: '"', close: '"' },
-        { open: '\'', close: '\'' }
+        { open: '\'', close: '\'' },
       ],
       surroundingPairs: [
         { open: '{', close: '}' },
         { open: '[', close: ']' },
         { open: '"', close: '"' },
-        { open: '\'', close: '\'' }
-      ]
+        { open: '\'', close: '\'' },
+      ],
     });
   }, []);
 
@@ -156,7 +160,8 @@ function Json5EditorTest(): React.ReactElement {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px',
-    }}>
+    }}
+    >
       <div style={{ display: 'flex', width: '100%', gap: '20px' }}>
         <div style={{ flex: '0 0 60%' }}>
           <img
@@ -212,9 +217,12 @@ function Json5EditorTest(): React.ReactElement {
         {errors.length > 0 ? (
           <ul>
             {errors.map((error, index) => (
-              <li key={index} style={{ 
-                color: error === 'No errors found. JSON5 is valid!' ? 'green' : 'red'
-              }}>
+              <li
+                key={index}
+                style={{
+                  color: error === 'No errors found. JSON5 is valid!' ? 'green' : 'red',
+                }}
+              >
                 {error}
               </li>
             ))}

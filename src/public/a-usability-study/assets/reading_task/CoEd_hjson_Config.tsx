@@ -74,52 +74,52 @@ function CodeEditorTest(): React.ReactElement {
         root: [
           // 注释
           [/#.*$/, 'comment'],
-          
+
           // 键名（支持有引号和无引号）
           [/^[ \t]*([A-Za-z_$][\w$]*)(?=\s*:)/, 'type'],
           [/^[ \t]*"([^"]*)"(?=\s*:)/, 'type'],
-          
+
           // 冒号和中括号
           [/:/, 'delimiter.colon'],
           [/[\[\]]/, 'delimiter.bracket'],
           [/,/, 'delimiter.comma'],
-          
+
           // 布尔值和 null
           [/\b(?:true|false|null)\b/, 'keyword'],
-          
+
           // 数字
           [/-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?/, 'number'],
-          
+
           // 引号字符串
           [/"[^"]*"/, 'string'],
-          
+
           // 多行字符串（使用 | 语法）
           [/^\s*\|/, 'string', '@multiline'],
-          
+
           // 无引号字符串（包括命令和路径）
-          [/[^\s,\[\]{}#:]+/, 'string']
+          [/[^\s,\[\]{}#:]+/, 'string'],
         ],
-        
+
         multiline: [
-          [/^(?!\s)/, '@pop'],  // 当遇到非空白开头的行时结束
-          [/.*$/, 'string']     // 多行字符串内容
-        ]
-      }
+          [/^(?!\s)/, '@pop'], // 当遇到非空白开头的行时结束
+          [/.*$/, 'string'], // 多行字符串内容
+        ],
+      },
     });
 
     monaco.languages.setLanguageConfiguration('hjson', {
       comments: {
-        lineComment: '#'
+        lineComment: '#',
       },
       brackets: [
         ['{', '}'],
-        ['[', ']']
+        ['[', ']'],
       ],
       autoClosingPairs: [
         { open: '{', close: '}' },
         { open: '[', close: ']' },
-        { open: '"', close: '"' }
-      ]
+        { open: '"', close: '"' },
+      ],
     });
   }, []);
 
@@ -137,7 +137,7 @@ function CodeEditorTest(): React.ReactElement {
         folding: true,
         lineNumbers: 'on',
         roundedSelection: false,
-        wordWrap: 'on'
+        wordWrap: 'on',
       });
 
       return () => {
