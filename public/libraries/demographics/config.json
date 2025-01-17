@@ -8,21 +8,21 @@
       "response": [
         {
           "id": "gender",
-          "prompt": "What is your gender?",
+          "prompt": "What is your **gender**?",
           "required": true,
           "location": "aboveStimulus",
           "type": "radio",
+          "withOther": true,
           "options": [
             "Man",
             "Woman",
             "Non-binary",
-            "Prefer to self-describe",
             "Prefer not to say"
           ]
         },
         {
           "id": "age",
-          "prompt": "What is your age?",
+          "prompt": "What is your **age**?",
           "required": true,
           "location": "aboveStimulus",
           "type": "radio",
@@ -39,10 +39,11 @@
         },
         {
           "id": "education",
-          "prompt": "What is the highest degree or level of education you have completed?",
+          "prompt": "What is the **highest degree or level of education** you have completed?",
           "required": true,
           "location": "aboveStimulus",
           "type": "radio",
+          "withOther": true,
           "options": [
             "Less than high school",
             "High school diploma or equivalent",
