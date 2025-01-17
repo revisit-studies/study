@@ -38,11 +38,15 @@ function useYamlEditor(initialCode: string) {
     }
   }, [code, editorInstance]);
 
-  return { code, setCode, errors, validateYaml, setEditorInstance };
+  return {
+    code, setCode, errors, validateYaml, setEditorInstance,
+  };
 }
 
 function YamlEditorTest(): React.ReactElement {
-  const { code, setCode, errors, validateYaml, setEditorInstance } = useYamlEditor('');
+  const {
+    code, setCode, errors, validateYaml, setEditorInstance,
+  } = useYamlEditor('');
 
   useEffect(() => {
     // 注册 YAML 语言
@@ -56,37 +60,37 @@ function YamlEditorTest(): React.ReactElement {
           [/#.*$/, 'comment'],
 
           // 键值对
-          [/([^:]+?)(?=\s*:)/, 'type'],  // 键名
-          [/:/, 'operators'],             // 冒号
+          [/([^:]+?)(?=\s*:)/, 'type'], // 键名
+          [/:/, 'operators'], // 冒号
 
           // 特殊值
           [/\b(true|false|null|undefined)\b/, 'keyword'],
           [/[+-]?[0-9]+\.?[0-9]*/, 'number'],
-          
+
           // 字符串（引号可选）
           [/"([^"\\]|\\.)*"/, 'string'],
           [/'([^'\\]|\\.)*'/, 'string'],
 
           // 特殊 YAML 语法
-          [/^---/, 'operators'],          // 文档开始
-          [/^\.{3}/, 'operators'],        // 文档结束
-          [/\|/, 'operators'],            // 多行字符串
-          [/>/, 'operators'],             // 折叠多行字符串
-          
+          [/^---/, 'operators'], // 文档开始
+          [/^\.{3}/, 'operators'], // 文档结束
+          [/\|/, 'operators'], // 多行字符串
+          [/>/, 'operators'], // 折叠多行字符串
+
           // 数组
-          [/^(\s*)-/, 'operators'],       // 数组项
+          [/^(\s*)-/, 'operators'], // 数组项
 
           // 引用和锚点
-          [/&\w+/, 'tag'],               // 锚点
-          [/\*\w+/, 'tag'],              // 引用
+          [/&\w+/, 'tag'], // 锚点
+          [/\*\w+/, 'tag'], // 引用
         ],
-      }
+      },
     });
 
     // 配置语言特性
     monaco.languages.setLanguageConfiguration('yaml', {
       comments: {
-        lineComment: '#'
+        lineComment: '#',
       },
       brackets: [
         ['{', '}'],
@@ -96,18 +100,18 @@ function YamlEditorTest(): React.ReactElement {
         { open: '{', close: '}' },
         { open: '[', close: ']' },
         { open: '"', close: '"' },
-        { open: '\'', close: '\'' }
+        { open: '\'', close: '\'' },
       ],
       surroundingPairs: [
         { open: '{', close: '}' },
         { open: '[', close: ']' },
         { open: '"', close: '"' },
-        { open: '\'', close: '\'' }
+        { open: '\'', close: '\'' },
       ],
       indentationRules: {
         increaseIndentPattern: /^.*:(?:$|[^:]*[^-\s]$)|^\s*-\s*[^-\s]/,
-        decreaseIndentPattern: /^\s*-\s*[^-\s]|^\s+\}$|^\s+\]$/
-      }
+        decreaseIndentPattern: /^\s*-\s*[^-\s]|^\s+\}$|^\s+\]$/,
+      },
     });
   }, []);
 
@@ -147,7 +151,8 @@ function YamlEditorTest(): React.ReactElement {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px',
-    }}>
+    }}
+    >
       <div style={{ display: 'flex', width: '100%', gap: '20px' }}>
         <div style={{ flex: '0 0 60%' }}>
           <img
@@ -203,9 +208,12 @@ function YamlEditorTest(): React.ReactElement {
         {errors.length > 0 ? (
           <ul>
             {errors.map((error, index) => (
-              <li key={index} style={{ 
-                color: error === 'No errors found. YAML is valid!' ? 'green' : 'red'
-              }}>
+              <li
+                key={index}
+                style={{
+                  color: error === 'No errors found. YAML is valid!' ? 'green' : 'red',
+                }}
+              >
                 {error}
               </li>
             ))}

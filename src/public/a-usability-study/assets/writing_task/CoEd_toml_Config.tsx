@@ -25,7 +25,7 @@ function useTomlEditor(initialCode: string) {
         // 提取错误位置信息
         const lineMatch = e.message.match(/line\s+(\d+)/i);
         const columnMatch = e.message.match(/column\s+(\d+)/i);
-        
+
         const lineNumber = lineMatch ? parseInt(lineMatch[1], 10) : 1;
         const column = columnMatch ? parseInt(columnMatch[1], 10) : 1;
 
@@ -42,11 +42,15 @@ function useTomlEditor(initialCode: string) {
     }
   }, [code, editorInstance]);
 
-  return { code, setCode, errors, validateToml, setEditorInstance };
+  return {
+    code, setCode, errors, validateToml, setEditorInstance,
+  };
 }
 
 function TomlEditorTest(): React.ReactElement {
-  const { code, setCode, errors, validateToml, setEditorInstance } = useTomlEditor('');
+  const {
+    code, setCode, errors, validateToml, setEditorInstance,
+  } = useTomlEditor('');
 
   useEffect(() => {
     // 注册 TOML 语言
@@ -60,31 +64,31 @@ function TomlEditorTest(): React.ReactElement {
           [/#.*$/, 'comment'],
 
           // 表格和数组表格
-          [/^\s*\[\[.*?\]\]/, 'metatag'],  // 数组表格
-          [/^\s*\[.*?\]/, 'metatag'],      // 普通表格
+          [/^\s*\[\[.*?\]\]/, 'metatag'], // 数组表格
+          [/^\s*\[.*?\]/, 'metatag'], // 普通表格
 
           // 键值对
-          [/([A-Za-z_][A-Za-z0-9_\-]*)(?=\s*=)/, 'type'],  // 键名
-          [/=/, 'operators'],                               // 等号
+          [/([A-Za-z_][A-Za-z0-9_\-]*)(?=\s*=)/, 'type'], // 键名
+          [/=/, 'operators'], // 等号
 
           // 字符串
-          [/"([^"\\]|\\.)*"/, 'string'],       // 基本字符串
-          [/'([^'\\]|\\.)*'/, 'string'],       // 字面字符串
-          [/"""/, 'string', '@multiString'],    // 多行基本字符串
-          [/'''/, 'string', '@multiLiteral'],   // 多行字面字符串
+          [/"([^"\\]|\\.)*"/, 'string'], // 基本字符串
+          [/'([^'\\]|\\.)*'/, 'string'], // 字面字符串
+          [/"""/, 'string', '@multiString'], // 多行基本字符串
+          [/'''/, 'string', '@multiLiteral'], // 多行字面字符串
 
           // 数字
-          [/[+-]?[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?/, 'number'],  // 整数和浮点数
-          [/0x[0-9a-fA-F]+/, 'number'],                             // 十六进制
-          [/0o[0-7]+/, 'number'],                                   // 八进制
-          [/0b[01]+/, 'number'],                                    // 二进制
+          [/[+-]?[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?/, 'number'], // 整数和浮点数
+          [/0x[0-9a-fA-F]+/, 'number'], // 十六进制
+          [/0o[0-7]+/, 'number'], // 八进制
+          [/0b[01]+/, 'number'], // 二进制
 
           // 布尔值
           [/\b(true|false)\b/, 'keyword'],
 
           // 日期和时间
           [/\d{4}-\d{2}-\d{2}([T ]\d{2}:\d{2}:\d{2}(\.\d+)?(Z|[+-]\d{2}:\d{2})?)?/, 'string.date'],
-          
+
           // 数组
           [/\[|\]/, 'operators'],
           [/,/, 'operators'],
@@ -92,25 +96,25 @@ function TomlEditorTest(): React.ReactElement {
 
         multiString: [
           [/"""/, 'string', '@pop'],
-          [/.+/, 'string']
+          [/.+/, 'string'],
         ],
 
         multiLiteral: [
           [/'''/, 'string', '@pop'],
-          [/.+/, 'string']
+          [/.+/, 'string'],
         ],
-      }
+      },
     });
 
     // 配置语言特性
     monaco.languages.setLanguageConfiguration('toml', {
       comments: {
-        lineComment: '#'
+        lineComment: '#',
       },
       brackets: [
         ['{', '}'],
         ['[', ']'],
-        ['(', ')']
+        ['(', ')'],
       ],
       autoClosingPairs: [
         { open: '{', close: '}' },
@@ -119,15 +123,15 @@ function TomlEditorTest(): React.ReactElement {
         { open: '"', close: '"' },
         { open: '\'', close: '\'' },
         { open: '"""', close: '"""' },
-        { open: '\'\'\'', close: '\'\'\'' }
+        { open: '\'\'\'', close: '\'\'\'' },
       ],
       surroundingPairs: [
         { open: '{', close: '}' },
         { open: '[', close: ']' },
         { open: '(', close: ')' },
         { open: '"', close: '"' },
-        { open: '\'', close: '\'' }
-      ]
+        { open: '\'', close: '\'' },
+      ],
     });
   }, []);
 
@@ -136,7 +140,7 @@ function TomlEditorTest(): React.ReactElement {
       const editor = monaco.editor.create(node, {
         value: code,
         language: 'toml',
-        theme: 'hc-black',    // 使用高对比度主题
+        theme: 'hc-black', // 使用高对比度主题
         automaticLayout: true,
         minimap: { enabled: false },
         scrollBeyondLastLine: false,
@@ -165,7 +169,8 @@ function TomlEditorTest(): React.ReactElement {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px',
-    }}>
+    }}
+    >
       <div style={{ display: 'flex', width: '100%', gap: '20px' }}>
         <div style={{ flex: '0 0 60%' }}>
           <img
@@ -221,9 +226,12 @@ function TomlEditorTest(): React.ReactElement {
         {errors.length > 0 ? (
           <ul>
             {errors.map((error, index) => (
-              <li key={index} style={{ 
-                color: error === 'No errors found. TOML is valid!' ? 'green' : 'red'
-              }}>
+              <li
+                key={index}
+                style={{
+                  color: error === 'No errors found. TOML is valid!' ? 'green' : 'red',
+                }}
+              >
                 {error}
               </li>
             ))}

@@ -82,65 +82,65 @@ function CodeEditorTest(): React.ReactElement {
           // 注释
           [/\/\/.*$/, 'comment'],
           [/\/\*/, 'comment', '@comment'],
-          
+
           // 键名（支持有引号和无引号）
           [/([A-Za-z_$][\w$]*)(?=\s*:)/, 'type'],
           [/'([^']*)'(?=\s*:)/, 'type'],
           [/"([^"]*)"(?=\s*:)/, 'type'],
-          
+
           // 分隔符
           [/:/, 'delimiter.colon'],
           [/[{}\[\]]/, 'delimiter.bracket'],
           [/,/, 'delimiter.comma'],
-          
+
           // 布尔值和 null
           [/\b(?:true|false|null)\b/, 'keyword'],
-          
+
           // 数字
           [/[+-]?(Infinity|\d+\.?\d*([eE][+-]?\d+)?|NaN)/, 'number'],
           [/0[xX][0-9a-fA-F]+/, 'number'],
-          
+
           // 字符串
           [/'([^'\\]|\\.)*'/, 'string'],
           [/"([^"\\]|\\.)*"/, 'string'],
           [/`[^`]*`/, 'string'],
-          
+
           // 空白
-          [/\s+/, 'white']
+          [/\s+/, 'white'],
         ],
-        
+
         comment: [
           [/[^/*]+/, 'comment'],
           [/\*\//, 'comment', '@pop'],
-          [/[/*]/, 'comment']
-        ]
-      }
+          [/[/*]/, 'comment'],
+        ],
+      },
     });
 
     // 配置语言特性
     monaco.languages.setLanguageConfiguration('json5', {
       comments: {
         lineComment: '//',
-        blockComment: ['/*', '*/']
+        blockComment: ['/*', '*/'],
       },
       brackets: [
         ['{', '}'],
-        ['[', ']']
+        ['[', ']'],
       ],
       autoClosingPairs: [
         { open: '{', close: '}' },
         { open: '[', close: ']' },
         { open: '"', close: '"' },
         { open: '\'', close: '\'' },
-        { open: '`', close: '`' }
+        { open: '`', close: '`' },
       ],
       surroundingPairs: [
         { open: '{', close: '}' },
         { open: '[', close: ']' },
         { open: '"', close: '"' },
         { open: '\'', close: '\'' },
-        { open: '`', close: '`' }
-      ]
+        { open: '`', close: '`' },
+      ],
     });
   }, []);
 
@@ -158,7 +158,7 @@ function CodeEditorTest(): React.ReactElement {
         folding: true,
         lineNumbers: 'on',
         roundedSelection: false,
-        wordWrap: 'on'
+        wordWrap: 'on',
       });
 
       return () => {

@@ -79,29 +79,29 @@ function CodeEditorTest(): React.ReactElement {
           [/\/\*/, 'comment', '@comment'],
 
           // 键值对
-          [/"(?:[^\\"]|\\.)*"(?=\s*:)/, 'string.key'],   // 键名
-          [/:/, 'operator'],                              // 冒号
-          [/,/, 'delimiter'],                             // 逗号
+          [/"(?:[^\\"]|\\.)*"(?=\s*:)/, 'string.key'], // 键名
+          [/:/, 'operator'], // 冒号
+          [/,/, 'delimiter'], // 逗号
 
           // 字符串值（处理转义引号）
-          [/"(?:[^\\"]|\\.)*"/, 'string.value'],         // 字符串
+          [/"(?:[^\\"]|\\.)*"/, 'string.value'], // 字符串
 
           // 数字
-          [/-?\d+\.?\d*([eE][+-]?\d+)?/, 'number'],      // 数字
+          [/-?\d+\.?\d*([eE][+-]?\d+)?/, 'number'], // 数字
 
           // 布尔值和 null
-          [/\b(true|false|null)\b/, 'keyword'],           // 关键字
+          [/\b(true|false|null)\b/, 'keyword'], // 关键字
 
           // 括号
-          [/[\{\}\[\]]/, 'delimiter'],                    // 括号
+          [/[\{\}\[\]]/, 'delimiter'], // 括号
         ],
 
         comment: [
           [/[^/*]+/, 'comment'],
           [/\*\//, 'comment', '@pop'],
-          [/[/*]/, 'comment']
+          [/[/*]/, 'comment'],
         ],
-      }
+      },
     });
 
     // 配置 JSONC 语言特性

@@ -87,7 +87,6 @@ function CodeEditorYaml(): React.ReactElement {
       });
     }
 
-
     return () => {
       editorRef.current?.dispose(); // 清理编辑器实例
     };

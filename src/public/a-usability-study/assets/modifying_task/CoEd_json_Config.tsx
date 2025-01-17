@@ -59,7 +59,7 @@ const initialCode = JSON.stringify(
     },
   },
   null,
-  2
+  2,
 );
 
 function CodeEditorTest(): React.ReactElement {
@@ -157,10 +157,10 @@ function CodeEditorTest(): React.ReactElement {
         // 提取行和列号
         const match = e.message.match(/line (\d+)/i);
         const lineNumber = match ? parseInt(match[1], 10) : 1;
-        
+
         // 获取错误行的内容
         const lineContent = model.getLineContent(lineNumber);
-        
+
         // 创建装饰器
         const decorations = [
           {
@@ -168,16 +168,16 @@ function CodeEditorTest(): React.ReactElement {
             options: {
               isWholeLine: true,
               className: 'errorLine',
-              hoverMessage: { value: e.message }
-            }
+              hoverMessage: { value: e.message },
+            },
           },
           {
             range: new monaco.Range(lineNumber, 1, lineNumber, lineContent.length + 1),
             options: {
               className: 'errorDecoration',
-              hoverMessage: { value: e.message }
-            }
-          }
+              hoverMessage: { value: e.message },
+            },
+          },
         ];
 
         // 应用装饰器

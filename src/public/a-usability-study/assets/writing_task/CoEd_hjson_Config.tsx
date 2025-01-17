@@ -24,7 +24,7 @@ function useHjsonEditor(initialCode: string) {
         // 尝试从错误消息中提取行号
         const lineMatch = e.message.match(/line\s+(\d+)/i);
         let errorLine = 1;
-        
+
         if (lineMatch) {
           errorLine = parseInt(lineMatch[1], 10);
         } else {
@@ -50,11 +50,15 @@ function useHjsonEditor(initialCode: string) {
     }
   }, [code, editorInstance]);
 
-  return { code, setCode, errors, validateHjson, setEditorInstance };
+  return {
+    code, setCode, errors, validateHjson, setEditorInstance,
+  };
 }
 
 function HjsonEditorTest(): React.ReactElement {
-  const { code, setCode, errors, validateHjson, setEditorInstance } = useHjsonEditor('');
+  const {
+    code, setCode, errors, validateHjson, setEditorInstance,
+  } = useHjsonEditor('');
 
   useEffect(() => {
     // 注册 HJSON 语言
@@ -73,8 +77,8 @@ function HjsonEditorTest(): React.ReactElement {
           // 标识符和关键字
           [/[a-zA-Z_$][\w$]*/, {
             cases: {
-              '@default': 'identifier'
-            }
+              '@default': 'identifier',
+            },
           }],
 
           // 空格
@@ -107,21 +111,21 @@ function HjsonEditorTest(): React.ReactElement {
         comment: [
           [/[^/*]+/, 'comment'],
           [/\*\//, 'comment', '@pop'],
-          [/[/*]/, 'comment']
+          [/[/*]/, 'comment'],
         ],
 
         string_double: [
           [/[^\\"]+/, 'string'],
           [/@escapes/, 'string.escape'],
           [/\\./, 'string.escape.invalid'],
-          [/"/, 'string', '@pop']
+          [/"/, 'string', '@pop'],
         ],
 
         string_single: [
           [/[^\\']+/, 'string'],
           [/@escapes/, 'string.escape'],
           [/\\./, 'string.escape.invalid'],
-          [/'/, 'string', '@pop']
+          [/'/, 'string', '@pop'],
         ],
 
         string_multiline: [
@@ -129,35 +133,34 @@ function HjsonEditorTest(): React.ReactElement {
           [/@escapes/, 'string.escape'],
           [/\\./, 'string.escape.invalid'],
           [/'''/, 'string', '@pop'],
-          [/./, 'string']
+          [/./, 'string'],
         ],
-      }
+      },
     });
 
     // 配置语言特性
     monaco.languages.setLanguageConfiguration('hjson', {
       comments: {
         lineComment: '//',
-        blockComment: ['/*', '*/']
+        blockComment: ['/*', '*/'],
       },
       brackets: [
         ['{', '}'],
-        ['[', ']']
+        ['[', ']'],
       ],
       autoClosingPairs: [
         { open: '{', close: '}' },
         { open: '[', close: ']' },
         { open: '"', close: '"' },
-        { open: '\'', close: '\'' }
+        { open: '\'', close: '\'' },
       ],
       surroundingPairs: [
         { open: '{', close: '}' },
         { open: '[', close: ']' },
         { open: '"', close: '"' },
-        { open: '\'', close: '\'' }
-      ]
+        { open: '\'', close: '\'' },
+      ],
     });
-
   }, []);
 
   const containerRef = useCallback((node: HTMLDivElement) => {
@@ -194,7 +197,8 @@ function HjsonEditorTest(): React.ReactElement {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', gap: '20px', padding: '20px',
-    }}>
+    }}
+    >
       <div style={{ display: 'flex', width: '100%', gap: '20px' }}>
         <div style={{ flex: '0 0 60%' }}>
           <img
@@ -250,9 +254,12 @@ function HjsonEditorTest(): React.ReactElement {
         {errors.length > 0 ? (
           <ul>
             {errors.map((error, index) => (
-              <li key={index} style={{ 
-                color: error === 'No errors found. HJSON is valid!' ? 'green' : 'red'
-              }}>
+              <li
+                key={index}
+                style={{
+                  color: error === 'No errors found. HJSON is valid!' ? 'green' : 'red',
+                }}
+              >
                 {error}
               </li>
             ))}

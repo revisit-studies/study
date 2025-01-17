@@ -20,7 +20,7 @@ function useJsonEditor(initialCode: string) {
         const errorMsg = e.message;
         const lineMatch = code.substring(0, e.message.indexOf('"')).split('\n');
         const lineNumber = lineMatch.length;
-        
+
         setCurrentErrors([errorMsg]);
 
         monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', [{
@@ -51,7 +51,7 @@ function useJsonEditor(initialCode: string) {
     code,
     setCode,
     currentErrors,
-    setEditorInstance
+    setEditorInstance,
   };
 }
 
@@ -60,7 +60,7 @@ function CodeEditorTest(): React.ReactElement {
     code,
     setCode,
     currentErrors,
-    setEditorInstance
+    setEditorInstance,
   } = useJsonEditor('');
 
   const containerRef = useCallback((node: HTMLDivElement) => {
@@ -73,7 +73,7 @@ function CodeEditorTest(): React.ReactElement {
         minimap: { enabled: false },
         formatOnPaste: true,
         formatOnType: true,
-        scrollBeyondLastLine: false
+        scrollBeyondLastLine: false,
       });
 
       setEditorInstance(editor);
@@ -93,7 +93,8 @@ function CodeEditorTest(): React.ReactElement {
       flexDirection: 'column',
       gap: '20px',
       padding: '20px',
-    }}>
+    }}
+    >
       {/* 图片与代码编辑器部分 */}
       <div style={{ display: 'flex', width: '100%', gap: '20px' }}>
         <div style={{ flex: '0 0 60%' }}>
