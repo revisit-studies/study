@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as monaco from 'monaco-editor';
 import { Box } from '@mantine/core';
+import { StimulusParams } from '../../../../store/types';
 
 function useJsonEditor(initialCode: string) {
   const [code, setCode] = useState(initialCode);
   const [currentErrors, setCurrentErrors] = useState<string[]>([]);
   const [editorInstance, setEditorInstance] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 
-  // JSON 验证
+  // JSON
   const validateJson = useCallback(() => {
     if (!editorInstance) return;
 
@@ -35,7 +36,7 @@ function useJsonEditor(initialCode: string) {
     }
   }, [code, editorInstance]);
 
-  // 实时验证
+  //
   useEffect(() => {
     if (code.trim()) {
       validateJson();
@@ -55,7 +56,7 @@ function useJsonEditor(initialCode: string) {
   };
 }
 
-function CodeEditorTest(): React.ReactElement {
+function CodeEditorTest({ setAnswer }: StimulusParams<unknown, Record<string, never>>): React.ReactElement {
   const {
     code,
     setCode,
@@ -80,6 +81,15 @@ function CodeEditorTest(): React.ReactElement {
 
       editor.onDidChangeModelContent(() => {
         const rawCode = editor.getValue();
+
+        setAnswer({
+          status: true,
+          answers: {
+            code: rawCode,
+            error: rawCode,
+          },
+        });
+
         setCode(rawCode);
       });
 
