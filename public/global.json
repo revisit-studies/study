@@ -1,11 +1,15 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/GlobalConfigSchema.json",
   "configsList": [
-    "super-resolution-study"
+    "super-resolution-study",
+    "tutorial-advanced-react-component"
   ],
   "configs": {
     "super-resolution-study": {
       "path": "super-resolution-study/config.json"
+    },
+    "tutorial-advanced-react-component": {
+      "path": "tutorial/react-and-randomization/config.json"
     }
   }
 }

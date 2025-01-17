@@ -16,9 +16,14 @@
        .iframe-container {
            flex: 1;
            width: 100%;
+           height: 800px;
            margin: 0 auto;
+           display: flex;
+           flex-direction: column;
        }
        iframe {
+           width: 100%;
+           flex: 1;
            border: none;
            box-shadow: 0 0 10px rgba(0,0,0,0.1);
        }
@@ -32,14 +37,12 @@
 <body>
    <div class="iframe-container">
        <iframe 
-           src="https://chpc2.nationalsciencedatafabric.org:11771/app"
-           width="100%" 
-           height="500px"
+           src="https://chpc2.nationalsciencedatafabric.org:1773/app"
            frameborder="0"
            scrolling="no"
            allowfullscreen>
            <p>Your browser does not support iframes. Visit the site directly at 
-               <a href="https://chpc2.nationalsciencedatafabric.org:11771/app">here</a>
+               <a href="https://chpc2.nationalsciencedatafabric.org:1773/app">here</a>
            </p>
        </iframe>
    </div>

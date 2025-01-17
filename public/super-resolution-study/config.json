@@ -261,138 +261,138 @@
       "filler-1": {
         "type": "website",
         "recordAudio": true,
-        "path": "super-resolution-study/assets/11771.html",
+        "path": "super-resolution-study/assets/11771-right-filler.html",
         "response": []
       },
       "pair1-q1":{
         "baseComponent": "Q1",
-        "path": "super-resolution-study/assets/11771.html"  
+        "path": "super-resolution-study/assets/11771-right.html"  
       },
       "pair1-q2":{
         "baseComponent": "Q2",
-        "path": "super-resolution-study/assets/11771.html"  
+        "path": "super-resolution-study/assets/11771-right.html"  
       },
       "pair1-q3":{
         "baseComponent": "Q3",
-        "path": "super-resolution-study/assets/11771.html"  
+        "path": "super-resolution-study/assets/11771-right.html"  
       },
       "pair1-q4":{
         "baseComponent": "Q4",
-        "path": "super-resolution-study/assets/11771.html"  
+        "path": "super-resolution-study/assets/11771-right.html"  
       },
       "pair1-q5":{
         "baseComponent": "Q5",
-        "path": "super-resolution-study/assets/11771.html"  
+        "path": "super-resolution-study/assets/11771-right.html"  
       },
       "pair1-q6":{
         "baseComponent": "Q6",
-        "path": "super-resolution-study/assets/11771.html"  
+        "path": "super-resolution-study/assets/11771-right.html"  
       },
       "pair1-q7":{
         "baseComponent": "Q7",
-        "path": "super-resolution-study/assets/11771.html"  
+        "path": "super-resolution-study/assets/11771-right.html"  
       },
       "filler-2": {
         "type": "website",
         "recordAudio": true,
-        "path": "super-resolution-study/assets/11772.html",
+        "path": "super-resolution-study/assets/11772-right.html",
         "response": []
       },
       "pair2-q1":{
         "baseComponent": "Q1",
-        "path": "super-resolution-study/assets/11772.html"  
+        "path": "super-resolution-study/assets/11772-right.html"  
       },
       "pair2-q2":{
         "baseComponent": "Q2",
-        "path": "super-resolution-study/assets/11772.html"  
+        "path": "super-resolution-study/assets/11772-right.html"  
       },
       "pair2-q3":{
         "baseComponent": "Q3",
-        "path": "super-resolution-study/assets/11772.html"  
+        "path": "super-resolution-study/assets/11772-right.html"  
       },
       "pair2-q4":{
         "baseComponent": "Q4",
-        "path": "super-resolution-study/assets/11772.html"  
+        "path": "super-resolution-study/assets/11772-right.html"  
       },
       "pair2-q5":{
         "baseComponent": "Q5",
-        "path": "super-resolution-study/assets/11772.html"  
+        "path": "super-resolution-study/assets/11772-right.html"  
       },
       "pair2-q6":{
         "baseComponent": "Q6",
-        "path": "super-resolution-study/assets/11772.html"  
+        "path": "super-resolution-study/assets/11772-right.html"  
       },
       "pair2-q7":{
         "baseComponent": "Q7",
-        "path": "super-resolution-study/assets/11772.html"  
+        "path": "super-resolution-study/assets/11772-right.html"  
       },
       "filler-3": {
         "type": "website",
         "recordAudio": true,
-        "path": "super-resolution-study/assets/11773.html",
+        "path": "super-resolution-study/assets/11773-right.html",
         "response": []
       },
       "pair3-q1":{
         "baseComponent": "Q1",
-        "path": "super-resolution-study/assets/11773.html"  
+        "path": "super-resolution-study/assets/11773-right.html"  
       },
       "pair3-q2":{
         "baseComponent": "Q2",
-        "path": "super-resolution-study/assets/11773.html"  
+        "path": "super-resolution-study/assets/11773-right.html"  
       },
       "pair3-q3":{
         "baseComponent": "Q3",
-        "path": "super-resolution-study/assets/11773.html"  
+        "path": "super-resolution-study/assets/11773-right.html"  
       },
       "pair3-q4":{
         "baseComponent": "Q4",
-        "path": "super-resolution-study/assets/11773.html"  
+        "path": "super-resolution-study/assets/11773-right.html"  
       },
       "pair3-q5":{
         "baseComponent": "Q5",
-        "path": "super-resolution-study/assets/11773.html"  
+        "path": "super-resolution-study/assets/11773-right.html"  
       },
       "pair3-q6":{
         "baseComponent": "Q6",
-        "path": "super-resolution-study/assets/11773.html"  
+        "path": "super-resolution-study/assets/11773-right.html"  
       },
       "pair3-q7":{
         "baseComponent": "Q7",
-        "path": "super-resolution-study/assets/11773.html"  
+        "path": "super-resolution-study/assets/11773-right.html"  
       },
       "filler-4": {
         "type": "website",
         "recordAudio": true,
-        "path": "super-resolution-study/assets/11774.html",
+        "path": "super-resolution-study/assets/11774-right.html",
         "response": []
       },
       "pair4-q1":{
         "baseComponent": "Q1",
-        "path": "super-resolution-study/assets/11774.html"  
+        "path": "super-resolution-study/assets/11774-right.html"  
       },
       "pair4-q2":{
         "baseComponent": "Q2",
-        "path": "super-resolution-study/assets/11774.html"  
+        "path": "super-resolution-study/assets/11774-right.html"  
       },
       "pair4-q3":{
         "baseComponent": "Q3",
-        "path": "super-resolution-study/assets/11774.html"  
+        "path": "super-resolution-study/assets/11774-right.html"  
       },
       "pair4-q4":{
         "baseComponent": "Q4",
-        "path": "super-resolution-study/assets/11774.html"  
+        "path": "super-resolution-study/assets/11774-right.html"  
       },
       "pair4-q5":{
         "baseComponent": "Q5",
-        "path": "super-resolution-study/assets/11774.html"  
+        "path": "super-resolution-study/assets/11774-right.html"  
       },
       "pair4-q6":{
         "baseComponent": "Q6",
-        "path": "super-resolution-study/assets/11774.html"  
+        "path": "super-resolution-study/assets/11774-right.html"  
       },
       "pair4-q7":{
         "baseComponent": "Q7",
-        "path": "super-resolution-study/assets/11774.html"  
+        "path": "super-resolution-study/assets/11774-right.html"  
       },
       "post-study": {
         "type": "questionnaire",

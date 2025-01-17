@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+   <meta charset="UTF-8">
+   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+   <title>External Website</title>
+   <style>
+       body {
+           margin: 0;
+           padding: 0;
+           font-family: Arial, sans-serif;
+           min-height: 100vh;
+           display: flex;
+           flex-direction: column;
+       }
+       .iframe-container {
+           flex: 1;
+           width: 100%;
+           height: 800px;
+           margin: 0 auto;
+           display: flex;
+           flex-direction: column;
+       }
+       iframe {
+           width: 100%;
+           flex: 1;
+           border: none;
+           box-shadow: 0 0 10px rgba(0,0,0,0.1);
+       }
+       h1 {
+           color: #333;
+           text-align: center;
+           margin-bottom: 20px;
+       }
+   </style>
+</head>
+<body>
+   <div class="iframe-container">
+       <iframe 
+           src="https://chpc2.nationalsciencedatafabric.org:1774/app"
+           frameborder="0"
+           scrolling="no"
+           allowfullscreen>
+           <p>Your browser does not support iframes. Visit the site directly at 
+               <a href="https://chpc2.nationalsciencedatafabric.org:1774/app">here</a>
+           </p>
+       </iframe>
+   </div>
+</body>
+</html>
