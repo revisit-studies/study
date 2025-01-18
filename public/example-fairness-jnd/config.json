@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc4/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/next-enter/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Fairness JND",
     "version": "pilot",
@@ -20,7 +20,8 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": true
+    "sidebar": true,
+    "nextOnEnter": true
   },
   "baseComponents": {
     "rankCompare": {
