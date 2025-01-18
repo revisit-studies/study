@@ -95,7 +95,7 @@ test('test', async ({ page }) => {
     }
 
     await page.getByRole('button', { name: 'Next', exact: true }).click();
-    await page.waitForTimeout(50);
+    await page.waitForTimeout(100);
   }
 
   // Check that the thank you message is displayed
