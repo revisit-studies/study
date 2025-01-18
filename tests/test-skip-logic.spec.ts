@@ -5,6 +5,8 @@ async function answerTrial1(page, q1, q2) {
   await page.getByLabel(q1).check();
   await page.getByLabel(q2).check();
   await page.getByRole('button', { name: 'Next', exact: true }).click();
+  // wait 50ms for the next component to load
+  await page.waitForTimeout(50);
 }
 
 async function answerAttentionCheck(page, q1) {

@@ -57,7 +57,6 @@ test('test', async ({ page }) => {
   const sequenceOccurences = flattenedSequenceArray.map((sequence) => {
     expect(sequence.length).toBe(24);
 
-    // eslint-disable-next-line no-return-assign
     const occurrences: Record<string, number | undefined> = sequence.reduce((acc, curr) => { acc[curr] = (acc[curr] || 0) + 1; return acc; }, {});
 
     expect(occurrences.introduction).toBe(2);
