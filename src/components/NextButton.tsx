@@ -61,6 +61,22 @@ export function NextButton({
     [nextButtonDisableTime, nextButtonEnableTime, timer],
   );
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Enter' && !disabled && !isNextDisabled && buttonTimerSatisfied) {
+        goToNextStep();
+      }
+    };
+
+    if (studyConfig.uiConfig.nextOnEnter) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+    return () => {};
+  }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, studyConfig.uiConfig.nextOnEnter]);
+
   return (
     <>
       <Button
