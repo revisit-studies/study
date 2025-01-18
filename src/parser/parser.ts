@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { parse as hjsonParse } from 'hjson';
 import Ajv from 'ajv';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
@@ -33,7 +31,7 @@ function verifyGlobalConfig(data: GlobalConfig) {
 }
 
 export function parseGlobalConfig(fileData: string) {
-  const data = hjsonParse(fileData);
+  const data = JSON.parse(fileData);
 
   const validatedData = globalValidate(data) as boolean;
   const extraValidation = verifyGlobalConfig(data);
@@ -185,7 +183,7 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
   let data: StudyConfig | undefined;
 
   try {
-    data = hjsonParse(fileData);
+    data = JSON.parse(fileData);
     validatedData = studyValidate(data) as boolean;
   } catch {
     validatedData = false;

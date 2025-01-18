@@ -22,7 +22,7 @@ import {
   IconUserPlus,
 } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
-import { useHref } from 'react-router-dom';
+import { useHref } from 'react-router';
 import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,

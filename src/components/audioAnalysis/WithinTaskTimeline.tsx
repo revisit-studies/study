@@ -20,7 +20,6 @@ export function WithinTaskTimeline({
   }, [setCurrentNode, setPlayTime, totalLength, xScale]);
 
   const circles = useMemo(() => Object.entries(participantData.answers).filter((entry) => (trialName ? trialName === entry[0] : true)).map((entry) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const [name, answer] = entry;
 
     return <WithinTaskProvenance key={name} taskName={name} answer={answer} height={height} currentNode={currentNode} setCurrentNode={currentNodeCallback} xScale={xScale} />;

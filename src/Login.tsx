@@ -6,7 +6,7 @@ import {
   getAuth, signInWithPopup, GoogleAuthProvider, browserPopupRedirectResolver,
 } from '@firebase/auth';
 import { IconBrandGoogleFilled } from '@tabler/icons-react';
-import { Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router';
 import { PREFIX } from './utils/Prefix';
 import { useAuth } from './store/hooks/useAuth';
 import { useStorageEngine } from './storage/storageEngineHooks';

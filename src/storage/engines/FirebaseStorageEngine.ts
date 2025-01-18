@@ -128,7 +128,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         provider: new ReCaptchaV3Provider(this.RECAPTCHAV3TOKEN),
         isTokenAutoRefreshEnabled: false,
       });
-    } catch (e) {
+    } catch {
       console.warn('Failed to initialize Firebase App Check');
     }
   }
@@ -138,7 +138,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       await enableNetwork(this.firestore);
 
       this.connected = true;
-    } catch (e) {
+    } catch {
       console.warn('Failed to connect to Firebase');
     }
   }
@@ -173,7 +173,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       if (currentConfigHash && currentConfigHash !== configHash) {
         try {
           await this._deleteFromFirebaseStorage('', 'sequenceArray');
-        } catch (error) {
+        } catch {
           // pass, if this happens, we didn't have a sequence array yet
         }
         await this.clearCurrentParticipantId();
@@ -1021,7 +1021,7 @@ export class FirebaseStorageEngine extends StorageEngine {
           },
         ],
       };
-    } catch (error) {
+    } catch {
       return {
         status: 'FAILED',
         error: {

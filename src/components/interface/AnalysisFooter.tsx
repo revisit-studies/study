@@ -3,7 +3,7 @@ import {
   ActionIcon,
   AppShell, Box, Button, Center, Group, LoadingOverlay, Select, Text,
 } from '@mantine/core';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router';
 import { useMemo, useState } from 'react';
 import {
   IconArrowLeft, IconArrowRight, IconPlayerPauseFilled, IconPlayerPlayFilled, IconUser,
@@ -104,21 +104,21 @@ export function AnalysisFooter() {
               style={{ width: '300px' }}
               value={participant?.participantId || ''}
               onChange={(e) => {
-                navigate(`./${encryptIndex(0)}?participantId=${e}`, { relative: 'path' });
+                navigate(`./../${encryptIndex(0)}?participantId=${e}`);
               }}
               data={selectData}
             />
-            <Button onClick={() => navigate(`./${encryptIndex(+currentStep - 1)}?participantId=${participantId}`, { relative: 'path' })}>
+            <Button onClick={() => navigate(`../${encryptIndex(+currentStep - 1)}?participantId=${participantId}`, { relative: 'path' })}>
               <IconArrowLeft />
             </Button>
-            <Button onClick={() => navigate(`./${encryptIndex(+currentStep + 1)}?participantId=${participantId}`, { relative: 'path' })}>
+            <Button onClick={() => navigate(`../${encryptIndex(+currentStep + 1)}?participantId=${participantId}`, { relative: 'path' })}>
               <IconArrowRight />
             </Button>
-            <Button px="xs" disabled={!participant || nextParticipantNameAndIndex[0] === participant.participantId} onClick={() => navigate(`./${encryptIndex(prevParticipantNameAndIndex[1])}?participantId=${prevParticipantNameAndIndex[0]}`)}>
+            <Button px="xs" disabled={!participant || nextParticipantNameAndIndex[0] === participant.participantId} onClick={() => navigate(`./../${encryptIndex(prevParticipantNameAndIndex[1])}?participantId=${prevParticipantNameAndIndex[0]}`)}>
               <IconArrowLeft />
               <IconUser />
             </Button>
-            <Button px="xs" disabled={!participant || nextParticipantNameAndIndex[0] === participant.participantId} onClick={() => navigate(`./${encryptIndex(nextParticipantNameAndIndex[1])}?participantId=${nextParticipantNameAndIndex[0]}`)}>
+            <Button px="xs" disabled={!participant || nextParticipantNameAndIndex[0] === participant.participantId} onClick={() => navigate(`./../${encryptIndex(nextParticipantNameAndIndex[1])}?participantId=${nextParticipantNameAndIndex[0]}`)}>
               <IconUser />
               <IconArrowRight />
             </Button>

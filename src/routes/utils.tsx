@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { useFlatSequence } from '../store/store';
 import { decryptIndex } from '../utils/encryptDecryptIndex';
 
@@ -14,7 +14,7 @@ export function useCurrentStep() {
     return 0;
   }
 
-  if (index.startsWith('reviewer-')) {
+  if (index.startsWith('reviewer-') || index.startsWith('__')) {
     return index;
   }
 

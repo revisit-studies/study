@@ -1,4 +1,3 @@
-import { parse as hjsonParse } from 'hjson';
 import Ajv from 'ajv';
 import { merge } from 'lodash';
 import librarySchema from './LibraryConfigSchema.json';
@@ -99,7 +98,7 @@ export function parseLibraryConfig(fileData: string, libraryName: string): Parse
   let data: LibraryConfig | undefined;
 
   try {
-    data = hjsonParse(fileData);
+    data = JSON.parse(fileData);
     validatedData = libraryValidate(data) as boolean;
   } catch {
     validatedData = false;

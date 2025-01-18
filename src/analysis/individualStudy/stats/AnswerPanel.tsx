@@ -59,7 +59,6 @@ export function AnswerPanel({ data, config }: { data: Record<string, Record<stri
     }
   }, [config, data]);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const specBoxer = useMemo(() => ({
     height: 50,
     width: dms.width - 100,

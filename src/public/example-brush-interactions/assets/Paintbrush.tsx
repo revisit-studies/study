@@ -34,7 +34,6 @@ export function Paintbrush(
     const svg = d3.select<SVGGElement, any>('#scatterSvgBrushStudy');
 
     if (svg) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const svgPos = svg.node()!.getBoundingClientRect();
       svg.on('mousemove', (e: React.MouseEvent) => {
         const pos = [e.clientX - svgPos.x, e.clientY - svgPos.y];
