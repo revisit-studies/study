@@ -1933,6 +1933,10 @@
           "description": "The path to the logo image. This is displayed on the landing page and the header.",
           "type": "string"
         },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. Defaults to false.",
+          "type": "boolean"
+        },
         "numSequences": {
           "description": "The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000.",
           "type": "number"
