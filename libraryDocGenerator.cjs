@@ -26,11 +26,11 @@ ${libraryConfig.description}
 
 ${libraryConfig.reference || libraryConfig.doi || libraryConfig.externalLink ? '## Reference' : ''}
 
-${libraryConfig.reference ? `:::note[Reference]\n${libraryConfig.reference}\n:::` : ''}
+${libraryConfig.reference ? `${libraryConfig.reference}` : ''}
 
 ${libraryConfig.doi ? `DOI: [${libraryConfig.doi}](https://doi.org/${libraryConfig.doi})` : ''}
 
-${libraryConfig.externalLink ? `Link: ${libraryConfig.externalLink}` : ''}
+${libraryConfig.externalLink ? `Link: [${libraryConfig.externalLink}](https://${libraryConfig.externalLink})` : ''}
 
 ## Available Components
 
