@@ -1,13 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc4/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "SUS: System Usability Scale",
+    "title": "test Example Study",
     "version": "1.0.0",
     "authors": [
       "reVISit Team"
     ],
     "date": "2025-01-19",
-    "description": "Example study using the sus library.",
+    "description": "Example study using the test library.",
     "organizations": [
       "University of Utah",
       "WPI",
@@ -21,20 +21,11 @@
     "sidebar": true
   },
   "importedLibraries": [
-    "sus"
+    "test"
   ],
-  "components": {
-    "introduction": {
-      "type": "markdown",
-      "path": "library-sus/assets/sus.md",
-      "response": []
-    }
-  },
+  "components": {},
   "sequence": {
     "order": "fixed",
-    "components": [
-      "introduction",
-      "$sus.co.sus"
-    ]
+    "components": []
   }
 }

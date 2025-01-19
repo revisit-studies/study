@@ -1,14 +1,24 @@
 /* eslint-disable @typescript-eslint/no-var-requires */
 
-// This script generates example study configurations for each library in the public/libraries directory
+// This script generates example study configurations for libraries in the public/libraries directory
 // It creates a new directory for each library (library-{name}) with a basic config.json and an assets folder
-// This script will skip generating example configs for libraries that already have a library-{name} folder
-// For example, if library-demographics already exists, it will skip creating a new one
+// It will run libraryDocGenerator.cjs to generate library.md files, which will be placed in the assets/ folder of each example study to serve as the introduction component
+
+// The script will skip:
+// - Libraries that already have a library-{name} folder (e.g. if library-demographics exists)
+// - Libraries listed in SKIP_LIBRARIES (e.g. test library, libraries under construction)
 
 
 const fs = require('fs');
 const path = require('path');
 const { exec } = require('child_process');
+
+// List of libraries to skip (under construction or not need an example study）
+const SKIP_LIBRARIES = [
+  'test',           // test library, its example study is public/test-library/, so not need an example study here
+  'nasa-tlx',       // under construction
+  'berlin-num',     // under construction
+];
 
 // Path to the libraries directory containing reusable components and sequences
 const librariesPath = path.join(__dirname, './public/libraries');
@@ -50,8 +60,8 @@ const createExampleConfig = (libraryName) => ({
 // Process each library
 const libraries = fs.readdirSync(librariesPath);
 libraries.forEach((library) => {
-  // Skip hidden folders and files
-  if (library.startsWith('.')) return;
+  // Skip hidden folders and files, and libraries in skip list
+  if (library.startsWith('.') || SKIP_LIBRARIES.includes(library)) return;
 
   const exampleFolderName = `library-${library}`;
   const examplePath = path.join(publicPath, exampleFolderName);
