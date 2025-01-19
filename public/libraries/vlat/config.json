@@ -1,5 +1,8 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
+  "description": "Visualization Literacy Assessment Test (VLAT) is developed to measure users' ability to read, understand, and use data visualizations to solve problems. The VLAT consists of 12 data visualizations and 53 multiple-choice questions. This library contains 53 components, each corresponding to a question of the VLAT. It also includes a sequence of all 53 components (the full VLAT).",
+  "reference": "S. Lee, S.-H. Kim, and B. C. Kwon, \"VLAT: Development of a Visualization Literacy Assessment Test,\" IEEE Transactions on Visualization and Computer Graphics, vol. 23, no. 1, pp. 551-560, Jan. 2017",
+  "doi": "10.1109/TVCG.2016.2598920",
   "baseComponents": {
     "line": {
       "type": "image",
@@ -1675,10 +1678,12 @@
     }
   },
   "sequences": {
-    "latinSquare": {
+    "full-latinSquare": {
+      "id": "vlat-latinSquare",
       "order": "latinSquare",
       "components": [
         {
+          "id": "vlat-line-latinSquare",
           "order": "latinSquare",
           "components": [
             "line-value",
@@ -1689,6 +1694,7 @@
           ]
         },
         {
+          "id": "vlat-bar-latinSquare",
           "order": "latinSquare",
           "components": [
             "bar-value",
@@ -1698,6 +1704,7 @@
           ]
         },
         {
+          "id": "vlat-stackbar-latinSquare",
           "order": "latinSquare",
           "components": [
             "stackbar-value-absolute",
@@ -1708,6 +1715,7 @@
           ]
         },
         {
+          "id": "vlat-stackbar100-latinSquare",
           "order": "latinSquare",
           "components": [
             "stackbar100-value-relative",
@@ -1716,6 +1724,7 @@
           ]
         },
         {
+          "id": "vlat-pie-latinSquare",
           "order": "latinSquare",
           "components": [
             "pie-value-relative",
@@ -1724,6 +1733,7 @@
           ]
         },
         {
+          "id": "vlat-histogram-latinSquare",
           "order": "latinSquare",
           "components": [
             "histogram-value-derived",
@@ -1732,6 +1742,7 @@
           ]
         },
         {
+          "id": "vlat-scatterplot-latinSquare",
           "order": "latinSquare",
           "components": [
             "scatterplot-value",
@@ -1744,6 +1755,7 @@
           ]
         },
         {
+          "id": "vlat-area-latinSquare",
           "order": "latinSquare",
           "components": [
             "area-value",
@@ -1753,6 +1765,7 @@
           ]
         },
         {
+          "id": "vlat-stackarea-latinSquare",
           "order": "latinSquare",
           "components": [
             "stackarea-value-absolute",
@@ -1764,6 +1777,7 @@
           ]
         },
         {
+          "id": "vlat-bubble-latinSquare",
           "order": "latinSquare",
           "components": [
             "bubble-value",
@@ -1776,6 +1790,7 @@
           ]
         },
         {
+          "id": "vlat-map-latinSquare",
           "order": "latinSquare",
           "components": [
             "map-value-approximate",
@@ -1784,6 +1799,7 @@
           ]
         },
         {
+          "id": "vlat-treemap-latinSquare",
           "order": "latinSquare",
           "components": [
             "treemap-extremum-relative",
