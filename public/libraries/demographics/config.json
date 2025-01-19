@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
-  "description": "This is a library for demographic questions. It contains one component with three questions: demographics.",
+  "description": "This is a library for demographic questions. It contains one component, demographics, with three questions: gender, age, and education.",
   "components": {
     "demographics": {
       "type": "questionnaire",

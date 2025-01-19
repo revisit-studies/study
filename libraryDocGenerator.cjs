@@ -19,7 +19,7 @@ libraries.forEach((library) => {
   const libraryPath = path.join(librariesPath, library, 'config.json');
   const libraryConfig = JSON.parse(fs.readFileSync(libraryPath, 'utf8'));
 
-  const markdown = `
+  const baseMarkdown = `
 # ${library}
 
 ${libraryConfig.description}
@@ -43,8 +43,21 @@ ${Object.keys(libraryConfig.sequences).length > 0
     : 'None'}
 `;
 
+  // Save to docsLibraries folder
   const docsLibraryPath = path.join(docsLibrariesPath, `${library}.md`);
-  fs.writeFileSync(docsLibraryPath, markdown);
+  fs.writeFileSync(docsLibraryPath, baseMarkdown);
+
+  // Save to example study assets folder if assets folder exists
+  // Add a prefix to baseMarkdown when saving to example assets
+  const exampleAssetsPath = path.join(__dirname, 'public', `library-${library}`, 'assets');
+  if (fs.existsSync(exampleAssetsPath)) {
+    const exampleMarkdown = `This is an example study of the library \`${library}\`.
+
+${baseMarkdown}`;
+    const exampleDocsPath = path.join(exampleAssetsPath, `${library}.md`);
+    fs.writeFileSync(exampleDocsPath, exampleMarkdown);
+    console.log(`Documentation saved to ${exampleDocsPath}`);
+  }
 });
 
 // eslint-disable-next-line no-console
