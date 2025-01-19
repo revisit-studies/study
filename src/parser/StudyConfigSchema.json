@@ -1994,6 +1994,7 @@
     },
     "VegaComponentConfig": {
       "additionalProperties": false,
+      "description": "The VegaComponentConfig interface is used to define the properties of a Vega Component. This component is used to render a Vega Component by adding Vega specs within the reVISit config itself.\n\nTo do this, would use the following snippet: ```js { \"type\": \"vega\", \"config\": { ... vega specs here ...}, } ```",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
@@ -2080,6 +2081,7 @@
     },
     "VegaComponentPath": {
       "additionalProperties": false,
+      "description": "The VegaComponentPath interface is used to define the properties of a Vega Component. This component is used to render a Vega Component with path pointing to your Vega specs file.\n\nFor example, to render a vega based stimuli with a path of `path/to/study/assets/vega.specs.json`, you would use the following snippet: ```js { \"type\": \"vega\", \"path\": \"<study-name>/assets/vega.specs.json\", } ```",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If not provided, the default is true.",

@@ -729,12 +729,34 @@ export interface QuestionnaireComponent extends BaseIndividualComponent {
   type: 'questionnaire';
 }
 
+/**
+ * The VegaComponentPath interface is used to define the properties of a Vega Component. This component is used to render a Vega Component with path pointing to your Vega specs file.
+ *
+ * For example, to render a vega based stimuli with a path of `path/to/study/assets/vega.specs.json`, you would use the following snippet:
+```js
+{
+  "type": "vega",
+  "path": "<study-name>/assets/vega.specs.json",
+}
+```
+*/
 export interface VegaComponentPath extends BaseIndividualComponent {
   type: 'vega';
   /** The path to the vega file. This should be a relative path from the public folder. */
   path: string;
 }
 
+/**
+ * The VegaComponentConfig interface is used to define the properties of a Vega Component. This component is used to render a Vega Component by adding Vega specs within the reVISit config itself.
+ *
+ * To do this, would use the following snippet:
+```js
+{
+  "type": "vega",
+  "config": { ... vega specs here ...},
+}
+```
+*/
 export interface VegaComponentConfig extends BaseIndividualComponent {
   type: 'vega';
   /** The vega or vega-lite configuration. */
