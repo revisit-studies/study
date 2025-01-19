@@ -3,7 +3,8 @@ This is an example study of the library `beauvis`.
 
 # beauvis
 
-BeauVis is a validated scale for assessing the aesthetic pleasure of visualizations. This library contains three components for the 3-, 4-, and 5-item versions of the BeauVis scale.
+BeauVis is a validated scale for assessing the aesthetic pleasure of visualizations. This library contains three components for the 3-, 4-, and 5-item versions of the BeauVis scale.  
+ When using this library, please replace the `vis-example.png` file with your own visualization.
 
 ## Reference
 
