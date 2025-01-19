@@ -1,13 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc4/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Demographics: Demographic Questions",
+    "title": "Demographics",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
     "date": "2023-04-14",
-    "description": "This is an example of using the demographics library.",
+    "description": "Example study using the demographics library.",
     "organizations": [
       "University of Utah",
       "WPI",
