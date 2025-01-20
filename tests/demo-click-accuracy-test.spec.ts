@@ -29,6 +29,7 @@ test('test', async ({ page }) => {
     await expect(await oneAnswer.count()).toEqual(1);
 
     await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await page.waitForTimeout(100);
   }
   // Check that the thank you message is displayed
   await page.getByText('Please wait while your answers are uploaded.').click();

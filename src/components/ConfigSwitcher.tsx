@@ -66,8 +66,6 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
       return 'Ready to Collect Data';
     }
     return 'Data Collection Disabled';
-
-    return null;
   }, [modes, studyStatusAndTiming]);
 
   return (

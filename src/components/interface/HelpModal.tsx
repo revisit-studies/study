@@ -6,7 +6,6 @@ import { getStaticAssetByPath } from '../../utils/getStaticAsset';
 import { ResourceNotFound } from '../../ResourceNotFound';
 
 export function HelpModal() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const showHelpText = useStoreSelector((state) => state.showHelpText);
   const config = useStoreSelector((state) => state.config);
 

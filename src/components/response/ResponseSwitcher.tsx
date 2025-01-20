@@ -1,5 +1,5 @@
 import { Box, Checkbox, Divider } from '@mantine/core';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import { useEffect, useMemo, useState } from 'react';
 import { GetInputPropsReturnType, UseFormReturnType } from '@mantine/form/lib/types';
 import { IndividualComponent, Response, StoredAnswer } from '../../parser/types';
@@ -54,7 +54,8 @@ export function ResponseSwitcher({
     if (dontKnowCheckbox) {
       form.setFieldValue(response.id, '');
     }
-  }, [dontKnowCheckbox, form, response.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dontKnowCheckbox, response.id]);
 
   return (
     <Box mb={response.withDivider || configInUse.responseDividers ? 'xl' : 'lg'}>

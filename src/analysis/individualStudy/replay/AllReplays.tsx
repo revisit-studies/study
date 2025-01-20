@@ -1,6 +1,6 @@
 import { Group, Stack, Switch } from '@mantine/core';
 import { useResizeObserver } from '@mantine/hooks';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { useMemo, useState } from 'react';
 import { AllTasksTimeline } from './AllTasksTimeline';
 import { ParticipantData } from '../../../storage/types';

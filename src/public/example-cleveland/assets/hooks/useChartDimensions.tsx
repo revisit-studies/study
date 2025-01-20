@@ -34,7 +34,7 @@ const combineChartDimensions = (dimensions: Dimensions): BoundedDimensions => {
   };
 };
 
-export const useChartDimensions = (passedSettings: Dimensions): [React.RefObject<HTMLDivElement>, BoundedDimensions] => {
+export const useChartDimensions = (passedSettings: Dimensions): [React.RefObject<HTMLDivElement | null>, BoundedDimensions] => {
   const ref = useRef<HTMLDivElement>(null);
   const dimensions = combineChartDimensions(passedSettings);
 
