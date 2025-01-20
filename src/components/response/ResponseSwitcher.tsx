@@ -5,7 +5,7 @@ import { GetInputPropsReturnType, UseFormReturnType } from '@mantine/form/lib/ty
 import { IndividualComponent, Response, StoredAnswer } from '../../parser/types';
 import { CheckBoxInput } from './CheckBoxInput';
 import { DropdownInput } from './DropdownInput';
-import { IframeInput } from './IframeInput';
+import { Reactive } from './ReactiveInput';
 import { LikertInput } from './LikertInput';
 import { NumericInput } from './NumericInput';
 import { RadioInput } from './RadioInput';
@@ -131,8 +131,8 @@ export function ResponseSwitcher({
           enumerateQuestions={enumerateQuestions}
         />
       )}
-      {response.type === 'iframe' && (
-        <IframeInput
+      {response.type === 'reactive' && (
+        <Reactive
           response={response}
           answer={ans as { value: string[] }}
           index={index}

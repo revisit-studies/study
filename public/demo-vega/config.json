@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc4/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/iframe-to-reactive/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Vega Stimuli Demo",
     "version": "pilot",
@@ -230,7 +230,7 @@
           "id": "vegaDemoResponse1",
           "prompt": "You selected:",
           "location": "sidebar",
-          "type": "iframe"
+          "type": "reactive"
         },
         {
           "id": "vegaDemoConfidence1",
@@ -264,7 +264,7 @@
           "id": "vegaDemoResponse1",
           "prompt": "You selected:",
           "location": "sidebar",
-          "type": "iframe"
+          "type": "reactive"
         },
         {
           "id": "vegaDemoConfidence1",
