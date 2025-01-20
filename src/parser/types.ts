@@ -438,7 +438,6 @@ export interface RadioResponse extends BaseResponse {
 {
   "id": "q7",
   "prompt": "Checkbox example (not required)",
-  "required": false,
   "location": "aboveStimulus",
   "type": "checkbox",
   "options": ["Option 1", "Option 2", "Option 3"]
@@ -461,7 +460,16 @@ export interface CheckboxResponse extends BaseResponse {
 
 /**
  * The ReactiveResponse interface is used to define the properties of a reactive response.
- * ReactiveResponses render as a list, that is connected to a WebsiteComponent, VegaComponent, or ReactComponent. When data is sent from the WebsiteComponent, it is displayed in the list.
+ * ReactiveResponses render as a list, that is connected to a WebsiteComponent, VegaComponent, or ReactComponent. When data is sent from the components, it is displayed in the list.
+ *
+```js
+{
+  "id": "reactiveResponse",
+  "prompt": "Answer clicked in the stimulus",
+  "location": "aboveStimulus",
+  "type": "reactive"
+}
+```
  */
 export interface ReactiveResponse extends BaseResponse {
   type: 'reactive';
