@@ -52,6 +52,7 @@ export function SliderInput({
         max={max}
         {...answer}
         h={40}
+        mt={4}
       />
     </Input.Wrapper>
   );

@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 import {
   Center, Flex, Loader, Space, Text,
 } from '@mantine/core';
@@ -104,13 +105,9 @@ export function StudyEnd() {
     <Center style={{ height: '100%' }}>
       <Flex direction="column">
         {completed || !dataCollectionEnabled
-          ? (
-            <Text size="xl" display="block">
-              {studyConfig.uiConfig.studyEndMsg
-                ? <ReactMarkdownWrapper text={studyConfig.uiConfig.studyEndMsg} />
-                : 'Thank you for completing the study. You may close this window now.'}
-            </Text>
-          )
+          ? (studyConfig.uiConfig.studyEndMsg
+            ? <ReactMarkdownWrapper text={studyConfig.uiConfig.studyEndMsg} />
+            : <Text size="xl" display="block">Thank you for completing the study. You may close this window now.</Text>)
           : (
             <>
               <Text size="xl" display="block">Please wait while your answers are uploaded.</Text>

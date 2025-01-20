@@ -7,7 +7,7 @@ import {
   IconX,
 } from '@tabler/icons-react';
 import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { ParticipantData, StoredAnswer, StudyConfig } from '../../../parser/types';
 import { ParticipantMetadata } from '../../../store/types';
 import { configSequenceToUniqueTrials, findBlockForStep, getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';

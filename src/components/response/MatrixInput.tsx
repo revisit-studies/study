@@ -115,6 +115,7 @@ export function MatrixInput({
     answerOptions,
     questionOptions,
     prompt,
+    secondaryText,
     required,
   } = response;
 
@@ -162,13 +163,15 @@ export function MatrixInput({
           <ReactMarkdownWrapper text={prompt} required={required} />
         </Box>
       </Flex>
-      <div
+      <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>
+      <Box
         style={{
           display: 'grid',
           gridTemplateColumns: 'auto 1fr',
           gridTemplateRows: 'auto 1fr',
-          margin: '40px 100px 100px 100px',
         }}
+        m="md"
+        mt="xs"
       >
 
         {/* Empty Square */}
@@ -217,13 +220,18 @@ export function MatrixInput({
             <Text
               key={`question-${idx}-label`}
               style={{
-                height: '60px',
+                height: '80px',
+                width: '100%',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'end',
                 borderRight: '1px solid var(--mantine-color-dark-0)',
                 backgroundColor: `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
-                paddingLeft: '10px',
+                overflowY: 'hidden',
               }}
+              ta="right"
+              p="sm"
+              miw={140}
             >
               {entry.label}
             </Text>
@@ -274,7 +282,7 @@ export function MatrixInput({
             </div>
           ))}
         </div>
-      </div>
+      </Box>
     </>
   );
 }

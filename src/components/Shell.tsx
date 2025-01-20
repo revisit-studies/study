@@ -5,7 +5,7 @@ import {
   useMemo,
 } from 'react';
 import { Provider } from 'react-redux';
-import { RouteObject, useRoutes, useSearchParams } from 'react-router-dom';
+import { RouteObject, useRoutes, useSearchParams } from 'react-router';
 import { LoadingOverlay, Title } from '@mantine/core';
 import {
   GlobalConfig,

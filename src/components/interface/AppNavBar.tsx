@@ -37,12 +37,10 @@ export function AppNavBar() {
           bg="gray.3"
           p="md"
         >
-          <Text c="gray.9">
-            <Text span c="orange.8" fw={700} inherit>
-              Task:
-            </Text>
-            <ReactMarkdownWrapper text={instruction} />
+          <Text span c="orange.8" fw={700} inherit>
+            Task:
           </Text>
+          <ReactMarkdownWrapper text={instruction} />
         </AppShell.Section>
       )}
 

@@ -50,51 +50,52 @@ test('test', async ({ page }) => {
       const checkbox = page.frameLocator('#root iframe').locator('.answerBox rect').nth(0);
       await expect(checkbox).toBeVisible({ timeout: 5000 });
       await checkbox.click();
-    } catch (e) {
       // eslint-disable-next-line no-empty
+    } catch {
     }
 
     try {
       const radio = await page.getByLabel('European');
       await expect(radio).toBeVisible({ timeout: 100 });
       await radio.click();
-    } catch (e) {
       // eslint-disable-next-line no-empty
+    } catch {
     }
 
     try {
       const radio = await page.getByLabel('Mentions');
       await expect(radio).toBeVisible({ timeout: 100 });
       await radio.click();
-    } catch (e) {
       // eslint-disable-next-line no-empty
+    } catch {
     }
 
     try {
       const radio = await page.getByLabel('NA');
       await expect(radio).toBeVisible({ timeout: 100 });
       await radio.click();
-    } catch (e) {
       // eslint-disable-next-line no-empty
+    } catch {
     }
 
     try {
       const input = await page.getByPlaceholder('answer text');
       await expect(input).toBeVisible({ timeout: 100 });
       await input.fill('test');
-    } catch (e) {
       // eslint-disable-next-line no-empty
+    } catch {
     }
 
     try {
       const input = await page.getByLabel('Enter Findings Below*');
       await expect(input).toBeVisible({ timeout: 100 });
       await input.fill('test');
-    } catch (e) {
       // eslint-disable-next-line no-empty
+    } catch {
     }
 
     await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await page.waitForTimeout(100);
   }
 
   // Check that the thank you message is displayed

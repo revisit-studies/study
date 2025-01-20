@@ -11,7 +11,7 @@ import {
 } from '@mantine/core';
 import React, { useMemo, useState } from 'react';
 import { IconInfoCircle, IconUserPlus } from '@tabler/icons-react';
-import { useHref } from 'react-router-dom';
+import { useHref } from 'react-router';
 import { ComponentBlockWithOrderPath, StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import {
@@ -24,7 +24,6 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 
-// eslint-disable-next-line react/display-name
 function InfoHover({ text }: { text: string }) {
   return (
     <Tooltip label={text} multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom">

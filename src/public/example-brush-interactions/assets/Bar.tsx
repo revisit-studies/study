@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 import { useResizeObserver } from '@mantine/hooks';
 import { useMemo } from 'react';
 import ColumnTable from 'arquero/dist/types/table/column-table';
@@ -8,8 +7,6 @@ import { Loader } from '@mantine/core';
 import { XAxisBar } from './XAxisBar';
 import { YAxisBar } from './YAxisBar';
 import { BrushParams } from './types';
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 
 const margin = {
   top: 15,

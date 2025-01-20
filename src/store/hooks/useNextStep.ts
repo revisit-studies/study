@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   useStoreSelector,
   useStoreActions,
@@ -172,7 +172,6 @@ export function useNextStep() {
         })) as unknown as StoredAnswer;
 
         // Slim down the validationCandidates to only include the skip condition's component
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const componentsToCheck = condition.check !== 'block' ? Object.entries(validationCandidates).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === condition.name) : Object.entries(validationCandidates);
 
         // Make sure componentsToCheck array is well-formed
