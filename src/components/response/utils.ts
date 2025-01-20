@@ -38,7 +38,7 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
       let initField: string | string[] | object | null = '';
       if (response.paramCapture) {
         initField = queryParameters.get(response.paramCapture);
-      } else if (response.type === 'iframe') {
+      } else if (response.type === 'reactive') {
         initField = [];
       } else if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
         initField = Object.fromEntries(

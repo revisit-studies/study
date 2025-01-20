@@ -1,3 +1,4 @@
+/* eslint-disable no-nested-ternary */
 /* eslint-disable @typescript-eslint/no-require-imports */
 // Loops over the files in public/libraries/*/config.json and outputs a markdown document for each library
 // Each json contains optional keys "description", and "reference" that are used to generate the markdown. Name comes from the folder name
@@ -15,7 +16,7 @@ ${libraryConfig.description}
 
 ${libraryConfig.reference || libraryConfig.doi || libraryConfig.externalLink ? '## Reference' : ''}
 
-${libraryConfig.reference ? (forDocs ? `:::note[Reference]${libraryConfig.reference}:::` : `${libraryConfig.reference}`) : ''}
+${libraryConfig.reference ? (forDocs ? `:::note[Reference]\n${libraryConfig.reference}\n:::` : `${libraryConfig.reference}`) : ''}
 
 ${libraryConfig.doi ? `DOI: [${libraryConfig.doi}](https://doi.org/${libraryConfig.doi})` : ''}
 
@@ -51,6 +52,7 @@ libraries.forEach((library) => {
   // Save to docsLibraries folder
   const docsLibraryPath = path.join(docsLibrariesPath, `${library}.md`);
   fs.writeFileSync(docsLibraryPath, docsMd);
+  // eslint-disable-next-line no-console
   console.log(`Documentation saved to ${docsLibraryPath}`);
 
   // Save to example study assets folder if assets folder exists
@@ -59,6 +61,7 @@ libraries.forEach((library) => {
   if (fs.existsSync(exampleAssetsPath)) {
     const exampleDocsPath = path.join(exampleAssetsPath, `${library}.md`);
     fs.writeFileSync(exampleDocsPath, exampleMd);
+    // eslint-disable-next-line no-console
     console.log(`Documentation saved to ${exampleDocsPath}`);
   }
 });

@@ -1,16 +1,16 @@
 import {
   Box, Flex, Input, List,
 } from '@mantine/core';
-import { IFrameResponse } from '../../parser/types';
+import { ReactiveResponse } from '../../parser/types';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 
-export function IframeInput({
+export function Reactive({
   response,
   answer,
   index,
   enumerateQuestions,
 }: {
-  response: IFrameResponse;
+  response: ReactiveResponse;
   answer: { value?: string[] };
   index: number;
   enumerateQuestions: boolean;
