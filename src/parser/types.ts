@@ -732,11 +732,11 @@ export interface QuestionnaireComponent extends BaseIndividualComponent {
 /**
  * The VegaComponentPath interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component with path pointing to your Vega/Vega-Lite specs file.
  *
- * For example, to render a vega based stimuli with a path of `path/to/study/assets/vega.specs.json`, you would use the following snippet:
+ * For example, to render a vega based stimuli with a path of `<study-name>/assets/vega.spec.json`, you would use the following snippet:
 ```js
 {
   "type": "vega",
-  "path": "<study-name>/assets/vega.specs.json",
+  "path": "<study-name>/assets/vega.spec.json",
 }
 ```
 
@@ -775,7 +775,7 @@ export interface VegaComponentPath extends BaseIndividualComponent {
   "config": { ... vega specs here ...},
 }
 
-In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. This signal is then passed to reVISit as the participant's response.
+IIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec's signals section:
 ```js
 {
   "signals": [
