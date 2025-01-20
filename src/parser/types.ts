@@ -460,14 +460,14 @@ export interface CheckboxResponse extends BaseResponse {
 }
 
 /**
- * The IFrameResponse interface is used to define the properties of an iframe response.
- * IFrameResponses render as a list, that is connected to a WebsiteComponent. When data is sent from the WebsiteComponent, it is displayed in the list.
+ * The ReactiveResponse interface is used to define the properties of a reactive response.
+ * ReactiveResponses render as a list, that is connected to a WebsiteComponent, VegaComponent, or ReactComponent. When data is sent from the WebsiteComponent, it is displayed in the list.
  */
-export interface IFrameResponse extends BaseResponse {
-  type: 'iframe';
+export interface ReactiveResponse extends BaseResponse {
+  type: 'reactive';
 }
 
-export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | IFrameResponse | MatrixResponse;
+export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | ReactiveResponse | MatrixResponse;
 
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.
@@ -666,7 +666,7 @@ export interface ImageComponent extends BaseIndividualComponent {
       "id": "barChart",
       "prompt": "Your selected answer:",
       "location": "belowStimulus",
-      "type": "iframe"
+      "type": "reactive"
     }
   ],
 }

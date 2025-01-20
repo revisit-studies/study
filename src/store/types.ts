@@ -135,8 +135,8 @@ export interface StoreState {
   showHelpText: boolean;
   alertModal: { show: boolean, message: string };
   trialValidation: TrialValidation;
-  iframeAnswers: Record<string, unknown>;
-  iframeProvenance: TrrackedProvenance | null;
+  reactiveAnswers: Record<string, unknown>;
+  reactiveProvenance: TrrackedProvenance | null;
   otherTexts: Record<string, string>;
   metadata: ParticipantMetadata;
   analysisProvState: unknown | null;

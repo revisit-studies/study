@@ -57,8 +57,8 @@ export function ResponseBlock({
 
   const answerValidator = useAnswerField(responsesWithDefaults, currentStep, storedAnswer || {});
   const [provenanceGraph, setProvenanceGraph] = useState<TrrackedProvenance | undefined>(undefined);
-  const iframeAnswers = useStoreSelector((state) => state.iframeAnswers);
-  const iframeProvenance = useStoreSelector((state) => state.iframeProvenance);
+  const reactiveAnswers = useStoreSelector((state) => state.reactiveAnswers);
+  const reactiveProvenance = useStoreSelector((state) => state.reactiveProvenance);
   const matrixAnswers = useStoreSelector((state) => state.matrixAnswers);
 
   const hasCorrectAnswerFeedback = configInUse?.provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
@@ -70,19 +70,19 @@ export function ResponseBlock({
   const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
 
   useEffect(() => {
-    const iframeResponse = responsesWithDefaults.find((r) => r.type === 'iframe');
-    if (iframeAnswers && iframeResponse) {
-      const answerId = iframeResponse.id;
-      answerValidator.setValues({ ...answerValidator.values, [answerId]: iframeAnswers[answerId] });
+    const ReactiveResponse = responsesWithDefaults.find((r) => r.type === 'reactive');
+    if (reactiveAnswers && ReactiveResponse) {
+      const answerId = ReactiveResponse.id;
+      answerValidator.setValues({ ...answerValidator.values, [answerId]: reactiveAnswers[answerId] });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [iframeAnswers]);
+  }, [reactiveAnswers]);
 
   useEffect(() => {
-    if (iframeProvenance) {
-      setProvenanceGraph(iframeProvenance);
+    if (reactiveProvenance) {
+      setProvenanceGraph(reactiveProvenance);
     }
-  }, [iframeProvenance]);
+  }, [reactiveProvenance]);
 
   useEffect(() => {
     // Checks if there are any matrix responses.
