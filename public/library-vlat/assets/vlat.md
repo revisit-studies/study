@@ -71,4 +71,4 @@ DOI: [10.1109/TVCG.2016.2598920](https://doi.org/10.1109/TVCG.2016.2598920)
 
 ## Available Sequences
 
-- full-latinSquare
+- full

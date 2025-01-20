@@ -34,7 +34,7 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "$vlat.se.full-latinSquare"
+      "$vlat.se.full"
     ]
   }
 }

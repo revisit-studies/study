@@ -1678,12 +1678,12 @@
     }
   },
   "sequences": {
-    "full-latinSquare": {
-      "id": "vlat-latinSquare",
+    "full": {
+      "id": "vlat",
       "order": "latinSquare",
       "components": [
         {
-          "id": "vlat-line-latinSquare",
+          "id": "vlat-line",
           "order": "latinSquare",
           "components": [
             "line-value",
@@ -1694,7 +1694,7 @@
           ]
         },
         {
-          "id": "vlat-bar-latinSquare",
+          "id": "vlat-bar",
           "order": "latinSquare",
           "components": [
             "bar-value",
@@ -1704,7 +1704,7 @@
           ]
         },
         {
-          "id": "vlat-stackbar-latinSquare",
+          "id": "vlat-stackbar",
           "order": "latinSquare",
           "components": [
             "stackbar-value-absolute",
@@ -1715,7 +1715,7 @@
           ]
         },
         {
-          "id": "vlat-stackbar100-latinSquare",
+          "id": "vlat-stackbar100",
           "order": "latinSquare",
           "components": [
             "stackbar100-value-relative",
@@ -1724,7 +1724,7 @@
           ]
         },
         {
-          "id": "vlat-pie-latinSquare",
+          "id": "vlat-pie",
           "order": "latinSquare",
           "components": [
             "pie-value-relative",
@@ -1733,7 +1733,7 @@
           ]
         },
         {
-          "id": "vlat-histogram-latinSquare",
+          "id": "vlat-histogram",
           "order": "latinSquare",
           "components": [
             "histogram-value-derived",
@@ -1742,7 +1742,7 @@
           ]
         },
         {
-          "id": "vlat-scatterplot-latinSquare",
+          "id": "vlat-scatterplot",
           "order": "latinSquare",
           "components": [
             "scatterplot-value",
@@ -1755,7 +1755,7 @@
           ]
         },
         {
-          "id": "vlat-area-latinSquare",
+          "id": "vlat-area",
           "order": "latinSquare",
           "components": [
             "area-value",
@@ -1765,7 +1765,7 @@
           ]
         },
         {
-          "id": "vlat-stackarea-latinSquare",
+          "id": "vlat-stackarea",
           "order": "latinSquare",
           "components": [
             "stackarea-value-absolute",
@@ -1777,7 +1777,7 @@
           ]
         },
         {
-          "id": "vlat-bubble-latinSquare",
+          "id": "vlat-bubble",
           "order": "latinSquare",
           "components": [
             "bubble-value",
@@ -1790,7 +1790,7 @@
           ]
         },
         {
-          "id": "vlat-map-latinSquare",
+          "id": "vlat-map",
           "order": "latinSquare",
           "components": [
             "map-value-approximate",
@@ -1799,7 +1799,7 @@
           ]
         },
         {
-          "id": "vlat-treemap-latinSquare",
+          "id": "vlat-treemap",
           "order": "latinSquare",
           "components": [
             "treemap-extremum-relative",

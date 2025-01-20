@@ -13,7 +13,7 @@ T. He, P. Isenberg, R. Dachselt, and T. Isenberg, “BeauVis: A Validated Scale 
 
 DOI: [10.1109/tvcg.2022.3209390](https://doi.org/10.1109/tvcg.2022.3209390)
 
-Link: https://www.aviz.fr/Research/BeauVis-Scale
+Link: [https://www.aviz.fr/Research/BeauVis-Scale](https://www.aviz.fr/Research/BeauVis-Scale)
 
 ## Available Components
 

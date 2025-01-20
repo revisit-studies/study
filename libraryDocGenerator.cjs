@@ -19,7 +19,7 @@ ${libraryConfig.reference ? (forDocs ? `:::note[Reference]${libraryConfig.refere
 
 ${libraryConfig.doi ? `DOI: [${libraryConfig.doi}](https://doi.org/${libraryConfig.doi})` : ''}
 
-${libraryConfig.externalLink ? `Link: ${libraryConfig.externalLink}` : ''}
+${libraryConfig.externalLink ? `Link: [${libraryConfig.externalLink}](${libraryConfig.externalLink})` : ''}
 
 ## Available Components
 

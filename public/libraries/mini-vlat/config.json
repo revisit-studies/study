@@ -444,8 +444,8 @@
     }
   },
   "sequences": {
-    "full-latinSquare": {
-      "id": "mini-vlat-latinSquare",
+    "full": {
+      "id": "mini-vlat",
       "order": "latinSquare",
       "components": [
         "treemap",

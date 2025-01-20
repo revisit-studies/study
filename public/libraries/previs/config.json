@@ -154,7 +154,7 @@
   },
   "sequences": {
     "4dimensions": {
-      "id": "previs-4dimensions-latinSquare",
+      "id": "previs-4dimensions",
       "order": "latinSquare",
       "components": [
         "Understand",
