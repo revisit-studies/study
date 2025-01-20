@@ -1,4 +1,4 @@
-import { Navigate, NavigateProps, useSearchParams } from 'react-router-dom';
+import { Navigate, NavigateProps, useSearchParams } from 'react-router';
 
 export function NavigateWithParams(
   props: Omit<NavigateProps, 'to'> & { to: string },

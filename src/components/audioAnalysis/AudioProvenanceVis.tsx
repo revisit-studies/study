@@ -1,9 +1,8 @@
-/* eslint-disable no-nested-ternary */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box, Center, Group, Loader, Stack,
 } from '@mantine/core';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
@@ -37,7 +36,6 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Storage
   return null;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string) => void }) {
   const [searchParams] = useSearchParams();
   const participantId = useMemo(() => searchParams.get('participantId') || undefined, [searchParams]);
@@ -123,7 +121,6 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
 
     let tempNode = provGraph.nodes[currentNode];
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       if (playTime < tempNode.createdOn) {
         if (!isRootNode(tempNode)) {

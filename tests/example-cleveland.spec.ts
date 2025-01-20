@@ -63,6 +63,7 @@ test('test', async ({ page }) => {
 
     // Click on the next button
     await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await page.waitForTimeout(100);
   }
 
   // Check that the next question does not have a check answer button
@@ -87,6 +88,7 @@ test('test', async ({ page }) => {
 
     // Click on the next button
     await page.getByRole('button', { name: 'Next', exact: true }).click();
+    await page.waitForTimeout(200);
   }
 
   // Check for the post study survey and fill it out

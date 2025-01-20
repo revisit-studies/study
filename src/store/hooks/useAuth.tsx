@@ -26,11 +26,9 @@ const AuthContext = createContext<AuthContextValue>({
     isAdmin: false,
     adminVerification: false,
   },
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   logout: async () => {},
   triggerAuth: () => {},
   verifyAdminStatus: () => Promise.resolve(false),
-
 });
 
 // Firebase auth context
@@ -103,7 +101,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
     if (storageEngine instanceof FirebaseStorageEngine) {
       try {
         auth = getAuth();
-      } catch (error) {
+      } catch {
         console.warn('No firebase store.');
       }
     }

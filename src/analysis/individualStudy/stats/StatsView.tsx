@@ -4,7 +4,7 @@ import {
 import {
   useMemo,
 } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams } from 'react-router';
 import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
 import { TrialVisualization } from './TrialVisualization';

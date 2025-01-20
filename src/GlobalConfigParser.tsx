@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Route, Routes } from 'react-router';
 import { ModalsProvider } from '@mantine/modals';
 import { AppShell } from '@mantine/core';
 import { ConfigSwitcher } from './components/ConfigSwitcher';

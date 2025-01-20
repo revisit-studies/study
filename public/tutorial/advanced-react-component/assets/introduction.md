@@ -15,7 +15,7 @@ When participants click on the circle, the distance between click and the center
   - In config file, in the "clickCircle" components, we have a parameters attributes. This is where you specify your parameters that passed to the React component.
   - In `ClickCircle.tsx`, we passed the "parameters" as the component props. Then we can extract data from it.
 - The reVISit framework could take answers from the React component as well.
-  - In config file, in the "clickCircle" component, the response type is "iframe". This type of response is used to receive answers from React component. Notice the id of this response is passed to React component by parameters.
+  - In config file, in the "clickCircle" component, the response type is "reactive". This type of response is used to receive answers from React component. Notice the id of this response is passed to React component by parameters.
   - In `ClickCircle.tsx`, you can see the setAnswer is passed to the component as props. Then you can use that function to pass answers back to reVISit. When you click on screen, the distance between click and the center of the circle will be calculated and saved as the answer.
 
 ## Exercise

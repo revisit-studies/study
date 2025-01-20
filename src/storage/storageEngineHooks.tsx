@@ -11,7 +11,6 @@ interface StorageContextValue {
 
 const StorageEngineContext = createContext<StorageContextValue>({
   storageEngine: undefined,
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   setStorageEngine: () => {},
 });
 

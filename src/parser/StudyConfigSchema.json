@@ -169,7 +169,7 @@
     },
     "CheckboxResponse": {
       "additionalProperties": false,
-      "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.\n\n```js { \"id\": \"q7\", \"prompt\": \"Checkbox example (not required)\", \"required\": false, \"location\": \"aboveStimulus\", \"type\": \"checkbox\", \"options\": [\"Option 1\", \"Option 2\", \"Option 3\"] } ```",
+      "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.\n\n```js { \"id\": \"q7\", \"prompt\": \"Checkbox example (not required)\", \"location\": \"aboveStimulus\", \"type\": \"checkbox\", \"options\": [\"Option 1\", \"Option 2\", \"Option 3\"] } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -444,65 +444,6 @@
       "required": [
         "id",
         "options",
-        "prompt",
-        "type"
-      ],
-      "type": "object"
-    },
-    "IFrameResponse": {
-      "additionalProperties": false,
-      "description": "The IFrameResponse interface is used to define the properties of an iframe response. IFrameResponses render as a list, that is connected to a WebsiteComponent. When data is sent from the WebsiteComponent, it is displayed in the list.",
-      "properties": {
-        "hidden": {
-          "description": "Controls whether the response is hidden.",
-          "type": "boolean"
-        },
-        "id": {
-          "description": "The id of the response. This is used to identify the response in the data file.",
-          "type": "string"
-        },
-        "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
-        },
-        "paramCapture": {
-          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
-          "type": "string"
-        },
-        "prompt": {
-          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
-          "type": "string"
-        },
-        "required": {
-          "description": "Controls whether the response is required to be answered. Defaults to true.",
-          "type": "boolean"
-        },
-        "requiredLabel": {
-          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
-          "type": "string"
-        },
-        "requiredValue": {
-          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
-        },
-        "secondaryText": {
-          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
-          "type": "string"
-        },
-        "type": {
-          "const": "iframe",
-          "type": "string"
-        },
-        "withDivider": {
-          "description": "Renders the response with a trailing divider.",
-          "type": "boolean"
-        },
-        "withDontKnow": {
-          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
-          "type": "boolean"
-        }
-      },
-      "required": [
-        "id",
         "prompt",
         "type"
       ],
@@ -1551,6 +1492,65 @@
       ],
       "type": "object"
     },
+    "ReactiveResponse": {
+      "additionalProperties": false,
+      "description": "The ReactiveResponse interface is used to define the properties of a reactive response. ReactiveResponses render as a list, that is connected to a WebsiteComponent, VegaComponent, or ReactComponent. When data is sent from the components, it is displayed in the list.\n\n```js { \"id\": \"reactiveResponse\", \"prompt\": \"Answer clicked in the stimulus\", \"location\": \"aboveStimulus\", \"type\": \"reactive\" } ```",
+      "properties": {
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "type": {
+          "const": "reactive",
+          "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
+        "type"
+      ],
+      "type": "object"
+    },
     "RepeatedComponentBlockCondition": {
       "additionalProperties": false,
       "description": "The RepeatedComponentBlockCondition interface is used to define a SkipCondition based on the number of correct or incorrect repeated components. You might use this if you need to check if an attention check was failed multiple times. This is similar to the [ComponentBlockCondition](../ComponentBlockCondition), but it only checks a specific repeated component.\n\nHere's an example of how to use the RepeatedComponentBlockCondition:\n\n```js { ... \"skip\": [ {   \"name\": \"attentionCheck\",   \"check\": \"repeatedComponent\",   \"condition\": \"numIncorrect\",   \"value\": 2,   \"to\": \"end\" } ] ... } ```\n\nIn this example, when the number of incorrect responses to the repeated component with the name \"attentionCheck\" is two, the participant will be redirected to the end of the study. If the number of incorrect responses is less than two, the participant will continue to the next component in the sequence.",
@@ -1617,7 +1617,7 @@
           "$ref": "#/definitions/CheckboxResponse"
         },
         {
-          "$ref": "#/definitions/IFrameResponse"
+          "$ref": "#/definitions/ReactiveResponse"
         },
         {
           "$ref": "#/definitions/MatrixResponse"
@@ -1933,6 +1933,10 @@
           "description": "The path to the logo image. This is displayed on the landing page and the header.",
           "type": "string"
         },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. Defaults to false.",
+          "type": "boolean"
+        },
         "numSequences": {
           "description": "The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000.",
           "type": "number"
@@ -1990,6 +1994,7 @@
     },
     "VegaComponentConfig": {
       "additionalProperties": false,
+      "description": "The VegaComponentConfig interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component by adding Vega/Vega-Lite specs within the reVISit config itself.\n\nTo do this, would use the following snippet: ```js { \"type\": \"vega\", \"config\": { ... vega specs here ...}, }\n\nIIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec's signals section: ```js { \"signals\": [  {    \"name\": \"revisitAnswer\",    \"value\": {},    \"on\": [      {        \"events\": \"rect:click\",        \"update\": \"{responseId: 'vegaDemoResponse1', response: datum.category}\"      }    ]  } ] } In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. ```",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
@@ -2076,6 +2081,7 @@
     },
     "VegaComponentPath": {
       "additionalProperties": false,
+      "description": "The VegaComponentPath interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component with path pointing to your Vega/Vega-Lite specs file.\n\nFor example, to render a vega based stimuli with a path of `<study-name>/assets/vega.spec.json`, you would use the following snippet: ```js { \"type\": \"vega\", \"path\": \"<study-name>/assets/vega.spec.json\", } ```\n\nIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec file's signals section: ```js { \"signals\": [  {    \"name\": \"revisitAnswer\",    \"value\": {},    \"on\": [      {        \"events\": \"rect:click\",        \"update\": \"{responseId: 'vegaDemoResponse1', response: datum.category}\"      }    ]  } ] } In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. This signal is then passed to reVISit as the participant's response. ```",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
@@ -2162,7 +2168,7 @@
     },
     "WebsiteComponent": {
       "additionalProperties": false,
-      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder.\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/assets/website.html\", } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/website.html\", \"parameters\": {  \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3] } \"response\": [  {    \"id\": \"barChart\",    \"prompt\": \"Your selected answer:\",    \"location\": \"belowStimulus\",    \"type\": \"iframe\"  } ], } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {  const barData = data['barData'];  ... });\n\n// Call out that 'barChart' needs to match ID in 'response' object Revisit.postAnswers({ barChart: userAnswer }); </script> ```\n\n If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenanceGraph` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.\n\n```js const trrack = initializeTrrack({ initialState, registry });\n\n... Revisit.postProvenance(trrack.graph.backend); ```",
+      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder.\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/assets/website.html\", } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/website.html\", \"parameters\": {  \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3] } \"response\": [  {    \"id\": \"barChart\",    \"prompt\": \"Your selected answer:\",    \"location\": \"belowStimulus\",    \"type\": \"reactive\"  } ], } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {  const barData = data['barData'];  ... });\n\n// Call out that 'barChart' needs to match ID in 'response' object Revisit.postAnswers({ barChart: userAnswer }); </script> ```\n\n If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenanceGraph` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.\n\n```js const trrack = initializeTrrack({ initialState, registry });\n\n... Revisit.postProvenance(trrack.graph.backend); ```",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If not provided, the default is true.",

@@ -1,11 +1,11 @@
 import { Box, Checkbox, Divider } from '@mantine/core';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import { useEffect, useMemo, useState } from 'react';
 import { GetInputPropsReturnType, UseFormReturnType } from '@mantine/form/lib/types';
 import { IndividualComponent, Response, StoredAnswer } from '../../parser/types';
 import { CheckBoxInput } from './CheckBoxInput';
 import { DropdownInput } from './DropdownInput';
-import { IframeInput } from './IframeInput';
+import { Reactive } from './ReactiveInput';
 import { LikertInput } from './LikertInput';
 import { NumericInput } from './NumericInput';
 import { RadioInput } from './RadioInput';
@@ -54,7 +54,8 @@ export function ResponseSwitcher({
     if (dontKnowCheckbox) {
       form.setFieldValue(response.id, '');
     }
-  }, [dontKnowCheckbox, form, response.id]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dontKnowCheckbox, response.id]);
 
   return (
     <Box mb={response.withDivider || configInUse.responseDividers ? 'xl' : 'lg'}>
@@ -130,8 +131,8 @@ export function ResponseSwitcher({
           enumerateQuestions={enumerateQuestions}
         />
       )}
-      {response.type === 'iframe' && (
-        <IframeInput
+      {response.type === 'reactive' && (
+        <Reactive
           response={response}
           answer={ans as { value: string[] }}
           index={index}

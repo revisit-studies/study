@@ -2,7 +2,6 @@ import {
   useCallback, useEffect, useMemo, useRef,
 } from 'react';
 import { useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 import { useCurrentComponent } from '../routes/utils';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { WebsiteComponent } from '../parser/types';
@@ -17,7 +16,7 @@ const defaultStyle = {
 };
 
 export function IframeController({ currentConfig }: { currentConfig: WebsiteComponent; }) {
-  const { setIframeAnswers, setIframeProvenance } = useStoreActions();
+  const { setreactiveAnswers, setreactiveProvenance } = useStoreActions();
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
 
@@ -30,7 +29,6 @@ export function IframeController({ currentConfig }: { currentConfig: WebsiteComp
 
   // navigation
   const currentComponent = useCurrentComponent();
-  const navigate = useNavigate();
 
   const sendMessage = useCallback(
     (tag: string, message: unknown) => {
@@ -63,10 +61,10 @@ export function IframeController({ currentConfig }: { currentConfig: WebsiteComp
             }
             break;
           case `${PREFIX}/ANSWERS`:
-            storeDispatch(setIframeAnswers(data.message));
+            storeDispatch(setreactiveAnswers(data.message));
             break;
           case `${PREFIX}/PROVENANCE`:
-            storeDispatch(setIframeProvenance(data.message));
+            storeDispatch(setreactiveProvenance(data.message));
             break;
           default:
             break;
@@ -77,7 +75,7 @@ export function IframeController({ currentConfig }: { currentConfig: WebsiteComp
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, dispatch, iframeId, navigate, currentConfig, sendMessage, setIframeAnswers, setIframeProvenance]);
+  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setreactiveAnswers, setreactiveProvenance]);
 
   return (
     <iframe

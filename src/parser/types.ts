@@ -118,6 +118,8 @@ export interface UIConfig {
   timeoutReject?: boolean;
   /** The default name field for a participant. Directs revisit to use the task and response id as a name in UI elements. For example, if you wanted the response 'prolificId' from the task 'introduction' to be the name, this field would be 'introduction.prolificId' */
   participantNameField?: string;
+  /** Whether enter key should move to the next question. Defaults to false. */
+  nextOnEnter?: boolean;
 }
 
 /**
@@ -436,7 +438,6 @@ export interface RadioResponse extends BaseResponse {
 {
   "id": "q7",
   "prompt": "Checkbox example (not required)",
-  "required": false,
   "location": "aboveStimulus",
   "type": "checkbox",
   "options": ["Option 1", "Option 2", "Option 3"]
@@ -458,14 +459,23 @@ export interface CheckboxResponse extends BaseResponse {
 }
 
 /**
- * The IFrameResponse interface is used to define the properties of an iframe response.
- * IFrameResponses render as a list, that is connected to a WebsiteComponent. When data is sent from the WebsiteComponent, it is displayed in the list.
+ * The ReactiveResponse interface is used to define the properties of a reactive response.
+ * ReactiveResponses render as a list, that is connected to a WebsiteComponent, VegaComponent, or ReactComponent. When data is sent from the components, it is displayed in the list.
+ *
+```js
+{
+  "id": "reactiveResponse",
+  "prompt": "Answer clicked in the stimulus",
+  "location": "aboveStimulus",
+  "type": "reactive"
+}
+```
  */
-export interface IFrameResponse extends BaseResponse {
-  type: 'iframe';
+export interface ReactiveResponse extends BaseResponse {
+  type: 'reactive';
 }
 
-export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | IFrameResponse | MatrixResponse;
+export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | ReactiveResponse | MatrixResponse;
 
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.
@@ -664,7 +674,7 @@ export interface ImageComponent extends BaseIndividualComponent {
       "id": "barChart",
       "prompt": "Your selected answer:",
       "location": "belowStimulus",
-      "type": "iframe"
+      "type": "reactive"
     }
   ],
 }
@@ -727,12 +737,71 @@ export interface QuestionnaireComponent extends BaseIndividualComponent {
   type: 'questionnaire';
 }
 
+/**
+ * The VegaComponentPath interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component with path pointing to your Vega/Vega-Lite specs file.
+ *
+ * For example, to render a vega based stimuli with a path of `<study-name>/assets/vega.spec.json`, you would use the following snippet:
+```js
+{
+  "type": "vega",
+  "path": "<study-name>/assets/vega.spec.json",
+}
+```
+
+If you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec file's signals section:
+```js
+{
+  "signals": [
+    {
+      "name": "revisitAnswer",
+      "value": {},
+      "on": [
+        {
+          "events": "rect:click",
+          "update": "{responseId: 'vegaDemoResponse1', response: datum.category}"
+        }
+      ]
+    }
+  ]
+}
+In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. This signal is then passed to reVISit as the participant's response.
+```
+*/
 export interface VegaComponentPath extends BaseIndividualComponent {
   type: 'vega';
   /** The path to the vega file. This should be a relative path from the public folder. */
   path: string;
 }
 
+/**
+ * The VegaComponentConfig interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component by adding Vega/Vega-Lite specs within the reVISit config itself.
+ *
+ * To do this, would use the following snippet:
+```js
+{
+  "type": "vega",
+  "config": { ... vega specs here ...},
+}
+
+IIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec's signals section:
+```js
+{
+  "signals": [
+    {
+      "name": "revisitAnswer",
+      "value": {},
+      "on": [
+        {
+          "events": "rect:click",
+          "update": "{responseId: 'vegaDemoResponse1', response: datum.category}"
+        }
+      ]
+    }
+  ]
+}
+In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response.
+```
+*/
 export interface VegaComponentConfig extends BaseIndividualComponent {
   type: 'vega';
   /** The vega or vega-lite configuration. */
@@ -1248,9 +1317,13 @@ export interface LibraryConfig {
   /** A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information */
   $schema: string;
   /** A description of the library. */
-  description?: string;
+  description: string;
   /** The reference to the paper where the content of the library is based on. */
   reference?: string;
+  /** The DOI of the paper where the content of the library is based on. */
+  doi?: string;
+  /** The external link to the paper/website where the content of the library is based on. */
+  externalLink?: string;
   /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */
   baseComponents?: BaseComponents;
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
@@ -1291,5 +1364,5 @@ export type Nullable<T> = T | undefined | null;
  */
 export type Prettify<T> = {
   [K in keyof T]: T[K];
-  /* eslint-disable */
+
 } & {};

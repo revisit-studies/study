@@ -23,7 +23,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   const storeDispatch = useStoreDispatch();
   const [vegaConfig, setVegaConfig] = useState<VisualizationSpec | null>(null);
   const [loading, setLoading] = useState(true);
-  const { updateResponseBlockValidation, setIframeAnswers } = useStoreActions();
+  const { updateResponseBlockValidation, setreactiveAnswers } = useStoreActions();
   const [view, setView] = useState<View>();
 
   const { actions, trrack } = useMemo(() => {
@@ -64,8 +64,8 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
       }),
     );
 
-    storeDispatch(setIframeAnswers(answers));
-  }, [currentComponent, currentStep, storeDispatch, setIframeAnswers, updateResponseBlockValidation]);
+    storeDispatch(setreactiveAnswers(answers));
+  }, [currentComponent, currentStep, storeDispatch, setreactiveAnswers, updateResponseBlockValidation]);
 
   const handleSignalEvt = useCallback((key: string, value: unknown) => {
     trrack.apply(key, actions.signalAction({
@@ -138,5 +138,6 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     return <div>Failed to load vega config</div>;
   }
 
+  // @ts-expect-error Vega type is not updated to match the new types from react 19
   return (<Vega spec={structuredClone(vegaConfig)} signalListeners={signalListeners} onNewView={(v) => setView(v)} />);
 }
