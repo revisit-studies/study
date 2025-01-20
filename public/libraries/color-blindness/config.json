@@ -772,7 +772,7 @@
   },
   "sequences": {
     "short-test": {
-      "id": "short-test-random",
+      "id": "short-test",
       "order": "random",
       "components": [
         "plate2",
@@ -782,7 +782,7 @@
       ]
     },
     "full-test": {
-      "id": "full-test-fixed",
+      "id": "full-test",
       "order": "fixed",
       "components": [
         "plate1",

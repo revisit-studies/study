@@ -26,11 +26,11 @@ const publicPath = path.join(__dirname, './public');
 
 // Create example study config template
 const createExampleConfig = (libraryName) => ({
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc4/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": `${libraryName} Example Study`,
     "version": "1.0.0",
-    "authors": ["reVISit Team"],
+    "authors": ["The reVISit Team"],
     "date": new Date().toISOString().split('T')[0],
     "description": `Example study using the ${libraryName} library.`,
     "organizations": ["University of Utah", "WPI", "University of Toronto"]
@@ -76,15 +76,13 @@ libraries.forEach((library) => {
     const assetsPath = path.join(examplePath, 'assets');
     fs.mkdirSync(assetsPath);
     console.log(`Created ${exampleFolderName}/assets directory`);
-
-    // Create config.json
-    const configPath = path.join(examplePath, 'config.json');
-    const configContent = createExampleConfig(library);
-    fs.writeFileSync(configPath, JSON.stringify(configContent, null, 2));
-    console.log(`Created ${exampleFolderName}/config.json`);
-  } else {
-    console.log(`Skipping ${exampleFolderName} - already exists`);
   }
+
+  // Create config.json
+  const configPath = path.join(examplePath, 'config.json');
+  const configContent = createExampleConfig(library);
+  fs.writeFileSync(configPath, JSON.stringify(configContent, null, 2));
+  console.log(`Created/Updated ${exampleFolderName}/config.json`);
 });
 
 console.log('Library example generation complete');

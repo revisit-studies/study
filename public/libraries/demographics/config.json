@@ -14,9 +14,11 @@
           "type": "radio",
           "withOther": true,
           "options": [
-            "Man",
             "Woman",
-            "Non-binary",
+            "Man",
+            "Non-binary / Genderqueer / Third gender",
+            "Genderfluid / Gender non-conforming",
+            "Questioning",
             "Prefer not to say"
           ]
         },
@@ -49,8 +51,7 @@
             "High school diploma or equivalent",
             "Bachelor's degree or equivalent",
             "Master's degree or equivalent",
-            "Doctoral degree or equivalent",
-            "Other, please specify"
+            "Doctoral degree or equivalent"
           ]
         }
       ]

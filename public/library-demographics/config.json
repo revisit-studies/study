@@ -1,12 +1,12 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc4/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Demographics",
-    "version": "pilot",
+    "version": "1.0.0",
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2023-04-14",
+    "date": "2025-01-20",
     "description": "Example study using the demographics library.",
     "organizations": [
       "University of Utah",
