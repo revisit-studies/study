@@ -3,7 +3,7 @@ import {
   useCallback, useEffect, useMemo, useState,
 } from 'react';
 import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useNextStep } from '../store/hooks/useNextStep';
 import { IndividualComponent } from '../parser/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
@@ -48,7 +48,7 @@ export function NextButton({
   }, []);
   useEffect(() => {
     if (timer && nextButtonDisableTime && timer >= nextButtonDisableTime && studyConfig.uiConfig.timeoutReject) {
-      navigate('./__timeout');
+      navigate('./../__timedOut');
     }
   }, [nextButtonDisableTime, timer, navigate, studyConfig.uiConfig.timeoutReject]);
 

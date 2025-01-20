@@ -108,7 +108,6 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
 
         const response = completeComponent.response.find((resp) => resp.id === key);
         if (properties.includes('status')) {
-          // eslint-disable-next-line no-nested-ternary
           tidyRow.status = participant.rejected ? 'rejected' : (participant.completed ? 'completed' : 'in progress');
         }
         if (properties.includes('rejectReason')) {
@@ -118,7 +117,6 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
           tidyRow.rejectTime = participant.rejected ? new Date(participant.rejected.timestamp).toISOString() : undefined;
         }
         if (properties.includes('configHash')) {
-          // eslint-disable-next-line no-nested-ternary
           tidyRow.configHash = participant.participantConfigHash;
         }
         if (properties.includes('percentComplete')) {

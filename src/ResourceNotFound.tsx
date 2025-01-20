@@ -3,7 +3,7 @@ import {
   Space,
   Anchor,
 } from '@mantine/core';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
 export function ResourceNotFound({ email, path }: { email?: string, path?: string }) {
   const location = useLocation();

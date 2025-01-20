@@ -729,12 +729,71 @@ export interface QuestionnaireComponent extends BaseIndividualComponent {
   type: 'questionnaire';
 }
 
+/**
+ * The VegaComponentPath interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component with path pointing to your Vega/Vega-Lite specs file.
+ *
+ * For example, to render a vega based stimuli with a path of `<study-name>/assets/vega.spec.json`, you would use the following snippet:
+```js
+{
+  "type": "vega",
+  "path": "<study-name>/assets/vega.spec.json",
+}
+```
+
+If you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec file's signals section:
+```js
+{
+  "signals": [
+    {
+      "name": "revisitAnswer",
+      "value": {},
+      "on": [
+        {
+          "events": "rect:click",
+          "update": "{responseId: 'vegaDemoResponse1', response: datum.category}"
+        }
+      ]
+    }
+  ]
+}
+In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. This signal is then passed to reVISit as the participant's response.
+```
+*/
 export interface VegaComponentPath extends BaseIndividualComponent {
   type: 'vega';
   /** The path to the vega file. This should be a relative path from the public folder. */
   path: string;
 }
 
+/**
+ * The VegaComponentConfig interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component by adding Vega/Vega-Lite specs within the reVISit config itself.
+ *
+ * To do this, would use the following snippet:
+```js
+{
+  "type": "vega",
+  "config": { ... vega specs here ...},
+}
+
+IIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec's signals section:
+```js
+{
+  "signals": [
+    {
+      "name": "revisitAnswer",
+      "value": {},
+      "on": [
+        {
+          "events": "rect:click",
+          "update": "{responseId: 'vegaDemoResponse1', response: datum.category}"
+        }
+      ]
+    }
+  ]
+}
+In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response.
+```
+*/
 export interface VegaComponentConfig extends BaseIndividualComponent {
   type: 'vega';
   /** The vega or vega-lite configuration. */
@@ -1297,5 +1356,5 @@ export type Nullable<T> = T | undefined | null;
  */
 export type Prettify<T> = {
   [K in keyof T]: T[K];
-  /* eslint-disable */
+
 } & {};

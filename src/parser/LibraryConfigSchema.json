@@ -1871,6 +1871,7 @@
     },
     "VegaComponentConfig": {
       "additionalProperties": false,
+      "description": "The VegaComponentConfig interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component by adding Vega/Vega-Lite specs within the reVISit config itself.\n\nTo do this, would use the following snippet: ```js { \"type\": \"vega\", \"config\": { ... vega specs here ...}, }\n\nIIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec's signals section: ```js { \"signals\": [  {    \"name\": \"revisitAnswer\",    \"value\": {},    \"on\": [      {        \"events\": \"rect:click\",        \"update\": \"{responseId: 'vegaDemoResponse1', response: datum.category}\"      }    ]  } ] } In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. ```",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
@@ -1957,6 +1958,7 @@
     },
     "VegaComponentPath": {
       "additionalProperties": false,
+      "description": "The VegaComponentPath interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component with path pointing to your Vega/Vega-Lite specs file.\n\nFor example, to render a vega based stimuli with a path of `<study-name>/assets/vega.spec.json`, you would use the following snippet: ```js { \"type\": \"vega\", \"path\": \"<study-name>/assets/vega.spec.json\", } ```\n\nIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec file's signals section: ```js { \"signals\": [  {    \"name\": \"revisitAnswer\",    \"value\": {},    \"on\": [      {        \"events\": \"rect:click\",        \"update\": \"{responseId: 'vegaDemoResponse1', response: datum.category}\"      }    ]  } ] } In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. This signal is then passed to reVISit as the participant's response. ```",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If not provided, the default is true.",

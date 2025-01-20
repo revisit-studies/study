@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
-  "description": "This is a library for demographic questions. It contains one component with three questions: demographics.",
+  "description": "This is a library for demographic questions. It contains one component, demographics, with three questions: gender, age, and education.",
   "components": {
     "demographics": {
       "type": "questionnaire",
@@ -8,21 +8,23 @@
       "response": [
         {
           "id": "gender",
-          "prompt": "What is your gender?",
+          "prompt": "What is your **gender**?",
           "required": true,
           "location": "aboveStimulus",
           "type": "radio",
+          "withOther": true,
           "options": [
-            "Man",
             "Woman",
-            "Non-binary",
-            "Prefer to self-describe",
+            "Man",
+            "Non-binary / Genderqueer / Third gender",
+            "Genderfluid / Gender non-conforming",
+            "Questioning",
             "Prefer not to say"
           ]
         },
         {
           "id": "age",
-          "prompt": "What is your age?",
+          "prompt": "What is your **age**?",
           "required": true,
           "location": "aboveStimulus",
           "type": "radio",
@@ -39,17 +41,17 @@
         },
         {
           "id": "education",
-          "prompt": "What is the highest degree or level of education you have completed?",
+          "prompt": "What is the **highest degree or level of education** you have completed?",
           "required": true,
           "location": "aboveStimulus",
           "type": "radio",
+          "withOther": true,
           "options": [
             "Less than high school",
             "High school diploma or equivalent",
             "Bachelor's degree or equivalent",
             "Master's degree or equivalent",
-            "Doctoral degree or equivalent",
-            "Other, please specify"
+            "Doctoral degree or equivalent"
           ]
         }
       ]
