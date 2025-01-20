@@ -1,6 +1,6 @@
 # Introduction
 
-This is a demo study that uses stimuli built with [Vega](https://vega.github.io/vega/). reVISit support both Vega and [Vega-lite](https://vega.github.io/vega-lite/) based stimuli.
+This is a demo study that uses stimuli built with [Vega](https://vega.github.io/vega/). reVISit supports both Vega and [Vega-lite](https://vega.github.io/vega-lite/) based stimuli.
 
 Make sure to review [the documentation for vega stimuli](https://revisit.dev/docs/designing-studies/vega-stimulus/).
 
