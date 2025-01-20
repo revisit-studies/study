@@ -25,7 +25,8 @@ test('test', async ({ page }) => {
   await expect(maxSelectionsText).toBeVisible();
   await page.getByRole('checkbox', { name: 'Option 1' }).click();
 
-  await page.getByRole('radio', { name: 'Option 2' }).click();
+  await page.getByRole('radio', { name: 'Option 2' }).nth(1).click();
+  await page.getByRole('radio', { name: 'Option 2' }).nth(1).click();
 
   const radios = await page.locator('input[value="Highly Unsatisfied"]');
   for (let i = 0; i < await radios.count(); i += 1) {
