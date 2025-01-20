@@ -201,7 +201,7 @@ export function AllTasksTimeline({
                 </Text>
               ) : null }
 
-            <Text size="md" fw={800}>
+            <Text size="md" fw={700}>
               {partName || participantData.participantId}
             </Text>
 
