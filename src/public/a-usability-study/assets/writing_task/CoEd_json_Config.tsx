@@ -1,7 +1,19 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as monaco from 'monaco-editor';
 import { Box } from '@mantine/core';
-import { StimulusParams } from '../../../../store/types';
+
+// 只修改类型定义部分
+interface EditorAnswer {
+  status: boolean;
+  answers: {
+    code: string;
+    error: string;
+  };
+}
+
+interface StimulusParamsTyped {
+  setAnswer: (answer: EditorAnswer) => void;
+}
 
 function useJsonEditor(initialCode: string) {
   const [code, setCode] = useState(initialCode);
@@ -36,7 +48,6 @@ function useJsonEditor(initialCode: string) {
     }
   }, [code, editorInstance]);
 
-  //
   useEffect(() => {
     if (code.trim()) {
       validateJson();
@@ -56,7 +67,8 @@ function useJsonEditor(initialCode: string) {
   };
 }
 
-function CodeEditorTest({ setAnswer }: StimulusParams<unknown, Record<string, never>>): React.ReactElement {
+// 只修改类型声明部分
+function CodeEditorTest({ setAnswer }: StimulusParamsTyped): React.ReactElement {
   const {
     code,
     setCode,
@@ -86,7 +98,7 @@ function CodeEditorTest({ setAnswer }: StimulusParams<unknown, Record<string, ne
           status: true,
           answers: {
             code: rawCode,
-            error: rawCode,
+            error: currentErrors.join('\n'), // 这里修改，将currentErrors作为error输出
           },
         });
 
@@ -99,7 +111,7 @@ function CodeEditorTest({ setAnswer }: StimulusParams<unknown, Record<string, ne
     }
     return undefined;
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setCode, setEditorInstance]); // 移除 code 依赖，添加 eslint-disable 注释
+  }, [setCode, setEditorInstance]);
 
   return (
     <div style={{
@@ -109,11 +121,11 @@ function CodeEditorTest({ setAnswer }: StimulusParams<unknown, Record<string, ne
       padding: '20px',
     }}
     >
-      {/* 图片与代码编辑器部分 */}
+      {/* fig and code editor part */}
       <div style={{ display: 'flex', width: '100%', gap: '20px' }}>
         <div style={{ flex: '0 0 60%' }}>
           <img
-            src="/a-usability-study/assets/tasks/fig/config_write.png"
+            src="./a-usability-study/assets/tasks/fig/config_write.png"
             alt="Example"
             style={{
               width: '100%',
@@ -134,7 +146,7 @@ function CodeEditorTest({ setAnswer }: StimulusParams<unknown, Record<string, ne
         />
       </div>
 
-      {/* 验证状态显示 */}
+      {/* validation dispaly */}
       <Box
         style={{
           background: '#f5f5f5',
