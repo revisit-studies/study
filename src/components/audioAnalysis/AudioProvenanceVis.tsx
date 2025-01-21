@@ -73,6 +73,11 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
 
   const componentAndIndex = useMemo(() => `${currentComponent}_${currentStep}`, [currentComponent, currentStep]);
 
+  // Make sure we always pause analysis when we change participants or tasks
+  useEffect(() => {
+    storeDispatch(setAnalysisIsPlaying(false));
+  }, [participantId, currentComponent, currentStep, storeDispatch, setAnalysisIsPlaying]);
+
   // Create an instance of trrack to ensure getState works, incase the saved state is not a full state node.
   useEffect(() => {
     if (componentAndIndex && participant && participant.answers[componentAndIndex]?.provenanceGraph) {
