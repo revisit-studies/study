@@ -41,7 +41,7 @@
               "prompt": "Which image more accurately represents detailed pathological features?",
               "options": [
                 {
-                  "label": "left",
+                  "label": "left is better",
                   "value": 0
                 },
                 {
@@ -49,7 +49,7 @@
                   "value": 50
                 },
                 {
-                  "label": "right",
+                  "label": "right is better",
                   "value": 100
                 }
               ]
@@ -70,7 +70,7 @@
               "prompt": "Which image helps you to distinguish individual cellular structures better?",
               "options": [
                 {
-                  "label": "left",
+                  "label": "left is better",
                   "value": 0
                 },
                 {
@@ -78,7 +78,7 @@
                   "value": 50
                 },
                 {
-                  "label": "right",
+                  "label": "right is better",
                   "value": 100
                 }
               ]
@@ -99,7 +99,7 @@
               "prompt": "Which image better represents informative tissue textures?",
               "options": [
                 {
-                  "label": "left",
+                  "label": "left is better",
                   "value": 0
                 },
                 {
@@ -107,7 +107,7 @@
                   "value": 50
                 },
                 {
-                  "label": "right",
+                  "label": "right is better",
                   "value": 100
                 }
               ]
@@ -128,7 +128,7 @@
               "prompt": "Which image, if any, reports false tissue textures?",
               "options": [
                 {
-                  "label": "left",
+                  "label": "left is better",
                   "value": 0
                 },
                 {
@@ -136,7 +136,7 @@
                   "value": 50
                 },
                 {
-                  "label": "right",
+                  "label": "right is better",
                   "value": 100
                 }
               ]
@@ -157,7 +157,7 @@
               "prompt": "Which image better defines the bundaries between tissue regions?",
               "options": [
                 {
-                  "label": "left",
+                  "label": "left is better",
                   "value": 0
                 },
                 {
@@ -165,7 +165,7 @@
                   "value": 50
                 },
                 {
-                  "label": "right",
+                  "label": "right is better",
                   "value": 100
                 }
               ]
@@ -186,7 +186,7 @@
               "prompt": "Which image maintains better zooming quality?",
               "options": [
                 {
-                  "label": "left",
+                  "label": "left is better",
                   "value": 0
                 },
                 {
@@ -194,7 +194,7 @@
                   "value": 50
                 },
                 {
-                  "label": "right",
+                  "label": "right is better",
                   "value": 100
                 }
               ]
@@ -295,7 +295,7 @@
       "filler-2": {
         "type": "website",
         "recordAudio": true,
-        "path": "super-resolution-study/assets/11772-right.html",
+        "path": "super-resolution-study/assets/11772-right-filler.html",
         "response": []
       },
       "pair2-q1":{
@@ -329,7 +329,7 @@
       "filler-3": {
         "type": "website",
         "recordAudio": true,
-        "path": "super-resolution-study/assets/11773-right.html",
+        "path": "super-resolution-study/assets/11773-right-filler.html",
         "response": []
       },
       "pair3-q1":{
@@ -363,7 +363,7 @@
       "filler-4": {
         "type": "website",
         "recordAudio": true,
-        "path": "super-resolution-study/assets/11774-right.html",
+        "path": "super-resolution-study/assets/11774-right-filler.html",
         "response": []
       },
       "pair4-q1":{

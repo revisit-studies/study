@@ -2,11 +2,11 @@
 
 ## Introduction
 
-Thank you for participating in this study of evaluating the effectiveness of super-resolution technology in cancer pathology image analysis. This research aims to assess whether super-resolution imaging techniques improve the ability to detect and analyze cancer cells compared to traditional imaging methods.
+Thank you for participating in this study to evaluate the effectiveness of super-resolution technology in cancer pathology image analysis. This research aims to assess whether super-resolution imaging techniques improve the ability to detect and analyze cancer cells compared to traditional imaging methods.
 
 ### Instructions
 
-You will be presented with ten pairs of cancer images side by side. In some images, the original images will be on the left and super-resolution images on the right and vice-versa. Below are two demonstration of these setup:
+You will be presented with twenty pairs of cancer images side by side. In some images, the original images will be on the left and super-resolution images on the right and vice versa. Below are two demonstrations of these setups:
 <!-- - Left: Original image
 - Right: Super-resolution version of the same image -->
 
@@ -18,9 +18,9 @@ The original and the super-resolution images are synchronized, meaning any inter
 - Pan across different areas of the images
 - Take time to explore the details thoroughly
 
-For each image pair, you will be asked to evaluate various aspects of image quality and diagnostic utility by scoring five metrices and one open-ended questions. The score is set for each metric on a scale of -1, 0, 1, where:
-- -1 = Left is better
-- 0 = Same
+For each image pair, you will be asked to evaluate various aspects of image quality and cancerous region detection utility by scoring six metrices and one open-ended questions. The score is set for each metric on continous a scale of 0 to 100, where:
+- 0 = Left is better
+- 50 = Same
 - 1 = Right is better
 
 Please take sufficient time to examine each image pair thoroughly before submitting your assessment. After completing all ten image pairs, you will be asked to complete a brief post-study questionnaire.
