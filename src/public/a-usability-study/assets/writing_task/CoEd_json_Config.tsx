@@ -125,7 +125,7 @@ function CodeEditorTest({ setAnswer }: StimulusParamsTyped): React.ReactElement 
       <div style={{ display: 'flex', width: '100%', gap: '20px' }}>
         <div style={{ flex: '0 0 60%' }}>
           <img
-            src="./a-usability-study/assets/tasks/fig/config_write.png"
+            src="./assets/tasks/fig/config_write.png"
             alt="Example"
             style={{
               width: '100%',
