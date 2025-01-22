@@ -54,7 +54,7 @@ scripts:
     cp ../$npm_package_name/dist/$npm_package_name.js $npm_package_name.v$npm_package_version%%.*.js && 
     cp ../$npm_package_name/dist/$npm_package_name.min.js $npm_package_name.v$npm_package_version%%.*.min.js && 
     git add $npm_package_name.v$npm_package_version%%.*.js $npm_package_name.v$npm_package_version%%.*.min.js && 
-    git commit -m "$npm_package_name $npm_package_version" && git push && cd -
+   git push && cd -
 engines:
   node: ">=12"`;
 

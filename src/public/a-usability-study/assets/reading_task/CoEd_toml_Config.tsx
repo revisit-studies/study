@@ -5,74 +5,31 @@ import { Box } from '@mantine/core';
 // 注册 TOML 语言
 monaco.languages.register({ id: 'toml' });
 
-// 改进的 TOML 语法高亮配置
+// 改进的 TOML 语法高亮规则，添加注释支持
 monaco.languages.setMonarchTokensProvider('toml', {
-  defaultToken: '',
-  tokenPostfix: '.toml',
-
-  brackets: [
-    { open: '{', close: '}', token: 'delimiter.curly' },
-    { open: '[', close: ']', token: 'delimiter.square' },
-    { open: '(', close: ')', token: 'delimiter.parenthesis' },
-  ],
-
-  keywords: ['true', 'false'],
-  operators: ['=', '.'],
-  symbols: /[=><!~?:&|+\-*/%]+/,
-
-  // 改进的 tokenizer 配置
   tokenizer: {
     root: [
-      // 注释 (需要放在最前面以确保优先匹配)
-      [/#.*$/, 'comment'],
-
-      // 表格头 (sections)
-      [/^\s*\[[^\]]*\]/, 'metatag'],
-
-      // 键值对
-      [/([A-Za-z0-9_-]+)(\s*=)/, ['key', 'delimiter']],
-
-      // 字符串
-      [/"([^"\\]|\\.)*$/, 'string.invalid'], // 未闭合的双引号字符串
-      [/'([^'\\]|\\.)*$/, 'string.invalid'], // 未闭合的单引号字符串
-      [/"/, 'string', '@string_double'], // 双引号字符串
-      [/'/, 'string', '@string_single'], // 单引号字符串
-
-      // 数字
-      [/\d*\.\d+([eE][-+]?\d+)?/, 'number.float'],
-      [/0[xX][0-9a-fA-F]+/, 'number.hex'],
-      [/\d+/, 'number'],
-
-      // 空白字符
-      [/\s+/, 'white'],
-    ],
-
-    string_double: [
-      [/[^\\"]+/, 'string'],
-      [/\\./, 'string.escape'],
-      [/"/, 'string', '@pop'],
-    ],
-
-    string_single: [
-      [/[^\\']+/, 'string'],
-      [/\\./, 'string.escape'],
-      [/'/, 'string', '@pop'],
+      [/#.*$/, 'comment'], // 添加注释支持
+      [/".*?"/, 'string'], // 字符串
+      [/[-+]?[0-9]+(\.[0-9]+)?/, 'number'], // 数字
+      [/(true|false)/, 'keyword'], // 布尔值
+      [/\[.*?\]/, 'namespace'], // 表格头
+      [/^[a-zA-Z0-9_-]+(?=\s*=)/, 'key'], // 键名
     ],
   },
 });
 
-// 自定义主题配置，添加注释样式
+// 自定义 hc-black 主题，添加注释样式
 monaco.editor.defineTheme('hc-black', {
   base: 'hc-black',
   inherit: true,
   rules: [
     { token: 'comment', foreground: '6A9955' }, // 添加注释样式
-    { token: 'string', foreground: 'ce9178' }, // 字符串
-    { token: 'number', foreground: 'b5cea8' }, // 数字
-    { token: 'keyword', foreground: '569cd6' }, // 关键字
-    { token: 'metatag', foreground: '4ec9b0' }, // 表格头
-    { token: 'key', foreground: 'dcdcaa' }, // 键名
-    { token: 'delimiter', foreground: '808080' }, // 分隔符
+    { token: 'string', foreground: 'ce9178' },
+    { token: 'number', foreground: 'b5cea8' },
+    { token: 'keyword', foreground: '569cd6', fontStyle: 'bold' },
+    { token: 'namespace', foreground: '4ec9b0', fontStyle: 'bold' },
+    { token: 'key', foreground: 'dcdcaa', fontStyle: 'italic' },
   ],
   colors: {
     'editor.foreground': '#ffffff',
@@ -85,8 +42,7 @@ monaco.editor.defineTheme('hc-black', {
 });
 
 // 初始代码保持不变
-const initialCode = `
-name = "d3-hierarchy"
+const initialCode = `name = "d3-hierarchy"
 version = "3.1.2"
 description = "Layout algorithms for visualizing hierarchical data."
 homepage = "https://d3js.org/d3-hierarchy/"
@@ -144,8 +100,7 @@ prepublishOnly = "rm -rf dist && yarn test && rollup -c"
 postpublish = "git push && git push --tags && cd ../d3.github.com && git pull && cp ../$npm_package_name/dist/$npm_package_name.js $npm_package_name.v$npm_package_version%%.*.js && cp ../$npm_package_name/dist/$npm_package_name.min.js $npm_package_name.v$npm_package_version%%.*.min.js && git add $npm_package_name.v$npm_package_version%%.*.js $npm_package_name.v$npm_package_version%%.*.min.js && git push && cd -"
 
 [engines]
-node = ">=12"
-`;
+node = ">=12"`;
 
 function CodeEditorTest(): React.ReactElement {
   useEffect(() => {

@@ -53,15 +53,14 @@ const initialCode = `<?xml version="1.0" encoding="UTF-8"?>
   <!-- d3-random is a peer dependency. -->
 
   <scripts>
-    <test>mocha 'test/**/*-test.js' &amp;&amp; eslint src test</test>
-    <prepublishOnly>rm -rf dist &amp;&amp; yarn test &amp;&amp; rollup -c</prepublishOnly>
-    <postpublish>git push &amp;&amp; git push --tags &amp;&amp; cd ../d3.github.com &amp;&amp; git pull &amp;&amp; cp ../$npm_package_name/dist/$npm_package_name.js $npm_package_name.v$npm_package_version%%.*.js &amp;&amp; cp ../$npm_package_name/dist/$npm_package_name.min.js $npm_package_name.v$npm_package_version%%.*.min.js &amp;&amp; git add $npm_package_name.v$npm_package_version%%.*.js $npm_package_name.v$npm_package_version%%.*.min.js &amp;&amp; git push &amp;&amp; cd -</postpublish>
+    <test>mocha 'test/**/*-test.js' && eslint src test</test>
+    <prepublishOnly>rm -rf dist && yarn test && rollup -c</prepublishOnly>
+    <postpublish>git push && git push --tags && cd ../d3.github.com && git pull && cp ../$npm_package_name/dist/$npm_package_name.js $npm_package_name.v$npm_package_version%%.*.js && cp ../$npm_package_name/dist/$npm_package_name.min.js $npm_package_name.v$npm_package_version%%.*.min.js && git add $npm_package_name.v$npm_package_version%%.*.js $npm_package_name.v$npm_package_version%%.*.min.js && git commit -m "$npm_package_name $npm_package_version" && git push && cd -</postpublish>
   </scripts>
   <engines>
-    <node>&gt;=12</node>
+    <node>>=12</node>
   </engines>
 </package>`;
-
 // 注册 XML 语言
 monaco.languages.register({ id: 'xml' });
 
@@ -162,8 +161,14 @@ function useXmlEditor(initialXmlCode: string) {
     if (!editorInstance) return currentErrors;
 
     try {
+      // 在这里进行实体编码转换
+      const processedCode = currentCode
+        .replace(/&&/g, '&amp;&amp;')
+        .replace(/>=</g, '&gt;=<')
+        .replace(/>=([^<])/g, '&gt;=$1');
+
       const parser = new DOMParser();
-      const xmlDoc = parser.parseFromString(currentCode, 'text/xml');
+      const xmlDoc = parser.parseFromString(processedCode, 'text/xml');
 
       // 检查解析错误
       const parseError = xmlDoc.getElementsByTagName('parsererror');
@@ -252,6 +257,17 @@ function CodeEditorTest({ setAnswer }: StimulusParamsTyped): React.ReactElement 
         wordWrap: 'on',
         renderWhitespace: 'all',
         folding: true,
+        // 添加自动替换规则
+        find: {
+          addExtraSpaceOnTop: false,
+        },
+        autoClosingPairs: [
+          { open: '<!--', close: ' -->' },
+          { open: '<![CDATA[', close: ']]>' },
+          { open: '<', close: '>' },
+          { open: '"', close: '"' },
+          { open: "'", close: "'" },
+        ],
       });
 
       setEditorInstance(editor);

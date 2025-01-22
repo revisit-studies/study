@@ -68,16 +68,15 @@ node = ">=12"`;
 monaco.languages.register({ id: 'toml' });
 
 // 改进的 TOML 语法高亮规则，添加注释支持
-// 改进的 TOML 语法高亮规则，添加注释支持
 monaco.languages.setMonarchTokensProvider('toml', {
   tokenizer: {
     root: [
       [/#.*$/, 'comment'], // 添加注释支持
       [/".*?"/, 'string'], // 字符串
-      [/[-+]?[0-9]+(\.[0-9]+)?/, 'number'], // 数字（此处的 - 是作为负号，不在字符类中，所以不需要改）
+      [/[-+]?[0-9]+(\.[0-9]+)?/, 'number'], // 数字
       [/(true|false)/, 'keyword'], // 布尔值
       [/\[.*?\]/, 'namespace'], // 表格头
-      [/^[a-zA-Z0-9_-]+(?=\s*=)/, 'key'], // 键名（修复了这里的转义）
+      [/^[a-zA-Z0-9_-]+(?=\s*=)/, 'key'], // 键名
     ],
   },
 });
