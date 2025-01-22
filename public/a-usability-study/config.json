@@ -1348,6 +1348,165 @@
       ],
       "allowFailedTraining": false
     },
+    "modifying-task-config-toml": {
+      "meta": {
+        "taskName": "modifying-task-config-toml"
+      },
+      "description": "modifying task with configuration data",
+      "instruction": "Please modify the TOML data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/modifying_task/CoEd_toml_Config.tsx",
+      "parameters": {
+        "taskid": "modifying-task-config-toml"
+      },
+      "response": [
+        {
+          "id": "modifying-task-config-toml_q1",
+          "prompt": "1. Change the value of benchmark to 7.",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-toml_q2",
+          "prompt": "2. Move the authors' information below the repository. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-toml_q3",
+          "prompt": "3. Remove the peer dependency. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-toml",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-config-toml",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "modifying-task-config-yaml": {
+      "meta": {
+        "taskName": "modifying-task-config-yaml"
+      },
+      "description": "modifying task with configuration data",
+      "instruction": "Please modify the YAML data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/modifying_task/CoEd_yaml_Config.tsx",
+      "parameters": {
+        "taskid": "modifying-task-config-yaml"
+      },
+      "response": [
+        {
+          "id": "modifying-task-config-yaml_q1",
+          "prompt": "1. Change the value of benchmark to 7.",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-yaml_q2",
+          "prompt": "2. Move the authors' information below the repository. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-yaml_q3",
+          "prompt": "3. Remove the peer dependency. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-yaml",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-config-yaml",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "modifying-task-config-xml": {
+      "meta": {
+        "taskName": "modifying-task-config-xml"
+      },
+      "description": "modifying task with configuration data",
+      "instruction": "Please modify the XML data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/modifying_task/CoEd_xml_Config.tsx",
+      "parameters": {
+        "taskid": "modifying-task-config-xml"
+      },
+      "response": [
+        {
+          "id": "modifying-task-config-xml_q1",
+          "prompt": "1. Change the value of benchmark to 7.",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-xml_q2",
+          "prompt": "2. Move the authors' information below the repository. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-xml_q3",
+          "prompt": "3. Remove the peer dependency. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-xml",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-config-xml",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
     "post-task-survey": {
       "type": "questionnaire",
       "response": [
@@ -1519,7 +1678,10 @@
       "writing-task-config-toml",
       "writing-task-config-xml"]},
       "modifying-task-config-json",
-      "modifying-task-config-jsonc"
+      "modifying-task-config-jsonc",
+      "modifying-task-config-toml",
+      "modifying-task-config-yaml",
+      "modifying-task-config-xml"
     ]
   }
 }

@@ -44,7 +44,7 @@ devDependencies:
   mocha: "9"
   rollup: "2"
   rollup-plugin-terser: "7"
-comments: d3-random is a peer dependency.
+  # d3-random is a peer dependency.
 scripts:
   test: mocha 'test/**/*-test.js' && eslint src test
   prepublishOnly: rm -rf dist && yarn test && rollup -c

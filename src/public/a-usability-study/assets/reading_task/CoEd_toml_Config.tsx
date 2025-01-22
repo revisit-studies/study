@@ -5,6 +5,7 @@ import { Box } from '@mantine/core';
 // 注册 TOML 语言
 monaco.languages.register({ id: 'toml' });
 
+// 改进的 TOML 语法高亮配置
 monaco.languages.setMonarchTokensProvider('toml', {
   defaultToken: '',
   tokenPostfix: '.toml',
@@ -16,23 +17,33 @@ monaco.languages.setMonarchTokensProvider('toml', {
   ],
 
   keywords: ['true', 'false'],
-
   operators: ['=', '.'],
+  symbols: /[=><!~?:&|+\-*/%]+/,
 
-  symbols: /[=><!~?:&|+\-*/%]+/, // 修正后的行
-
+  // 改进的 tokenizer 配置
   tokenizer: {
     root: [
-      [/^\s*\[[^\]]*\]/, 'metatag'],
-      [/([A-Za-z0-9_-]+)(\s*=)/, ['key', 'delimiter']],
-      [/"([^"\\]|\\.)*$/, 'string.invalid'],
-      [/'([^'\\]|\\.)*$/, 'string.invalid'],
-      [/"/, 'string', '@string_double'],
-      [/'/, 'string', '@string_single'],
+      // 注释 (需要放在最前面以确保优先匹配)
       [/#.*$/, 'comment'],
-      [/\d*\.\d+([eE][-+]?\d+)?/, 'number.float'], // 修正后的行
+
+      // 表格头 (sections)
+      [/^\s*\[[^\]]*\]/, 'metatag'],
+
+      // 键值对
+      [/([A-Za-z0-9_-]+)(\s*=)/, ['key', 'delimiter']],
+
+      // 字符串
+      [/"([^"\\]|\\.)*$/, 'string.invalid'], // 未闭合的双引号字符串
+      [/'([^'\\]|\\.)*$/, 'string.invalid'], // 未闭合的单引号字符串
+      [/"/, 'string', '@string_double'], // 双引号字符串
+      [/'/, 'string', '@string_single'], // 单引号字符串
+
+      // 数字
+      [/\d*\.\d+([eE][-+]?\d+)?/, 'number.float'],
       [/0[xX][0-9a-fA-F]+/, 'number.hex'],
       [/\d+/, 'number'],
+
+      // 空白字符
       [/\s+/, 'white'],
     ],
 
@@ -50,7 +61,30 @@ monaco.languages.setMonarchTokensProvider('toml', {
   },
 });
 
-// JSON 格式的初始代码
+// 自定义主题配置，添加注释样式
+monaco.editor.defineTheme('hc-black', {
+  base: 'hc-black',
+  inherit: true,
+  rules: [
+    { token: 'comment', foreground: '6A9955' }, // 添加注释样式
+    { token: 'string', foreground: 'ce9178' }, // 字符串
+    { token: 'number', foreground: 'b5cea8' }, // 数字
+    { token: 'keyword', foreground: '569cd6' }, // 关键字
+    { token: 'metatag', foreground: '4ec9b0' }, // 表格头
+    { token: 'key', foreground: 'dcdcaa' }, // 键名
+    { token: 'delimiter', foreground: '808080' }, // 分隔符
+  ],
+  colors: {
+    'editor.foreground': '#ffffff',
+    'editor.background': '#000000',
+    'editor.lineHighlightBackground': '#333333',
+    'editorCursor.foreground': '#ffffff',
+    'editor.selectionBackground': '#264f78',
+    'editorLineNumber.foreground': '#858585',
+  },
+});
+
+// 初始代码保持不变
 const initialCode = `
 name = "d3-hierarchy"
 version = "3.1.2"
@@ -102,6 +136,8 @@ mocha = "9"
 rollup = "2"
 rollup-plugin-terser = "7"
 
+# d3-random is a peer dependency.
+
 [scripts]
 test = "mocha 'test/**/*-test.js' && eslint src test"
 prepublishOnly = "rm -rf dist && yarn test && rollup -c"
@@ -113,7 +149,6 @@ node = ">=12"
 
 function CodeEditorTest(): React.ReactElement {
   useEffect(() => {
-    // 保持原有的 JSON 配置
     monaco.languages.json.jsonDefaults.setDiagnosticsOptions({
       validate: true,
       allowComments: true,
@@ -128,7 +163,7 @@ function CodeEditorTest(): React.ReactElement {
     if (node) {
       const editor = monaco.editor.create(node, {
         value: initialCode,
-        language: 'toml', // 使用我们注册的 toml 语言
+        language: 'toml',
         theme: 'hc-black',
         automaticLayout: true,
         readOnly: true,

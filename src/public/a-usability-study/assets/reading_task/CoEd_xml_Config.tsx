@@ -51,7 +51,7 @@ const initialCode = `<?xml version="1.0" encoding="UTF-8"?>
     <rollup>2</rollup>
     <rollup-plugin-terser>7</rollup-plugin-terser>
   </devDependencies>
-  <comments>d3-random is a peer dependency.</comments>
+  <!-- d3-random is a peer dependency. -->
   <scripts>
     <test>mocha 'test/**/*-test.js' && eslint src test</test>
     <prepublishOnly>rm -rf dist && yarn test && rollup -c</prepublishOnly>
