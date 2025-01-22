@@ -1348,122 +1348,263 @@
       ],
       "allowFailedTraining": false
     },
+    "modifying-task-config-toml": {
+      "meta": {
+        "taskName": "modifying-task-config-toml"
+      },
+      "description": "modifying task with configuration data",
+      "instruction": "Please modify the TOML data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/modifying_task/CoEd_toml_Config.tsx",
+      "parameters": {
+        "taskid": "modifying-task-config-toml"
+      },
+      "response": [
+        {
+          "id": "modifying-task-config-toml_q1",
+          "prompt": "1. Change the value of benchmark to 7.",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-toml_q2",
+          "prompt": "2. Move the authors' information below the repository. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-toml_q3",
+          "prompt": "3. Remove the peer dependency. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-toml",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-config-toml",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "modifying-task-config-yaml": {
+      "meta": {
+        "taskName": "modifying-task-config-yaml"
+      },
+      "description": "modifying task with configuration data",
+      "instruction": "Please modify the YAML data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/modifying_task/CoEd_yaml_Config.tsx",
+      "parameters": {
+        "taskid": "modifying-task-config-yaml"
+      },
+      "response": [
+        {
+          "id": "modifying-task-config-yaml_q1",
+          "prompt": "1. Change the value of benchmark to 7.",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-yaml_q2",
+          "prompt": "2. Move the authors' information below the repository. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-yaml_q3",
+          "prompt": "3. Remove the peer dependency. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-yaml",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-config-yaml",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "modifying-task-config-xml": {
+      "meta": {
+        "taskName": "modifying-task-config-xml"
+      },
+      "description": "modifying task with configuration data",
+      "instruction": "Please modify the XML data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/modifying_task/CoEd_xml_Config.tsx",
+      "parameters": {
+        "taskid": "modifying-task-config-xml"
+      },
+      "response": [
+        {
+          "id": "modifying-task-config-xml_q1",
+          "prompt": "1. Change the value of benchmark to 7.",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-xml_q2",
+          "prompt": "2. Move the authors' information below the repository. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-xml_q3",
+          "prompt": "3. Remove the peer dependency. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-xml",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-config-xml",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
     "post-task-survey": {
       "type": "questionnaire",
       "response": [
         {
           "id": "q1",
-          "prompt": "Please rate the difficulty of finishing the task from 1 (easiest) to 9 (most difficult). ",
+          "prompt": "Please rate the difficulty of learning the syntax rules of the following formats.",
           "required": true,
           "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
+          "type": "matrix-radio",
+          "answerOptions": [
+            "Not Encountered",
+            "Very Easy",
+            "Easy",
+            "Neutral",
+            "Difficult",
+            "Very Difficult"
+          ],
+          "questionOptions": [
+            "JSON",
+            "JSONC",
+            "JSON5",
+            "HJSON",
+            "YAML",
+            "TOML",
+            "XML"
+          ]
         },
         {
           "id": "q2",
-          "prompt": "Please rate the smoothness of finishing the task from 1 (easiest) to 9 (most difficult). ",
+          "prompt": "Please rate the difficulty of completing tasks with the following formats you encountered.",
           "required": true,
           "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
-        }
-      ]
-    },
-    "post-study-survey": {
-      "type": "questionnaire",
-      "response": [
-        {
-          "id": "q1",
-          "prompt": "Please rate the difficulty of finishing the task with csv from 1 (easiest) to 9 (most difficult). ",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
-        },
-        {
-          "id": "q2",
-          "prompt": "Please rate the difficulty of finishing the task with json from 1 (easiest) to 9 (most difficult). ",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
+          "type": "matrix-radio",
+          "answerOptions": [
+            "Not Encountered",
+            "Very Easy",
+            "Easy",
+            "Neutral",
+            "Difficult",
+            "Very Difficult"
+          ],
+          "questionOptions": [
+            "JSON",
+            "JSONC",
+            "JSON5",
+            "HJSON",
+            "YAML",
+            "TOML",
+            "XML"
+          ]
         },
         {
           "id": "q3",
-          "prompt": "Please rate the difficulty of finishing the task with jsonc from 1 (easiest) to 9 (most difficult). ",
+          "prompt": "Please rate the experience of completing tasks with the following formats.",
           "required": true,
           "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
+          "type": "matrix-radio",
+          "answerOptions": [
+            "Not Encountered",
+            "Very Smooth",
+            "Smooth",
+            "Neutral",
+            "Rough",
+            "Very Rough"
+          ],
+          "questionOptions": [
+            "JSON",
+            "JSONC",
+            "JSON5",
+            "HJSON",
+            "YAML",
+            "TOML",
+            "XML"
+          ]
         },
         {
-          "id": "q4",
-          "prompt": "Please rate the difficulty of finishing the task with json5 from 1 (easiest) to 9 (most difficult). ",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
-        },
-        {
-          "id": "q5",
-          "prompt": "Please rate the difficulty of finishing the task with hjson from 1 (easiest) to 9 (most difficult). ",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
-        },
-        {
-          "id": "q6",
-          "prompt": "Please rate the difficulty of finishing the task with yaml from 1 (easiest) to 9 (most difficult). ",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
-        },
-        {
-          "id": "q7",
-          "prompt": "Please rate the difficulty of finishing the task with toml from 1 (easiest) to 9 (most difficult). ",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
-        },
-        {
-          "id": "q8",
-          "prompt": "Please rate the difficulty of finishing the task with xml from 1 (easiest) to 9 (most difficult). ",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
-        },
-        {
-          "id": "q9",
-          "prompt": "Please provide any comments about the tasks",
-          "required": false,
-          "location": "aboveStimulus",
-          "type": "longText",
-          "placeholder": "Enter your comments here"
-        }
+        "id": "q4",
+        "prompt": "Compared to the format you encountered in the reading task, if you had a choice, which format would you prefer to use for this task? Please consider factors such as user-friendliness, efficiency, and error prevention. Check all that apply, and indicate why you agree with each selected format.",
+        "required": true,
+        "location": "aboveStimulus",
+        "type": "matrix-checkbox",
+        "answerOptions": [
+          "Not a better choice",
+          "I am not sure",
+          "More user-friendly",
+          "More efficient",
+          "Btter error prevention"
+        ],
+        "questionOptions": [
+          "JSON",
+          "JSONC",
+          "JSON5",
+          "HJSON",
+          "YAML",
+          "TOML",
+          "XML"
+        ]
+      }
       ]
     }
   },
@@ -1493,25 +1634,30 @@
         "numSamples": 1,
         "components": [
       "reading-task-config-json",
-      "reading-task-config-jsonc",
-      "reading-task-config-json5",
-      "reading-task-config-hjson",
       "reading-task-config-yaml",
       "reading-task-config-toml",
       "reading-task-config-xml"]},
+      "reading-task-config-json",
+      "reading-task-config-yaml",
+      "reading-task-config-toml",
+      "reading-task-config-xml",
+      "writing-task-config-json",
+      "writing-task-config-yaml",
+      "writing-task-config-toml",
+      "writing-task-config-xml",
       {
         "order": "latinSquare",
         "numSamples": 1,
         "components": [
       "writing-task-config-json",
-      "writing-task-config-jsonc",
-      "writing-task-config-json5",
-      "writing-task-config-hjson",
       "writing-task-config-yaml",
       "writing-task-config-toml",
       "writing-task-config-xml"]},
       "modifying-task-config-json",
-      "modifying-task-config-jsonc"
+      "modifying-task-config-toml",
+      "modifying-task-config-yaml",
+      "modifying-task-config-xml",
+      "post-task-survey"
     ]
   }
 }

@@ -1,79 +1,201 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as monaco from 'monaco-editor';
 import { Box } from '@mantine/core';
+import yaml from 'js-yaml';
 
-function useJsonEditor(initialCode: string) {
-  const [code, setCode] = useState(initialCode);
+// 初始 YAML 代码
+const initialCode = `name: d3-hierarchy
+version: 3.1.2
+description: Layout algorithms for visualizing hierarchical data.
+homepage: https://d3js.org/d3-hierarchy/
+repository:
+  type: git
+  url: https://github.com/d3/d3-hierarchy.git
+keywords:
+  - d3
+  - d3-module
+  - layout
+  - tree
+  - treemap
+  - hierarchy
+  - infovis
+license: ISC
+author:
+  name: Mike Bostock
+  url: http://bost.ocks.org/mike
+type: module
+files:
+  - dist/**/*.js
+  - src/**/*.js
+module: src/index.js
+main: src/index.js
+jsdelivr: dist/d3-hierarchy.min.js
+unpkg: dist/d3-hierarchy.min.js
+exports:
+  umd: ./dist/d3-hierarchy.min.js
+  default: ./src/index.js
+sideEffects: false
+devDependencies:
+  benchmark: "2"
+  d3-array: "1.2.0 - 3"
+  d3-dsv: "1 - 3"
+  d3-random: "1.1.0 - 3"
+  eslint: "8"
+  mocha: "9"
+  rollup: "2"
+  rollup-plugin-terser: "7" 
+  # d3-random is a peer dependency.
+scripts:
+  test: mocha 'test/**/*-test.js' && eslint src test
+  prepublishOnly: rm -rf dist && yarn test && rollup -c
+  postpublish: >
+    git push && git push --tags && 
+    cd ../d3.github.com && git pull && 
+    cp ../$npm_package_name/dist/$npm_package_name.js $npm_package_name.v$npm_package_version%%.*.js && 
+    cp ../$npm_package_name/dist/$npm_package_name.min.js $npm_package_name.v$npm_package_version%%.*.min.js && 
+    git add $npm_package_name.v$npm_package_version%%.*.js $npm_package_name.v$npm_package_version%%.*.min.js && 
+   git push && cd -
+engines:
+  node: ">=12"`;
+
+// 注册 YAML 语言
+monaco.languages.register({ id: 'yaml' });
+
+// 设置 YAML 语法高亮规则
+monaco.languages.setMonarchTokensProvider('yaml', {
+  tokenizer: {
+    root: [
+      [/^[\s-]*([a-zA-Z0-9_-]+)(?=\s*:)/, 'key'],
+      [/:\s*([a-zA-Z0-9_-]+)/, 'string'],
+      [/'[^']*'/, 'string'],
+      [/"[^"]*"/, 'string'],
+      [/\d+/, 'number'],
+      [/^-\s/, 'delimiter'],
+      [/true|false/, 'keyword'],
+      [/#.*$/, 'comment'],
+    ],
+  },
+});
+
+// 自定义主题
+monaco.editor.defineTheme('yaml-dark', {
+  base: 'vs-dark',
+  inherit: true,
+  rules: [
+    { token: 'key', foreground: '9CDCFE' },
+    { token: 'string', foreground: 'CE9178' },
+    { token: 'number', foreground: 'B5CEA8' },
+    { token: 'delimiter', foreground: 'D4D4D4' },
+    { token: 'keyword', foreground: '569CD6' },
+    { token: 'comment', foreground: '6A9955' },
+  ],
+  colors: {
+    'editor.foreground': '#D4D4D4',
+    'editor.background': '#1E1E1E',
+    'editor.lineHighlightBackground': '#2D2D2D',
+  },
+});
+
+interface EditorAnswer {
+  status: boolean;
+  answers: {
+    code: string;
+    error: string;
+  };
+}
+
+interface StimulusParamsTyped {
+  setAnswer: (answer: EditorAnswer) => void;
+}
+
+function useYamlEditor(initialYamlCode: string) {
+  const [code, setCode] = useState(initialYamlCode);
   const [currentErrors, setCurrentErrors] = useState<string[]>([]);
   const [editorInstance, setEditorInstance] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 
-  // JSON 验证
-  const validateJson = useCallback(() => {
-    if (!editorInstance) return;
+  const validateYaml = useCallback((currentCode: string) => {
+    let validationErrors: string[] = [];
+    if (!editorInstance) return currentErrors;
 
     try {
-      JSON.parse(code);
-      setCurrentErrors(['No errors found. JSON is valid!']);
-      monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', []);
+      yaml.load(currentCode);
+      validationErrors = ['No errors found. YAML is valid!'];
+      monaco.editor.setModelMarkers(editorInstance.getModel()!, 'yaml', []);
     } catch (e) {
-      if (e instanceof Error) {
-        const errorMsg = e.message;
-        const lineMatch = code.substring(0, e.message.indexOf('"')).split('\n');
-        const lineNumber = lineMatch.length;
+      if (e instanceof Error && e.message) {
+        const errorMessage = e.message;
+        const lineMatch = errorMessage.match(/line (\d+)/);
+        const columnMatch = errorMessage.match(/column (\d+)/);
 
-        setCurrentErrors([errorMsg]);
+        if (lineMatch && columnMatch) {
+          const lineNumber = parseInt(lineMatch[1], 10);
+          const startColumn = parseInt(columnMatch[1], 10);
 
-        monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', [{
-          startLineNumber: lineNumber,
-          startColumn: 1,
-          endLineNumber: lineNumber,
-          endColumn: Number.MAX_VALUE,
-          message: errorMsg,
-          severity: monaco.MarkerSeverity.Error,
-        }]);
+          validationErrors = [`Syntax error at line ${lineNumber}, column ${startColumn}: ${errorMessage}`];
+
+          monaco.editor.setModelMarkers(editorInstance.getModel()!, 'yaml', [{
+            startLineNumber: lineNumber,
+            startColumn,
+            endLineNumber: lineNumber,
+            endColumn: startColumn + 1,
+            message: errorMessage,
+            severity: monaco.MarkerSeverity.Error,
+          }]);
+        } else {
+          validationErrors = [errorMessage];
+        }
       }
     }
-  }, [code, editorInstance]);
 
-  // 实时验证
-  useEffect(() => {
-    if (code.trim()) {
-      validateJson();
-    } else {
-      setCurrentErrors([]);
-      if (editorInstance) {
-        monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', []);
-      }
-    }
-  }, [code, validateJson, editorInstance]);
+    setCurrentErrors(validationErrors);
+    return validationErrors;
+  }, [editorInstance, currentErrors]);
 
   return {
     code,
     setCode,
     currentErrors,
+    validateYaml,
     setEditorInstance,
   };
 }
 
-function CodeEditorTest(): React.ReactElement {
+function CodeEditorTest({ setAnswer }: StimulusParamsTyped): React.ReactElement {
   const {
     code,
     setCode,
     currentErrors,
+    validateYaml,
     setEditorInstance,
-  } = useJsonEditor('');
+  } = useYamlEditor(initialCode);
+
+  useEffect(() => {
+    const latestErrors = validateYaml(code);
+
+    setAnswer({
+      status: true,
+      answers: {
+        code,
+        error: latestErrors.join('\n'),
+      },
+    });
+  }, [code, validateYaml, setAnswer]);
 
   const containerRef = useCallback((node: HTMLDivElement) => {
     if (node) {
       const editor = monaco.editor.create(node, {
         value: code,
-        language: 'json',
-        theme: 'hc-black',
+        language: 'yaml',
+        theme: 'yaml-dark',
         automaticLayout: true,
         minimap: { enabled: false },
         formatOnPaste: true,
         formatOnType: true,
         scrollBeyondLastLine: false,
+        lineNumbers: 'on',
+        roundedSelection: false,
+        wordWrap: 'on',
+        tabSize: 2,
       });
 
       setEditorInstance(editor);
@@ -88,8 +210,7 @@ function CodeEditorTest(): React.ReactElement {
       };
     }
     return undefined;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setCode, setEditorInstance]); // 移除 code 依赖，添加 eslint-disable 注释
+  }, [setCode, setEditorInstance]);
 
   return (
     <div style={{
@@ -99,11 +220,11 @@ function CodeEditorTest(): React.ReactElement {
       padding: '20px',
     }}
     >
-      {/* 图片与代码编辑器部分 */}
+      {/* fig and code editor */}
       <div style={{ display: 'flex', width: '100%', gap: '20px' }}>
         <div style={{ flex: '0 0 60%' }}>
           <img
-            src="/a-usability-study/assets/tasks/fig/config_write.png"
+            src="./assets/tasks/fig/config_write.png"
             alt="Example"
             style={{
               width: '100%',
@@ -124,7 +245,7 @@ function CodeEditorTest(): React.ReactElement {
         />
       </div>
 
-      {/* 验证状态显示 */}
+      {/* validation */}
       <Box
         style={{
           background: '#f5f5f5',
