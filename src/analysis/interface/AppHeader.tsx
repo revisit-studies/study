@@ -12,7 +12,7 @@ export function AppHeader({ studyIds }: { studyIds: string[] }) {
   const { studyId } = useParams();
   const location = useLocation();
 
-  const selectorData = studyIds.map((id) => ({ value: id, label: id }));
+  const selectorData = studyIds.map((id) => ({ value: id, label: id })).sort((a, b) => a.label.localeCompare(b.label));
 
   const inAnalysis = location.pathname.includes('analysis');
 
