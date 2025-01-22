@@ -113,7 +113,7 @@
         },
         {
           "id": "q-checkbox",
-          "prompt": "Checkbox example",
+          "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
           "secondaryText": "Checkboxes for multi-selection",
           "minSelections": 2,
           "maxSelections": 2,
@@ -124,6 +124,22 @@
             "Option 2",
             "Option 3"
           ],
+          "withOther": true
+        },
+        {
+          "id": "q-checkbox-horizontal",
+          "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
+          "secondaryText": "Checkboxes for multi-selection",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "location": "aboveStimulus",
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "horizontal": true,
           "withOther": true
         },
         {
@@ -139,16 +155,17 @@
           "withOther": true
         },
         {
-          "id": "q-radio",
+          "id": "q-radio-horizontal",
           "prompt": "Horizontal Radio button example",
           "secondaryText": "Radio buttons for single selection",
           "location": "aboveStimulus",
           "type": "radio",
           "options": [
             "Option 1",
-            "Option 2"
+            "Option 2 this is long a long option that will wrap"
           ],
-          "horizontal": true
+          "horizontal": true,
+          "withOther": true
         },
         {
           "id": "q-slider",

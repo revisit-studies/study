@@ -68,7 +68,7 @@ export function RadioInput({
         <HorizontalHandler horizontal={!!horizontal} style={{ flexGrow: 1 }}>
           {optionsAsStringOptions.map((radio) => (
             <div
-              key={radio.label}
+              key={`${radio.value}-${response.id}`}
               style={{
                 display: 'flex',
                 flexDirection: horizontal ? 'column' : 'row',
@@ -91,18 +91,32 @@ export function RadioInput({
             </div>
           ))}
           {withOther && (
-          <Radio
-            key="__other"
-            disabled={disabled}
-            value="__other"
-            checked={otherSelected}
-            onClick={(event) => setOtherSelected(event.currentTarget.checked)}
-            label={<Input mt={-8} placeholder="Other" disabled={!otherSelected} value={otherValue} onChange={(event) => setOtherValue(event.currentTarget.value)} />}
-          />
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: horizontal ? 'column' : 'row',
+                gap: horizontal ? 'unset' : rem(12),
+                flex: stretch ? 1 : 'unset',
+                alignItems: 'center',
+              }}
+            >
+              {horizontal && <Text size="sm">Other</Text>}
+              <Radio
+                disabled={disabled}
+                value="other"
+                checked={otherSelected}
+                onClick={(event) => setOtherSelected(event.currentTarget.checked)}
+                label={!horizontal && <Input mt={-8} placeholder="Other" disabled={!otherSelected} value={otherValue} onChange={(event) => setOtherValue(event.currentTarget.value)} />}
+                mt={0}
+              />
+            </div>
           )}
         </HorizontalHandler>
         <Text>{rightLabel}</Text>
       </Group>
+      {horizontal && withOther && (
+        <Input mt="sm" placeholder="Other" disabled={!otherSelected} value={otherValue} onChange={(event) => setOtherValue(event.currentTarget.value)} w={216} />
+      )}
     </Radio.Group>
   );
 }

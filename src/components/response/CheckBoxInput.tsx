@@ -1,8 +1,7 @@
 import {
-  Box, Checkbox, Flex, Group,
-  Input,
+  Box, Checkbox, Flex, Input,
 } from '@mantine/core';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { CheckboxResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
@@ -42,6 +41,8 @@ export function CheckBoxInput({
     storeDispatch(setOtherText({ key: response.id, value: otherValue }));
   }, [otherValue, response.id, setOtherText, storeDispatch]);
 
+  const error = useMemo(() => generateErrorMessage(response, answer, optionsAsStringOptions), [response, answer, optionsAsStringOptions]);
+
   return (
     <Checkbox.Group
       label={(
@@ -54,10 +55,10 @@ export function CheckBoxInput({
       )}
       description={secondaryText}
       {...answer}
-      error={generateErrorMessage(response, answer, optionsAsStringOptions)}
+      error={error}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
-      <Group mt="xs">
+      <Box mt="xs">
         <HorizontalHandler horizontal={!!horizontal} style={{ flexGrow: 1 }}>
           {optionsAsStringOptions.map((option) => (
             <Checkbox
@@ -74,11 +75,14 @@ export function CheckBoxInput({
               value="__other"
               checked={otherSelected}
               onClick={(event) => setOtherSelected(event.currentTarget.checked)}
-              label={<Input mt={-8} placeholder="Other" disabled={!otherSelected} value={otherValue} onChange={(event) => setOtherValue(event.currentTarget.value)} />}
+              label={horizontal ? 'Other' : <Input mt={-8} placeholder="Other" disabled={!otherSelected} value={otherValue} onChange={(event) => setOtherValue(event.currentTarget.value)} />}
             />
           )}
         </HorizontalHandler>
-      </Group>
+      </Box>
+      {horizontal && withOther && (
+        <Input mt="sm" placeholder="Other" disabled={!otherSelected} value={otherValue} onChange={(event) => setOtherValue(event.currentTarget.value)} w={216} />
+      )}
     </Checkbox.Group>
   );
 }
