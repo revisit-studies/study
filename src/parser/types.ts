@@ -96,6 +96,8 @@ export interface UIConfig {
   autoDownloadTime?: number;
   /** The message to display when the study ends. */
   studyEndMsg?: string;
+  /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.  */
+  recordStudyAudio?: boolean;
   /** Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. */
   sidebar: boolean;
   /** The width of the left sidebar. Defaults to 300. */
@@ -550,7 +552,7 @@ export interface BaseIndividualComponent {
   description?: string;
   /** The instruction of the component. This is used to identify and provide additional information for the component in the admin panel. */
   instruction?: string;
-  /** Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.  */
+  /** Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.  */
   recordAudio?: boolean;
   /** A timeout (in ms) after which the next button will be disabled. */
   nextButtonDisableTime?: number;
@@ -1280,8 +1282,6 @@ export interface StudyConfig {
   $schema: string;
   /** The metadata for the study. This is used to identify the study and version in the data file. */
   studyMetadata: StudyMetadata;
-  /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.  */
-  recordStudyAudio?: boolean;
   /** The UI configuration for the study. This is used to configure the UI of the app. */
   uiConfig: UIConfig;
   /** A list of libraries that are used in the study. This is used to import external libraries into the study. Library names are valid namespaces to be used later. */
