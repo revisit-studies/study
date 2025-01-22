@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as monaco from 'monaco-editor';
 import { Box } from '@mantine/core';
-import yaml from 'js-yaml';
+import * as YAML from 'yaml'; // 只使用 yaml 包
 
-// 初始 YAML 代码
+// 初始 YAML 代码保持不变
 const initialCode = `name: d3-hierarchy
 version: 3.1.2
 description: Layout algorithms for visualizing hierarchical data.
@@ -54,7 +54,7 @@ scripts:
     cp ../$npm_package_name/dist/$npm_package_name.js $npm_package_name.v$npm_package_version%%.*.js && 
     cp ../$npm_package_name/dist/$npm_package_name.min.js $npm_package_name.v$npm_package_version%%.*.min.js && 
     git add $npm_package_name.v$npm_package_version%%.*.js $npm_package_name.v$npm_package_version%%.*.min.js && 
-   git push && cd -
+    git push && cd -
 engines:
   node: ">=12"`;
 
@@ -118,32 +118,26 @@ function useYamlEditor(initialYamlCode: string) {
     if (!editorInstance) return currentErrors;
 
     try {
-      yaml.load(currentCode);
+      YAML.parse(currentCode, {
+        strict: true,
+        prettyErrors: true,
+      });
       validationErrors = ['No errors found. YAML is valid!'];
       monaco.editor.setModelMarkers(editorInstance.getModel()!, 'yaml', []);
     } catch (e) {
-      if (e instanceof Error && e.message) {
-        const errorMessage = e.message;
-        const lineMatch = errorMessage.match(/line (\d+)/);
-        const columnMatch = errorMessage.match(/column (\d+)/);
+      if (e instanceof YAML.YAMLParseError) {
+        const errorMsg = e.message;
 
-        if (lineMatch && columnMatch) {
-          const lineNumber = parseInt(lineMatch[1], 10);
-          const startColumn = parseInt(columnMatch[1], 10);
+        validationErrors = [errorMsg];
 
-          validationErrors = [`Syntax error at line ${lineNumber}, column ${startColumn}: ${errorMessage}`];
-
-          monaco.editor.setModelMarkers(editorInstance.getModel()!, 'yaml', [{
-            startLineNumber: lineNumber,
-            startColumn,
-            endLineNumber: lineNumber,
-            endColumn: startColumn + 1,
-            message: errorMessage,
-            severity: monaco.MarkerSeverity.Error,
-          }]);
-        } else {
-          validationErrors = [errorMessage];
-        }
+        monaco.editor.setModelMarkers(editorInstance.getModel()!, 'yaml', [{
+          startLineNumber: 1,
+          startColumn: 1,
+          endLineNumber: 1,
+          endColumn: Number.MAX_VALUE,
+          message: errorMsg,
+          severity: monaco.MarkerSeverity.Error,
+        }]);
       }
     }
 
