@@ -64,9 +64,14 @@ const initialCode = `<?xml version="1.0" encoding="UTF-8"?>
 // 注册 XML 语言
 monaco.languages.register({ id: 'xml' });
 
-// 设置 XML 语法高亮规则
-// 设置 XML 语法高亮规则
 monaco.languages.setMonarchTokensProvider('xml', {
+  autoClosingPairs: [
+    { open: '<!--', close: ' -->' },
+    { open: '<![CDATA[', close: ']]>' },
+    { open: '<', close: '>' },
+    { open: '"', close: '"' },
+    { open: "'", close: "'" },
+  ],
   defaultToken: '',
   tokenPostfix: '.xml',
 
@@ -257,17 +262,6 @@ function CodeEditorTest({ setAnswer }: StimulusParamsTyped): React.ReactElement 
         wordWrap: 'on',
         renderWhitespace: 'all',
         folding: true,
-        // 添加自动替换规则
-        find: {
-          addExtraSpaceOnTop: false,
-        },
-        autoClosingPairs: [
-          { open: '<!--', close: ' -->' },
-          { open: '<![CDATA[', close: ']]>' },
-          { open: '<', close: '>' },
-          { open: '"', close: '"' },
-          { open: "'", close: "'" },
-        ],
       });
 
       setEditorInstance(editor);
