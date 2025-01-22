@@ -18,7 +18,11 @@ export function RecordingAudioWaveform({ width = 70, height = 36 }: { width?: nu
     if (isMounted && wavesurferRef.current) {
       const record = wavesurferRef.current.registerPlugin(RecordPlugin.create({ scrollingWaveform: true, renderRecordedAudio: false } as never));
       recording.current = record;
-      record.startRecording();
+
+      if (!navigator.userAgent.includes('Firefox')) {
+        record.startRecording();
+      }
+
       wavesurferRef.current.setOptions({ height, waveColor: '#FA5252' });
     }
 
