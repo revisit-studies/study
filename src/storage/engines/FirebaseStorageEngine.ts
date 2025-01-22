@@ -328,17 +328,22 @@ export class FirebaseStorageEngine extends StorageEngine {
     audioStream: MediaRecorder,
     taskName: string,
   ) {
-    const listener = (data: BlobEvent) => {
-      this._pushToFirebaseStorage(`/audio/${this.currentParticipantId}`, taskName, data.data);
+    let debounceTimeout: NodeJS.Timeout | null = null;
+
+    const listener = async (data: BlobEvent) => {
+      if (debounceTimeout) {
+        return;
+      }
+
+      debounceTimeout = setTimeout(async () => {
+        this._pushToFirebaseStorage(`/audio/${this.currentParticipantId}`, taskName, data.data);
+      }, 500);
     };
 
     audioStream.addEventListener('dataavailable', listener);
     audioStream.requestData();
 
-    // The 0 timeout is to ensure that we let the event get sent before removing the event listener
-    setTimeout(() => {
-      audioStream.removeEventListener('dataavailable', listener);
-    }, 0);
+    // Don't clean up the listener. The stream will be destroyed.
   }
 
   async saveAnswers(answers: Record<string, StoredAnswer>) {

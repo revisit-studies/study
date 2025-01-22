@@ -176,6 +176,18 @@ export function AllTasksTimeline({
     return null;
   }, [participantData.answers, studyConfig]);
 
+  const completionTime = useMemo(() => {
+    if (!participantData.answers || Object.entries(participantData.answers).length === 0) {
+      return '';
+    }
+
+    const answersSorted = Object.values(participantData.answers).filter((data) => data.startTime).sort((a, b) => a.startTime - b.startTime);
+
+    const date = new Date(answersSorted[answersSorted.length - 1].endTime);
+
+    return participantData.completed ? `${date.toLocaleDateString()} ${date.toLocaleTimeString()}` : '';
+  }, [participantData]);
+
   return (
     <Center>
       <Stack gap={15} style={{ width: '100%' }}>
@@ -189,8 +201,12 @@ export function AllTasksTimeline({
                 </Text>
               ) : null }
 
-            <Text size="md">
+            <Text size="md" fw={700}>
               {partName || participantData.participantId}
+            </Text>
+
+            <Text size="md">
+              {completionTime}
             </Text>
 
             {participantData.completed ? null : <Text size="xl" c="red">Not completed</Text>}
