@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from 'react';
 import * as monaco from 'monaco-editor';
 import { Box } from '@mantine/core';
 
-// 只修改类型定义部分
 interface EditorAnswer {
   status: boolean;
   answers: {
@@ -20,61 +19,74 @@ function useJsonEditor(initialCode: string) {
   const [currentErrors, setCurrentErrors] = useState<string[]>([]);
   const [editorInstance, setEditorInstance] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 
-  // JSON
-  const validateJson = useCallback(() => {
-    if (!editorInstance) return;
+  const validateJson = useCallback((currentCode: string) => {
+    let validationErrors: string[] = [];
+    if (!editorInstance) return currentErrors;
 
     try {
-      JSON.parse(code);
-      setCurrentErrors(['No errors found. JSON is valid!']);
+      JSON.parse(currentCode);
+      validationErrors = ['No errors found. JSON is valid!'];
       monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', []);
     } catch (e) {
-      if (e instanceof Error) {
-        const errorMsg = e.message;
-        const lineMatch = code.substring(0, e.message.indexOf('"')).split('\n');
-        const lineNumber = lineMatch.length;
+      if (e instanceof SyntaxError && e.message) {
+        const match = /at position (\d+)/.exec(e.message);
+        if (match) {
+          const position = parseInt(match[1], 10);
+          const lines = currentCode.slice(0, position).split('\n');
+          const lineNumber = lines.length;
+          const startColumn = lines[lineNumber - 1].length + 1;
 
-        setCurrentErrors([errorMsg]);
+          validationErrors = [`Syntax error at line ${lineNumber}, column ${startColumn}: ${e.message}`];
 
-        monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', [{
-          startLineNumber: lineNumber,
-          startColumn: 1,
-          endLineNumber: lineNumber,
-          endColumn: Number.MAX_VALUE,
-          message: errorMsg,
-          severity: monaco.MarkerSeverity.Error,
-        }]);
+          monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', [
+            {
+              startLineNumber: lineNumber,
+              startColumn,
+              endLineNumber: lineNumber,
+              endColumn: startColumn + 1,
+              message: e.message,
+              severity: monaco.MarkerSeverity.Error,
+            },
+          ]);
+        } else {
+          validationErrors = [e.message];
+        }
       }
     }
-  }, [code, editorInstance]);
 
-  useEffect(() => {
-    if (code.trim()) {
-      validateJson();
-    } else {
-      setCurrentErrors([]);
-      if (editorInstance) {
-        monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', []);
-      }
-    }
-  }, [code, validateJson, editorInstance]);
+    setCurrentErrors(validationErrors);
+    return validationErrors;
+  }, [editorInstance, currentErrors]);
 
   return {
     code,
     setCode,
     currentErrors,
+    validateJson,
     setEditorInstance,
   };
 }
 
-// 只修改类型声明部分
 function CodeEditorTest({ setAnswer }: StimulusParamsTyped): React.ReactElement {
   const {
     code,
     setCode,
     currentErrors,
+    validateJson,
     setEditorInstance,
   } = useJsonEditor('');
+
+  useEffect(() => {
+    const latestErrors = validateJson(code);
+
+    setAnswer({
+      status: true,
+      answers: {
+        code,
+        error: latestErrors.join('\n'),
+      },
+    });
+  }, [code, validateJson, setAnswer]);
 
   const containerRef = useCallback((node: HTMLDivElement) => {
     if (node) {
@@ -93,15 +105,6 @@ function CodeEditorTest({ setAnswer }: StimulusParamsTyped): React.ReactElement 
 
       editor.onDidChangeModelContent(() => {
         const rawCode = editor.getValue();
-
-        setAnswer({
-          status: true,
-          answers: {
-            code: rawCode,
-            error: currentErrors.join('\n'), // 这里修改，将currentErrors作为error输出
-          },
-        });
-
         setCode(rawCode);
       });
 
@@ -110,7 +113,6 @@ function CodeEditorTest({ setAnswer }: StimulusParamsTyped): React.ReactElement 
       };
     }
     return undefined;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [setCode, setEditorInstance]);
 
   return (
@@ -121,7 +123,7 @@ function CodeEditorTest({ setAnswer }: StimulusParamsTyped): React.ReactElement 
       padding: '20px',
     }}
     >
-      {/* fig and code editor part */}
+      {/* fig and code editor */}
       <div style={{ display: 'flex', width: '100%', gap: '20px' }}>
         <div style={{ flex: '0 0 60%' }}>
           <img
@@ -146,7 +148,7 @@ function CodeEditorTest({ setAnswer }: StimulusParamsTyped): React.ReactElement 
         />
       </div>
 
-      {/* validation dispaly */}
+      {/* validation */}
       <Box
         style={{
           background: '#f5f5f5',

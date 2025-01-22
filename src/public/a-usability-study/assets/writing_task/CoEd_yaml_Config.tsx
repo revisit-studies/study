@@ -1,74 +1,92 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as monaco from 'monaco-editor';
 import { Box } from '@mantine/core';
-import { StimulusParams } from '../../../../store/types';
+import * as YAML from 'yaml'; // 引入 YAML 解析库
 
-function useJsonEditor(initialCode: string) {
+interface EditorAnswer {
+  status: boolean;
+  answers: {
+    code: string;
+    error: string;
+  };
+}
+
+interface StimulusParamsTyped {
+  setAnswer: (answer: EditorAnswer) => void;
+}
+
+function useYamlEditor(initialCode: string) {
   const [code, setCode] = useState(initialCode);
   const [currentErrors, setCurrentErrors] = useState<string[]>([]);
   const [editorInstance, setEditorInstance] = useState<monaco.editor.IStandaloneCodeEditor | null>(null);
 
-  // JSON
-  const validateJson = useCallback(() => {
-    if (!editorInstance) return;
+  const validateYaml = useCallback((currentCode: string) => {
+    let validationErrors: string[] = [];
+    if (!editorInstance) return currentErrors;
 
     try {
-      JSON.parse(code);
-      setCurrentErrors(['No errors found. JSON is valid!']);
-      monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', []);
+      YAML.parse(currentCode, {
+        strict: true, // 启用严格模式
+        prettyErrors: true, // 提供更易读的错误信息
+      });
+      validationErrors = ['No errors found. YAML is valid!'];
+      monaco.editor.setModelMarkers(editorInstance.getModel()!, 'yaml', []);
     } catch (e) {
-      if (e instanceof Error) {
+      if (e instanceof YAML.YAMLParseError) {
         const errorMsg = e.message;
-        const lineMatch = code.substring(0, e.message.indexOf('"')).split('\n');
-        const lineNumber = lineMatch.length;
 
-        setCurrentErrors([errorMsg]);
+        validationErrors = [errorMsg];
 
-        monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', [{
-          startLineNumber: lineNumber,
+        monaco.editor.setModelMarkers(editorInstance.getModel()!, 'yaml', [{
+          startLineNumber: 1,
           startColumn: 1,
-          endLineNumber: lineNumber,
+          endLineNumber: 1,
           endColumn: Number.MAX_VALUE,
           message: errorMsg,
           severity: monaco.MarkerSeverity.Error,
         }]);
       }
     }
-  }, [code, editorInstance]);
 
-  //
-  useEffect(() => {
-    if (code.trim()) {
-      validateJson();
-    } else {
-      setCurrentErrors([]);
-      if (editorInstance) {
-        monaco.editor.setModelMarkers(editorInstance.getModel()!, 'json', []);
-      }
-    }
-  }, [code, validateJson, editorInstance]);
+    setCurrentErrors(validationErrors);
+    return validationErrors;
+  }, [editorInstance, currentErrors]);
 
   return {
     code,
     setCode,
     currentErrors,
+    validateYaml,
     setEditorInstance,
   };
 }
 
-function CodeEditorTest({ setAnswer }: StimulusParams<unknown, Record<string, never>>): React.ReactElement {
+function CodeEditorTest({ setAnswer }: StimulusParamsTyped): React.ReactElement {
   const {
     code,
     setCode,
     currentErrors,
+    validateYaml,
     setEditorInstance,
-  } = useJsonEditor('');
+  } = useYamlEditor('');
+
+  useEffect(() => {
+    const latestErrors = validateYaml(code);
+
+    setAnswer({
+      status: true,
+      answers: {
+        code,
+        error: latestErrors.join('\n'),
+      },
+    });
+  }, [code, validateYaml, setAnswer]);
 
   const containerRef = useCallback((node: HTMLDivElement) => {
     if (node) {
       const editor = monaco.editor.create(node, {
         value: code,
-        language: 'json',
+        language: 'yaml', // 设置语言为 YAML
         theme: 'hc-black',
         automaticLayout: true,
         minimap: { enabled: false },
@@ -81,15 +99,6 @@ function CodeEditorTest({ setAnswer }: StimulusParams<unknown, Record<string, ne
 
       editor.onDidChangeModelContent(() => {
         const rawCode = editor.getValue();
-
-        setAnswer({
-          status: true,
-          answers: {
-            code: rawCode,
-            error: rawCode,
-          },
-        });
-
         setCode(rawCode);
       });
 
@@ -98,8 +107,7 @@ function CodeEditorTest({ setAnswer }: StimulusParams<unknown, Record<string, ne
       };
     }
     return undefined;
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setCode, setEditorInstance]); // 移除 code 依赖，添加 eslint-disable 注释
+  }, [setCode, setEditorInstance]);
 
   return (
     <div style={{
@@ -109,11 +117,11 @@ function CodeEditorTest({ setAnswer }: StimulusParams<unknown, Record<string, ne
       padding: '20px',
     }}
     >
-      {/* 图片与代码编辑器部分 */}
+      {/* 图示与代码编辑器 */}
       <div style={{ display: 'flex', width: '100%', gap: '20px' }}>
         <div style={{ flex: '0 0 60%' }}>
           <img
-            src="/a-usability-study/assets/tasks/fig/config_write.png"
+            src="./assets/tasks/fig/config_write.png"
             alt="Example"
             style={{
               width: '100%',
