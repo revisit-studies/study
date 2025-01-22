@@ -1512,117 +1512,99 @@
       "response": [
         {
           "id": "q1",
-          "prompt": "Please rate the difficulty of finishing the task from 1 (easiest) to 9 (most difficult). ",
+          "prompt": "Please rate the difficulty of learning the syntax rules of the following formats.",
           "required": true,
           "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
+          "type": "matrix-radio",
+          "answerOptions": [
+            "Not Encountered",
+            "Very Easy",
+            "Easy",
+            "Neutral",
+            "Difficult",
+            "Very Difficult"
+          ],
+          "questionOptions": [
+            "JSON",
+            "JSONC",
+            "JSON5",
+            "HJSON",
+            "YAML",
+            "TOML",
+            "XML"
+          ]
         },
         {
           "id": "q2",
-          "prompt": "Please rate the smoothness of finishing the task from 1 (easiest) to 9 (most difficult). ",
+          "prompt": "Please rate the difficulty of completing tasks with the following formats you encountered.",
           "required": true,
           "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
-        }
-      ]
-    },
-    "post-study-survey": {
-      "type": "questionnaire",
-      "response": [
-        {
-          "id": "q1",
-          "prompt": "Please rate the difficulty of finishing the task with csv from 1 (easiest) to 9 (most difficult). ",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
-        },
-        {
-          "id": "q2",
-          "prompt": "Please rate the difficulty of finishing the task with json from 1 (easiest) to 9 (most difficult). ",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
+          "type": "matrix-radio",
+          "answerOptions": [
+            "Not Encountered",
+            "Very Easy",
+            "Easy",
+            "Neutral",
+            "Difficult",
+            "Very Difficult"
+          ],
+          "questionOptions": [
+            "JSON",
+            "JSONC",
+            "JSON5",
+            "HJSON",
+            "YAML",
+            "TOML",
+            "XML"
+          ]
         },
         {
           "id": "q3",
-          "prompt": "Please rate the difficulty of finishing the task with jsonc from 1 (easiest) to 9 (most difficult). ",
+          "prompt": "Please rate the experience of completing tasks with the following formats.",
           "required": true,
           "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
+          "type": "matrix-radio",
+          "answerOptions": [
+            "Not Encountered",
+            "Very Smooth",
+            "Smooth",
+            "Neutral",
+            "Rough",
+            "Very Rough"
+          ],
+          "questionOptions": [
+            "JSON",
+            "JSONC",
+            "JSON5",
+            "HJSON",
+            "YAML",
+            "TOML",
+            "XML"
+          ]
         },
         {
-          "id": "q4",
-          "prompt": "Please rate the difficulty of finishing the task with json5 from 1 (easiest) to 9 (most difficult). ",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
-        },
-        {
-          "id": "q5",
-          "prompt": "Please rate the difficulty of finishing the task with hjson from 1 (easiest) to 9 (most difficult). ",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
-        },
-        {
-          "id": "q6",
-          "prompt": "Please rate the difficulty of finishing the task with yaml from 1 (easiest) to 9 (most difficult). ",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
-        },
-        {
-          "id": "q7",
-          "prompt": "Please rate the difficulty of finishing the task with toml from 1 (easiest) to 9 (most difficult). ",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
-        },
-        {
-          "id": "q8",
-          "prompt": "Please rate the difficulty of finishing the task with xml from 1 (easiest) to 9 (most difficult). ",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "most difficult",
-          "leftLabel": "easiest"
-        },
-        {
-          "id": "q9",
-          "prompt": "Please provide any comments about the tasks",
-          "required": false,
-          "location": "aboveStimulus",
-          "type": "longText",
-          "placeholder": "Enter your comments here"
-        }
+        "id": "q4",
+        "prompt": "Compared to the format you encountered in the reading task, if you had a choice, which format would you prefer to use for this task? Please consider factors such as user-friendliness, efficiency, and error prevention. Check all that apply, and indicate why you agree with each selected format.",
+        "required": true,
+        "location": "aboveStimulus",
+        "type": "matrix-checkbox",
+        "answerOptions": [
+          "Not a better choice",
+          "I am not sure",
+          "More user-friendly",
+          "More efficient",
+          "Btter error prevention"
+        ],
+        "questionOptions": [
+          "JSON",
+          "JSONC",
+          "JSON5",
+          "HJSON",
+          "YAML",
+          "TOML",
+          "XML"
+        ]
+      }
       ]
     }
   },
@@ -1652,9 +1634,6 @@
         "numSamples": 1,
         "components": [
       "reading-task-config-json",
-      "reading-task-config-jsonc",
-      "reading-task-config-json5",
-      "reading-task-config-hjson",
       "reading-task-config-yaml",
       "reading-task-config-toml",
       "reading-task-config-xml"]},
@@ -1671,17 +1650,14 @@
         "numSamples": 1,
         "components": [
       "writing-task-config-json",
-      "writing-task-config-jsonc",
-      "writing-task-config-json5",
-      "writing-task-config-hjson",
       "writing-task-config-yaml",
       "writing-task-config-toml",
       "writing-task-config-xml"]},
       "modifying-task-config-json",
-      "modifying-task-config-jsonc",
       "modifying-task-config-toml",
       "modifying-task-config-yaml",
-      "modifying-task-config-xml"
+      "modifying-task-config-xml",
+      "post-task-survey"
     ]
   }
 }
