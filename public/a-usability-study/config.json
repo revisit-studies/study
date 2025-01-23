@@ -476,6 +476,80 @@
       ],
       "allowFailedTraining": false
     },
+    "reading-task-tabular-json": {
+      "meta": {
+        "taskName": "reading-task-tabular-json"
+      },
+      "description": "reading task with tabular data",
+      "instruction": "Please read the data in code editor and answer the following questions.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/reading_task/CoEd_json_Tabular.tsx",
+      "parameters": {
+        "taskid": "reading-task-tabular-json"
+      },
+      "response": [
+        {
+          "id": "reading-task-tabular-json_q1",
+          "prompt": "1. What is the grade for Eva's final exam? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-json_q2",
+          "prompt": "2. How many quizzes did Bob take? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-json_q3",
+          "prompt": "3. Which quiz did Eva get the highest grade on? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-json_q4",
+          "prompt": "4. How many  second-level keys does the file contain? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-json_q5",
+          "prompt": "5. Which second-level keys under the top-level 'students' key in the file contain nested structures (i.e., other key-value pairs)?",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-json_q6",
+          "prompt": "6. Who is absent from the final exam?",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-json",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "reading-task-tabular-json",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
     "reading-task-config-jsonc": {
       "meta": {
         "taskName": "reading-task-config-jsonc"
@@ -772,6 +846,80 @@
   ],
   "allowFailedTraining": false
 },
+"reading-task-tabular-yaml": {
+  "meta": {
+    "taskName": "reading-task-tabular-yaml"
+  },
+  "description": "reading task with tabular data",
+  "instruction": "Please read the data in code editor and answer the following questions.",
+  "type": "react-component",
+  "nextButtonLocation": "sidebar",
+  "path": "a-usability-study/assets/reading_task/CoEd_yaml_Tabular.tsx",
+  "parameters": {
+    "taskid": "reading-task-tabular-yaml"
+  },
+  "response": [
+    {
+      "id": "reading-task-tabular-yaml_q1",
+      "prompt": "1. What is the grade for Eva's final exam? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-tabular-yaml_q2",
+      "prompt": "2. How many quizzes did Bob take? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-tabular-yaml_q3",
+      "prompt": "3. Which quiz did Eva get the highest grade on? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-tabular-yaml_q4",
+      "prompt": "4. How many  second-level keys does the file contain? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-tabular-yaml_q5",
+      "prompt": "5. Which second-level keys under the top-level 'students' key in the file contain nested structures (i.e., other key-value pairs)?",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-tabular-yaml_q6",
+      "prompt": "6. Who is absent from the final exam?",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-tabular-yaml",
+      "prompt": "Are you sure to submit your answer?",
+      "type": "radio",
+      "location": "sidebar",
+      "required": true,
+      "options": [
+        "Yes"
+      ]
+    }
+  ],
+  "correctAnswer": [
+    {
+      "id": "reading-task-tabular-yaml",
+      "answer": "Yes"
+    }
+  ],
+  "allowFailedTraining": false
+},
 "reading-task-config-toml": {
   "meta": {
     "taskName": "reading-task-config-toml"
@@ -841,6 +989,80 @@
   "correctAnswer": [
     {
       "id": "reading-task-config-toml",
+      "answer": "Yes"
+    }
+  ],
+  "allowFailedTraining": false
+},
+"reading-task-tabular-toml": {
+  "meta": {
+    "taskName": "reading-task-tabular-toml"
+  },
+  "description": "reading task with tabular data",
+  "instruction": "Please read the data in code editor and answer the following questions.",
+  "type": "react-component",
+  "nextButtonLocation": "sidebar",
+  "path": "a-usability-study/assets/reading_task/CoEd_toml_Tabular.tsx",
+  "parameters": {
+    "taskid": "reading-task-tabular-toml"
+  },
+  "response": [
+    {
+      "id": "reading-task-tabular-toml_q1",
+      "prompt": "1. What is the grade for Eva's final exam? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-tabular-toml_q2",
+      "prompt": "2. How many quizzes did Bob take? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-tabular-toml_q3",
+      "prompt": "3. Which quiz did Eva get the highest grade on? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-tabular-toml_q4",
+      "prompt": "4. How many  second-level keys does the file contain? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-tabular-toml_q5",
+      "prompt": "5. Which second-level keys under the top-level 'students' key in the file contain nested structures (i.e., other key-value pairs)?",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-tabular-toml_q6",
+      "prompt": "6. Who is absent from the final exam?",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-tabular-toml",
+      "prompt": "Are you sure to submit your answer?",
+      "type": "radio",
+      "location": "sidebar",
+      "required": true,
+      "options": [
+        "Yes"
+      ]
+    }
+  ],
+  "correctAnswer": [
+    {
+      "id": "reading-task-tabular-toml",
       "answer": "Yes"
     }
   ],
@@ -920,12 +1142,86 @@
   ],
   "allowFailedTraining": false
 },
+"reading-task-tabular-xml": {
+  "meta": {
+    "taskName": "reading-task-tabular-xml"
+  },
+  "description": "reading task with tabular data",
+  "instruction": "Please read the data in code editor and answer the following questions.",
+  "type": "react-component",
+  "nextButtonLocation": "sidebar",
+  "path": "a-usability-study/assets/reading_task/CoEd_xml_Tabular.tsx",
+  "parameters": {
+    "taskid": "reading-task-tabular-xml"
+  },
+  "response": [
+    {
+      "id": "reading-task-tabular-xml_q1",
+      "prompt": "1. What is the grade for Eva's final exam? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-tabular-xml_q2",
+      "prompt": "2. How many quizzes did Bob take? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-tabular-xml_q3",
+      "prompt": "3. Which quiz did Eva get the highest grade on? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-tabular-xml_q4",
+      "prompt": "4. How many  second-level keys does the file contain? ",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-tabular-xml_q5",
+      "prompt": "5. Which second-level keys under the top-level 'students' key in the file contain nested structures (i.e., other key-value pairs)?",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-tabular-xml_q6",
+      "prompt": "6. Who is absent from the final exam?",
+      "type": "shortText",
+      "location": "sidebar",
+      "required": true
+    },
+    {
+      "id": "reading-task-tabular-xml",
+      "prompt": "Are you sure to submit your answer?",
+      "type": "radio",
+      "location": "sidebar",
+      "required": true,
+      "options": [
+        "Yes"
+      ]
+    }
+  ],
+  "correctAnswer": [
+    {
+      "id": "reading-task-tabular-xml",
+      "answer": "Yes"
+    }
+  ],
+  "allowFailedTraining": false
+},
     "writing-task-config-json": {
       "meta": {
         "taskName": "writing-task-config-json"
       },
       "description": "writing task with configuration data",
-      "instruction": "Please refer to the data structure shown in the figure and convert it into JSON format.",
+      "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into JSON format. ",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/writing_task/CoEd_json_Config.tsx",
@@ -966,12 +1262,58 @@
       ],
       "allowFailedTraining": false
     },
+    "writing-task-tabular-json": {
+      "meta": {
+        "taskName": "writing-task-tabular-json"
+      },
+      "description": "writing task with tabular data",
+      "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into JSON format.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/writing_task/CoEd_json_Tabular.tsx",
+      "parameters": {
+        "taskid": "writing-task-tabular-json"
+      },
+      "response": [
+        {
+          "id": "code",
+          "prompt": "",
+          "hidden": true,
+          "type": "iframe",
+          "required": false
+        },
+        {
+          "id": "error",
+          "prompt": "",
+          "hidden": true,
+          "type": "iframe",
+          "required": false
+        },
+        {
+          "id": "writing-task-tabular-json",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "writing-task-config-json",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
     "writing-task-config-jsonc": {
       "meta": {
         "taskName": "writing-task-config-jsonc"
       },
       "description": "writing task with configuration data",
-      "instruction": "Please refer to the data structure shown in the figure and convert it into JSONC format.",
+      "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into JSONC format.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/writing_task/CoEd_jsonc_Config.tsx",
@@ -1017,7 +1359,7 @@
         "taskName": "writing-task-config-json5"
       },
       "description": "writing task with configuration data",
-      "instruction": "Please refer to the data structure shown in the figure and convert it into JSON5 format.",
+      "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into JSON5 format.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/writing_task/CoEd_json5_Config.tsx",
@@ -1063,7 +1405,7 @@
         "taskName": "writing-task-config-hjson"
       },
       "description": "writing task with configuration data",
-      "instruction": "Please refer to the data structure shown in the figure and convert it into HJSON format.",
+      "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into HJSON format.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/writing_task/CoEd_hjson_Config.tsx",
@@ -1109,7 +1451,7 @@
         "taskName": "writing-task-config-yaml"
       },
       "description": "writing task with configuration data",
-      "instruction": "Please refer to the data structure shown in the figure and convert it into YAML format.",
+      "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into YAML format.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/writing_task/CoEd_yaml_Config.tsx",
@@ -1150,12 +1492,58 @@
       ],
       "allowFailedTraining": false
     },
+    "writing-task-tabular-yaml": {
+      "meta": {
+        "taskName": "writing-task-tabular-yaml"
+      },
+      "description": "writing task with tabular data",
+      "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into YAML format.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/writing_task/CoEd_yaml_Tabular.tsx",
+      "parameters": {
+        "taskid": "writing-task-tabular-yaml"
+      },
+      "response": [
+        {
+          "id": "code",
+          "prompt": "",
+          "hidden": true,
+          "type": "iframe",
+          "required": false
+        },
+        {
+          "id": "error",
+          "prompt": "",
+          "hidden": true,
+          "type": "iframe",
+          "required": false
+        },
+        {
+          "id": "writing-task-tabular-yaml",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "writing-task-tabular-yaml",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
     "writing-task-config-toml": {
       "meta": {
         "taskName": "writing-task-config-json"
       },
       "description": "writing task with configuration data",
-      "instruction": "Please refer to the data structure shown in the figure and convert it into TOML format.",
+      "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into TOML format.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/writing_task/CoEd_toml_Config.tsx",
@@ -1196,12 +1584,58 @@
       ],
       "allowFailedTraining": false
     },
+    "writing-task-tabular-toml": {
+      "meta": {
+        "taskName": "writing-task-tabular-json"
+      },
+      "description": "writing task with tabular data",
+      "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into TOML format.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/writing_task/CoEd_toml_Tabular.tsx",
+      "parameters": {
+        "taskid": "writing-task-tabular-toml"
+      },
+      "response": [
+        {
+          "id": "code",
+          "prompt": "",
+          "hidden": true,
+          "type": "iframe",
+          "required": false
+        },
+        {
+          "id": "error",
+          "prompt": "",
+          "hidden": true,
+          "type": "iframe",
+          "required": false
+        },
+        {
+          "id": "writing-task-tabular-toml",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "writing-task-tabular-toml",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
     "writing-task-config-xml": {
       "meta": {
         "taskName": "writing-task-config-xml"
       },
       "description": "writing task with configuration data",
-      "instruction": "Please refer to the data structure shown in the figure and convert it into XML format.",
+      "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into XML format.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/writing_task/CoEd_xml_Config.tsx",
@@ -1237,6 +1671,52 @@
       "correctAnswer": [
         {
           "id": "writing-task-config-xml",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "writing-task-tabular-xml": {
+      "meta": {
+        "taskName": "writing-task-tabular-xml"
+      },
+      "description": "writing task with tabular data",
+      "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into XML format.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/writing_task/CoEd_xml_Tabular.tsx",
+      "parameters": {
+        "taskid": "writing-task-tabular-xml"
+      },
+      "response": [
+        {
+          "id": "code",
+          "prompt": "",
+          "hidden": true,
+          "type": "iframe",
+          "required": false
+        },
+        {
+          "id": "error",
+          "prompt": "",
+          "hidden": true,
+          "type": "iframe",
+          "required": false
+        },
+        {
+          "id": "writing-task-tabular-xml",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "writing-task-tabular-xml",
           "answer": "Yes"
         }
       ],
@@ -1290,6 +1770,59 @@
       "correctAnswer": [
         {
           "id": "modifying-task-config-json",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "modifying-task-tabular-json": {
+      "meta": {
+        "taskName": "modifying-task-tabular-json"
+      },
+      "description": "modifying task with tabular data",
+      "instruction": "Please modify the JSON data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/modifying_task/CoEd_json_Tabular.tsx",
+      "parameters": {
+        "taskid": "modifying-task-tabular-json"
+      },
+      "response": [
+        {
+          "id": "modifying-task-tabular-json_q1",
+          "prompt": "1. Change the final grade for Eva to 80.",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-json_q2",
+          "prompt": "2. Move the information about the midterm and final grades below the 'Quizzes' section. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-json_q3",
+          "prompt": "3. Remove all information regarding the final grade for students who are absent. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-json",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-tabular-json",
           "answer": "Yes"
         }
       ],
@@ -1401,6 +1934,59 @@
       ],
       "allowFailedTraining": false
     },
+    "modifying-task-tabular-toml": {
+      "meta": {
+        "taskName": "modifying-task-tabular-toml"
+      },
+      "description": "modifying task with tabular data",
+      "instruction": "Please modify the TOML data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/modifying_task/CoEd_toml_Tabular.tsx",
+      "parameters": {
+        "taskid": "modifying-task-tabular-toml"
+      },
+      "response": [
+        {
+          "id": "modifying-task-tabular-toml_q1",
+          "prompt": "1. Change the final grade for Eva to 80.",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-toml_q2",
+          "prompt": "2. Move the information about the midterm and final grades below the 'Quizzes' section. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-toml_q3",
+          "prompt": "3. Remove all information regarding the final grade for students who are absent. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-toml",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-tabular-toml",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
     "modifying-task-config-yaml": {
       "meta": {
         "taskName": "modifying-task-config-yaml"
@@ -1454,6 +2040,59 @@
       ],
       "allowFailedTraining": false
     },
+    "modifying-task-tabular-yaml": {
+      "meta": {
+        "taskName": "modifying-task-tabular-yaml"
+      },
+      "description": "modifying task with tabular data",
+      "instruction": "Please modify the YAML data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/modifying_task/CoEd_yaml_Tabular.tsx",
+      "parameters": {
+        "taskid": "modifying-task-tabular-yaml"
+      },
+      "response": [
+        {
+          "id": "modifying-task-tabular-yaml_q1",
+          "prompt": "1. Change the final grade for Eva to 80.",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-yaml_q2",
+          "prompt": "2. Move the information about the midterm and final grades below the 'Quizzes' section. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-yaml_q3",
+          "prompt": "3. Remove all information regarding the final grade for students who are absent. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-yaml",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-tabular-yaml",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
     "modifying-task-config-xml": {
       "meta": {
         "taskName": "modifying-task-config-xml"
@@ -1502,6 +2141,59 @@
       "correctAnswer": [
         {
           "id": "modifying-task-config-xml",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "modifying-task-tabular-xml": {
+      "meta": {
+        "taskName": "modifying-task-tabular-xml"
+      },
+      "description": "modifying task with tabular data",
+      "instruction": "Please modify the XML data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/modifying_task/CoEd_xml_Tabular.tsx",
+      "parameters": {
+        "taskid": "modifying-task-tabular-xml"
+      },
+      "response": [
+        {
+          "id": "modifying-task-tabular-xml_q1",
+          "prompt": "1. Change the final grade for Eva to 80.",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-xml_q2",
+          "prompt": "2. Move the information about the midterm and final grades below the 'Quizzes' section. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-xml_q3",
+          "prompt": "3. Remove all information regarding the final grade for students who are absent. ",
+          "type": "iframe",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-xml",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-tabular-xml",
           "answer": "Yes"
         }
       ],
@@ -1604,6 +2296,33 @@
           "TOML",
           "XML"
         ]
+      },
+      {
+        "id": "q5",
+        "prompt": "Do you have any vision conditions that might affect how you perceive visual information?",
+        "required": true,
+        "location": "aboveStimulus",
+        "type": "checkbox",
+        "options": [
+          "No, I do not have any related conditions.",
+          "Color vision deficiency (CVD) (e.g., difficulty distinguishing colors like red and green).",
+          "Low vision (e.g., difficulty seeing clearly, even with corrective lenses).",
+          "Blindness (e.g., unable to see or severe visual impairment)."
+        ],
+        "withOther": true
+      },
+      {
+        "id": "q6",
+        "prompt": "Do you experience any cognitive conditions that may affect your ability to interpret text or symbols?",
+        "required": true,
+        "location": "aboveStimulus",
+        "type": "checkbox",
+        "options": [
+          "No, I do not have any cognitive-related conditions.",
+          "Dyslexia (e.g., difficulty reading or distinguishing symbols, such as \"b\" and \"d\").",
+          "Dysgraphia (e.g., difficulty with handwriting or written expression)."
+        ],
+        "withOther": true
       }
       ]
     }
@@ -1641,10 +2360,18 @@
       "reading-task-config-yaml",
       "reading-task-config-toml",
       "reading-task-config-xml",
-      "writing-task-config-json",
-      "writing-task-config-yaml",
-      "writing-task-config-toml",
-      "writing-task-config-xml",
+      {
+        "order": "latinSquare",
+        "numSamples": 1,
+        "components": [
+      "reading-task-tabular-json",
+      "reading-task-tabular-yaml",
+      "reading-task-tabular-toml",
+      "reading-task-tabular-xml"]},
+      "reading-task-tabular-json",
+      "reading-task-tabular-toml",
+      "reading-task-tabular-yaml",
+      "reading-task-tabular-xml",
       {
         "order": "latinSquare",
         "numSamples": 1,
@@ -1653,10 +2380,47 @@
       "writing-task-config-yaml",
       "writing-task-config-toml",
       "writing-task-config-xml"]},
+      "writing-task-config-json",
+      "writing-task-config-yaml",
+      "writing-task-config-toml",
+      "writing-task-config-xml",
+      {
+        "order": "latinSquare",
+        "numSamples": 1,
+        "components": [
+      "writing-task-tabular-json",
+      "writing-task-tabular-yaml",
+      "writing-task-tabular-toml",
+      "writing-task-tabular-xml"]},
+      "writing-task-tabular-json",
+      "writing-task-tabular-yaml",
+      "writing-task-tabular-toml",
+      "writing-task-tabular-xml",
+      {
+        "order": "latinSquare",
+        "numSamples": 1,
+        "components": [
+      "modifying-task-config-json",
+      "modifying-task-config-toml",
+      "modifying-task-config-yaml",
+      "modifying-task-config-xml"]},
       "modifying-task-config-json",
       "modifying-task-config-toml",
       "modifying-task-config-yaml",
       "modifying-task-config-xml",
+      {
+        "order": "latinSquare",
+        "numSamples": 1,
+        "components": [
+      "modifying-task-tabular-json",
+      "modifying-task-tabular-toml",
+      "modifying-task-tabular-yaml",
+      "modifying-task-tabular-xml"]},
+      "modifying-task-tabular-json",
+      "modifying-task-tabular-toml",
+      "modifying-task-tabular-yaml",
+      "modifying-task-tabular-xml",
+
       "post-task-survey"
     ]
   }
