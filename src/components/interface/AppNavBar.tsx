@@ -1,4 +1,6 @@
-import { AppShell, Text } from '@mantine/core';
+import {
+  AppShell, Text,
+} from '@mantine/core';
 import { useMemo } from 'react';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
@@ -6,6 +8,7 @@ import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { ResponseBlock } from '../response/ResponseBlock';
 import { useCurrentComponent } from '../../routes/utils';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { useIsDarkMode } from '../../store/hooks/useIsDarkMode';
 
 export function AppNavBar() {
   const trialHasSideBar = useStudyConfig()?.uiConfig.sidebar;
@@ -24,6 +27,8 @@ export function AppNavBar() {
     return null;
   }, [stepConfig, studyConfig]);
 
+  const isDarkMode = useIsDarkMode();
+
   const status = useStoredAnswer();
   const instruction = currentConfig?.instruction || '';
 
@@ -31,18 +36,16 @@ export function AppNavBar() {
     || currentConfig?.instructionLocation === undefined;
 
   return trialHasSideBar && currentConfig ? (
-    <AppShell.Navbar bg="gray.1" display="block" style={{ zIndex: 0, overflowY: 'scroll' }}>
+    <AppShell.Navbar bg={isDarkMode ? '' : 'gray.1'} display="block" style={{ zIndex: 0, overflowY: 'scroll' }}>
       {instructionInSideBar && instruction !== '' && (
         <AppShell.Section
-          bg="gray.3"
+          bg={isDarkMode ? '' : 'gray.3'}
           p="md"
         >
-          <Text c="gray.9">
-            <Text span c="orange.8" fw={700} inherit>
-              Task:
-            </Text>
-            <ReactMarkdownWrapper text={instruction} />
+          <Text span c="orange.8" fw={700} inherit>
+            Task:
           </Text>
+          <ReactMarkdownWrapper text={instruction} />
         </AppShell.Section>
       )}
 
@@ -58,7 +61,7 @@ export function AppNavBar() {
       )}
     </AppShell.Navbar>
   ) : (
-    <AppShell.Navbar bg="gray.1" display="block" style={{ zIndex: 0, overflowY: 'scroll' }}>
+    <AppShell.Navbar bg={isDarkMode ? '' : 'gray.1'} display="block" style={{ zIndex: 0, overflowY: 'scroll' }}>
       <ResponseBlock
         key={`${currentComponent}-sidebar-response-block`}
         status={status}

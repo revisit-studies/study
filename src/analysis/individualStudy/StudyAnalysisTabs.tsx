@@ -1,7 +1,7 @@
 import {
   Alert, AppShell, Checkbox, Container, Flex, Group, LoadingOverlay, Space, Tabs, Text, Title,
 } from '@mantine/core';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router';
 import {
   IconChartDonut2, IconPlayerPlay, IconTable, IconSettings,
   IconInfoCircle,

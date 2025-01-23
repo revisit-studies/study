@@ -1,5 +1,5 @@
 import { AppShell } from '@mantine/core';
-import { Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router';
 import { useEffect, useMemo, useRef } from 'react';
 import debounce from 'lodash.debounce';
 import { AppAside } from './interface/AppAside';

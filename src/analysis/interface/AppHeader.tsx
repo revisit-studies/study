@@ -1,10 +1,10 @@
 import {
-  Flex, Image, Select, Title, Space, Grid, AppShell,
+  Flex, Image, Select, Title, Space, Grid, AppShell, Button,
 } from '@mantine/core';
 
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router';
 
-import { IconSettings } from '@tabler/icons-react';
+import { IconListCheck, IconSettings } from '@tabler/icons-react';
 import { PREFIX } from '../../utils/Prefix';
 
 export function AppHeader({ studyIds }: { studyIds: string[] }) {
@@ -12,7 +12,7 @@ export function AppHeader({ studyIds }: { studyIds: string[] }) {
   const { studyId } = useParams();
   const location = useLocation();
 
-  const selectorData = studyIds.map((id) => ({ value: id, label: id }));
+  const selectorData = studyIds.map((id) => ({ value: id, label: id })).sort((a, b) => a.label.localeCompare(b.label));
 
   const inAnalysis = location.pathname.includes('analysis');
 
@@ -35,14 +35,19 @@ export function AppHeader({ studyIds }: { studyIds: string[] }) {
             direction="row"
           >
             {inAnalysis && (
-            <Select
-              allowDeselect={false}
-              placeholder="Select Study"
-              data={selectorData}
-              value={studyId}
-              onChange={(value) => navigate(`/analysis/stats/${value}`)}
-              mr={16}
-            />
+              <>
+                <Select
+                  allowDeselect={false}
+                  placeholder="Select Study"
+                  data={selectorData}
+                  value={studyId}
+                  onChange={(value) => navigate(`/analysis/stats/${value}`)}
+                  mr={16}
+                />
+                <Button component="a" href={`${PREFIX}${studyId}`} target="_blank" leftSection={<IconListCheck />} mr="sm">
+                  Go to Study
+                </Button>
+              </>
             )}
 
             <IconSettings onClick={() => navigate('/settings')} style={{ cursor: 'pointer', marginTop: inAnalysis ? 6 : undefined }} />

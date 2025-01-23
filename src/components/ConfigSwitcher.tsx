@@ -6,6 +6,7 @@ import {
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Timestamp } from 'firebase/firestore';
+import { useNavigate, useSearchParams } from 'react-router';
 import {
   GlobalConfig, ParsedConfig, StudyConfig,
 } from '../parser/types';
@@ -66,8 +67,6 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
       return 'Ready to Collect Data';
     }
     return 'Data Collection Disabled';
-
-    return null;
   }, [modes, studyStatusAndTiming]);
 
   return (
@@ -207,6 +206,10 @@ export function ConfigSwitcher({
   const libraries = configsList.filter((configName) => configName.startsWith('library-'));
   const others = configsList.filter((configName) => !configName.startsWith('demo-') && !configName.startsWith('tutorial-') && !configName.startsWith('example-') && !configName.startsWith('test-') && !configName.startsWith('library-'));
 
+  const [searchParams] = useSearchParams();
+  const tab = useMemo(() => searchParams.get('tab') || (others.length > 0 ? 'Others' : 'Demos'), [others.length, searchParams]);
+  const navigate = useNavigate();
+
   return (
     <AppShell.Main>
       <Container size="sm" px={0}>
@@ -218,7 +221,7 @@ export function ConfigSwitcher({
           src={`${PREFIX}revisitAssets/revisitLogoSquare.svg`}
           alt="reVISit"
         />
-        <Tabs variant="outline" defaultValue={others.length > 0 ? 'Others' : 'Demos'}>
+        <Tabs variant="outline" defaultValue={others.length > 0 ? 'Others' : 'Demos'} value={tab} onChange={(value) => navigate(`${PREFIX}?tab=${value}`)}>
           <Tabs.List>
             {others.length > 0 && (
               <Tabs.Tab value="Others">Your Studies</Tabs.Tab>
@@ -257,7 +260,7 @@ export function ConfigSwitcher({
           </Tabs.Panel>
 
           <Tabs.Panel value="Libraries">
-            <Text c="dimmed" mt="sm">Here you can see an example of every library that we publish</Text>
+            <Text c="dimmed" mt="sm">Here you can see an example of every library that we publish.</Text>
             <StudyCards configNames={libraries} studyConfigs={studyConfigs} />
           </Tabs.Panel>
         </Tabs>

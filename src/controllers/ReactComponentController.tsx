@@ -20,7 +20,7 @@ export function ReactComponentController({ currentConfig, provState }: { current
   const StimulusComponent = reactPath in modules ? (modules[reactPath] as ModuleNamespace).default : null;
 
   const storeDispatch = useStoreDispatch();
-  const { updateResponseBlockValidation, setIframeAnswers } = useStoreActions();
+  const { updateResponseBlockValidation, setreactiveAnswers } = useStoreActions();
   const setAnswer = useCallback(({ status, provenanceGraph, answers }: Parameters<StimulusParams<unknown>['setAnswer']>[0]) => {
     storeDispatch(updateResponseBlockValidation({
       location: 'sidebar',
@@ -30,8 +30,8 @@ export function ReactComponentController({ currentConfig, provState }: { current
       provenanceGraph,
     }));
 
-    storeDispatch(setIframeAnswers(answers));
-  }, [currentComponent, currentStep, setIframeAnswers, storeDispatch, updateResponseBlockValidation]);
+    storeDispatch(setreactiveAnswers(answers));
+  }, [currentComponent, currentStep, setreactiveAnswers, storeDispatch, updateResponseBlockValidation]);
 
   return (
     <Suspense fallback={<div>Loading...</div>}>

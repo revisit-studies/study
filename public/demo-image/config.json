@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc5/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/2.0.0-rc7/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations",
     "version": "pilot",
@@ -20,7 +20,8 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": true
+    "sidebar": true,
+    "nextOnEnter": true
   },
   "components": {
     "introduction": {

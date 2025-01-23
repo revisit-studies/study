@@ -26,6 +26,7 @@ The different component types:
 - [MarkdownComponent](interfaces/MarkdownComponent.md)
 - [QuestionnaireComponent](interfaces/QuestionnaireComponent.md)
 - [ReactComponent](interfaces/ReactComponent.md)
+- [VegaComponent](type-aliases/VegaComponent.md)
 - [WebsiteComponent](interfaces/WebsiteComponent.md)
 
 ## Responses
@@ -33,7 +34,7 @@ The different component types:
 Responses allow study designers to collect responses from participants  Responses are included on administrative forms, such as consent or training, but most importantly as a response to a stimulus.
 
 - [Response](type-aliases/Response.md)
-- [IFrameResponse](interfaces/IFrameResponse.md)
+- [ReactiveResponse](interfaces/ReactiveResponse.md)
 - [Answer](interfaces/Answer.md)
 
 ### Form Elements

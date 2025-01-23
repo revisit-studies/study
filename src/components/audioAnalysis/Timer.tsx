@@ -31,8 +31,17 @@ export function Timer({
   });
 
   useEffect(() => {
+    // if were past the end of the timer but someone hit play, reset the timer to the beginning
+    if (isPlaying && timer.current >= duration) {
+      updateTimer(startTime, 0);
+      startDate.current = Date.now() - timer.current;
+      timer.current = 0;
+    }
+  }, [startTime, isPlaying, duration, updateTimer]);
+
+  useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
-    if (isPlaying) {
+    if (isPlaying && timer.current < duration) {
       startDate.current = Date.now() - timer.current;
 
       interval = setInterval(() => {
@@ -47,7 +56,7 @@ export function Timer({
         clearInterval(interval);
       }
     };
-  }, [incrementTimer, isPlaying]);
+  }, [duration, incrementTimer, isPlaying]);
 
   const clickOnSvg = useCallback((e: React.MouseEvent<SVGSVGElement, MouseEvent>) => {
     timer.current = xScale.invert(e.clientX - 10) - xScale.domain()[0];

@@ -128,7 +128,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         provider: new ReCaptchaV3Provider(this.RECAPTCHAV3TOKEN),
         isTokenAutoRefreshEnabled: false,
       });
-    } catch (e) {
+    } catch {
       console.warn('Failed to initialize Firebase App Check');
     }
   }
@@ -138,7 +138,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       await enableNetwork(this.firestore);
 
       this.connected = true;
-    } catch (e) {
+    } catch {
       console.warn('Failed to connect to Firebase');
     }
   }
@@ -173,7 +173,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       if (currentConfigHash && currentConfigHash !== configHash) {
         try {
           await this._deleteFromFirebaseStorage('', 'sequenceArray');
-        } catch (error) {
+        } catch {
           // pass, if this happens, we didn't have a sequence array yet
         }
         await this.clearCurrentParticipantId();
@@ -328,17 +328,22 @@ export class FirebaseStorageEngine extends StorageEngine {
     audioStream: MediaRecorder,
     taskName: string,
   ) {
-    const listener = (data: BlobEvent) => {
-      this._pushToFirebaseStorage(`/audio/${this.currentParticipantId}`, taskName, data.data);
+    let debounceTimeout: NodeJS.Timeout | null = null;
+
+    const listener = async (data: BlobEvent) => {
+      if (debounceTimeout) {
+        return;
+      }
+
+      debounceTimeout = setTimeout(async () => {
+        this._pushToFirebaseStorage(`/audio/${this.currentParticipantId}`, taskName, data.data);
+      }, 500);
     };
 
     audioStream.addEventListener('dataavailable', listener);
     audioStream.requestData();
 
-    // The 0 timeout is to ensure that we let the event get sent before removing the event listener
-    setTimeout(() => {
-      audioStream.removeEventListener('dataavailable', listener);
-    }, 0);
+    // Don't clean up the listener. The stream will be destroyed.
   }
 
   async saveAnswers(answers: Record<string, StoredAnswer>) {
@@ -1021,7 +1026,7 @@ export class FirebaseStorageEngine extends StorageEngine {
           },
         ],
       };
-    } catch (error) {
+    } catch {
       return {
         status: 'FAILED',
         error: {

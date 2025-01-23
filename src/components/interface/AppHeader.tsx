@@ -13,6 +13,8 @@ import {
   Title,
   Tooltip,
   Text,
+  useMantineColorScheme,
+  Switch,
 } from '@mantine/core';
 import {
   IconChartHistogram,
@@ -22,7 +24,7 @@ import {
   IconUserPlus,
 } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
-import { useHref } from 'react-router-dom';
+import { useHref } from 'react-router';
 import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,
@@ -68,6 +70,8 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
     }
   }, [studyConfig]);
 
+  const { colorScheme, setColorScheme } = useMantineColorScheme();
+
   return (
     <AppShell.Header p="md">
       <Grid mt={-7} align="center">
@@ -101,6 +105,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
               </Group>
             ) : null}
             {!dataCollectionEnabled && <Tooltip multiline withArrow arrowSize={6} w={300} label="This is a demo version of the study, we’re not collecting any data."><Badge size="lg" color="orange">Demo Mode</Badge></Tooltip>}
+            <Switch checked={colorScheme === 'dark'} onChange={(e) => setColorScheme(e.currentTarget.checked ? 'dark' : 'light')} />
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"

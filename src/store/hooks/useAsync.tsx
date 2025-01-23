@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // Took this whole thing from https://github.com/datavisyn/visyn_core/blob/develop/src/hooks/useAsync.tsx
-import * as React from 'react';
+import {
+  useState, useRef, useEffect, useCallback,
+} from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 
 // https://stackoverflow.com/questions/48011353/how-to-unwrap-type-of-a-promise
 type Awaited<T> = T extends PromiseLike<infer U> ? { 0: Awaited<U>; 1: U }[U extends PromiseLike<any> ? 0 : 1] : T;
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export type useAsyncStatus = 'idle' | 'pending' | 'success' | 'error';
 
 /**
@@ -37,13 +38,13 @@ export const useAsync = <F extends (...args: any[]) => any, E = Error, T = Await
   asyncFunction: F,
   immediate: Parameters<F> | null = null,
 ) => {
-  const [status, setStatus] = React.useState<useAsyncStatus>('idle');
-  const [value, setValue] = React.useState<T | null>(null);
-  const [error, setError] = React.useState<E | null>(null);
-  const latestPromiseRef = React.useRef<Promise<T> | null>();
-  const mountedRef = React.useRef<boolean>(false);
+  const [status, setStatus] = useState<useAsyncStatus>('idle');
+  const [value, setValue] = useState<T | null>(null);
+  const [error, setError] = useState<E | null>(null);
+  const latestPromiseRef = useRef<Promise<T> | null>(null);
+  const mountedRef = useRef<boolean>(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     mountedRef.current = true;
     return () => {
       mountedRef.current = false;
@@ -54,7 +55,7 @@ export const useAsync = <F extends (...args: any[]) => any, E = Error, T = Await
   // handles setting state for pending, value, and error.
   // useCallback ensures the below useEffect is not called
   // on every render, but only if asyncFunction changes.
-  const execute = React.useCallback(
+  const execute = useCallback(
     (...args: Parameters<typeof asyncFunction>) => {
       setStatus('pending');
       // Do not unset the value, as we mostly want to retain the last value to avoid flickering, i.e. for "silent" updates.
@@ -74,7 +75,6 @@ export const useAsync = <F extends (...args: any[]) => any, E = Error, T = Await
             setError(e);
             setStatus('error');
           }
-          // eslint-disable-next-line @typescript-eslint/no-throw-literal
           throw e;
         });
       latestPromiseRef.current = currentPromise;
@@ -89,7 +89,7 @@ export const useAsync = <F extends (...args: any[]) => any, E = Error, T = Await
     if (immediate) {
       try {
         execute(...immediate);
-      } catch (e) {
+      } catch {
         // ignore any immediate error
       }
     }

@@ -1,9 +1,8 @@
-/* eslint-disable no-nested-ternary */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
   Box, Center, Group, Loader, Stack,
 } from '@mantine/core';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import {
   useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
@@ -37,7 +36,6 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Storage
   return null;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string) => void }) {
   const [searchParams] = useSearchParams();
   const participantId = useMemo(() => searchParams.get('participantId') || undefined, [searchParams]);
@@ -48,7 +46,9 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
   const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
   const analysisHasProvenance = useStoreSelector((state) => state.analysisHasProvenance);
 
-  const { saveAnalysisState, setAnalysisHasAudio, setAnalysisHasProvenance } = useStoreActions();
+  const {
+    saveAnalysisState, setAnalysisHasAudio, setAnalysisHasProvenance, setAnalysisIsPlaying,
+  } = useStoreActions();
   const storeDispatch = useStoreDispatch();
 
   const currentComponent = useCurrentComponent();
@@ -72,6 +72,11 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
   const trrackForTrial = useRef<Trrack<object, string> | null>(null);
 
   const componentAndIndex = useMemo(() => `${currentComponent}_${currentStep}`, [currentComponent, currentStep]);
+
+  // Make sure we always pause analysis when we change participants or tasks
+  useEffect(() => {
+    storeDispatch(setAnalysisIsPlaying(false));
+  }, [participantId, currentComponent, currentStep, storeDispatch, setAnalysisIsPlaying]);
 
   // Create an instance of trrack to ensure getState works, incase the saved state is not a full state node.
   useEffect(() => {
@@ -123,7 +128,6 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
 
     let tempNode = provGraph.nodes[currentNode];
 
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       if (playTime < tempNode.createdOn) {
         if (!isRootNode(tempNode)) {
@@ -192,14 +196,22 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
   );
 
   const _setPlayTime = useCallback((n: number, percent: number | undefined) => {
+    // if were past the end, pause the timer
+    if (n > totalAudioLength * 1000 + startTime) {
+      storeDispatch(setAnalysisIsPlaying(false));
+      setPlayTime(n);
+
+      return;
+    }
+
     setPlayTime(n);
 
-    if (wavesurfer.current && percent) {
+    if (wavesurfer.current && percent !== undefined) {
       setTimeout(() => {
         wavesurfer.current?.seekTo(percent);
       });
     }
-  }, [setPlayTime, wavesurfer]);
+  }, [setAnalysisIsPlaying, setPlayTime, startTime, storeDispatch, totalAudioLength]);
 
   useEffect(() => {
     if (wavesurfer.current) {
@@ -209,7 +221,7 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
         wavesurfer.current.pause();
       }
     }
-  }, [wavesurfer, analysisIsPlaying]);
+  }, [wavesurfer, analysisIsPlaying, totalAudioLength, startTime, setPlayTime]);
 
   const xScale = useMemo(() => {
     if (!participant || !participant.answers[componentAndIndex]?.startTime || !participant.answers[componentAndIndex]?.endTime) {
@@ -261,7 +273,7 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
               height={25}
             />
           ) : null}
-        {xScale && participant && (analysisHasAudio || analysisHasProvenance) ? <Timer duration={totalAudioLength * 1000} height={(analysisHasAudio ? 50 : 0) + (analysisHasProvenance ? 25 : 0)} isPlaying={analysisIsPlaying} startTime={participant.answers[componentAndIndex].startTime} width={width} xScale={xScale} updateTimer={_setPlayTime} /> : null}
+        {xScale && participant && (analysisHasAudio || analysisHasProvenance) ? <Timer duration={totalAudioLength * 1000} height={(analysisHasAudio ? 50 : 0) + (analysisHasProvenance ? 25 : 0)} isPlaying={analysisIsPlaying} startTime={startTime} width={width} xScale={xScale} updateTimer={_setPlayTime} /> : null}
       </Stack>
     </Group>
   );

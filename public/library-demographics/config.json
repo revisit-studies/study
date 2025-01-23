@@ -1,13 +1,13 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc5/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/2.0.0-rc7/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "demographics library example",
-    "version": "pilot",
+    "title": "Demographics",
+    "version": "1.0.0",
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2023-04-14",
-    "description": "This is a test for library imports.",
+    "date": "2025-01-20",
+    "description": "Example study using the demographics library.",
     "organizations": [
       "University of Utah",
       "WPI",
@@ -18,15 +18,22 @@
     "contactEmail": "",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": false,
-    "sidebar": true
+    "sidebar": false
   },
   "importedLibraries": [
     "demographics"
   ],
-  "components": {},
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "library-demographics/assets/demographics.md",
+      "response": []
+    }
+  },
   "sequence": {
     "order": "fixed",
     "components": [
+      "introduction",
       "$demographics.co.demographics"
     ]
   }

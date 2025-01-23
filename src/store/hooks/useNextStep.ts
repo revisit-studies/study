@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   useStoreSelector,
   useStoreActions,
@@ -55,7 +55,7 @@ export function useNextStep() {
 
   const storeDispatch = useStoreDispatch();
   const {
-    saveTrialAnswer, setIframeAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox, resetOtherText,
+    saveTrialAnswer, setreactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox, resetOtherText,
   } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
@@ -134,7 +134,7 @@ export function useNextStep() {
           },
         );
       }
-      storeDispatch(setIframeAnswers({}));
+      storeDispatch(setreactiveAnswers({}));
       storeDispatch(resetOtherText());
       storeDispatch(setMatrixAnswersCheckbox(null));
       storeDispatch(setMatrixAnswersRadio(null));
@@ -172,7 +172,6 @@ export function useNextStep() {
         })) as unknown as StoredAnswer;
 
         // Slim down the validationCandidates to only include the skip condition's component
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const componentsToCheck = condition.check !== 'block' ? Object.entries(validationCandidates).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === condition.name) : Object.entries(validationCandidates);
 
         // Make sure componentsToCheck array is well-formed
@@ -219,7 +218,7 @@ export function useNextStep() {
     }
 
     navigate(`/${studyId}/${encryptIndex(nextStep)}${window.location.search}`);
-  }, [currentStep, trialValidation, identifier, otherTexts, storedAnswer, windowEvents, dataCollectionEnabled, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setIframeAnswers, resetOtherText, setMatrixAnswersCheckbox, setMatrixAnswersRadio, studyConfig, participantSequence]);
+  }, [currentStep, trialValidation, identifier, otherTexts, storedAnswer, windowEvents, dataCollectionEnabled, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setreactiveAnswers, resetOtherText, setMatrixAnswersCheckbox, setMatrixAnswersRadio, studyConfig, participantSequence]);
 
   return {
     isNextDisabled,

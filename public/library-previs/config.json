@@ -1,13 +1,13 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0-rc5/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/2.0.0-rc7/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "previs library example",
-    "version": "pilot",
+    "title": "PREVis: Perceived Readability Evaluation for Visualizations",
+    "version": "1.0.0",
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2023-04-14",
-    "description": "This is a test for library imports.",
+    "date": "2025-01-20",
+    "description": "Example study using the previs library.",
     "organizations": [
       "University of Utah",
       "WPI",
@@ -17,17 +17,23 @@
   "uiConfig": {
     "contactEmail": "",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
-    "withProgressBar": false,
+    "withProgressBar": true,
     "sidebar": true
   },
   "importedLibraries": [
-                       "previs"
-                      ],
+    "previs"
+  ],
   "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "library-previs/assets/previs.md",
+      "response": []
+    }
   },
   "sequence": {
     "order": "fixed",
     "components": [
+      "introduction",
       "$previs.se.4dimensions"
     ]
   }

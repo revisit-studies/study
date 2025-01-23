@@ -2,7 +2,7 @@ import {
   Suspense, useEffect, useMemo, useRef, useState,
 } from 'react';
 import merge from 'lodash.merge';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router';
 import { Center, Loader } from '@mantine/core';
 import { ResponseBlock } from '../components/response/ResponseBlock';
 import { IframeController } from './IframeController';
@@ -69,7 +69,7 @@ export function ComponentController() {
   }, [setAlertModal, storageEngine, storeDispatch]);
 
   useEffect(() => {
-    if (!studyConfig || !studyConfig.recordStudyAudio || !storageEngine || storageEngine.getEngine() !== 'firebase' || (status && status.endTime > 0) || isAnalysis) {
+    if (!studyConfig || !studyConfig.uiConfig.recordStudyAudio || !storageEngine || storageEngine.getEngine() !== 'firebase' || (status && status.endTime > 0) || isAnalysis) {
       return;
     }
 
@@ -133,7 +133,7 @@ export function ComponentController() {
   }, [currentStep, storageEngine, sequence]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const currentConfig = useMemo(() => (currentComponent !== 'end' && isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent), [stepConfig, studyConfig]);
+  const currentConfig = useMemo(() => (currentComponent !== 'end' && !currentComponent.startsWith('__') && isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent), [stepConfig, studyConfig]);
 
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.

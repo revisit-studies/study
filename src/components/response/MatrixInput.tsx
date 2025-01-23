@@ -5,6 +5,7 @@ import { ChangeEvent } from 'react';
 import { MatrixResponse, StringOption } from '../../parser/types';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { useStoreDispatch, useStoreActions } from '../../store/store';
+import { useIsDarkMode } from '../../store/hooks/useIsDarkMode';
 
 function CheckboxComponent({
   _choices,
@@ -115,6 +116,7 @@ export function MatrixInput({
     answerOptions,
     questionOptions,
     prompt,
+    secondaryText,
     required,
   } = response;
 
@@ -152,6 +154,8 @@ export function MatrixInput({
     storeDispatch(setMatrixAnswersCheckbox(payload));
   };
 
+  const isDarkMode = useIsDarkMode();
+
   const _n = _choices.length;
   const _m = _questions.length;
   return (
@@ -162,13 +166,15 @@ export function MatrixInput({
           <ReactMarkdownWrapper text={prompt} required={required} />
         </Box>
       </Flex>
-      <div
+      <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>
+      <Box
         style={{
           display: 'grid',
           gridTemplateColumns: 'auto 1fr',
           gridTemplateRows: 'auto 1fr',
-          margin: '40px 100px 100px 100px',
         }}
+        m="md"
+        mt="xs"
       >
 
         {/* Empty Square */}
@@ -217,13 +223,18 @@ export function MatrixInput({
             <Text
               key={`question-${idx}-label`}
               style={{
-                height: '60px',
+                height: '80px',
+                width: '100%',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'end',
                 borderRight: '1px solid var(--mantine-color-dark-0)',
-                backgroundColor: `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
-                paddingLeft: '10px',
+                backgroundColor: isDarkMode ? '' : `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
+                overflowY: 'hidden',
               }}
+              ta="right"
+              p="sm"
+              miw={140}
             >
               {entry.label}
             </Text>
@@ -244,7 +255,7 @@ export function MatrixInput({
                 flex: 1,
                 display: 'flex',
                 alignItems: 'center',
-                backgroundColor: `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
+                backgroundColor: isDarkMode ? '' : `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
               }}
             >
               {response.type === 'matrix-radio'
@@ -274,7 +285,7 @@ export function MatrixInput({
             </div>
           ))}
         </div>
-      </div>
+      </Box>
     </>
   );
 }

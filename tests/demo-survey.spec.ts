@@ -16,16 +16,20 @@ test('test', async ({ page }) => {
   await page.getByPlaceholder('Enter your long comments here').fill('asdf');
   await page.locator('.mantine-Slider-track').click();
 
-  await page.getByRole('checkbox', { name: 'Option 2' }).click();
+  await page.getByRole('checkbox', { name: 'Option 2' }).nth(1).click();
   const minSelectionsText = await page.getByText('Please select at least 2 options');
   await expect(minSelectionsText).toBeVisible();
-  await page.getByRole('checkbox', { name: 'Option 1' }).click();
-  await page.getByRole('checkbox', { name: 'Option 3' }).click();
+  await page.getByRole('checkbox', { name: 'Option 1' }).nth(1).click();
+  await page.getByRole('checkbox', { name: 'Option 3' }).nth(1).click();
   const maxSelectionsText = await page.getByText('Please select at most 2 options');
   await expect(maxSelectionsText).toBeVisible();
-  await page.getByRole('checkbox', { name: 'Option 1' }).click();
+  await page.getByRole('checkbox', { name: 'Option 1' }).nth(1).click();
 
-  await page.getByRole('radio', { name: 'Option 2' }).click();
+  await page.getByRole('checkbox', { name: 'Option 2' }).nth(0).click();
+  await page.getByRole('checkbox', { name: 'Option 3' }).nth(0).click();
+
+  await page.getByRole('radio', { name: 'Option 2' }).nth(0).click();
+  await page.getByRole('radio', { name: 'Option 2' }).nth(1).click();
 
   const radios = await page.locator('input[value="Highly Unsatisfied"]');
   for (let i = 0; i < await radios.count(); i += 1) {

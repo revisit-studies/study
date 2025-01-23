@@ -114,7 +114,6 @@ export interface StoredAnswer {
 export interface StimulusParams<T, S = never> {
   parameters: T;
   provenanceState?: S;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
 }
 
@@ -136,8 +135,8 @@ export interface StoreState {
   showHelpText: boolean;
   alertModal: { show: boolean, message: string };
   trialValidation: TrialValidation;
-  iframeAnswers: Record<string, unknown>;
-  iframeProvenance: TrrackedProvenance | null;
+  reactiveAnswers: Record<string, unknown>;
+  reactiveProvenance: TrrackedProvenance | null;
   otherTexts: Record<string, string>;
   metadata: ParticipantMetadata;
   analysisProvState: unknown | null;

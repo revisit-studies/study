@@ -37,7 +37,7 @@ test('test', async ({ page }) => {
 
   // Select a response and click next
   await page.getByLabel('No').check();
-  await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await page.keyboard.press('Enter');
 
   // Check the page contains the question
   const question3Text = await page.getByText('Will you issue blankets to the alpacas?');
