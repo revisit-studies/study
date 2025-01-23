@@ -7,7 +7,7 @@
   const id = urlParams.get("id");
 
   const sendMessage = (tag, message) => {
-    window.top.postMessage(
+    window.parent.postMessage(
       {
         error: false,
         type: `${PREFIX}/${tag}`,
