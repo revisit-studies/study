@@ -186,8 +186,7 @@
               "label": "Good",
               "value": 100
             }
-          ],
-          "required": false
+          ]
         }
       ]
     }

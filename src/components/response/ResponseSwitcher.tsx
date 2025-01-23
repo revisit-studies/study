@@ -49,10 +49,10 @@ export function ResponseSwitcher({
 
   const [dontKnowCheckbox, setDontKnowCheckbox] = useState(!!storedAnswer?.[`${response.id}-dontKnow`] || false);
   useEffect(() => {
-    form.setFieldValue(`${response.id}-dontKnow`, !!dontKnowCheckbox);
+    form.setFieldValue(`${response.id}-dontKnow`, dontKnowCheckbox.toString());
     // reset answer value if dontKnowCheckbox changes
-    if (dontKnowCheckbox) {
-      form.setFieldValue(response.id, '');
+    if (!dontKnowCheckbox) {
+      form.setFieldValue(response.id, false.toString());
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dontKnowCheckbox, response.id]);

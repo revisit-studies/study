@@ -174,7 +174,10 @@ export async function studyStoreCreator(
             provenanceGraph: undefined,
           };
         }
-        state.trialValidation[payload.identifier][payload.location] = { valid: payload.status, values: payload.values };
+        if (Object.keys(payload.values).length > 0) {
+          const currentValues = state.trialValidation[payload.identifier][payload.location].values;
+          state.trialValidation[payload.identifier][payload.location] = { valid: payload.status, values: { ...currentValues, ...payload.values } };
+        }
 
         if (payload.provenanceGraph) {
           state.trialValidation[payload.identifier].provenanceGraph = payload.provenanceGraph;

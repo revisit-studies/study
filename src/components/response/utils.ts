@@ -46,7 +46,8 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
         );
       }
 
-      initObj = { ...initObj, [response.id]: initField, [`${response.id}-dontKnow`]: '' };
+      const dontKnowObj = response.withDontKnow ? { [`${response.id}-dontKnow`]: '' } : {};
+      initObj = { ...initObj, [response.id]: initField, ...dontKnowObj };
     }
   });
 

@@ -18,7 +18,7 @@ ${libraryConfig.reference || libraryConfig.doi || libraryConfig.externalLink ? '
 
 ${libraryConfig.reference ? (forDocs ? `:::note[Reference]\n${libraryConfig.reference}\n:::` : `${libraryConfig.reference}`) : ''}
 
-${libraryConfig.doi ? `DOI: [${libraryConfig.doi}](https://doi.org/${libraryConfig.doi})` : ''}
+${libraryConfig.doi ? `DOI: [${libraryConfig.doi}](https://dx.doi.org/${libraryConfig.doi})` : ''}
 
 ${libraryConfig.externalLink ? `Link: [${libraryConfig.externalLink}](${libraryConfig.externalLink})` : ''}
 

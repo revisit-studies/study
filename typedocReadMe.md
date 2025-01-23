@@ -26,6 +26,7 @@ The different component types:
 - [MarkdownComponent](interfaces/MarkdownComponent.md)
 - [QuestionnaireComponent](interfaces/QuestionnaireComponent.md)
 - [ReactComponent](interfaces/ReactComponent.md)
+- [VegaComponent](type-aliases/VegaComponent.md)
 - [WebsiteComponent](interfaces/WebsiteComponent.md)
 
 ## Responses
