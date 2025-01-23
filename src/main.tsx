@@ -11,7 +11,7 @@ import { GlobalConfigParser } from './GlobalConfigParser';
 ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
     <StorageEngineProvider>
-      <MantineProvider>
+      <MantineProvider defaultColorScheme="light">
         <Notifications />
         <GlobalConfigParser />
       </MantineProvider>

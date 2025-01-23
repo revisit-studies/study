@@ -23,6 +23,7 @@ import { getNewParticipant } from '../../utils/nextParticipant';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
+import { useIsDarkMode } from '../../store/hooks/useIsDarkMode';
 
 function InfoHover({ text }: { text: string }) {
   return (
@@ -36,6 +37,7 @@ export function AppAside() {
   const sequence = useStoreSelector((state) => state.sequence);
   const metadata = useStoreSelector((state) => state.metadata);
   const { toggleStudyBrowser } = useStoreActions();
+  const isDarkMode = useIsDarkMode();
 
   const studyConfig = useStudyConfig();
   const dispatch = useStoreDispatch();
@@ -94,7 +96,7 @@ export function AppAside() {
           <Box style={{
             position: 'sticky',
             top: 0,
-            backgroundColor: 'white',
+            backgroundColor: isDarkMode ? '' : 'white',
             zIndex: 1,
           }}
           >

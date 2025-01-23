@@ -5,6 +5,7 @@ import { ChangeEvent } from 'react';
 import { MatrixResponse, StringOption } from '../../parser/types';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { useStoreDispatch, useStoreActions } from '../../store/store';
+import { useIsDarkMode } from '../../store/hooks/useIsDarkMode';
 
 function CheckboxComponent({
   _choices,
@@ -153,6 +154,8 @@ export function MatrixInput({
     storeDispatch(setMatrixAnswersCheckbox(payload));
   };
 
+  const isDarkMode = useIsDarkMode();
+
   const _n = _choices.length;
   const _m = _questions.length;
   return (
@@ -226,7 +229,7 @@ export function MatrixInput({
                 alignItems: 'center',
                 justifyContent: 'end',
                 borderRight: '1px solid var(--mantine-color-dark-0)',
-                backgroundColor: `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
+                backgroundColor: isDarkMode ? '' : `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
                 overflowY: 'hidden',
               }}
               ta="right"
@@ -252,7 +255,7 @@ export function MatrixInput({
                 flex: 1,
                 display: 'flex',
                 alignItems: 'center',
-                backgroundColor: `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
+                backgroundColor: isDarkMode ? '' : `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
               }}
             >
               {response.type === 'matrix-radio'
