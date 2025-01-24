@@ -1,6 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import * as monaco from 'monaco-editor';
 import { Box } from '@mantine/core';
+import { loadWASM } from 'onigasm';
+import { wasm } from 'onigasm/lib/onigasm.wasm';
+import { Registry } from 'monaco-textmate'; // peer dependency
+import { wireTmGrammars } from 'monaco-editor-textmate';
+
 import { StimulusParams } from '../../../../store/types';
 
 function useJsonEditor(initialCode: string) {
@@ -54,6 +59,41 @@ function useJsonEditor(initialCode: string) {
     currentErrors,
     setEditorInstance,
   };
+}
+
+export async function liftOff() {
+  await loadWASM(wasm); // See https://www.npmjs.com/package/onigasm#light-it-up
+
+  const registry = new Registry({
+    getGrammarDefinition: async (scopeName) => ({
+      format: 'json',
+      content: await (await fetch('static/grammars/css.tmGrammar.json')).text(),
+    }),
+  });
+
+  // map of monaco "language id's" to TextMate scopeNames
+  const grammars = new Map();
+  grammars.set('css', 'source.css');
+  grammars.set('html', 'text.html.basic');
+  grammars.set('typescript', 'source.ts');
+
+  // monaco's built-in themes aren't powereful enough to handle TM tokens
+  // https://github.com/Nishkalkashyap/monaco-vscode-textmate-theme-converter#monaco-vscode-textmate-theme-converter
+  monaco.editor.defineTheme('vs-code-theme-converted', {
+    // ... use `monaco-vscode-textmate-theme-converter` to convert vs code theme and pass the parsed object here
+  });
+
+  const editor = monaco.editor.create(document.getElementById('container'), {
+    value: [
+      'html, body {',
+      '    margin: 0;',
+      '}',
+    ].join('\n'),
+    language: 'css', // this won't work out of the box, see below for more info,
+    theme: 'vs-code-theme-converted', // very important, see comment above
+  });
+
+  await wireTmGrammars(monaco, registry, grammars, editor);
 }
 
 function CodeEditorTest({ setAnswer }: StimulusParams<unknown, Record<string, never>>): React.ReactElement {

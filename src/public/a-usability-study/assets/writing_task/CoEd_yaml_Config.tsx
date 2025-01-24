@@ -70,17 +70,17 @@ function CodeEditorTest({ setAnswer }: StimulusParamsTyped): React.ReactElement 
     setEditorInstance,
   } = useYamlEditor('');
 
-  useEffect(() => {
-    const latestErrors = validateYaml(code);
+  // useEffect(() => {
+  //   const latestErrors = validateYaml(code);
 
-    setAnswer({
-      status: true,
-      answers: {
-        code,
-        error: latestErrors.join('\n'),
-      },
-    });
-  }, [code, validateYaml, setAnswer]);
+  //   setAnswer({
+  //     status: true,
+  //     answers: {
+  //       code,
+  //       error: latestErrors.join('\n'),
+  //     },
+  //   });
+  // }, [code, validateYaml, setAnswer]);
 
   const containerRef = useCallback((node: HTMLDivElement) => {
     if (node) {
