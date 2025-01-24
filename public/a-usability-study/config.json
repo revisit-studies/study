@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Data Serialization Formats Study",
     "version": "pilot",
@@ -1233,14 +1233,14 @@
           "id": "code",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
           "id": "error",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
@@ -1279,14 +1279,14 @@
           "id": "code",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
           "id": "error",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
@@ -1325,14 +1325,14 @@
           "id": "code",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
           "id": "error",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
@@ -1371,14 +1371,14 @@
           "id": "code",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
           "id": "error",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
@@ -1417,14 +1417,14 @@
           "id": "code",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": true
         },
         {
           "id": "error",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": true
         },
         {
@@ -1463,14 +1463,14 @@
           "id": "code",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
           "id": "error",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
@@ -1509,14 +1509,14 @@
           "id": "code",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
           "id": "error",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
@@ -1555,14 +1555,14 @@
           "id": "code",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
           "id": "error",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
@@ -1601,14 +1601,14 @@
           "id": "code",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
           "id": "error",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
@@ -1647,14 +1647,14 @@
           "id": "code",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
           "id": "error",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
@@ -1693,14 +1693,14 @@
           "id": "code",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
           "id": "error",
           "prompt": "",
           "hidden": true,
-          "type": "iframe",
+          "type": "reactive",
           "required": false
         },
         {
@@ -1738,21 +1738,21 @@
         {
           "id": "modifying-task-config-json_q1",
           "prompt": "1. Change the value of benchmark to 7.",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
         {
           "id": "modifying-task-config-json_q2",
           "prompt": "2. Move the authors' information below the repository. ",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
         {
           "id": "modifying-task-config-json_q3",
           "prompt": "3. Remove the peer dependency. ",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
@@ -1791,21 +1791,21 @@
         {
           "id": "modifying-task-tabular-json_q1",
           "prompt": "1. Change the final grade for Eva to 80.",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
         {
           "id": "modifying-task-tabular-json_q2",
           "prompt": "2. Move the information about the midterm and final grades below the 'Quizzes' section. ",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
         {
           "id": "modifying-task-tabular-json_q3",
           "prompt": "3. Remove all information regarding the final grade for students who are absent. ",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
@@ -1844,21 +1844,21 @@
         {
           "id": "modifying-task-config-jsonc_q1",
           "prompt": "1. Change the value of benchmark to 7.",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
         {
           "id": "modifying-task-config-jsonc_q2",
           "prompt": "2. Move the authors' information below the repository. ",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
         {
           "id": "modifying-task-config-jsonc_q3",
           "prompt": "3. Remove the peer dependency. ",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
@@ -1897,21 +1897,21 @@
         {
           "id": "modifying-task-config-toml_q1",
           "prompt": "1. Change the value of benchmark to 7.",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
         {
           "id": "modifying-task-config-toml_q2",
           "prompt": "2. Move the authors' information below the repository. ",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
         {
           "id": "modifying-task-config-toml_q3",
           "prompt": "3. Remove the peer dependency. ",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
@@ -1950,21 +1950,21 @@
         {
           "id": "modifying-task-tabular-toml_q1",
           "prompt": "1. Change the final grade for Eva to 80.",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
         {
           "id": "modifying-task-tabular-toml_q2",
           "prompt": "2. Move the information about the midterm and final grades below the 'Quizzes' section. ",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
         {
           "id": "modifying-task-tabular-toml_q3",
           "prompt": "3. Remove all information regarding the final grade for students who are absent. ",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
@@ -2003,21 +2003,21 @@
         {
           "id": "modifying-task-config-yaml_q1",
           "prompt": "1. Change the value of benchmark to 7.",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
         {
           "id": "modifying-task-config-yaml_q2",
           "prompt": "2. Move the authors' information below the repository. ",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
         {
           "id": "modifying-task-config-yaml_q3",
           "prompt": "3. Remove the peer dependency. ",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
@@ -2056,21 +2056,21 @@
         {
           "id": "modifying-task-tabular-yaml_q1",
           "prompt": "1. Change the final grade for Eva to 80.",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
         {
           "id": "modifying-task-tabular-yaml_q2",
           "prompt": "2. Move the information about the midterm and final grades below the 'Quizzes' section. ",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
         {
           "id": "modifying-task-tabular-yaml_q3",
           "prompt": "3. Remove all information regarding the final grade for students who are absent. ",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
@@ -2109,21 +2109,21 @@
         {
           "id": "modifying-task-config-xml_q1",
           "prompt": "1. Change the value of benchmark to 7.",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
         {
           "id": "modifying-task-config-xml_q2",
           "prompt": "2. Move the authors' information below the repository. ",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
         {
           "id": "modifying-task-config-xml_q3",
           "prompt": "3. Remove the peer dependency. ",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
@@ -2162,21 +2162,21 @@
         {
           "id": "modifying-task-tabular-xml_q1",
           "prompt": "1. Change the final grade for Eva to 80.",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
         {
           "id": "modifying-task-tabular-xml_q2",
           "prompt": "2. Move the information about the midterm and final grades below the 'Quizzes' section. ",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
         {
           "id": "modifying-task-tabular-xml_q3",
           "prompt": "3. Remove all information regarding the final grade for students who are absent. ",
-          "type": "iframe",
+          "type": "reactive",
           "location": "sidebar",
           "required": false
         },
@@ -2233,12 +2233,12 @@
           "location": "aboveStimulus",
           "type": "matrix-radio",
           "answerOptions": [
-            "Not Encountered",
             "Very Easy",
             "Easy",
             "Neutral",
             "Difficult",
-            "Very Difficult"
+            "Very Difficult",
+            {"value": "Not Encountered", "label": "Not Encountered", "separator": true}
           ],
           "questionOptions": [
             "JSON",

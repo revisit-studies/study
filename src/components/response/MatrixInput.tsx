@@ -1,5 +1,9 @@
 import {
   Box, Flex, Radio, Text, Checkbox,
+  Divider,
+  Group,
+  Center,
+  Stack,
 } from '@mantine/core';
 import { ChangeEvent } from 'react';
 import { MatrixResponse, StringOption } from '../../parser/types';
@@ -65,6 +69,7 @@ function RadioGroupComponent({
   disabled: boolean
 
 }) {
+  const isDarkMode = useIsDarkMode();
   return (
     <Radio.Group
       name={`radioInput${response.id}-${idx}`}
@@ -84,13 +89,27 @@ function RadioGroupComponent({
           justifyItems: 'center',
         }}
       >
-        {_choices.map((radio: StringOption) => (
-          <Radio
-            disabled={disabled}
-            value={radio.value}
-            key={`${radio.label}-${idx}`}
-          />
-        ))}
+        {_choices.map((radio: StringOption) => (radio.separator ? (
+          <Group justify="space-between" key={radio.value} style={{ height: '80px', width: '100%' }}>
+            <Divider orientation="vertical" size="sm" color={isDarkMode ? 'gray.4' : 'black'} />
+            <Radio
+              disabled={disabled}
+              value={radio.value}
+              key={`${radio.label}-${idx}`}
+            />
+            <Box />
+          </Group>
+        ) : (
+          <Stack key={radio.value} justify="center" style={{ height: '80px', width: '100%' }}>
+            <Center>
+              <Radio
+                disabled={disabled}
+                value={radio.value}
+                key={`${radio.label}-${idx}`}
+              />
+            </Center>
+          </Stack>
+        )))}
       </div>
     </Radio.Group>
   );
@@ -255,7 +274,7 @@ export function MatrixInput({
                 flex: 1,
                 display: 'flex',
                 alignItems: 'center',
-                backgroundColor: isDarkMode ? '' : `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
+                backgroundColor: isDarkMode ? `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-8)' : ''}` : `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
               }}
             >
               {response.type === 'matrix-radio'

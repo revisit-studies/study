@@ -1020,7 +1020,14 @@
           "anyOf": [
             {
               "items": {
-                "type": "string"
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "$ref": "#/definitions/StringOption"
+                  }
+                ]
               },
               "type": "array"
             },
@@ -1789,6 +1796,10 @@
         "label": {
           "description": "The label displayed to participants.",
           "type": "string"
+        },
+        "separator": {
+          "description": "Separate this option from the previous options via divider",
+          "type": "boolean"
         },
         "value": {
           "description": "The value stored in the participant's data.",

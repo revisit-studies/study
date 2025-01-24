@@ -144,6 +144,8 @@ export interface StringOption {
   label: string;
   /** The value stored in the participant's data. */
   value: string;
+  /** Separate this option from the previous options via divider */
+  separator?: boolean;
 }
 
 /**
@@ -336,7 +338,7 @@ Here's an example using custom columns (answerOptions):
 export interface MatrixResponse extends BaseResponse {
   type: 'matrix-radio' | 'matrix-checkbox';
   /** The answer options (columns). We provide some shortcuts for a likelihood scale (ranging from highly unlikely to highly likely) and a satisfaction scale (ranging from highly unsatisfied to highly satisfied) with either 5 or 7 options to choose from. */
-  answerOptions: string[] | `likely${5 | 7}` | `satisfaction${5 | 7}`;
+  answerOptions: (string | StringOption)[] | `likely${5 | 7}` | `satisfaction${5 | 7}`;
   /** The question options (rows) are the prompts for each response you'd like to record. */
   questionOptions: string[];
 }
