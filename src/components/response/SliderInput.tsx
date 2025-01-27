@@ -3,11 +3,12 @@ import {
   Flex,
   Input, Slider, SliderProps,
 } from '@mantine/core';
+import { useMemo } from 'react';
 import { SliderResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
-import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 
-export default function SliderInput({
+export function SliderInput({
   response,
   disabled,
   answer,
@@ -27,12 +28,14 @@ export default function SliderInput({
     secondaryText,
   } = response;
 
+  const [min, max] = useMemo(() => [Math.min(...options.map((opt) => opt.value)), Math.max(...options.map((opt) => opt.value))], [options]);
+
   const errorMessage = generateErrorMessage(response, answer);
   return (
     <Input.Wrapper
       label={(
         <Flex direction="row" wrap="nowrap" gap={4}>
-          {enumerateQuestions && <Box style={{ minWidth: 'fit-content' }}>{`${index}. `}</Box>}
+          {enumerateQuestions && <Box style={{ minWidth: 'fit-content', fontSize: 16, fontWeight: 500 }}>{`${index}. `}</Box>}
           <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
             <ReactMarkdownWrapper text={prompt} required={required} />
           </Box>
@@ -45,8 +48,11 @@ export default function SliderInput({
       <Slider
         disabled={disabled}
         marks={options as SliderProps['marks']}
+        min={min}
+        max={max}
         {...answer}
         h={40}
+        mt={4}
       />
     </Input.Wrapper>
   );

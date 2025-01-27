@@ -3,9 +3,9 @@ import {
 } from '@mantine/core';
 import { DropdownResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
-import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 
-export default function DropdownInput({
+export function DropdownInput({
   response,
   disabled,
   answer,
@@ -33,7 +33,7 @@ export default function DropdownInput({
       disabled={disabled}
       label={(
         <Flex direction="row" wrap="nowrap" gap={4}>
-          {enumerateQuestions && <Box style={{ minWidth: 'fit-content' }}>{`${index}. `}</Box>}
+          {enumerateQuestions && <Box style={{ minWidth: 'fit-content', fontSize: 16, fontWeight: 500 }}>{`${index}. `}</Box>}
           <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
             <ReactMarkdownWrapper text={prompt} required={required} />
           </Box>

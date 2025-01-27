@@ -1,5 +1,5 @@
 {
-    "$schema": "../../src/parser/StudyConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
         "title": "Test LIKERT",
         "version": "pilot",
@@ -36,7 +36,6 @@
                     "id": "my_likert",
                     "prompt": "How likely would you be to own each of the following pets?",
                     "secondaryText": "1 = Not at all confident, 5 = Very confident",
-                    "required": true,
                     "location": "aboveStimulus",
                     "type": "matrix-radio",
                     "answerOptions": "satisfaction5",
@@ -52,7 +51,6 @@
                     "id": "additional_likert",
                     "prompt": "For each animal, select all that apply.",
                     "secondaryText": "1 = Not at all confident, 5 = Very confident",
-                    "required": true,
                     "location": "aboveStimulus",
                     "type": "matrix-checkbox",
                     "answerOptions": [
@@ -73,7 +71,6 @@
                 {
                     "id": "q1",
                     "prompt": "How useful did you find the rectangular selection method? ",
-                    "required": true,
                     "location": "aboveStimulus",
                     "type": "likert",
                     "numItems": 7,

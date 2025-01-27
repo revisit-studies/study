@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Passing Data from reVISit to HTML and back",
     "version": "pilot",
@@ -30,9 +30,8 @@
         {
           "id": "barChart",
           "prompt": "Your selected answer:",
-          "required": true,
           "location": "belowStimulus",
-          "type": "iframe"
+          "type": "reactive"
         }
       ],
       "path": "demo-html-input/assets/bar-chart-interaction.html",

@@ -1,15 +1,16 @@
 import {
-  Badge, Box, NavLink, Popover, Text,
+  Badge, Box, NavLink, Popover, Text, Tooltip,
 } from '@mantine/core';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { IconArrowsShuffle, IconBrain, IconPackageImport } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { ComponentBlock, StudyConfig } from '../../parser/types';
 import { Sequence } from '../../store/types';
 import { deepCopy } from '../../utils/deepCopy';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+import { encryptIndex } from '../../utils/encryptDecryptIndex';
 
 export type ComponentBlockWithOrderPath = Omit<ComponentBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]};
 
@@ -114,13 +115,16 @@ function StepItem({
   const stepIndex = subSequence && subSequence.components.slice(startIndex).includes(step) ? findTaskIndexInSequence(fullSequence, step, startIndex, subSequence.orderPath) : -1;
 
   const { trialId } = useParams();
+  const [searchParams] = useSearchParams();
+  const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
 
   const analysisActive = trialId === step;
   const studyActive = participantView ? currentStep === stepIndex : currentStep === `reviewer-${step}`;
   const active = analysisNavigation ? analysisActive : studyActive;
 
   const analysisNavigateTo = useCallback(() => (trialId ? navigate(`./../${step}`) : navigate(`./${step}`)), [navigate, step, trialId]);
-  const studyNavigateTo = () => (participantView ? navigate(`/${studyId}/${stepIndex}`) : navigate(`/${studyId}/reviewer-${step}`));
+  // eslint-disable-next-line no-nested-ternary
+  const studyNavigateTo = () => (participantView ? (participantId ? navigate(`/${studyId}/${encryptIndex(stepIndex)}?participantId=${participantId}`) : navigate(`/${studyId}/${encryptIndex(stepIndex)}`)) : navigate(`/${studyId}/reviewer-${step}`));
   const navigateTo = analysisNavigation ? analysisNavigateTo : studyNavigateTo;
 
   // eslint-disable-next-line no-nested-ternary
@@ -247,11 +251,13 @@ export function StepsPanel({
                   opacity: sequenceStepsLength > 0 ? 1 : 0.5,
                 }}
               >
-                <Text size="sm" display="inline">
-                  {step.order}
+                <Text size="sm" display="inline" fw={700}>
+                  {step.id ? step.id : step.order}
                 </Text>
                 {step.order === 'random' || step.order === 'latinSquare' ? (
-                  <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
+                  <Tooltip label={step.order} position="right" withArrow>
+                    <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
+                  </Tooltip>
                 ) : null}
                 {participantView && (
                 <Badge ml={5} variant="light">

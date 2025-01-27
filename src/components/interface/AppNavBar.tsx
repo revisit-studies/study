@@ -1,13 +1,13 @@
 import { AppShell, Text } from '@mantine/core';
 import { useMemo } from 'react';
-import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
-import ResponseBlock from '../response/ResponseBlock';
+import { ResponseBlock } from '../response/ResponseBlock';
 import { useCurrentComponent } from '../../routes/utils';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 
-export default function AppNavBar() {
+export function AppNavBar() {
   const trialHasSideBar = useStudyConfig()?.uiConfig.sidebar;
   const trialHasSideBarResponses = true;
 
@@ -37,12 +37,10 @@ export default function AppNavBar() {
           bg="gray.3"
           p="md"
         >
-          <Text c="gray.9">
-            <Text span c="orange.8" fw={700} inherit>
-              Task:
-            </Text>
-            <ReactMarkdownWrapper text={instruction} />
+          <Text span c="orange.8" fw={700} inherit>
+            Task:
           </Text>
+          <ReactMarkdownWrapper text={instruction} />
         </AppShell.Section>
       )}
 

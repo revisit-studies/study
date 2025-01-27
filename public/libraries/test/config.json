@@ -1,5 +1,6 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/LibraryConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0/src/parser/LibraryConfigSchema.json",
+  "description": "This is a test library for testing the parser. It is unlikely to be useful for any other purpose.",
   "baseComponents": {
     "test-baseComponent": {
       "type": "markdown",
@@ -20,12 +21,14 @@
     },
     "test-inherited": {
       "baseComponent": "test-baseComponent",
-      "response": [{
-        "id": "test-response",
-        "type": "shortText",
-        "prompt": "What did you think of the test?",
-        "required": false
-      }]
+      "response": [
+        {
+          "id": "test-response",
+          "type": "shortText",
+          "prompt": "What did you think of the test?",
+          "required": false
+        }
+      ]
     }
   },
   "sequences": {

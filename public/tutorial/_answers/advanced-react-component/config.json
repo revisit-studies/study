@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "TUTORIAL - Advanced React Component Tutorial",
     "version": "pilot",
@@ -38,9 +38,8 @@
         {
           "id": "click",
           "prompt": "Your click distance to circle center",
-          "required": true,
           "location": "sidebar",
-          "type": "iframe"
+          "type": "reactive"
         }
       ],
       "parameters": {

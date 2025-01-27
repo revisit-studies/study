@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation } from 'react-router';
 
-export default function PageTitle({ title }: { title: string }) {
+export function PageTitle({ title }: { title: string }) {
   const location = useLocation();
 
   useEffect(() => {

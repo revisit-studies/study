@@ -1,17 +1,18 @@
-import { Suspense } from 'react';
+import { Suspense, useCallback } from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
 import { ReactComponent } from '../parser/types';
 import { StimulusParams } from '../store/types';
-import ResourceNotFound from '../ResourceNotFound';
+import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
+import { ErrorBoundary } from './ErrorBoundary';
 
 const modules = import.meta.glob(
   '../public/**/*.{mjs,js,mts,ts,jsx,tsx}',
   { eager: true },
 );
 
-function ReactComponentController({ currentConfig }: { currentConfig: ReactComponent; }) {
+export function ReactComponentController({ currentConfig, provState }: { currentConfig: ReactComponent; provState?: unknown }) {
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
 
@@ -19,8 +20,8 @@ function ReactComponentController({ currentConfig }: { currentConfig: ReactCompo
   const StimulusComponent = reactPath in modules ? (modules[reactPath] as ModuleNamespace).default : null;
 
   const storeDispatch = useStoreDispatch();
-  const { updateResponseBlockValidation, setIframeAnswers } = useStoreActions();
-  function setAnswer({ status, provenanceGraph, answers }: Parameters<StimulusParams<unknown>['setAnswer']>[0]) {
+  const { updateResponseBlockValidation, setreactiveAnswers } = useStoreActions();
+  const setAnswer = useCallback(({ status, provenanceGraph, answers }: Parameters<StimulusParams<unknown>['setAnswer']>[0]) => {
     storeDispatch(updateResponseBlockValidation({
       location: 'sidebar',
       identifier: `${currentComponent}_${currentStep}`,
@@ -29,22 +30,22 @@ function ReactComponentController({ currentConfig }: { currentConfig: ReactCompo
       provenanceGraph,
     }));
 
-    storeDispatch(setIframeAnswers(answers));
-  }
+    storeDispatch(setreactiveAnswers(answers));
+  }, [currentComponent, currentStep, setreactiveAnswers, storeDispatch, updateResponseBlockValidation]);
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
       {StimulusComponent
         ? (
-          <StimulusComponent
-            parameters={currentConfig.parameters}
-            // eslint-disable-next-line react/jsx-no-bind
-            setAnswer={setAnswer}
-          />
+          <ErrorBoundary>
+            <StimulusComponent
+              parameters={currentConfig.parameters}
+              setAnswer={setAnswer}
+              provenanceState={provState}
+            />
+          </ErrorBoundary>
         )
         : <ResourceNotFound path={currentConfig.path} />}
     </Suspense>
   );
 }
-
-export default ReactComponentController;

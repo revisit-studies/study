@@ -3,14 +3,13 @@ import {
 } from '@mantine/core';
 
 import {
-  useCallback, useEffect, useRef,
-  useState,
+  useCallback, useEffect, useRef, useState,
 } from 'react';
 import { WaveForm, WaveSurfer } from 'wavesurfer-react';
 import WaveSurferRef from 'wavesurfer.js';
 import RecordPlugin from 'wavesurfer.js/dist/plugins/record';
 
-export default function RecordingAudioWaveform({ width = 70, height = 36 }: { width?: number, height?: number }) {
+export function RecordingAudioWaveform({ width = 70, height = 36 }: { width?: number, height?: number }) {
   const wavesurferRef = useRef<WaveSurferRef | null>(null);
   const recording = useRef<RecordPlugin | null>(null);
   const [isMounted, setIsMounted] = useState(false);
@@ -19,7 +18,11 @@ export default function RecordingAudioWaveform({ width = 70, height = 36 }: { wi
     if (isMounted && wavesurferRef.current) {
       const record = wavesurferRef.current.registerPlugin(RecordPlugin.create({ scrollingWaveform: true, renderRecordedAudio: false } as never));
       recording.current = record;
-      record.startRecording();
+
+      if (!navigator.userAgent.includes('Firefox')) {
+        record.startRecording();
+      }
+
       wavesurferRef.current.setOptions({ height, waveColor: '#FA5252' });
     }
 

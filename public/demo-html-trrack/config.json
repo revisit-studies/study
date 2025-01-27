@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "HTML with Trrack library",
     "version": "pilot",
@@ -42,9 +42,8 @@
         {
           "id": "circlesCount",
           "prompt": "Answer:",
-          "required": true,
           "location": "sidebar",
-          "type": "iframe",
+          "type": "reactive",
           "hidden": false
         }
       ]
@@ -62,9 +61,8 @@
         {
           "id": "circlesCount",
           "prompt": "Answer:",
-          "required": true,
           "location": "sidebar",
-          "type": "iframe",
+          "type": "reactive",
           "hidden": false
         }
       ]

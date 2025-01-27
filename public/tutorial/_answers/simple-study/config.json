@@ -1,11 +1,12 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "A simple study for our tutorial",
     "version": "development",
     "authors": [
       "The reVISit Team",
-      "The reVISit Community"
+      "The reVISit Community",
+      "You :)"
     ],
     "date": "2023-10-13",
     "description": "This is a simple study to demonstrate how to create a study using reVISit.",
@@ -13,7 +14,7 @@
       "University of Utah",
       "WPI",
       "University of Toronto",
-      "IEEE VIS"
+      "You :)"
     ]
   },
   "uiConfig": {
@@ -42,13 +43,11 @@
         {
           "id": "age",
           "type": "numerical",
-          "required": true,
           "prompt": "What is your age?"
         },
         {
           "id": "height",
           "type": "numerical",
-          "required": true,
           "prompt": "What is your height in inches?"
         }
       ]
@@ -61,7 +60,6 @@
         {
           "id": "women",
           "type": "radio",
-          "required": true,
           "prompt": "For which profession did AI generate women the least compared to US census data?",
           "location": "sidebar",
           "options": [
@@ -74,7 +72,6 @@
         {
           "id": "men",
           "type": "radio",
-          "required": true,
           "prompt": "For which profession did AI generate men the least compared to US census data?",
           "location": "sidebar",
           "options": [

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "TUTORIAL - Interactive Selections in Scatterplots",
     "version": "pilot",
@@ -42,7 +42,6 @@
         {
           "id": "prolificId",
           "prompt": "Please enter your Prolific ID",
-          "required": true,
           "location": "belowStimulus",
           "type": "shortText",
           "placeholder": "Prolific ID",
@@ -58,7 +57,6 @@
         {
           "id": "signature",
           "prompt": "Your signature",
-          "required": true,
           "location": "belowStimulus",
           "type": "shortText",
           "placeholder": "Please provide your signature"
@@ -66,7 +64,6 @@
         {
           "id": "accept",
           "prompt": "Do you consent to the study and wish to continue?",
-          "required": true,
           "requiredValue": "Accept",
           "location": "belowStimulus",
           "type": "radio",
@@ -98,7 +95,6 @@
         {
           "id": "response",
           "prompt": "Answer:",
-          "required": true,
           "location": "sidebar",
           "type": "numerical",
           "max": 100,
@@ -127,7 +123,6 @@
         {
           "id": "max-response",
           "prompt": "Most Cars:",
-          "required": true,
           "location": "sidebar",
           "type": "dropdown",
           "options": [
@@ -139,7 +134,6 @@
         {
           "id": "min-response",
           "prompt": "Least Cars:",
-          "required": true,
           "location": "sidebar",
           "type": "dropdown",
           "options": [
@@ -176,7 +170,6 @@
         {
           "id": "response",
           "prompt": "Answer:",
-          "required": true,
           "location": "sidebar",
           "type": "numerical",
           "max": 100,
@@ -206,7 +199,6 @@
         {
           "id": "max-response",
           "prompt": "Most common Weather:",
-          "required": true,
           "location": "sidebar",
           "type": "dropdown",
           "options": [
@@ -219,7 +211,6 @@
         {
           "id": "min-response",
           "prompt": "Least common Weather:",
-          "required": true,
           "location": "sidebar",
           "type": "dropdown",
           "options": [
@@ -256,7 +247,6 @@
         {
           "id": "response",
           "prompt": "Answer:",
-          "required": true,
           "location": "sidebar",
           "type": "numerical",
           "max": 100,
@@ -285,7 +275,6 @@
         {
           "id": "max-response",
           "prompt": "Most common Penguin:",
-          "required": true,
           "location": "sidebar",
           "type": "dropdown",
           "options": [
@@ -297,7 +286,6 @@
         {
           "id": "min-response",
           "prompt": "Least common Penguin:",
-          "required": true,
           "location": "sidebar",
           "type": "dropdown",
           "options": [
@@ -333,7 +321,6 @@
         {
           "id": "response",
           "prompt": "Answer:",
-          "required": true,
           "location": "sidebar",
           "type": "numerical",
           "max": 100,
@@ -362,7 +349,6 @@
         {
           "id": "max-response",
           "prompt": "Most common Genre:",
-          "required": true,
           "location": "sidebar",
           "type": "dropdown",
           "options": [
@@ -375,7 +361,6 @@
         {
           "id": "min-response",
           "prompt": "Least common Genre:",
-          "required": true,
           "location": "sidebar",
           "type": "dropdown",
           "options": [
@@ -403,7 +388,6 @@
         {
           "id": "q1",
           "prompt": "How useful did you find the rectangular selection method? ",
-          "required": true,
           "location": "aboveStimulus",
           "type": "likert",
           "numItems": 7,
@@ -413,7 +397,6 @@
         {
           "id": "q2",
           "prompt": "How useful did you find the axis-aligned selection? ",
-          "required": true,
           "location": "aboveStimulus",
           "type": "likert",
           "numItems": 7,
@@ -423,7 +406,6 @@
         {
           "id": "q3",
           "prompt": "How useful did you find the paint-brush selection?",
-          "required": true,
           "location": "aboveStimulus",
           "type": "likert",
           "numItems": 7,
@@ -433,7 +415,6 @@
         {
           "id": "q4",
           "prompt": "How useful did you find the slider selection?",
-          "required": true,
           "location": "aboveStimulus",
           "type": "likert",
           "numItems": 7,
@@ -452,12 +433,11 @@
     },
     "survey": {
       "type": "markdown",
-      "path": "demo-VLAT-mini-randomized/assets/survey.md",
+      "path": "example-VLAT-mini-randomized/assets/survey.md",
       "response": [
         {
           "id": "surveyExperience",
           "prompt": "Did you experience any problems with our tool?",
-          "required": true,
           "location": "belowStimulus",
           "type": "longText",
           "placeholder": "Enter your answer here."
@@ -465,7 +445,6 @@
         {
           "id": "surveyRenderIssues",
           "prompt": "Did anything not render or display properly?",
-          "required": true,
           "location": "belowStimulus",
           "type": "longText",
           "placeholder": "Enter your answer here"
@@ -473,7 +452,6 @@
         {
           "id": "surveyOtherIssues",
           "prompt": "Any other issues or anything you would like to tell us?",
-          "required": true,
           "location": "belowStimulus",
           "type": "longText",
           "placeholder": "Enter your answer here"

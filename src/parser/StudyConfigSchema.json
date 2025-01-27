@@ -4,7 +4,7 @@
   "definitions": {
     "Answer": {
       "additionalProperties": false,
-      "description": "The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.\n\nAnswers are used to defined correct answers for a task. These are generally used in training tasks or if skip logic is required based on the answer. The answer field is used to define the correct answer to the question. The acceptableLow and acceptableHigh fields are used to define a range of acceptable answers (these are currently only used for training). For example, if the correct answer is 5, and the acceptableLow is 4 and the acceptableHigh is 6, then any answer between 4 and 6 will be considered correct.\n\nHere's an example of how to use the Answer interface to define the correct answer to a question:\n\n```js { \"type\": \"markdown\", \"path\": \"<study-name>/assets/question.md\", \"response\": [  {    \"id\": \"response1\",    \"prompt\": \"What is 2 + 2?\",    \"required\": true,    \"location\": \"belowStimulus\",    \"type\": \"numerical\"  } ] \"correctAnswer\": [{  \"id\": \"response1\",  \"answer\": 4 }] } ```\n\nIn this example, the correct answer to the question \"What is 2 + 2?\" is 4. If the participant answers 4, they will be considered correct. If they answer anything other than 4, they will be considered incorrect.",
+      "description": "The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.\n\nAnswers are used to defined correct answers for a task. These are generally used in training tasks or if skip logic is required based on the answer. The answer field is used to define the correct answer to the question. The acceptableLow and acceptableHigh fields are used to define a range of acceptable answers (these are currently only used for training). For example, if the correct answer is 5, and the acceptableLow is 4 and the acceptableHigh is 6, then any answer between 4 and 6 will be considered correct.\n\nHere's an example of how to use the Answer interface to define the correct answer to a question:\n\n```js { \"type\": \"markdown\", \"path\": \"<study-name>/assets/question.md\", \"response\": [  {    \"id\": \"response1\",    \"prompt\": \"What is 2 + 2?\",    \"location\": \"belowStimulus\",    \"type\": \"numerical\"  } ] \"correctAnswer\": [{  \"id\": \"response1\",  \"answer\": 4 }] } ```\n\nIn this example, the correct answer to the question \"What is 2 + 2?\" is 4. If the participant answers 4, they will be considered correct. If they answer anything other than 4, they will be considered incorrect.",
       "properties": {
         "acceptableHigh": {
           "description": "The acceptable high value for the answer. This is used to define a range of acceptable answers.",
@@ -35,6 +35,10 @@
           "allowFailedTraining": {
             "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
             "type": "boolean"
+          },
+          "config": {
+            "description": "The vega or vega-lite configuration.",
+            "type": "object"
           },
           "correctAnswer": {
             "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
@@ -108,6 +112,10 @@
               {
                 "description": "The path to the website. This should be a relative path from the public folder or could be an external website.",
                 "type": "string"
+              },
+              {
+                "description": "The path to the vega file. This should be a relative path from the public folder.",
+                "type": "string"
               }
             ],
             "description": "The path to the markdown file. This should be a relative path from the public folder."
@@ -117,7 +125,7 @@
             "type": "boolean"
           },
           "recordAudio": {
-            "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
+            "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
             "type": "boolean"
           },
           "response": {
@@ -126,6 +134,10 @@
               "$ref": "#/definitions/Response"
             },
             "type": "array"
+          },
+          "responseDividers": {
+            "description": "Whether to show the response dividers. Defaults to false.",
+            "type": "boolean"
           },
           "style": {
             "additionalProperties": {
@@ -144,7 +156,8 @@
               "react-component",
               "image",
               "website",
-              "questionnaire"
+              "questionnaire",
+              "vega"
             ],
             "type": "string"
           }
@@ -156,10 +169,14 @@
     },
     "CheckboxResponse": {
       "additionalProperties": false,
-      "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.\n\n```js { \"id\": \"q7\", \"prompt\": \"Checkbox example (not required)\", \"required\": false, \"location\": \"aboveStimulus\", \"type\": \"checkbox\", \"options\": [\"Option 1\", \"Option 2\", \"Option 3\"] } ```",
+      "description": "The CheckboxResponse interface is used to define the properties of a checkbox response. CheckboxResponses render as a checkbox input with user specified options.\n\n```js { \"id\": \"q7\", \"prompt\": \"Checkbox example (not required)\", \"location\": \"aboveStimulus\", \"type\": \"checkbox\", \"options\": [\"Option 1\", \"Option 2\", \"Option 3\"] } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "horizontal": {
+          "description": "Whether to render the checkboxes horizontally. Defaults to false, so they render horizontally.",
           "type": "boolean"
         },
         "id": {
@@ -201,7 +218,7 @@
           "type": "string"
         },
         "required": {
-          "description": "Controls whether the response is required to be answered.",
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
           "type": "boolean"
         },
         "requiredLabel": {
@@ -218,13 +235,24 @@
         "type": {
           "const": "checkbox",
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withOther": {
+          "description": "Whether to render the checkboxes with an \"other\" option.",
+          "type": "boolean"
         }
       },
       "required": [
         "id",
         "options",
         "prompt",
-        "required",
         "type"
       ],
       "type": "object"
@@ -345,7 +373,7 @@
     },
     "DropdownResponse": {
       "additionalProperties": false,
-      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options.\n\nExample: ```js { \"id\": \"q-color\", \"prompt\": \"What is your favorite color?\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"dropdown\", \"placeholder\": \"Please choose your favorite color\", \"options\": [\"Red\", \"Blue\"] } ```",
+      "description": "The DropdownResponse interface is used to define the properties of a dropdown response. DropdownResponses render as a select input with user specified options.\n\nExample: ```js { \"id\": \"q-color\", \"prompt\": \"What is your favorite color?\", \"location\": \"aboveStimulus\", \"type\": \"dropdown\", \"placeholder\": \"Please choose your favorite color\", \"options\": [\"Red\", \"Blue\"] } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -386,7 +414,7 @@
           "type": "string"
         },
         "required": {
-          "description": "Controls whether the response is required to be answered.",
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
           "type": "boolean"
         },
         "requiredLabel": {
@@ -403,65 +431,20 @@
         "type": {
           "const": "dropdown",
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
         "id",
         "options",
         "prompt",
-        "required",
-        "type"
-      ],
-      "type": "object"
-    },
-    "IFrameResponse": {
-      "additionalProperties": false,
-      "description": "The IFrameResponse interface is used to define the properties of an iframe response. IFrameResponses render as a list, that is connected to a WebsiteComponent. When data is sent from the WebsiteComponent, it is displayed in the list.",
-      "properties": {
-        "hidden": {
-          "description": "Controls whether the response is hidden.",
-          "type": "boolean"
-        },
-        "id": {
-          "description": "The id of the response. This is used to identify the response in the data file.",
-          "type": "string"
-        },
-        "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
-          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
-        },
-        "paramCapture": {
-          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
-          "type": "string"
-        },
-        "prompt": {
-          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
-          "type": "string"
-        },
-        "required": {
-          "description": "Controls whether the response is required to be answered.",
-          "type": "boolean"
-        },
-        "requiredLabel": {
-          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
-          "type": "string"
-        },
-        "requiredValue": {
-          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
-        },
-        "secondaryText": {
-          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
-          "type": "string"
-        },
-        "type": {
-          "const": "iframe",
-          "type": "string"
-        }
-      },
-      "required": [
-        "id",
-        "prompt",
-        "required",
         "type"
       ],
       "type": "object"
@@ -523,7 +506,7 @@
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
+          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
           "type": "boolean"
         },
         "response": {
@@ -532,6 +515,10 @@
             "$ref": "#/definitions/Response"
           },
           "type": "array"
+        },
+        "responseDividers": {
+          "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
         },
         "style": {
           "additionalProperties": {
@@ -572,6 +559,9 @@
         },
         {
           "$ref": "#/definitions/QuestionnaireComponent"
+        },
+        {
+          "$ref": "#/definitions/VegaComponent"
         }
       ]
     },
@@ -658,6 +648,10 @@
         "baseComponent": {
           "type": "string"
         },
+        "config": {
+          "description": "The vega or vega-lite configuration.",
+          "type": "object"
+        },
         "correctAnswer": {
           "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
           "items": {
@@ -730,6 +724,10 @@
             {
               "description": "The path to the website. This should be a relative path from the public folder or could be an external website.",
               "type": "string"
+            },
+            {
+              "description": "The path to the vega file. This should be a relative path from the public folder.",
+              "type": "string"
             }
           ],
           "description": "The path to the markdown file. This should be a relative path from the public folder."
@@ -739,7 +737,7 @@
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
+          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
           "type": "boolean"
         },
         "response": {
@@ -748,6 +746,10 @@
             "$ref": "#/definitions/Response"
           },
           "type": "array"
+        },
+        "responseDividers": {
+          "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
         },
         "style": {
           "additionalProperties": {
@@ -766,7 +768,8 @@
             "react-component",
             "image",
             "website",
-            "questionnaire"
+            "questionnaire",
+            "vega"
           ],
           "type": "string"
         }
@@ -789,7 +792,7 @@
     },
     "LikertResponse": {
       "additionalProperties": false,
-      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likert Scale:\n\n```js { \"id\": \"q-satisfaction\", \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"likert\", \"leftLabel\": \"Not Enjoyable\", \"rightLabel\": \"Very Enjoyable\", \"numItems\": 5 } ```",
+      "description": "The LikertResponse interface is used to define the properties of a likert response. LikertResponses render as radio buttons with a user specified number of options, which can be controlled through the numItems. For example, numItems: 5 will render 5 radio buttons, and numItems: 7 will render 7 radio buttons. LikertResponses can also have a description, and left and right labels. The left and right labels are used to label the left and right ends of the likert scale with values such as 'Strongly Disagree' and 'Strongly Agree'.\n\nExample for a five-point Likert Scale:\n\n```js { \"id\": \"q-satisfaction\", \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).\", \"location\": \"aboveStimulus\", \"type\": \"likert\", \"leftLabel\": \"Not Enjoyable\", \"rightLabel\": \"Very Enjoyable\", \"numItems\": 5 } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -820,7 +823,7 @@
           "type": "string"
         },
         "required": {
-          "description": "Controls whether the response is required to be answered.",
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
           "type": "boolean"
         },
         "requiredLabel": {
@@ -841,20 +844,27 @@
         "type": {
           "const": "likert",
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
         "id",
         "numItems",
         "prompt",
-        "required",
         "type"
       ],
       "type": "object"
     },
     "LongTextResponse": {
       "additionalProperties": false,
-      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```js { \"id\": \"q-name\", \"prompt\": \"What is your first name?\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"longText\", \"placeholder\": \"Please enter your first name\" } ```",
+      "description": "The LongTextResponse interface is used to define the properties of a long text response. LongTextResponses render as a text area that accepts any text and can optionally have a placeholder. ```js { \"id\": \"q-name\", \"prompt\": \"What is your first name?\", \"location\": \"aboveStimulus\", \"type\": \"longText\", \"placeholder\": \"Please enter your first name\" } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -881,7 +891,7 @@
           "type": "string"
         },
         "required": {
-          "description": "Controls whether the response is required to be answered.",
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
           "type": "boolean"
         },
         "requiredLabel": {
@@ -898,12 +908,19 @@
         "type": {
           "const": "longText",
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
         "id",
         "prompt",
-        "required",
         "type"
       ],
       "type": "object"
@@ -965,7 +982,7 @@
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
+          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
           "type": "boolean"
         },
         "response": {
@@ -974,6 +991,10 @@
             "$ref": "#/definitions/Response"
           },
           "type": "array"
+        },
+        "responseDividers": {
+          "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
@@ -993,7 +1014,7 @@
     },
     "MatrixResponse": {
       "additionalProperties": false,
-      "description": "The MatrixResponse interface is used to define the properties of a matrix radio or matrix checkbox response. Question options are rendered as rows of the matrix, each row containing its own radio/checkbox group. Answer options are rendered as column headers of the matrix. These can be customized by passing in the custom strings into the answer options. Alternatively, `answerOptions` can be set to one of the following custom strings: 'satisfaction5','satisfaction7', 'likely5', 'likely7'. This will automatically generate the appropriate headers for the matrix.\n\nExample for a 5-scale satisfaction matrix with three questions:\n\n```js { \"id\": \"multi-satisfaction\", \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable) for the following items.\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"matrix-radio\", \"answerOptions\": \"satisfaction5\", \"questionOptions\": [  \"The tool we created\",  \"The technique we developed\",  \"The authors of the tools\" ] } ```\n\nHere's an example using custom columns (answerOptions):\n\n```js { \"id\": \"multi-custom\", \"prompt\": \"Which categories do the following items belong to?\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"matrix-checkbox\", \"answerOptions\": [  \"Has Legs\",  \"Has Wings\",  \"Can Swim\" ], \"questionOptions\": [  \"Dog\",  \"Snake\",  \"Eagle\",  \"Salmon\",  \"Platypus\" ]\n\n} ```",
+      "description": "The MatrixResponse interface is used to define the properties of a matrix radio or matrix checkbox response. Question options are rendered as rows of the matrix, each row containing its own radio/checkbox group. Answer options are rendered as column headers of the matrix. These can be customized by passing in the custom strings into the answer options. Alternatively, `answerOptions` can be set to one of the following custom strings: 'satisfaction5','satisfaction7', 'likely5', 'likely7'. This will automatically generate the appropriate headers for the matrix.\n\nExample for a 5-scale satisfaction matrix with three questions:\n\n```js { \"id\": \"multi-satisfaction\", \"prompt\": \"Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable) for the following items.\", \"location\": \"aboveStimulus\", \"type\": \"matrix-radio\", \"answerOptions\": \"satisfaction5\", \"questionOptions\": [  \"The tool we created\",  \"The technique we developed\",  \"The authors of the tools\" ] } ```\n\nHere's an example using custom columns (answerOptions):\n\n```js { \"id\": \"multi-custom\", \"prompt\": \"Which categories do the following items belong to?\", \"location\": \"aboveStimulus\", \"type\": \"matrix-checkbox\", \"answerOptions\": [  \"Has Legs\",  \"Has Wings\",  \"Can Swim\" ], \"questionOptions\": [  \"Dog\",  \"Snake\",  \"Eagle\",  \"Salmon\",  \"Platypus\" ]\n\n} ```",
       "properties": {
         "answerOptions": {
           "anyOf": [
@@ -1050,7 +1071,7 @@
           "type": "array"
         },
         "required": {
-          "description": "Controls whether the response is required to be answered.",
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
           "type": "boolean"
         },
         "requiredLabel": {
@@ -1070,6 +1091,14 @@
             "matrix-checkbox"
           ],
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1077,7 +1106,6 @@
         "id",
         "prompt",
         "questionOptions",
-        "required",
         "type"
       ],
       "type": "object"
@@ -1103,7 +1131,7 @@
     },
     "NumericalResponse": {
       "additionalProperties": false,
-      "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.\n\nExample: ```js { \"id\": \"q-numerical\", \"prompt\": \"Numerical example\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"numerical\", \"placeholder\": \"Enter your age, range from 0 - 120\", \"max\": 120, \"min\": 0 } ```",
+      "description": "The NumericalResponse interface is used to define the properties of a numerical response. NumericalResponses render as a text input that only accepts numbers, and can optionally have a min and max value, or a placeholder.\n\nExample: ```js { \"id\": \"q-numerical\", \"prompt\": \"Numerical example\", \"location\": \"aboveStimulus\", \"type\": \"numerical\", \"placeholder\": \"Enter your age, range from 0 - 120\", \"max\": 120, \"min\": 0 } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -1138,7 +1166,7 @@
           "type": "string"
         },
         "required": {
-          "description": "Controls whether the response is required to be answered.",
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
           "type": "boolean"
         },
         "requiredLabel": {
@@ -1155,19 +1183,26 @@
         "type": {
           "const": "numerical",
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
         "id",
         "prompt",
-        "required",
         "type"
       ],
       "type": "object"
     },
     "QuestionnaireComponent": {
       "additionalProperties": false,
-      "description": "A QuestionnaireComponent is used to render simple questions that require a response. The main use case of this component type is to ask participants questions when you don't need to render a stimulus. Please note, that even though we're not using a stimulus, the responses still require a `location`. For example this could be used to collect demographic information from a participant using the following snippet:\n\n```js { \"type\": \"questionnaire\", \"response\": [  {    \"id\": \"gender\",    \"prompt\": \"Gender:\",    \"required\": true,    \"location\": \"belowStimulus\",    \"type\": \"checkbox\",    \"options\": [\"Man\", \"Woman\", \"Genderqueer\", \"Third-gender\", ...]  } ] } ```",
+      "description": "A QuestionnaireComponent is used to render simple questions that require a response. The main use case of this component type is to ask participants questions when you don't need to render a stimulus. Please note, that even though we're not using a stimulus, the responses still require a `location`. For example this could be used to collect demographic information from a participant using the following snippet:\n\n```js { \"type\": \"questionnaire\", \"response\": [  {    \"id\": \"gender\",    \"prompt\": \"Gender:\",    \"location\": \"belowStimulus\",    \"type\": \"checkbox\",    \"options\": [\"Man\", \"Woman\", \"Genderqueer\", \"Third-gender\", ...]  } ] } ```",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
@@ -1218,7 +1253,7 @@
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
+          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
           "type": "boolean"
         },
         "response": {
@@ -1227,6 +1262,10 @@
             "$ref": "#/definitions/Response"
           },
           "type": "array"
+        },
+        "responseDividers": {
+          "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
@@ -1245,10 +1284,14 @@
     },
     "RadioResponse": {
       "additionalProperties": false,
-      "description": "The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection. RadioResponses render as a radio input with user specified options, and optionally left and right labels.\n\nExample: ```js { \"id\": \"q-radio\", \"prompt\": \"Radio button example\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"radio\", \"options\": [\"Option 1\", \"Option 2\"] } ```",
+      "description": "The RadioResponse interface is used to define the properties of a radio response. Radios have only one allowable selection. RadioResponses render as a radio input with user specified options, and optionally left and right labels.\n\nExample: ```js { \"id\": \"q-radio\", \"prompt\": \"Radio button example\", \"location\": \"aboveStimulus\", \"type\": \"radio\", \"options\": [\"Option 1\", \"Option 2\"] } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "horizontal": {
+          "description": "Whether to render the radio buttons horizontally. Defaults to false, so they render horizontally.",
           "type": "boolean"
         },
         "id": {
@@ -1286,7 +1329,7 @@
           "type": "string"
         },
         "required": {
-          "description": "Controls whether the response is required to be answered.",
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
           "type": "boolean"
         },
         "requiredLabel": {
@@ -1307,13 +1350,24 @@
         "type": {
           "const": "radio",
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        },
+        "withOther": {
+          "description": "Whether to render the radios with an \"other\" option.",
+          "type": "boolean"
         }
       },
       "required": [
         "id",
         "options",
         "prompt",
-        "required",
         "type"
       ],
       "type": "object"
@@ -1348,7 +1402,7 @@
     },
     "ReactComponent": {
       "additionalProperties": false,
-      "description": "The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.\n\nUnlike other types of components, the path for a React component is relative to the `src/public/` folder. Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study. Your React component which you link to in the path must be default exported from its file.\n\nReact components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.\n\n```ts { parameters: T; setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void } ```\n\nparameters is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component. setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.\n\nSo, for example, if I had the following ReactComponent in my config ```js { type: 'react-component'; path: 'my_study/CoolComponent.tsx'; parameters: {  name: 'Zach';  age: 26; } } ```\n\nMy react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this\n\n```ts export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) { // render something } ```\n\nFor in depth examples, see the following studies, and their associated codebases. https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/v1.0.6/src/public/demo-brush-interactions/assets)",
+      "description": "The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.\n\nUnlike other types of components, the path for a React component is relative to the `src/public/` folder. Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study. Your React component which you link to in the path must be default exported from its file.\n\nReact components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.\n\n```ts { parameters: T; setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void } ```\n\nparameters is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component. setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.\n\nSo, for example, if I had the following ReactComponent in my config ```js { type: 'react-component'; path: 'my_study/CoolComponent.tsx'; parameters: {  name: 'Zach';  age: 26; } } ```\n\nMy react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this\n\n```ts export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) { // render something } ```\n\nFor in depth examples, see the following studies, and their associated codebases. https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/2.0.0-rc7/src/public/demo-click-accuracy-test/assets) https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/2.0.0-rc7/src/public/example-brush-interactions/assets)",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
@@ -1408,7 +1462,7 @@
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
+          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
           "type": "boolean"
         },
         "response": {
@@ -1417,6 +1471,10 @@
             "$ref": "#/definitions/Response"
           },
           "type": "array"
+        },
+        "responseDividers": {
+          "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
@@ -1430,6 +1488,65 @@
       "required": [
         "path",
         "response",
+        "type"
+      ],
+      "type": "object"
+    },
+    "ReactiveResponse": {
+      "additionalProperties": false,
+      "description": "The ReactiveResponse interface is used to define the properties of a reactive response. ReactiveResponses render as a list, that is connected to a WebsiteComponent, VegaComponent, or ReactComponent. When data is sent from the components, it is displayed in the list.\n\n```js { \"id\": \"reactiveResponse\", \"prompt\": \"Answer clicked in the stimulus\", \"location\": \"aboveStimulus\", \"type\": \"reactive\" } ```",
+      "properties": {
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "type": {
+          "const": "reactive",
+          "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
         "type"
       ],
       "type": "object"
@@ -1500,7 +1617,7 @@
           "$ref": "#/definitions/CheckboxResponse"
         },
         {
-          "$ref": "#/definitions/IFrameResponse"
+          "$ref": "#/definitions/ReactiveResponse"
         },
         {
           "$ref": "#/definitions/MatrixResponse"
@@ -1517,7 +1634,7 @@
     },
     "ShortTextResponse": {
       "additionalProperties": false,
-      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.\n\n```js { \"id\": \"q-short-text\", \"prompt\": \"Short text example\", \"required\": true, \"location\": \"aboveStimulus\", \"type\": \"shortText\", \"placeholder\": \"Enter your answer here\" } ```",
+      "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.\n\n```js { \"id\": \"q-short-text\", \"prompt\": \"Short text example\", \"location\": \"aboveStimulus\", \"type\": \"shortText\", \"placeholder\": \"Enter your answer here\" } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -1544,7 +1661,7 @@
           "type": "string"
         },
         "required": {
-          "description": "Controls whether the response is required to be answered.",
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
           "type": "boolean"
         },
         "requiredLabel": {
@@ -1561,12 +1678,19 @@
         "type": {
           "const": "shortText",
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
         "id",
         "prompt",
-        "required",
         "type"
       ],
       "type": "object"
@@ -1593,7 +1717,7 @@
     },
     "SliderResponse": {
       "additionalProperties": false,
-      "description": "The SliderResponse interface is used to define the properties of a slider response. SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100.\n\nExample: ```js { \"id\": \"q-slider\", \"prompt\": \"How are you feeling?\", \"location\": \"aboveStimulus\", \"required\": true, \"type\": \"slider\", \"options\": [  {    \"label\": \"Bad\",    \"value\": 0  },  {    \"label\": \"OK\",    \"value\": 50  },  {    \"label\": \"Good\",    \"value\": 100  } ] } ```",
+      "description": "The SliderResponse interface is used to define the properties of a slider response. SliderResponses render as a slider input with user specified steps. For example, you could have steps of 0, 50, and 100.\n\nExample: ```js { \"id\": \"q-slider\", \"prompt\": \"How are you feeling?\", \"location\": \"aboveStimulus\", \"type\": \"slider\", \"options\": [  {    \"label\": \"Bad\",    \"value\": 0  },  {    \"label\": \"OK\",    \"value\": 50  },  {    \"label\": \"Good\",    \"value\": 100  } ] } ```",
       "properties": {
         "hidden": {
           "description": "Controls whether the response is hidden.",
@@ -1623,7 +1747,7 @@
           "type": "string"
         },
         "required": {
-          "description": "Controls whether the response is required to be answered.",
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
           "type": "boolean"
         },
         "requiredLabel": {
@@ -1640,13 +1764,20 @@
         "type": {
           "const": "slider",
           "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
         }
       },
       "required": [
         "id",
         "options",
         "prompt",
-        "required",
         "type"
       ],
       "type": "object"
@@ -1672,7 +1803,7 @@
     },
     "StudyConfig": {
       "additionalProperties": false,
-      "description": "The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.\n\n```js { \"$schema\": \"https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/StudyConfigSchema.json\", \"studyMetadata\": {  ... }, \"uiConfig\": {  ... }, \"components\": {  ... }, \"sequence\": {  ... } } ```\n\n:::info For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually. ::: <br/>\n\nThe `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.",
+      "description": "The StudyConfig interface is used to define the properties of a study configuration. This is a JSON object with four main components: the StudyMetadata, the UIConfig, the Components, and the Sequence. Below is the general template that should be followed when constructing a Study configuration file.\n\n```js { \"$schema\": \"https://raw.githubusercontent.com/revisit-studies/study/v2.0.0/src/parser/StudyConfigSchema.json\", \"studyMetadata\": {  ... }, \"uiConfig\": {  ... }, \"components\": {  ... }, \"sequence\": {  ... } } ```\n\n:::info For information about each of the individual pieces of the study configuration file, you can visit the documentation for each one individually. ::: <br/>\n\nThe `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration.",
       "properties": {
         "$schema": {
           "description": "A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information",
@@ -1702,10 +1833,6 @@
             "type": "string"
           },
           "type": "array"
-        },
-        "recordStudyAudio": {
-          "description": "Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.",
-          "type": "boolean"
         },
         "sequence": {
           "$ref": "#/definitions/ComponentBlock",
@@ -1802,9 +1929,21 @@
           "description": "The path to the logo image. This is displayed on the landing page and the header.",
           "type": "string"
         },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. Defaults to false.",
+          "type": "boolean"
+        },
         "numSequences": {
           "description": "The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000.",
           "type": "number"
+        },
+        "participantNameField": {
+          "description": "The default name field for a participant. Directs revisit to use the task and response id as a name in UI elements. For example, if you wanted the response 'prolificId' from the task 'introduction' to be the name, this field would be 'introduction.prolificId'",
+          "type": "string"
+        },
+        "recordStudyAudio": {
+          "description": "Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.",
+          "type": "boolean"
         },
         "sidebar": {
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question.",
@@ -1843,9 +1982,193 @@
       ],
       "type": "object"
     },
+    "VegaComponent": {
+      "anyOf": [
+        {
+          "$ref": "#/definitions/VegaComponentPath"
+        },
+        {
+          "$ref": "#/definitions/VegaComponentConfig"
+        }
+      ]
+    },
+    "VegaComponentConfig": {
+      "additionalProperties": false,
+      "description": "The VegaComponentConfig interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component by adding Vega/Vega-Lite specs within the reVISit config itself.\n\nTo do this, would use the following snippet: ```js { \"type\": \"vega\", \"config\": { ... vega specs here ...}, }\n\nIIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec's signals section: ```js { \"signals\": [  {    \"name\": \"revisitAnswer\",    \"value\": {},    \"on\": [      {        \"events\": \"rect:click\",        \"update\": \"{responseId: 'vegaDemoResponse1', response: datum.category}\"      }    ]  } ] } In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. ```",
+      "properties": {
+        "allowFailedTraining": {
+          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "type": "boolean"
+        },
+        "config": {
+          "description": "The vega or vega-lite configuration.",
+          "type": "object"
+        },
+        "correctAnswer": {
+          "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instruction": {
+          "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the instructions."
+        },
+        "meta": {
+          "additionalProperties": {},
+          "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "object"
+        },
+        "nextButtonDisableTime": {
+          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "type": "number"
+        },
+        "nextButtonEnableTime": {
+          "description": "A timer (in ms) after which the next button will be enabled.",
+          "type": "number"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the next button."
+        },
+        "nextButtonText": {
+          "description": "The text that is displayed on the next button.",
+          "type": "string"
+        },
+        "provideFeedback": {
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "recordAudio": {
+          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "type": "boolean"
+        },
+        "response": {
+          "description": "The responses to the component",
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "responseDividers": {
+          "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
+        },
+        "trainingAttempts": {
+          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "type": "number"
+        },
+        "type": {
+          "const": "vega",
+          "type": "string"
+        }
+      },
+      "required": [
+        "config",
+        "response",
+        "type"
+      ],
+      "type": "object"
+    },
+    "VegaComponentPath": {
+      "additionalProperties": false,
+      "description": "The VegaComponentPath interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component with path pointing to your Vega/Vega-Lite specs file.\n\nFor example, to render a vega based stimuli with a path of `<study-name>/assets/vega.spec.json`, you would use the following snippet: ```js { \"type\": \"vega\", \"path\": \"<study-name>/assets/vega.spec.json\", } ```\n\nIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec file's signals section: ```js { \"signals\": [  {    \"name\": \"revisitAnswer\",    \"value\": {},    \"on\": [      {        \"events\": \"rect:click\",        \"update\": \"{responseId: 'vegaDemoResponse1', response: datum.category}\"      }    ]  } ] } In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. This signal is then passed to reVISit as the participant's response. ```",
+      "properties": {
+        "allowFailedTraining": {
+          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "type": "boolean"
+        },
+        "correctAnswer": {
+          "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instruction": {
+          "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the instructions."
+        },
+        "meta": {
+          "additionalProperties": {},
+          "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "object"
+        },
+        "nextButtonDisableTime": {
+          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "type": "number"
+        },
+        "nextButtonEnableTime": {
+          "description": "A timer (in ms) after which the next button will be enabled.",
+          "type": "number"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ResponseBlockLocation",
+          "description": "The location of the next button."
+        },
+        "nextButtonText": {
+          "description": "The text that is displayed on the next button.",
+          "type": "string"
+        },
+        "path": {
+          "description": "The path to the vega file. This should be a relative path from the public folder.",
+          "type": "string"
+        },
+        "provideFeedback": {
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "recordAudio": {
+          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "type": "boolean"
+        },
+        "response": {
+          "description": "The responses to the component",
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "responseDividers": {
+          "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
+        },
+        "trainingAttempts": {
+          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "type": "number"
+        },
+        "type": {
+          "const": "vega",
+          "type": "string"
+        }
+      },
+      "required": [
+        "path",
+        "response",
+        "type"
+      ],
+      "type": "object"
+    },
     "WebsiteComponent": {
       "additionalProperties": false,
-      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder.\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/assets/website.html\", } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/website.html\", \"parameters\": {  \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3] } \"response\": [  {    \"id\": \"barChart\",    \"prompt\": \"Your selected answer:\",    \"required\": true,    \"location\": \"belowStimulus\",    \"type\": \"iframe\"  } ], } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {  const barData = data['barData'];  ... });\n\n// Call out that 'barChart' needs to match ID in 'response' object Revisit.postAnswers({ barChart: userAnswer }); </script> ```\n\n If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenanceGraph` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.\n\n```js const trrack = initializeTrrack({ initialState, registry });\n\n... Revisit.postProvenance(trrack.graph.backend); ```",
+      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder.\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/assets/website.html\", } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/website.html\", \"parameters\": {  \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3] } \"response\": [  {    \"id\": \"barChart\",    \"prompt\": \"Your selected answer:\",    \"location\": \"belowStimulus\",    \"type\": \"reactive\"  } ], } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {  const barData = data['barData'];  ... });\n\n// Call out that 'barChart' needs to match ID in 'response' object Revisit.postAnswers({ barChart: userAnswer }); </script> ```\n\n If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenanceGraph` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.\n\n```js const trrack = initializeTrrack({ initialState, registry });\n\n... Revisit.postProvenance(trrack.graph.backend); ```",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
@@ -1905,7 +2228,7 @@
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.",
+          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
           "type": "boolean"
         },
         "response": {
@@ -1914,6 +2237,10 @@
             "$ref": "#/definitions/Response"
           },
           "type": "array"
+        },
+        "responseDividers": {
+          "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",

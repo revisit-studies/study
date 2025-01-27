@@ -26,6 +26,7 @@ The different component types:
 - [MarkdownComponent](interfaces/MarkdownComponent.md)
 - [QuestionnaireComponent](interfaces/QuestionnaireComponent.md)
 - [ReactComponent](interfaces/ReactComponent.md)
+- [VegaComponent](type-aliases/VegaComponent.md)
 - [WebsiteComponent](interfaces/WebsiteComponent.md)
 
 ## Responses
@@ -33,24 +34,40 @@ The different component types:
 Responses allow study designers to collect responses from participants  Responses are included on administrative forms, such as consent or training, but most importantly as a response to a stimulus.
 
 - [Response](type-aliases/Response.md)
-- [IFrameResponse](interfaces/IFrameResponse.md)
+- [ReactiveResponse](interfaces/ReactiveResponse.md)
 - [Answer](interfaces/Answer.md)
 
 ### Form Elements
 
-Responses are provided as form elements. ReVISit supports the following form elements:
+Responses are provided as form elements. See the [example](https://revisit.dev/study/demo-survey/) and the [example-source](https://github.com/revisit-studies/study/blob/main/public/demo-survey/config.json)
 
+ReVISit supports the following form elements:
+
+The BaseResponse contains generic fields that all form elements share: 
 - [BaseResponse](interfaces/BaseResponse.md)
-- [CheckboxResponse](interfaces/CheckboxResponse.md)
-- [DropdownResponse](interfaces/DropdownResponse.md)
-- [LikertResponse](interfaces/LikertResponse.md)
+
+You can ask for text responses: 
 - [LongTextResponse](interfaces/LongTextResponse.md)
+- [ShortTextResponse](interfaces/ShortTextResponse.md)
+
+Numerical responses via fields or sliders: 
 - [NumericalResponse](interfaces/NumericalResponse.md)
+- [SliderResponse](interfaces/SliderResponse.md)
+
+Choices of items via checkboxes or drop-downs: 
+- [CheckboxResponse](interfaces/CheckboxResponse.md)
+- [RadioResponse](interfaces/RadioResponse.md)
+- [DropdownResponse](interfaces/DropdownResponse.md)
+
+Likert-style rating scales: 
+- [LikertResponse](interfaces/LikertResponse.md)
+
+Matrix-style options that can be used for numerical or categorical responses:
+- [MatrixResponse](interfaces/MatrixResponse.md)
+
+You can specify numerical and textual responses through those interfaces: 
 - [NumberOption](interfaces/NumberOption.md)
 - [StringOption](interfaces/StringOption.md)
-- [RadioResponse](interfaces/RadioResponse.md)
-- [ShortTextResponse](interfaces/ShortTextResponse.md)
-- [SliderResponse](interfaces/SliderResponse.md)
 
 ## Sequencing
 

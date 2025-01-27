@@ -3,7 +3,7 @@ import {
   useCallback, useEffect, useMemo, useState,
 } from 'react';
 import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import { useNextStep } from '../store/hooks/useNextStep';
 import { IndividualComponent } from '../parser/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
@@ -41,14 +41,14 @@ export function NextButton({
     const interval = setInterval(() => {
       time += 100;
       setTimer(time);
-    }, 500);
+    }, 100);
     return () => {
       clearInterval(interval);
     };
   }, []);
   useEffect(() => {
     if (timer && nextButtonDisableTime && timer >= nextButtonDisableTime && studyConfig.uiConfig.timeoutReject) {
-      navigate('./__timeout');
+      navigate('./../__timedOut');
     }
   }, [nextButtonDisableTime, timer, navigate, studyConfig.uiConfig.timeoutReject]);
 
@@ -60,6 +60,22 @@ export function NextButton({
     },
     [nextButtonDisableTime, nextButtonEnableTime, timer],
   );
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Enter' && !disabled && !isNextDisabled && buttonTimerSatisfied) {
+        goToNextStep();
+      }
+    };
+
+    if (studyConfig.uiConfig.nextOnEnter) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+    return () => {};
+  }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, studyConfig.uiConfig.nextOnEnter]);
 
   return (
     <>

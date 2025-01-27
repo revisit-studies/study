@@ -1,0 +1,200 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Question Types and Form Elements Demo",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-30",
+    "description": "A demo of supported survey question types and form elements.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-survey/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true,
+    "enumerateQuestions": true
+  },
+  "components": {
+    "survey": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q-dropdown",
+          "prompt": "Dropdown example – which chart do you like best?",
+          "secondaryText": "You can specify secondary text to clarify your question.",
+          "location": "aboveStimulus",
+          "type": "dropdown",
+          "placeholder": "Enter your preference",
+          "options": [
+            "Bar",
+            "Bubble",
+            "Pie",
+            "Stacked Bar"
+          ]
+        },
+        {
+          "id": "q-numerical",
+          "prompt": "Numerical example, required",
+          "secondaryText": "A numeric example",
+          "location": "aboveStimulus",
+          "type": "numerical",
+          "placeholder": "Enter your age here, range from 0 - 100",
+          "max": 100,
+          "min": 0,
+          "withDontKnow": true
+        },
+        {
+          "id": "q-likert",
+          "prompt": "Likert scale example",
+          "secondaryText": "A likert example with 9 items, also showing how to add a divider after the element.",
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 9,
+          "rightLabel": "Like",
+          "leftLabel": "Dislike",
+          "withDivider": true
+        },
+        {
+          "id": "q-multi-satisfaction",
+          "prompt": "Rate your satisfaction from 1 (Highly Unsatisfied) to 5 (Highly Satisfied) for the following items.",
+          "secondaryText": "A simple matrix of Likert responses with predefined options for satisfaction.",
+          "location": "aboveStimulus",
+          "type": "matrix-radio",
+          "answerOptions": "satisfaction5",
+          "questionOptions": [
+            "The tool we created",
+            "The technique we developed",
+            "The authors of the tools"
+          ]
+        },
+        {
+          "id": "multi-custom",
+          "prompt": "Which categories do the following items belong to?",
+          "secondaryText": "A matrix of checkboxes with custom options for categorization.",
+          "location": "aboveStimulus",
+          "type": "matrix-checkbox",
+          "answerOptions": [
+            "Has Legs",
+            "Has Wings",
+            "Can Swim"
+          ],
+          "questionOptions": [
+            "Dog",
+            "Snake",
+            "Eagle",
+            "Salmon",
+            "Platypus"
+          ]
+        },
+        {
+          "id": "q-short-text",
+          "prompt": "Short text example",
+          "secondaryText": "A short text example",
+          "location": "aboveStimulus",
+          "type": "shortText",
+          "placeholder": "Enter your answer here"
+        },
+        {
+          "id": "q-long-text",
+          "prompt": "Long text example",
+          "secondaryText": "A text box for long text",
+          "location": "aboveStimulus",
+          "type": "longText",
+          "placeholder": "Enter your long comments here"
+        },
+        {
+          "id": "q-checkbox",
+          "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
+          "secondaryText": "Checkboxes for multi-selection",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "location": "aboveStimulus",
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "withOther": true
+        },
+        {
+          "id": "q-checkbox-horizontal",
+          "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
+          "secondaryText": "Checkboxes for multi-selection",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "location": "aboveStimulus",
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "horizontal": true,
+          "withOther": true
+        },
+        {
+          "id": "q-radio",
+          "prompt": "Radio button example",
+          "secondaryText": "Radio buttons for single selection",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ],
+          "withOther": true
+        },
+        {
+          "id": "q-radio-horizontal",
+          "prompt": "Horizontal Radio button example",
+          "secondaryText": "Radio buttons for single selection",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2 this is long a long option that will wrap"
+          ],
+          "horizontal": true,
+          "withOther": true
+        },
+        {
+          "id": "q-slider",
+          "prompt": "Slider example",
+          "secondaryText": "A slider for 0-100 with 3 breakpoints for bad, mid, and good",
+          "location": "aboveStimulus",
+          "type": "slider",
+          "options": [
+            {
+              "label": "Bad",
+              "value": 0
+            },
+            {
+              "label": "Mid",
+              "value": 50
+            },
+            {
+              "label": "Good",
+              "value": 100
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "survey"
+    ]
+  }
+}

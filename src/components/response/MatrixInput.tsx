@@ -3,7 +3,7 @@ import {
 } from '@mantine/core';
 import { ChangeEvent } from 'react';
 import { MatrixResponse, StringOption } from '../../parser/types';
-import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { useStoreDispatch, useStoreActions } from '../../store/store';
 
 function CheckboxComponent({
@@ -38,6 +38,7 @@ function CheckboxComponent({
           key={`${checkbox.label}-${idx}`}
           checked={answer.value[question.label].split('|').includes(checkbox.value)}
           onChange={(event) => onChange(event, question.label, checkbox)}
+          value={checkbox.value}
         />
       ))}
     </div>
@@ -94,7 +95,7 @@ function RadioGroupComponent({
   );
 }
 
-export default function MatrixInput({
+export function MatrixInput({
   response,
   answer,
   index,
@@ -114,6 +115,7 @@ export default function MatrixInput({
     answerOptions,
     questionOptions,
     prompt,
+    secondaryText,
     required,
   } = response;
 
@@ -155,19 +157,21 @@ export default function MatrixInput({
   const _m = _questions.length;
   return (
     <>
-      <Flex direction="row" wrap="nowrap" gap={0}>
-        {enumerateQuestions && <Box style={{ minWidth: 'fit-content' }}>{`${index}. `}</Box>}
+      <Flex direction="row" wrap="nowrap" gap={4}>
+        {enumerateQuestions && <Box style={{ minWidth: 'fit-content', fontSize: 16, fontWeight: 500 }}>{`${index}. `}</Box>}
         <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
           <ReactMarkdownWrapper text={prompt} required={required} />
         </Box>
       </Flex>
-      <div
+      <Text c="dimmed" size="sm" mt={0}>{secondaryText}</Text>
+      <Box
         style={{
           display: 'grid',
           gridTemplateColumns: 'auto 1fr',
           gridTemplateRows: 'auto 1fr',
-          margin: '40px 100px 100px 100px',
         }}
+        m="md"
+        mt="xs"
       >
 
         {/* Empty Square */}
@@ -216,13 +220,18 @@ export default function MatrixInput({
             <Text
               key={`question-${idx}-label`}
               style={{
-                height: '60px',
+                height: '80px',
+                width: '100%',
                 display: 'flex',
                 alignItems: 'center',
+                justifyContent: 'end',
                 borderRight: '1px solid var(--mantine-color-dark-0)',
                 backgroundColor: `${(idx + 1) % 2 === 0 ? 'var(--mantine-color-gray-2)' : 'white'}`,
-                paddingLeft: '10px',
+                overflowY: 'hidden',
               }}
+              ta="right"
+              p="sm"
+              miw={140}
             >
               {entry.label}
             </Text>
@@ -273,7 +282,7 @@ export default function MatrixInput({
             </div>
           ))}
         </div>
-      </div>
+      </Box>
     </>
   );
 }

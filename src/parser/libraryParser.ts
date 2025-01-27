@@ -1,4 +1,3 @@
-import { parse as hjsonParse } from 'hjson';
 import Ajv from 'ajv';
 import { merge } from 'lodash';
 import librarySchema from './LibraryConfigSchema.json';
@@ -40,6 +39,18 @@ export function expandLibrarySequences(sequence: StudyConfig['sequence'], import
         const [libraryName, sequenceName] = component.split(seOrSequences);
         // Remove the $ from the library name
         const cleanLibraryName = libraryName.slice(1);
+
+        // Check if the library is in the imported libraries
+        if (!importedLibrariesData[cleanLibraryName]) {
+          const error: ParserErrorWarning = {
+            message: `Library ${cleanLibraryName} not found in imported libraries`,
+            instancePath: '',
+            params: { action: 'check the library name' },
+          };
+          errors.push(error);
+          return component;
+        }
+
         const library = importedLibrariesData[cleanLibraryName];
 
         let librarySequence = library.sequences[sequenceName];
@@ -87,7 +98,7 @@ export function parseLibraryConfig(fileData: string, libraryName: string): Parse
   let data: LibraryConfig | undefined;
 
   try {
-    data = hjsonParse(fileData);
+    data = JSON.parse(fileData);
     validatedData = libraryValidate(data) as boolean;
   } catch {
     validatedData = false;

@@ -1,0 +1,37 @@
+name: Release new version
+
+on:
+  pull_request:
+    branches: [main]
+    types: [closed]
+
+jobs:
+  release:
+    if: github.event.pull_request.merged
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.PAT }}
+
+      - name: Run make-release.sh to modify version numbers across the repo
+        run: |
+          find src public -type f -exec env LANG=C sed -i -E "s/githubusercontent\.com\/re[Vv][Ii][Ss]it-studies\/study\/.*\/src/githubusercontent.com\/revisit-studies\/study\/${{ github.event.pull_request.title }}\/src/g" {} +
+          find src public -type f -exec env LANG=C sed -i -E "s/github.com\/re[Vv][Ii][Ss]it-studies\/study\/tree\/v[^\/]*\/([^\s]*)/github.com\/revisit-studies\/study\/tree\/${{ github.event.pull_request.title }}\/\1/g" {} +
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "jackwilburn@tutanota.com"
+          git config --local user.name "Jack Wilburn"
+          git add .
+          git commit -m "Release version ${{ github.event.pull_request.title }}"
+          git tag -a ${{ github.event.pull_request.title }} -m "Release version ${{ github.event.pull_request.title }}"
+          git push --follow-tags
+
+      - uses: peter-evans/repository-dispatch@v2
+        name: Build documentation in revisit.dev if repo is in revisit-studies
+        if: ${{ github.repository_owner == 'revisit-studies' }}
+        with:
+          token: ${{ secrets.PAT }}
+          repository: revisit-studies/reVISit-studies.github.io
+          event-type: study_repo_publish

@@ -1,4 +1,4 @@
-import ReactMarkdownWrapper from './ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from './ReactMarkdownWrapper';
 import { ParsedConfig, StudyConfig } from '../parser/types';
 
 export function ErrorLoadingConfig({ issues, type }: { issues: ParsedConfig<StudyConfig>['errors'], type: 'error' | 'warning'}) {

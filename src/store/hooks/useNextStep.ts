@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router';
 import {
   useStoreSelector,
   useStoreActions,
@@ -19,6 +19,8 @@ import { useStudyConfig } from './useStudyConfig';
 import {
   Answer, IndividualComponent, InheritedComponent, StudyConfig,
 } from '../../parser/types';
+import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import { useIsAnalysis } from './useIsAnalysis';
 
 function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: string, componentConfig: IndividualComponent | InheritedComponent, studyConfig: StudyConfig) {
   const componentName = componentId.slice(0, componentId.lastIndexOf('_'));
@@ -49,9 +51,12 @@ export function useNextStep() {
   const sequence = useStoreSelector((state) => state.sequence);
   const answers = useStoreSelector((state) => state.answers);
   const modes = useStoreSelector((state) => state.modes);
+  const otherTexts = useStoreSelector((state) => state.otherTexts);
 
   const storeDispatch = useStoreDispatch();
-  const { saveTrialAnswer, setIframeAnswers } = useStoreActions();
+  const {
+    saveTrialAnswer, setreactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox, resetOtherText,
+  } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
   const studyId = useStudyId();
@@ -61,7 +66,8 @@ export function useNextStep() {
   const areResponsesValid = useAreResponsesValid(identifier);
 
   // Status of the next button. If false, the next button should be disabled
-  const isNextDisabled = typeof currentStep !== 'number' || !areResponsesValid;
+  const isAnalysis = useIsAnalysis();
+  const isNextDisabled = typeof currentStep !== 'number' || isAnalysis || !areResponsesValid;
 
   const storedAnswer = useStoredAnswer();
 
@@ -83,9 +89,21 @@ export function useNextStep() {
         return { ...acc, ...(curr as ValidationStatus).values };
       }
       return acc;
-    }, {});
+    }, {}) as StoredAnswer['answer'];
+    // Set the other text in the answer
+    Object.entries(otherTexts).forEach(([key, value]) => {
+      if (Array.isArray(answer[key]) && (answer[key] as string[]).includes('__other')) {
+        (answer[key] as string[]) = (answer[key] as string[]).filter((item) => item !== '__other');
+        (answer[key] as string[]).push(`other:${value}`);
+      }
+      if (typeof answer[key] === 'string' && answer[key] === '__other') {
+        answer[key] = `other:${value}`;
+      }
+    });
     const { provenanceGraph } = trialValidationCopy;
     const endTime = Date.now();
+
+    const { incorrectAnswers, helpButtonClickedCount } = storedAnswer;
 
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
@@ -95,9 +113,11 @@ export function useNextStep() {
         answer: collectData ? answer : {},
         startTime,
         endTime,
+        incorrectAnswers,
         provenanceGraph,
         windowEvents: currentWindowEvents,
         timedOut: !collectData,
+        helpButtonClickedCount,
       };
       storeDispatch(
         saveTrialAnswer({
@@ -114,7 +134,10 @@ export function useNextStep() {
           },
         );
       }
-      storeDispatch(setIframeAnswers({}));
+      storeDispatch(setreactiveAnswers({}));
+      storeDispatch(resetOtherText());
+      storeDispatch(setMatrixAnswersCheckbox(null));
+      storeDispatch(setMatrixAnswersRadio(null));
     }
 
     let nextStep = currentStep + 1;
@@ -149,7 +172,6 @@ export function useNextStep() {
         })) as unknown as StoredAnswer;
 
         // Slim down the validationCandidates to only include the skip condition's component
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const componentsToCheck = condition.check !== 'block' ? Object.entries(validationCandidates).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === condition.name) : Object.entries(validationCandidates);
 
         // Make sure componentsToCheck array is well-formed
@@ -195,8 +217,8 @@ export function useNextStep() {
       });
     }
 
-    navigate(`/${studyId}/${nextStep}${window.location.search}`);
-  }, [currentStep, trialValidation, identifier, windowEvents, dataCollectionEnabled, storedAnswer?.endTime, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setIframeAnswers, studyConfig, participantSequence]);
+    navigate(`/${studyId}/${encryptIndex(nextStep)}${window.location.search}`);
+  }, [currentStep, trialValidation, identifier, otherTexts, storedAnswer, windowEvents, dataCollectionEnabled, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setreactiveAnswers, resetOtherText, setMatrixAnswersCheckbox, setMatrixAnswersRadio, studyConfig, participantSequence]);
 
   return {
     isNextDisabled,

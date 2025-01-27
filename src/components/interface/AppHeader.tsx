@@ -14,30 +14,33 @@ import {
   Text,
 } from '@mantine/core';
 import {
+  IconChartHistogram,
   IconDotsVertical,
   IconMail,
   IconSchema,
   IconUserPlus,
 } from '@tabler/icons-react';
 import { useEffect, useRef, useState } from 'react';
-import { useHref } from 'react-router-dom';
-import { useCurrentStep, useStudyId } from '../../routes/utils';
+import { useHref } from 'react-router';
+import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,
 } from '../../store/store';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 // import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
-import RecordingAudioWaveform from './RecordingAudioWaveform';
+import { RecordingAudioWaveform } from './RecordingAudioWaveform';
 
-export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
+export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
   const metadata = useStoreSelector((state) => state.metadata);
 
   const flatSequence = useFlatSequence();
   const storeDispatch = useStoreDispatch();
-  const { toggleShowHelpText, toggleStudyBrowser } = useStoreActions();
+  const { toggleShowHelpText, toggleStudyBrowser, incrementHelpCounter } = useStoreActions();
   const { storageEngine } = useStorageEngine();
+
+  const currentComponent = useCurrentComponent();
 
   const currentStep = useCurrentStep();
 
@@ -100,7 +103,7 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"
-                onClick={() => storeDispatch(toggleShowHelpText())}
+                onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier: `${currentComponent}_${currentStep}` })); }}
               >
                 Help
               </Button>
@@ -127,7 +130,6 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
                     Study Browser
                   </Menu.Item>
                 )}
-
                 <Menu.Item
                   component="a"
                   href={
@@ -139,13 +141,21 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
                 >
                   Contact
                 </Menu.Item>
-
                 {studyNavigatorEnabled && (
                   <Menu.Item
                     leftSection={<IconUserPlus size={14} />}
                     onClick={() => getNewParticipant(storageEngine, studyConfig, metadata, studyHref)}
                   >
                     Next Participant
+                  </Menu.Item>
+                )}
+                {studyNavigatorEnabled && (
+                  <Menu.Item
+                    leftSection={<IconChartHistogram size={14} />}
+                    component="a"
+                    href={`${PREFIX}analysis/stats/${studyId}`}
+                  >
+                    Analyze & Manage
                   </Menu.Item>
                 )}
               </Menu.Dropdown>

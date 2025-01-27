@@ -96,6 +96,8 @@ export interface UIConfig {
   autoDownloadTime?: number;
   /** The message to display when the study ends. */
   studyEndMsg?: string;
+  /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.  */
+  recordStudyAudio?: boolean;
   /** Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. */
   sidebar: boolean;
   /** The width of the left sidebar. Defaults to 300. */
@@ -116,6 +118,10 @@ export interface UIConfig {
   enumerateQuestions?: boolean;
   /** Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set. */
   timeoutReject?: boolean;
+  /** The default name field for a participant. Directs revisit to use the task and response id as a name in UI elements. For example, if you wanted the response 'prolificId' from the task 'introduction' to be the name, this field would be 'introduction.prolificId' */
+  participantNameField?: string;
+  /** Whether enter key should move to the next question. Defaults to false. */
+  nextOnEnter?: boolean;
 }
 
 /**
@@ -165,8 +171,8 @@ export interface BaseResponse {
   prompt: string;
   /** The secondary text that is displayed to the participant under the prompt. This does not accept markdown. */
   secondaryText?: string;
-  /** Controls whether the response is required to be answered. */
-  required: boolean;
+  /** Controls whether the response is required to be answered. Defaults to true. */
+  required?: boolean;
   /** Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus` */
   location?: ResponseBlockLocation;
   /** You can provide a required value, which makes it so a participant has to answer with that value. */
@@ -177,6 +183,10 @@ export interface BaseResponse {
   paramCapture?: string;
   /** Controls whether the response is hidden. */
   hidden?: boolean;
+  /** Renders the response with a trailing divider. */
+  withDivider?: boolean;
+  /** Renders the response with an option for "I don't know". This counts as a completed answer for the validation. */
+  withDontKnow?: boolean;
 }
 
 /**
@@ -188,7 +198,6 @@ export interface BaseResponse {
 {
   "id": "q-numerical",
   "prompt": "Numerical example",
-  "required": true,
   "location": "aboveStimulus",
   "type": "numerical",
   "placeholder": "Enter your age, range from 0 - 120",
@@ -215,7 +224,6 @@ export interface NumericalResponse extends BaseResponse {
 {
   "id": "q-short-text",
   "prompt": "Short text example",
-  "required": true,
   "location": "aboveStimulus",
   "type": "shortText",
   "placeholder": "Enter your answer here"
@@ -236,7 +244,6 @@ export interface ShortTextResponse extends BaseResponse {
 {
   "id": "q-name",
   "prompt": "What is your first name?",
-  "required": true,
   "location": "aboveStimulus",
   "type": "longText",
   "placeholder": "Please enter your first name"
@@ -262,7 +269,6 @@ export interface LongTextResponse extends BaseResponse {
 {
   "id": "q-satisfaction",
   "prompt": "Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable).",
-  "required": true,
   "location": "aboveStimulus",
   "type": "likert",
   "leftLabel": "Not Enjoyable",
@@ -292,7 +298,6 @@ export interface LikertResponse extends BaseResponse {
 {
   "id": "multi-satisfaction",
   "prompt": "Rate your satisfaction from 1 (not enjoyable) to 5 (very enjoyable) for the following items.",
-  "required": true,
   "location": "aboveStimulus",
   "type": "matrix-radio",
   "answerOptions": "satisfaction5",
@@ -310,7 +315,6 @@ Here's an example using custom columns (answerOptions):
 {
   "id": "multi-custom",
   "prompt": "Which categories do the following items belong to?",
-  "required": true,
   "location": "aboveStimulus",
   "type": "matrix-checkbox",
   "answerOptions": [
@@ -346,7 +350,6 @@ export interface MatrixResponse extends BaseResponse {
 {
   "id": "q-color",
   "prompt": "What is your favorite color?",
-  "required": true,
   "location": "aboveStimulus",
   "type": "dropdown",
   "placeholder": "Please choose your favorite color",
@@ -374,7 +377,6 @@ export interface DropdownResponse extends BaseResponse {
   "id": "q-slider",
   "prompt": "How are you feeling?",
   "location": "aboveStimulus",
-  "required": true,
   "type": "slider",
   "options": [
     {
@@ -409,7 +411,6 @@ export interface SliderResponse extends BaseResponse {
 {
   "id": "q-radio",
   "prompt": "Radio button example",
-  "required": true,
   "location": "aboveStimulus",
   "type": "radio",
   "options": ["Option 1", "Option 2"]
@@ -425,6 +426,10 @@ export interface RadioResponse extends BaseResponse {
   leftLabel?: string;
   /** The right label of the radio group. Used in Likert scales for example */
   rightLabel?: string;
+  /** Whether to render the radio buttons horizontally. Defaults to false, so they render horizontally. */
+  horizontal?: boolean;
+  /** Whether to render the radios with an "other" option. */
+  withOther?: boolean;
 }
 
 /**
@@ -435,7 +440,6 @@ export interface RadioResponse extends BaseResponse {
 {
   "id": "q7",
   "prompt": "Checkbox example (not required)",
-  "required": false,
   "location": "aboveStimulus",
   "type": "checkbox",
   "options": ["Option 1", "Option 2", "Option 3"]
@@ -450,17 +454,30 @@ export interface CheckboxResponse extends BaseResponse {
   minSelections?: number;
   /** The maximum number of selections that are required. */
   maxSelections?: number;
+  /** Whether to render the checkboxes horizontally. Defaults to false, so they render horizontally. */
+  horizontal?: boolean;
+  /** Whether to render the checkboxes with an "other" option. */
+  withOther?: boolean;
 }
 
 /**
- * The IFrameResponse interface is used to define the properties of an iframe response.
- * IFrameResponses render as a list, that is connected to a WebsiteComponent. When data is sent from the WebsiteComponent, it is displayed in the list.
+ * The ReactiveResponse interface is used to define the properties of a reactive response.
+ * ReactiveResponses render as a list, that is connected to a WebsiteComponent, VegaComponent, or ReactComponent. When data is sent from the components, it is displayed in the list.
+ *
+```js
+{
+  "id": "reactiveResponse",
+  "prompt": "Answer clicked in the stimulus",
+  "location": "aboveStimulus",
+  "type": "reactive"
+}
+```
  */
-export interface IFrameResponse extends BaseResponse {
-  type: 'iframe';
+export interface ReactiveResponse extends BaseResponse {
+  type: 'reactive';
 }
 
-export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | IFrameResponse | MatrixResponse;
+export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | ReactiveResponse | MatrixResponse;
 
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.
@@ -477,7 +494,6 @@ export type Response = NumericalResponse | ShortTextResponse | LongTextResponse 
     {
       "id": "response1",
       "prompt": "What is 2 + 2?",
-      "required": true,
       "location": "belowStimulus",
       "type": "numerical"
     }
@@ -536,12 +552,14 @@ export interface BaseIndividualComponent {
   description?: string;
   /** The instruction of the component. This is used to identify and provide additional information for the component in the admin panel. */
   instruction?: string;
-  /** Whether or not to record audio for a component. Only relevant if StudyConfig.recordStudyAudio is true. Defaults to true.  */
+  /** Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.  */
   recordAudio?: boolean;
   /** A timeout (in ms) after which the next button will be disabled. */
   nextButtonDisableTime?: number;
   /** A timer (in ms) after which the next button will be enabled. */
   nextButtonEnableTime?: number;
+  /** Whether to show the response dividers. Defaults to false. */
+  responseDividers?: boolean;
 }
 
 /**
@@ -601,8 +619,8 @@ export default function CoolComponent({ parameters, setAnswer }: StimulusParams<
 ```
  *
  * For in depth examples, see the following studies, and their associated codebases.
- * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/v1.0.6/src/public/demo-click-accuracy-test/assets)
- * https://revisit.dev/study/demo-brush-interactions (https://github.com/revisit-studies/study/v1.0.6/src/public/demo-brush-interactions/assets)
+ * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/2.0.0-rc7/src/public/demo-click-accuracy-test/assets)
+ * https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/2.0.0-rc7/src/public/example-brush-interactions/assets)
  */
 export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
@@ -657,9 +675,8 @@ export interface ImageComponent extends BaseIndividualComponent {
     {
       "id": "barChart",
       "prompt": "Your selected answer:",
-      "required": true,
       "location": "belowStimulus",
-      "type": "iframe"
+      "type": "reactive"
     }
   ],
 }
@@ -710,7 +727,6 @@ export interface WebsiteComponent extends BaseIndividualComponent {
     {
       "id": "gender",
       "prompt": "Gender:",
-      "required": true,
       "location": "belowStimulus",
       "type": "checkbox",
       "options": ["Man", "Woman", "Genderqueer", "Third-gender", ...]
@@ -723,7 +739,80 @@ export interface QuestionnaireComponent extends BaseIndividualComponent {
   type: 'questionnaire';
 }
 
-export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent;
+/**
+ * The VegaComponentPath interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component with path pointing to your Vega/Vega-Lite specs file.
+ *
+ * For example, to render a vega based stimuli with a path of `<study-name>/assets/vega.spec.json`, you would use the following snippet:
+```js
+{
+  "type": "vega",
+  "path": "<study-name>/assets/vega.spec.json",
+}
+```
+
+If you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec file's signals section:
+```js
+{
+  "signals": [
+    {
+      "name": "revisitAnswer",
+      "value": {},
+      "on": [
+        {
+          "events": "rect:click",
+          "update": "{responseId: 'vegaDemoResponse1', response: datum.category}"
+        }
+      ]
+    }
+  ]
+}
+In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response. This signal is then passed to reVISit as the participant's response.
+```
+*/
+export interface VegaComponentPath extends BaseIndividualComponent {
+  type: 'vega';
+  /** The path to the vega file. This should be a relative path from the public folder. */
+  path: string;
+}
+
+/**
+ * The VegaComponentConfig interface is used to define the properties of a Vega Component. This component is used to render a Vega/Vega-Lite Component by adding Vega/Vega-Lite specs within the reVISit config itself.
+ *
+ * To do this, would use the following snippet:
+```js
+{
+  "type": "vega",
+  "config": { ... vega specs here ...},
+}
+
+IIf you are using Vega, you can use signals with `revisitAnswer` to send the user's responses back to the reVISit. For example, you can use the following snippet in your Vega spec's signals section:
+```js
+{
+  "signals": [
+    {
+      "name": "revisitAnswer",
+      "value": {},
+      "on": [
+        {
+          "events": "rect:click",
+          "update": "{responseId: 'vegaDemoResponse1', response: datum.category}"
+        }
+      ]
+    }
+  ]
+}
+In this example, when a user clicks on a rectangle in the Vega chart, the `revisitAnswer` signal is updated with the responseId and response.
+```
+*/
+export interface VegaComponentConfig extends BaseIndividualComponent {
+  type: 'vega';
+  /** The vega or vega-lite configuration. */
+  config: object;
+}
+
+export type VegaComponent = VegaComponentPath | VegaComponentConfig;
+
+export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent | VegaComponent;
 
 /** The DeterministicInterruption interface is used to define an interruption that will be shown at a specific location in the block.
  *
@@ -1165,7 +1254,7 @@ export type BaseComponents = Record<string, Partial<IndividualComponent>>;
 
 ```js
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     ...
   },
@@ -1193,8 +1282,6 @@ export interface StudyConfig {
   $schema: string;
   /** The metadata for the study. This is used to identify the study and version in the data file. */
   studyMetadata: StudyMetadata;
-  /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.  */
-  recordStudyAudio?: boolean;
   /** The UI configuration for the study. This is used to configure the UI of the app. */
   uiConfig: UIConfig;
   /** A list of libraries that are used in the study. This is used to import external libraries into the study. Library names are valid namespaces to be used later. */
@@ -1213,7 +1300,7 @@ export interface StudyConfig {
  *
  * ```js
  * {
- *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/LibraryConfigSchema.json",
+ *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0/src/parser/LibraryConfigSchema.json",
  *   "baseComponents": {
  *     // BaseComponents here are defined exactly as is in the StudyConfig
  *   },
@@ -1229,6 +1316,14 @@ export interface StudyConfig {
 export interface LibraryConfig {
   /** A required json schema property. This should point to the github link for the version of the schema you would like. The `$schema` line is used to verify the schema. If you're using VSCode (or other similar IDEs), including this line will allow for autocomplete and helpful suggestions when writing the study configuration. See examples for more information */
   $schema: string;
+  /** A description of the library. */
+  description: string;
+  /** The reference to the paper where the content of the library is based on. */
+  reference?: string;
+  /** The DOI of the paper where the content of the library is based on. */
+  doi?: string;
+  /** The external link to the paper/website where the content of the library is based on. */
+  externalLink?: string;
   /** The base components that are used in the study. These components can be used to template other components. See [BaseComponents](../../type-aliases/BaseComponents) for more information. */
   baseComponents?: BaseComponents;
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
@@ -1269,5 +1364,5 @@ export type Nullable<T> = T | undefined | null;
  */
 export type Prettify<T> = {
   [K in keyof T]: T[K];
-  /* eslint-disable */
+
 } & {};
