@@ -1,5 +1,5 @@
 {
-    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.6/src/parser/StudyConfigSchema.json",
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
       "title": "Super resolution image evaluation for cancer detection",
       "version": "development",
@@ -13,7 +13,6 @@
         "CEDMAV"
       ]
     },
-    "recordStudyAudio": true,
     "uiConfig": {
       "contactEmail": "ishratjahan.eliza@utah.edu",
       "helpTextPath": "super-resolution-study/assets/help.md",
@@ -23,7 +22,8 @@
       "autoDownloadStudy": false,
       "sidebar": false,
       "enumerateQuestions": false,
-      "sidebarWidth": 408
+      "sidebarWidth": 408,
+      "recordStudyAudio": true
     }, 
     "baseComponents": {
         "Q1":{
@@ -216,8 +216,16 @@
               "placeholder": "Type your comments here"
             }
           ]
+        },
+        "filler": {
+          "type": "react-component",
+          "recordAudio": true,
+          "path": "super-resolution-study/assets/11771-right-filler.tsx",
+          "instruction": "Please zoom-in, pan, zoom-out as needed before answering the questions in the next pages. After answering each question click \"Next\" to proceed to the next question.",
+          "response": []
         }
       },
+
       
     "components": {
       "welcome": {
@@ -259,10 +267,11 @@
         ]
       },
       "filler-1": {
-        "type": "website",
-        "recordAudio": true,
-        "path": "super-resolution-study/assets/11771-right-filler.html",
-        "response": []
+        "baseComponent": "filler",
+        "parameters": {
+          "websiteLink": "https://chpc2.nationalsciencedatafabric.org:11771/app",
+          "pairNumber": 1
+        }
       },
       "pair1-q1":{
         "baseComponent": "Q1",

@@ -25,7 +25,6 @@ import {
   serverTimestamp,
   setDoc,
   where,
-  deleteDoc,
   updateDoc,
   writeBatch,
 } from 'firebase/firestore';
@@ -129,7 +128,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         provider: new ReCaptchaV3Provider(this.RECAPTCHAV3TOKEN),
         isTokenAutoRefreshEnabled: false,
       });
-    } catch (e) {
+    } catch {
       console.warn('Failed to initialize Firebase App Check');
     }
   }
@@ -139,7 +138,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       await enableNetwork(this.firestore);
 
       this.connected = true;
-    } catch (e) {
+    } catch {
       console.warn('Failed to connect to Firebase');
     }
   }
@@ -174,13 +173,13 @@ export class FirebaseStorageEngine extends StorageEngine {
       if (currentConfigHash && currentConfigHash !== configHash) {
         try {
           await this._deleteFromFirebaseStorage('', 'sequenceArray');
-        } catch (error) {
+        } catch {
           // pass, if this happens, we didn't have a sequence array yet
         }
         await this.clearCurrentParticipantId();
       }
 
-      await this.setcurrentConfigHash(configHash);
+      await this._setCurrentConfigHash(configHash);
 
       return Promise.resolve();
     } catch (error) {
@@ -222,10 +221,12 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
     // Initialize participant
     const participantConfigHash = await hash(JSON.stringify(config));
+    const { currentRow, creationIndex } = await this.getSequence();
     this.participantData = {
       participantId: this.currentParticipantId,
       participantConfigHash,
-      sequence: await this.getSequence(),
+      sequence: currentRow,
+      participantIndex: creationIndex,
       answers: {},
       searchParams,
       metadata,
@@ -257,7 +258,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return configHashDocData.exists() ? configHashDocData.data().configHash : null;
   }
 
-  async setcurrentConfigHash(configHash: string) {
+  async _setCurrentConfigHash(configHash: string) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -327,17 +328,22 @@ export class FirebaseStorageEngine extends StorageEngine {
     audioStream: MediaRecorder,
     taskName: string,
   ) {
-    const listener = (data: BlobEvent) => {
-      this._pushToFirebaseStorage(`/audio/${this.currentParticipantId}`, taskName, data.data);
+    let debounceTimeout: NodeJS.Timeout | null = null;
+
+    const listener = async (data: BlobEvent) => {
+      if (debounceTimeout) {
+        return;
+      }
+
+      debounceTimeout = setTimeout(async () => {
+        this._pushToFirebaseStorage(`/audio/${this.currentParticipantId}`, taskName, data.data);
+      }, 500);
     };
 
     audioStream.addEventListener('dataavailable', listener);
     audioStream.requestData();
 
-    // The 0 timeout is to ensure that we let the event get sent before removing the event listener
-    setTimeout(() => {
-      audioStream.removeEventListener('dataavailable', listener);
-    }, 0);
+    // Don't clean up the listener. The stream will be destroyed.
   }
 
   async saveAnswers(answers: Record<string, StoredAnswer>) {
@@ -420,36 +426,46 @@ export class FirebaseStorageEngine extends StorageEngine {
 
     const rejectedQuery = query(
       sequenceAssignmentCollection,
-      where('participantId', '==', ''),
+      where('rejected', '==', true),
+      where('claimed', '==', false),
     );
     const rejectedDocs = await getDocs(rejectedQuery);
     if (rejectedDocs.docs.length > 0) {
       const firstReject = rejectedDocs.docs[0];
       const firstRejectTime = firstReject.data().timestamp;
       if (modes.dataCollectionEnabled) {
-        await deleteDoc(firstReject.ref);
+        await setDoc(firstReject.ref, { claimed: true });
         await setDoc(participantSequenceAssignmentDoc, {
           participantId: this.currentParticipantId,
-          timestamp: firstRejectTime,
+          timestamp: firstRejectTime, // Use the timestamp of the first reject
+          rejected: false,
+          claimed: false,
+          completed: null,
+          createdTime: serverTimestamp(),
         });
       }
     } else if (modes.dataCollectionEnabled) {
       await setDoc(participantSequenceAssignmentDoc, {
         participantId: this.currentParticipantId,
         timestamp: serverTimestamp(),
+        rejected: false,
+        claimed: false,
+        completed: null,
+        createdTime: serverTimestamp(),
       });
     }
 
     // Query all the intents to get a sequence and find our position in the queue
     const intentsQuery = query(
       sequenceAssignmentCollection,
+      // where('rejected', '==', false),
       orderBy('timestamp', 'asc'),
     );
     const intentDocs = await getDocs(intentsQuery);
     const intents = intentDocs.docs.map((intent) => intent.data());
 
     // Get the current row
-    const intentIndex = intents.findIndex(
+    const intentIndex = intents.filter((intent) => !intent.rejected).findIndex(
       (intent) => intent.participantId === this.currentParticipantId,
     ) % sequenceArray.length;
     const selectedIndex = intentIndex === -1
@@ -461,7 +477,10 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Latin square is empty');
     }
 
-    return currentRow;
+    const creationSorted = intents.sort((a, b) => a.createdTime - b.createdTime);
+    const creationIndex = creationSorted.findIndex((intent) => intent.participantId === this.currentParticipantId) + 1;
+
+    return { currentRow, creationIndex };
   }
 
   async getAllParticipantsData() {
@@ -493,17 +512,42 @@ export class FirebaseStorageEngine extends StorageEngine {
     return participantsData;
   }
 
-  async getParticipantData() {
+  async getAudio(
+    task: string,
+    participantId: string,
+  ) {
+    const storage = getStorage();
+
+    const url = await getDownloadURL(ref(storage, `${this.collectionPrefix}${this.studyId}/audio/${participantId}_${task}`));
+
+    const allAudioList = new Promise<string>((resolve) => {
+      const xhr = new XMLHttpRequest();
+      xhr.responseType = 'blob';
+      xhr.onload = () => {
+        const blob = xhr.response;
+
+        const _url = URL.createObjectURL(blob);
+
+        resolve(_url);
+      };
+      xhr.open('GET', url);
+      xhr.send();
+    });
+
+    return allAudioList;
+  }
+
+  async getParticipantData(participantId?: string) {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
 
-    if (this.currentParticipantId === null) {
+    if (this.currentParticipantId === null && !participantId) {
       throw new Error('Participant not initialized');
     }
 
     const participantData = await this._getFromFirebaseStorage(
-      `participants/${this.currentParticipantId}`,
+      `participants/${participantId || this.currentParticipantId}`,
       'participantData',
     );
 
@@ -591,6 +635,10 @@ export class FirebaseStorageEngine extends StorageEngine {
     // Get modes
     const modes = await this.getModes(this.studyId);
 
+    if (this.participantData.completed) {
+      return true;
+    }
+
     this.participantData.completed = true;
     if (modes.dataCollectionEnabled) {
       await this._pushToFirebaseStorage(
@@ -599,6 +647,17 @@ export class FirebaseStorageEngine extends StorageEngine {
         this.participantData,
       );
     }
+
+    const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+    const participantSequenceAssignmentDoc = doc(
+      sequenceAssignmentCollection,
+      this.currentParticipantId,
+    );
+    await updateDoc(participantSequenceAssignmentDoc, { completed: serverTimestamp() });
 
     return true;
   }
@@ -789,7 +848,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         sequenceAssignmentCollection,
         participantId,
       );
-      await updateDoc(participantSequenceAssignmentDoc, { participantId: '' });
+      await updateDoc(participantSequenceAssignmentDoc, { rejected: true });
     } catch {
       console.warn('Failed to reject the participant.');
     }
@@ -833,6 +892,39 @@ export class FirebaseStorageEngine extends StorageEngine {
     };
     await setDoc(revisitModesDoc, defaultModes);
     return defaultModes;
+  }
+
+  async getParticipantsStatusCounts(studyId: string) {
+    const studyCollection = collection(
+      this.firestore,
+      `${this.collectionPrefix}${studyId}`,
+    );
+    const sequenceAssignmentDoc = doc(studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+    const sequenceAssignmentsQuery = query(
+      sequenceAssignmentCollection,
+      orderBy('timestamp', 'asc'),
+    );
+
+    const sequenceAssignments = await getDocs(sequenceAssignmentsQuery);
+    const sequenceAssignmentsData = sequenceAssignments.docs.map((d) => d.data());
+
+    const completed = sequenceAssignmentsData.filter((assignment) => assignment.completed && !assignment.rejected).length;
+    const rejected = sequenceAssignmentsData.filter((assignment) => assignment.rejected).length;
+    const inProgress = sequenceAssignmentsData.length - completed - rejected;
+    const minTime = sequenceAssignmentsData.length > 0 ? sequenceAssignmentsData[0].timestamp : null;
+    const maxTime = sequenceAssignmentsData.length > 0 ? sequenceAssignmentsData.at(-1)!.timestamp : null;
+
+    return {
+      completed,
+      rejected,
+      inProgress,
+      minTime,
+      maxTime,
+    };
   }
 
   async createSnapshot(
@@ -933,7 +1025,7 @@ export class FirebaseStorageEngine extends StorageEngine {
           },
         ],
       };
-    } catch (error) {
+    } catch {
       return {
         status: 'FAILED',
         error: {
