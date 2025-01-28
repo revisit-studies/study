@@ -1,0 +1,3 @@
+.markLabel {
+  transform: translate(calc((var(--mark-offset) * -1)), calc(var(--mantine-spacing-xs) / 2));
+}
