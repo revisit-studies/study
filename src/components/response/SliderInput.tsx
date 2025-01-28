@@ -7,6 +7,7 @@ import { useMemo } from 'react';
 import { SliderResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
+import classes from './SliderInput.module.css';
 
 export function SliderInput({
   response,
@@ -53,6 +54,7 @@ export function SliderInput({
         {...answer}
         h={40}
         mt={4}
+        classNames={{ markLabel: classes.markLabel }}
       />
     </Input.Wrapper>
   );
