@@ -27,6 +27,7 @@ export function SliderInput({
     required,
     options,
     secondaryText,
+    snap,
   } = response;
 
   const [min, max] = useMemo(() => [Math.min(...options.map((opt) => opt.value)), Math.max(...options.map((opt) => opt.value))], [options]);
@@ -55,6 +56,8 @@ export function SliderInput({
         h={40}
         mt={4}
         classNames={{ markLabel: classes.markLabel }}
+        restrictToMarks={snap}
+        label={(value) => (snap ? null : value)}
       />
     </Input.Wrapper>
   );
