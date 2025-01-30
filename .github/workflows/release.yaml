@@ -35,3 +35,19 @@ jobs:
           token: ${{ secrets.PAT }}
           repository: revisit-studies/reVISit-studies.github.io
           event-type: study_repo_publish
+
+      - uses: peter-evans/repository-dispatch@v2
+        name: Build documentation in revisit.dev if repo is in revisit-studies
+        if: ${{ github.repository_owner == 'revisit-studies' }}
+        with:
+          token: ${{ secrets.PAT }}
+          repository: revisit-studies/revisitpy
+          event-type: study_repo_publish
+
+      - uses: peter-evans/repository-dispatch@v2
+        name: Build documentation in revisit.dev if repo is in revisit-studies
+        if: ${{ github.repository_owner == 'revisit-studies' }}
+        with:
+          token: ${{ secrets.PAT }}
+          repository: revisit-studies/revisitpy-server
+          event-type: study_repo_publish
