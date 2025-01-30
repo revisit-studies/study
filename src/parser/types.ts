@@ -400,6 +400,10 @@ export interface SliderResponse extends BaseResponse {
   type: 'slider';
   /** This defines the steps in the slider and the extent of the slider as an array of objects that have a label and a value. */
   options: NumberOption[];
+  /** The starting value of the slider. Defaults to the minimum value. */
+  startingValue?: number;
+  /** Whether the slider should snap between values. Defaults to false. Slider snapping disables the label above the handle. */
+  snap?: boolean;
 }
 
 /**
