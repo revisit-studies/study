@@ -400,6 +400,8 @@ export interface SliderResponse extends BaseResponse {
   type: 'slider';
   /** This defines the steps in the slider and the extent of the slider as an array of objects that have a label and a value. */
   options: NumberOption[];
+  /** The starting value of the slider. Defaults to the minimum value. */
+  startingValue?: number;
 }
 
 /**

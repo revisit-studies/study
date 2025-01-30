@@ -1761,6 +1761,10 @@
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
+        "startingValue": {
+          "description": "The starting value of the slider. Defaults to the minimum value.",
+          "type": "number"
+        },
         "type": {
           "const": "slider",
           "type": "string"
