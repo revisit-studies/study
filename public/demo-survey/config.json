@@ -176,15 +176,15 @@
           "startingValue": 50,
           "options": [
             {
-              "label": "Left is better",
+              "label": "Bad",
               "value": 0
             },
             {
-              "label": "Same",
+              "label": "Mid",
               "value": 50
             },
             {
-              "label": "Right is better",
+              "label": "Good",
               "value": 100
             }
           ]
