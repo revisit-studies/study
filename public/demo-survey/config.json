@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Question Types and Form Elements Demo",
     "version": "pilot",
@@ -173,17 +173,18 @@
           "secondaryText": "A slider for 0-100 with 3 breakpoints for bad, mid, and good",
           "location": "aboveStimulus",
           "type": "slider",
+          "startingValue": 50,
           "options": [
             {
-              "label": "Bad",
+              "label": "Left is better",
               "value": 0
             },
             {
-              "label": "Mid",
+              "label": "Same",
               "value": 50
             },
             {
-              "label": "Good",
+              "label": "Right is better",
               "value": 100
             }
           ]

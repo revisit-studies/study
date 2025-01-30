@@ -44,6 +44,8 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
         initField = Object.fromEntries(
           response.questionOptions.map((entry) => [entry, '']),
         );
+      } else if (response.type === 'slider' && response.startingValue) {
+        initField = response.startingValue.toString();
       }
 
       const dontKnowObj = response.withDontKnow ? { [`${response.id}-dontKnow`]: '' } : {};
