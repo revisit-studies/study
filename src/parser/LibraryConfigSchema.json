@@ -1819,6 +1819,10 @@
           "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
           "type": "string"
         },
+        "snap": {
+          "description": "Whether the slider should snap between values. Defaults to false. Slider snapping disables the label above the handle.",
+          "type": "boolean"
+        },
         "startingValue": {
           "description": "The starting value of the slider. Defaults to the minimum value.",
           "type": "number"
