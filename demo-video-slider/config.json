@@ -1,0 +1,62 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "HTML as a Stimulus",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-14",
+    "description": "A simple demo of using stimuli in an HTML file that renders a D3 visualization. Data is collected via a numeric response field.",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-html/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": false,
+    "windowEventDebounceTime": 200
+  },
+  "components": {
+    "video-slider": {
+      "type": "website",
+      "path": "demo-video-slider/assets/video.html",
+      "response": [
+        {
+          "id": "html-response",
+          "prompt": "Answer:",
+          "location": "belowStimulus",
+          "type": "slider",
+          "options": [
+            {
+              "label": "left",
+              "value": 0
+            },
+            {
+              "label": "neither",
+              "value": 50
+            },
+            {
+              "label": "right",
+              "value": 100
+            }
+          ],
+          "snap": true,
+          "startingValue": 50
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "video-slider"
+    ]
+  }
+}
