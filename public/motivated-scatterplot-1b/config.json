@@ -1,0 +1,722 @@
+{
+    "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+      "title": "Motivated Scatterplots",
+      "version": "pilot",
+      "authors": [
+        "MQP 2024 reVISit team"
+      ],
+      "date": "2023-11-03",
+      "description": "Replication of the study 'Motivated Scatterplots'",
+      "organizations": [
+        "WPI"
+      ]
+    },
+    "uiConfig": {
+      "contactEmail": "askittur@wpi.edu",
+      "helpTextPath": "motivated-scatterplot-1b/assets/tutorial.md",
+      "logoPath": "revisitAssets/revisitLogoSquare.svg",
+      "withProgressBar": true,
+      "autoDownloadStudy": false,
+      "sidebar": true,
+      "studyEndMsg": "**Thank you for completing the study. You may click this link and return to Prolific**: [https://app.prolific.com/submissions/complete?cc=C1MXB7XQ](https://app.prolific.com/submissions/complete?cc=C1MXB7XQ)",
+      "urlParticipantIdParam": "PROLIFIC_PID"
+    },
+    "baseComponents": {
+      "scatterPlot": {
+        "description": "A scatterplot and accompanying bar chart.",
+        "type": "react-component",
+        "path": "motivated-scatterplot-1b/assets/BrushPlot.tsx",
+        "nextButtonLocation": "sidebar",
+        "instructionLocation": "sidebar",
+        "response": []
+      }
+    },
+    "components": {
+      "introduction": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/introduction.md",
+        "response": [
+          {
+            "id": "confirmationClick",
+            "prompt": "Please type your name and click next to continue to the survey.",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "shortText"
+          }
+        ]
+      },
+      "introduction_2": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/introduction_2.md",
+        "response": [
+          {
+            "id": "max-response",
+            "prompt": "We will ask you to answer short questions about _____.",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "radio",
+            "options": [
+              "tables",
+              "graphs",
+              "images"
+            ]
+          }
+        ]
+      },
+      "instructions": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/tutorial.md",
+        "nextButtonText": "Next",
+        "response": [
+          {
+            "id": "correlationQuestion",
+            "prompt": "Compare the two correlations seen above. Which is stronger?",
+            "required": true,
+            "type": "radio",
+            "options": [
+              "Correlation: 0.3",
+              "Correlation: -0.3",
+              "They are equal."
+            ]
+          }
+        ]
+      },
+      "understanding_test_1": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/understanding_test_1.md",
+        "nextButtonText": "Next",
+        "response": [
+          {
+            "id": "correlationQuestion",
+            "prompt": "How correlated do you think the data looks?",
+            "required": true,
+            "type": "radio",
+            "options": [
+              "0",
+              "0.1",
+              "0.2",
+              "0.3",
+              "0.4",
+              "0.5",
+              "0.6",
+              "0.7",
+              "0.8",
+              "0.9",
+              "1"
+            ]
+          }
+        ]
+      },
+      "understanding_test_2": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/understanding_test_2.md",
+        "nextButtonText": "Next",
+        "response": [
+          {
+            "id": "correlationQuestion",
+            "prompt": "How correlated do you think the data looks?",
+            "required": true,
+            "type": "radio",
+            "options": [
+              "-1",
+              "-0.9",
+              "-0.8",
+              "-0.7",
+              "-0.6",
+              "-0.5",
+              "-0.4",
+              "-0.3",
+              "-0.2",
+              "-0.1",
+              "0"
+            ]
+          }
+        ]
+      },
+      "understanding_test_3": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/understanding_test_3.md",
+        "nextButtonText": "Next",
+        "response": [
+          {
+            "id": "correlationQuestion",
+            "prompt": "How correlated do you think the data looks?",
+            "required": true,
+            "type": "radio",
+            "options": [
+              "-1",
+              "-0.9",
+              "-0.8",
+              "-0.7",
+              "-0.6",
+              "-0.5",
+              "-0.4",
+              "-0.3",
+              "-0.2",
+              "-0.1",
+              "0"
+            ]
+          }
+        ]
+      },
+      "intro_to_graphs": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/introToGraphs.md",
+        "response": [
+          {
+            "id": "max-response",
+            "prompt": "Will you receive feedback after selecting your answer?",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "radio",
+            "options": [
+              "Yes",
+              "No"
+            ]
+          }
+        ]
+      },
+      "q1": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/q1.md",
+        "response": [
+          {
+            "id": "q1-response",
+            "prompt": "How correlated do you think the data looks?",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "radio",
+            "options": [
+              "0",
+              "0.1",
+              "0.2",
+              "0.3",
+              "0.4",
+              "0.5",
+              "0.6",
+              "0.7",
+              "0.8",
+              "0.9",
+              "1"
+            ]
+          }
+        ]
+      },
+      "q2": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/q1.md",
+        "response": [
+          {
+            "id": "q2-response",
+            "prompt": "How correlated do you think the data looks?",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "radio",
+            "options": [
+              "0",
+              "0.1",
+              "0.2",
+              "0.3",
+              "0.4",
+              "0.5",
+              "0.6",
+              "0.7",
+              "0.8",
+              "0.9",
+              "1"
+            ]
+          }
+        ]
+      },
+      "q3": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/q3.md",
+        "response": [
+          {
+            "id": "q3-response",
+            "prompt": "How correlated do you think the data looks?",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "radio",
+            "options": [
+              "0",
+              "0.1",
+              "0.2",
+              "0.3",
+              "0.4",
+              "0.5",
+              "0.6",
+              "0.7",
+              "0.8",
+              "0.9",
+              "1"
+            ]
+          }
+        ]
+      },
+      "q4": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/q4.md",
+        "response": [
+          {
+            "id": "q4-response",
+            "prompt": "How correlated do you think the data looks?",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "radio",
+            "options": [
+              "0",
+              "0.1",
+              "0.2",
+              "0.3",
+              "0.4",
+              "0.5",
+              "0.6",
+              "0.7",
+              "0.8",
+              "0.9",
+              "1"
+            ]
+          }
+        ]
+      },
+      "graph1": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/graph1.md",
+        "response": [
+          {
+            "id": "graph1_1",
+            "prompt": "Please write down the FIRST conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          },
+          {
+            "id": "graph1_2",
+            "prompt": "Please write down the SECOND conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          },
+          {
+            "id": "graph1_3",
+            "prompt": "Please write down the THIRD conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          },
+          {
+            "id": "graph1_4",
+            "prompt": "Please write down the FOURTH conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          },
+          {
+            "id": "graph1_5",
+            "prompt": "Please write down the FIFTH conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          }
+        ]
+      },
+      "graph2": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/graph2.md",
+        "response": [
+          {
+            "id": "graph2_1",
+            "prompt": "Please write down the FIRST conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          },
+          {
+            "id": "graph2_2",
+            "prompt": "Please write down the SECOND conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          },
+          {
+            "id": "graph2_3",
+            "prompt": "Please write down the THIRD conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          },
+          {
+            "id": "graph2_4",
+            "prompt": "Please write down the FOURTH conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          },
+          {
+            "id": "graph2_5",
+            "prompt": "Please write down the FIFTH conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          }
+        ]
+      },
+      "graph3": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/graph3.md",
+        "response": [
+          {
+            "id": "graph3_1",
+            "prompt": "Please write down the FIRST conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          },
+          {
+            "id": "graph3_2",
+            "prompt": "Please write down the SECOND conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          },
+          {
+            "id": "graph3_3",
+            "prompt": "Please write down the THIRD conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          },
+          {
+            "id": "graph3_4",
+            "prompt": "Please write down the FOURTH conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          },
+          {
+            "id": "graph3_5",
+            "prompt": "Please write down the FIFTH conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          }
+        ]
+      },
+      "graph4": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/graph4.md",
+        "response": [
+          {
+            "id": "graph4_1",
+            "prompt": "Please write down the FIRST conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          },
+          {
+            "id": "graph4_2",
+            "prompt": "Please write down the SECOND conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          },
+          {
+            "id": "graph4_3",
+            "prompt": "Please write down the THIRD conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          },
+          {
+            "id": "graph4_4",
+            "prompt": "Please write down the FOURTH conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          },
+          {
+            "id": "graph4_5",
+            "prompt": "Please write down the FIFTH conclusion you drew from this data.",
+            "required": true,
+            "location": "belowStimulus",
+            "type":"shortText"
+          }
+        ]
+      },
+      "check_3": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/check_3.md",
+        "response": [
+          {
+            "id": "check_3",
+            "prompt": "How many stores and companies were there?",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "radio",
+            "options": [
+              "3 stores, 2 companies",
+              "2 stores, 3 companies",
+              "2 stores, 2 companies"
+            ]
+          }
+        ]
+      },
+      "q5": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/q5.md",
+        "response": [
+          {
+            "id": "q5-response",
+            "prompt": "How correlated do you think the data looks?",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "radio",
+            "options": [
+              "0",
+              "0.1",
+              "0.2",
+              "0.3",
+              "0.4",
+              "0.5",
+              "0.6",
+              "0.7",
+              "0.8",
+              "0.9",
+              "1"
+            ]
+          }
+        ]
+      },
+      "q6": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/q6.md",
+        "response": [
+          {
+            "id": "q6-response",
+            "prompt": "How correlated do you think the data looks?",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "radio",
+            "options": [
+              "0",
+              "0.1",
+              "0.2",
+              "0.3",
+              "0.4",
+              "0.5",
+              "0.6",
+              "0.7",
+              "0.8",
+              "0.9",
+              "1"
+            ]
+          }
+        ]
+      },
+      "q7": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/q7.md",
+        "response": [
+          {
+            "id": "q7-response",
+            "prompt": "How correlated do you think the data looks?",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "radio",
+            "options": [
+              "0",
+              "0.1",
+              "0.2",
+              "0.3",
+              "0.4",
+              "0.5",
+              "0.6",
+              "0.7",
+              "0.8",
+              "0.9",
+              "1"
+            ]
+          }
+        ]
+      },
+      "q8": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/q8.md",
+        "response": [
+          {
+            "id": "q5-response",
+            "prompt": "How correlated do you think the data looks?",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "radio",
+            "options": [
+              "0",
+              "0.1",
+              "0.2",
+              "0.3",
+              "0.4",
+              "0.5",
+              "0.6",
+              "0.7",
+              "0.8",
+              "0.9",
+              "1"
+            ]
+          }
+        ]
+      },
+      "demographics": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/demographics.md",
+        "response": [
+          {
+            "id": "year-born-response",
+            "prompt": "What year were you born?",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "shortText"
+          },
+          {
+            "id": "gender-response",
+            "prompt": "What is your gender?",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "radio",
+            "options": [
+              "Man",
+              "Woman",
+              "Non-binary",
+              "Prefer not to disclose",
+              "Other"
+            ]
+          },
+          {
+            "id": "political-response",
+            "prompt": "What is the highest level of school you have completed or the highest degree you have received?",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "radio",
+            "options": [
+              "Less than high school degree",
+              "High school graduate (high school diploma or equivalent including GED)",
+              "Some college but no degree",
+              "Associate degree in college (2-year)",
+              "Bachelor's degree in college (4-year)",
+              "Master's degree",
+              "Doctoral degree",
+              "Professional degree (JD, MD)",
+              "Prefer not to answer"
+            ]
+          },
+          {
+            "id": "political-response",
+            "prompt": "On this 7-point scale of political views from extremely liberal (left) to  extremely conservative (right) where would you place yourself on this scale?",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "radio",
+            "options": [
+              "0",
+              "1",
+              "2",
+              "3",
+              "4",
+              "5",
+              "6",
+              "7"
+            ]
+          },
+          {
+            "id": "statistics-response",
+            "prompt": "How many years of experiences do you have studying statistics? (enter a number)",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "shortText"
+          },
+          {
+            "id": "research-response",
+            "prompt": "How many years of experiences do you have doing research? (enter a number)",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "shortText"
+          },
+          {
+            "id": "correlation-response",
+            "prompt": "How well do you understand correlation?",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "radio",
+            "options": [
+              "Extremely Well",
+              "Very Well",
+              "Moderately Well",
+              "Slightly Well",
+              "Not Well at All"
+            ]
+          }
+        ]
+      },
+      "specific-added-questions": {
+        "type": "markdown",
+        "path": "motivated-scatterplot-1b/assets/specific-added-questions.md",
+        "response": [
+          {
+            "id": "specific-statistics-response",
+            "prompt": "How many years of experiences do you have studying statistics (e.g. doing experiments in a lab, collecting and analyzing data)? (enter a number)",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "shortText"
+          },
+          {
+            "id": "specific-research-response",
+            "prompt": "How many years of experiences do you have doing research (e.g. self-taught, taking classes)? (enter a number)",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "shortText"
+          },
+          {
+            "id": "correlation-response",
+            "prompt": "How well do you understand correlation, after completing the training and tasks within this survey?",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "radio",
+            "options": [
+              "Extremely Well",
+              "Very Well",
+              "Moderately Well",
+              "Slightly Well",
+              "Not Well at All"
+            ]
+          }
+        ]
+      }
+    },
+    "sequence": {
+      "order": "fixed",
+      "components": [
+        "introduction",
+        "introduction_2",
+        "instructions",
+        "understanding_test_1",
+        "understanding_test_2",
+        "understanding_test_3",
+        "intro_to_graphs",
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "graph1",
+        "graph2",
+        "graph3",
+        "graph4",
+        "check_3",
+        "q5",
+        "q6",
+        "q7",
+        "q8",
+        "demographics",
+        "specific-added-questions"
+      ]
+    }
+  }

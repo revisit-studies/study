@@ -1,0 +1,1 @@
+<img src="./assets/-0.5_training.png" width="auto" height="300px">
