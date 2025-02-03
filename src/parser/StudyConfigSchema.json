@@ -270,6 +270,9 @@
               },
               {
                 "$ref": "#/definitions/ComponentBlock"
+              },
+              {
+                "$ref": "#/definitions/FuncComponentBlock"
               }
             ]
           },
@@ -446,6 +449,27 @@
         "options",
         "prompt",
         "type"
+      ],
+      "type": "object"
+    },
+    "FuncComponentBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "func": {
+          "type": "string"
+        },
+        "id": {
+          "description": "The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property.",
+          "type": "string"
+        },
+        "order": {
+          "const": "func",
+          "description": "The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "order"
       ],
       "type": "object"
     },
@@ -1835,7 +1859,14 @@
           "type": "array"
         },
         "sequence": {
-          "$ref": "#/definitions/ComponentBlock",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ComponentBlock"
+            },
+            {
+              "$ref": "#/definitions/FuncComponentBlock"
+            }
+          ],
           "description": "The order of the components in the study. This might include some randomness."
         },
         "studyMetadata": {

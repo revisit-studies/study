@@ -1,8 +1,18 @@
-import { ComponentBlock } from '../parser/types';
+import { ComponentBlock, FuncComponentBlock } from '../parser/types';
+import { isFuncComponentBlock } from '../parser/utils';
 import { Sequence } from '../store/types';
 
-export function getSequenceFlatMap<T extends Sequence | ComponentBlock>(sequence: T): string[] {
-  return sequence.components.flatMap((component) => (typeof component === 'string' ? component : getSequenceFlatMap(component)));
+export function getSequenceFlatMap<T extends Sequence | ComponentBlock | FuncComponentBlock>(sequence: T): string[] {
+  return isFuncComponentBlock(sequence) ? [sequence.id] : sequence.components.flatMap((component) => (typeof component === 'string' ? component : getSequenceFlatMap(component)));
+}
+
+export function findAllFuncBlocks(sequence: ComponentBlock | FuncComponentBlock): FuncComponentBlock[] {
+  return isFuncComponentBlock(sequence) ? [sequence] : sequence.components.flatMap((component) => (typeof component === 'string' ? [] : findAllFuncBlocks(component)));
+}
+
+export function findFuncBlock(name: string, sequence: ComponentBlock | FuncComponentBlock): (FuncComponentBlock | undefined) {
+  const allFuncBlocks = findAllFuncBlocks(sequence);
+  return allFuncBlocks.find((funcBlock) => funcBlock.id === name);
 }
 
 export function getSequenceFlatMapWithInterruptions(sequence: ComponentBlock): string[] {
@@ -99,5 +109,7 @@ export function addPathToComponentBlock(order: ComponentBlock | string, orderPat
   if (typeof order === 'string') {
     return order;
   }
-  return { ...order, orderPath, components: order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)) };
+  return {
+    ...order, orderPath, order: order.order, components: order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)),
+  };
 }

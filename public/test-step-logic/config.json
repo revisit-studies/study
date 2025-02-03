@@ -1,0 +1,117 @@
+{
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+      "title": "Using Skip Logic",
+      "description": "This is a test study to check the functionality of the reVISit' skip logic. This study is not meant to be used for any real data collection.",
+      "version": "1.0.0",
+      "authors": [
+        "The reVISit Team"
+      ],
+      "date": "2024-02-23",
+      "organizations": [
+        "University of Utah",
+        "WPI",
+        "University of Toronto"
+      ]
+    },
+    "uiConfig": {
+      "contactEmail": "jwilburn@sci.utah.edu",
+      "logoPath": "revisitAssets/revisitLogoSquare.svg",
+      "sidebar": true,
+      "withProgressBar": true
+    },
+    "baseComponents": {
+      "trial": {
+        "type": "questionnaire",
+        "response": [
+          {
+            "id": "q1",
+            "type": "radio",
+            "prompt": "What is your favorite color?",
+            "location": "belowStimulus",
+            "options": ["Blue", "Red", "Green", "Yellow"]
+          },
+          {
+            "id": "q2",
+            "type": "radio",
+            "prompt": "What is your favorite animal?",
+            "location": "belowStimulus",
+            "options": ["Dog", "Cat", "Bird", "Fish"]
+          }
+        ],
+        "nextButtonLocation": "belowStimulus",
+        "instruction": "Please answer the following questions...",
+        "instructionLocation": "aboveStimulus"
+      }
+    },
+    "components": {
+      "trial1": {
+        "baseComponent": "trial",
+        "correctAnswer": [
+          {
+            "id": "q1",
+            "answer": "Blue"
+          },
+          {
+            "id": "q2",
+            "answer": "Cat"
+          }
+        ]
+      },
+      "attentionCheck": {
+        "type": "questionnaire",
+        "instruction": "Are you paying attention?",
+        "response": [
+          {
+            "id": "q1",
+            "type": "radio",
+            "prompt": "Are you paying attention?",
+            "location": "belowStimulus",
+            "options": ["Yes", "No"]
+          }
+        ],
+        "correctAnswer": [
+          {
+            "id": "q1",
+            "answer": "Yes"
+          }
+        ]
+      },
+      "continuingComponent": {
+        "type": "markdown",
+        "path": "test-skip-logic/continuingComponent.md",
+        "response": []
+      },
+      "reactComponent": {
+        "type": "react-component",
+        "path": "test-step-logic/Example.tsx",
+        "response": []
+      },
+      "targetComponent": {
+        "type": "markdown",
+        "path": "test-skip-logic/targetComponent.md",
+        "response": []
+      },
+      "targetBlockComponent": {
+        "type": "markdown",
+        "path": "test-skip-logic/targetBlockComponent.md",
+        "response": []
+      }
+    },
+    "sequence": {
+      "order": "fixed",
+      "components": [
+        "trial1",
+        {
+            "id": "loopingBlock",
+            "parameters": {
+                "loop": 3
+            },
+            "order": "func",
+            "func": "test-step-logic/func.ts"
+        },
+        "trial1"
+      ]
+    }
+  }
+  

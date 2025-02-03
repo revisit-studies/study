@@ -1082,6 +1082,14 @@ export interface RepeatedComponentBlockCondition {
 */
 export type SkipConditions = (IndividualComponentSingleResponseCondition | IndividualComponentAllResponsesCondition | ComponentBlockCondition | RepeatedComponentBlockCondition)[];
 
+export interface FuncComponentBlock {
+  /** The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property. */
+  id: string
+  /** The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed. */
+  order: 'func';
+  func: string;
+}
+
 /** The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).
  *
  * The pure random assignment is a random assignment with no guarantees. For example, one component _could_ show up in the first position 10 times in a row. However, this situation is unlikely.
@@ -1192,7 +1200,7 @@ export interface ComponentBlock {
   /** The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed. */
   order: 'random' | 'latinSquare' | 'fixed';
   /** The components that are included in the order. */
-  components: (string | ComponentBlock)[];
+  components: (string | ComponentBlock | FuncComponentBlock)[];
   /** The number of samples to use for the random assignments. This means you can randomize across 3 components while only showing a participant 2 at a time. */
   numSamples?: number;
   /** The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks.  */
@@ -1291,7 +1299,7 @@ export interface StudyConfig {
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
   components: Record<string, IndividualComponent | InheritedComponent>
   /** The order of the components in the study. This might include some randomness. */
-  sequence: ComponentBlock;
+  sequence: ComponentBlock | FuncComponentBlock;
 }
 
 /**  LibraryConfig is used to define the properties of a library configuration. This is a JSON object with three main components: baseComponents, components, and the sequences. Libraries are useful for defining components and sequences of these components that are to be reused across multiple studies. We (the reVISit team) provide several libraries that can be used in your study configurations. Check the public/libraries folder in the reVISit-studies repository for available libraries. We also plan to accept community contributions for libraries. If you have a library that you think would be useful for others, please reach out to us. We would love to include it in our repository.

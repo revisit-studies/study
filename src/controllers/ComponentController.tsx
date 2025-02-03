@@ -33,7 +33,10 @@ export function ComponentController() {
   // Get the config for the current step
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
-  const currentComponent = useCurrentComponent() || 'Notfound';
+  const currentComponent = useCurrentComponent();
+
+  console.log(currentComponent);
+
   const stepConfig = studyConfig.components[currentComponent];
   const { storageEngine } = useStorageEngine();
 
@@ -133,7 +136,7 @@ export function ComponentController() {
   }, [currentStep, storageEngine, sequence]);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const currentConfig = useMemo(() => (currentComponent !== 'end' && !currentComponent.startsWith('__') && isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent), [stepConfig, studyConfig]);
+  const currentConfig = useMemo(() => (currentComponent && currentComponent !== 'end' && !currentComponent.startsWith('__') && isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent), [stepConfig, studyConfig]);
 
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.

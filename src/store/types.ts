@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 // eslint-disable-next-line import/no-cycle
-import { SkipConditions, StudyConfig } from '../parser/types';
+import { ComponentBlock, SkipConditions, StudyConfig } from '../parser/types';
 import { type REVISIT_MODE } from '../storage/engines/StorageEngine';
 
 /**
@@ -111,6 +111,14 @@ export interface StoredAnswer {
   helpButtonClickedCount: number;
 }
 
+export interface JumpFunctionParameters {
+  components: (string | ComponentBlock)[], answers: Record<string, StoredAnswer>, sequenceSoFar: string[]
+}
+
+export interface JumpFunctionReturnVal {
+  component: string | null, parameters?: Record<string, any>
+}
+
 export interface StimulusParams<T, S = never> {
   parameters: T;
   provenanceState?: S;
@@ -120,6 +128,7 @@ export interface StimulusParams<T, S = never> {
 export interface Sequence {
   id?: string;
   orderPath: string;
+  order: string;
   components: (string | Sequence)[];
   skip?: SkipConditions;
 }
@@ -145,4 +154,6 @@ export interface StoreState {
   analysisHasProvenance: boolean;
   modes: Record<REVISIT_MODE, boolean>;
   matrixAnswers: Record<string, Record<string, string>>;
+  funcSequence: Record<string, string[]>;
+  funcParams: unknown | undefined;
 }

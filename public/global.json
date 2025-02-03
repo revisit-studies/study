@@ -31,7 +31,9 @@
     "test-parser-errors",
     "demo-vega",
     "test-randomization",
-    "test-skip-logic"
+    "test-skip-logic",
+    "test-step-logic"
+
   ],
   "configs": {
     "tutorial-simple-study": {
@@ -138,6 +140,10 @@
     },
     "test-skip-logic": {
       "path": "test-skip-logic/config.json",
+      "test": true
+    },
+    "test-step-logic": {
+      "path": "test-step-logic/config.json",
       "test": true
     }
   }
