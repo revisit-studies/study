@@ -128,6 +128,7 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
 
     let tempNode = provGraph.nodes[currentNode];
 
+    // eslint-disable-next-line no-constant-condition
     while (true) {
       if (playTime < tempNode.createdOn) {
         if (!isRootNode(tempNode)) {
