@@ -1730,9 +1730,115 @@
       "instruction": "Please modify the JSON data in the code editor according to the requirements listed in the sidebar.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/modifying_task/CoEd_json_Config.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "modifying-task-config-json"
+        "language": "json", "imagePath": null, "type": "modifying"
+      },
+      "response": [
+        {
+          "id": "modifying-task-config-json_q1",
+          "prompt": "1. Change the value of benchmark to 7.",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-json_q2",
+          "prompt": "2. Move the authors' information below the repository. ",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-json_q3",
+          "prompt": "3. Remove the peer dependency. ",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-json",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-config-json",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "modifying-task-config-hjson": {
+      "meta": {
+        "taskName": "modifying-task-config-json"
+      },
+      "description": "modifying task with configuration data",
+      "instruction": "Please modify the JSON data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/Editor.tsx",
+      "parameters": {
+        "language": "hjson", "imagePath": null, "type": "modifying"
+      },
+      "response": [
+        {
+          "id": "modifying-task-config-json_q1",
+          "prompt": "1. Change the value of benchmark to 7.",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-json_q2",
+          "prompt": "2. Move the authors' information below the repository. ",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-json_q3",
+          "prompt": "3. Remove the peer dependency. ",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-json",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-config-json",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "modifying-task-config-json5": {
+      "meta": {
+        "taskName": "modifying-task-config-json"
+      },
+      "description": "modifying task with configuration data",
+      "instruction": "Please modify the JSON data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/Editor.tsx",
+      "parameters": {
+        "language": "json5", "imagePath": null, "type": "modifying"
       },
       "response": [
         {
@@ -1836,9 +1942,9 @@
       "instruction": "Please modify the JSONC data in the code editor according to the requirements listed in the sidebar.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/modifying_task/CoEd_jsonc_Config.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "modifying-task-config-jsonc"
+        "language": "jsonc", "imagePath": null, "type": "modifying"
       },
       "response": [
         {
@@ -1889,9 +1995,9 @@
       "instruction": "Please modify the TOML data in the code editor according to the requirements listed in the sidebar.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/modifying_task/CoEd_toml_Config.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "modifying-task-config-toml"
+        "language": "toml", "imagePath": null, "type": "modifying"
       },
       "response": [
         {
@@ -1995,9 +2101,9 @@
       "instruction": "Please modify the YAML data in the code editor according to the requirements listed in the sidebar.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/modifying_task/CoEd_yaml_Config.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "modifying-task-config-yaml"
+        "language": "yaml", "imagePath": null, "type": "modifying"
       },
       "response": [
         {
@@ -2101,9 +2207,9 @@
       "instruction": "Please modify the XML data in the code editor according to the requirements listed in the sidebar.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/modifying_task/CoEd_xml_Config.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "modifying-task-config-xml"
+        "language": "xml", "imagePath": null, "type": "modifying"
       },
       "response": [
         {
@@ -2330,97 +2436,13 @@
   "sequence": {
     "order": "fixed",
     "components": [
-      "introduction",
-      "consent",
-      "tutorial",
-      "tutorial-json",
-      "quiz-json",
-      "tutorial-jsonc",
-      "quiz-jsonc",
-      "tutorial-json5",
-      "quiz-json5",
-      "tutorial-hjson",
-      "quiz-hjson",
-      "tutorial-yaml",
-      "quiz-yaml",
-      "tutorial-toml",
-      "quiz-toml",
-      "tutorial-xml",
-      "quiz-xml",
-      "task",
-      {
-        "order": "latinSquare",
-        "numSamples": 1,
-        "components": [
-      "reading-task-config-json",
-      "reading-task-config-yaml",
-      "reading-task-config-toml",
-      "reading-task-config-xml"]},
-      "reading-task-config-json",
-      "reading-task-config-yaml",
-      "reading-task-config-toml",
-      "reading-task-config-xml",
-      {
-        "order": "latinSquare",
-        "numSamples": 1,
-        "components": [
-      "reading-task-tabular-json",
-      "reading-task-tabular-yaml",
-      "reading-task-tabular-toml",
-      "reading-task-tabular-xml"]},
-      "reading-task-tabular-json",
-      "reading-task-tabular-toml",
-      "reading-task-tabular-yaml",
-      "reading-task-tabular-xml",
-      {
-        "order": "latinSquare",
-        "numSamples": 1,
-        "components": [
-      "writing-task-config-json",
-      "writing-task-config-yaml",
-      "writing-task-config-toml",
-      "writing-task-config-xml"]},
-      "writing-task-config-json",
-      "writing-task-config-yaml",
-      "writing-task-config-toml",
-      "writing-task-config-xml",
-      {
-        "order": "latinSquare",
-        "numSamples": 1,
-        "components": [
-      "writing-task-tabular-json",
-      "writing-task-tabular-yaml",
-      "writing-task-tabular-toml",
-      "writing-task-tabular-xml"]},
-      "writing-task-tabular-json",
-      "writing-task-tabular-yaml",
-      "writing-task-tabular-toml",
-      "writing-task-tabular-xml",
-      {
-        "order": "latinSquare",
-        "numSamples": 1,
-        "components": [
-      "modifying-task-config-json",
-      "modifying-task-config-toml",
-      "modifying-task-config-yaml",
-      "modifying-task-config-xml"]},
       "modifying-task-config-json",
       "modifying-task-config-toml",
       "modifying-task-config-yaml",
       "modifying-task-config-xml",
-      {
-        "order": "latinSquare",
-        "numSamples": 1,
-        "components": [
-      "modifying-task-tabular-json",
-      "modifying-task-tabular-toml",
-      "modifying-task-tabular-yaml",
-      "modifying-task-tabular-xml"]},
-      "modifying-task-tabular-json",
-      "modifying-task-tabular-toml",
-      "modifying-task-tabular-yaml",
-      "modifying-task-tabular-xml",
-
+      "modifying-task-config-jsonc",
+      "modifying-task-config-json5",
+      "modifying-task-config-hjson",
       "post-task-survey"
     ]
   }
