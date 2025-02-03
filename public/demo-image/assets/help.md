@@ -4,7 +4,7 @@ resources for farms in Peru. In previous years, alpacas have
 died in Peru from cold temperatures. Alpacas can typically
 withstand the cold unless the temperature drops below 32°F.
 
-**Budget**: You are in charge of the Red Cross’s blanket
+**Budget**: You are in charge of the Red Cross's blanket
 budget, and it is your job to issue blankets to the alpacas
 when temperatures fall below 32°F, which will help them
 withstand the cold.

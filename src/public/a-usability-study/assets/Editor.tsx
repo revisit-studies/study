@@ -3,7 +3,7 @@ import React, {
 } from 'react';
 
 import AceEditor from 'react-ace';
-import { Container, Group } from '@mantine/core';
+import { Box, Group } from '@mantine/core';
 import { startingStringsMap } from './startingStrings';
 
 import 'ace-builds/src-noconflict/mode-hjson';
@@ -16,7 +16,7 @@ import 'ace-builds/src-noconflict/theme-github_dark';
 import 'ace-builds/src-noconflict/ext-language_tools';
 import { StimulusParams } from '../../../store/types';
 // adding worker
-function CodeEditorTest({ setAnswer, parameters }: StimulusParams<{language: string, imagePath: string | null, type: 'modifying' | 'writing' | 'reading'}, Record<string, never>>): React.ReactElement {
+function CodeEditorTest({ setAnswer, parameters }: StimulusParams<{language: string, imagePath: string | null, type: 'modifying' | 'writing' | 'reading', tabular: boolean}, Record<string, never>>): React.ReactElement {
   const [code, setCode] = useState<string>(startingStringsMap[parameters.type + parameters.language]);
 
   const editorOnChange = useCallback((rawCode: string) => {
@@ -32,11 +32,11 @@ function CodeEditorTest({ setAnswer, parameters }: StimulusParams<{language: str
   }, [setAnswer]);
 
   return (
-    <Container>
+    <Box>
       {/* 图片与代码编辑器部分 */}
-      <Group gap={20}>
+      <Group gap={20} wrap="nowrap">
         {parameters.imagePath ? (
-          <div style={{ flex: '0 0 60%' }}>
+          <div style={{ flex: '0 0 50%' }}>
             <img
               src="/a-usability-study/assets/tasks/fig/config_write.png"
               alt="Example"
@@ -63,7 +63,8 @@ function CodeEditorTest({ setAnswer, parameters }: StimulusParams<{language: str
       </Group>
 
       {/* 验证状态显示 */}
-    </Container>
+    </Box>
+
   );
 }
 

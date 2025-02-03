@@ -38,7 +38,7 @@ export function RevisitModesAccordionItem({ studyId }: { studyId: string }) {
   };
 
   return (
-    asyncStatus && (
+    asyncStatus ? (
       <Stack>
         <Switch
           label="Data Collection Enabled"
@@ -56,6 +56,6 @@ export function RevisitModesAccordionItem({ studyId }: { studyId: string }) {
           onChange={(event) => handleSwitch('analyticsInterfacePubliclyAccessible', event.currentTarget.checked)}
         />
       </Stack>
-    )
+    ) : null
   );
 }

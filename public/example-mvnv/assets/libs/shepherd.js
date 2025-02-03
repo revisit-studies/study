@@ -6697,7 +6697,7 @@
      * })'
      * ```
      *
-     * If you don’t specify an attachTo the element will appear in the middle of the screen.
+     * If you don't specify an attachTo the element will appear in the middle of the screen.
      * If you omit the `on` portion of `attachTo`, the element will still be highlighted, but the tooltip will appear
      * in the middle of the screen, without an arrow pointing to the target.
      * @param {HTMLElement|string} options.attachTo.element
@@ -6710,7 +6710,7 @@
      *   ...moreOptions
      * })'
      * ```
-     * `event` doesn’t have to be an event inside the tour, it can be any event fired on any element on the page.
+     * `event` doesn't have to be an event inside the tour, it can be any event fired on any element on the page.
      * You can also always manually advance the Tour by calling `myTour.next()`.
      * @param {function} options.beforeShowPromise A function that returns a promise.
      * When the promise resolves, the rest of the `show` code for the step will execute.

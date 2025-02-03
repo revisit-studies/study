@@ -590,7 +590,7 @@ function setupShepherd(vis,mode) {
       {
         title: 'Edge Click ',
         text:
-          '<span class=instructions>Click on a cell (edge) to select the rows and cols highlighted on hover.</span> This also outlines the clicked edge  and the ‘mirror edge’ in red. ',
+          '<span class=instructions>Click on a cell (edge) to select the rows and cols highlighted on hover.</span> This also outlines the clicked edge  and the 'mirror edge' in red. ',
 
         attachTo: {
           element: '.svg-content',

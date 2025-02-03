@@ -37,7 +37,7 @@
   "configs": {
     "a-usability-study": {
       "path": "a-usability-study/config.json"
-    },  
+    },
     "tutorial-simple-study": {
       "path": "tutorial/simple-study/config.json"
     },

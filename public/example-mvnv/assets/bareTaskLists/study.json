@@ -152,7 +152,7 @@
     },
     "S-task10": {
         "hypothesis":"Within Node Comparison Hypothesis, Small/Large Network Hypothesis",
-        "prompt": "Select all of Noeska’s neighbors that are <span class='attribute'>people</span> and have <span class='attribute'>more friends than followers</span>",
+        "prompt": "Select all of Noeska's neighbors that are <span class='attribute'>people</span> and have <span class='attribute'>more friends than followers</span>",
         "replyType": [
             "multipleNodeSelection"
         ],

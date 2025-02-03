@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Data Serialization Formats Study",
     "version": "pilot",
@@ -120,7 +120,7 @@
       "correctAnswer": [
         {
           "id": "quiz-json",
-          "answer": ["A","D","E"]
+          "answer": ["A","D","F"]
         }
       ],
       "allowFailedTraining": false,
@@ -210,7 +210,7 @@
       "correctAnswer": [
         {
           "id": "quiz-json5",
-          "answer": ["A","B","C","D","F"]
+          "answer": ["A","B","C","D","E","F"]
         }
       ],
       "allowFailedTraining": false,
@@ -247,15 +247,14 @@
             "B",
             "C",
             "D",
-            "E",
-            "F"
+            "E"
           ]
         }
       ],
       "correctAnswer": [
         {
           "id": "quiz-hjson",
-          "answer": ["A","B","C","D"]
+          "answer": ["A","B","C","D","E"]
         }
       ],
       "allowFailedTraining": false,
@@ -410,9 +409,9 @@
       "instruction": "Please read the data in code editor and answer the following questions.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/reading_task/CoEd_json_Config.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "reading-task-config-json"
+        "language": "json", "imagePath": null, "type": "reading", "tabular": false
       },
       "response": [
         {
@@ -484,14 +483,14 @@
       "instruction": "Please read the data in code editor and answer the following questions.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/reading_task/CoEd_json_Tabular.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "reading-task-tabular-json"
+        "language": "json", "imagePath": null, "type": "reading", "tabular": true
       },
       "response": [
         {
           "id": "reading-task-tabular-json_q1",
-          "prompt": "1. What is the grade for Eva's final exam? ",
+          "prompt": "1. What is the grade for Eve's final exam? ",
           "type": "shortText",
           "location": "sidebar",
           "required": true
@@ -505,7 +504,7 @@
         },
         {
           "id": "reading-task-tabular-json_q3",
-          "prompt": "3. Which quiz did Eva get the highest grade on? ",
+          "prompt": "3. Which quiz did Eve get the highest grade on? ",
           "type": "shortText",
           "location": "sidebar",
           "required": true
@@ -558,9 +557,9 @@
       "instruction": "Please read the data in code editor and answer the following questions.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/reading_task/CoEd_jsonc_Config.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "reading-task-config-jsonc"
+        "language": "jsonc", "imagePath": null, "type": "reading", "tabular": false
       },
       "response": [
         {
@@ -632,9 +631,9 @@
       "instruction": "Please read the data in code editor and answer the following questions.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/reading_task/CoEd_json5_Config.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "reading-task-config-json5"
+        "language": "json5", "imagePath": null, "type": "reading", "tabular": false
       },
       "response": [
         {
@@ -706,9 +705,9 @@
   "instruction": "Please read the data in code editor and answer the following questions.",
   "type": "react-component",
   "nextButtonLocation": "sidebar",
-  "path": "a-usability-study/assets/reading_task/CoEd_hjson_Config.tsx",
+  "path": "a-usability-study/assets/Editor.tsx",
   "parameters": {
-    "taskid": "reading-task-config-hjson"
+    "language": "hjson", "imagePath": null, "type": "reading", "tabular": false
   },
   "response": [
     {
@@ -780,9 +779,9 @@
   "instruction": "Please read the data in code editor and answer the following questions.",
   "type": "react-component",
   "nextButtonLocation": "sidebar",
-  "path": "a-usability-study/assets/reading_task/CoEd_yaml_Config.tsx",
+  "path": "a-usability-study/assets/Editor.tsx",
   "parameters": {
-    "taskid": "reading-task-config-yaml"
+    "language": "yaml", "imagePath": null, "type": "reading", "tabular": false
   },
   "response": [
     {
@@ -854,14 +853,14 @@
   "instruction": "Please read the data in code editor and answer the following questions.",
   "type": "react-component",
   "nextButtonLocation": "sidebar",
-  "path": "a-usability-study/assets/reading_task/CoEd_yaml_Tabular.tsx",
+  "path": "a-usability-study/assets/Editor.tsx",
   "parameters": {
-    "taskid": "reading-task-tabular-yaml"
+    "language": "yaml", "imagePath": null, "type": "reading", "tabular": true
   },
   "response": [
     {
       "id": "reading-task-tabular-yaml_q1",
-      "prompt": "1. What is the grade for Eva's final exam? ",
+      "prompt": "1. What is the grade for Eve's final exam? ",
       "type": "shortText",
       "location": "sidebar",
       "required": true
@@ -875,7 +874,7 @@
     },
     {
       "id": "reading-task-tabular-yaml_q3",
-      "prompt": "3. Which quiz did Eva get the highest grade on? ",
+      "prompt": "3. Which quiz did Eve get the highest grade on? ",
       "type": "shortText",
       "location": "sidebar",
       "required": true
@@ -928,9 +927,9 @@
   "instruction": "Please read the data in code editor and answer the following questions.",
   "type": "react-component",
   "nextButtonLocation": "sidebar",
-  "path": "a-usability-study/assets/reading_task/CoEd_toml_Config.tsx",
+  "path": "a-usability-study/assets/Editor.tsx",
   "parameters": {
-    "taskid": "reading-task-config-toml"
+    "language": "toml", "imagePath": null, "type": "reading", "tabular": false
   },
   "response": [
     {
@@ -1002,14 +1001,14 @@
   "instruction": "Please read the data in code editor and answer the following questions.",
   "type": "react-component",
   "nextButtonLocation": "sidebar",
-  "path": "a-usability-study/assets/reading_task/CoEd_toml_Tabular.tsx",
+  "path": "a-usability-study/assets/Editor.tsx",
   "parameters": {
-    "taskid": "reading-task-tabular-toml"
+    "language": "toml", "imagePath": null, "type": "reading", "tabular": true
   },
   "response": [
     {
       "id": "reading-task-tabular-toml_q1",
-      "prompt": "1. What is the grade for Eva's final exam? ",
+      "prompt": "1. What is the grade for Eve's final exam? ",
       "type": "shortText",
       "location": "sidebar",
       "required": true
@@ -1023,7 +1022,7 @@
     },
     {
       "id": "reading-task-tabular-toml_q3",
-      "prompt": "3. Which quiz did Eva get the highest grade on? ",
+      "prompt": "3. Which quiz did Eve get the highest grade on? ",
       "type": "shortText",
       "location": "sidebar",
       "required": true
@@ -1076,9 +1075,9 @@
   "instruction": "Please read the data in code editor and answer the following questions.",
   "type": "react-component",
   "nextButtonLocation": "sidebar",
-  "path": "a-usability-study/assets/reading_task/CoEd_xml_Config.tsx",
+  "path": "a-usability-study/assets/Editor.tsx",
   "parameters": {
-    "taskid": "reading-task-config-yaml"
+    "language": "xml", "imagePath": null, "type": "reading", "tabular": false
   },
   "response": [
     {
@@ -1150,14 +1149,14 @@
   "instruction": "Please read the data in code editor and answer the following questions.",
   "type": "react-component",
   "nextButtonLocation": "sidebar",
-  "path": "a-usability-study/assets/reading_task/CoEd_xml_Tabular.tsx",
+  "path": "a-usability-study/assets/Editor.tsx",
   "parameters": {
-    "taskid": "reading-task-tabular-xml"
+    "language": "xml", "imagePath": null, "type": "reading", "tabular": true
   },
   "response": [
     {
       "id": "reading-task-tabular-xml_q1",
-      "prompt": "1. What is the grade for Eva's final exam? ",
+      "prompt": "1. What is the grade for Eve's final exam? ",
       "type": "shortText",
       "location": "sidebar",
       "required": true
@@ -1171,7 +1170,7 @@
     },
     {
       "id": "reading-task-tabular-xml_q3",
-      "prompt": "3. Which quiz did Eva get the highest grade on? ",
+      "prompt": "3. Which quiz did Eve get the highest grade on? ",
       "type": "shortText",
       "location": "sidebar",
       "required": true
@@ -1224,9 +1223,9 @@
       "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into JSON format. ",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/writing_task/CoEd_json_Config.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "writing-task-config-json"
+        "language": "json", "imagePath": "a-usability-study/assets/writing_task_1.png", "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1270,9 +1269,9 @@
       "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into JSON format.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/writing_task/CoEd_json_Tabular.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "writing-task-tabular-json"
+        "language": "json", "imagePath": null, "type": "writing", "tabular": true
       },
       "response": [
         {
@@ -1316,9 +1315,9 @@
       "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into JSONC format.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/writing_task/CoEd_jsonc_Config.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "writing-task-config-jsonc"
+        "language": "jsonc", "imagePath": null, "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1362,9 +1361,9 @@
       "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into JSON5 format.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/writing_task/CoEd_json5_Config.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "writing-task-config-json5"
+        "language": "json5", "imagePath": null, "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1408,9 +1407,9 @@
       "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into HJSON format.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/writing_task/CoEd_hjson_Config.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "writing-task-config-hjson"
+        "language": "hjson", "imagePath": null, "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1454,9 +1453,9 @@
       "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into YAML format.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/writing_task/CoEd_yaml_Config.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "writing-task-config-yaml"
+        "language": "yaml", "imagePath": null, "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1500,9 +1499,9 @@
       "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into YAML format.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/writing_task/CoEd_yaml_Tabular.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "writing-task-tabular-yaml"
+        "language": "yaml", "imagePath": null, "type": "writing", "tabular": true
       },
       "response": [
         {
@@ -1546,9 +1545,9 @@
       "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into TOML format.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/writing_task/CoEd_toml_Config.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "writing-task-config-toml"
+        "language": "toml", "imagePath": null, "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1592,9 +1591,9 @@
       "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into TOML format.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/writing_task/CoEd_toml_Tabular.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "writing-task-tabular-toml"
+        "language": "toml", "imagePath": null, "type": "writing", "tabular": true
       },
       "response": [
         {
@@ -1638,9 +1637,9 @@
       "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into XML format.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/writing_task/CoEd_xml_Config.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "writing-task-config-xml"
+        "language": "xml", "imagePath": null, "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1684,9 +1683,9 @@
       "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into XML format.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/writing_task/CoEd_xml_Tabular.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "writing-task-tabular-xml"
+        "language": "xml", "imagePath": null, "type": "writing", "tabular": true
       },
       "response": [
         {
@@ -1732,113 +1731,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "json", "imagePath": null, "type": "modifying"
-      },
-      "response": [
-        {
-          "id": "modifying-task-config-json_q1",
-          "prompt": "1. Change the value of benchmark to 7.",
-          "type": "reactive",
-          "location": "sidebar",
-          "required": false
-        },
-        {
-          "id": "modifying-task-config-json_q2",
-          "prompt": "2. Move the authors' information below the repository. ",
-          "type": "reactive",
-          "location": "sidebar",
-          "required": false
-        },
-        {
-          "id": "modifying-task-config-json_q3",
-          "prompt": "3. Remove the peer dependency. ",
-          "type": "reactive",
-          "location": "sidebar",
-          "required": false
-        },
-        {
-          "id": "modifying-task-config-json",
-          "prompt": "Are you sure to submit your answer?",
-          "type": "radio",
-          "location": "sidebar",
-          "required": true,
-          "options": [
-            "Yes"
-          ]
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "modifying-task-config-json",
-          "answer": "Yes"
-        }
-      ],
-      "allowFailedTraining": false
-    },
-    "modifying-task-config-hjson": {
-      "meta": {
-        "taskName": "modifying-task-config-json"
-      },
-      "description": "modifying task with configuration data",
-      "instruction": "Please modify the JSON data in the code editor according to the requirements listed in the sidebar.",
-      "type": "react-component",
-      "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/Editor.tsx",
-      "parameters": {
-        "language": "hjson", "imagePath": null, "type": "modifying"
-      },
-      "response": [
-        {
-          "id": "modifying-task-config-json_q1",
-          "prompt": "1. Change the value of benchmark to 7.",
-          "type": "reactive",
-          "location": "sidebar",
-          "required": false
-        },
-        {
-          "id": "modifying-task-config-json_q2",
-          "prompt": "2. Move the authors' information below the repository. ",
-          "type": "reactive",
-          "location": "sidebar",
-          "required": false
-        },
-        {
-          "id": "modifying-task-config-json_q3",
-          "prompt": "3. Remove the peer dependency. ",
-          "type": "reactive",
-          "location": "sidebar",
-          "required": false
-        },
-        {
-          "id": "modifying-task-config-json",
-          "prompt": "Are you sure to submit your answer?",
-          "type": "radio",
-          "location": "sidebar",
-          "required": true,
-          "options": [
-            "Yes"
-          ]
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "modifying-task-config-json",
-          "answer": "Yes"
-        }
-      ],
-      "allowFailedTraining": false
-    },
-    "modifying-task-config-json5": {
-      "meta": {
-        "taskName": "modifying-task-config-json"
-      },
-      "description": "modifying task with configuration data",
-      "instruction": "Please modify the JSON data in the code editor according to the requirements listed in the sidebar.",
-      "type": "react-component",
-      "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/Editor.tsx",
-      "parameters": {
-        "language": "json5", "imagePath": null, "type": "modifying"
+        "language": "json", "imagePath": null, "type": "modifying", "tabular": false
       },
       "response": [
         {
@@ -1889,14 +1782,14 @@
       "instruction": "Please modify the JSON data in the code editor according to the requirements listed in the sidebar.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/modifying_task/CoEd_json_Tabular.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "modifying-task-tabular-json"
+        "language": "json", "imagePath": null, "type": "modifying", "tabular": true
       },
       "response": [
         {
           "id": "modifying-task-tabular-json_q1",
-          "prompt": "1. Change the final grade for Eva to 80.",
+          "prompt": "1. Change the final grade for Eve to 80.",
           "type": "reactive",
           "location": "sidebar",
           "required": false
@@ -1944,7 +1837,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "jsonc", "imagePath": null, "type": "modifying"
+        "language": "jsonc", "imagePath": null, "type": "modifying", "tabular": false
       },
       "response": [
         {
@@ -1997,7 +1890,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "toml", "imagePath": null, "type": "modifying"
+        "language": "toml", "imagePath": null, "type": "modifying", "tabular": false
       },
       "response": [
         {
@@ -2048,14 +1941,14 @@
       "instruction": "Please modify the TOML data in the code editor according to the requirements listed in the sidebar.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/modifying_task/CoEd_toml_Tabular.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "modifying-task-tabular-toml"
+        "language": "toml", "imagePath": null, "type": "modifying", "tabular": true
       },
       "response": [
         {
           "id": "modifying-task-tabular-toml_q1",
-          "prompt": "1. Change the final grade for Eva to 80.",
+          "prompt": "1. Change the final grade for Eve to 80.",
           "type": "reactive",
           "location": "sidebar",
           "required": false
@@ -2103,7 +1996,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "yaml", "imagePath": null, "type": "modifying"
+        "language": "yaml", "imagePath": null, "type": "modifying", "tabular": false
       },
       "response": [
         {
@@ -2154,14 +2047,14 @@
       "instruction": "Please modify the YAML data in the code editor according to the requirements listed in the sidebar.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/modifying_task/CoEd_yaml_Tabular.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "modifying-task-tabular-yaml"
+        "language": "yaml", "imagePath": null, "type": "modifying", "tabular": true
       },
       "response": [
         {
           "id": "modifying-task-tabular-yaml_q1",
-          "prompt": "1. Change the final grade for Eva to 80.",
+          "prompt": "1. Change the final grade for Eve to 80.",
           "type": "reactive",
           "location": "sidebar",
           "required": false
@@ -2209,7 +2102,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "xml", "imagePath": null, "type": "modifying"
+        "language": "xml", "imagePath": null, "type": "modifying", "tabular": false
       },
       "response": [
         {
@@ -2260,14 +2153,14 @@
       "instruction": "Please modify the XML data in the code editor according to the requirements listed in the sidebar.",
       "type": "react-component",
       "nextButtonLocation": "sidebar",
-      "path": "a-usability-study/assets/modifying_task/CoEd_xml_Tabular.tsx",
+      "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "taskid": "modifying-task-tabular-xml"
+        "language": "xml", "imagePath": null, "type": "modifying", "tabular": true
       },
       "response": [
         {
           "id": "modifying-task-tabular-xml_q1",
-          "prompt": "1. Change the final grade for Eva to 80.",
+          "prompt": "1. Change the final grade for Eve to 80.",
           "type": "reactive",
           "location": "sidebar",
           "required": false
@@ -2305,65 +2198,57 @@
       ],
       "allowFailedTraining": false
     },
-    "post-task-survey": {
+    "after-task-survey":{
       "type": "questionnaire",
       "response": [
         {
           "id": "q1",
-          "prompt": "Please rate the difficulty of learning the syntax rules of the following formats.",
+          "prompt": "1. Please rate the difficulty of learning the syntax rules of the format.",
           "required": true,
           "location": "aboveStimulus",
-          "type": "matrix-radio",
-          "answerOptions": [
-            "Not Encountered",
+          "type": "radio",
+          "options": [
             "Very Easy",
             "Easy",
             "Neutral",
             "Difficult",
             "Very Difficult"
           ],
-          "questionOptions": [
-            "JSON",
-            "JSONC",
-            "JSON5",
-            "HJSON",
-            "YAML",
-            "TOML",
-            "XML"
-          ]
+          "withOther": true
         },
         {
-          "id": "q2",
-          "prompt": "Please rate the difficulty of completing tasks with the following formats you encountered.",
+        "id": "q2",
+        "prompt": "2. Please rate the difficulty of completing the following tasks",
+        "required": true,
+        "location": "aboveStimulus",
+        "type": "matrix-radio",
+        "answerOptions": [
+          "Very Easy",
+          "Easy",
+          "Neutral",
+          "Difficult",
+          "Very Difficult"
+        ],
+        "questionOptions": [
+          "Reading",
+          "Writing",
+          "Modifying"
+        ]
+      },
+        {
+        "id": "q3",
+        "prompt": "Do you want to explain your answer? If yes, please provide your explanation.",
+        "required": false,
+        "location": "aboveStimulus",
+        "type": "longText"
+      },
+        {
+          "id": "q4",
+          "prompt": "3. Please rate the experience of completing the following tasks",
           "required": true,
           "location": "aboveStimulus",
           "type": "matrix-radio",
           "answerOptions": [
-            "Very Easy",
-            "Easy",
-            "Neutral",
-            "Difficult",
-            "Very Difficult",
-            {"value": "Not Encountered", "label": "Not Encountered", "separator": true}
-          ],
-          "questionOptions": [
-            "JSON",
-            "JSONC",
-            "JSON5",
-            "HJSON",
-            "YAML",
-            "TOML",
-            "XML"
-          ]
-        },
-        {
-          "id": "q3",
-          "prompt": "Please rate the experience of completing tasks with the following formats.",
-          "required": true,
-          "location": "aboveStimulus",
-          "type": "matrix-radio",
-          "answerOptions": [
-            "Not Encountered",
             "Very Smooth",
             "Smooth",
             "Neutral",
@@ -2371,27 +2256,132 @@
             "Very Rough"
           ],
           "questionOptions": [
-            "JSON",
-            "JSONC",
-            "JSON5",
-            "HJSON",
-            "YAML",
-            "TOML",
-            "XML"
+            "Reading",
+            "Writing",
+            "Modifying"
           ]
         },
         {
-        "id": "q4",
-        "prompt": "Compared to the format you encountered in the reading task, if you had a choice, which format would you prefer to use for this task? Please consider factors such as user-friendliness, efficiency, and error prevention. Check all that apply, and indicate why you agree with each selected format.",
+          "id": "q5",
+          "prompt": "Do you want to explain your answer? If yes, please provide your explanation.",
+          "required": false,
+          "location": "aboveStimulus",
+          "type": "longText"
+        },
+        {
+          "id": "q6",
+          "prompt": "4. Please rate how much you agree that the format you are using possesses the following positive features.",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "matrix-radio",
+          "answerOptions": [
+            "0(Not agree at all)",
+            "1(A little agree)",
+            "2(Moderately agree)",
+            "3(Agree)",
+            "4(Very much agree)"
+          ],
+          "questionOptions": [
+            "Easy to learn",
+            "Easy to use",
+            "Efficient",
+            "Flexible",
+            "Intuitive",
+            "User-friendly",
+            "Easy to debug"
+          ]
+        },
+        {
+          "id": "q7",
+          "prompt": "5. Please rate how much you agree that the format you are using possesses the following negative features.",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "matrix-radio",
+          "answerOptions": [
+            "0(Not agree at all)",
+            "1(A little agree)",
+            "2(Moderately agree)",
+            "3(Agree)",
+            "4(Very much agree)"
+          ],
+          "questionOptions": [
+            "Hard to learn",
+            "Hard to use",
+            "Annoying due to strict syntax rules",
+            "Frustrating due to loose syntax rules",
+            "Bad readability",
+            "Requires a lot of labor",
+            "Requires a lot of mental effort",
+            "Not user-friendly",
+            "Difficult to debugg"
+          ]
+        },
+        {
+          "id":"q8",
+          "prompt": "6. Is there anything you’d like to tell us?",
+          "required": false,
+          "location": "aboveStimulus",
+          "type": "longText"
+        }
+      ]
+    },
+    "post-task-survey": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q1",
+          "prompt": "What is your age?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "shortText"
+        },
+        {
+          "id": "q2",
+          "prompt": "What is your highest level of education? (High School, Bachelor's, Master's, PhD, etc.)",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "High School",
+            "Bachelor's",
+            "Master's",
+            "PhD"
+          ],
+          "withOther": true
+        },
+      {
+        "id": "q3",
+        "prompt": "How would you describe your computer skill level?",
         "required": true,
         "location": "aboveStimulus",
-        "type": "matrix-checkbox",
+        "type": "radio",
+        "options": [
+          "Beginner",
+          "Intermediate",
+          "Advanced",
+          "Expert"
+        ],
+        "withOther": true
+      },
+      {
+        "id": "q4",
+        "prompt": "How many years of programming experience do you have (including taking programming-related classes or receiving related training)?",
+        "required": true,
+        "location": "aboveStimulus",
+        "type": "shortText"
+      },
+      {
+        "id": "q5",
+        "prompt": "Can you specify your familarity with the following data formats?",
+        "required": true,
+        "location": "aboveStimulus",
+        "type": "matrix-radio",
         "answerOptions": [
-          "Not a better choice",
-          "I am not sure",
-          "More user-friendly",
-          "More efficient",
-          "Btter error prevention"
+          "Expert",
+          "Comfortable using it",
+          "Used it a few times",
+          "Heard of it but never used",
+          "Not familiar at all"
         ],
         "questionOptions": [
           "JSON",
@@ -2404,29 +2394,31 @@
         ]
       },
       {
-        "id": "q5",
+        "id": "q6",
         "prompt": "Do you have any vision conditions that might affect how you perceive visual information?",
         "required": true,
         "location": "aboveStimulus",
         "type": "checkbox",
         "options": [
-          "No, I do not have any related conditions.",
-          "Color vision deficiency (CVD) (e.g., difficulty distinguishing colors like red and green).",
-          "Low vision (e.g., difficulty seeing clearly, even with corrective lenses).",
-          "Blindness (e.g., unable to see or severe visual impairment)."
+          "Prefer not to say.",
+          "No, I do not have any cognitive-related conditions.",
+          "Dyslexia (e.g., difficulty reading or distinguishing symbols, such as \"b\" and \"d\").",
+          "Dysgraphia (e.g., difficulty with handwriting or written expression)."
         ],
         "withOther": true
       },
       {
-        "id": "q6",
+        "id": "q7",
         "prompt": "Do you experience any cognitive conditions that may affect your ability to interpret text or symbols?",
         "required": true,
         "location": "aboveStimulus",
         "type": "checkbox",
         "options": [
-          "No, I do not have any cognitive-related conditions.",
-          "Dyslexia (e.g., difficulty reading or distinguishing symbols, such as \"b\" and \"d\").",
-          "Dysgraphia (e.g., difficulty with handwriting or written expression)."
+          "Prefer not to say.",
+          "No, I do not have any related conditions.",
+          "Color vision deficiency (CVD) (e.g., difficulty distinguishing colors like red and green).",
+          "Low vision (e.g., difficulty seeing clearly, even with corrective lenses).",
+          "Blindness (e.g., unable to see or severe visual impairment)."
         ],
         "withOther": true
       }
@@ -2436,15 +2428,58 @@
   "sequence": {
     "order": "fixed",
     "components": [
-      "modifying-task-config-json",
-      "modifying-task-config-toml",
-      "modifying-task-config-yaml",
-      "modifying-task-config-xml",
-      "modifying-task-config-jsonc",
-      "modifying-task-config-json5",
-      "modifying-task-config-hjson",
+      "introduction",
+      "consent",
+      "task",
+      {"order":"fixed",
+      "components": [
+        {"order":"fixed",
+        "components": [
+          "tutorial-json",
+          "quiz-json",
+          "reading-task-config-json",
+          "writing-task-config-json",
+          "modifying-task-config-json",
+          "after-task-survey"
+        ]
+        },
+        {"order":"latinSquare",
+        "numSamples": 1,
+        "components": [
+          {"order":"fixed",
+          "components": [
+            "tutorial-yaml",
+            "quiz-yaml",
+            "reading-task-tabular-yaml",
+            "writing-task-tabular-yaml",
+            "modifying-task-tabular-yaml",
+            "after-task-survey"
+          ]
+          },
+          {"order":"fixed",
+          "components": [
+            "tutorial-yaml",
+            "quiz-yaml",
+            "reading-task-tabular-toml",
+            "writing-task-tabular-toml",
+            "modifying-task-tabular-toml",
+            "after-task-survey"
+          ]
+          },
+          {"order":"fixed",
+          "components": [
+            "tutorial-yaml",
+            "quiz-yaml",
+            "reading-task-tabular-xml",
+            "writing-task-tabular-xml",
+            "modifying-task-tabular-xml",
+            "after-task-survey"
+          ]
+          }]},     
       "post-task-survey"
     ]
   }
+]
+}
 }
 
