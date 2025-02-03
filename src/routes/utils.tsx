@@ -36,7 +36,7 @@ const modules = import.meta.glob(
 
 export function useCurrentComponent(): string {
   const { funcIndex } = useParams();
-  const answers = useStoreSelector((state) => state.answers);
+  const _answers = useStoreSelector((state) => state.answers);
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
   const flatSequence = useFlatSequence();
@@ -71,35 +71,42 @@ export function useCurrentComponent(): string {
     }
   }, [currentStep, funcIndex, navigate, nextFunc, studyId]);
 
-  const compName = useMemo(() => {
+  const { compName, parameters } = useMemo(() => {
     if (typeof currentStep === 'number') {
       const component = getComponent(flatSequence[currentStep], studyConfig);
 
       // in a func component
       if (!component && nextFunc !== null) {
-        const { component: currCompName, parameters } = nextFunc({ components: [], answers, sequenceSoFar: [] });
+        const { component: currCompName, parameters: _params } = nextFunc({
+          components: [], answers: _answers, sequenceSoFar: [], customParameters: {},
+        });
         if (currCompName !== null) {
-          setPrevComponentName(currCompName);
-          if (funcIndex) {
-            storeDispatch(pushToFuncSequence({
-              component: currCompName, funcName: flatSequence[currentStep], index: currentStep, funcIndex: decryptIndex(funcIndex),
-            }));
-          }
-
-          storeDispatch(setFuncParams(parameters));
-
-          return currCompName;
+          return { compName: currCompName, parameters: _params };
         }
 
-        navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${window.location.search}`);
-        return prevComponentName;
+        return { compName: prevComponentName, parameters: null };
       }
-      setPrevComponentName(flatSequence[currentStep]);
-      return flatSequence[currentStep];
+      return { compName: flatSequence[currentStep], parameters: null };
     }
-    setPrevComponentName(currentStep.replace('reviewer-', ''));
-    return currentStep.replace('reviewer-', '');
-  }, [answers, currentStep, flatSequence, funcIndex, navigate, nextFunc, prevComponentName, pushToFuncSequence, setFuncParams, storeDispatch, studyConfig, studyId]);
+    return { compName: currentStep.replace('reviewer-', ''), parameters: null };
+  }, [_answers, currentStep, flatSequence, nextFunc, prevComponentName, studyConfig]);
+
+  useEffect(() => {
+    if (typeof currentStep !== 'number') {
+      return;
+    }
+    if (compName === null) {
+      navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${window.location.search}`);
+    } else if (flatSequence[currentStep] !== compName) {
+      if (funcIndex) {
+        storeDispatch(pushToFuncSequence({
+          component: compName, funcName: flatSequence[currentStep], index: currentStep, funcIndex: decryptIndex(funcIndex),
+        }));
+      }
+      storeDispatch(setFuncParams(parameters));
+    }
+    setPrevComponentName(compName);
+  }, [compName, currentStep, flatSequence, funcIndex, navigate, parameters, pushToFuncSequence, setFuncParams, storeDispatch, studyId]);
   // console.log(compName, nextFunc, currentComponent, flatSequence);
 
   return compName;

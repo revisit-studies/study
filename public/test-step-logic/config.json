@@ -104,9 +104,6 @@
         "trial1",
         {
             "id": "loopingBlock",
-            "parameters": {
-                "loop": 3
-            },
             "order": "func",
             "func": "test-step-logic/func.ts"
         },

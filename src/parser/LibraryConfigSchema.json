@@ -466,10 +466,16 @@
           "const": "func",
           "description": "The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed.",
           "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "type": "object"
         }
       },
       "required": [
-        "order"
+        "id",
+        "order",
+        "func"
       ],
       "type": "object"
     },

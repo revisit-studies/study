@@ -35,8 +35,6 @@ export function ComponentController() {
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
 
-  console.log(currentComponent);
-
   const stepConfig = studyConfig.components[currentComponent];
   const { storageEngine } = useStorageEngine();
 

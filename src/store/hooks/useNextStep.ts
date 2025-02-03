@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import {
   useStoreSelector,
@@ -86,9 +86,6 @@ export function useNextStep() {
     if (typeof currentStep !== 'number') {
       return;
     }
-    console.log(trialValidation);
-    console.log(storedAnswer);
-    console.log(identifier);
     // Get answer from across the 3 response blocks and the provenance graph
     const trialValidationCopy = deepCopy(trialValidation[identifier]);
     const answer = Object.values(trialValidationCopy).reduce((acc, curr) => {

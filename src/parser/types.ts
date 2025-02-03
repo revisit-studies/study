@@ -1088,6 +1088,7 @@ export interface FuncComponentBlock {
   /** The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed. */
   order: 'func';
   func: string;
+  parameters?: Record<string, unknown>;
 }
 
 /** The ComponentBlock interface is used to define order properties within the sequence. This is used to define the order of components in a study and the skip logic. It supports random assignment of trials using a pure random assignment and a [latin square](https://en.wikipedia.org/wiki/Latin_square).

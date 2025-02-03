@@ -1,4 +1,6 @@
-import { Suspense, useCallback } from 'react';
+import {
+  Suspense, useCallback, useMemo,
+} from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
 import { ReactComponent } from '../parser/types';
 import { StimulusParams } from '../store/types';
@@ -34,13 +36,15 @@ export function ReactComponentController({ currentConfig, provState }: { current
     storeDispatch(setreactiveAnswers(answers));
   }, [currentComponent, currentStep, setreactiveAnswers, storeDispatch, updateResponseBlockValidation]);
 
+  const params = useMemo(() => (funcParams !== undefined ? funcParams : currentConfig.parameters), [currentConfig.parameters, funcParams]);
+
   return (
     <Suspense fallback={<div>Loading...</div>}>
       {StimulusComponent
         ? (
           <ErrorBoundary>
             <StimulusComponent
-              parameters={funcParams !== undefined ? funcParams : currentConfig.parameters}
+              parameters={params}
               setAnswer={setAnswer}
               provenanceState={provState}
             />

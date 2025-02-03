@@ -112,7 +112,7 @@ export interface StoredAnswer {
 }
 
 export interface JumpFunctionParameters {
-  components: (string | ComponentBlock)[], answers: Record<string, StoredAnswer>, sequenceSoFar: string[]
+  components: (string | ComponentBlock)[], answers: Record<string, StoredAnswer>, sequenceSoFar: string[], customParameters: Record<string, any>
 }
 
 export interface JumpFunctionReturnVal {

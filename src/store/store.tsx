@@ -19,10 +19,7 @@ export async function studyStoreCreator(
   modes: Record<REVISIT_MODE, boolean>,
   participantId: string,
 ) {
-  console.log(sequence);
   const flatSequence = getSequenceFlatMap(sequence);
-
-  console.log(flatSequence);
 
   const emptyAnswers: Record<string, StoredAnswer> = Object.fromEntries(flatSequence.filter((id) => id !== 'end')
     .map((id, idx) => [
@@ -94,7 +91,6 @@ export async function studyStoreCreator(
         state.answers[`${payload.payload.funcName}_${payload.payload.index}_${payload.payload.component}_${payload.payload.funcIndex}`] = {
           answer: {}, incorrectAnswers: {}, startTime: 0, endTime: -1, provenanceGraph: undefined, windowEvents: [], timedOut: false, helpButtonClickedCount: 0,
         };
-        console.log();
         state.trialValidation[`${payload.payload.funcName}_${payload.payload.index}_${payload.payload.component}_${payload.payload.funcIndex}`] = { aboveStimulus: { valid: false, values: {} }, belowStimulus: { valid: false, values: {} }, sidebar: { valid: false, values: {} } };
       },
       toggleStudyBrowser: (state) => {
@@ -286,23 +282,23 @@ export const useStoreDispatch: () => StoreDispatch = useDispatch;
 export const useStoreSelector: TypedUseSelectorHook<StoreState> = useSelector;
 
 export function useAreResponsesValid(id: string) {
-  // return useStoreSelector((state) => {
-  //   if (id.includes('reviewer-')) {
-  //     return true;
-  //   }
-  //   const valid = Object.values(state.trialValidation[id]).every((x) => {
-  //     if (typeof x === 'object' && 'valid' in x) {
-  //       return x.valid;
-  //     }
-  //     return true;
-  //   });
-  //   if (!valid) return false;
+  return useStoreSelector((state) => {
+    if (id.includes('reviewer-')) {
+      return true;
+    }
+    const valid = Object.values(state.trialValidation[id]).every((x) => {
+      if (typeof x === 'object' && 'valid' in x) {
+        return x.valid;
+      }
+      return true;
+    });
+    if (!valid) return false;
 
-  //   // Valid seems to not be an object, just a boolean (you're using 'every').
-  //   // Was this originally something else? Should just be "return valid"
-  //   // instead of "if (!valid) return false" and then the stuff below
-  //   return Object.values(valid).every((x) => x);
-  // });
+    // Valid seems to not be an object, just a boolean (you're using 'every').
+    // Was this originally something else? Should just be "return valid"
+    // instead of "if (!valid) return false" and then the stuff below
+    return Object.values(valid).every((x) => x);
+  });
 
   return true;
 }
