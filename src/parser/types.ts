@@ -816,7 +816,15 @@ export interface VegaComponentConfig extends BaseIndividualComponent {
 
 export type VegaComponent = VegaComponentPath | VegaComponentConfig;
 
-export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent | VegaComponent;
+export interface VideoComponent extends BaseIndividualComponent {
+  type: 'video';
+  /** The path to the video. This should be a relative path from the public folder. */
+  path: string;
+  /** Whether to force the video to play until the end. */
+  forceCompletion?: boolean;
+}
+
+export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent | VegaComponent | VideoComponent;
 
 /** The DeterministicInterruption interface is used to define an interruption that will be shown at a specific location in the block.
  *
