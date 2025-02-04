@@ -635,6 +635,80 @@
       ],
       "allowFailedTraining": false
     },
+    "reading-task-tabular-jsonc": {
+      "meta": {
+        "taskName": "reading-task-tabular-jsonc"
+      },
+      "description": "reading task with tabular data",
+      "instruction": "Please read the data in code editor and answer the following questions.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/Editor.tsx",
+      "parameters": {
+        "language": "jsonc", "imagePath": null, "type": "reading", "tabular": true
+      },
+      "response": [
+        {
+          "id": "reading-task-tabular-jsonc_q1",
+          "prompt": "1. What is the grade for Eve's final exam? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-jsonc_q2",
+          "prompt": "2. How many quizzes did Bob take? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-jsonc_q3",
+          "prompt": "3. Which quiz did Eve get the highest grade on? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-jsonc_q4",
+          "prompt": "4. How many  second-level keys does the file contain? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-jsonc_q5",
+          "prompt": "5. Which second-level keys under the top-level 'students' key in the file contain nested structures (i.e., other key-value pairs)?",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-jsonc_q6",
+          "prompt": "6. Who is absent from the final exam?",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-jsonc",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "reading-task-tabular-jsonc",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
     "reading-task-config-json5": {
       "meta": {
         "taskName": "reading-task-config-json5"
@@ -709,6 +783,80 @@
       ],
       "allowFailedTraining": false
     },
+    "reading-task-tabular-json5": {
+      "meta": {
+        "taskName": "reading-task-tabular-json5"
+      },
+      "description": "reading task with tabular data",
+      "instruction": "Please read the data in code editor and answer the following questions.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/Editor.tsx",
+      "parameters": {
+        "language": "json5", "imagePath": null, "type": "reading", "tabular": true
+      },
+      "response": [
+        {
+          "id": "reading-task-tabular-json5_q1",
+          "prompt": "1. What is the grade for Eve's final exam? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-json5_q2",
+          "prompt": "2. How many quizzes did Bob take? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-json5_q3",
+          "prompt": "3. Which quiz did Eve get the highest grade on? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-json5_q4",
+          "prompt": "4. How many  second-level keys does the file contain? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-json5_q5",
+          "prompt": "5. Which second-level keys under the top-level 'students' key in the file contain nested structures (i.e., other key-value pairs)?",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-json5_q6",
+          "prompt": "6. Who is absent from the final exam?",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-json5",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "reading-task-tabular-json5",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
     "reading-task-config-hjson": {
       "meta": {
         "taskName": "reading-task-config-hjson"
@@ -778,6 +926,80 @@
       "correctAnswer": [
         {
           "id": "reading-task-config-hjson",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "reading-task-tabular-hjson": {
+      "meta": {
+        "taskName": "reading-task-tabular-hjson"
+      },
+      "description": "reading task with tabular data",
+      "instruction": "Please read the data in code editor and answer the following questions.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/Editor.tsx",
+      "parameters": {
+        "language": "hjson", "imagePath": null, "type": "reading", "tabular": true
+      },
+      "response": [
+        {
+          "id": "reading-task-tabular-hjson_q1",
+          "prompt": "1. What is the grade for Eve's final exam? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-hjson_q2",
+          "prompt": "2. How many quizzes did Bob take? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-hjson_q3",
+          "prompt": "3. Which quiz did Eve get the highest grade on? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-hjson_q4",
+          "prompt": "4. How many  second-level keys does the file contain? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-hjson_q5",
+          "prompt": "5. Which second-level keys under the top-level 'students' key in the file contain nested structures (i.e., other key-value pairs)?",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-hjson_q6",
+          "prompt": "6. Who is absent from the final exam?",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-hjson",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "reading-task-tabular-hjson",
           "answer": "Yes"
         }
       ],
@@ -1079,154 +1301,154 @@
       ],
       "allowFailedTraining": false
     },
-"reading-task-config-xml": {
-  "meta": {
-    "taskName": "reading-task-config-xml"
-  },
-  "description": "reading task with configuration data",
-  "instruction": "Please read the data in code editor and answer the following questions.",
-  "type": "react-component",
-  "nextButtonLocation": "sidebar",
-  "path": "a-usability-study/assets/Editor.tsx",
-  "parameters": {
-    "language": "xml", "imagePath": null, "type": "reading", "tabular": false
-  },
-  "response": [
-    {
-      "id": "reading-task-config-xml_q1",
-      "prompt": "1. What is the value of \"version\"? ",
-      "type": "shortText",
-      "location": "sidebar",
-      "required": true
+    "reading-task-config-xml": {
+      "meta": {
+        "taskName": "reading-task-config-xml"
+      },
+      "description": "reading task with configuration data",
+      "instruction": "Please read the data in code editor and answer the following questions.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/Editor.tsx",
+      "parameters": {
+        "language": "xml", "imagePath": null, "type": "reading", "tabular": false
+      },
+      "response": [
+        {
+          "id": "reading-task-config-xml_q1",
+          "prompt": "1. What is the value of \"version\"? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-xml_q2",
+          "prompt": "2. What is the value of \"node\"? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-xml_q3",
+          "prompt": "3. How many values does \"keywords\" have? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-xml_q4",
+          "prompt": "4. How many top-level keys does the file contain? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-xml_q5",
+          "prompt": "5. Which top-level keys in the file have a nested structure (contain other key-value pairs within them)? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-xml_q6",
+          "prompt": "6. Which devDependency is considered a peer dependency?",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-config-xml",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "reading-task-config-xml",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
     },
-    {
-      "id": "reading-task-config-xml_q2",
-      "prompt": "2. What is the value of \"node\"? ",
-      "type": "shortText",
-      "location": "sidebar",
-      "required": true
+    "reading-task-tabular-xml": {
+      "meta": {
+        "taskName": "reading-task-tabular-xml"
+      },
+      "description": "reading task with tabular data",
+      "instruction": "Please read the data in code editor and answer the following questions.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/Editor.tsx",
+      "parameters": {
+        "language": "xml", "imagePath": null, "type": "reading", "tabular": true
+      },
+      "response": [
+        {
+          "id": "reading-task-tabular-xml_q1",
+          "prompt": "1. What is the grade for Eve's final exam? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-xml_q2",
+          "prompt": "2. How many quizzes did Bob take? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-xml_q3",
+          "prompt": "3. Which quiz did Eve get the highest grade on? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-xml_q4",
+          "prompt": "4. How many  second-level keys does the file contain? ",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-xml_q5",
+          "prompt": "5. Which second-level keys under the top-level 'students' key in the file contain nested structures (i.e., other key-value pairs)?",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-xml_q6",
+          "prompt": "6. Who is absent from the final exam?",
+          "type": "shortText",
+          "location": "sidebar",
+          "required": true
+        },
+        {
+          "id": "reading-task-tabular-xml",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "reading-task-tabular-xml",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
     },
-    {
-      "id": "reading-task-config-xml_q3",
-      "prompt": "3. How many values does \"keywords\" have? ",
-      "type": "shortText",
-      "location": "sidebar",
-      "required": true
-    },
-    {
-      "id": "reading-task-config-xml_q4",
-      "prompt": "4. How many top-level keys does the file contain? ",
-      "type": "shortText",
-      "location": "sidebar",
-      "required": true
-    },
-    {
-      "id": "reading-task-config-xml_q5",
-      "prompt": "5. Which top-level keys in the file have a nested structure (contain other key-value pairs within them)? ",
-      "type": "shortText",
-      "location": "sidebar",
-      "required": true
-    },
-    {
-      "id": "reading-task-config-xml_q6",
-      "prompt": "6. Which devDependency is considered a peer dependency?",
-      "type": "shortText",
-      "location": "sidebar",
-      "required": true
-    },
-    {
-      "id": "reading-task-config-xml",
-      "prompt": "Are you sure to submit your answer?",
-      "type": "radio",
-      "location": "sidebar",
-      "required": true,
-      "options": [
-        "Yes"
-      ]
-    }
-  ],
-  "correctAnswer": [
-    {
-      "id": "reading-task-config-xml",
-      "answer": "Yes"
-    }
-  ],
-  "allowFailedTraining": false
-},
-"reading-task-tabular-xml": {
-  "meta": {
-    "taskName": "reading-task-tabular-xml"
-  },
-  "description": "reading task with tabular data",
-  "instruction": "Please read the data in code editor and answer the following questions.",
-  "type": "react-component",
-  "nextButtonLocation": "sidebar",
-  "path": "a-usability-study/assets/Editor.tsx",
-  "parameters": {
-    "language": "xml", "imagePath": null, "type": "reading", "tabular": true
-  },
-  "response": [
-    {
-      "id": "reading-task-tabular-xml_q1",
-      "prompt": "1. What is the grade for Eve's final exam? ",
-      "type": "shortText",
-      "location": "sidebar",
-      "required": true
-    },
-    {
-      "id": "reading-task-tabular-xml_q2",
-      "prompt": "2. How many quizzes did Bob take? ",
-      "type": "shortText",
-      "location": "sidebar",
-      "required": true
-    },
-    {
-      "id": "reading-task-tabular-xml_q3",
-      "prompt": "3. Which quiz did Eve get the highest grade on? ",
-      "type": "shortText",
-      "location": "sidebar",
-      "required": true
-    },
-    {
-      "id": "reading-task-tabular-xml_q4",
-      "prompt": "4. How many  second-level keys does the file contain? ",
-      "type": "shortText",
-      "location": "sidebar",
-      "required": true
-    },
-    {
-      "id": "reading-task-tabular-xml_q5",
-      "prompt": "5. Which second-level keys under the top-level 'students' key in the file contain nested structures (i.e., other key-value pairs)?",
-      "type": "shortText",
-      "location": "sidebar",
-      "required": true
-    },
-    {
-      "id": "reading-task-tabular-xml_q6",
-      "prompt": "6. Who is absent from the final exam?",
-      "type": "shortText",
-      "location": "sidebar",
-      "required": true
-    },
-    {
-      "id": "reading-task-tabular-xml",
-      "prompt": "Are you sure to submit your answer?",
-      "type": "radio",
-      "location": "sidebar",
-      "required": true,
-      "options": [
-        "Yes"
-      ]
-    }
-  ],
-  "correctAnswer": [
-    {
-      "id": "reading-task-tabular-xml",
-      "answer": "Yes"
-    }
-  ],
-  "allowFailedTraining": false
-},
     "writing-task-config-json": {
       "meta": {
         "taskName": "writing-task-config-json"
@@ -1237,7 +1459,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "json", "imagePath": "a-usability-study/assets/writing_task_1.png", "type": "writing", "tabular": false
+        "language": "json", "imagePath": "a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1283,7 +1505,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "json", "imagePath": null, "type": "writing", "tabular": true
+        "language": "json", "imagePath": "a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
       },
       "response": [
         {
@@ -1329,7 +1551,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "jsonc", "imagePath": null, "type": "writing", "tabular": false
+        "language": "jsonc", "imagePath": "a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1348,6 +1570,52 @@
         },
         {
           "id": "writing-task-config-jsonc",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "writing-task-config-jsonc",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "writing-task-tabular-jsonc": {
+      "meta": {
+        "taskName": "writing-task-tabular-jsonc"
+      },
+      "description": "writing task with tabular data",
+      "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into JSONC format.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/Editor.tsx",
+      "parameters": {
+        "language": "jsonc", "imagePath": "a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
+      },
+      "response": [
+        {
+          "id": "code",
+          "prompt": "",
+          "hidden": true,
+          "type": "reactive",
+          "required": false
+        },
+        {
+          "id": "error",
+          "prompt": "",
+          "hidden": true,
+          "type": "reactive",
+          "required": false
+        },
+        {
+          "id": "writing-task-tabular-jsonc",
           "prompt": "Are you sure to submit your answer?",
           "type": "radio",
           "location": "sidebar",
@@ -1375,7 +1643,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "json5", "imagePath": null, "type": "writing", "tabular": false
+        "language": "json5", "imagePath": "a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1394,6 +1662,52 @@
         },
         {
           "id": "writing-task-config-json5",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "writing-task-config-json5",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "writing-task-tabular-json5": {
+      "meta": {
+        "taskName": "writing-task-tabular-json5"
+      },
+      "description": "writing task with tabular data",
+      "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into JSON5 format.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/Editor.tsx",
+      "parameters": {
+        "language": "json5", "imagePath": "a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
+      },
+      "response": [
+        {
+          "id": "code",
+          "prompt": "",
+          "hidden": true,
+          "type": "reactive",
+          "required": false
+        },
+        {
+          "id": "error",
+          "prompt": "",
+          "hidden": true,
+          "type": "reactive",
+          "required": false
+        },
+        {
+          "id": "writing-task-tabular-json5",
           "prompt": "Are you sure to submit your answer?",
           "type": "radio",
           "location": "sidebar",
@@ -1421,7 +1735,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "hjson", "imagePath": null, "type": "writing", "tabular": false
+        "language": "hjson", "imagePath": "a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1457,6 +1771,52 @@
       ],
       "allowFailedTraining": false
     },
+    "writing-task-tabular-hjson": {
+      "meta": {
+        "taskName": "writing-task-tabular-hjson"
+      },
+      "description": "writing task with tabular data",
+      "instruction": "Please refer to the data structure shown in the figure and convert it(including comments) into HJSON format.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/Editor.tsx",
+      "parameters": {
+        "language": "hjson", "imagePath": "a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
+      },
+      "response": [
+        {
+          "id": "code",
+          "prompt": "",
+          "hidden": true,
+          "type": "reactive",
+          "required": false
+        },
+        {
+          "id": "error",
+          "prompt": "",
+          "hidden": true,
+          "type": "reactive",
+          "required": false
+        },
+        {
+          "id": "writing-task-tabular-hjson",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "writing-task-config-hjson",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
     "writing-task-config-yaml": {
       "meta": {
         "taskName": "writing-task-config-yaml"
@@ -1467,7 +1827,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "yaml", "imagePath": null, "type": "writing", "tabular": false
+        "language": "yaml", "imagePath": "a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1513,7 +1873,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "yaml", "imagePath": null, "type": "writing", "tabular": true
+        "language": "yaml", "imagePath": "a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
       },
       "response": [
         {
@@ -1559,7 +1919,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "toml", "imagePath": null, "type": "writing", "tabular": false
+        "language": "toml", "imagePath": "a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1605,7 +1965,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "toml", "imagePath": null, "type": "writing", "tabular": true
+        "language": "toml", "imagePath": "a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
       },
       "response": [
         {
@@ -1651,7 +2011,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "xml", "imagePath": null, "type": "writing", "tabular": false
+        "language": "xml", "imagePath": "a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1697,7 +2057,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "xml", "imagePath": null, "type": "writing", "tabular": true
+        "language": "xml", "imagePath": "a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
       },
       "response": [
         {
@@ -1887,6 +2247,271 @@
       "correctAnswer": [
         {
           "id": "modifying-task-config-jsonc",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "modifying-task-tabular-jsonc": {
+      "meta": {
+        "taskName": "modifying-task-tabular-jsonc"
+      },
+      "description": "modifying task with tabular data",
+      "instruction": "Please modify the JSONC data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/Editor.tsx",
+      "parameters": {
+        "language": "jsonc", "imagePath": null, "type": "modifying", "tabular": true
+      },
+      "response": [
+        {
+          "id": "modifying-task-tabular-jsonc_q1",
+          "prompt": "1. Change the final grade for Eve to 80.",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-jsonc_q2",
+          "prompt": "2. Move the information about the midterm and final grades below the 'Quizzes' section. ",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-jsonc_q3",
+          "prompt": "3. Remove all information regarding the final grade for students who are absent. ",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-jsonc",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-tabular-jsonc",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "modifying-task-config-json5": {
+      "meta": {
+        "taskName": "modifying-task-config-json5"
+      },
+      "description": "modifying task with configuration data",
+      "instruction": "Please modify the JSON5 data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/Editor.tsx",
+      "parameters": {
+        "language": "json5", "imagePath": null, "type": "modifying", "tabular": false
+      },
+      "response": [
+        {
+          "id": "modifying-task-config-json5_q1",
+          "prompt": "1. Change the value of benchmark to 7.",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-json5_q2",
+          "prompt": "2. Move the authors' information below the repository. ",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-json5_q3",
+          "prompt": "3. Remove the peer dependency. ",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-json5",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-config-json5",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "modifying-task-tabular-json5": {
+      "meta": {
+        "taskName": "modifying-task-tabular-json5"
+      },
+      "description": "modifying task with tabular data",
+      "instruction": "Please modify the JSON5 data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/Editor.tsx",
+      "parameters": {
+        "language": "json5", "imagePath": null, "type": "modifying", "tabular": true
+      },
+      "response": [
+        {
+          "id": "modifying-task-tabular-json5_q1",
+          "prompt": "1. Change the final grade for Eve to 80.",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-json5_q2",
+          "prompt": "2. Move the information about the midterm and final grades below the 'Quizzes' section. ",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-json5_q3",
+          "prompt": "3. Remove all information regarding the final grade for students who are absent. ",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-json5",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-tabular-json5",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "modifying-task-config-hjson": {
+      "meta": {
+        "taskName": "modifying-task-config-hjson"
+      },
+      "description": "modifying task with configuration data",
+      "instruction": "Please modify the HJSON data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/Editor.tsx",
+      "parameters": {
+        "language": "hjson", "imagePath": null, "type": "modifying", "tabular": false
+      },
+      "response": [
+        {
+          "id": "modifying-task-config-hjson_q1",
+          "prompt": "1. Change the value of benchmark to 7.",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-hjson_q2",
+          "prompt": "2. Move the authors' information below the repository. ",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-hjson_q3",
+          "prompt": "3. Remove the peer dependency. ",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-config-hjson",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-config-hjson",
+          "answer": "Yes"
+        }
+      ],
+      "allowFailedTraining": false
+    },
+    "modifying-task-tabular-hjson": {
+      "meta": {
+        "taskName": "modifying-task-tabular-hjson"
+      },
+      "description": "modifying task with tabular data",
+      "instruction": "Please modify the HJSON data in the code editor according to the requirements listed in the sidebar.",
+      "type": "react-component",
+      "nextButtonLocation": "sidebar",
+      "path": "a-usability-study/assets/Editor.tsx",
+      "parameters": {
+        "language": "hjson", "imagePath": null, "type": "modifying", "tabular": true
+      },
+      "response": [
+        {
+          "id": "modifying-task-tabular-hjson_q1",
+          "prompt": "1. Change the final grade for Eve to 80.",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-jhjson_q2",
+          "prompt": "2. Move the information about the midterm and final grades below the 'Quizzes' section. ",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-hjson_q3",
+          "prompt": "3. Remove all information regarding the final grade for students who are absent. ",
+          "type": "reactive",
+          "location": "sidebar",
+          "required": false
+        },
+        {
+          "id": "modifying-task-tabular-hjson",
+          "prompt": "Are you sure to submit your answer?",
+          "type": "radio",
+          "location": "sidebar",
+          "required": true,
+          "options": [
+            "Yes"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "modifying-task-tabular-hjson",
           "answer": "Yes"
         }
       ],
@@ -2421,7 +3046,7 @@
       "consent",
       "task",
       {"order":"latinSquare",
-        "numSamples": 2,
+        "numSamples": 1,
         "components": [
       {"order":"fixed",
         "components": [
