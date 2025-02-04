@@ -6,7 +6,7 @@ Before we begin, please read the following consent form carefully and thereafter
 
 **Procedure:** In this experiment, you will be asked to complete a tutorial, take a quiz, and perform a series of tasks related to reading and writing using different data serialization formats.
 
-**Duration:** The estimated completion time for the experiment is 60 minutes.
+**Duration:** The estimated completion time for the experiment is 40 minutes.
 
 **Privacy:** Your participation is anonymous and your responses cannot be used to identify you.
 

@@ -2,7 +2,7 @@
 JSON (JavaScript Object Notation) is a lightweight data-interchange format that is easy for humans to read and write, and easy for machines to parse and generate.
 <br><br>
 
-### 1. JSON Basic Structure
+### 1.Basic Structure
 JSON consists of **key-value** pairs and **data types**, and it primarily has two structures:
 - **Object**: Denoted with curly braces <strong style="color:green;">{}</strong>, it contains an unordered collection of key-value pairs.
 - **Array**: Denoted with square brackets <strong style="color:green;">[]</strong>, it contains an ordered list of values.
@@ -10,7 +10,7 @@ JSON consists of **key-value** pairs and **data types**, and it primarily has tw
    <img src="./assets/tutorial/json/json_BasicStructure.png" width="450px" height="auto">
 <br>
 
-### 2. Rules for Key-Value Pairs
+### 2. Key-Value Pairs
 - Keys and values are separated by a colon <strong style="color:green;">:</strong>.
 - Keys must be strings and must be enclosed in double quotes <strong style="color:green;">""</strong>.
 - Key-value pairs are separated by commas <strong style="color:green;">,</strong>.
@@ -18,8 +18,8 @@ JSON consists of **key-value** pairs and **data types**, and it primarily has tw
    <img src="./assets/tutorial/json/json_KVPair.png" width="450px" height="auto">
 <br>
 
-### 3. JSON Data Types
-- **String**: Strings must be enclosed in double quotes <strong style="color:green;">""</strong>.
+### 3. Data Types
+**String**: Strings must be enclosed in double quotes <strong style="color:green;">""</strong>.
 ###### <u>Correct Example</u> 
    <img src="./assets/tutorial/json/json_string.png" width="450px" height="auto">
 
@@ -44,7 +44,7 @@ JSON consists of **key-value** pairs and **data types**, and it primarily has tw
    <img src="./assets/tutorial/json/json_array.png" width="450px" height="auto">
 <br>
 
-### 4. JSON Format Requirements
+### 4. Format Requirements
 **Comma Rules**: There must be **no trailing commas** after the last key-value pair or array item.
 ###### <strong style="color:red;"><u>Incorrect Example</u></strong>
    <img src="./assets/tutorial/json/json_comma_IC.png" width="450px" height="auto">
@@ -80,7 +80,7 @@ JSON supports nested objects and arrays, enabling the construction of complex da
    <img src="./assets/tutorial/json/json_nested.png" width="450px" height="auto">
 <br>
 
-### 6.Not Support Comments
-JSON Does Not Support Comments.
+### 6.Does Not Support Comments
+JSON doesn't support comments.
 ###### <strong style="color:red;"><u>Incorrect Example</u></strong> 
    <img src="./assets/tutorial/json/json_comments.png" width="450px" height="auto">
