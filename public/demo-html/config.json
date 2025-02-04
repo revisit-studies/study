@@ -66,6 +66,7 @@
     "order": "fixed",
     "components": [
       "introduction",
+      "trainingVideo",
       "barChart",
       "external_website"
     ]

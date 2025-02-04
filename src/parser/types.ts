@@ -822,6 +822,8 @@ export interface VideoComponent extends BaseIndividualComponent {
   path: string;
   /** Whether to force the video to play until the end. */
   forceCompletion?: boolean;
+  /** Whether to show the video timeline. Defaults to false. */
+  withTimeline?: boolean;
 }
 
 export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent | VegaComponent | VideoComponent;

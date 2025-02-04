@@ -169,6 +169,10 @@
               "video"
             ],
             "type": "string"
+          },
+          "withTimeline": {
+            "description": "Whether to show the video timeline. Defaults to false.",
+            "type": "boolean"
           }
         },
         "type": "object"
@@ -793,6 +797,10 @@
             "video"
           ],
           "type": "string"
+        },
+        "withTimeline": {
+          "description": "Whether to show the video timeline. Defaults to false.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2276,6 +2284,10 @@
         "type": {
           "const": "video",
           "type": "string"
+        },
+        "withTimeline": {
+          "description": "Whether to show the video timeline. Defaults to false.",
+          "type": "boolean"
         }
       },
       "required": [
