@@ -1,0 +1,1 @@
+Now that you have completed the tutorial and quiz sections, we will proceed to the tasks. We understand that you may not remember all the rules due to limited experience, so feel free to click the help button in the top right corner to review the syntax rules from the tutorial.
