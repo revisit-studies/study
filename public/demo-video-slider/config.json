@@ -20,48 +20,43 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": true,
+    "sidebar": false,
     "windowEventDebounceTime": 200
   },
   "components": {
-    "introduction": {
-      "type": "markdown",
-      "path": "demo-html/assets/introduction.md",
-      "response": []
-    },
-    "barChart": {
+    "video-slider": {
       "type": "website",
-      "nextButtonLocation": "sidebar",
-      "meta": {
-        "difficulty": "hard"
-      },
-      "description": "Question that asks users to count the number of bars that have a value greater than 1.",
-      "instruction": "How many bars have a value greater than 1?",
-      "path": "demo-html/assets/bar-chart.html",
+      "path": "demo-video-slider/assets/video.html",
       "response": [
         {
           "id": "html-response",
           "prompt": "Answer:",
-          "location": "sidebar",
-          "type": "numerical",
-          "placeholder": "0-7",
-          "min": 0,
-          "max": 7
+          "location": "belowStimulus",
+          "type": "slider",
+          "options": [
+            {
+              "label": "left",
+              "value": 0
+            },
+            {
+              "label": "neither",
+              "value": 50
+            },
+            {
+              "label": "right",
+              "value": 100
+            }
+          ],
+          "snap": true,
+          "startingValue": 50
         }
       ]
-    },
-    "external_website": {
-      "type": "website",
-      "path": "https://www.revisit.dev",
-      "response": []
     }
   },
   "sequence": {
     "order": "fixed",
     "components": [
-      "introduction",
-      "barChart",
-      "external_website"
+      "video-slider"
     ]
   }
 }
