@@ -1,7 +1,9 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.2/src/parser/GlobalConfigSchema.json",
   "configsList": [
+    "motivated-scatterplot-1a",
     "motivated-scatterplot-1b",
+    "motivated-scatterplot-2",
     "tutorial-simple-study",
     "tutorial-react-and-randomization",
     "tutorial-advanced-react",
@@ -36,9 +38,15 @@
     "test-skip-logic"
   ],
   "configs": {
-  "motivated-scatterplot-1b": {
+    "motivated-scatterplot-1a": {
+      "path": "motivated-scatterplot-1a/config.json"
+    },
+    "motivated-scatterplot-1b": {
 	  "path": "motivated-scatterplot-1b/config.json"
-    },  
+    },
+    "motivated-scatterplot-2": {
+      "path": "motivated-scatterplot-2/config.json"
+    },
     "tutorial-simple-study": {
       "path": "tutorial/simple-study/config.json"
     },
