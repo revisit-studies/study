@@ -81,7 +81,7 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
 
   return loading || assetFound
     ? (
-      <Box>
+      <Box mb="md">
         <Plyr source={{ type: 'video', sources }} options={options} />
       </Box>
     )
