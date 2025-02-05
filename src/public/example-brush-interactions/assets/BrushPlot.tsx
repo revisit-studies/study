@@ -14,7 +14,9 @@ import { Bar } from './Bar';
 import { StimulusParams } from '../../../store/types';
 import { BrushParams, BrushState, SelectionType } from './types';
 
-export function BrushPlot({ parameters, setAnswer, provenanceState }: StimulusParams<BrushParams, {all: {brush: BrushState}}>) {
+export function BrushPlot({
+  parameters, setAnswer, provenanceState, updateState = () => null,
+}: StimulusParams<BrushParams, {all: {brush: BrushState}}> & {updateState: (b: BrushState) => void}) {
   const [filteredTable, setFilteredTable] = useState<ColumnTable | null>(null);
   const [brushState, setBrushState] = useState<BrushState>(provenanceState ? (provenanceState.all.brush || provenanceState.all) : {
     hasBrush: false, x1: 0, y1: 0, x2: 0, y2: 0, ids: [],
@@ -126,8 +128,8 @@ export function BrushPlot({ parameters, setAnswer, provenanceState }: StimulusPa
       _filteredTable = fullTable!.filter(escape((d: any) => d[parameters.x] >= xMin && d[parameters.x] <= xMax && d[parameters.y] >= yMin && d[parameters.y] <= yMax));
     }
 
-    const newState = {
-      x1: sel[0][0] || brushState?.x1 || 0, x2: sel[1][0] || brushState?.x2 || 0, y1: sel[0][1] || brushState?.y1 || 0, y2: sel[1][1] || brushState?.y2 || 0, hasBrush: selType !== 'clear', ids: selType !== 'clear' ? _filteredTable?.array('id') : [],
+    const newState: BrushState = {
+      x1: sel[0][0] || brushState?.x1 || 0, x2: sel[1][0] || brushState?.x2 || 0, y1: sel[0][1] || brushState?.y1 || 0, y2: sel[1][1] || brushState?.y2 || 0, hasBrush: selType !== 'clear', ids: selType !== 'clear' ? _filteredTable?.array('id') as string[] : [],
     };
 
     setBrushState(newState);
@@ -139,6 +141,8 @@ export function BrushPlot({ parameters, setAnswer, provenanceState }: StimulusPa
     }
 
     setFilteredTable(_filteredTable);
+
+    updateState(newState);
 
     setAnswer({
       status: true,

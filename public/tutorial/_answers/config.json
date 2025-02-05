@@ -17,7 +17,9 @@
       "You :)"
     ]
   },
+  "importedLibraries": ["mic-check"],
   "uiConfig": {
+    "recordStudyAudio": true,
     "contactEmail": "contact@revisit.dev",
     "helpTextPath": "tutorial/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
@@ -28,11 +30,13 @@
   "components": {
     "welcome": {
       "type": "markdown",
+      "recordAudio": false,
       "path": "tutorial/assets/welcome.md",
       "response": []
     },
     "consent": {
       "type": "markdown",
+      "recordAudio": false,
       "path": "tutorial/assets/consent.md",
       "nextButtonText": "I agree",
       "response": []
@@ -264,6 +268,65 @@
           0.3
         ]
       }
+    },
+    "reactExampleCars": {
+      "type": "react-component",
+      "path": "tutorial/assets/ReactExample.tsx",
+      "instruction": "How many cars from Japan have a Miles Per Gallon value greater than 35?",
+      "response": [
+        {
+          "id": "response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "numerical",
+          "max": 100,
+          "min": 0
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "response",
+          "answer": 17
+        }
+      ],
+      "parameters": {
+        "dataset": "cars",
+        "x": "Miles per Gallon",
+        "y": "Weight (lbs)",
+        "category": "Origin",
+        "ids": "id",
+        "brushType": "Rectangular Selection"
+      }
+    },
+    "reactExamplePenguins": {
+      "type": "react-component",
+      "instruction": "Consider only cars that have a miles per gallon value greater than 30 AND weigh more than 2000 pounds. Which country or region produces the most and the least of these cars?",
+      "path": "tutorial/assets/ReactExample.tsx",
+      "response": [
+        {
+          "id": "response",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "numerical",
+          "max": 100,
+          "min": 0
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "response",
+          "answer": 15
+        }
+      ],
+      "parameters": {
+        "dataset": "penguin",
+        "x": "Body Mass (g)",
+        "y": "Flipper Length (mm)",
+        "category": "Species",
+        "ids": "id",
+        "brushType": "Slider Selection"
+      }
+      
     }
   },
   "sequence": {
@@ -271,6 +334,7 @@
     "components": [
       "welcome",
       "consent",
+      "$mic-check.co.audioTest",
       "demographics",
       "trainingWithFeedback",
       "coinImage",
@@ -278,7 +342,9 @@
       "vegaConfig",
       "reactiveVega",
       "website",
-      "reactiveWebsite"
+      "reactiveWebsite",
+      "reactExampleCars",
+      "reactExamplePenguins"
     ]
   }
 }

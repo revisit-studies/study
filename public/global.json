@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.2/src/parser/GlobalConfigSchema.json",
   "configsList": [
-    "tutorial-in-person",
+    "tutorial",
     "example-brush-interactions",
     "example-cleveland",
     "example-mvnv",
@@ -33,7 +33,7 @@
     "test-skip-logic"
   ],
   "configs": {
-    "tutorial-in-person": {
+    "tutorial": {
       "path": "tutorial/config.json"
     },
     "example-brush-interactions": {
