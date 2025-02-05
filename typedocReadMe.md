@@ -74,6 +74,7 @@ You can specify numerical and textual responses through those interfaces:
 Sequencing determines the order in which components appear.
 
 - [ComponentBlock](interfaces/ComponentBlock.md) — The ComponentBlock interface is used to define order properties within the sequence.
+- [DynamicBlock](interfaces/DynamicBlock.md) — The DynamicBlock interface is used to dynamically define the sequence of components based on previous responses or other factors.
 
 Interruptions augment the sequence with components that are inserted either randomly or deterministically. These might be for breaks or attention checks.
 
