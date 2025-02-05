@@ -1,5 +1,5 @@
 import Ajv from 'ajv';
-import { merge } from 'lodash.merge';
+import merge from 'lodash.merge';
 import librarySchema from './LibraryConfigSchema.json';
 import {
   IndividualComponent, LibraryConfig, ParsedConfig, ParserErrorWarning, StudyConfig,
@@ -31,7 +31,6 @@ export function expandLibrarySequences(sequence: StudyConfig['sequence'], import
       if (typeof component === 'object') {
         return expandLibrarySequences(component, importedLibrariesData);
       }
-      // eslint-disable-next-line no-nested-ternary
       const seOrSequences = component.includes('.se.')
         ? '.se.'
         : (component.includes('.sequences.') ? '.sequences.' : false);

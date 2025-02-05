@@ -123,11 +123,9 @@ function StepItem({
   const active = analysisNavigation ? analysisActive : studyActive;
 
   const analysisNavigateTo = useCallback(() => (trialId ? navigate(`./../${step}`) : navigate(`./${step}`)), [navigate, step, trialId]);
-  // eslint-disable-next-line no-nested-ternary
   const studyNavigateTo = () => (participantView ? (participantId ? navigate(`/${studyId}/${encryptIndex(stepIndex)}?participantId=${participantId}`) : navigate(`/${studyId}/${encryptIndex(stepIndex)}`)) : navigate(`/${studyId}/reviewer-${step}`));
   const navigateTo = analysisNavigation ? analysisNavigateTo : studyNavigateTo;
 
-  // eslint-disable-next-line no-nested-ternary
   const coOrComponents = step.includes('.co.')
     ? '.co.'
     : (step.includes('.components.') ? '.components.' : false);

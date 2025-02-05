@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import {
   Alert, Anchor, Button, Group,
 } from '@mantine/core';
