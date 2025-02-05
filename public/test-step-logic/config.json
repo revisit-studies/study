@@ -1,8 +1,8 @@
 {
     "$schema": "https://raw.githubusercontent.com/revisit-studies/study/zc/stepLogic/src/parser/StudyConfigSchema.json",
     "studyMetadata": {
-      "title": "Using Skip Logic",
-      "description": "This is a test study to check the functionality of the reVISit' skip logic. This study is not meant to be used for any real data collection.",
+      "title": "Step logic test",
+      "description": "This is a test of the step logic feature.",
       "version": "1.0.0",
       "authors": [
         "The reVISit Team"
@@ -103,9 +103,9 @@
       "components": [
         "trial1",
         {
-            "id": "loopingBlock",
-            "order": "dynamic",
-            "functionPath": "test-step-logic/func.ts"
+          "id": "loopingBlock",
+          "order": "dynamic",
+          "functionPath": "test-step-logic/func.ts"
         },
         "trial1"
       ]

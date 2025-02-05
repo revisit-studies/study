@@ -17,11 +17,11 @@ export function findFuncBlock(name: string, sequence: StudyConfig['sequence']): 
 
 export function getSequenceFlatMapWithInterruptions(sequence: StudyConfig['sequence']): string[] {
   if (isDynamicBlock(sequence)) {
-    return [sequence.id];
+    return [];
   }
 
   return [
-    ...sequence.components.flatMap((component) => (typeof component === 'string' ? component : (isDynamicBlock(component) ? component.id : getSequenceFlatMapWithInterruptions(component)))),
+    ...sequence.components.flatMap((component) => (typeof component === 'string' ? component : (isDynamicBlock(component) ? [] : getSequenceFlatMapWithInterruptions(component)))),
     ...sequence.interruptions?.flatMap((interruption) => interruption.components) || [],
   ];
 }
@@ -113,12 +113,12 @@ export function configSequenceToUniqueTrials(sequence: ComponentBlock | DynamicB
   return result;
 }
 
-export function addPathToComponentBlock(order: ComponentBlock | DynamicBlock | string, orderPath: string): (ComponentBlock & { orderPath: string }) | string {
+export function addPathToComponentBlock(order: StudyConfig['sequence'] | string, orderPath: string): (StudyConfig['sequence'] & { orderPath: string }) | string {
   if (typeof order === 'string') {
     return order;
   }
   if (isDynamicBlock(order)) {
-    return order.id;
+    return { ...order, orderPath };
   }
   return {
     ...order, orderPath, order: order.order, components: order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)),

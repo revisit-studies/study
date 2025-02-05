@@ -56,7 +56,7 @@ function countInterruptionsRecursively(configSequence: ComponentBlockWithOrderPa
   return count;
 }
 
-function reorderComponents(configSequence: ComponentBlockWithOrderPath['components'], participantSequence: Sequence['components']) {
+function reorderComponents(configSequence: ComponentBlockWithOrderPath['components'] | undefined, participantSequence: Sequence['components']) {
   const newComponents: (string | ComponentBlockWithOrderPath)[] = [];
 
   // Iterate through the sequence components and reorder the orderComponents
@@ -79,7 +79,9 @@ function reorderComponents(configSequence: ComponentBlockWithOrderPath['componen
     }
   });
 
-  newComponents.push(...configSequence);
+  if (configSequence) {
+    newComponents.push(...configSequence);
+  }
 
   return newComponents;
 }
@@ -210,7 +212,7 @@ export function StepsPanel({
     // Add interruptions to the sequence
     components = [
       ...(configSequence.interruptions?.flatMap((interruption) => interruption.components) || []),
-      ...components,
+      ...(components || []),
     ];
   }
 
