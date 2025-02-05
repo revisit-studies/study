@@ -29,12 +29,6 @@
       "path": "demo-html/assets/introduction.md",
       "response": []
     },
-    "trainingVideo": {
-      "type": "video",
-      "path": "https://www.youtube.com/watch?v=tCDvOQI3pco",
-      "forceCompletion": true,
-      "response": []
-    },
     "barChart": {
       "type": "website",
       "nextButtonLocation": "sidebar",
@@ -66,7 +60,6 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "trainingVideo",
       "barChart",
       "external_website"
     ]
