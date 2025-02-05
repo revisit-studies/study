@@ -79,7 +79,7 @@ uiConfig:{
   "numSequences": 500
 }
 ```
-In the above, the `path/to/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)
+In the above, the `<study-name>/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)
  */
 export interface UIConfig {
   /** The email address that used during the study if a participant clicks contact. */
@@ -623,8 +623,8 @@ export default function CoolComponent({ parameters, setAnswer }: StimulusParams<
 ```
  *
  * For in depth examples, see the following studies, and their associated codebases.
- * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/2.0.0-rc7/src/public/demo-click-accuracy-test/assets)
- * https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/2.0.0-rc7/src/public/example-brush-interactions/assets)
+ * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v2.0.2/src/public/demo-click-accuracy-test/assets)
+ * https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.0.2/src/public/example-brush-interactions/assets)
  */
 export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
@@ -650,7 +650,7 @@ export interface ReactComponent extends BaseIndividualComponent {
  */
 export interface ImageComponent extends BaseIndividualComponent {
   type: 'image';
-  /** The path to the image. This should be a relative path from the public folder. */
+  /** The path to the image. This could be a relative path from the public folder or a url to an external image. */
   path: string;
   /** The style of the image. This is an object with css properties as keys and css values as values. */
   style?: Record<string, string>;
@@ -816,9 +816,25 @@ export interface VegaComponentConfig extends BaseIndividualComponent {
 
 export type VegaComponent = VegaComponentPath | VegaComponentConfig;
 
+/**
+ * The VideoComponent interface is used to define the properties of a video component. This component is used to render a video with optional controls.
+ *
+ * Most often, video components will be used for trainings, and will have a `forceCompletion` field set to true. This will prevent the participant from moving on until the video has finished playing.
+ *
+ * As such, the `forceCompletion` field is set to true by default, and the `withTimeline` field is set to false by default.
+ *
+ * For example, to render a training video with a path of `<study-name>/assets/video.mp4`, you would use the following snippet:
+ * ```js
+ * {
+ *   "type": "video",
+ *   "path": "<study-name>/assets/video.mp4",
+ * }
+ * ```
+ * */
+
 export interface VideoComponent extends BaseIndividualComponent {
   type: 'video';
-  /** The path to the video. This should be a relative path from the public folder. */
+  /** The path to the video. This could be a relative path from the public folder or might be a url to an external website. */
   path: string;
   /** Whether to force the video to play until the end. Defaults to true. */
   forceCompletion?: boolean;
