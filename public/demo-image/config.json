@@ -111,6 +111,22 @@
           ]
         }
       ]
+    },
+    "externalImage": {
+      "type": "image",
+      "path": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Shaki_waterfall.jpg",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "externalImage-response",
+          "prompt": "What is this a picture of?",
+          "location": "sidebar",
+          "type": "shortText"
+        }
+      ]
     }
   },
   "sequence": {
@@ -119,7 +135,8 @@
       "introduction",
       "dotplot-low",
       "dotplot-medium",
-      "dotplot-high"
+      "dotplot-high",
+      "externalImage"
     ]
   }
 }
