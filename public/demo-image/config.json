@@ -124,7 +124,8 @@
           "id": "externalImage-response",
           "prompt": "What is this a picture of?",
           "location": "sidebar",
-          "type": "shortText"
+          "type": "shortText",
+          "required": false
         }
       ]
     }

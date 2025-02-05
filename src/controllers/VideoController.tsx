@@ -94,7 +94,6 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
       'volume',
       'fullscreen',
     ],
-    settings: ['captions', 'quality', 'speed'],
   }), [currentConfig.forceCompletion, currentConfig.withTimeline]);
 
   const currentComponent = useCurrentComponent();
