@@ -1082,12 +1082,33 @@ export interface RepeatedComponentBlockCondition {
 */
 export type SkipConditions = (IndividualComponentSingleResponseCondition | IndividualComponentAllResponsesCondition | ComponentBlockCondition | RepeatedComponentBlockCondition)[];
 
-export interface FuncComponentBlock {
+/**
+ * The DynamicBlock interface is used to define a block where displayed components are controlled by a function. This is useful when you want to generate the sequence based on answers to previous questions or other factors.
+ *
+ * The functionPath property is a path to the function that generates the components. This should be a relative path from the src/public folder.
+ *
+ * Here's an example of how to use the DynamicBlock:
+ *
+ * ```js
+ * {
+ *   "id": "funcBlock",
+ *   "order": "dynamic",
+ *   "functionPath": "<study-name>/assets/function.js",
+ *   "parameters": {
+ *     "param1": "value1",
+ *     "param2": "value2"
+ *   }
+ * }
+ * ```
+ */
+export interface DynamicBlock {
   /** The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property. */
   id: string
   /** The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed. */
-  order: 'func';
-  func: string;
+  order: 'dynamic';
+  /** The path to the function that generates the components. This should be a relative path from the src/public folder. */
+  functionPath: string;
+  /** The parameters that are passed to the function. These can be used within your function to render different things. */
   parameters?: Record<string, unknown>;
 }
 
@@ -1201,7 +1222,7 @@ export interface ComponentBlock {
   /** The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed. */
   order: 'random' | 'latinSquare' | 'fixed';
   /** The components that are included in the order. */
-  components: (string | ComponentBlock | FuncComponentBlock)[];
+  components: (string | ComponentBlock | DynamicBlock)[];
   /** The number of samples to use for the random assignments. This means you can randomize across 3 components while only showing a participant 2 at a time. */
   numSamples?: number;
   /** The interruptions property specifies an array of interruptions. These can be used for breaks or attention checks.  */
@@ -1300,7 +1321,7 @@ export interface StudyConfig {
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
   components: Record<string, IndividualComponent | InheritedComponent>
   /** The order of the components in the study. This might include some randomness. */
-  sequence: ComponentBlock | FuncComponentBlock;
+  sequence: ComponentBlock | DynamicBlock;
 }
 
 /**  LibraryConfig is used to define the properties of a library configuration. This is a JSON object with three main components: baseComponents, components, and the sequences. Libraries are useful for defining components and sequences of these components that are to be reused across multiple studies. We (the reVISit team) provide several libraries that can be used in your study configurations. Check the public/libraries folder in the reVISit-studies repository for available libraries. We also plan to accept community contributions for libraries. If you have a library that you think would be useful for others, please reach out to us. We would love to include it in our repository.

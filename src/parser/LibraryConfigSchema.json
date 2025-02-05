@@ -272,7 +272,7 @@
                 "$ref": "#/definitions/ComponentBlock"
               },
               {
-                "$ref": "#/definitions/FuncComponentBlock"
+                "$ref": "#/definitions/DynamicBlock"
               }
             ]
           },
@@ -452,10 +452,11 @@
       ],
       "type": "object"
     },
-    "FuncComponentBlock": {
+    "DynamicBlock": {
       "additionalProperties": false,
       "properties": {
-        "func": {
+        "functionPath": {
+          "description": "The path to the function that generates the components. This should be a relative path from the src/public folder.",
           "type": "string"
         },
         "id": {
@@ -463,7 +464,7 @@
           "type": "string"
         },
         "order": {
-          "const": "func",
+          "const": "dynamic",
           "description": "The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed.",
           "type": "string"
         },
@@ -475,7 +476,7 @@
       "required": [
         "id",
         "order",
-        "func"
+        "functionPath"
       ],
       "type": "object"
     },
