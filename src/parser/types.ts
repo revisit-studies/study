@@ -1359,7 +1359,7 @@ export interface LibraryConfig {
   /** The components that are used in the study. They must be fully defined here with all properties. Some properties may be inherited from baseComponents. */
   components: Record<string, IndividualComponent | InheritedComponent>
   /** The order of the components in the study. This might include some randomness. */
-  sequences: Record<string, ComponentBlock>;
+  sequences: Record<string, StudyConfig['sequence']>;
 }
 
 /**

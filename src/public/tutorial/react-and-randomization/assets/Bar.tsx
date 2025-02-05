@@ -40,7 +40,7 @@ export function Bar({ barsTable, parameters, data } : {barsTable: ColumnTable | 
       return null;
     }
 
-    return d3.scaleBand([margin.top, height + margin.top]).domain(barsTable.array(parameters.category).sort()).paddingInner(0.1);
+    return d3.scaleBand([margin.top, height + margin.top]).domain(barsTable.array(parameters.category).sort() as never).paddingInner(0.1);
   }, [barsTable, height, parameters.category]);
 
   const rects = useMemo(() => {

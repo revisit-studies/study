@@ -6,7 +6,7 @@ import {
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 import { expandLibrarySequences, loadLibrariesParseNamespace, verifyLibraryUsage } from './libraryParser';
-import { isInheritedComponent } from './utils';
+import { isDynamicBlock, isInheritedComponent } from './utils';
 
 const ajv1 = new Ajv();
 ajv1.addSchema(globalSchema);
@@ -52,6 +52,10 @@ function verifyStudySkip(
   skipTargets: string[],
   errors: { message: string, instancePath: string, params: { 'action': string } }[] = [],
 ) {
+  if (isDynamicBlock(sequence)) {
+    return;
+  }
+
   // Base case: empty sequence
   if (sequence.components.length === 0) {
     // Push an error for an empty components array

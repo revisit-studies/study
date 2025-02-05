@@ -127,7 +127,12 @@ export function BrushPlot({ parameters, setAnswer, provenanceState }: StimulusPa
     }
 
     const newState = {
-      x1: sel[0][0] || brushState?.x1 || 0, x2: sel[1][0] || brushState?.x2 || 0, y1: sel[0][1] || brushState?.y1 || 0, y2: sel[1][1] || brushState?.y2 || 0, hasBrush: selType !== 'clear', ids: selType !== 'clear' ? _filteredTable?.array('id') : [],
+      x1: sel[0][0] || brushState?.x1 || 0,
+      x2: sel[1][0] || brushState?.x2 || 0,
+      y1: sel[0][1] || brushState?.y1 || 0,
+      y2: sel[1][1] || brushState?.y2 || 0,
+      hasBrush: selType !== 'clear',
+      ids: selType !== 'clear' ? _filteredTable?.array('id') as string[] : [],
     };
 
     setBrushState(newState);

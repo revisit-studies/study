@@ -1,12 +1,12 @@
 import { Sequence } from '../store/types';
 import {
-  ComponentBlock, FuncComponentBlock, IndividualComponent, InheritedComponent,
+  DynamicBlock, IndividualComponent, InheritedComponent, StudyConfig,
 } from './types';
 
 export function isInheritedComponent(comp: IndividualComponent | InheritedComponent) : comp is InheritedComponent {
   return (<InheritedComponent>comp).baseComponent !== undefined;
 }
 
-export function isFuncComponentBlock(comp: ComponentBlock | FuncComponentBlock | Sequence) : comp is FuncComponentBlock {
-  return (<FuncComponentBlock>comp).order === 'func';
+export function isDynamicBlock(comp: StudyConfig['sequence'] | Sequence) : comp is DynamicBlock {
+  return (<DynamicBlock>comp).order === 'dynamic';
 }

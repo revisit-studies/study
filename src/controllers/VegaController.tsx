@@ -138,6 +138,5 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     return <div>Failed to load vega config</div>;
   }
 
-  // @ts-expect-error Vega type is not updated to match the new types from react 19
   return (<Vega spec={structuredClone(vegaConfig)} signalListeners={signalListeners} onNewView={(v) => setView(v)} />);
 }

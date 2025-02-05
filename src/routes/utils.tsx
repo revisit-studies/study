@@ -57,7 +57,7 @@ export function useCurrentComponent(): string {
         return null;
       }
 
-      const reactPath = `../public/${block.func}`;
+      const reactPath = `../public/${block.functionPath}`;
       const newFunc = reactPath in modules ? (modules[reactPath] as ModuleNamespace).default : null;
 
       return newFunc;

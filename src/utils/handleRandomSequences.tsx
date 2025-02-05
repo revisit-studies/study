@@ -1,15 +1,26 @@
 // eslint-disable-next-line import/no-unresolved
 import latinSquare from '@quentinroy/latin-square';
-import { ComponentBlock, StudyConfig } from '../parser/types';
+import { ComponentBlock, DynamicBlock, StudyConfig } from '../parser/types';
 import { deepCopy } from './deepCopy';
 import { Sequence } from '../store/types';
+import { isDynamicBlock } from '../parser/utils';
 
 function _componentBlockToSequence(
-  order: ComponentBlock,
+  order: StudyConfig['sequence'],
   latinSquareObject: Record<string, string[][]>,
   path: string,
 ): Sequence {
-  let computedComponents: (string | ComponentBlock | string[])[] = order.components;
+  if (isDynamicBlock(order)) {
+    return {
+      id: order.id,
+      orderPath: path,
+      order: order.order,
+      components: [],
+      skip: [],
+    };
+  }
+
+  let computedComponents = order.components;
 
   if (order.order === 'random') {
     const randomArr = order.components.sort(() => 0.5 - Math.random());
@@ -45,7 +56,7 @@ function _componentBlockToSequence(
             i === interruption.firstLocation
             || (i > interruption.firstLocation && i % interruption.spacing === 0)
           ) {
-            newComponents.push(interruption.components);
+            newComponents.push(...interruption.components);
           }
           newComponents.push(computedComponents[i]);
         }
@@ -67,7 +78,7 @@ function _componentBlockToSequence(
         let j = 0;
         for (let i = 0; i < computedComponents.length; i += 1) {
           if (i === sortedRandomInterruptionLocations[j]) {
-            newComponents.push(interruption.components);
+            newComponents.push(...interruption.components);
             j += 1;
           }
           newComponents.push(computedComponents[i]);
@@ -87,7 +98,7 @@ function _componentBlockToSequence(
 }
 
 function componentBlockToSequence(
-  order: ComponentBlock,
+  order: StudyConfig['sequence'],
   latinSquareObject: Record<string, string[][]>,
 ): Sequence {
   const orderCopy = deepCopy(order);
@@ -95,20 +106,24 @@ function componentBlockToSequence(
   return _componentBlockToSequence(orderCopy, latinSquareObject, 'root');
 }
 
-function _createRandomOrders(order: ComponentBlock, paths: string[], path: string, index = 0) {
+function _createRandomOrders(order: StudyConfig['sequence'], paths: string[], path: string, index = 0) {
   const newPath = path.length > 0 ? `${path}-${index}` : 'root';
   if (order.order === 'latinSquare') {
     paths.push(newPath);
   }
 
+  if (isDynamicBlock(order)) {
+    return;
+  }
+
   order.components.forEach((comp, i) => {
-    if (typeof comp !== 'string') {
+    if (typeof comp !== 'string' && !isDynamicBlock(comp)) {
       _createRandomOrders(comp, paths, newPath, i);
     }
   });
 }
 
-function createRandomOrders(order: ComponentBlock) {
+function createRandomOrders(order: StudyConfig['sequence']) {
   const paths: string[] = [];
   _createRandomOrders(order, paths, '', 0);
 
@@ -118,11 +133,14 @@ function createRandomOrders(order: ComponentBlock) {
 function generateLatinSquare(config: StudyConfig, path: string) {
   const pathArr = path.split('-');
 
-  let locationInSequence: Partial<ComponentBlock> | string = {};
+  let locationInSequence: Partial<ComponentBlock> | Partial<DynamicBlock> | string = {};
   pathArr.forEach((p) => {
     if (p === 'root') {
       locationInSequence = config.sequence;
     } else {
+      if (isDynamicBlock(locationInSequence as StudyConfig['sequence'])) {
+        return;
+      }
       locationInSequence = (locationInSequence as ComponentBlock).components[+p];
     }
   });
