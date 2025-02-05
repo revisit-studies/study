@@ -1,5 +1,5 @@
 import Ajv from 'ajv';
-import { merge } from 'lodash';
+import { merge } from 'lodash.merge';
 import librarySchema from './LibraryConfigSchema.json';
 import {
   IndividualComponent, LibraryConfig, ParsedConfig, ParserErrorWarning, StudyConfig,
