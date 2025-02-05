@@ -27,6 +27,7 @@ import { TimedOut } from '../components/TimedOut';
 import { findBlockForStep } from '../utils/getSequenceFlatMap';
 import { VegaController, VegaProvState } from './VegaController';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
+import { VideoController } from './VideoController';
 
 // current active stimuli presented to the user
 export function ComponentController() {
@@ -183,6 +184,7 @@ export function ComponentController() {
         {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
         {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} />}
         {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} provState={analysisProvState as VegaProvState} />}
+        {currentConfig.type === 'video' && <VideoController currentConfig={currentConfig} />}
 
       </Suspense>
 

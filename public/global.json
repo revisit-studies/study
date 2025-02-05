@@ -16,6 +16,7 @@
     "demo-click-accuracy-test",
     "demo-image",
     "demo-video-slider",
+    "demo-video",
     "test-audio",
     "test-library",
     "library-beauvis",
@@ -62,6 +63,9 @@
     },
     "demo-training": {
       "path": "demo-training/config.json"
+    },
+    "demo-video": {
+      "path": "demo-video/config.json"
     },
     "example-VLAT-full-randomized": {
       "path": "example-VLAT-full-randomized/config.json"

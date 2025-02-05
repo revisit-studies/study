@@ -39,6 +39,7 @@ export type TrialValidation = Record<
     aboveStimulus: ValidationStatus;
     belowStimulus: ValidationStatus;
     sidebar: ValidationStatus;
+    stimulus: ValidationStatus;
     provenanceGraph?: TrrackedProvenance;
   }
 >;

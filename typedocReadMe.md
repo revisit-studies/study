@@ -27,6 +27,7 @@ The different component types:
 - [QuestionnaireComponent](interfaces/QuestionnaireComponent.md)
 - [ReactComponent](interfaces/ReactComponent.md)
 - [VegaComponent](type-aliases/VegaComponent.md)
+- [VideoComponent](interfaces/VideoComponent.md)
 - [WebsiteComponent](interfaces/WebsiteComponent.md)
 
 ## Responses
