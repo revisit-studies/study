@@ -17,7 +17,9 @@
       "You :)"
     ]
   },
-  "importedLibraries": ["mic-check"],
+  "importedLibraries": [
+    "mic-check"
+  ],
   "uiConfig": {
     "recordStudyAudio": true,
     "contactEmail": "contact@revisit.dev",
@@ -198,20 +200,33 @@
         "description": "A simple bar chart with embedded data.",
         "data": {
           "values": [
-            {"category": "A", "value": 28},
-            {"category": "B", "value": 55},
-            {"category": "C", "value": 43},
-            {"category": "D", "value": 91},
-            {"category": "E", "value": 81},
-            {"category": "F", "value": 53},
-            {"category": "G", "value": 19},
-            {"category": "H", "value": 87}
+            {
+              "category": "A",
+              "value": 28
+            },
+            {
+              "category": "B",
+              "value": 55
+            },
+            {
+              "category": "C",
+              "value": 43
+            }
           ]
         },
         "mark": "bar",
         "encoding": {
-          "x": {"field": "category", "type": "nominal", "axis": {"labelAngle": 0}},
-          "y": {"field": "value", "type": "quantitative"}
+          "x": {
+            "field": "category",
+            "type": "nominal",
+            "axis": {
+              "labelAngle": 0
+            }
+          },
+          "y": {
+            "field": "value",
+            "type": "quantitative"
+          }
         }
       },
       "response": [
@@ -326,7 +341,44 @@
         "ids": "id",
         "brushType": "Slider Selection"
       }
-      
+    },
+    "example1": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q-example-1",
+          "type": "shortText",
+          "prompt": "Example question"
+        }
+      ]
+    },
+    "example2": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q-example-2",
+          "type": "dropdown",
+          "prompt": "Example question",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ]
+        }
+      ]
+    },
+    "attentionCheck": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q-example-2",
+          "type": "dropdown",
+          "prompt": "Attention check question",
+          "options": [
+            "Option 1",
+            "Option 2"
+          ]
+        }
+      ]
     }
   },
   "sequence": {
@@ -344,7 +396,45 @@
       "website",
       "reactiveWebsite",
       "reactExampleCars",
-      "reactExamplePenguins"
+      "reactExamplePenguins",
+      {
+        "id": "attentionDeterministic",
+        "order": "fixed",
+        "components": [
+          "example1",
+          "example2",
+          "example1",
+          "example2"
+        ],
+        "interruptions": [
+          {
+            "firstLocation": 0,
+            "spacing": 2,
+            "components": [
+              "attentionCheck"
+            ]
+          }
+        ]
+      },
+      {
+        "id": "attentionRandom",
+        "order": "fixed",
+        "components": [
+          "example1",
+          "example2",
+          "example1",
+          "example2"
+        ],
+        "interruptions": [
+          {
+            "spacing": "random",
+            "numInterruptions": 3,
+            "components": [
+              "attentionCheck"
+            ]
+          }
+        ]
+      }
     ]
   }
 }
