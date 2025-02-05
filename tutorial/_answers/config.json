@@ -379,6 +379,16 @@
           ]
         }
       ]
+    },
+    "exampleWithAnswer": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q-example-1",
+          "type": "numerical",
+          "prompt": "What is 2 + 2?"
+        }
+      ]
     }
   },
   "sequence": {
@@ -432,6 +442,24 @@
             "components": [
               "attentionCheck"
             ]
+          }
+        ]
+      },
+      {
+        "id": "skipResponse",
+        "order": "fixed",
+        "components": [
+          "exampleWithAnswer",
+          "example1"
+        ],
+        "skip": [
+          {
+            "name": "exampleWithAnswer",
+            "check": "response",
+            "responseId": "q-example-1",
+            "value": 4,
+            "comparison": "notEqual",
+            "to": "end"
           }
         ]
       }
