@@ -820,7 +820,7 @@ export interface VideoComponent extends BaseIndividualComponent {
   type: 'video';
   /** The path to the video. This should be a relative path from the public folder. */
   path: string;
-  /** Whether to force the video to play until the end. */
+  /** Whether to force the video to play until the end. Defaults to true. */
   forceCompletion?: boolean;
   /** Whether to show the video timeline. Defaults to false. */
   withTimeline?: boolean;

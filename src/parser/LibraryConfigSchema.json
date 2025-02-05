@@ -52,7 +52,7 @@
             "type": "string"
           },
           "forceCompletion": {
-            "description": "Whether to force the video to play until the end.",
+            "description": "Whether to force the video to play until the end. Defaults to true.",
             "type": "boolean"
           },
           "instruction": {
@@ -680,7 +680,7 @@
           "type": "string"
         },
         "forceCompletion": {
-          "description": "Whether to force the video to play until the end.",
+          "description": "Whether to force the video to play until the end. Defaults to true.",
           "type": "boolean"
         },
         "instruction": {
@@ -2099,7 +2099,7 @@
           "type": "string"
         },
         "forceCompletion": {
-          "description": "Whether to force the video to play until the end.",
+          "description": "Whether to force the video to play until the end. Defaults to true.",
           "type": "boolean"
         },
         "instruction": {
