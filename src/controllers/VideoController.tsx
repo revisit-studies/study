@@ -1,11 +1,38 @@
-import { useEffect, useMemo, useState } from 'react';
+import {
+  forwardRef, RefObject, useCallback, useEffect, useMemo, useRef, useState,
+} from 'react';
 import { Box } from '@mantine/core';
-import Plyr from 'plyr-react';
+import { APITypes, PlyrProps, usePlyr } from 'plyr-react';
 import { VideoComponent } from '../parser/types';
 import { PREFIX } from '../utils/Prefix';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
 import 'plyr-react/plyr.css';
+import { useStoreActions, useStoreDispatch } from '../store/store';
+import { useCurrentComponent, useCurrentStep } from '../routes/utils';
+
+// eslint-disable-next-line react/display-name
+const CustomPlyrInstance = forwardRef<APITypes, PlyrProps & { endedCallback:() => void; errorCallback: () => void }>(
+  (props, ref) => {
+    const {
+      source, options = null, endedCallback, errorCallback,
+    } = props;
+    const raptorRef = usePlyr(ref, { options, source });
+
+    useEffect(() => {
+      const { current } = ref as RefObject<APITypes>;
+      if (current.plyr.source === null) return;
+      current.plyr.on('ended', endedCallback);
+      current.plyr.on('error', errorCallback);
+    });
+
+    return (
+      <video
+        ref={raptorRef}
+        className="plyr-react plyr"
+      />
+    );
+  });
 
 export function VideoController({ currentConfig }: { currentConfig: VideoComponent; }) {
   const url = useMemo(() => {
@@ -36,26 +63,17 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
 
   const sources = useMemo<Plyr.Source[]>(() => {
     if (url.includes('youtube')) {
-      const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-
-      // Extract video ID from the URL
-      const match = url.match(regex);
-      const videoId = match ? match[1] : '';
       return [
         {
-          src: videoId,
+          src: url,
           provider: 'youtube',
         },
       ];
     }
     if (url.includes('vimeo')) {
-      const regex = /https?:\/\/(?:www\.)?vimeo\.com\/(\d+)/;
-      // Extract video ID from the URL
-      const match = url.match(regex);
-      const videoId = match ? match[1] : '';
       return [
         {
-          src: videoId,
+          src: url,
           provider: 'vimeo',
         },
       ];
@@ -79,10 +97,54 @@ export function VideoController({ currentConfig }: { currentConfig: VideoCompone
     settings: ['captions', 'quality', 'speed'],
   }), [currentConfig.forceCompletion, currentConfig.withTimeline]);
 
+  const currentComponent = useCurrentComponent();
+  const currentStep = useCurrentStep();
+  const storeDispatch = useStoreDispatch();
+  const { updateResponseBlockValidation } = useStoreActions();
+  // Set the validation to invalid if forceCompletion is true
+  useEffect(() => {
+    if (currentConfig.forceCompletion) {
+      storeDispatch(
+        updateResponseBlockValidation({
+          location: 'stimulus',
+          identifier: `${currentComponent}_${currentStep}`,
+          status: false,
+          values: {},
+        }),
+      );
+    }
+  }, [currentComponent, currentConfig.forceCompletion, currentStep, storeDispatch, updateResponseBlockValidation]);
+
+  // Set the validation to valid if forceCompletion is true and the video is played
+  const endedCallback = useCallback(() => {
+    if (currentConfig.forceCompletion) {
+      storeDispatch(
+        updateResponseBlockValidation({
+          location: 'stimulus',
+          identifier: `${currentComponent}_${currentStep}`,
+          status: true,
+          values: {},
+        }),
+      );
+    }
+  }, [currentComponent, currentConfig.forceCompletion, currentStep, storeDispatch, updateResponseBlockValidation]);
+
+  const errorCallback = useCallback(() => {
+    setAssetFound(false);
+  }, []);
+
+  const ref = useRef<APITypes>(null);
+
   return loading || assetFound
     ? (
       <Box mb="md">
-        <Plyr source={{ type: 'video', sources }} options={options} />
+        <CustomPlyrInstance
+          ref={ref}
+          source={{ type: 'video', sources }}
+          options={options}
+          endedCallback={endedCallback}
+          errorCallback={errorCallback}
+        />
       </Box>
     )
     : <ResourceNotFound path={currentConfig.path} />;
