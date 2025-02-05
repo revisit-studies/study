@@ -1,15 +1,15 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "A simple study for our tutorial",
+    "title": "A tutorial that you will build with us",
     "version": "development",
     "authors": [
       "The reVISit Team",
       "The reVISit Community",
       "You :)"
     ],
-    "date": "2023-10-13",
-    "description": "This is a simple study to demonstrate how to create a study using reVISit.",
+    "date": "2025-02-05",
+    "description": "This tutorial will teach you how to create a reVISit study and use all of the features that reVISit has to offer.",
     "organizations": [
       "University of Utah",
       "WPI",
@@ -19,7 +19,7 @@
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-cleveland/assets/help.md",
+    "helpTextPath": "tutorial/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -28,12 +28,12 @@
   "components": {
     "welcome": {
       "type": "markdown",
-      "path": "tutorial/simple-study/assets/welcome.md",
+      "path": "tutorial/assets/welcome.md",
       "response": []
     },
     "consent": {
       "type": "markdown",
-      "path": "tutorial/simple-study/assets/consent.md",
+      "path": "tutorial/assets/consent.md",
       "nextButtonText": "I agree",
       "response": []
     },
@@ -46,42 +46,224 @@
           "prompt": "What is your age?"
         },
         {
-          "id": "height",
-          "type": "numerical",
-          "prompt": "What is your height in inches?"
-        }
-      ]
-    },
-    "stimulus_1": {
-      "type": "image",
-      "path": "tutorial/simple-study/assets/AI-gender.webp",
-      "nextButtonLocation": "sidebar",
-      "response": [
+          "id": "health",
+          "type": "likert",
+          "prompt": "How would you rate your overall health?",
+          "secondaryText": "1 being the worst health and 5 being the best health",
+          "numItems": 5,
+          "rightLabel": "Best health",
+          "leftLabel": "Worst health",
+          "withDivider": true
+        },
         {
-          "id": "women",
-          "type": "radio",
-          "prompt": "For which profession did AI generate women the least compared to US census data?",
-          "location": "sidebar",
-          "options": [
-            "Doctor",
-            "Engineer",
-            "Dishwasher",
-            "Janitor"
+          "id": "fruits",
+          "type": "matrix-checkbox",
+          "prompt": "Which of these fruits do you like at each time of day?",
+          "answerOptions": [
+            "Breakfast",
+            "Lunch",
+            "Dinner"
+          ],
+          "questionOptions": [
+            "Banana",
+            "Apple",
+            "Orange",
+            "Grapes",
+            "Strawberry"
           ]
         },
         {
-          "id": "men",
-          "type": "radio",
-          "prompt": "For which profession did AI generate men the least compared to US census data?",
-          "location": "sidebar",
+          "id": "q-short-text",
+          "type": "shortText",
+          "prompt": "What is your favorite sports team?",
+          "placeholder": "Enter your team here"
+        },
+        {
+          "id": "operating-systems",
+          "type": "checkbox",
+          "prompt": "Which of these operating systems do you use?",
+          "minSelections": 1,
+          "maxSelections": 2,
           "options": [
-            "Doctor",
-            "Engineer",
-            "Dishwasher",
-            "Janitor"
+            "Windows",
+            "macOS",
+            "Linux"
+          ],
+          "withOther": true
+        },
+        {
+          "id": "q-slider",
+          "type": "slider",
+          "prompt": "How would you rate this tutorial so far?",
+          "secondaryText": "Your answer is not legally binding.",
+          "startingValue": 50,
+          "options": [
+            {
+              "label": "Bad",
+              "value": 0
+            },
+            {
+              "label": "Alright",
+              "value": 50
+            },
+            {
+              "label": "Good",
+              "value": 100
+            }
           ]
         }
       ]
+    },
+    "trainingWithFeedback": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "training",
+          "type": "radio",
+          "prompt": "Yes is the correct answer, click it",
+          "options": [
+            "Yes",
+            "No"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "training",
+          "answer": "Yes"
+        }
+      ],
+      "provideFeedback": true,
+      "trainingAttempts": 2,
+      "allowFailedTraining": false,
+      "nextButtonDisableTime": 5000
+    },
+    "coinImage": {
+      "type": "image",
+      "path": "tutorial/assets/coins.png",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "cost-effective",
+          "type": "dropdown",
+          "prompt": "Which coin is least cost effective to produce?",
+          "location": "sidebar",
+          "options": [
+            "Penny",
+            "Nickel",
+            "Dime",
+            "Quarter",
+            "Half Dollar"
+          ]
+        },
+        {
+          "id": "cost-ineffective",
+          "type": "radio",
+          "prompt": "Which coin is least most effective to produce?",
+          "location": "sidebar",
+          "options": [
+            "Penny",
+            "Nickel",
+            "Dime",
+            "Quarter",
+            "Half Dollar"
+          ]
+        }
+      ]
+    },
+    "vegaPath": {
+      "type": "vega",
+      "path": "tutorial/assets/simpleChart.json",
+      "response": [
+        {
+          "id": "simple-vega",
+          "type": "radio",
+          "prompt": "What is the value of bar A?",
+          "options": [
+            "10",
+            "28",
+            "50"
+          ]
+        }
+      ]
+    },
+    "vegaConfig": {
+      "type": "vega",
+      "config": {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "description": "A simple bar chart with embedded data.",
+        "data": {
+          "values": [
+            {"category": "A", "value": 28},
+            {"category": "B", "value": 55},
+            {"category": "C", "value": 43},
+            {"category": "D", "value": 91},
+            {"category": "E", "value": 81},
+            {"category": "F", "value": 53},
+            {"category": "G", "value": 19},
+            {"category": "H", "value": 87}
+          ]
+        },
+        "mark": "bar",
+        "encoding": {
+          "x": {"field": "category", "type": "nominal", "axis": {"labelAngle": 0}},
+          "y": {"field": "value", "type": "quantitative"}
+        }
+      },
+      "response": [
+        {
+          "id": "dynamic-vega",
+          "type": "radio",
+          "prompt": "What is the value of bar A?",
+          "options": [
+            "10",
+            "28",
+            "50"
+          ]
+        }
+      ]
+    },
+    "reactiveVega": {
+      "type": "vega",
+      "path": "tutorial/assets/reactive.json",
+      "response": [
+        {
+          "id": "reactiveResponse",
+          "type": "reactive",
+          "prompt": "What is the value of bar A? Click it to show here"
+        }
+      ]
+    },
+    "website": {
+      "type": "website",
+      "path": "https://revisit.dev",
+      "response": []
+    },
+    "reactiveWebsite": {
+      "type": "website",
+      "path": "demo-html-input/assets/bar-chart-interaction.html",
+      "instructionLocation": "aboveStimulus",
+      "description": "A trial for the user to click the larges bar",
+      "instruction": "Click on the largest bar",
+      "response": [
+        {
+          "id": "barChart",
+          "prompt": "Your selected answer:",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ],
+      "parameters": {
+        "barData": [
+          0.32,
+          0.01,
+          1.2,
+          1.3,
+          0.82,
+          0.4,
+          0.3
+        ]
+      }
     }
   },
   "sequence": {
@@ -90,7 +272,13 @@
       "welcome",
       "consent",
       "demographics",
-      "stimulus_1"
+      "trainingWithFeedback",
+      "coinImage",
+      "vegaPath",
+      "vegaConfig",
+      "reactiveVega",
+      "website",
+      "reactiveWebsite"
     ]
   }
 }

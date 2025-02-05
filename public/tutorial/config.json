@@ -1,15 +1,15 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "A simple study for our tutorial",
+    "title": "A tutorial that you will build with us",
     "version": "development",
     "authors": [
       "The reVISit Team",
       "The reVISit Community",
       "You :)"
     ],
-    "date": "2025-01-13",
-    "description": "This is a simple study to demonstrate how to create a study using reVISit.",
+    "date": "2025-02-05",
+    "description": "This tutorial will teach you how to create a reVISit study and use all of the features that reVISit has to offer.",
     "organizations": [
       "University of Utah",
       "WPI",
@@ -19,7 +19,7 @@
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-cleveland/assets/help.md",
+    "helpTextPath": "tutorial/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
