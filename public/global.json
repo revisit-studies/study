@@ -1,6 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.2/src/parser/GlobalConfigSchema.json",
   "configsList": [
+    "vis-search",
     "tutorial-simple-study",
     "tutorial-react-and-randomization",
     "tutorial-advanced-react",
@@ -35,6 +36,9 @@
     "test-skip-logic"
   ],
   "configs": {
+    "vis-search": {
+      "path": "vis-search/config.json"
+    },
     "tutorial-simple-study": {
       "path": "tutorial/simple-study/config.json"
     },

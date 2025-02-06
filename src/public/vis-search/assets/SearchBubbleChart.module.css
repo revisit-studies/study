@@ -1,0 +1,27 @@
+.chartWrapper {
+  position: relative;
+}
+
+.tooltip {
+  position: absolute;
+  width: 250px;
+  border: 2px solid #222;
+  pointer-events: none;
+  font-size: .75rem;
+  background: #fff;
+  padding: 1rem;
+}
+
+.chartWrapper.searching {
+  .bubble {
+    opacity: .2;
+  }
+}
+
+.bubble {
+  opacity: 1;
+}
+
+.bubbleSelected {
+  opacity: 1 !important;
+}
