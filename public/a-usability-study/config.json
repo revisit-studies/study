@@ -74,12 +74,6 @@
         }
       ]
     },
-    "tutorial": {
-      "type": "markdown",
-      "path": "a-usability-study/assets/tutorial/tutorial.md",
-      "nextButtonText": "",
-      "response": []
-    },
     "tutorial-json": {
       "type": "markdown",
       "path": "a-usability-study/assets/tutorial/json/tutorial-json.md",
@@ -449,21 +443,14 @@
         },
         {
           "id": "reading-task-config-json_q4",
-          "prompt": "4. How many top-level keys does the file contain? ",
+          "prompt": "4. Which top-level keys(or tags, such as 'keywords') in the file have a nested structure (contain other key-value pairs or elements within them)? ",
           "type": "shortText",
           "location": "sidebar",
           "required": true
         },
         {
           "id": "reading-task-config-json_q5",
-          "prompt": "5. Which top-level keys in the file have a nested structure (contain other key-value pairs within them)? ",
-          "type": "shortText",
-          "location": "sidebar",
-          "required": true
-        },
-        {
-          "id": "reading-task-config-json_q6",
-          "prompt": "6. Which devDependency is considered a peer dependency?",
+          "prompt": "5. Which devDependency is considered a peer dependency?",
           "type": "shortText",
           "location": "sidebar",
           "required": true
@@ -523,21 +510,14 @@
         },
         {
           "id": "reading-task-tabular-json_q4",
-          "prompt": "4. How many  second-level keys does the file contain? ",
+          "prompt": "4. Within the 'students' key (or tag), which second-level keys (or tags) contain nested structures (i.e., other elements or key-value pairs)? Please list all that apply.",
           "type": "shortText",
           "location": "sidebar",
           "required": true
         },
         {
           "id": "reading-task-tabular-json_q5",
-          "prompt": "5. Which second-level keys under the top-level 'students' key in the file contain nested structures (i.e., other key-value pairs)?",
-          "type": "shortText",
-          "location": "sidebar",
-          "required": true
-        },
-        {
-          "id": "reading-task-tabular-json_q6",
-          "prompt": "6. Who is absent from the final exam?",
+          "prompt": "5. Who is absent from the final exam?",
           "type": "shortText",
           "location": "sidebar",
           "required": true
@@ -597,21 +577,14 @@
         },
         {
           "id": "reading-task-config-jsonc_q4",
-          "prompt": "4. How many top-level keys does the file contain? ",
+          "prompt": "4. Which top-level keys(or tags, such as 'keywords') in the file have a nested structure (contain other key-value pairs or elements within them)? ",
           "type": "shortText",
           "location": "sidebar",
           "required": true
         },
         {
           "id": "reading-task-config-jsonc_q5",
-          "prompt": "5. Which top-level keys in the file have a nested structure (contain other key-value pairs within them)? ",
-          "type": "shortText",
-          "location": "sidebar",
-          "required": true
-        },
-        {
-          "id": "reading-task-config-jsonc_q6",
-          "prompt": "6. Which devDependency is considered a peer dependency?",
+          "prompt": "5. Which devDependency is considered a peer dependency?",
           "type": "shortText",
           "location": "sidebar",
           "required": true
@@ -671,21 +644,14 @@
         },
         {
           "id": "reading-task-tabular-jsonc_q4",
-          "prompt": "4. How many  second-level keys does the file contain? ",
+          "prompt": "4. Within the 'students' key (or tag), which second-level keys (or tags) contain nested structures (i.e., other elements or key-value pairs)? Please list all that apply.",
           "type": "shortText",
           "location": "sidebar",
           "required": true
         },
         {
           "id": "reading-task-tabular-jsonc_q5",
-          "prompt": "5. Which second-level keys under the top-level 'students' key in the file contain nested structures (i.e., other key-value pairs)?",
-          "type": "shortText",
-          "location": "sidebar",
-          "required": true
-        },
-        {
-          "id": "reading-task-tabular-jsonc_q6",
-          "prompt": "6. Who is absent from the final exam?",
+          "prompt": "5. Who is absent from the final exam?",
           "type": "shortText",
           "location": "sidebar",
           "required": true
@@ -745,21 +711,14 @@
         },
         {
           "id": "reading-task-config-json5_q4",
-          "prompt": "4. How many top-level keys does the file contain? ",
+          "prompt": "4. Which top-level keys(or tags, such as 'keywords') in the file have a nested structure (contain other key-value pairs or elements within them)? ",
           "type": "shortText",
           "location": "sidebar",
           "required": true
         },
         {
           "id": "reading-task-config-json5_q5",
-          "prompt": "5. Which top-level keys in the file have a nested structure (contain other key-value pairs within them)? ",
-          "type": "shortText",
-          "location": "sidebar",
-          "required": true
-        },
-        {
-          "id": "reading-task-config-json5_q6",
-          "prompt": "6. Which devDependency is considered a peer dependency?",
+          "prompt": "5. Which devDependency is considered a peer dependency?",
           "type": "shortText",
           "location": "sidebar",
           "required": true
@@ -819,21 +778,14 @@
         },
         {
           "id": "reading-task-tabular-json5_q4",
-          "prompt": "4. How many  second-level keys does the file contain? ",
+          "prompt": "4. Within the 'students' key (or tag), which second-level keys (or tags) contain nested structures (i.e., other elements or key-value pairs)? Please list all that apply.",
           "type": "shortText",
           "location": "sidebar",
           "required": true
         },
         {
           "id": "reading-task-tabular-json5_q5",
-          "prompt": "5. Which second-level keys under the top-level 'students' key in the file contain nested structures (i.e., other key-value pairs)?",
-          "type": "shortText",
-          "location": "sidebar",
-          "required": true
-        },
-        {
-          "id": "reading-task-tabular-json5_q6",
-          "prompt": "6. Who is absent from the final exam?",
+          "prompt": "5. Who is absent from the final exam?",
           "type": "shortText",
           "location": "sidebar",
           "required": true
@@ -893,21 +845,14 @@
         },
         {
           "id": "reading-task-config-hjson_q4",
-          "prompt": "4. How many top-level keys does the file contain? ",
+          "prompt": "4. Which top-level keys(or tags, such as 'keywords') in the file have a nested structure (contain other key-value pairs or elements within them)? ",
           "type": "shortText",
           "location": "sidebar",
           "required": true
         },
         {
           "id": "reading-task-config-hjson_q5",
-          "prompt": "5. Which top-level keys in the file have a nested structure (contain other key-value pairs within them)? ",
-          "type": "shortText",
-          "location": "sidebar",
-          "required": true
-        },
-        {
-          "id": "reading-task-config-hjson_q6",
-          "prompt": "6. Which devDependency is considered a peer dependency?",
+          "prompt": "5. Which devDependency is considered a peer dependency?",
           "type": "shortText",
           "location": "sidebar",
           "required": true
@@ -967,21 +912,14 @@
         },
         {
           "id": "reading-task-tabular-hjson_q4",
-          "prompt": "4. How many  second-level keys does the file contain? ",
+          "prompt": "4. Within the 'students' key (or tag), which second-level keys (or tags) contain nested structures (i.e., other elements or key-value pairs)? Please list all that apply.",
           "type": "shortText",
           "location": "sidebar",
           "required": true
         },
         {
           "id": "reading-task-tabular-hjson_q5",
-          "prompt": "5. Which second-level keys under the top-level 'students' key in the file contain nested structures (i.e., other key-value pairs)?",
-          "type": "shortText",
-          "location": "sidebar",
-          "required": true
-        },
-        {
-          "id": "reading-task-tabular-hjson_q6",
-          "prompt": "6. Who is absent from the final exam?",
+          "prompt": "5. Who is absent from the final exam?",
           "type": "shortText",
           "location": "sidebar",
           "required": true
@@ -1041,21 +979,14 @@
         },
         {
           "id": "reading-task-config-yaml_q4",
-          "prompt": "4. How many top-level keys does the file contain? ",
+          "prompt": "4. Which top-level keys(or tags, such as 'keywords') in the file have a nested structure (contain other key-value pairs or elements within them)? ",
           "type": "shortText",
           "location": "sidebar",
           "required": true
         },
         {
           "id": "reading-task-config-yaml_q5",
-          "prompt": "5. Which top-level keys in the file have a nested structure (contain other key-value pairs within them)? ",
-          "type": "shortText",
-          "location": "sidebar",
-          "required": true
-        },
-        {
-          "id": "reading-task-config-yaml_q6",
-          "prompt": "6. Which devDependency is considered a peer dependency?",
+          "prompt": "5. Which devDependency is considered a peer dependency?",
           "type": "shortText",
           "location": "sidebar",
           "required": true
@@ -1115,21 +1046,14 @@
         },
         {
           "id": "reading-task-tabular-yaml_q4",
-          "prompt": "4. How many  second-level keys does the file contain? ",
+          "prompt": "4. Within the 'students' key (or tag), which second-level keys (or tags) contain nested structures (i.e., other elements or key-value pairs)? Please list all that apply.",
           "type": "shortText",
           "location": "sidebar",
           "required": true
         },
         {
           "id": "reading-task-tabular-yaml_q5",
-          "prompt": "5. Which second-level keys under the top-level 'students' key in the file contain nested structures (i.e., other key-value pairs)?",
-          "type": "shortText",
-          "location": "sidebar",
-          "required": true
-        },
-        {
-          "id": "reading-task-tabular-yaml_q6",
-          "prompt": "6. Who is absent from the final exam?",
+          "prompt": "5. Who is absent from the final exam?",
           "type": "shortText",
           "location": "sidebar",
           "required": true
@@ -1189,21 +1113,14 @@
         },
         {
           "id": "reading-task-config-toml_q4",
-          "prompt": "4. How many top-level keys does the file contain? ",
+          "prompt": "4. Which top-level keys(or tags, such as 'keywords') in the file have a nested structure (contain other key-value pairs or elements within them)? ",
           "type": "shortText",
           "location": "sidebar",
           "required": true
         },
         {
           "id": "reading-task-config-toml_q5",
-          "prompt": "5. Which top-level keys in the file have a nested structure (contain other key-value pairs within them)? ",
-          "type": "shortText",
-          "location": "sidebar",
-          "required": true
-        },
-        {
-          "id": "reading-task-config-toml_q6",
-          "prompt": "6. Which devDependency is considered a peer dependency?",
+          "prompt": "5. Which devDependency is considered a peer dependency?",
           "type": "shortText",
           "location": "sidebar",
           "required": true
@@ -1263,21 +1180,14 @@
         },
         {
           "id": "reading-task-tabular-toml_q4",
-          "prompt": "4. How many  second-level keys does the file contain? ",
+          "prompt": "4. Within the 'students' key (or tag), which second-level keys (or tags) contain nested structures (i.e., other elements or key-value pairs)? Please list all that apply.",
           "type": "shortText",
           "location": "sidebar",
           "required": true
         },
         {
           "id": "reading-task-tabular-toml_q5",
-          "prompt": "5. Which second-level keys under the top-level 'students' key in the file contain nested structures (i.e., other key-value pairs)?",
-          "type": "shortText",
-          "location": "sidebar",
-          "required": true
-        },
-        {
-          "id": "reading-task-tabular-toml_q6",
-          "prompt": "6. Who is absent from the final exam?",
+          "prompt": "5. Who is absent from the final exam?",
           "type": "shortText",
           "location": "sidebar",
           "required": true
@@ -1337,21 +1247,14 @@
         },
         {
           "id": "reading-task-config-xml_q4",
-          "prompt": "4. How many top-level keys does the file contain? ",
+          "prompt": "4. Which top-level keys(or tags, such as 'keywords') in the file have a nested structure (contain other key-value pairs or elements within them)? ",
           "type": "shortText",
           "location": "sidebar",
           "required": true
         },
         {
           "id": "reading-task-config-xml_q5",
-          "prompt": "5. Which top-level keys in the file have a nested structure (contain other key-value pairs within them)? ",
-          "type": "shortText",
-          "location": "sidebar",
-          "required": true
-        },
-        {
-          "id": "reading-task-config-xml_q6",
-          "prompt": "6. Which devDependency is considered a peer dependency?",
+          "prompt": "5. Which devDependency is considered a peer dependency?",
           "type": "shortText",
           "location": "sidebar",
           "required": true
@@ -1411,21 +1314,14 @@
         },
         {
           "id": "reading-task-tabular-xml_q4",
-          "prompt": "4. How many  second-level keys does the file contain? ",
+          "prompt": "4. Within the 'students' key (or tag), which second-level keys (or tags) contain nested structures (i.e., other elements or key-value pairs)? Please list all that apply.",
           "type": "shortText",
           "location": "sidebar",
           "required": true
         },
         {
           "id": "reading-task-tabular-xml_q5",
-          "prompt": "5. Which second-level keys under the top-level 'students' key in the file contain nested structures (i.e., other key-value pairs)?",
-          "type": "shortText",
-          "location": "sidebar",
-          "required": true
-        },
-        {
-          "id": "reading-task-tabular-xml_q6",
-          "prompt": "6. Who is absent from the final exam?",
+          "prompt": "5. Who is absent from the final exam?",
           "type": "shortText",
           "location": "sidebar",
           "required": true
@@ -1459,7 +1355,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "json", "imagePath": "a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
+        "language": "json", "imagePath": "/a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1551,7 +1447,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "jsonc", "imagePath": "a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
+        "language": "jsonc", "imagePath": "/a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1597,7 +1493,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "jsonc", "imagePath": "a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
+        "language": "jsonc", "imagePath": "/a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
       },
       "response": [
         {
@@ -1643,7 +1539,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "json5", "imagePath": "a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
+        "language": "json5", "imagePath": "/a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1689,7 +1585,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "json5", "imagePath": "a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
+        "language": "json5", "imagePath": "/a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
       },
       "response": [
         {
@@ -1735,7 +1631,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "hjson", "imagePath": "a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
+        "language": "hjson", "imagePath": "/a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1781,7 +1677,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "hjson", "imagePath": "a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
+        "language": "hjson", "imagePath": "/a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
       },
       "response": [
         {
@@ -1827,7 +1723,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "yaml", "imagePath": "a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
+        "language": "yaml", "imagePath": "/a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1873,7 +1769,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "yaml", "imagePath": "a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
+        "language": "yaml", "imagePath": "/a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
       },
       "response": [
         {
@@ -1919,7 +1815,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "toml", "imagePath": "a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
+        "language": "toml", "imagePath": "/a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -1965,7 +1861,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "toml", "imagePath": "a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
+        "language": "toml", "imagePath": "/a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
       },
       "response": [
         {
@@ -2011,7 +1907,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "xml", "imagePath": "a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
+        "language": "xml", "imagePath": "/a-usability-study/assets/tasks/fig/config_write.png", "type": "writing", "tabular": false
       },
       "response": [
         {
@@ -2057,7 +1953,7 @@
       "nextButtonLocation": "sidebar",
       "path": "a-usability-study/assets/Editor.tsx",
       "parameters": {
-        "language": "xml", "imagePath": "a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
+        "language": "xml", "imagePath": "/a-usability-study/assets/tasks/fig/tabular_write.png", "type": "writing", "tabular": true
       },
       "response": [
         {
@@ -2168,7 +2064,7 @@
         },
         {
           "id": "modifying-task-tabular-json_q2",
-          "prompt": "2. Move the information about the midterm and final grades below the 'Quizzes' section. ",
+          "prompt": "2. Please add the following quiz information for Bob - Quiz 3 grade 10 weight 0.1.",
           "type": "reactive",
           "location": "sidebar",
           "required": false
@@ -2274,7 +2170,7 @@
         },
         {
           "id": "modifying-task-tabular-jsonc_q2",
-          "prompt": "2. Move the information about the midterm and final grades below the 'Quizzes' section. ",
+          "prompt": "2. Please add the following quiz information for Bob - Quiz 3 grade 10 weight 0.1. ",
           "type": "reactive",
           "location": "sidebar",
           "required": false
@@ -2380,7 +2276,7 @@
         },
         {
           "id": "modifying-task-tabular-json5_q2",
-          "prompt": "2. Move the information about the midterm and final grades below the 'Quizzes' section. ",
+          "prompt": "2. Please add the following quiz information for Bob - Quiz 3 grade 10 weight 0.1. ",
           "type": "reactive",
           "location": "sidebar",
           "required": false
@@ -2486,7 +2382,7 @@
         },
         {
           "id": "modifying-task-tabular-jhjson_q2",
-          "prompt": "2. Move the information about the midterm and final grades below the 'Quizzes' section. ",
+          "prompt": "2. Please add the following quiz information for Bob - Quiz 3 grade 10 weight 0.1. ",
           "type": "reactive",
           "location": "sidebar",
           "required": false
@@ -2592,7 +2488,7 @@
         },
         {
           "id": "modifying-task-tabular-toml_q2",
-          "prompt": "2. Move the information about the midterm and final grades below the 'Quizzes' section. ",
+          "prompt": "2. Please add the following quiz information for Bob - Quiz 3 grade 10 weight 0.1. ",
           "type": "reactive",
           "location": "sidebar",
           "required": false
@@ -2698,7 +2594,7 @@
         },
         {
           "id": "modifying-task-tabular-yaml_q2",
-          "prompt": "2. Move the information about the midterm and final grades below the 'Quizzes' section. ",
+          "prompt": "2. Please add the following quiz information for Bob - Quiz 3 grade 10 weight 0.1. ",
           "type": "reactive",
           "location": "sidebar",
           "required": false
@@ -2804,7 +2700,7 @@
         },
         {
           "id": "modifying-task-tabular-xml_q2",
-          "prompt": "2. Move the information about the midterm and final grades below the 'Quizzes' section. ",
+          "prompt": "2. Please add the following quiz information for Bob - Quiz 3 grade 10 weight 0.1. ",
           "type": "reactive",
           "location": "sidebar",
           "required": false

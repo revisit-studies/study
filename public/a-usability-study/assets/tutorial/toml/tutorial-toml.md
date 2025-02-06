@@ -23,15 +23,21 @@ Supports integers, floating-point numbers, and booleans.
 <br>
 
 ### 4. Arrays
-Arrays are defined using square brackets <strong style="color:green;">[]</strong>, with items separated by commas <strong style="color:green;">,</strong>.
+Arrays are defined using square brackets <strong style="color:green;">[]</strong>, with items separated by commas <strong style="color:green;">,</strong>. 
 ###### <u>Correct Example</u> 
    <img src="./assets/tutorial/toml/toml_arrays.png" width="450px" height="auto">
 <br>
+
 
 ### 5. Tables
 Tables are defined using square brackets <strong style="color:green;">[]</strong> and create hierarchical structures.
 ###### <u>Correct Example</u> 
    <img src="./assets/tutorial/toml/toml_table.png" width="450px" height="auto">
+<br>
+
+Array of tables <strong style="color:green;">[[array]]</strong> is used to define a list of objects (tables). Each [[array]] entry represents a separate table inside an array.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/toml/toml_arrays2.png" width="450px" height="auto">
 <br>
 
 ### 6. Inline Tables

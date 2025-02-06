@@ -16,7 +16,7 @@ YAML uses spaces to represent hierarchy. **Tab characters are not allowed**.
 
 ### 3. Strings
 Strings can be written directly without quotes.
-Use quotes if the string contains special characters, colons, or newlines.
+Use quotes(Single or double) if the string contains special characters, colons, or newlines. Or use quotes if you want to ensure the number is interpreted as a string.
 ###### <u>Correct Example</u> 
    <img src="./assets/tutorial/yaml/yaml_Strings.png" width="450px" height="auto">
 <br>

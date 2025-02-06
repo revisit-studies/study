@@ -435,3 +435,171 @@ Punctuators and whitespace can't be used in an unquoted key or as the first char
 ### Full HJSON Example
    <img src="./assets/tutorial/hjson/hjson_example.png" width="450px" height="auto">
 <br>
+
+
+## YAML Basic Syntax Tutorial
+YAML (**YAML Ain't Markup Language**) is a human-readable, lightweight data serialization format primarily used for configuration files and data exchange. It is concise, easy to read, and easier to manually edit compared to JSON.
+<br><br>
+
+### 1. Key-Value Pairs
+Each key-value pair is separated by a colon <strong style="color:green;">:</strong>, with a space after the colon.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/yaml/yaml_KVPairs.png" width="450px" height="auto">
+<br>
+
+### 2. Indentation and Hierarchy
+YAML uses spaces to represent hierarchy. **Tab characters are not allowed**.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/yaml/yaml_Indentation.png" width="450px" height="auto">
+<br>
+
+### 3. Strings
+Strings can be written directly without quotes.
+Use quotes(Single or double) if the string contains special characters, colons, or newlines. Or use quotes if you want to ensure the number is interpreted as a string.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/yaml/yaml_Strings.png" width="450px" height="auto">
+<br>
+
+### 4. Arrays
+Array items are prefixed with <strong style="color:green;">-</strong>, one item per line.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/yaml/yaml_Arrays.png" width="450px" height="auto">
+<br>
+
+### 5. Objects
+Use indentation to represent nested objects.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/yaml/yaml_Objects.png" width="450px" height="auto">
+<br>
+
+### 6. Booleans and Null
+Booleans are represented using <strong style="color:green;">true</strong>/<strong style="color:green;">false</strong> or <strong style="color:green;">yes</strong>/<strong style="color:green;">no</strong>.
+Null values are represented using <strong style="color:green;">null</strong> or <strong style="color:green;">~</strong>.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/yaml/yaml_Booleans.png" width="450px" height="auto">
+<br>
+
+### Full YAML Example
+   <img src="./assets/tutorial/yaml/yaml_example.png" width="450px" height="auto">
+<br>
+
+## TOML Basic Syntax Tutorial
+TOML (**Tom's Obvious, Minimal Language**) is a simple, easy-to-read, and easy-to-write configuration file format. It is designed to be human-friendly and easy to parse, making it ideal for configuration files.
+<br><br>
+
+### 1. Key-Value Pairs
+Key-value pairs are separated by an equals sign =; keys are on the left, and values are on the right.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/toml/toml_KVPairs.png" width="450px" height="auto">
+<br>
+
+
+### 2. Strings
+**Basic strings** are enclosed in double quotes <strong style="color:green;">""</strong>.
+**Multi-line strings** use triple double quotes <strong style="color:green;">"""</strong> for multiple lines.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/toml/toml_strings.png" width="450px" height="auto">
+<br>
+
+### 3. Numbers and Booleans
+Supports integers, floating-point numbers, and booleans.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/toml/toml_numbers.png" width="450px" height="auto">
+<br>
+
+### 4. Arrays
+Arrays are defined using square brackets <strong style="color:green;">[]</strong>, with items separated by commas <strong style="color:green;">,</strong>. 
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/toml/toml_arrays.png" width="450px" height="auto">
+<br>
+
+
+### 5. Tables
+Tables are defined using square brackets <strong style="color:green;">[]</strong> and create hierarchical structures.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/toml/toml_table.png" width="450px" height="auto">
+<br>
+
+Array of tables <strong style="color:green;">[[array]]</strong> is used to define a list of objects (tables). Each [[array]] entry represents a separate table inside an array.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/toml/toml_arrays2.png" width="450px" height="auto">
+<br>
+
+### 6. Inline Tables
+Inline tables use <strong style="color:green;">{}</strong> and are suitable for simple objects.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/toml/toml_intable.png" width="450px" height="auto">
+<br>
+
+### 7. Dates and Times
+TOML explicitly supports time and date formats based on the **RFC 3339** standard.
+- Date (Full Date)
+   Format: <strong style="color:green;">YYYY-MM-DD</strong>
+- Local Date-Time (No Time Zone)
+   Format: <strong style="color:green;">YYYY-MM-DDTHH:MM:SS</strong>
+- Date-Time with Time Zone
+   Format:
+   <strong style="color:green;">YYYY-MM-DDTHH:MM:SSZ</strong> (UTC time, where Z indicates the zero offset).
+   <strong style="color:green;">YYYY-MM-DDTHH:MM:SS±HH:MM</strong> (Time offset).
+- Time Only (Local Time)
+   Format: <strong style="color:green;">HH:MM:SS</strong>
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/toml/toml_date.png" width="450px" height="auto">
+<br>
+
+### Full TOML Example
+   <img src="./assets/tutorial/toml/toml_example.png" width="450px" height="auto">
+<br>
+
+## XML Basic Syntax Tutorial
+XML (**eXtensible Markup Language**) is a markup language used to store and transport data. It is a structured text format similar to HTML but more flexible because it allows for custom tags.
+<br><br>
+
+### 1. Declaration
+An XML document starts with a declaration that specifies the XML version and character encoding.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/xml/xml_declaration.png" width="450px" height="auto">
+<br>
+
+### 2. Elements
+XML uses elements to represent data, which include start tags and end tags.
+Tag names are case-sensitive.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/xml/xml_elements.png" width="450px" height="auto">
+<br>
+
+### 3. Attributes
+Elements can include attributes to provide additional information.
+Attributes are written inside the start tag as key-value pairs.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/xml/xml_attributes.png" width="450px" height="auto">
+<br>
+
+### 4. Empty Elements
+Empty elements have no content and can use self-closing tags.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/xml/xml_empty.png" width="450px" height="auto">
+<br>
+
+### 5. Comments
+Comments in XML are enclosed in <strong style="color:green;">`<!-- comment -->`</strong>.
+
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/xml/xml_comments.png" width="450px" height="auto">
+<br>
+
+### 6. Text Content
+The content between elements can be plain text.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/xml/xml_text.png" width="450px" height="auto">
+<br>
+
+### 7. Nested Elements
+XML supports nested elements, forming a hierarchical structure.
+###### <u>Correct Example</u> 
+   <img src="./assets/tutorial/xml/xml_nested.png" width="450px" height="auto">
+<br>
+
+### Full XML Example
+   <img src="./assets/tutorial/xml/xml_example.png" width="450px" height="auto">
+<br>

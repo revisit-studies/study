@@ -17,7 +17,7 @@ import 'ace-builds/src-noconflict/ext-language_tools';
 import { StimulusParams } from '../../../store/types';
 // adding worker
 function CodeEditorTest({ setAnswer, parameters }: StimulusParams<{language: string, imagePath: string | null, type: 'modifying' | 'writing' | 'reading', tabular: boolean}, Record<string, never>>): React.ReactElement {
-  const [code, setCode] = useState<string>(startingStringsMap[parameters.type + parameters.language]);
+  const [code, setCode] = useState<string>(startingStringsMap[parameters.type + (parameters.tabular ? 'tabular' : 'config') + parameters.language]);
 
   const editorOnChange = useCallback((rawCode: string) => {
     setAnswer({
@@ -33,12 +33,12 @@ function CodeEditorTest({ setAnswer, parameters }: StimulusParams<{language: str
 
   return (
     <Box>
-      {/* 图片与代码编辑器部分 */}
+      {/*  */}
       <Group gap={20} wrap="nowrap">
         {parameters.imagePath ? (
           <div style={{ flex: '0 0 50%' }}>
             <img
-              src="/a-usability-study/assets/tasks/fig/config_write.png"
+              src={parameters.imagePath}
               alt="Example"
               style={{
                 width: '100%',
@@ -62,7 +62,7 @@ function CodeEditorTest({ setAnswer, parameters }: StimulusParams<{language: str
 
       </Group>
 
-      {/* 验证状态显示 */}
+      {/* validation */}
     </Box>
 
   );
