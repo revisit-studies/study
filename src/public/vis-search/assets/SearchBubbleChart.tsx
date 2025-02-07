@@ -7,8 +7,8 @@ import {
   useState,
 } from 'react';
 import * as d3 from 'd3';
-import { ComboboxItem, Select } from '@mantine/core';
-import { FilterOptionsInput } from '@mantine/core/lib/components/Combobox/OptionsDropdown/default-options-filter';
+import { Select } from '@mantine/core';
+import { Registry, initializeTrrack } from '@trrack/core';
 import cx from 'clsx';
 import { StimulusParams } from '../../../store/types';
 import classes from './SearchBubbleChart.module.css';
@@ -64,16 +64,68 @@ function containsCaseInsensitive(mainString:string, searchString:string) {
 const MemoizedSelect = memo(Select);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function SearchBubbleChart({ parameters }: StimulusParams<any>) {
+function SearchBubbleChart({ parameters, setAnswer, provenanceState }: StimulusParams<any, {all: {hoveredItem: DataModel, searchValue: string}}>) {
   const { data: dataPath } = parameters;
   const ref = useRef(null);
   const [data, setData] = useState<d3.HierarchyCircularNode<DataModel> | null>(null);
   const [dataByKey, setDataByKey] = useState<{[key: string]: DataModel}>({});
+  const [nodeByKey, setNodeByKey] = useState<{[key: string]: d3.HierarchyCircularNode<DataModel>}>({});
 
-  const [hoveredItem, setHoveredItem] = useState<d3.HierarchyCircularNode<DataModel>>();
+  const [hoveredItem, setHoveredItem] = useState<DataModel | null>(null);
   const [searchValue, setSearchValue] = useState('');
   const [selectedValue, setSelectedValue] = useState<string | null>('');
   const [highlightedItems, setHighlightedItems] = useState<DataModel[]>([]);
+
+  const hoveredNode = useMemo(() => {
+    if (hoveredItem) {
+      const i = hoveredItem[NAME_ATTR] as string;
+      return nodeByKey[i];
+    }
+    return null;
+  }, [hoveredItem, nodeByKey]);
+
+  useEffect(() => {
+    if (provenanceState) {
+      setHoveredItem(provenanceState.all.hoveredItem);
+      setSearchValue(provenanceState.all.searchValue || '');
+    } else {
+      setHoveredItem(null);
+      setSearchValue('');
+    }
+  }, [provenanceState]);
+
+  // creating provenance tracking
+  const { actions, trrack } = useMemo(() => {
+    const reg = Registry.create();
+
+    const hover = reg.register('hoverItem', (state, currHoveredItem: DataModel | null) => {
+      state.all.hoveredItem = currHoveredItem;
+      return state;
+    });
+
+    const searchInProgress = reg.register('searchInProgress', (state, currSearchValue: string | null) => {
+      state.all.searchValue = currSearchValue;
+      return state;
+    });
+
+    const trrackInst = initializeTrrack({
+      registry: reg,
+      initialState: {
+        all: {
+          hoveredItem: null,
+          searchValue: null,
+        },
+      },
+    });
+
+    return {
+      actions: {
+        hover,
+        searchInProgress,
+      },
+      trrack: trrackInst,
+    };
+  }, []);
 
   const searchList: string[] = useMemo(() => {
     if (data && data.children) {
@@ -87,12 +139,15 @@ function SearchBubbleChart({ parameters }: StimulusParams<any>) {
       const formattedData = formatData(unformattedData) as unknown as d3.HierarchyCircularNode<DataModel>;
       setData(formattedData);
 
-      const byKey: {[key: string]: DataModel} = {};
+      const _dataByKey: {[key: string]: DataModel} = {};
+      const _nodeByKey: {[key: string]: d3.HierarchyCircularNode<DataModel>} = {};
       formattedData.children?.forEach((a) => {
-        byKey[a.data[NAME_ATTR] as string] = a.data;
+        _dataByKey[a.data[NAME_ATTR] as string] = a.data;
+        _nodeByKey[a.data[NAME_ATTR] as string] = a;
       });
 
-      setDataByKey(byKey);
+      setDataByKey(_dataByKey);
+      setNodeByKey(_nodeByKey);
     });
   }, [dataPath]);
 
@@ -111,7 +166,6 @@ function SearchBubbleChart({ parameters }: StimulusParams<any>) {
       .attr('r', (d) => d.r)
       .attr('cx', (d) => d.x)
       .attr('cy', (d) => d.y)
-      // .classed('group', (d) => !!d.children)
       .filter((d) => !!d.data)
       .style('fill', (d) => color((+d.data[COLOR_ATTR]) ** 2))
       .classed(classes.bubble, true);
@@ -119,11 +173,25 @@ function SearchBubbleChart({ parameters }: StimulusParams<any>) {
     // Add mouse events to bubbles
     bubbles.on('mouseover', (e, d) => {
       if (d.data.children) return;
-      setHoveredItem(d);
+      setHoveredItem(d.data);
+      trrack.apply('Hover', actions.hover(d.data));
+
+      setAnswer({
+        status: true,
+        provenanceGraph: trrack.graph.backend,
+        answers: {},
+      });
     });
 
     bubbles.on('mouseout', () => {
-      setHoveredItem(undefined);
+      setHoveredItem(null);
+      trrack.apply('Hover', actions.hover(null));
+
+      setAnswer({
+        status: true,
+        provenanceGraph: trrack.graph.backend,
+        answers: {},
+      });
     });
 
     const legend = svg.append('g')
@@ -137,7 +205,7 @@ function SearchBubbleChart({ parameters }: StimulusParams<any>) {
       .attr('y', currentLegendHeight)
       .text('Distance to Center: Admission Rate (%)');
     currentLegendHeight += legendTextStep + legendSpaceStep;
-  }, [data]);
+  }, [data, trrack, setAnswer, actions]);
 
   useEffect(() => {
     const svg = d3.select(ref.current);
@@ -146,57 +214,62 @@ function SearchBubbleChart({ parameters }: StimulusParams<any>) {
     filteredBubbles.classed(classes.bubbleSelected, true);
   }, [highlightedItems]);
 
-  const handleFilter = useCallback((filterOptionsInput: FilterOptionsInput) => {
-    const x = filterOptionsInput.options.filter((a) => {
-      const r = a as ComboboxItem;
-      return containsCaseInsensitive(r.label, filterOptionsInput.search);
-    });
-
-    if (selectedValue && filterOptionsInput.search === '') {
+  useEffect(() => {
+    const x = searchList.filter((a) => containsCaseInsensitive(a, searchValue));
+    if (selectedValue && searchValue === '') {
       setHighlightedItems([dataByKey[selectedValue]]);
     } else {
-      setHighlightedItems(x.map((a) => dataByKey[(a as ComboboxItem).value]));
+      setHighlightedItems(x.map((a) => dataByKey[a]));
     }
-    return x;
-  }, [dataByKey, selectedValue]);
+  }, [searchValue, dataByKey, selectedValue, searchList]);
+
+  const handleSearchValueChange = useCallback((v: string) => {
+    setSearchValue(v || '');
+    trrack.apply('Search Value', actions.searchInProgress(v || ''));
+
+    setAnswer({
+      status: true,
+      provenanceGraph: trrack.graph.backend,
+      answers: {},
+    });
+  }, [trrack, setAnswer, actions]);
 
   return (
     <div>
       <MemoizedSelect
         searchable
         searchValue={searchValue}
-        onSearchChange={setSearchValue}
+        onSearchChange={handleSearchValueChange}
         onChange={setSelectedValue}
-        filter={handleFilter}
         label="Search"
         placeholder="Search for college..."
         data={searchList}
       />
       <div className={cx(classes.chartWrapper, { [classes.searching]: searchValue !== '' })} style={{ height: '720px' }}>
         <svg ref={ref} style={{ height: 720, width: 720 }} />
-        {hoveredItem && (
+        {hoveredNode && (
         <div
           className={classes.tooltip}
-          style={{ left: hoveredItem.x, top: hoveredItem.y }}
+          style={{ left: hoveredNode.x, top: hoveredNode.y }}
         >
-          <div>{hoveredItem.data.INSTNM as string}</div>
+          <div><strong>{hoveredNode.data.INSTNM as string}</strong></div>
           <div>
             Admission Rate:
             {' '}
-            {Math.round(+hoveredItem.data.ADM_RATE * 10000) / 100}
+            {Math.round(+hoveredNode.data.ADM_RATE * 10000) / 100}
             %
           </div>
           <div>
             Annual Cost:
             {' '}
             $
-            {hoveredItem.data.COSTT4_A as string}
+            {hoveredNode.data.COSTT4_A as string}
           </div>
           <div>
             Median of Earnings:
             {' '}
             $
-            {hoveredItem.data.MD_EARN_WNE_P10 as string}
+            {hoveredNode.data.MD_EARN_WNE_P10 as string}
           </div>
         </div>
         )}
