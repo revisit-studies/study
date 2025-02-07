@@ -20,7 +20,8 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": true
+    "sidebar": true,
+    "recordStudyAudio": true
   },
   "components": {
     "introduction": {
@@ -54,8 +55,8 @@
       ]
     },
     "training1": {
-      "type": "image",
-      "path": "vis-search/assets/cm-training.png",
+      "type": "markdown",
+      "path": "vis-search/assets/training.md",
       "response": []
     },
     "bubbleChart": {
