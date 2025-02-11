@@ -162,7 +162,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
     ))
     .forEach((componentName) => {
       warnings.push({
-        message: `Component \`${componentName}\` is defined in components object but not used in the sequence`,
+        message: `Component \`${componentName}\` is defined in components object but not used deterministically in the sequence`,
         instancePath: '/components/',
         params: { action: 'remove the component from the components object or add it to the sequence' },
       });
