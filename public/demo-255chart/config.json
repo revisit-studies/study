@@ -1,0 +1,88 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "255 Charts",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2025-02-1",
+    "description": "255 Chart from the Hindsight study",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-255chart/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true,
+    "windowEventDebounceTime": 200
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-255chart/assets/introduction.md",
+      "response": []
+    },
+    "255Chart": {
+      "type": "website",
+      "nextButtonLocation": "sidebar",
+      "meta": {
+        "difficulty": "easy"
+      },
+      "description": "Explore the chart",
+      "instruction": "Explore the chart",
+      "path": "demo-255chart/assets/255charts/index.html",
+      "response": [
+        {
+          "id": "circlesCount",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "reactive",
+          "hidden": false
+        }
+      ]
+    },
+    "debrief": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q1",
+          "prompt": "Tell us about 3-5 findings you discovered in the data. Use the text boxes below to separate your results.",
+          "location": "aboveStimulus",
+          "type": "longText",
+          "placeholder": "Enter your findings here"
+        },
+        {
+          "id": "q2",
+          "prompt": "Please describe your general analysis strategy when interacting with the charts",
+          "location": "aboveStimulus",
+          "type": "longText",
+          "placeholder": "Enter your comments here"
+        },
+        {
+          "id": "q3",
+          "prompt": "Did you revisit any charts during your analysis? If so, how difficult was it to find the one you visited before?",
+          "location": "aboveStimulus",
+          "type": "longText",
+          "placeholder": "Enter your comments here"
+        }
+        ]
+
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "255Chart",
+        "debrief"
+
+    ]
+  }
+}

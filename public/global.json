@@ -32,7 +32,8 @@
     "test-parser-errors",
     "demo-vega",
     "test-randomization",
-    "test-skip-logic"
+    "test-skip-logic",
+    "demo-255chart"
   ],
   "configs": {
     "tutorial-simple-study": {
@@ -143,6 +144,9 @@
     "test-skip-logic": {
       "path": "test-skip-logic/config.json",
       "test": true
+    },
+    "demo-255chart": {
+      "path": "demo-255chart/config.json"
     }
   }
 }
