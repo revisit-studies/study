@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<div id="container"></div>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script type="module">
+
+// Function for generating random data
+function random_data() {
+    const numValues = Math.floor(Math.random() * 4) + 5;
+    const minValue = 0.1; // Make sure that each element will be somewhat visible
+    let remaining = 1 - numValues * minValue;
+
+    // Distribute remaining proportions randomly
+    let randomParts = Array.from({ length: numValues }, () => Math.random());
+    let totalRandom = randomParts.reduce((sum, val) => sum + val, 0);
+
+    // Convert to ratios
+    return randomParts.map(r => minValue + (r / totalRandom) * remaining);
+}
+
+// Function for generating the 2 marked points
+function getIndices(size) {
+    let first = d3.randomInt(0, size)();
+    let second;
+    do {
+        second = d3.randomInt(0, size)();
+    } while (second == first);
+    return [first, second];
+}
+
+// Function for creating a bubble chart
+function bubble_chart(svg, data) {
+    const pack = d3.pack()
+        .size([300, 300])
+        .padding(1.5);
+    
+    const root = d3.hierarchy({ children: data })
+        .sum(d => d);
+    
+    const bubble_chart = svg.append("g")
+        .attr("transform", "translate(250, 250)");
+    
+    const nodes = pack(root).leaves();
+    
+    const indices = getIndices(data.length);
+    console.log(indices);
+    
+    bubble_chart.selectAll("circle")
+        .data(nodes)
+        .join("circle")
+        .attr("cx", d => d.x)
+        .attr("cy", d => d.y)
+        .attr("r", d => d.r)
+        .attr("fill", "white")
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+        .each(function(d, i) {
+            if (i == indices[0] || i == indices[1]) {
+                bubble_chart.append("circle")
+                    .attr("cx", d.x)
+                    .attr("cy", d.y)
+                    .attr("r", 5)
+                    .attr("fill", "black");
+            }
+        });
+}
+
+const svg = d3.select("#container")
+  .append("svg")
+  .attr("width", 1000)
+  .attr("height", 1000);
+
+// Generate some random data for a bubble chart
+var data = random_data();
+//var data = [1, 1, 1, 2]
+console.log(data);
+
+// Create a bubble chart
+bubble_chart(svg, data);
+
+</script>

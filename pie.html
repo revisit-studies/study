@@ -5,7 +5,7 @@
 
 // Function for generating random data
 function random_data() {
-    const numValues = Math.floor(Math.random() * 6) + 5;
+    const numValues = Math.floor(Math.random() * 4) + 5;
     const minValue = 0.1; // Make sure that each element will be somewhat visible
     let remaining = 1 - numValues * minValue;
 
@@ -17,6 +17,16 @@ function random_data() {
     return randomParts.map(r => minValue + (r / totalRandom) * remaining);
 }
 
+// Function for generating the 2 marked points
+function getIndices(size) {
+    let first = d3.randomInt(0, size)();
+    let second;
+    do {
+        second = d3.randomInt(0, size)();
+    } while (second == first);
+    return [first, second];
+}
+
 
 // Function for creating a pie chart
 function pie_chart(svg, data) {
@@ -25,6 +35,9 @@ function pie_chart(svg, data) {
 
   const pie_chart = svg.append("g")
     .attr("transform", "translate(500, 500)");
+
+  const indices = getIndices(data.length);
+  console.log(indices);
 
   pie_chart.selectAll("path")
     .data(arcs)
@@ -37,7 +50,7 @@ function pie_chart(svg, data) {
     .attr("stroke", "black")
     .attr("stroke-width", 1)
     .each(function(d, i) {
-      if (i == 2 || i == 3) {
+      if (i == indices[0] || i == indices[1]) {
         console.log(d.startAngle, "     ", d.endAngle);
         console.log((d.startAngle + d.endAngle) / 2);
         const angle = ((d.startAngle + (3 * Math.PI / 2)) + (d.endAngle + (3 * Math.PI / 2))) / 2
