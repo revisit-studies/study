@@ -27,6 +27,9 @@ function getIndices(size) {
     return [first, second];
 }
 
+let bubble1;
+let bubble2;
+
 // Function for creating a bubble chart
 function bubble_chart(svg, data) {
     const pack = d3.pack()
@@ -60,6 +63,11 @@ function bubble_chart(svg, data) {
                     .attr("cy", d.y)
                     .attr("r", 5)
                     .attr("fill", "black");
+                if(i == indices[0]) {
+                    bubble1 = d.data;
+                } else {
+                    bubble2 = d.data;
+                }
             }
         });
 }
@@ -76,5 +84,6 @@ console.log(data);
 
 // Create a bubble chart
 bubble_chart(svg, data);
+console.log("bubbles", bubble1, bubble2);
 
 </script>

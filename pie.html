@@ -27,6 +27,8 @@ function getIndices(size) {
     return [first, second];
 }
 
+let pie1;
+let pie2;
 
 // Function for creating a pie chart
 function pie_chart(svg, data) {
@@ -46,44 +48,26 @@ function pie_chart(svg, data) {
       .innerRadius(0)
       .outerRadius(100)
     )
-    .attr("fill", /*(d, i) => d3.schemeCategory10[i]*/"white")
+    .attr("fill", "white")
     .attr("stroke", "black")
     .attr("stroke-width", 1)
     .each(function(d, i) {
       if (i == indices[0] || i == indices[1]) {
-        console.log(d.startAngle, "     ", d.endAngle);
-        console.log((d.startAngle + d.endAngle) / 2);
         const angle = ((d.startAngle + (3 * Math.PI / 2)) + (d.endAngle + (3 * Math.PI / 2))) / 2
         pie_chart.append("circle")
             .attr("cx", Math.cos(angle) * 75)
             .attr("cy", Math.sin(angle) * 75)
             .attr("r", 5)
-            .attr("fill", /*(d) => {
-                if (i == 2) {
-                    return "black";
-                } else {
-                    return "white";
-                }
-            }*/"black");
+            .attr("fill", "black");
         const centroid = d3.arc()
             .innerRadius(0)
             .outerRadius(100)
             .centroid(d);
-        /*
-        pie_chart.append("text")
-            .attr("x", centroid[0])
-            .attr("y", centroid[1])
-            .attr("text-anchor", "middle")
-            .attr("alignment-baseline", "middle")
-            .attr("fill", "Black")
-            .text((d) => {
-                if (i == 2) {
-                    return "A";
-                } else {
-                    return "B";
-                }
-            });
-        */
+        }
+        if(i == indices[0]) {
+            pie1 = d.data;
+        } else {
+            pie2 = d.data;
         }
     });
     
@@ -102,5 +86,6 @@ console.log(data);
 
 // Create a pie chart
 pie_chart(svg, data);
+console.log("pies", pie1, pie2);
 
 </script>
