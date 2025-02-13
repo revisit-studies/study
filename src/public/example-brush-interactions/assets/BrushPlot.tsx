@@ -14,7 +14,9 @@ import { Bar } from './Bar';
 import { StimulusParams } from '../../../store/types';
 import { BrushParams, BrushState, SelectionType } from './types';
 
-export function BrushPlot({ parameters, setAnswer, provenanceState }: StimulusParams<BrushParams, {all: {brush: BrushState}}>) {
+export function BrushPlot({
+  parameters, setAnswer, provenanceState, updateState = () => null,
+}: StimulusParams<BrushParams, {all: {brush: BrushState}}> & {updateState: (b: BrushState) => void}) {
   const [filteredTable, setFilteredTable] = useState<ColumnTable | null>(null);
   const [brushState, setBrushState] = useState<BrushState>(provenanceState ? (provenanceState.all.brush || provenanceState.all) : {
     hasBrush: false, x1: 0, y1: 0, x2: 0, y2: 0, ids: [],
@@ -144,6 +146,8 @@ export function BrushPlot({ parameters, setAnswer, provenanceState }: StimulusPa
     }
 
     setFilteredTable(_filteredTable);
+
+    updateState(newState);
 
     setAnswer({
       status: true,

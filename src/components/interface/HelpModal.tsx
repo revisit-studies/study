@@ -4,6 +4,7 @@ import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { useStoreDispatch, useStoreSelector, useStoreActions } from '../../store/store';
 import { getStaticAssetByPath } from '../../utils/getStaticAsset';
 import { ResourceNotFound } from '../../ResourceNotFound';
+import { PREFIX } from '../../utils/Prefix';
 
 export function HelpModal() {
   const showHelpText = useStoreSelector((state) => state.showHelpText);
@@ -21,7 +22,7 @@ export function HelpModal() {
         setLoading(false);
         return;
       }
-      const asset = await getStaticAssetByPath(config.uiConfig.helpTextPath);
+      const asset = await getStaticAssetByPath(`${PREFIX}${config.uiConfig.helpTextPath}`);
       if (asset !== undefined) {
         setHelpText(asset);
       }

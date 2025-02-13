@@ -11,7 +11,7 @@ import { StoredUser } from '../../storage/engines/StorageEngine';
 import { signInWithGoogle } from '../../Login';
 
 export function GlobalSettings() {
-  const { user, triggerAuth } = useAuth();
+  const { user, triggerAuth, logout } = useAuth();
   const { storageEngine } = useStorageEngine();
 
   const [isAuthEnabled, setAuthEnabled] = useState<boolean>(false);
@@ -155,6 +155,14 @@ export function GlobalSettings() {
                     </Flex>
                   ),
                 ) : null}
+                <Flex direction="row" justify="left">
+                  <Button
+                    onClick={() => logout()}
+                    mt={20}
+                  >
+                    Log out
+                  </Button>
+                </Flex>
               </Flex>
             )
             : null}

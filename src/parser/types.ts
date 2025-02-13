@@ -79,7 +79,7 @@ uiConfig:{
   "numSequences": 500
 }
 ```
-In the above, the `path/to/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)
+In the above, the `<study-name>/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)
  */
 export interface UIConfig {
   /** The email address that used during the study if a participant clicks contact. */
@@ -400,6 +400,10 @@ export interface SliderResponse extends BaseResponse {
   type: 'slider';
   /** This defines the steps in the slider and the extent of the slider as an array of objects that have a label and a value. */
   options: NumberOption[];
+  /** The starting value of the slider. Defaults to the minimum value. */
+  startingValue?: number;
+  /** Whether the slider should snap between values. Defaults to false. Slider snapping disables the label above the handle. */
+  snap?: boolean;
 }
 
 /**
@@ -619,8 +623,8 @@ export default function CoolComponent({ parameters, setAnswer }: StimulusParams<
 ```
  *
  * For in depth examples, see the following studies, and their associated codebases.
- * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/2.0.0-rc7/src/public/demo-click-accuracy-test/assets)
- * https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/2.0.0-rc7/src/public/example-brush-interactions/assets)
+ * https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v2.0.2/src/public/demo-click-accuracy-test/assets)
+ * https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.0.2/src/public/example-brush-interactions/assets)
  */
 export interface ReactComponent extends BaseIndividualComponent {
   type: 'react-component';
@@ -646,7 +650,7 @@ export interface ReactComponent extends BaseIndividualComponent {
  */
 export interface ImageComponent extends BaseIndividualComponent {
   type: 'image';
-  /** The path to the image. This should be a relative path from the public folder. */
+  /** The path to the image. This could be a relative path from the public folder or a url to an external image. */
   path: string;
   /** The style of the image. This is an object with css properties as keys and css values as values. */
   style?: Record<string, string>;
@@ -670,7 +674,7 @@ export interface ImageComponent extends BaseIndividualComponent {
   "path": "<study-name>/website.html",
   "parameters": {
     "barData": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]
-  }
+  },
   "response": [
     {
       "id": "barChart",
@@ -678,7 +682,7 @@ export interface ImageComponent extends BaseIndividualComponent {
       "location": "belowStimulus",
       "type": "reactive"
     }
-  ],
+  ]
 }
 ```
  * In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:
@@ -812,7 +816,33 @@ export interface VegaComponentConfig extends BaseIndividualComponent {
 
 export type VegaComponent = VegaComponentPath | VegaComponentConfig;
 
-export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent | VegaComponent;
+/**
+ * The VideoComponent interface is used to define the properties of a video component. This component is used to render a video with optional controls.
+ *
+ * Most often, video components will be used for trainings, and will have a `forceCompletion` field set to true. This will prevent the participant from moving on until the video has finished playing.
+ *
+ * As such, the `forceCompletion` field is set to true by default, and the `withTimeline` field is set to false by default.
+ *
+ * For example, to render a training video with a path of `<study-name>/assets/video.mp4`, you would use the following snippet:
+ * ```js
+ * {
+ *   "type": "video",
+ *   "path": "<study-name>/assets/video.mp4",
+ * }
+ * ```
+ * */
+
+export interface VideoComponent extends BaseIndividualComponent {
+  type: 'video';
+  /** The path to the video. This could be a relative path from the public folder or might be a url to an external website. */
+  path: string;
+  /** Whether to force the video to play until the end. Defaults to true. */
+  forceCompletion?: boolean;
+  /** Whether to show the video timeline. Defaults to false. */
+  withTimeline?: boolean;
+}
+
+export type IndividualComponent = MarkdownComponent | ReactComponent | ImageComponent | WebsiteComponent | QuestionnaireComponent | VegaComponent | VideoComponent;
 
 /** The DeterministicInterruption interface is used to define an interruption that will be shown at a specific location in the block.
  *
@@ -1284,7 +1314,7 @@ export type BaseComponents = Record<string, Partial<IndividualComponent>>;
 
 ```js
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     ...
   },
@@ -1330,7 +1360,7 @@ export interface StudyConfig {
  *
  * ```js
  * {
- *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0/src/parser/LibraryConfigSchema.json",
+ *   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.2/src/parser/LibraryConfigSchema.json",
  *   "baseComponents": {
  *     // BaseComponents here are defined exactly as is in the StudyConfig
  *   },

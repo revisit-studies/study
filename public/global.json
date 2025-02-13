@@ -1,9 +1,7 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.0/src/parser/GlobalConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.2/src/parser/GlobalConfigSchema.json",
   "configsList": [
-    "tutorial-simple-study",
-    "tutorial-react-and-randomization",
-    "tutorial-advanced-react",
+    "tutorial",
     "example-brush-interactions",
     "example-cleveland",
     "example-mvnv",
@@ -17,6 +15,8 @@
     "demo-html-trrack",
     "demo-click-accuracy-test",
     "demo-image",
+    "demo-video-slider",
+    "demo-video",
     "test-audio",
     "test-library",
     "library-beauvis",
@@ -36,14 +36,8 @@
 
   ],
   "configs": {
-    "tutorial-simple-study": {
-      "path": "tutorial/simple-study/config.json"
-    },
-    "tutorial-react-and-randomization": {
-      "path": "tutorial/react-and-randomization/config.json"
-    },
-    "tutorial-advanced-react": {
-      "path": "tutorial/advanced-react-component/config.json"
+    "tutorial": {
+      "path": "tutorial/config.json"
     },
     "example-brush-interactions": {
       "path": "example-brush-interactions/config.json"
@@ -57,6 +51,9 @@
     "example-fairness-jnd": {
       "path": "example-fairness-jnd/config.json"
     },
+    "demo-video-slider": {
+      "path": "demo-video-slider/config.json"
+    },
     "demo-html": {
       "path": "demo-html/config.json"
     },
@@ -68,6 +65,9 @@
     },
     "demo-training": {
       "path": "demo-training/config.json"
+    },
+    "demo-video": {
+      "path": "demo-video/config.json"
     },
     "example-VLAT-full-randomized": {
       "path": "example-VLAT-full-randomized/config.json"
