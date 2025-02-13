@@ -8,7 +8,9 @@ import {
   IndividualComponent,
   ResponseBlockLocation,
 } from '../../parser/types';
-import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
+import {
+  useCurrentComponent, useCurrentIdentifier, useCurrentStep, useStudyId,
+} from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions,
 } from '../../store/store';
@@ -66,6 +68,8 @@ export function ResponseBlock({
   const trainingAttempts = configInUse?.trainingAttempts || 2;
   const [enableNextButton, setEnableNextButton] = useState(false);
 
+  const identifier = useCurrentIdentifier();
+
   const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
 
   useEffect(() => {
@@ -108,7 +112,7 @@ export function ResponseBlock({
     storeDispatch(
       updateResponseBlockValidation({
         location,
-        identifier: `${currentComponent}_${currentStep}`,
+        identifier,
         status: answerValidator.isValid(),
         values: deepCopy(answerValidator.values),
         provenanceGraph,

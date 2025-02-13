@@ -25,7 +25,8 @@ export async function studyStoreCreator(
     .map((id, idx) => [
       `${id}_${idx}`,
       {
-        answer: {}, incorrectAnswers: {}, startTime: 0, endTime: -1, provenanceGraph: undefined, windowEvents: [], timedOut: false, helpButtonClickedCount: 0,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        answer: {}, incorrectAnswers: {}, startTime: 0, endTime: -1, provenanceGraph: undefined, windowEvents: [], timedOut: false, helpButtonClickedCount: 0, parameters: Object.hasOwn(config.components[id] || {}, 'parameters') ? (config.components[id] as any).parameters : {},
       },
     ]));
   const emptyValidation: TrialValidation = Object.assign(
@@ -79,7 +80,8 @@ export async function studyStoreCreator(
       setFuncParams(state, payload: PayloadAction<unknown | undefined>) {
         state.funcParams = payload.payload;
       },
-      pushToFuncSequence(state, payload: PayloadAction<{component: string, funcName: string, index: number, funcIndex: number}>) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      pushToFuncSequence(state, payload: PayloadAction<{component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any>}>) {
         if (!state.funcSequence[payload.payload.funcName]) {
           state.funcSequence[payload.payload.funcName] = [];
         }
@@ -89,7 +91,7 @@ export async function studyStoreCreator(
 
         state.funcSequence[payload.payload.funcName].push(payload.payload.component);
         state.answers[`${payload.payload.funcName}_${payload.payload.index}_${payload.payload.component}_${payload.payload.funcIndex}`] = {
-          answer: {}, incorrectAnswers: {}, startTime: 0, endTime: -1, provenanceGraph: undefined, windowEvents: [], timedOut: false, helpButtonClickedCount: 0,
+          answer: {}, incorrectAnswers: {}, startTime: 0, endTime: -1, provenanceGraph: undefined, windowEvents: [], timedOut: false, helpButtonClickedCount: 0, parameters: payload.payload.parameters,
         };
         state.trialValidation[`${payload.payload.funcName}_${payload.payload.index}_${payload.payload.component}_${payload.payload.funcIndex}`] = { aboveStimulus: { valid: false, values: {} }, belowStimulus: { valid: false, values: {} }, sidebar: { valid: false, values: {} } };
       },
@@ -209,7 +211,7 @@ export async function studyStoreCreator(
         }: PayloadAction<{ identifier: string } & StoredAnswer>,
       ) {
         const {
-          identifier, answer, startTime, endTime, provenanceGraph, windowEvents, timedOut, incorrectAnswers, helpButtonClickedCount,
+          identifier, answer, startTime, endTime, provenanceGraph, windowEvents, timedOut, incorrectAnswers, helpButtonClickedCount, parameters,
         } = payload;
         state.answers[identifier] = {
           incorrectAnswers,
@@ -220,6 +222,7 @@ export async function studyStoreCreator(
           windowEvents,
           timedOut,
           helpButtonClickedCount,
+          parameters,
         };
       },
       incrementHelpCounter(
@@ -286,7 +289,7 @@ export function useAreResponsesValid(id: string) {
     if (id.includes('reviewer-')) {
       return true;
     }
-    const valid = Object.values(state.trialValidation[id]).every((x) => {
+    const valid = !(state.trialValidation[id]) ? true : Object.values(state.trialValidation[id]).every((x) => {
       if (typeof x === 'object' && 'valid' in x) {
         return x.valid;
       }

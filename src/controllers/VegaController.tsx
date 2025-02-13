@@ -8,7 +8,7 @@ import { getJsonAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { StimulusParams } from '../store/types';
-import { useCurrentComponent, useCurrentStep } from '../routes/utils';
+import { useCurrentIdentifier } from '../routes/utils';
 
 export interface VegaProvState {
   event: {
@@ -18,11 +18,12 @@ export interface VegaProvState {
 }
 
 export function VegaController({ currentConfig, provState }: { currentConfig: VegaComponent; provState?: VegaProvState }) {
-  const currentStep = useCurrentStep();
-  const currentComponent = useCurrentComponent();
   const storeDispatch = useStoreDispatch();
   const [vegaConfig, setVegaConfig] = useState<VisualizationSpec | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const identifier = useCurrentIdentifier();
+
   const { updateResponseBlockValidation, setreactiveAnswers } = useStoreActions();
   const [view, setView] = useState<View>();
 
@@ -57,7 +58,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     storeDispatch(
       updateResponseBlockValidation({
         location: 'sidebar',
-        identifier: `${currentComponent}_${currentStep}`,
+        identifier,
         status,
         values: answers,
         provenanceGraph,
@@ -65,7 +66,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     );
 
     storeDispatch(setreactiveAnswers(answers));
-  }, [currentComponent, currentStep, storeDispatch, setreactiveAnswers, updateResponseBlockValidation]);
+  }, [storeDispatch, updateResponseBlockValidation, identifier, setreactiveAnswers]);
 
   const handleSignalEvt = useCallback((key: string, value: unknown) => {
     trrack.apply(key, actions.signalAction({

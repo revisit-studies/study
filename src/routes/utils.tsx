@@ -100,7 +100,7 @@ export function useCurrentComponent(): string {
     } else if (flatSequence[currentStep] !== compName) {
       if (funcIndex) {
         storeDispatch(pushToFuncSequence({
-          component: compName, funcName: flatSequence[currentStep], index: currentStep, funcIndex: decryptIndex(funcIndex),
+          component: compName, funcName: flatSequence[currentStep], index: currentStep, funcIndex: decryptIndex(funcIndex), parameters: parameters || {},
         }));
       }
       storeDispatch(setFuncParams(parameters));
@@ -110,4 +110,16 @@ export function useCurrentComponent(): string {
   // console.log(compName, nextFunc, currentComponent, flatSequence);
 
   return compName;
+}
+
+export function useCurrentIdentifier(): string {
+  const currentStep = useCurrentStep();
+
+  const participantSequence = useFlatSequence();
+  const currentComponent = useCurrentComponent();
+
+  const { funcIndex } = useParams();
+  const identifier = funcIndex && typeof currentStep === 'number' ? `${participantSequence[currentStep]}_${currentStep}_${currentComponent}_${decryptIndex(funcIndex)}` : `${currentComponent}_${currentStep}`;
+
+  return identifier;
 }
