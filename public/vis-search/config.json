@@ -1,0 +1,90 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Vis search",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-28",
+    "description": "Vis search replication",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "vis-search/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true,
+    "recordStudyAudio": true
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "vis-search/assets/introduction.md",
+      "response": []
+    },
+    "consent": {
+      "type": "markdown",
+      "path": "vis-search/assets/consent.md",
+      "nextButtonText": "Agree",
+      "response": [
+        {
+          "id": "signature",
+          "prompt": "Your signature",
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Please provide your signature"
+        },
+        {
+          "id": "accept",
+          "prompt": "Do you consent to the study and wish to continue?",
+          "requiredValue": "Accept",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Decline",
+            "Accept"
+          ]
+        }
+      ]
+    },
+    "training1": {
+      "type": "markdown",
+      "path": "vis-search/assets/training.md",
+      "response": []
+    },
+    "bubbleChart": {
+      "description": "Desc",
+      "instruction": "Test instruction",
+      "type": "react-component",
+      "path": "vis-search/assets/SearchBubbleChart.tsx",
+      "parameters": {
+        "data": "assets/data/college.csv"
+      },
+      "response": [
+        {
+          "id": "search",
+          "prompt": "What do you see?",
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Please provide your answer"
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "consent",
+      "training1",
+      "bubbleChart"
+    ]
+  }
+}
