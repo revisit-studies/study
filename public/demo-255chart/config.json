@@ -21,7 +21,8 @@
     "withProgressBar": true,
     "autoDownloadStudy": false,
     "sidebar": true,
-    "windowEventDebounceTime": 200
+    "windowEventDebounceTime": 200,
+    "recordStudyAudio": true
   },
   "components": {
     "consent": {
@@ -45,9 +46,6 @@
     "255Chart": {
       "type": "website",
       "nextButtonLocation": "sidebar",
-      "meta": {
-        "difficulty": "easy"
-      },
       "description": "Explore the chart",
       "instruction": "Explore the chart",
       "path": "demo-255chart/assets/255charts/index.html",
