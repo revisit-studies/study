@@ -1,0 +1,74 @@
+{
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Bar Test",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-14",
+    "description": "testing",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-html/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true,
+    "windowEventDebounceTime": 200
+  },
+  "baseComponents": {
+    "bar-chart": {
+        "type": "website",
+        "response": [
+            {
+                "id": "barChart",
+                "prompt": "Your selected answer:",
+                "required": true,
+                "location": "belowStimulus",
+                "type": "reactive"
+            }
+        ],
+        "path": "bar-test/assets/bar.html",
+        "instructionLocation": "aboveStimulus"
+    
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-html/assets/introduction.md",
+      "response": []
+    },
+    "bar-chart-1":{
+    "baseComponent": "bar-chart",
+    "description": "A trial for the user to click the largest bar",
+    "instruction": "Click on the largest bar",
+    "parameters": {
+        "barData": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]
+    }
+},
+"bar-chart-2":{
+    "baseComponent": "bar-chart",
+    "description": "A trial for the user to click the smallest bar",
+    "instruction": "Click on the smallest bar",
+    "parameters": {
+        "barData": [1.2, 1.2, 1.2, 1.3, 0.82, 0.4, 0.3]
+    }
+}
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "bar-chart-1",
+      "bar-chart-2"
+    ]
+  }
+}
