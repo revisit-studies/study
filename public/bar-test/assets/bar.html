@@ -1,76 +1,85 @@
 <!DOCTYPE html>
 <div id="container"></div>
 <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="../../revisitUtilities/revisit-communicate.js"></script>
 <script type="module">
 
-// Function for generating random data
-function random_data() {
-    const numValues = Math.floor(Math.random() * 4) + 5;
-    
-    return Array.from({ length: numValues }, () => (Math.random() * 95 + 5));
-}
+Revisit.onDataReceive((data) => {
+    console.log("data", data);
+    // Function for generating random data
+    function random_data() {
+        const numValues = Math.floor(Math.random() * 3) + 5;
+        
+        return Array.from({ length: numValues }, () => (Math.random() * 95 + 5));
+    }
 
-// Function for generating the 2 marked points
-function getIndices(size) {
-    let first = d3.randomInt(0, size)();
-    let second;
-    do {
-        second = d3.randomInt(0, size)();
-    } while (second == first);
-    return [first, second];
-}
+    // Function for generating the 2 marked points
+    function getIndices(size) {
+        let first = d3.randomInt(0, size)();
+        let second;
+        do {
+            second = d3.randomInt(0, size)();
+        } while (second == first);
+        return [first, second];
+    }
 
-let bar1;
-let bar2;
+    let bar1;
+    let bar2;
 
-// Function for creating a bar chart
-function bar_chart(svg, data) {
-    const bar_width = 50;
+    // Function for creating a bar chart
+    function bar_chart(svg, data) {
+        const bar_width = 50;
 
-    const indices = getIndices(data.length);
-    console.log(indices);
+        const indices = getIndices(data.length);
+        console.log(indices);
 
-    const bar_chart = svg.append("g")
-        .attr("transform", "translate(250, 250)");
+        const bar_chart = svg.append("g")
+            .attr("transform", "translate(250, 250)");
 
-    bar_chart.selectAll("rect")
-        .data(data)
-        .join("rect")
-        .attr("x", (d, i) => i * bar_width)
-        .attr("y", d => 100 - (2 * d))
-        .attr("width", bar_width)
-        .attr("height", d => (2 * d))
-        .attr("fill", "white")
-        .attr("stroke", "black")
-        .attr("stroke-width", 1)
-        .each(function(d, i) {
-            if (i == indices[0] || i == indices[1]) {
-                bar_chart.append("circle")
-                    .attr("cx", i * bar_width + bar_width / 2)
-                    .attr("cy", 90)
-                    .attr("r", 5)
-                    .attr("fill", "black");
-                if(i == indices[0]) {
-                    bar1 = d;
-                } else {
-                    bar2 = d;
+        bar_chart.selectAll("rect")
+            .data(data)
+            .join("rect")
+            .attr("x", (d, i) => i * bar_width)
+            .attr("y", d => 100 - (2 * d))
+            .attr("width", bar_width)
+            .attr("height", d => (2 * d))
+            .attr("fill", "white")
+            .attr("stroke", "black")
+            .attr("stroke-width", 1)
+            .each(function(d, i) {
+                if (i == indices[0] || i == indices[1]) {
+                    bar_chart.append("circle")
+                        .attr("cx", i * bar_width + bar_width / 2)
+                        .attr("cy", 90)
+                        .attr("r", 5)
+                        .attr("fill", "black");
+                    if(i == indices[0]) {
+                        bar1 = d;
+                    } else {
+                        bar2 = d;
+                    }
                 }
-            }
-        });
-}
+            });
+    }
 
-const svg = d3.select("#container")
-  .append("svg")
-  .attr("width", 1000)
-  .attr("height", 1000);
+    const svg = d3.select("#container")
+    .append("svg")
+    .attr("width", 1000)
+    .attr("height", 1000);
 
-// Generate some random data for a bubble chart
-var data = random_data();
-//var data = [1, 1, 1, 2]
-console.log(data);
+    // Generate some random data for a bubble chart
+    var data = random_data();
+    //var data = [1, 1, 1, 2]
+    console.log(data);
 
-// Create a bubble chart
-bar_chart(svg, data);
-console.log("bars", bar1, bar2);
+    // Create a bubble chart
+    bar_chart(svg, data);
+    console.log("bars", bar1, bar2);
+    if (bar1 > bar2) {
+        return Math.round((bar2 / bar1) * 100);
+    } else {
+        return Math.round((bar1 / bar2) * 100);
+    }
+});
 
 </script>

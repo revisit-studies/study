@@ -28,16 +28,18 @@
         "type": "website",
         "response": [
             {
-                "id": "barChart",
-                "prompt": "Your selected answer:",
+                "id": "q-numerical",
+                "prompt": "Your response:",
                 "required": true,
                 "location": "belowStimulus",
-                "type": "reactive"
+                "type": "numerical",
+                "min": 0,
+                "max": 100,
+                "placeholder": "Enter a number"
             }
         ],
         "path": "bar-test/assets/bar.html",
-        "instructionLocation": "aboveStimulus"
-    
+        "instructionLocation": "belowStimulus"
     }
   },
   "components": {
@@ -49,17 +51,17 @@
     "bar-chart-1":{
     "baseComponent": "bar-chart",
     "description": "A trial for the user to click the largest bar",
-    "instruction": "Click on the largest bar",
+    "instruction": "What percentage of the larger is the smaller?",
     "parameters": {
-        "barData": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3]
+        "barData": [1]
     }
 },
 "bar-chart-2":{
     "baseComponent": "bar-chart",
     "description": "A trial for the user to click the smallest bar",
-    "instruction": "Click on the smallest bar",
+    "instruction": "What percentage of the larger is the smaller?",
     "parameters": {
-        "barData": [1.2, 1.2, 1.2, 1.3, 0.82, 0.4, 0.3]
+        "barData": [1]
     }
 }
   },
