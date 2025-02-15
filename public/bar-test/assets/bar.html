@@ -5,7 +5,6 @@
 <script type="module">
 
 Revisit.onDataReceive((data) => {
-    console.log("data", data);
     // Function for generating random data
     function random_data() {
         const numValues = Math.floor(Math.random() * 3) + 5;
@@ -67,18 +66,18 @@ Revisit.onDataReceive((data) => {
     .attr("width", 1000)
     .attr("height", 1000);
 
-    // Generate some random data for a bubble chart
+    // Generate some random data for a bar chart
     var data = random_data();
     //var data = [1, 1, 1, 2]
     console.log(data);
 
-    // Create a bubble chart
+    // Create a bar chart
     bar_chart(svg, data);
     console.log("bars", bar1, bar2);
     if (bar1 > bar2) {
-        return Math.round((bar2 / bar1) * 100);
+        Revisit.postAnswers([Math.round((bar2 / bar1) * 100)]);
     } else {
-        return Math.round((bar1 / bar2) * 100);
+        Revisit.postAnswers([Math.round((bar1 / bar2) * 100)]);
     }
 });
 
