@@ -181,14 +181,14 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
 }
 
 function StudyCards({ configNames, studyConfigs } : { configNames: string[]; studyConfigs: Record<string, ParsedConfig<StudyConfig> | null> }) {
-  return configNames.map((configName) => {
+  return configNames.map((configName, index) => {
     const config = studyConfigs[configName];
     if (!config) {
       return null;
     }
     const url = sanitizeStringForUrl(configName);
 
-    return <StudyCard key={configName} configName={configName} config={config} url={url} />;
+    return <StudyCard key={`${configName}-${index}`} configName={configName} config={config} url={url} />;
   });
 }
 
