@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<div id="container"></div>
+<script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+<script src="../../revisitUtilities/revisit-communicate.js"></script>
+<script type="module">
+
+Revisit.onDataReceive((data) => {
+    // Function for generating random data
+    function random_data(seed, indices) {
+    const data = Array.from({ length: indices[0] }, () => (Math.random() * 96 + 5));
+    let point = Math.random() * (16 + ((seed - 2) * 5)) + (85 - ((seed - 2) * 5));
+    let newPoint = point * (seed * 5) / 100;
+    console.log("seed", seed);
+    console.log("point", point);
+    console.log("newPoint", newPoint);
+    data[indices[1]] = point;
+    data[indices[2]] = newPoint;
+    return data;
+    }
+
+    // Function for generating the 2 marked points
+    function getIndices() {
+    let size = Math.floor(Math.random() * 3) + 5;
+    let first = d3.randomInt(0, size)();
+    let second;
+    do {
+        second = d3.randomInt(0, size)();
+    } while (second == first);
+    return [size, first, second];
+    }
+
+    let pie1;
+    let pie2;
+
+    // Function for creating a pie chart
+    function pie_chart(svg, data, indices) {
+    const pie = d3.pie();
+    const arcs = pie(data);
+
+    const pie_chart = svg.append("g")
+        .attr("transform", "translate(500, 500)");
+
+    indices = [indices[1], indices[2]];
+    console.log(indices);
+
+    pie_chart.selectAll("path")
+        .data(arcs)
+        .join("path")
+        .attr("d", d3.arc()
+        .innerRadius(0)
+        .outerRadius(100)
+        )
+        .attr("fill", "white")
+        .attr("stroke", "black")
+        .attr("stroke-width", 1)
+        .each(function(d, i) {
+        if (i == indices[0] || i == indices[1]) {
+            const angle = ((d.startAngle + (3 * Math.PI / 2)) + (d.endAngle + (3 * Math.PI / 2))) / 2
+            pie_chart.append("circle")
+                .attr("cx", Math.cos(angle) * 75)
+                .attr("cy", Math.sin(angle) * 75)
+                .attr("r", 5)
+                .attr("fill", "black");
+            const centroid = d3.arc()
+                .innerRadius(0)
+                .outerRadius(100)
+                .centroid(d);
+            }
+            if(i == indices[0]) {
+                pie1 = d.data;
+            } else {
+                pie2 = d.data;
+            }
+        });
+        
+    }
+
+
+    const svg = d3.select("#container")
+    .append("svg")
+    .attr("width", 1000)
+    .attr("height", 1000);
+
+    // Generate some random data for a pie chart
+    const seed = data['seed'];
+    const indices = getIndices();
+    var data = random_data(seed, indices);
+    //var data = [1, 1, 1, 2]
+    console.log(data);
+
+    // Create a pie chart
+    pie_chart(svg, data, indices);
+    console.log("pies", pie1, pie2);
+});
+
+</script>

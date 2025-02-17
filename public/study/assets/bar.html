@@ -11,9 +11,9 @@ Revisit.onDataReceive((data) => {
         const data = Array.from({ length: indices[0] }, () => (Math.random() * 96 + 5));
         let point = Math.random() * 36 + 65;
         let newPoint = point * (seed * 5) / 100;
-        console.log("seed", seed);
-        console.log("point", point);
-        console.log("newPoint", newPoint);
+        //console.log("seed", seed);
+        //console.log("point", point);
+        //console.log("newPoint", newPoint);
         data[indices[1]] = point;
         data[indices[2]] = newPoint;
         return data;
@@ -39,7 +39,7 @@ Revisit.onDataReceive((data) => {
 
         //const indices = getIndices(data.length);
         indices = [indicies[1], indicies[2]];
-        console.log(indices);
+        //console.log(indices);
 
         const bar_chart = svg.append("g")
             .attr("transform", "translate(250, 250)");
@@ -101,11 +101,11 @@ Revisit.onDataReceive((data) => {
     const indicies = getIndices();
     var data = random_data(seed, indicies);
     //var data = [1, 1, 1, 2]
-    console.log(data);
+    //console.log(data);
 
     // Create a bar chart
     bar_chart(svg, data, indicies);
-    console.log("bars", bar1, bar2);
+    //console.log("bars", bar1, bar2);
 });
 
 </script>

@@ -1,7 +1,7 @@
 {
     "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Bar Test",
+    "title": "Bubble Test",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
@@ -24,7 +24,7 @@
     "windowEventDebounceTime": 200
   },
   "baseComponents": {
-    "bar-chart": {
+    "bubble-chart": {
         "type": "website",
         "response": [
             {
@@ -38,7 +38,7 @@
                 "placeholder": "Enter a number"
             }
         ],
-        "path": "bar-test/assets/bar.html",
+        "path": "bubble-test/assets/bubble.html",
         "instructionLocation": "belowStimulus"
     }
   },
@@ -48,29 +48,29 @@
       "path": "demo-html/assets/introduction.md",
       "response": []
     },
-    "bar-chart-1":{
-      "baseComponent": "bar-chart",
-      "description": "A trial for the user to click the largest bar",
-      "instruction": "What percentage of the larger is the smaller?",
-      "parameters": {
-          "seed": [2]
-      }
+    "bubble-chart-1":{
+        "baseComponent": "bubble-chart",
+        "description": "A trial for the user to click the largest bar",
+        "instruction": "What percentage of the larger is the smaller?",
+        "parameters": {
+            "seed": [2]
+        }
     },
-    "bar-chart-2":{
-      "baseComponent": "bar-chart",
-      "description": "A trial for the user to click the smallest bar",
-      "instruction": "What percentage of the larger is the smaller?",
-      "parameters": {
-          "seed": [5]
-      }
+    "bubble-chart-2":{
+        "baseComponent": "bubble-chart",
+        "description": "A trial for the user to click the smallest bar",
+        "instruction": "What percentage of the larger is the smaller?",
+        "parameters": {
+            "seed": [5]
+        }
     }
   },
   "sequence": {
     "order": "fixed",
     "components": [
       "introduction",
-      "bar-chart-1",
-      "bar-chart-2"
+      "bubble-chart-1",
+      "bubble-chart-2"
     ]
   }
 }

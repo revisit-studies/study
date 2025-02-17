@@ -1,0 +1,146 @@
+{
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Data Visualization Study",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2023-04-14",
+    "description": "testing",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "demo-html/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true,
+    "windowEventDebounceTime": 200
+  },
+  "baseComponents": {
+    "bar-chart": {
+        "type": "website",
+        "response": [
+            {
+                "id": "q-numerical",
+                "prompt": "Your response:",
+                "required": true,
+                "location": "belowStimulus",
+                "type": "numerical",
+                "min": 0,
+                "max": 100,
+                "placeholder": "Enter a number"
+            }
+        ],
+        "path": "study/assets/bar.html",
+        "instructionLocation": "belowStimulus"
+    },
+    "bubble-chart": {
+        "type": "website",
+        "response": [
+            {
+                "id": "q-numerical",
+                "prompt": "Your response:",
+                "required": true,
+                "location": "belowStimulus",
+                "type": "numerical",
+                "min": 0,
+                "max": 100,
+                "placeholder": "Enter a number"
+            }
+        ],
+        "path": "study/assets/bubble.html",
+        "instructionLocation": "belowStimulus"
+    },
+    "pie-chart": {
+        "type": "website",
+        "response": [
+            {
+                "id": "q-numerical",
+                "prompt": "Your response:",
+                "required": true,
+                "location": "belowStimulus",
+                "type": "numerical",
+                "min": 0,
+                "max": 100,
+                "placeholder": "Enter a number"
+            }
+        ],
+        "path": "study/assets/pie.html",
+        "instructionLocation": "belowStimulus"
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-html/assets/introduction.md",
+      "response": []
+    },
+    "pie-chart-1":{
+        "baseComponent": "pie-chart",
+        "description": "A trial for the user to click the largest bar",
+        "instruction": "What percentage of the larger is the smaller?",
+        "parameters": {
+            "seed": [2]
+        }
+    },
+    "pie-chart-2":{
+        "baseComponent": "pie-chart",
+        "description": "A trial for the user to click the smallest bar",
+        "instruction": "What percentage of the larger is the smaller?",
+        "parameters": {
+            "seed": [5]
+        }
+    },
+    "bubble-chart-1":{
+        "baseComponent": "bubble-chart",
+        "description": "A trial for the user to click the largest bar",
+        "instruction": "What percentage of the larger is the smaller?",
+        "parameters": {
+            "seed": [2]
+        }
+    },
+    "bubble-chart-2":{
+        "baseComponent": "bubble-chart",
+        "description": "A trial for the user to click the smallest bar",
+        "instruction": "What percentage of the larger is the smaller?",
+        "parameters": {
+            "seed": [5]
+        }
+    },
+    "bar-chart-1":{
+      "baseComponent": "bar-chart",
+      "description": "A trial for the user to click the largest bar",
+      "instruction": "What percentage of the larger is the smaller?",
+      "parameters": {
+          "seed": [2]
+      }
+    },
+    "bar-chart-2":{
+      "baseComponent": "bar-chart",
+      "description": "A trial for the user to click the smallest bar",
+      "instruction": "What percentage of the larger is the smaller?",
+      "parameters": {
+          "seed": [5]
+      }
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+        "introduction",
+        "pie-chart-1",
+        "pie-chart-2",
+        "bubble-chart-1",
+        "bubble-chart-2",
+        "bar-chart-1",
+        "bar-chart-2"
+    ]
+  }
+}
