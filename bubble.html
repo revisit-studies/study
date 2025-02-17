@@ -4,34 +4,33 @@
 <script type="module">
 
 // Function for generating random data
-function random_data() {
-    const numValues = Math.floor(Math.random() * 3) + 5;
-    const minValue = 0.1; // Make sure that each element will be somewhat visible
-    let remaining = 1 - numValues * minValue;
-
-    // Distribute remaining proportions randomly
-    let randomParts = Array.from({ length: numValues }, () => Math.random());
-    let totalRandom = randomParts.reduce((sum, val) => sum + val, 0);
-
-    // Convert to ratios
-    return randomParts.map(r => minValue + (r / totalRandom) * remaining);
+function random_data(seed, indices) {
+    const data = Array.from({ length: indices[0] }, () => (Math.random() * 96 + 5));
+    let point = Math.random() * (16 + ((seed - 2) * 5)) + (85 - ((seed - 2) * 5));    let newPoint = point * (seed * 5) / 100;
+    console.log("seed", seed);
+    console.log("point", point);
+    console.log("newPoint", newPoint);
+    data[indices[1]] = point;
+    data[indices[2]] = newPoint;
+    return data;
 }
 
 // Function for generating the 2 marked points
-function getIndices(size) {
+function getIndices() {
+    let size = Math.floor(Math.random() * 3) + 5;
     let first = d3.randomInt(0, size)();
     let second;
     do {
         second = d3.randomInt(0, size)();
     } while (second == first);
-    return [first, second];
+    return [size, first, second];
 }
 
 let bubble1;
 let bubble2;
 
 // Function for creating a bubble chart
-function bubble_chart(svg, data) {
+function bubble_chart(svg, data, indices) {
     const pack = d3.pack()
         .size([300, 300])
         .padding(1.5);
@@ -44,7 +43,7 @@ function bubble_chart(svg, data) {
     
     const nodes = pack(root).leaves();
     
-    const indices = getIndices(data.length);
+    indices = [indices[1], indices[2]];
     console.log(indices);
     
     bubble_chart.selectAll("circle")
@@ -78,12 +77,14 @@ const svg = d3.select("#container")
   .attr("height", 1000);
 
 // Generate some random data for a bubble chart
-var data = random_data();
+const seed = 2;
+const indices = getIndices();
+var data = random_data(seed, indices);
 //var data = [1, 1, 1, 2]
 console.log(data);
 
 // Create a bubble chart
-bubble_chart(svg, data);
+bubble_chart(svg, data, indices);
 console.log("bubbles", bubble1, bubble2);
 
 </script>
