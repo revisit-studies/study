@@ -24,8 +24,8 @@
     },
     "components": {
         "introduction": {
-            "type": "markdown",
-            "path": "basic-questionnaire-study/assets/introduction.md",
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/sum.html",
             "response": []
         },
         "first-question-set": {
