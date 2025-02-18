@@ -154,6 +154,7 @@ export function BrushPlot({
       provenanceGraph: trrack.graph.backend,
       answers: {},
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [brushState, fullTable, parameters, trrack, setAnswer, debouncedCallback, actions]);
 
   // Which table the bar chart uses, either the base or the filtered table if any selections
