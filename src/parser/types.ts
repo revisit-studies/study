@@ -564,6 +564,8 @@ export interface BaseIndividualComponent {
   nextButtonEnableTime?: number;
   /** Whether to show the response dividers. Defaults to false. */
   responseDividers?: boolean;
+  /** Optional override for the help button. If present, will override the default help button path set in the uiConfig. */
+  helpButtonPathOverride?: string;
 }
 
 /**
