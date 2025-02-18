@@ -5,14 +5,15 @@ import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { IconArrowsShuffle, IconBrain, IconPackageImport } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import { useCallback, useMemo } from 'react';
-import { ComponentBlock, StudyConfig } from '../../parser/types';
+import { ComponentBlock, DynamicBlock, StudyConfig } from '../../parser/types';
 import { Sequence } from '../../store/types';
 import { deepCopy } from '../../utils/deepCopy';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import { useStoreSelector } from '../../store/store';
 
-export type ComponentBlockWithOrderPath = Omit<ComponentBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]};
+export type ComponentBlockWithOrderPath = Omit<ComponentBlock | DynamicBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]; interruptions?: { components: string[] }[] };
 
 function findTaskIndexInSequence(sequence: Sequence, step: string, startIndex: number, requestedPath: string): number {
   let index = 0;
@@ -208,6 +209,8 @@ export function StepsPanel({
     components = reorderedComponents;
   }
 
+  const answers = useStoreSelector((state) => state.answers);
+
   if (!participantView) {
     // Add interruptions to the sequence
     components = [
@@ -261,9 +264,7 @@ export function StepsPanel({
                 ) : null}
                 {participantView && (
                 <Badge ml={5} variant="light">
-                  {sequenceStepsLength}
-                  /
-                  {orderSteps.length}
+                  {step.order === 'dynamic' ? `${Object.keys(answers).filter((keys) => keys.startsWith(`${step.id}_`)).length - 1} / ?` : `${sequenceStepsLength}/${orderSteps.length}`}
                 </Badge>
                 )}
                 {participantView && step.interruptions && (

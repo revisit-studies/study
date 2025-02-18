@@ -48,8 +48,6 @@ export function useCurrentComponent(): string {
   const currentComponent = useMemo(() => (typeof currentStep === 'number' ? getComponent(flatSequence[currentStep], studyConfig) : null), [currentStep, flatSequence, studyConfig]);
 
   const [compName, setCompName] = useState<string | undefined>();
-  const [parameters, setParameters] = useState<Record<string, unknown> | undefined>();
-
   const nextFunc:(({ components, answers, sequenceSoFar }: JumpFunctionParameters<unknown>) => JumpFunctionReturnVal) | null = useMemo(() => {
     if (typeof currentStep === 'number' && !currentComponent) {
       const block = findFuncBlock(flatSequence[currentStep], studyConfig.sequence);
@@ -83,36 +81,22 @@ export function useCurrentComponent(): string {
         });
         if (currCompName !== null) {
           setCompName(currCompName);
-          setParameters(_params);
+
+          storeDispatch(pushToFuncSequence({
+            component: currCompName, funcName: flatSequence[currentStep], index: currentStep, funcIndex: funcIndex ? decryptIndex(funcIndex) : 0, parameters: _params || {},
+          }));
+
+          storeDispatch(setFuncParams(_params));
         } else {
           navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${window.location.search}`);
         }
       } else {
         setCompName(flatSequence[currentStep]);
-        setParameters(undefined);
       }
     } else {
       setCompName(currentStep.replace('reviewer-', ''));
-      setParameters(undefined);
     }
-  }, [_answers, currentStep, flatSequence, navigate, nextFunc, studyConfig, studyId]);
-
-  useEffect(() => {
-    if (typeof currentStep !== 'number') {
-      return;
-    }
-
-    if (flatSequence[currentStep] !== compName) {
-      if (funcIndex && compName) {
-        storeDispatch(pushToFuncSequence({
-          component: compName, funcName: flatSequence[currentStep], index: currentStep, funcIndex: decryptIndex(funcIndex), parameters: parameters || {},
-        }));
-      }
-      storeDispatch(setFuncParams(parameters));
-    }
-  }, [compName, currentStep, flatSequence, funcIndex, navigate, nextFunc, parameters, pushToFuncSequence,
-
-    setFuncParams, storeDispatch, studyId]);
+  }, [_answers, currentStep, flatSequence, funcIndex, nextFunc, pushToFuncSequence, setFuncParams, storeDispatch, studyConfig, studyId]);
   // console.log(compName, nextFunc, currentComponent, flatSequence);
 
   return compName || flatSequence[0];
