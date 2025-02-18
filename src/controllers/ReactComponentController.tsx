@@ -3,7 +3,7 @@ import { ModuleNamespace } from 'vite/types/hot';
 import { ReactComponent } from '../parser/types';
 import { StimulusParams } from '../store/types';
 import { ResourceNotFound } from '../ResourceNotFound';
-import { useStoreDispatch, useStoreActions } from '../store/store';
+import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store/store';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
 import { ErrorBoundary } from './ErrorBoundary';
 
@@ -18,6 +18,7 @@ export function ReactComponentController({ currentConfig, provState }: { current
 
   const reactPath = `../public/${currentConfig.path}`;
   const StimulusComponent = reactPath in modules ? (modules[reactPath] as ModuleNamespace).default : null;
+  const storeAnswers = useStoreSelector((store) => store.answers);
 
   const storeDispatch = useStoreDispatch();
   const { updateResponseBlockValidation, setreactiveAnswers } = useStoreActions();
@@ -41,6 +42,7 @@ export function ReactComponentController({ currentConfig, provState }: { current
             <StimulusComponent
               parameters={currentConfig.parameters}
               setAnswer={setAnswer}
+              answers={storeAnswers}
               provenanceState={provState}
             />
           </ErrorBoundary>

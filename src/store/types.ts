@@ -115,6 +115,7 @@ export interface StoredAnswer {
 export interface StimulusParams<T, S = never> {
   parameters: T;
   provenanceState?: S;
+  answers: Record<string, StoredAnswer>;
   setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
 }
 
