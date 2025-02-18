@@ -1,9 +1,9 @@
 import { Suspense, useCallback } from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
 import { ReactComponent } from '../parser/types';
-import { StimulusParams } from '../store/types';
+import { StimulusParams, StoredAnswer } from '../store/types';
 import { ResourceNotFound } from '../ResourceNotFound';
-import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store/store';
+import { useStoreDispatch, useStoreActions } from '../store/store';
 import { useCurrentComponent, useCurrentStep } from '../routes/utils';
 import { ErrorBoundary } from './ErrorBoundary';
 
@@ -21,16 +21,16 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
 
   const storeDispatch = useStoreDispatch();
   const { updateResponseBlockValidation, setreactiveAnswers } = useStoreActions();
-  const setAnswer = useCallback(({ status, provenanceGraph, answers }: Parameters<StimulusParams<unknown>['setAnswer']>[0]) => {
+  const setAnswer = useCallback(({ status, provenanceGraph, answers: stimulusAnswers }: Parameters<StimulusParams<unknown>['setAnswer']>[0]) => {
     storeDispatch(updateResponseBlockValidation({
       location: 'sidebar',
       identifier: `${currentComponent}_${currentStep}`,
       status,
-      values: answers,
+      values: stimulusAnswers,
       provenanceGraph,
     }));
 
-    storeDispatch(setreactiveAnswers(answers));
+    storeDispatch(setreactiveAnswers(stimulusAnswers));
   }, [currentComponent, currentStep, setreactiveAnswers, storeDispatch, updateResponseBlockValidation]);
 
   return (
@@ -41,7 +41,7 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
             <StimulusComponent
               parameters={currentConfig.parameters}
               setAnswer={setAnswer}
-              answers={storeAnswers}
+              answers={answers}
               provenanceState={provState}
             />
           </ErrorBoundary>
