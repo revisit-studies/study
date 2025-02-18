@@ -196,9 +196,12 @@ export function ResponseBlock({
           if (response.type === 'checkbox') {
             const correct = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
 
-            const matches = findMatchingStrings((answerValidator.values as Record<string, unknown>)[response.id] as string[], correct);
+            const suppliedAnswer = (answerValidator.values as Record<string, unknown>)[response.id] as string[];
+            const matches = findMatchingStrings(suppliedAnswer, correct);
 
-            message = `${matches.length} / ${correct.length} correct. ${message}`;
+            const tooManySelected = correct.length === matches.length && suppliedAnswer.length > correct.length ? 'However, you have selected too many boxes. ' : '';
+
+            message = `You have successfully checked ${matches.length}/${correct.length} correct boxes. ${tooManySelected}${message}`;
           }
           updateAlertConfig(response.id, true, 'Incorrect Answer', message, 'red');
         }
