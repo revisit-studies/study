@@ -32,16 +32,21 @@
             "type": "questionnaire",
             "response": [
                 {
-                    "id": "q1-name",
-                    "prompt": "What is your first name?",
+                    "id": "q1-bw-average",
+                    "prompt": "Quickly scan the charts across and try to find out which chart is easiest to read. If you need a pointer regarding this try to find out how much there is of item a, and then select the chart that communicates this.",
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "longText",
                     "placeholder": "Please enter your first name"
-                },
+                }
+            ]
+        },
+        "second-question-set": {
+            "type": "questionnaire",
+            "response": [
                 {
-                    "id": "q2-color",
-                    "prompt": "What is your favorite color?",
+                    "id": "q2-color-same",
+                    "prompt": "Quickly scan the charts across and try to find out which chart is easiest to read. If you need a pointer regarding this try to find out how much there is of item a, and then select the chart that communicates this.",
                     "required": true,
                     "location": "aboveStimulus",
                     "type": "dropdown",
@@ -54,11 +59,24 @@
                 }
             ]
         },
-        "second-question-set": {
+        "third-question-set": {
             "type": "questionnaire",
             "response": [
                 {
-                    "id": "q3-satisfaction",
+                    "id": "q3-bw-more",
+                    "prompt": "Quickly scan the charts across and try to find out which chart is easiest to read. If you need a pointer regarding this try to find out how much there is of item a, and then select the chart that communicates this.",
+                    "required": true,
+                    "location": "aboveStimulus",
+                    "type": "longText",
+                    "placeholder": "Please enter your first name"
+                }
+            ]
+        },
+        "fourth-question-set": {
+            "type": "questionnaire",
+            "response": [
+                {
+                    "id": "q4-satisfaction",
                     "prompt": "Rate your satisfaction with this survey from 1 (not enjoyable) to 5 (very enjoyable).",
                     "required": true,
                     "location": "aboveStimulus",
@@ -75,7 +93,9 @@
         "components": [
             "introduction",
             "first-question-set",
-            "second-question-set"
+            "second-question-set",
+            "third-question-set",
+            "fourth-question-set"
         ]
     }
 }
