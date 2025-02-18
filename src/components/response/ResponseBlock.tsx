@@ -28,6 +28,16 @@ type Props = {
   style?: React.CSSProperties;
 };
 
+function findMatchingStrings(arr1: string[], arr2: string[]): string[] {
+  const matches: string[] = [];
+  for (const str1 of arr1) {
+    if (arr2.includes(str1)) {
+      matches.push(str1);
+    }
+  }
+  return matches;
+}
+
 export function ResponseBlock({
   config,
   location,
@@ -182,6 +192,16 @@ export function ResponseBlock({
             message = 'Please try again. You have 1 attempt left.';
           } else {
             message = `Please try again. You have ${trainingAttempts - newAttemptsUsed} attempts left.`;
+          }
+          if (response.type === 'checkbox') {
+            const correct = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+
+            const suppliedAnswer = (answerValidator.values as Record<string, unknown>)[response.id] as string[];
+            const matches = findMatchingStrings(suppliedAnswer, correct);
+
+            const tooManySelected = correct.length === matches.length && suppliedAnswer.length > correct.length ? 'However, you have selected too many boxes. ' : '';
+
+            message = `You have successfully checked ${matches.length}/${correct.length} correct boxes. ${tooManySelected}${message}`;
           }
           updateAlertConfig(response.id, true, 'Incorrect Answer', message, 'red');
         }
