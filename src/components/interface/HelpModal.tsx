@@ -20,7 +20,7 @@ export function HelpModal() {
   const [loading, setLoading] = useState(true);
   const component = useCurrentComponent();
 
-  const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[component], config), [component, config]);
+  const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[component] || {}, config), [component, config]);
 
   const helpPath = useMemo(() => {
     if (componentConfig.helpTextPathOverride) {
