@@ -28,6 +28,16 @@ type Props = {
   style?: React.CSSProperties;
 };
 
+function findMatchingStrings(arr1: string[], arr2: string[]): string[] {
+  const matches: string[] = [];
+  for (const str1 of arr1) {
+    if (arr2.includes(str1)) {
+      matches.push(str1);
+    }
+  }
+  return matches;
+}
+
 export function ResponseBlock({
   config,
   location,
@@ -182,6 +192,13 @@ export function ResponseBlock({
             message = 'Please try again. You have 1 attempt left.';
           } else {
             message = `Please try again. You have ${trainingAttempts - newAttemptsUsed} attempts left.`;
+          }
+          if (response.type === 'checkbox') {
+            const correct = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+
+            const matches = findMatchingStrings((answerValidator.values as Record<string, unknown>)[response.id] as string[], correct);
+
+            message = `${matches.length} / ${correct.length} correct. ${message}`;
           }
           updateAlertConfig(response.id, true, 'Incorrect Answer', message, 'red');
         }
