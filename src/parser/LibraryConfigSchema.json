@@ -55,8 +55,8 @@
             "description": "Whether to force the video to play until the end. Defaults to true.",
             "type": "boolean"
           },
-          "helpButtonPathOverride": {
-            "description": "Optional override for the help button. If present, will override the default help button path set in the uiConfig.",
+          "helpTextPathOverride": {
+            "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
             "type": "string"
           },
           "instruction": {
@@ -485,8 +485,8 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpButtonPathOverride": {
-          "description": "Optional override for the help button. If present, will override the default help button path set in the uiConfig.",
+        "helpTextPathOverride": {
+          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
         "instruction": {
@@ -691,8 +691,8 @@
           "description": "Whether to force the video to play until the end. Defaults to true.",
           "type": "boolean"
         },
-        "helpButtonPathOverride": {
-          "description": "Optional override for the help button. If present, will override the default help button path set in the uiConfig.",
+        "helpTextPathOverride": {
+          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
         "instruction": {
@@ -1043,8 +1043,8 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpButtonPathOverride": {
-          "description": "Optional override for the help button. If present, will override the default help button path set in the uiConfig.",
+        "helpTextPathOverride": {
+          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
         "instruction": {
@@ -1322,8 +1322,8 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpButtonPathOverride": {
-          "description": "Optional override for the help button. If present, will override the default help button path set in the uiConfig.",
+        "helpTextPathOverride": {
+          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
         "instruction": {
@@ -1526,8 +1526,8 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpButtonPathOverride": {
-          "description": "Optional override for the help button. If present, will override the default help button path set in the uiConfig.",
+        "helpTextPathOverride": {
+          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
         "instruction": {
@@ -1953,8 +1953,8 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpButtonPathOverride": {
-          "description": "Optional override for the help button. If present, will override the default help button path set in the uiConfig.",
+        "helpTextPathOverride": {
+          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
         "instruction": {
@@ -2040,8 +2040,8 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpButtonPathOverride": {
-          "description": "Optional override for the help button. If present, will override the default help button path set in the uiConfig.",
+        "helpTextPathOverride": {
+          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
         "instruction": {
@@ -2135,8 +2135,8 @@
           "description": "Whether to force the video to play until the end. Defaults to true.",
           "type": "boolean"
         },
-        "helpButtonPathOverride": {
-          "description": "Optional override for the help button. If present, will override the default help button path set in the uiConfig.",
+        "helpTextPathOverride": {
+          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
         "instruction": {
@@ -2230,8 +2230,8 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpButtonPathOverride": {
-          "description": "Optional override for the help button. If present, will override the default help button path set in the uiConfig.",
+        "helpTextPathOverride": {
+          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
         "instruction": {
