@@ -9,6 +9,7 @@ import {
 } from './types';
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 import { REVISIT_MODE } from '../storage/engines/StorageEngine';
+import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 
 export async function studyStoreCreator(
   studyId: string,
@@ -22,23 +23,31 @@ export async function studyStoreCreator(
   const flatSequence = getSequenceFlatMap(sequence);
 
   const emptyAnswers: Record<string, StoredAnswer> = Object.fromEntries(flatSequence.filter((id) => id !== 'end')
-    .map((id, idx) => [
-      `${id}_${idx}`,
-      {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        answer: {}, incorrectAnswers: {}, startTime: 0, endTime: -1, provenanceGraph: undefined, windowEvents: [], timedOut: false, helpButtonClickedCount: 0, parameters: Object.hasOwn(config.components[id] || {}, 'parameters') ? (config.components[id] as any).parameters : {},
-      },
-    ]));
+    .map((id, idx) => {
+      const componentConfig = studyComponentToIndividualComponent(config.components[id] || {}, config);
+
+      return [
+        `${id}_${idx}`,
+        {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          answer: {}, incorrectAnswers: {}, startTime: 0, endTime: -1, provenanceGraph: undefined, windowEvents: [], timedOut: false, helpButtonClickedCount: 0, parameters: Object.hasOwn(componentConfig, 'parameters') ? (componentConfig as any).parameters : {},
+        },
+      ];
+    }));
   const emptyValidation: TrialValidation = Object.assign(
     {},
-    ...flatSequence.map((id, idx) => ({
-      [`${id}_${idx}`]: {
-        aboveStimulus: { valid: false, values: {} },
-        belowStimulus: { valid: false, values: {} },
-        sidebar: { valid: false, values: {} },
-        stimulus: { valid: false, values: {} },
-      },
-    })),
+    ...flatSequence.map((id, idx) => {
+      const componentConfig = studyComponentToIndividualComponent(config.components[id] || { response: [] }, config);
+
+      return {
+        [`${id}_${idx}`]: {
+          aboveStimulus: { valid: false, values: {} },
+          belowStimulus: { valid: false, values: {} },
+          sidebar: { valid: false, values: {} },
+          stimulus: { valid: componentConfig.response.every((response) => response.type !== 'reactive'), values: {} },
+        },
+      };
+    }),
   );
   const allValid = Object.assign(
     {},
@@ -96,11 +105,15 @@ export async function studyStoreCreator(
           return;
         }
 
+        const componentConfig = studyComponentToIndividualComponent(state.config.components[payload.payload.component] || { response: [] }, config);
+
         state.funcSequence[payload.payload.funcName].push(payload.payload.component);
         state.answers[`${payload.payload.funcName}_${payload.payload.index}_${payload.payload.component}_${payload.payload.funcIndex}`] = {
           answer: {}, incorrectAnswers: {}, startTime: 0, endTime: -1, provenanceGraph: undefined, windowEvents: [], timedOut: false, helpButtonClickedCount: 0, parameters: payload.payload.parameters,
         };
-        state.trialValidation[`${payload.payload.funcName}_${payload.payload.index}_${payload.payload.component}_${payload.payload.funcIndex}`] = { aboveStimulus: { valid: false, values: {} }, belowStimulus: { valid: false, values: {} }, sidebar: { valid: false, values: {} } };
+        state.trialValidation[`${payload.payload.funcName}_${payload.payload.index}_${payload.payload.component}_${payload.payload.funcIndex}`] = {
+          aboveStimulus: { valid: false, values: {} }, belowStimulus: { valid: false, values: {} }, stimulus: { valid: componentConfig.response.every((response) => response.type !== 'reactive'), values: {} }, sidebar: { valid: false, values: {} },
+        };
       },
       toggleStudyBrowser: (state) => {
         state.showStudyBrowser = !state.showStudyBrowser;
@@ -195,13 +208,7 @@ export async function studyStoreCreator(
         }>,
       ) => {
         if (!state.trialValidation[payload.identifier]) {
-          state.trialValidation[payload.identifier] = {
-            aboveStimulus: { valid: false, values: {} },
-            belowStimulus: { valid: false, values: {} },
-            sidebar: { valid: false, values: {} },
-            stimulus: { valid: false, values: {} },
-            provenanceGraph: undefined,
-          };
+          return;
         }
         if (Object.keys(payload.values).length > 0) {
           const currentValues = state.trialValidation[payload.identifier][payload.location].values;

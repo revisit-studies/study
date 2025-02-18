@@ -114,8 +114,8 @@ export interface StoredAnswer {
   helpButtonClickedCount: number;
 }
 
-export interface JumpFunctionParameters {
-  components: (string | ComponentBlock)[], answers: Record<string, StoredAnswer>, sequenceSoFar: string[], customParameters: Record<string, any>
+export interface JumpFunctionParameters<T> {
+  components: (string | ComponentBlock)[], answers: Record<string, StoredAnswer>, sequenceSoFar: string[], customParameters: T
 }
 
 export interface JumpFunctionReturnVal {

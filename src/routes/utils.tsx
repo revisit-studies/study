@@ -45,11 +45,12 @@ export function useCurrentComponent(): string {
   const storeDispatch = useStoreDispatch();
   const { pushToFuncSequence, setFuncParams } = useStoreActions();
 
-  const [prevComponentName, setPrevComponentName] = useState<string>('');
-
   const currentComponent = useMemo(() => (typeof currentStep === 'number' ? getComponent(flatSequence[currentStep], studyConfig) : null), [currentStep, flatSequence, studyConfig]);
 
-  const nextFunc:(({ components, answers, sequenceSoFar }: JumpFunctionParameters) => JumpFunctionReturnVal) | null = useMemo(() => {
+  const [compName, setCompName] = useState<string | undefined>();
+  const [parameters, setParameters] = useState<Record<string, unknown> | undefined>();
+
+  const nextFunc:(({ components, answers, sequenceSoFar }: JumpFunctionParameters<unknown>) => JumpFunctionReturnVal) | null = useMemo(() => {
     if (typeof currentStep === 'number' && !currentComponent) {
       const block = findFuncBlock(flatSequence[currentStep], studyConfig.sequence);
 
@@ -71,45 +72,50 @@ export function useCurrentComponent(): string {
     }
   }, [currentStep, funcIndex, navigate, nextFunc, studyId]);
 
-  const { compName, parameters } = useMemo(() => {
+  useEffect(() => {
     if (typeof currentStep === 'number') {
       const component = getComponent(flatSequence[currentStep], studyConfig);
 
       // in a func component
       if (!component && nextFunc !== null) {
         const { component: currCompName, parameters: _params } = nextFunc({
-          components: [], answers: _answers, sequenceSoFar: [], customParameters: {},
+          components: [], answers: _answers, sequenceSoFar: [], customParameters: findFuncBlock(flatSequence[currentStep], studyConfig.sequence)?.parameters,
         });
         if (currCompName !== null) {
-          return { compName: currCompName, parameters: _params };
+          setCompName(currCompName);
+          setParameters(_params);
+        } else {
+          navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${window.location.search}`);
         }
-
-        return { compName: prevComponentName, parameters: null };
+      } else {
+        setCompName(flatSequence[currentStep]);
+        setParameters(undefined);
       }
-      return { compName: flatSequence[currentStep], parameters: null };
+    } else {
+      setCompName(currentStep.replace('reviewer-', ''));
+      setParameters(undefined);
     }
-    return { compName: currentStep.replace('reviewer-', ''), parameters: null };
-  }, [_answers, currentStep, flatSequence, nextFunc, prevComponentName, studyConfig]);
+  }, [_answers, currentStep, flatSequence, navigate, nextFunc, studyConfig, studyId]);
 
   useEffect(() => {
     if (typeof currentStep !== 'number') {
       return;
     }
-    if (compName === null) {
-      navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${window.location.search}`);
-    } else if (flatSequence[currentStep] !== compName) {
-      if (funcIndex) {
+
+    if (flatSequence[currentStep] !== compName) {
+      if (funcIndex && compName) {
         storeDispatch(pushToFuncSequence({
           component: compName, funcName: flatSequence[currentStep], index: currentStep, funcIndex: decryptIndex(funcIndex), parameters: parameters || {},
         }));
       }
       storeDispatch(setFuncParams(parameters));
     }
-    setPrevComponentName(compName);
-  }, [compName, currentStep, flatSequence, funcIndex, navigate, parameters, pushToFuncSequence, setFuncParams, storeDispatch, studyId]);
+  }, [compName, currentStep, flatSequence, funcIndex, navigate, nextFunc, parameters, pushToFuncSequence,
+
+    setFuncParams, storeDispatch, studyId]);
   // console.log(compName, nextFunc, currentComponent, flatSequence);
 
-  return compName;
+  return compName || flatSequence[0];
 }
 
 export function useCurrentIdentifier(): string {

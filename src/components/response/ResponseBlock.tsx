@@ -51,6 +51,7 @@ export function ResponseBlock({
   const configInUse = config as IndividualComponent;
 
   const responses = useMemo(() => configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [], [configInUse?.response, location]);
+
   const responsesWithDefaults = useMemo(() => responses.map((response) => ({
     ...response,
     required: response.required === undefined ? true : response.required,
@@ -119,7 +120,7 @@ export function ResponseBlock({
       }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answerValidator.values, currentComponent, currentStep, location, storeDispatch, updateResponseBlockValidation, provenanceGraph]);
+  }, [answerValidator.values, identifier, location, storeDispatch, updateResponseBlockValidation, provenanceGraph]);
   const [alertConfig, setAlertConfig] = useState(Object.fromEntries(responsesWithDefaults.map((response) => ([response.id, {
     visible: false,
     title: 'Correct Answer',
@@ -224,10 +225,9 @@ export function ResponseBlock({
                   configInUse={configInUse}
                   form={answerValidator}
                 />
-                {alertConfig[response.id].visible && (
+                {alertConfig[response.id]?.visible && (
                   <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>
                     {alertConfig[response.id].message}
-                    {' '}
                     {alertConfig[response.id].message.includes('Please try again') && (
                       <>
                         <br />

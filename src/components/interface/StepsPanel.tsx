@@ -56,7 +56,7 @@ function countInterruptionsRecursively(configSequence: ComponentBlockWithOrderPa
   return count;
 }
 
-function reorderComponents(configSequence: ComponentBlockWithOrderPath['components'] | undefined, participantSequence: Sequence['components']) {
+function reorderComponents(configSequence: ComponentBlockWithOrderPath['components'], participantSequence: Sequence['components']) {
   const newComponents: (string | ComponentBlockWithOrderPath)[] = [];
 
   // Iterate through the sequence components and reorder the orderComponents

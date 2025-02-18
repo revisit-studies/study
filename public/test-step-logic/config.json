@@ -105,7 +105,18 @@
         {
           "id": "loopingBlock",
           "order": "dynamic",
-          "functionPath": "test-step-logic/func.ts"
+          "functionPath": "test-step-logic/func.ts",
+          "parameters": {
+            "name": "loopingBlock_1_"
+          }
+        },
+        {
+          "id": "loopingBlock2",
+          "order": "dynamic",
+          "functionPath": "test-step-logic/func.ts",
+          "parameters": {
+            "name": "loopingBlock2_2_"
+          }
         },
         "trial1"
       ]
