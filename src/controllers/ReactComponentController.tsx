@@ -12,13 +12,12 @@ const modules = import.meta.glob(
   { eager: true },
 );
 
-export function ReactComponentController({ currentConfig, provState }: { currentConfig: ReactComponent; provState?: unknown }) {
+export function ReactComponentController({ currentConfig, provState, answers }: { currentConfig: ReactComponent; provState?: unknown, answers: Record<string, StoredAnswer> }) {
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
 
   const reactPath = `../public/${currentConfig.path}`;
   const StimulusComponent = reactPath in modules ? (modules[reactPath] as ModuleNamespace).default : null;
-  const storeAnswers = useStoreSelector((store) => store.answers);
 
   const storeDispatch = useStoreDispatch();
   const { updateResponseBlockValidation, setreactiveAnswers } = useStoreActions();

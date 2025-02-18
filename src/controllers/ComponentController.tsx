@@ -183,7 +183,7 @@ export function ComponentController() {
         {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
         {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
         {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
-        {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} />}
+        {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
         {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} provState={analysisProvState as VegaProvState} />}
         {currentConfig.type === 'video' && <VideoController currentConfig={currentConfig} />}
 
