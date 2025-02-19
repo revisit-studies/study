@@ -2,7 +2,8 @@
   <div>
   </div>
 
-  <script>
+  <script type="module">
+    import {load255Chart,smData} from './js/main.js';
   ( function() {
     var data  = {};
 
@@ -40,7 +41,7 @@
       data.visited_sequence = smData.visited_sequence;
       data.visitedData = smData.visitedData;
       data.visited = visited[0].length;
-      
+
       // Wrap up
       experimentr.addData(data);
       experimentr.endTimer('exploration');

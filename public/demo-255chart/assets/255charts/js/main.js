@@ -1,10 +1,25 @@
-/* 
+/*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
 
 /*global queue, labels*/
+import { Registry, initializeTrrack } from 'https://cdn.jsdelivr.net/npm/@trrack/core@1.3.0/+esm'
+var registry = Registry.create();
+var recordActivity = registry.register(
+    "record-activity",
+    (state, task) => {
+        if (task === "mouseOver") {
+            console.log(state,'state')
+            state.mouseOver++;
+        } else if(task === "mouseMove") {
+            state.mouseMove++;
+        } else {
+            state.visited_sequence += (task + "-");
+        }
+    }
+);
 
 ///////////////////////////For Experiment Begin/////////////////////////////
 var smData = {
@@ -15,6 +30,23 @@ var smData = {
     "visited_sequence": "", //sequence string
     "visitedData": ""   //visited data table (JSON Array)
 };
+
+var initialState = {
+    mouseOver: 0,
+    mouseMove: 0,
+    visited_sequence: "", //sequence string
+};
+
+// Initialize Trrack
+var trrack = initializeTrrack({
+    initialState,
+    registry
+});
+
+trrack.currentChange(() => {
+    Revisit.postProvenance(trrack.graph.backend);
+});
+
 var visitedArray = [];
 var currentVisit = null;
 
@@ -279,6 +311,7 @@ function fadeIt(it, clone)
     //track the visted sequence
     var code = $(clone).attr('data-ces');
     smData.visited_sequence += (code + "-");
+    trrack.apply("visited", recordActivity(code));
 
     //visited array
     var startTime = Date.now();
@@ -292,7 +325,7 @@ function fadeIt(it, clone)
     //     .style('background','#e3e3e3');//#e3e3e3 //#d9d9d9
     // d3.select(clone[0]).select('.industry-header')
     //     .style('background','#e3e3e3');
-    
+
     d3.select(clone[0]).select('.emp-area')
     //.style("stroke",'#gray');
         .style('opacity',1);
@@ -385,9 +418,10 @@ function drawBead(e) {
     // bead.attr('cx', x).attr('cy', y);
     bead.attr("transform", "translate(-2.5, 0) translate(" + (x + (neg ? 4 : 0)) + "," + (y + (neg ? 7 : -7)) + ") rotate(" + (neg ? 180 : 0) + ")");
     showJobs(industry, datapoint, wagepoint, el);
-    
+
     //for Data Collection
     smData.mouseMove++;
+    trrack.apply("mouseMove", recordActivity("mouseMove"));
     if(currentVisit) {
         currentVisit.mousemove++;
         //console.log("current chart mousemove: " + currentVisit.mousemove);
@@ -418,7 +452,7 @@ function closeTile() {
             console.log("visited: "+ currentVisit.duration);
             currentVisit = null;
         }
-        
+
         //close tile
         openTile.original.removeClass('no-label');
         openTile.removeClass('is-open');
@@ -465,12 +499,13 @@ function showTile(industry) {
         $(window).on('mouseover', closeTile);
     });
 
-    
-    
+
+
     // Fade code
     console.log('mousing into tile');
     hoverId = setTimeout(fadeIt, smData.fadeDelay, industry.element, clone);
     smData.mouseOver++;
+    trrack.apply("mouseOver", recordActivity("mouseOver"));
 
 }
 
@@ -673,7 +708,7 @@ function transitionBetween() {
 function setSector() {
     var top = 0;
     //var realSector = currentSector != noSector;
-    realSector = false;
+    var realSector = false;
     //display == all
     top = $('#g-graphic').offset().top;
 
@@ -830,7 +865,7 @@ function renderChart(industry) {
             .style('stroke-width', 2)
             .style('fill', 'none')
             .attr("d", lineArea);
-    
+
     if(smData.condition == "fade")
     {
         /***For encoding: opacity***/
@@ -842,7 +877,7 @@ function renderChart(industry) {
             .datum(data)
             .attr("class", "emp-area")
             .attr("d", area);
-    
+
     d3.selectAll("svg.a-chart g")
             .on("mouseover", function (d) {
                 d3.select(this).classed("hover", true);
@@ -1019,3 +1054,37 @@ function renderLegend() {
 $(window).on('resize', _.debounce(function () {
     render();
 }, 50));
+
+
+export {
+    load255Chart,
+    boot,
+    addFilterDropShadow,
+    toggleMobile,
+    wageClassify,
+    findWageBreaks,
+    classify,
+    fadeIt,
+    bindEvents,
+    showJobs,
+    mouseoverAChart,
+    drawBead,
+    hideBead,
+    closeTile,
+    showTile,
+    eachMonth,
+    processCesData,
+    renderGraphic,
+    renderIndustry,
+    renderCharts,
+    togglePlacement,
+    place,
+    move,
+    transitionBetween,
+    setSector,
+    renderChart,
+    toggleKey,
+    renderKey,
+    renderLegend,
+    smData
+};
