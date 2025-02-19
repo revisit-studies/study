@@ -25,7 +25,7 @@ test('parser errors are shown correctly', async ({ page }) => {
   }
 
   const warnings = [
-    'Component testComponent is defined in components object but not used in the sequence - {"action":"remove the component from the components object or add it to the sequence"}',
+    'Component testComponent is defined in components object but not used deterministically in the sequence - {"action":"remove the component from the components object or add it to the sequence"}',
   ];
 
   for (const warning of warnings) {

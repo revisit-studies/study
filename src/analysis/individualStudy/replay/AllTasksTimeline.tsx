@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { JSX, useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
 import {
   Center, Group, Stack, Tooltip, Text, Divider, Button, Badge,

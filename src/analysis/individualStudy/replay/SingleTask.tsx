@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { useState } from 'react';
 import { Center, Group, Text } from '@mantine/core';
 import * as d3 from 'd3';

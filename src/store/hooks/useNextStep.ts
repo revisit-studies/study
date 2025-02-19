@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { useNavigate } from 'react-router';
+import { useNavigate, useParams } from 'react-router';
 import {
   useStoreSelector,
   useStoreActions,
@@ -10,7 +10,9 @@ import {
 import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
 
 import { deepCopy } from '../../utils/deepCopy';
-import { StoredAnswer, ValidationStatus } from '../types';
+import {
+  StoredAnswer, ValidationStatus,
+} from '../types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useStoredAnswer } from './useStoredAnswer';
 import { useWindowEvents } from './useWindowEvents';
@@ -19,7 +21,7 @@ import { useStudyConfig } from './useStudyConfig';
 import {
   Answer, IndividualComponent, InheritedComponent, StudyConfig,
 } from '../../parser/types';
-import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useIsAnalysis } from './useIsAnalysis';
 
 function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: string, componentConfig: IndividualComponent | InheritedComponent, studyConfig: StudyConfig) {
@@ -43,15 +45,19 @@ function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: st
 
 export function useNextStep() {
   const currentStep = useCurrentStep();
+
   const participantSequence = useFlatSequence();
   const currentComponent = useCurrentComponent();
-  const identifier = `${currentComponent}_${currentStep}`;
 
   const trialValidation = useStoreSelector((state) => state.trialValidation);
   const sequence = useStoreSelector((state) => state.sequence);
   const answers = useStoreSelector((state) => state.answers);
   const modes = useStoreSelector((state) => state.modes);
   const otherTexts = useStoreSelector((state) => state.otherTexts);
+  const studyConfig = useStudyConfig();
+
+  const { funcIndex } = useParams();
+  const identifier = funcIndex && typeof currentStep === 'number' ? `${participantSequence[currentStep]}_${currentStep}_${currentComponent}_${decryptIndex(funcIndex)}` : `${currentComponent}_${currentStep}`;
 
   const storeDispatch = useStoreDispatch();
   const {
@@ -72,8 +78,6 @@ export function useNextStep() {
   const storedAnswer = useStoredAnswer();
 
   const navigate = useNavigate();
-
-  const studyConfig = useStudyConfig();
 
   const startTime = useMemo(() => Date.now(), []);
 
@@ -103,7 +107,7 @@ export function useNextStep() {
     const { provenanceGraph } = trialValidationCopy;
     const endTime = Date.now();
 
-    const { incorrectAnswers, helpButtonClickedCount } = storedAnswer;
+    const { incorrectAnswers, helpButtonClickedCount, parameters } = storedAnswer;
 
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
@@ -118,6 +122,7 @@ export function useNextStep() {
         windowEvents: currentWindowEvents,
         timedOut: !collectData,
         helpButtonClickedCount,
+        parameters,
       };
       storeDispatch(
         saveTrialAnswer({
@@ -217,8 +222,12 @@ export function useNextStep() {
       });
     }
 
-    navigate(`/${studyId}/${encryptIndex(nextStep)}${window.location.search}`);
-  }, [currentStep, trialValidation, identifier, otherTexts, storedAnswer, windowEvents, dataCollectionEnabled, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setreactiveAnswers, resetOtherText, setMatrixAnswersCheckbox, setMatrixAnswersRadio, studyConfig, participantSequence]);
+    if (funcIndex) {
+      navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(decryptIndex(funcIndex) + 1)}${window.location.search}`);
+    } else {
+      navigate(`/${studyId}/${encryptIndex(nextStep)}${window.location.search}`);
+    }
+  }, [currentStep, trialValidation, identifier, otherTexts, storedAnswer, windowEvents, dataCollectionEnabled, sequence, answers, startTime, funcIndex, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setreactiveAnswers, resetOtherText, setMatrixAnswersCheckbox, setMatrixAnswersRadio, studyConfig, participantSequence]);
 
   return {
     isNextDisabled,

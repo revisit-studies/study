@@ -1,10 +1,10 @@
 import Ajv from 'ajv';
-import { merge } from 'lodash';
+import merge from 'lodash.merge';
 import librarySchema from './LibraryConfigSchema.json';
 import {
   IndividualComponent, LibraryConfig, ParsedConfig, ParserErrorWarning, StudyConfig,
 } from './types';
-import { isInheritedComponent } from './utils';
+import { isDynamicBlock, isInheritedComponent } from './utils';
 import { PREFIX } from '../utils/Prefix';
 
 const ajv = new Ajv();
@@ -12,6 +12,9 @@ ajv.addSchema(librarySchema);
 const libraryValidate = ajv.getSchema<LibraryConfig>('#/definitions/LibraryConfig')!;
 
 function namespaceLibrarySequenceComponents(sequence: StudyConfig['sequence'], libraryName: string): StudyConfig['sequence'] {
+  if (isDynamicBlock(sequence)) {
+    return sequence;
+  }
   return {
     ...sequence,
     components: sequence.components.map((component) => {
@@ -25,13 +28,15 @@ function namespaceLibrarySequenceComponents(sequence: StudyConfig['sequence'], l
 
 // Recursively iterate through sequences (sequence.components) and replace any library sequence references with the actual library sequence
 export function expandLibrarySequences(sequence: StudyConfig['sequence'], importedLibrariesData: Record<string, LibraryConfig>, errors: ParserErrorWarning[] = []): StudyConfig['sequence'] {
+  if (isDynamicBlock(sequence)) {
+    return sequence;
+  }
   return {
     ...sequence,
-    components: sequence.components.map((component) => {
+    components: (sequence.components || []).map((component) => {
       if (typeof component === 'object') {
         return expandLibrarySequences(component, importedLibrariesData);
       }
-      // eslint-disable-next-line no-nested-ternary
       const seOrSequences = component.includes('.se.')
         ? '.se.'
         : (component.includes('.sequences.') ? '.sequences.' : false);
