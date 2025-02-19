@@ -28,18 +28,10 @@
             "path": "basic-questionnaire-study/assets/sum.html",
             "response": []
         },
-        "first-question-set": {
-            "type": "questionnaire",
-            "response": [
-                {
-                    "id": "q1-bw-average",
-                    "prompt": "Quickly scan the charts across and try to find out which chart is easiest to read. If you need a pointer regarding this try to find out how much there is of item a, and then select the chart that communicates this.",
-                    "required": true,
-                    "location": "aboveStimulus",
-                    "type": "longText",
-                    "placeholder": "Please enter your first name"
-                }
-            ]
+        "first-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
         },
         "second-question-set": {
             "type": "questionnaire",
@@ -92,7 +84,7 @@
         "order": "fixed",
         "components": [
             "introduction",
-            "first-question-set",
+            "first-question",
             "second-question-set",
             "third-question-set",
             "fourth-question-set"

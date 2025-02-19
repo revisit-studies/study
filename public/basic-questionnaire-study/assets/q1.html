@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph Peak Question</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<h1>Identify the Peak Value of the Graph</h1>
+<canvas id="graphCanvas" width="400" height="200"></canvas>
+<form id="peakForm">
+    <label for="peakValue">What is the peak value of the graph?</label>
+    <input type="number" id="peakValue" name="peakValue" required>
+    <button type="submit">Submit</button>
+</form>
+<p id="feedback"></p>
+
+<script>
+    async function fetchGraphData() {
+        const response = await fetch('/public/basic-questionnaire-study/data-generation/experiment_data.json');
+        if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+        }
+        const data = await response.json();
+        return data[0].data_points; // Assuming we use the first trial's data points
+    }
+
+    function renderGraph(data) {
+        const ctx = document.getElementById('graphCanvas').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.map((_, index) => index + 1),
+                datasets: [{
+                    label: 'Random Data',
+                    data: data,
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+    }
+
+    document.getElementById('peakForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const peakValue = parseInt(document.getElementById('peakValue').value, 10);
+        fetchGraphData().then(data => {
+            const correctPeak = Math.max(...data);
+            const feedback = document.getElementById('feedback');
+            if (peakValue === correctPeak) {
+                feedback.textContent = 'Correct!';
+                feedback.style.color = 'green';
+            } else {
+                feedback.textContent = `Incorrect. The correct peak value is ${correctPeak}.`;
+                feedback.style.color = 'red';
+            }
+        });
+    });
+
+    fetchGraphData().then(renderGraph).catch(error => {
+        console.error('Error fetching the graph data:', error);
+    });
+</script>
+</body>
+</html>
