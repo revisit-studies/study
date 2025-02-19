@@ -23,7 +23,8 @@
             throw new Error('Network response was not ok ' + response.statusText);
         }
         const data = await response.json();
-        return data[0].data_points; // Assuming we use the first trial's data points
+        const randomTrialIndex = Math.floor(Math.random() * 200); // Random index from 0 to 199
+        return data[randomTrialIndex].data_points;
     }
 
     function renderGraph(data) {

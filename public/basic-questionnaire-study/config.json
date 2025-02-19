@@ -33,23 +33,10 @@
             "path": "basic-questionnaire-study/assets/q1.html",
             "response": []
         },
-        "second-question-set": {
-            "type": "questionnaire",
-            "response": [
-                {
-                    "id": "q2-color-same",
-                    "prompt": "Quickly scan the charts across and try to find out which chart is easiest to read. If you need a pointer regarding this try to find out how much there is of item a, and then select the chart that communicates this.",
-                    "required": true,
-                    "location": "aboveStimulus",
-                    "type": "dropdown",
-                    "placeholder": "Please choose your favorite color",
-                    "options": [
-                        "Red",
-                        "Blue",
-                        "My favorite color is not shown here."
-                    ]
-                }
-            ]
+        "second-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
         },
         "third-question-set": {
             "type": "questionnaire",
@@ -85,7 +72,7 @@
         "components": [
             "introduction",
             "first-question",
-            "second-question-set",
+            "second-question",
             "third-question-set",
             "fourth-question-set"
         ]
