@@ -24,7 +24,7 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
   const identifier = useCurrentIdentifier();
 
   const storeDispatch = useStoreDispatch();
-  const { updateResponseBlockValidation, setreactiveAnswers } = useStoreActions();
+  const { updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
   const setAnswer = useCallback(({ status, provenanceGraph, answers: stimulusAnswers }: Parameters<StimulusParams<unknown>['setAnswer']>[0]) => {
     storeDispatch(updateResponseBlockValidation({
       location: 'sidebar',
@@ -34,8 +34,8 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
       provenanceGraph,
     }));
 
-    storeDispatch(setreactiveAnswers(stimulusAnswers));
-  }, [setreactiveAnswers, storeDispatch, updateResponseBlockValidation, identifier]);
+    storeDispatch(setReactiveAnswers(stimulusAnswers));
+  }, [setReactiveAnswers, storeDispatch, updateResponseBlockValidation, identifier]);
 
   const params = useMemo(() => (funcParams !== undefined ? funcParams : currentConfig.parameters), [currentConfig.parameters, funcParams]);
 

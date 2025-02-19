@@ -124,10 +124,10 @@ export async function studyStoreCreator(
       setAlertModal: (state, action: PayloadAction<{ show: boolean; message: string }>) => {
         state.alertModal = action.payload;
       },
-      setreactiveAnswers: (state, action: PayloadAction<Record<string, unknown>>) => {
+      setReactiveAnswers: (state, action: PayloadAction<Record<string, unknown>>) => {
         state.reactiveAnswers = action.payload;
       },
-      setreactiveProvenance: (state, action: PayloadAction<TrrackedProvenance | null>) => {
+      setReactiveProvenance: (state, action: PayloadAction<TrrackedProvenance | null>) => {
         state.reactiveProvenance = action.payload;
       },
       setOtherText: (state, action: PayloadAction<{ key: string, value: string }>) => {

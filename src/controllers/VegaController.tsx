@@ -24,7 +24,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
 
   const identifier = useCurrentIdentifier();
 
-  const { updateResponseBlockValidation, setreactiveAnswers } = useStoreActions();
+  const { updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
   const [view, setView] = useState<View>();
 
   const { actions, trrack } = useMemo(() => {
@@ -65,8 +65,8 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
       }),
     );
 
-    storeDispatch(setreactiveAnswers(answers));
-  }, [storeDispatch, updateResponseBlockValidation, identifier, setreactiveAnswers]);
+    storeDispatch(setReactiveAnswers(answers));
+  }, [storeDispatch, updateResponseBlockValidation, identifier, setReactiveAnswers]);
 
   const handleSignalEvt = useCallback((key: string, value: unknown) => {
     trrack.apply(key, actions.signalAction({
