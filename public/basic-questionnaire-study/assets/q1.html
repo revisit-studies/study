@@ -20,7 +20,7 @@
     let currentData = null;
 
     async function fetchGraphData() {
-        const response = await fetch('/public/basic-questionnaire-study/data-generation/experiment_data.json');
+        const response = await fetch('basic-questionnaire-study/data-generation/experiment_data.json');
         if (!response.ok) {
             throw new Error('Network response was not ok ' + response.statusText);
         }
