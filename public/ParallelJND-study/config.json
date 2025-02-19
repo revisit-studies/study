@@ -21,7 +21,7 @@
   "baseComponents": {
     "experimentRevised": {
       "type": "react-component",
-      "path": "emma-jnd/vistaJND/src/components/vis/JNDParallelRevised.tsx",
+      "path": "jnd-replication/vistaJND/src/components/vis/JNDParallelRevised.tsx",
       "response": [{ 
         "id": "parallelSelections",
         "prompt": "Select the option with the higher correlation",
@@ -56,7 +56,7 @@
     },
     "practice": {
       "type": "react-component",
-      "path": "emma-jnd/vistaJND/src/components/vis/PracticeParallel.tsx",
+      "path": "jnd-replication/vistaJND/src/components/vis/PracticeParallel.tsx",
       "nextButtonLocation": "sidebar",
       "response": [{ 
         "id": "completed",

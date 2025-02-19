@@ -21,7 +21,7 @@
   "baseComponents": {
     "experimentRevised": {
       "type": "react-component",
-      "path": "emma-jnd/vistaJND/src/components/vis/JNDHeatmap.tsx",
+      "path": "jnd-replication/vistaJND/src/components/vis/JNDHeatmap.tsx",
       "response": [{ 
         "id": "heatmapSelections",
         "prompt": "Select the option with the higher correlation",
@@ -56,7 +56,7 @@
     },
     "practice": {
       "type": "react-component",
-      "path": "emma-jnd/vistaJND/src/components/vis/PracticeHeatmap.tsx",
+      "path": "jnd-replication/vistaJND/src/components/vis/PracticeHeatmap.tsx",
       "nextButtonLocation": "sidebar",
       "response": [{ 
         "id": "completed",
