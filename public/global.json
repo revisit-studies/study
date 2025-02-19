@@ -33,7 +33,11 @@
     "demo-vega",
     "test-randomization",
     "test-skip-logic",
-    "test-step-logic"
+    "test-step-logic",
+    "ScatterJND-study",
+    "ParallelJND-study",
+    "HexbinJND-study",
+    "HeatmapJND-study"
   ],
   "configs": {
     "vis-search": {
@@ -148,6 +152,18 @@
     "test-step-logic": {
       "path": "test-step-logic/config.json",
       "test": true
+    },
+    "ScatterJND-study": {
+      "path": "ScatterJND-study/config.json"
+    },
+    "ParallelJND-study": {
+      "path": "ParallelJND-study/config.json"
+    },
+    "HexbinJND-study": {
+      "path": "HexbinJND-study/config.json"
+    },
+    "HeatmapJND-study": {
+      "path": "HeatmapJND-study/config.json"
     }
   }
 }
