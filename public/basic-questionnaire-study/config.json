@@ -38,33 +38,95 @@
             "path": "basic-questionnaire-study/assets/q1.html",
             "response": []
         },
-        "third-question-set": {
-            "type": "questionnaire",
-            "response": [
-                {
-                    "id": "q3-bw-more",
-                    "prompt": "Quickly scan the charts across and try to find out which chart is easiest to read. If you need a pointer regarding this try to find out how much there is of item a, and then select the chart that communicates this.",
-                    "required": true,
-                    "location": "aboveStimulus",
-                    "type": "longText",
-                    "placeholder": "Please enter your first name"
-                }
-            ]
+        "third-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
         },
-        "fourth-question-set": {
-            "type": "questionnaire",
-            "response": [
-                {
-                    "id": "q4-satisfaction",
-                    "prompt": "Rate your satisfaction with this survey from 1 (not enjoyable) to 5 (very enjoyable).",
-                    "required": true,
-                    "location": "aboveStimulus",
-                    "type": "likert",
-                    "leftLabel": "Not Enjoyable",
-                    "rightLabel": "Very Enjoyable",
-                    "numItems": 5
-                }
-            ]
+        "fourth-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
+        },
+        "fifth-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
+        },
+        "sixth-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
+        },
+        "seventh-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
+        },
+        "eighth-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
+        },
+        "ninth-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
+        },
+        "tenth-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
+        },
+        "eleventh-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
+        },
+        "twelfth-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
+        },
+        "thirteenth-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
+        },
+        "fourteenth-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
+        },
+        "fifteenth-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
+        },
+        "sixteenth-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
+        },
+        "seventeenth-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
+        },
+        "eighteenth-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
+        },
+        "nineteenth-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
+        },
+        "twentieth-question": {
+            "type": "website",
+            "path": "basic-questionnaire-study/assets/q1.html",
+            "response": []
         }
     },
     "sequence": {
@@ -73,8 +135,24 @@
             "introduction",
             "first-question",
             "second-question",
-            "third-question-set",
-            "fourth-question-set"
+            "third-question",
+            "fourth-question",
+            "fifth-question",
+            "sixth-question",
+            "seventh-question",
+            "eighth-question",
+            "ninth-question",
+            "tenth-question",
+            "eleventh-question",
+            "twelfth-question",
+            "thirteenth-question",
+            "fourteenth-question",
+            "fifteenth-question",
+            "sixteenth-question",
+            "seventeenth-question",
+            "eighteenth-question",
+            "nineteenth-question",
+            "twentieth-question"
         ]
     }
 }
