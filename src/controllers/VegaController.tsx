@@ -60,7 +60,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   }: Parameters<StimulusParams<unknown>['setAnswer']>[0]) => {
     storeDispatch(
       updateResponseBlockValidation({
-        location: 'sidebar',
+        location: 'stimulus',
         identifier,
         status,
         values: answers,

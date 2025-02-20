@@ -44,7 +44,7 @@ export async function studyStoreCreator(
           aboveStimulus: { valid: false, values: {} },
           belowStimulus: { valid: false, values: {} },
           sidebar: { valid: false, values: {} },
-          stimulus: { valid: !(componentConfig.type === 'video' || componentConfig.response.some((response) => response.type === 'reactive')), values: {} },
+          stimulus: { valid: !(componentConfig.response.some((response) => response.type === 'reactive' && response.required !== false)), values: {} },
         },
       };
     }),
@@ -53,7 +53,7 @@ export async function studyStoreCreator(
     {},
     ...flatSequence.map((id, idx) => ({
       [`${id}_${idx}`]: {
-        aboveStimulus: true, belowStimulus: true, sidebar: true, stimulus: true, values: {},
+        aboveStimulus: true, belowStimulus: true, sidebar: true, stimulus: true,
       },
     })),
   );
@@ -67,7 +67,7 @@ export async function studyStoreCreator(
     showStudyBrowser: true,
     showHelpText: false,
     alertModal: { show: false, message: '' },
-    trialValidation: answers ? allValid : emptyValidation,
+    trialValidation: Object.keys(answers).length > 0 ? allValid : emptyValidation,
     reactiveAnswers: {},
     reactiveProvenance: null,
     otherTexts: {},
