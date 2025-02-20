@@ -34,7 +34,7 @@
     "@types/hjson": "^2.4.6",
     "@types/lodash": "^4.17.14",
     "@types/node": "^22.10.7",
-    "@visdesignlab/upset2-react": "^1.0.0-rc5",
+    "@visdesignlab/upset2-react": "^1.0.0-rc6",
     "ajv": "^8.17.1",
     "arquero": "^5.4.0",
     "crypto-js": "^4.2.0",

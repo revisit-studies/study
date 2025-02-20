@@ -2449,10 +2449,10 @@
   resolved "https://registry.yarnpkg.com/@ungap/structured-clone/-/structured-clone-1.2.0.tgz#756641adb587851b5ccb3e095daf27ae581c8406"
   integrity sha512-zuVdFrMJiuCDQUMCzQaD6KL28MjnqqN8XnAqiEq9PNm/hCPTSGfrXCOfwj1ow4LFb/tNymJPwsNbVePc1xFqrQ==
 
-"@visdesignlab/upset2-core@*":
-  version "1.0.0-rc5"
-  resolved "https://registry.yarnpkg.com/@visdesignlab/upset2-core/-/upset2-core-1.0.0-rc5.tgz#52e29f3455c0337d8479ed2a68c6d05737c8d532"
-  integrity sha512-uAxdFFuGPem2ID8SGV/tLhyGTQfweaaGKifLAFLMWLnDGQCVZGDTb9lmp/ZBuOKAeP63p2nWtUaPcGD9cftCuQ==
+"@visdesignlab/upset2-core@1.0.0-rc6":
+  version "1.0.0-rc6"
+  resolved "https://registry.yarnpkg.com/@visdesignlab/upset2-core/-/upset2-core-1.0.0-rc6.tgz#f0acf1d7153e73edd23681ffe0c98df5edf4ba81"
+  integrity sha512-ad2xRvqaJjg/fMVlEEq8tBCYYqFSaxYztuHfFHVVGBKxGh2eNopdUjW/kKKAroFbzfHy1tUozJY6cgLWrr1R3w==
   dependencies:
     d3-array "^3.2.4"
     d3-drag "^3.0.0"
@@ -2460,10 +2460,10 @@
     d3-selection "^3.0.0"
     hyperid "^3.0.0"
 
-"@visdesignlab/upset2-react@^1.0.0-rc5":
-  version "1.0.0-rc5"
-  resolved "https://registry.yarnpkg.com/@visdesignlab/upset2-react/-/upset2-react-1.0.0-rc5.tgz#e0a8351d9fce8f2c49eddb11179dc5fcec54e5ff"
-  integrity sha512-xu1uQWFIeMaoKs7UuEoMAhkVwlC3SDPyfoo+/pnZhNmWzWen1RunuvNeL0hrsHl9Chga7Sm4E1nC0AXT3t//Jg==
+"@visdesignlab/upset2-react@^1.0.0-rc6":
+  version "1.0.0-rc6"
+  resolved "https://registry.yarnpkg.com/@visdesignlab/upset2-react/-/upset2-react-1.0.0-rc6.tgz#58b5c206ca272e21d48672fe48e02c50b3af0517"
+  integrity sha512-BCuxx9WHk+yuxbelgnkKk8W5GS67WpakRW0roVElY4yqCFVvLkZlvvvPlB1qBSaAE1E79qwynJhORt65ZriXMg==
   dependencies:
     "@emotion/react" "^11.10.5"
     "@emotion/styled" "^11.13.0"
@@ -2476,7 +2476,7 @@
     "@storybook/react-vite" "^8.2.8"
     "@trrack/core" "^1.3.0-beta.1"
     "@trrack/vis-react" "^1.3.0"
-    "@visdesignlab/upset2-core" "*"
+    "@visdesignlab/upset2-core" "1.0.0-rc6"
     d3-array "^3.2.4"
     d3-drag "^3.0.0"
     d3-dsv "^3.0.1"
