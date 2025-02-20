@@ -23,7 +23,7 @@ export function ReactComponentController({ currentConfig, provState, answers }: 
   const { updateResponseBlockValidation, setreactiveAnswers } = useStoreActions();
   const setAnswer = useCallback(({ status, provenanceGraph, answers: stimulusAnswers }: Parameters<StimulusParams<unknown>['setAnswer']>[0]) => {
     storeDispatch(updateResponseBlockValidation({
-      location: 'sidebar',
+      location: 'stimulus',
       identifier: `${currentComponent}_${currentStep}`,
       status,
       values: stimulusAnswers,

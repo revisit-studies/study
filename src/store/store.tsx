@@ -192,6 +192,7 @@ export async function studyStoreCreator(
         if (payload.provenanceGraph) {
           state.trialValidation[payload.identifier].provenanceGraph = payload.provenanceGraph;
         }
+        console.log(JSON.parse(JSON.stringify(state.trialValidation)));
       },
       saveTrialAnswer(
         state,
