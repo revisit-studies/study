@@ -12,7 +12,9 @@ import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useStoreSelector } from '../../store/store';
 
-export type ComponentBlockWithOrderPath = Omit<ComponentBlock | DynamicBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]; interruptions?: { components: string[] }[] };
+export type ComponentBlockWithOrderPath =
+  Omit<ComponentBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]; interruptions?: { components: string[] }[] }
+  | (DynamicBlock & { orderPath: string; interruptions?: { components: string[] }[]; components: (ComponentBlockWithOrderPath | string)[]; });
 
 function findTaskIndexInSequence(sequence: Sequence, step: string, startIndex: number, requestedPath: string): number {
   let index = 0;
