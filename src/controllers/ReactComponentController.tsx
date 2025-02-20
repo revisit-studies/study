@@ -1,13 +1,9 @@
-import {
-  Suspense, useCallback, useMemo,
-} from 'react';
+import { Suspense, useCallback, useMemo } from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
 import { ReactComponent } from '../parser/types';
 import { StimulusParams, StoredAnswer } from '../store/types';
 import { ResourceNotFound } from '../ResourceNotFound';
-import {
-  useStoreDispatch, useStoreActions, useStoreSelector,
-} from '../store/store';
+import { useStoreDispatch, useStoreActions, useStoreSelector } from '../store/store';
 import { useCurrentIdentifier } from '../routes/utils';
 import { ErrorBoundary } from './ErrorBoundary';
 

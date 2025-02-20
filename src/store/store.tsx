@@ -44,7 +44,7 @@ export async function studyStoreCreator(
           aboveStimulus: { valid: false, values: {} },
           belowStimulus: { valid: false, values: {} },
           sidebar: { valid: false, values: {} },
-          stimulus: { valid: componentConfig.response.every((response) => response.type !== 'reactive'), values: {} },
+          stimulus: { valid: !(componentConfig.type === 'video' || componentConfig.response.some((response) => response.type === 'reactive')), values: {} },
         },
       };
     }),
@@ -319,8 +319,6 @@ export function useAreResponsesValid(id: string) {
     // instead of "if (!valid) return false" and then the stuff below
     return Object.values(valid).every((x) => x);
   });
-
-  return true;
 }
 
 const flatSequenceSelector = createSelector(

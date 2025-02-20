@@ -10,9 +10,7 @@ import {
 import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
 
 import { deepCopy } from '../../utils/deepCopy';
-import {
-  StoredAnswer, ValidationStatus,
-} from '../types';
+import { StoredAnswer, ValidationStatus } from '../types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useStoredAnswer } from './useStoredAnswer';
 import { useWindowEvents } from './useWindowEvents';
@@ -45,7 +43,6 @@ function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: st
 
 export function useNextStep() {
   const currentStep = useCurrentStep();
-
   const participantSequence = useFlatSequence();
   const currentComponent = useCurrentComponent();
 
