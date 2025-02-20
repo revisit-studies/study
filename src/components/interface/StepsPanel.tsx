@@ -11,6 +11,7 @@ import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useStoreSelector } from '../../store/store';
+import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 
 export type ComponentBlockWithOrderPath =
   Omit<ComponentBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]; interruptions?: { components: string[] }[] }
@@ -210,7 +211,12 @@ export function StepsPanel({
     components = reorderedComponents;
   }
 
-  const answers = useStoreSelector((state) => state.answers);
+  // Hacky. This call is not conditional, it either always happens or never happens. Not ideal.
+  let answers = {};
+  if (useIsAnalysis()) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    answers = useStoreSelector((state) => state.answers);
+  }
 
   if (!participantView) {
     // Add interruptions to the sequence
