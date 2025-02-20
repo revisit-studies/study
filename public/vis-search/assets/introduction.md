@@ -1,3 +1,11 @@
-# Introduction
+# Analysis using an Interactive Data Visualization
 
-Welcome to our study. This is a more complex example to show how to embed React.js components into the study page. In this example, React components are responsible for rendering the stimuli, but the reVISit framework automatically handles  answer tracking.
+We will ask you to analyze a dataset using an interactive visualization. 
+
+There is no time limit. 
+
+After you analyze the data, we will ask you to describe your findings. 
+
+**Note**
+
+Please do not use mobile devices (touchscreen) for this task. 
