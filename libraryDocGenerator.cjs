@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 /* eslint-disable @typescript-eslint/no-require-imports */
 // Loops over the files in public/libraries/*/config.json and outputs a markdown document for each library
 // Each json contains optional keys "description", and "reference" that are used to generate the markdown. Name comes from the folder name

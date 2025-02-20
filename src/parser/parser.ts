@@ -6,7 +6,7 @@ import {
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 import { expandLibrarySequences, loadLibrariesParseNamespace, verifyLibraryUsage } from './libraryParser';
-import { isInheritedComponent } from './utils';
+import { isDynamicBlock, isInheritedComponent } from './utils';
 
 const ajv1 = new Ajv();
 ajv1.addSchema(globalSchema);
@@ -52,6 +52,10 @@ function verifyStudySkip(
   skipTargets: string[],
   errors: { message: string, instancePath: string, params: { 'action': string } }[] = [],
 ) {
+  if (isDynamicBlock(sequence)) {
+    return;
+  }
+
   // Base case: empty sequence
   if (sequence.components.length === 0) {
     // Push an error for an empty components array
@@ -158,7 +162,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
     ))
     .forEach((componentName) => {
       warnings.push({
-        message: `Component \`${componentName}\` is defined in components object but not used in the sequence`,
+        message: `Component \`${componentName}\` is defined in components object but not used deterministically in the sequence`,
         instancePath: '/components/',
         params: { action: 'remove the component from the components object or add it to the sequence' },
       });

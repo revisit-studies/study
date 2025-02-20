@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import {
   Center, Flex, Loader, Space, Text,
 } from '@mantine/core';

@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import {
   Alert, Anchor, Button, Group,
 } from '@mantine/core';
@@ -9,12 +8,11 @@ import {
   IndividualComponent,
   ResponseBlockLocation,
 } from '../../parser/types';
-import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
+import { useCurrentIdentifier, useCurrentStep, useStudyId } from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions,
 } from '../../store/store';
 
-import { deepCopy } from '../../utils/deepCopy';
 import { NextButton } from '../NextButton';
 import { useAnswerField } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
@@ -50,7 +48,6 @@ export function ResponseBlock({
     updateResponseBlockValidation, toggleShowHelpText, saveIncorrectAnswer, incrementHelpCounter,
   } = useStoreActions();
   const currentStep = useCurrentStep();
-  const currentComponent = useCurrentComponent();
   const storedAnswer = status?.answer;
 
   const studyId = useStudyId();
@@ -60,6 +57,7 @@ export function ResponseBlock({
   const configInUse = config as IndividualComponent;
 
   const responses = useMemo(() => configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [], [configInUse?.response, location]);
+
   const responsesWithDefaults = useMemo(() => responses.map((response) => ({
     ...response,
     required: response.required === undefined ? true : response.required,
@@ -76,6 +74,8 @@ export function ResponseBlock({
   const [attemptsUsed, setAttemptsUsed] = useState(0);
   const trainingAttempts = configInUse?.trainingAttempts || 2;
   const [enableNextButton, setEnableNextButton] = useState(false);
+
+  const identifier = useCurrentIdentifier();
 
   const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
 
@@ -119,14 +119,14 @@ export function ResponseBlock({
     storeDispatch(
       updateResponseBlockValidation({
         location,
-        identifier: `${currentComponent}_${currentStep}`,
+        identifier,
         status: answerValidator.isValid(),
-        values: deepCopy(answerValidator.values),
+        values: structuredClone(answerValidator.values),
         provenanceGraph,
       }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answerValidator.values, currentComponent, currentStep, location, storeDispatch, updateResponseBlockValidation, provenanceGraph]);
+  }, [answerValidator.values, identifier, location, storeDispatch, updateResponseBlockValidation, provenanceGraph]);
   const [alertConfig, setAlertConfig] = useState(Object.fromEntries(responsesWithDefaults.map((response) => ([response.id, {
     visible: false,
     title: 'Correct Answer',
@@ -166,7 +166,7 @@ export function ResponseBlock({
         if (correctAnswers[response.id] && !alertConfig[response.id]?.message.includes('You\'ve failed to answer this question correctly')) {
           updateAlertConfig(response.id, true, 'Correct Answer', 'You have answered the question correctly.', 'green');
         } else {
-          storeDispatch(saveIncorrectAnswer({ question: `${currentComponent}_${currentStep}`, identifier: response.id, answer: (answerValidator.values as Record<string, unknown>)[response.id] }));
+          storeDispatch(saveIncorrectAnswer({ question: identifier, identifier: response.id, answer: (answerValidator.values as Record<string, unknown>)[response.id] }));
           let message = '';
           if (trainingAttempts === -1) {
             message = 'Please try again.';
@@ -241,17 +241,16 @@ export function ResponseBlock({
                   configInUse={configInUse}
                   form={answerValidator}
                 />
-                {alertConfig[response.id].visible && (
+                {alertConfig[response.id]?.visible && (
                   <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>
                     {alertConfig[response.id].message}
-                    {' '}
                     {alertConfig[response.id].message.includes('Please try again') && (
                       <>
                         <br />
                         <br />
                         If you&apos;re unsure
                         {' '}
-                        <Anchor style={{ fontSize: 14 }} onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier: `${currentComponent}_${currentStep}` })); }}>review the help text.</Anchor>
+                        <Anchor style={{ fontSize: 14 }} onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier })); }}>review the help text.</Anchor>
                         {' '}
                       </>
                     )}

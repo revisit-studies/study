@@ -147,7 +147,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
               element: <NavigateWithParams to={encryptIndex(0)} replace />,
             },
             {
-              path: '/:index',
+              path: '/:index/:funcIndex?',
               element:
                 activeConfig.errors.length > 0 ? (
                   <>

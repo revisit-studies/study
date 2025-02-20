@@ -9,7 +9,6 @@ import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
 import { TrialVisualization } from './TrialVisualization';
 import { ComponentBlockWithOrderPath, StepsPanel } from '../../../components/interface/StepsPanel';
-import { deepCopy } from '../../../utils/deepCopy';
 import { addPathToComponentBlock } from '../../../utils/getSequenceFlatMap';
 
 export function StatsView(
@@ -22,7 +21,7 @@ export function StatsView(
   },
 ) {
   const fullOrder = useMemo(() => {
-    let r = deepCopy(studyConfig.sequence) as ComponentBlockWithOrderPath;
+    let r = structuredClone(studyConfig.sequence) as ComponentBlockWithOrderPath;
     r = addPathToComponentBlock(r, 'root') as ComponentBlockWithOrderPath;
     r.components.push('end');
     return r;
