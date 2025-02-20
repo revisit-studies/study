@@ -11,7 +11,6 @@ import { deepCopy } from '../../utils/deepCopy';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
-import { useStoreSelector } from '../../store/store';
 
 export type ComponentBlockWithOrderPath = Omit<ComponentBlock | DynamicBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]; interruptions?: { components: string[] }[] };
 
@@ -209,8 +208,6 @@ export function StepsPanel({
     components = reorderedComponents;
   }
 
-  const answers = useStoreSelector((state) => state.answers);
-
   if (!participantView) {
     // Add interruptions to the sequence
     components = [
@@ -244,7 +241,7 @@ export function StepsPanel({
           ) : null}
           {participantView && (
             <Badge ml={5} variant="light">
-              {configSequence.order === 'dynamic' ? `${Object.keys(answers).filter((keys) => keys.startsWith(`${configSequence.id}_`)).length - 1} / ?` : `${sequenceStepsLength}/${orderSteps.length}`}
+              {configSequence.order === 'dynamic' ? '? / ?' : `${sequenceStepsLength}/${orderSteps.length}`}
             </Badge>
           )}
           {participantView && configSequence.interruptions && (
