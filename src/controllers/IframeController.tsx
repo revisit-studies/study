@@ -16,7 +16,7 @@ const defaultStyle = {
 };
 
 export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: Record<string, StoredAnswer> }) {
-  const { setreactiveAnswers, setreactiveProvenance } = useStoreActions();
+  const { setReactiveAnswers, setReactiveProvenance } = useStoreActions();
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
 
@@ -73,10 +73,10 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             }
             break;
           case `${PREFIX}/ANSWERS`:
-            storeDispatch(setreactiveAnswers(data.message));
+            storeDispatch(setReactiveAnswers(data.message));
             break;
           case `${PREFIX}/PROVENANCE`:
-            storeDispatch(setreactiveProvenance(data.message));
+            storeDispatch(setReactiveProvenance(data.message));
             break;
           default:
             break;
@@ -87,7 +87,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setreactiveAnswers, setreactiveProvenance]);
+  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, setReactiveProvenance]);
 
   return (
     <iframe

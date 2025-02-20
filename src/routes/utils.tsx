@@ -96,8 +96,7 @@ export function useCurrentComponent(): string {
     } else {
       setCompName(currentStep.replace('reviewer-', ''));
     }
-  }, [_answers, currentStep, flatSequence, funcIndex, nextFunc, pushToFuncSequence, setFuncParams, storeDispatch, studyConfig, studyId]);
-  // console.log(compName, nextFunc, currentComponent, flatSequence);
+  }, [_answers, currentStep, flatSequence, funcIndex, navigate, nextFunc, pushToFuncSequence, setFuncParams, storeDispatch, studyConfig, studyId]);
 
   return compName || flatSequence[0];
 }
