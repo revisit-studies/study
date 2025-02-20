@@ -202,7 +202,7 @@ export function StepsPanel({
   analysisNavigation?: boolean;
 }) {
   // If the participantSequence is provided, reorder the components
-  let components = deepCopy(configSequence.components);
+  let components = deepCopy(configSequence.components) || [];
   if (participantSequence && participantView) {
     const reorderedComponents = reorderComponents(deepCopy(configSequence.components), deepCopy(participantSequence.components));
     components = reorderedComponents;
