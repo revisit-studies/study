@@ -4,7 +4,7 @@ import {
 import { useDispatch } from 'react-redux';
 import { useCurrentComponent } from '../routes/utils';
 import { useStoreDispatch, useStoreActions } from '../store/store';
-import { WebsiteComponent } from '../parser/types';
+import { StoredAnswer, WebsiteComponent } from '../parser/types';
 import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 
 const PREFIX = '@REVISIT_COMMS';
@@ -15,7 +15,7 @@ const defaultStyle = {
   border: 0,
 };
 
-export function IframeController({ currentConfig }: { currentConfig: WebsiteComponent; }) {
+export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: Record<string, StoredAnswer> }) {
   const { setreactiveAnswers, setreactiveProvenance } = useStoreActions();
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
@@ -44,6 +44,18 @@ export function IframeController({ currentConfig }: { currentConfig: WebsiteComp
     },
     [ref, iframeId],
   );
+
+  useEffect(() => {
+    if (provState) {
+      sendMessage('PROVENANCE', provState);
+    }
+  }, [provState, sendMessage]);
+
+  useEffect(() => {
+    if (answers) {
+      sendMessage('ANSWERS', answers);
+    }
+  }, [answers, sendMessage]);
 
   useEffect(() => {
     const handler = (e: MessageEvent) => {

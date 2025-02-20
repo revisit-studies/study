@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import {
   Alert, Anchor, Button, Group,
 } from '@mantine/core';
@@ -9,7 +8,9 @@ import {
   IndividualComponent,
   ResponseBlockLocation,
 } from '../../parser/types';
-import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
+import {
+  useCurrentComponent, useCurrentIdentifier, useCurrentStep, useStudyId,
+} from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions,
 } from '../../store/store';
@@ -27,6 +28,16 @@ type Props = {
   location: ResponseBlockLocation;
   style?: React.CSSProperties;
 };
+
+function findMatchingStrings(arr1: string[], arr2: string[]): string[] {
+  const matches: string[] = [];
+  for (const str1 of arr1) {
+    if (arr2.includes(str1)) {
+      matches.push(str1);
+    }
+  }
+  return matches;
+}
 
 export function ResponseBlock({
   config,
@@ -50,6 +61,7 @@ export function ResponseBlock({
   const configInUse = config as IndividualComponent;
 
   const responses = useMemo(() => configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [], [configInUse?.response, location]);
+
   const responsesWithDefaults = useMemo(() => responses.map((response) => ({
     ...response,
     required: response.required === undefined ? true : response.required,
@@ -66,6 +78,8 @@ export function ResponseBlock({
   const [attemptsUsed, setAttemptsUsed] = useState(0);
   const trainingAttempts = configInUse?.trainingAttempts || 2;
   const [enableNextButton, setEnableNextButton] = useState(false);
+
+  const identifier = useCurrentIdentifier();
 
   const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
 
@@ -109,14 +123,14 @@ export function ResponseBlock({
     storeDispatch(
       updateResponseBlockValidation({
         location,
-        identifier: `${currentComponent}_${currentStep}`,
+        identifier,
         status: answerValidator.isValid(),
         values: deepCopy(answerValidator.values),
         provenanceGraph,
       }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answerValidator.values, currentComponent, currentStep, location, storeDispatch, updateResponseBlockValidation, provenanceGraph]);
+  }, [answerValidator.values, identifier, location, storeDispatch, updateResponseBlockValidation, provenanceGraph]);
   const [alertConfig, setAlertConfig] = useState(Object.fromEntries(responsesWithDefaults.map((response) => ([response.id, {
     visible: false,
     title: 'Correct Answer',
@@ -183,6 +197,16 @@ export function ResponseBlock({
           } else {
             message = `Please try again. You have ${trainingAttempts - newAttemptsUsed} attempts left.`;
           }
+          if (response.type === 'checkbox') {
+            const correct = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+
+            const suppliedAnswer = (answerValidator.values as Record<string, unknown>)[response.id] as string[];
+            const matches = findMatchingStrings(suppliedAnswer, correct);
+
+            const tooManySelected = correct.length === matches.length && suppliedAnswer.length > correct.length ? 'However, you have selected too many boxes. ' : '';
+
+            message = `You have successfully checked ${matches.length}/${correct.length} correct boxes. ${tooManySelected}${message}`;
+          }
           updateAlertConfig(response.id, true, 'Incorrect Answer', message, 'red');
         }
       });
@@ -221,10 +245,9 @@ export function ResponseBlock({
                   configInUse={configInUse}
                   form={answerValidator}
                 />
-                {alertConfig[response.id].visible && (
+                {alertConfig[response.id]?.visible && (
                   <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>
                     {alertConfig[response.id].message}
-                    {' '}
                     {alertConfig[response.id].message.includes('Please try again') && (
                       <>
                         <br />
