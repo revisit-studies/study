@@ -6,19 +6,19 @@
     "example-cleveland",
     "example-mvnv",
     "example-fairness-jnd",
+    "example-VLAT-full-randomized",
+    "example-VLAT-mini-randomized",
     "demo-html",
     "demo-html-input",
     "demo-survey",
     "demo-training",
-    "example-VLAT-full-randomized",
-    "example-VLAT-mini-randomized",
     "demo-html-trrack",
     "demo-click-accuracy-test",
     "demo-image",
+    "demo-upset",
+    "demo-vega",
     "demo-video-slider",
     "demo-video",
-    "test-audio",
-    "test-library",
     "library-beauvis",
     "library-color-blindness",
     "library-demographics",
@@ -27,9 +27,10 @@
     "library-previs",
     "library-sus",
     "library-vlat",
+    "test-audio",
+    "test-library",
     "test-likert-matrix",
     "test-parser-errors",
-    "demo-vega",
     "test-randomization",
     "test-skip-logic",
     "test-step-logic"
@@ -65,6 +66,9 @@
     },
     "demo-training": {
       "path": "demo-training/config.json"
+    },
+    "demo-upset": {
+      "path": "demo-upset/config.json"
     },
     "demo-video": {
       "path": "demo-video/config.json"
