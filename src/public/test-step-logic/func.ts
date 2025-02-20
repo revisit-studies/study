@@ -1,9 +1,9 @@
 import { JumpFunctionParameters, JumpFunctionReturnVal } from '../../store/types';
 
-export default function func({
-  answers, customParameters,
-} : JumpFunctionParameters<{name: string}>) : JumpFunctionReturnVal {
-  const topAnswerLength = Math.max(0, ...Object.keys(answers).filter((answer) => answer.startsWith(`${customParameters.name}`)).map((answer) => +(answer.split('_')[3])));
+export default function func({ answers, customParameters } : JumpFunctionParameters<{name: string}>) : JumpFunctionReturnVal {
+  const topAnswerLength = Object.keys(answers)
+    .filter((answer) => answer.startsWith(`${customParameters.name}`))
+    .length;
 
   if (topAnswerLength > 5) {
     return { component: null };

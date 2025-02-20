@@ -8,9 +8,7 @@ import {
   IndividualComponent,
   ResponseBlockLocation,
 } from '../../parser/types';
-import {
-  useCurrentComponent, useCurrentIdentifier, useCurrentStep, useStudyId,
-} from '../../routes/utils';
+import { useCurrentIdentifier, useCurrentStep, useStudyId } from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions,
 } from '../../store/store';
@@ -51,7 +49,6 @@ export function ResponseBlock({
     updateResponseBlockValidation, toggleShowHelpText, saveIncorrectAnswer, incrementHelpCounter,
   } = useStoreActions();
   const currentStep = useCurrentStep();
-  const currentComponent = useCurrentComponent();
   const storedAnswer = status?.answer;
 
   const studyId = useStudyId();
@@ -170,7 +167,7 @@ export function ResponseBlock({
         if (correctAnswers[response.id] && !alertConfig[response.id]?.message.includes('You\'ve failed to answer this question correctly')) {
           updateAlertConfig(response.id, true, 'Correct Answer', 'You have answered the question correctly.', 'green');
         } else {
-          storeDispatch(saveIncorrectAnswer({ question: `${currentComponent}_${currentStep}`, identifier: response.id, answer: (answerValidator.values as Record<string, unknown>)[response.id] }));
+          storeDispatch(saveIncorrectAnswer({ question: identifier, identifier: response.id, answer: (answerValidator.values as Record<string, unknown>)[response.id] }));
           let message = '';
           if (trainingAttempts === -1) {
             message = 'Please try again.';
@@ -254,7 +251,7 @@ export function ResponseBlock({
                         <br />
                         If you&apos;re unsure
                         {' '}
-                        <Anchor style={{ fontSize: 14 }} onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier: `${currentComponent}_${currentStep}` })); }}>review the help text.</Anchor>
+                        <Anchor style={{ fontSize: 14 }} onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier })); }}>review the help text.</Anchor>
                         {' '}
                       </>
                     )}
