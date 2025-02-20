@@ -1,13 +1,13 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "HTML as a Stimulus",
+    "title": "2 Videos with a Slider to Choose Between Them",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
     ],
     "date": "2023-04-14",
-    "description": "A simple demo of using stimuli in an HTML file that renders a D3 visualization. Data is collected via a numeric response field.",
+    "description": "A simple demo of using video as a stimulus. Data is collected via a slider response field.",
     "organizations": [
       "University of Utah",
       "WPI",

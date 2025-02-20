@@ -45,6 +45,6 @@ export default function ReactExample({ parameters, setAnswer, provenanceState } 
   }, [actions, setAnswer, trrack]);
 
   return (
-    <BrushPlotWrapper params={parameters} state={provenanceState || brushState} onStateChange={onStateChange} />
+    <BrushPlotWrapper params={parameters} state={provenanceState || brushState} onStateChange={onStateChange} answers={{}} />
   );
 }

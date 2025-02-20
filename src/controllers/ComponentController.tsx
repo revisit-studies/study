@@ -27,6 +27,7 @@ import { TimedOut } from '../components/TimedOut';
 import { findBlockForStep } from '../utils/getSequenceFlatMap';
 import { VegaController, VegaProvState } from './VegaController';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
+import { VideoController } from './VideoController';
 
 // current active stimuli presented to the user
 export function ComponentController() {
@@ -37,6 +38,7 @@ export function ComponentController() {
   const stepConfig = studyConfig.components[currentComponent];
   const { storageEngine } = useStorageEngine();
 
+  const answers = useStoreSelector((store) => store.answers);
   const audioStream = useRef<MediaRecorder | null>(null);
   const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
   const { setIsRecording } = useStoreActions();
@@ -179,10 +181,11 @@ export function ComponentController() {
 
       <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
         {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
-        {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} />}
+        {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
         {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
-        {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} />}
+        {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
         {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} provState={analysisProvState as VegaProvState} />}
+        {currentConfig.type === 'video' && <VideoController currentConfig={currentConfig} />}
 
       </Suspense>
 

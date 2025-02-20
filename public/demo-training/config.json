@@ -85,6 +85,37 @@
       "allowFailedTraining": false,
       "trainingAttempts": 4
     },
+    "multiSelectCheckbox": {
+      "type": "questionnaire",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "quiz",
+          "prompt": "Select A, D, F",
+          "required": true,
+          "location": "sidebar",
+          "type": "checkbox",
+          "options": [
+            "A",
+            "B",
+            "C",
+            "D",
+            "E",
+            "F",
+            "G"
+          ]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "quiz",
+          "answer": ["A","D","F"]
+        }
+      ],
+      "provideFeedback": true,
+      "allowFailedTraining": false,
+      "trainingAttempts": 4
+    },
     "main-page-text-field": {
       "type": "questionnaire",
       "nextButtonLocation": "belowStimulus",
@@ -126,6 +157,7 @@
     "components": [
       "simple-dropbox",
       "slider-range",
+      "multiSelectCheckbox",
       "main-page-text-field"
     ]
   }

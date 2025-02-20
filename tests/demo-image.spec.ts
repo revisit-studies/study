@@ -51,6 +51,13 @@ test('test', async ({ page }) => {
   await page.getByLabel('Yes').check();
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
+  // Check the page contains the visualization
+  const img4 = await page.getByRole('main').getByRole('img');
+  await expect(img4).toBeVisible();
+
+  // Select a response and click next
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+
   // Check that the end of study text renders
   const endText = await page.getByText('Please wait while your answers are uploaded.');
   await expect(endText).toBeVisible();

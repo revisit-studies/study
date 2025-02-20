@@ -83,11 +83,10 @@ export function RadioInput({
                 value={radio.value}
                 label={radio.label}
                 styles={{
-                  label: { display: 'none' },
+                  label: { display: !horizontal ? 'initial' : 'none' },
                 }}
                 onChange={() => setOtherSelected(false)}
               />
-              {!horizontal && <Text size="sm">{radio.label}</Text>}
             </div>
           ))}
           {withOther && (
