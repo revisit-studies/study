@@ -7,7 +7,6 @@ import { useDisclosure } from '@mantine/hooks';
 import { useCallback, useMemo, useState } from 'react';
 import { ComponentBlock, DynamicBlock, StudyConfig } from '../../parser/types';
 import { Sequence } from '../../store/types';
-import { deepCopy } from '../../utils/deepCopy';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
@@ -203,9 +202,9 @@ export function StepsPanel({
   analysisNavigation?: boolean;
 }) {
   // If the participantSequence is provided, reorder the components
-  let components = deepCopy(configSequence.components);
+  let components = structuredClone(configSequence.components);
   if (participantSequence && participantView) {
-    const reorderedComponents = reorderComponents(deepCopy(configSequence.components), deepCopy(participantSequence.components));
+    const reorderedComponents = reorderComponents(structuredClone(configSequence.components), structuredClone(participantSequence.components));
     components = reorderedComponents;
   }
 

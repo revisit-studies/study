@@ -18,7 +18,6 @@ import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useAsync } from '../../store/hooks/useAsync';
 import { useStoreActions, useStoreDispatch, useStoreSelector } from '../../store/store';
-import { deepCopy } from '../../utils/deepCopy';
 import { WithinTaskTimeline } from './WithinTaskTimeline';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { Timer } from './Timer';
@@ -86,7 +85,7 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
       const trrack = initializeTrrack({ registry: reg, initialState: {} });
 
       if (participant.answers[componentAndIndex].provenanceGraph) {
-        trrack.importObject(deepCopy(participant.answers[componentAndIndex].provenanceGraph!));
+        trrack.importObject(structuredClone(participant.answers[componentAndIndex].provenanceGraph!));
         storeDispatch(setAnalysisHasProvenance(true));
 
         trrackForTrial.current = trrack;

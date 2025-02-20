@@ -1,7 +1,6 @@
 // eslint-disable-next-line import/no-unresolved
 import latinSquare from '@quentinroy/latin-square';
 import { ComponentBlock, DynamicBlock, StudyConfig } from '../parser/types';
-import { deepCopy } from './deepCopy';
 import { Sequence } from '../store/types';
 import { isDynamicBlock } from '../parser/utils';
 
@@ -101,7 +100,7 @@ function componentBlockToSequence(
   order: StudyConfig['sequence'],
   latinSquareObject: Record<string, string[][]>,
 ): Sequence {
-  const orderCopy = deepCopy(order);
+  const orderCopy = structuredClone(order);
 
   return _componentBlockToSequence(orderCopy, latinSquareObject, 'root');
 }
