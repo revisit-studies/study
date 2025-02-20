@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph Column Value Question</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+<h1>Identify the Value of Column 5</h1>
+<canvas id="graphCanvas" width="400" height="200"></canvas>
+<form id="columnForm">
+    <label for="columnValue">What is the value of column 5?</label>
+    <input type="number" id="columnValue" name="columnValue" required>
+    <button type="submit">Submit</button>
+</form>
+<p id="feedback"></p>
+
+<script>
+    let currentData = null;
+
+    async function fetchGraphData() {
+        const response = await fetch('../data-generation/experiment_data.json');
+        if (!response.ok) {
+            throw new Error('Network response was not ok ' + response.statusText);
+        }
+        const data = await response.json();
+        const usedTrials = JSON.parse(localStorage.getItem('usedTrials')) || [];
+        let randomTrialIndex;
+
+        do {
+            randomTrialIndex = Math.floor(Math.random() * 200);
+        } while (usedTrials.includes(randomTrialIndex) && usedTrials.length < 200);
+
+        if (usedTrials.length >= 200) {
+            localStorage.removeItem('usedTrials');
+        } else {
+            usedTrials.push(randomTrialIndex);
+            localStorage.setItem('usedTrials', JSON.stringify(usedTrials));
+        }
+
+        console.log('Selected trial index:', randomTrialIndex);
+        console.log('Data points:', data[randomTrialIndex].data_points);
+
+        currentData = data[randomTrialIndex].data_points;
+        return currentData;
+    }
+
+    function renderGraph(data) {
+        const ctx = document.getElementById('graphCanvas').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.map((_, index) => index + 1),
+                datasets: [{
+                    label: 'Random Data',
+                    data: data,
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    borderColor: 'rgba(75, 192, 192, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y', // Switches the bar chart to horizontal
+                scales: {
+                    x: { 
+                        beginAtZero: true 
+                    }
+                },
+                plugins: {
+                    tooltip: {
+                        enabled: false
+                    }
+                }
+            }
+        });
+    }
+
+    document.getElementById('columnForm').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const columnValue = parseInt(document.getElementById('columnValue').value, 10);
+        if (currentData) {
+            const correctValue = currentData[4]; // Column 5 is at index 4
+            console.log('Data points:', currentData);
+            console.log('Correct value of column 5:', correctValue);
+            const feedback = document.getElementById('feedback');
+            if (columnValue === correctValue) {
+                feedback.textContent = 'Correct!';
+                feedback.style.color = 'green';
+            } else {
+                feedback.textContent = `Incorrect. The correct value of column 5 is ${correctValue}.`;
+                feedback.style.color = 'red';
+            }
+        } else {
+            console.error('No data available to check the column value.');
+        }
+    });
+
+    fetchGraphData().then(renderGraph).catch(error => {
+        console.error('Error fetching the graph data:', error);
+    });
+</script>
+</body>
+</html>
