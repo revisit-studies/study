@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.2/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Bubble Chart Search Study",
+    "title": "Bubble Chart Study",
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2023-04-28",
@@ -10,7 +10,7 @@
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "vis-search/assets/help.md",
+    "helpTextPath": "bubblechart-study/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -21,7 +21,7 @@
   "components": {
     "introduction": {
       "type": "markdown",
-      "path": "vis-search/assets/introduction.md",
+      "path": "bubblechart-study/assets/introduction.md",
       "response": [
         {
           "id": "prolificId",
@@ -33,19 +33,38 @@
         }
       ]
     },
-    "instructions": {
+    "instructionsWithSearch": {
       "type": "markdown",
-      "path": "vis-search/assets/instructions.md",
+      "path": "bubblechart-study/assets/instructions-foresight.md",
       "response": [],
       "nextButtonText": "Start Exploring"
     },
-    "bubbleChart": {
+    "instructionsWithoutSearch": {
+      "type": "markdown",
+      "path": "bubblechart-study/assets/instructions-control.md",
+      "response": [],
+      "nextButtonText": "Start Exploring"
+    },
+    "bubbleChartWithSearch": {
       "description": "Desc",
       "instruction": "Your task is to analyze this dataset of college information.\n On the following pages, you will be asked to briefly describe the findings you identified, and answer several questions on the understanding of the visualization. \n\n **How to Interact**: \n- Mouseover any of the circles to obtain a detailed view.\n- Use the text box at the top to search for specific college.",
       "type": "react-component",
-      "path": "vis-search/assets/SearchBubbleChart.tsx",
+      "path": "bubblechart-study/assets/SearchBubbleChart.tsx",
       "parameters": {
-        "data": "assets/data/college.csv"
+        "data": "assets/data/college.csv",
+        "search": true
+      },
+      "response": [],
+      "nextButtonText": "I'm finished"
+    },
+    "bubbleChartWithoutSearch": {
+      "description": "Desc",
+      "instruction": "Your task is to analyze this dataset of college information.\n On the following pages, you will be asked to briefly describe the findings you identified, and answer several questions on the understanding of the visualization. \n\n **How to Interact**: \n- Mouseover any of the circles to obtain a detailed view.",
+      "type": "react-component",
+      "path": "bubblechart-study/assets/SearchBubbleChart.tsx",
+      "parameters": {
+        "data": "assets/data/college.csv",
+        "search": false
       },
       "response": [],
       "nextButtonText": "I'm finished"
@@ -118,8 +137,23 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "instructions",
-      "bubbleChart",
+      {
+        "order": "latinSquare",
+        "numSamples": 1,
+        "components": [
+          {
+            "order": "fixed",
+            "components": ["instructionsWithSearch", "bubbleChartWithSearch"]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "instructionsWithoutSearch",
+              "bubbleChartWithoutSearch"
+            ]
+          }
+        ]
+      },
       "findings",
       "explorationStrategy",
       "$demographics.co.demographics"

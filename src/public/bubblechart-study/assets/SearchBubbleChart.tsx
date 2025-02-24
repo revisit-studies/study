@@ -67,7 +67,7 @@ const MemoizedSelect = memo(Select);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function SearchBubbleChart({ parameters, setAnswer, provenanceState }: StimulusParams<any, {all: {hoveredItem: DataModel, searchValue: string}}>) {
-  const { data: dataPath } = parameters;
+  const { data: dataPath, search: searchEnabled } = parameters;
   const ref = useRef(null);
   const [data, setData] = useState<d3.HierarchyCircularNode<DataModel> | null>(null);
   const [dataByKey, setDataByKey] = useState<{[key: string]: DataModel}>({});
@@ -290,6 +290,7 @@ function SearchBubbleChart({ parameters, setAnswer, provenanceState }: StimulusP
 
   return (
     <div>
+      {searchEnabled && (
       <Group display="flex" align="flex-end">
         <MemoizedSelect
           searchable
@@ -303,6 +304,7 @@ function SearchBubbleChart({ parameters, setAnswer, provenanceState }: StimulusP
         />
         <Button onClick={() => { handleSearchValueChange(''); }}>Reset Search</Button>
       </Group>
+      )}
       <div className={cx(classes.chartWrapper, { [classes.searching]: searchValue !== '' })} style={{ height: '720px' }}>
         <svg ref={ref} style={{ height: size + margin.top + margin.bottom, width: size + margin.left + margin.right }} />
         {hoveredNode && (
