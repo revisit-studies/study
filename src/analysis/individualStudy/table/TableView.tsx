@@ -191,7 +191,6 @@ export function TableView({
         <Flex direction="column" miw={100}>
           <Flex direction="row" align="center">
             {
-              // eslint-disable-next-line no-nested-ternary
               record.rejected ? <Tooltip label="Rejected"><IconX size={16} color="red" style={{ marginBottom: -3 }} /></Tooltip>
                 : record.completed
                   ? <Tooltip label="Completed"><IconCheck size={16} color="teal" style={{ marginBottom: -3 }} /></Tooltip>

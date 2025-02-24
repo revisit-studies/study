@@ -109,7 +109,7 @@
       "correctAnswer": [
         {
           "id": "res3",
-          "answer": "30 - 40km"
+          "answer": "30-40km"
         }
       ]
     },
@@ -366,7 +366,7 @@
       "correctAnswer": [
         {
           "id": "res-areachar",
-          "answer": "$0.71"
+          "answer": "0.71"
         }
       ]
     },

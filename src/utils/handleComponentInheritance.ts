@@ -11,3 +11,11 @@ export function studyComponentToIndividualComponent(stepConfig: InheritedCompone
     ) as IndividualComponent)
     : (stepConfig as IndividualComponent));
 }
+
+export function getComponent(name: string, studyConfig: StudyConfig): IndividualComponent | null {
+  // The only way this should happen is if the name we are getting is the name of the func, which is not a component
+  if (studyConfig.components[name] === undefined) {
+    return null;
+  }
+  return studyComponentToIndividualComponent(studyConfig.components[name], studyConfig);
+}

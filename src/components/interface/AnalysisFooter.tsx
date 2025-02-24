@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import {
   ActionIcon,
   AppShell, Box, Button, Center, Group, LoadingOverlay, Select, Text,

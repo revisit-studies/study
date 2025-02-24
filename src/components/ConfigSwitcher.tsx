@@ -203,11 +203,11 @@ export function ConfigSwitcher({
   const { configsList } = globalConfig;
 
   const demos = configsList.filter((configName) => configName.startsWith('demo-'));
-  const tutorials = configsList.filter((configName) => configName.startsWith('tutorial-'));
+  const tutorials = configsList.filter((configName) => configName.startsWith('tutorial'));
   const examples = configsList.filter((configName) => configName.startsWith('example-'));
   const tests = configsList.filter((configName) => configName.startsWith('test-'));
   const libraries = configsList.filter((configName) => configName.startsWith('library-'));
-  const others = useMemo(() => configsList.filter((configName) => !configName.startsWith('demo-') && !configName.startsWith('tutorial-') && !configName.startsWith('example-') && !configName.startsWith('test-') && !configName.startsWith('library-')), [configsList]);
+  const others = useMemo(() => configsList.filter((configName) => !configName.startsWith('demo-') && !configName.startsWith('tutorial') && !configName.startsWith('example-') && !configName.startsWith('test-') && !configName.startsWith('library-')), [configsList]);
 
   const [otherStudyVisibility, setOtherStudyVisibility] = useState<Record<string, boolean>>({});
   useEffect(() => {

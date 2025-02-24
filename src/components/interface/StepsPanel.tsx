@@ -4,15 +4,15 @@ import {
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { IconArrowsShuffle, IconBrain, IconPackageImport } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
-import { useCallback, useMemo } from 'react';
-import { ComponentBlock, StudyConfig } from '../../parser/types';
+import { useCallback, useMemo, useState } from 'react';
+import { ComponentBlock, DynamicBlock, StudyConfig } from '../../parser/types';
 import { Sequence } from '../../store/types';
 import { deepCopy } from '../../utils/deepCopy';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
 
-export type ComponentBlockWithOrderPath = Omit<ComponentBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]};
+export type ComponentBlockWithOrderPath = Omit<ComponentBlock | DynamicBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]; interruptions?: { components: string[] }[] };
 
 function findTaskIndexInSequence(sequence: Sequence, step: string, startIndex: number, requestedPath: string): number {
   let index = 0;
@@ -79,7 +79,9 @@ function reorderComponents(configSequence: ComponentBlockWithOrderPath['componen
     }
   });
 
-  newComponents.push(...configSequence);
+  if (configSequence) {
+    newComponents.push(...configSequence);
+  }
 
   return newComponents;
 }
@@ -123,11 +125,9 @@ function StepItem({
   const active = analysisNavigation ? analysisActive : studyActive;
 
   const analysisNavigateTo = useCallback(() => (trialId ? navigate(`./../${step}`) : navigate(`./${step}`)), [navigate, step, trialId]);
-  // eslint-disable-next-line no-nested-ternary
   const studyNavigateTo = () => (participantView ? (participantId ? navigate(`/${studyId}/${encryptIndex(stepIndex)}?participantId=${participantId}`) : navigate(`/${studyId}/${encryptIndex(stepIndex)}`)) : navigate(`/${studyId}/reviewer-${step}`));
   const navigateTo = analysisNavigation ? analysisNavigateTo : studyNavigateTo;
 
-  // eslint-disable-next-line no-nested-ternary
   const coOrComponents = step.includes('.co.')
     ? '.co.'
     : (step.includes('.components.') ? '.components.' : false);
@@ -212,80 +212,81 @@ export function StepsPanel({
     // Add interruptions to the sequence
     components = [
       ...(configSequence.interruptions?.flatMap((interruption) => interruption.components) || []),
-      ...components,
+      ...(components || []),
     ];
   }
 
+  // Count tasks - interruptions
+  const sequenceStepsLength = useMemo(() => (participantSequence ? getSequenceFlatMap(participantSequence).length - countInterruptionsRecursively(configSequence, participantSequence) : 0), [configSequence, participantSequence]);
+  const orderSteps = useMemo(() => getSequenceFlatMap(configSequence), [configSequence]);
+
+  const [isPanelOpened, setIsPanelOpened] = useState<boolean>(sequenceStepsLength > 0);
+
   return (
-    <>
-      {components.map((step, idx) => {
-        if (typeof step === 'string') {
-          return (
-            <StepItem
-              key={idx}
-              step={step}
-              disabled={participantView && participantSequence?.components[idx] !== step}
-              fullSequence={fullSequence}
-              startIndex={idx}
-              interruption={(configSequence.interruptions && (configSequence.interruptions.findIndex((i) => i.components.includes(step)) > -1)) || false}
-              participantView={participantView}
-              studyConfig={studyConfig}
-              subSequence={participantSequence}
-              analysisNavigation={analysisNavigation}
-            />
-          );
-        }
-
-        const participantSubSequence = participantSequence?.components.find((s) => typeof s !== 'string' && s.orderPath === step.orderPath) as Sequence | undefined;
-
-        // Count tasks - interruptions
-        const sequenceStepsLength = participantSubSequence ? getSequenceFlatMap(participantSubSequence).length - countInterruptionsRecursively(step, participantSubSequence) : 0;
-        const orderSteps = getSequenceFlatMap(step);
-
-        return (
-          <NavLink
-            key={idx}
-            label={(
-              <Box
-                style={{
-                  opacity: sequenceStepsLength > 0 ? 1 : 0.5,
-                }}
-              >
-                <Text size="sm" display="inline" fw={700}>
-                  {step.id ? step.id : step.order}
-                </Text>
-                {step.order === 'random' || step.order === 'latinSquare' ? (
-                  <Tooltip label={step.order} position="right" withArrow>
-                    <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
-                  </Tooltip>
-                ) : null}
-                {participantView && (
-                <Badge ml={5} variant="light">
-                  {sequenceStepsLength}
-                  /
-                  {orderSteps.length}
-                </Badge>
-                )}
-                {participantView && step.interruptions && (
-                <Badge ml={5} color="orange" variant="light">
-                  {participantSubSequence?.components.filter((s) => typeof s === 'string' && step.interruptions?.flatMap((i) => i.components).includes(s)).length || 0}
-                </Badge>
-                )}
-              </Box>
+    <NavLink
+      key={configSequence.id}
+      label={(
+        <Box
+          style={{
+            opacity: sequenceStepsLength > 0 ? 1 : 0.5,
+          }}
+        >
+          <Text size="sm" display="inline" fw={700}>
+            {configSequence.id ? configSequence.id : configSequence.order}
+          </Text>
+          {configSequence.order === 'random' || configSequence.order === 'latinSquare' ? (
+            <Tooltip label={configSequence.order} position="right" withArrow>
+              <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
+            </Tooltip>
+          ) : null}
+          {participantView && (
+            <Badge ml={5} variant="light">
+              {configSequence.order === 'dynamic' ? '? / ?' : `${sequenceStepsLength}/${orderSteps.length}`}
+            </Badge>
+          )}
+          {participantView && configSequence.interruptions && (
+            <Badge ml={5} color="orange" variant="light">
+              {participantSequence?.components.filter((s) => typeof s === 'string' && configSequence.interruptions?.flatMap((i) => i.components).includes(s)).length || 0}
+            </Badge>
+          )}
+        </Box>
             )}
-            defaultOpened
-            childrenOffset={32}
-            style={{
-              lineHeight: '32px',
-              height: '32px',
-            }}
-          >
-            <Box style={{ borderLeft: '1px solid #e9ecef' }}>
-              <StepsPanel configSequence={step} participantSequence={participantSubSequence} fullSequence={fullSequence} participantView={participantView} studyConfig={studyConfig} analysisNavigation={analysisNavigation} />
-            </Box>
-          </NavLink>
-        );
-      })}
-    </>
+      opened={isPanelOpened}
+      onClick={() => setIsPanelOpened(!isPanelOpened)}
+      childrenOffset={32}
+      style={{
+        lineHeight: '32px',
+        height: '32px',
+      }}
+    >
+      {isPanelOpened ? (
+        <Box style={{ borderLeft: '1px solid #e9ecef' }}>
+          {components.map((step, idx) => {
+            if (typeof step === 'string') {
+              return (
+                <StepItem
+                  key={idx}
+                  step={step}
+                  disabled={participantView && participantSequence?.components[idx] !== step}
+                  fullSequence={fullSequence}
+                  startIndex={idx}
+                  interruption={(configSequence.interruptions && (configSequence.interruptions.findIndex((i) => i.components.includes(step)) > -1)) || false}
+                  participantView={participantView}
+                  studyConfig={studyConfig}
+                  subSequence={participantSequence}
+                  analysisNavigation={analysisNavigation}
+                />
+              );
+            }
+
+            const newSequence = participantSequence?.components.find((s) => typeof s !== 'string' && s.orderPath === step.orderPath) as Sequence | undefined;
+
+            return (
+              <StepsPanel key={idx} configSequence={step} participantSequence={newSequence} fullSequence={fullSequence} participantView={participantView} studyConfig={studyConfig} analysisNavigation={analysisNavigation} />
+            );
+          })}
+        </Box>
+      ) : null }
+    </NavLink>
   );
 }

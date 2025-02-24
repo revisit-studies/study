@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 // eslint-disable-next-line import/no-cycle
-import { SkipConditions, StudyConfig } from '../parser/types';
+import { ComponentBlock, SkipConditions, StudyConfig } from '../parser/types';
 import { type REVISIT_MODE } from '../storage/engines/StorageEngine';
 
 /**
@@ -39,6 +39,7 @@ export type TrialValidation = Record<
     aboveStimulus: ValidationStatus;
     belowStimulus: ValidationStatus;
     sidebar: ValidationStatus;
+    stimulus: ValidationStatus;
     provenanceGraph?: TrrackedProvenance;
   }
 >;
@@ -107,19 +108,31 @@ export interface StoredAnswer {
   windowEvents: EventType[];
   /** A boolean value that indicates whether the participant timed out on this question. */
   timedOut: boolean;
+  /**  */
+  parameters: Record<string, any>;
   /** A counter indicating how many times participants opened the help tab during a task. Clicking help, or accessing the tab via answer feedback on an incorrect answer both are included in the counter. */
   helpButtonClickedCount: number;
+}
+
+export interface JumpFunctionParameters<T> {
+  components: (string | ComponentBlock)[], answers: Record<string, StoredAnswer>, sequenceSoFar: string[], customParameters: T
+}
+
+export interface JumpFunctionReturnVal {
+  component: string | null, parameters?: Record<string, any>
 }
 
 export interface StimulusParams<T, S = never> {
   parameters: T;
   provenanceState?: S;
+  answers: Record<string, StoredAnswer>;
   setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
 }
 
 export interface Sequence {
   id?: string;
   orderPath: string;
+  order: string;
   components: (string | Sequence)[];
   skip?: SkipConditions;
 }
@@ -145,4 +158,6 @@ export interface StoreState {
   analysisHasProvenance: boolean;
   modes: Record<REVISIT_MODE, boolean>;
   matrixAnswers: Record<string, Record<string, string>>;
+  funcSequence: Record<string, string[]>;
+  funcParams: unknown | undefined;
 }
