@@ -1,0 +1,162 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.2/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Bubble Chart Study",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2023-04-28",
+    "description": "Vis search replication",
+    "organizations": ["University of Utah", "WPI", "University of Toronto"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "bubblechart-study/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true,
+    "recordStudyAudio": true
+  },
+  "importedLibraries": ["demographics"],
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "bubblechart-study/assets/introduction.md",
+      "response": [
+        {
+          "id": "prolificId",
+          "prompt": "Please enter your prolificId",
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Prolific Id",
+          "paramCapture": "PROLIFIC_ID"
+        }
+      ]
+    },
+    "instructionsWithSearch": {
+      "type": "markdown",
+      "path": "bubblechart-study/assets/instructions-foresight.md",
+      "response": [],
+      "nextButtonText": "Start Exploring"
+    },
+    "instructionsWithoutSearch": {
+      "type": "markdown",
+      "path": "bubblechart-study/assets/instructions-control.md",
+      "response": [],
+      "nextButtonText": "Start Exploring"
+    },
+    "bubbleChartWithSearch": {
+      "description": "Desc",
+      "instruction": "Your task is to analyze this dataset of college information.\n On the following pages, you will be asked to briefly describe the findings you identified, and answer several questions on the understanding of the visualization. \n\n **How to Interact**: \n- Mouseover any of the circles to obtain a detailed view.\n- Use the text box at the top to search for specific college.",
+      "type": "react-component",
+      "path": "bubblechart-study/assets/SearchBubbleChart.tsx",
+      "parameters": {
+        "data": "assets/data/college.csv",
+        "search": true
+      },
+      "response": [],
+      "nextButtonText": "I'm finished"
+    },
+    "bubbleChartWithoutSearch": {
+      "description": "Desc",
+      "instruction": "Your task is to analyze this dataset of college information.\n On the following pages, you will be asked to briefly describe the findings you identified, and answer several questions on the understanding of the visualization. \n\n **How to Interact**: \n- Mouseover any of the circles to obtain a detailed view.",
+      "type": "react-component",
+      "path": "bubblechart-study/assets/SearchBubbleChart.tsx",
+      "parameters": {
+        "data": "assets/data/college.csv",
+        "search": false
+      },
+      "response": [],
+      "nextButtonText": "I'm finished"
+    },
+    "findings": {
+      "description": "Findings",
+      "instruction": "Your Findings\n\nIn this section, please tell us about the findings you discovered in the data. \n\nUse the textbox with multiple paragraphs to separate your results, and list as many unique findings as you can.",
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "findings",
+          "prompt": "Write your findings here",
+          "location": "belowStimulus",
+          "type": "longText",
+          "placeholder": "Write your findings here",
+          "paramCapture": "FINDINGS"
+        }
+      ]
+    },
+    "explorationStrategy": {
+      "description": "Exploration Strategy",
+      "instruction": "**Your Exploration Strategy** \n\nIn this section, please tell us about the strategies you applied during exploration by answering the following questions.",
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "searched",
+          "prompt": "1. During exploration, did you actively search for items that you thought might be in the visualization?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": ["Yes", "No", "I'm not sure"],
+          "secondaryText": "If you answer yes, please provide more details in the questions 2-4."
+        },
+        {
+          "id": "searchedItems",
+          "prompt": "2. If you answered yes, which items did you actively search for?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        },
+        {
+          "id": "relatedToYou",
+          "prompt": "3. How are the ones you actively searched for related to you?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        },
+        {
+          "id": "difficulty",
+          "prompt": "4. How difficult was it to find them?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "I was not able to find them",
+            "It was very difficult to find them",
+            "It took me some time and effort to find them",
+            "It was very easy to find them"
+          ]
+        },
+        {
+          "id": "strategy",
+          "prompt": "5. Did you apply any particular strategy during exploration? What was your strategy? *",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": true
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "introduction",
+      {
+        "order": "latinSquare",
+        "numSamples": 1,
+        "components": [
+          {
+            "order": "fixed",
+            "components": ["instructionsWithSearch", "bubbleChartWithSearch"]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "instructionsWithoutSearch",
+              "bubbleChartWithoutSearch"
+            ]
+          }
+        ]
+      },
+      "findings",
+      "explorationStrategy",
+      "$demographics.co.demographics"
+    ]
+  }
+}

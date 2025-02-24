@@ -7,7 +7,9 @@ import {
   useState,
 } from 'react';
 import * as d3 from 'd3';
-import { Select } from '@mantine/core';
+import {
+  Button, Group, Select, Text,
+} from '@mantine/core';
 import { Registry, initializeTrrack } from '@trrack/core';
 import cx from 'clsx';
 import { StimulusParams } from '../../../store/types';
@@ -65,7 +67,7 @@ const MemoizedSelect = memo(Select);
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function SearchBubbleChart({ parameters, setAnswer, provenanceState }: StimulusParams<any, {all: {hoveredItem: DataModel, searchValue: string}}>) {
-  const { data: dataPath } = parameters;
+  const { data: dataPath, search: searchEnabled } = parameters;
   const ref = useRef(null);
   const [data, setData] = useState<d3.HierarchyCircularNode<DataModel> | null>(null);
   const [dataByKey, setDataByKey] = useState<{[key: string]: DataModel}>({});
@@ -195,7 +197,9 @@ function SearchBubbleChart({ parameters, setAnswer, provenanceState }: StimulusP
     });
 
     const legend = svg.append('g')
+      .attr('text-anchor', 'end')
       .classed('legend', true);
+
     let currentLegendHeight = 40;
     const legendSpaceStep = 20;
     const legendTextStep = 10;
@@ -203,8 +207,58 @@ function SearchBubbleChart({ parameters, setAnswer, provenanceState }: StimulusP
     legend.append('text')
       .attr('x', size + margin.right)
       .attr('y', currentLegendHeight)
+      .attr('font-size', '0.8em')
       .text('Distance to Center: Admission Rate (%)');
     currentLegendHeight += legendTextStep + legendSpaceStep;
+
+    legend.append('text')
+      .attr('x', size + margin.right)
+      .attr('y', currentLegendHeight)
+      .attr('font-size', '0.8em')
+      .text('Radius: Annual Cost ($)');
+    currentLegendHeight += legendTextStep + legendSpaceStep;
+
+    legend.append('text')
+      .attr('x', size + margin.right)
+      .attr('y', currentLegendHeight)
+      .attr('font-size', '0.8em')
+      .text('Color: Median of Earnings ($)');
+    currentLegendHeight += legendTextStep + legendSpaceStep;
+
+    // color legend
+    const colorDomain = color.domain();
+    const colorStep = (colorDomain[1] - colorDomain[0]) / 4;
+    const colorValues = [
+      colorDomain[0],
+      colorDomain[0] + colorStep,
+      colorDomain[0] + 2 * colorStep,
+      colorDomain[0] + 3 * colorStep,
+    ];
+    const colorLegendData = colorRange.map((d, i) => {
+      const obj = {
+        color: d,
+        start: `${Math.round(Math.sqrt(colorValues[i]) / 1000)}k`,
+      };
+      return obj;
+    });
+    const rectWidth = 40;
+
+    const legendColorBlocks = legend.append('g').selectAll('g')
+      .data(colorLegendData)
+      .enter()
+      .append('g')
+      .attr('transform', (d, i) => `translate(${size + margin.right - (4 - i) * rectWidth},${currentLegendHeight} )`);
+
+    legendColorBlocks.append('rect')
+      .attr('width', rectWidth)
+      .attr('height', 10)
+      .attr('fill', (d) => d.color);
+    legendColorBlocks.append('text')
+      .attr('x', 10)
+      .attr('y', -5)
+      .attr('font-size', '0.8em')
+      .text((d) => d.start);
+    currentLegendHeight += 20 + legendSpaceStep;
   }, [data, trrack, setAnswer, actions]);
 
   useEffect(() => {
@@ -236,17 +290,23 @@ function SearchBubbleChart({ parameters, setAnswer, provenanceState }: StimulusP
 
   return (
     <div>
-      <MemoizedSelect
-        searchable
-        searchValue={searchValue}
-        onSearchChange={handleSearchValueChange}
-        onChange={setSelectedValue}
-        label="Search"
-        placeholder="Search for college..."
-        data={searchList}
-      />
+      {searchEnabled && (
+      <Group display="flex" align="flex-end">
+        <MemoizedSelect
+          searchable
+          searchValue={searchValue}
+          onSearchChange={handleSearchValueChange}
+          onChange={setSelectedValue}
+          label="Search"
+          placeholder="Search for college..."
+          data={searchList}
+          w={400}
+        />
+        <Button onClick={() => { handleSearchValueChange(''); }}>Reset Search</Button>
+      </Group>
+      )}
       <div className={cx(classes.chartWrapper, { [classes.searching]: searchValue !== '' })} style={{ height: '720px' }}>
-        <svg ref={ref} style={{ height: 720, width: 720 }} />
+        <svg ref={ref} style={{ height: size + margin.top + margin.bottom, width: size + margin.left + margin.right }} />
         {hoveredNode && (
         <div
           className={classes.tooltip}
@@ -273,6 +333,11 @@ function SearchBubbleChart({ parameters, setAnswer, provenanceState }: StimulusP
           </div>
         </div>
         )}
+      </div>
+      <div>
+        Click the following button only after you&apos;ve finished exploring --
+        {' '}
+        <Text c="blue">you cannot return to this page.</Text>
       </div>
     </div>
 

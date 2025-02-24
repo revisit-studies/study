@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.2/src/parser/GlobalConfigSchema.json",
   "configsList": [
-    "vis-search",
+    "bubblechart-study",
     "tutorial",
     "example-brush-interactions",
     "example-cleveland",
@@ -40,8 +40,8 @@
     "HeatmapJND-study"
   ],
   "configs": {
-    "vis-search": {
-      "path": "vis-search/config.json"
+    "bubblechart-study": {
+      "path": "bubblechart-study/config.json"
     },
     "tutorial": {
       "path": "tutorial/config.json"
