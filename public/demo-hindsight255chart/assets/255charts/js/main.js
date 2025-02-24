@@ -6,6 +6,7 @@
 
 /*global queue, labels*/
 import { Registry, initializeTrrack } from 'https://cdn.jsdelivr.net/npm/@trrack/core@1.3.0/+esm'
+var taskId = 'visit';
 var registry = Registry.create();
 var recordActivity = registry.register(
     "record-activity",
@@ -19,7 +20,6 @@ var recordActivity = registry.register(
         }
     }
 );
-
 ///////////////////////////For Experiment Begin/////////////////////////////
 var smData = {
     "mouseOver": 0,
@@ -43,8 +43,12 @@ var trrack = initializeTrrack({
 });
 
 trrack.currentChange(() => {
+    Revisit.postAnswers({
+        [taskId]: smData.visited_sequence.split('-').length
+    });
     Revisit.postProvenance(trrack.graph.backend);
 });
+
 
 var visitedArray = [];
 var currentVisit = null;
@@ -57,9 +61,9 @@ var fadeColor = '#000000';
 
 
 // if (Math.random() > 0.5) {
-//     smData.condition = "fade";
+    smData.condition = "fade";
 // } else {
-    smData.condition = "nofade";
+//     smData.condition = "nofade";
 // }
 
 console.log("condition = " + smData.condition);
@@ -421,6 +425,7 @@ function drawBead(e) {
     //for Data Collection
     smData.mouseMove++;
     trrack.apply("mouseMove", recordActivity("mouseMove"));
+
     if(currentVisit) {
         currentVisit.mousemove++;
         //console.log("current chart mousemove: " + currentVisit.mousemove);
@@ -505,6 +510,7 @@ function showTile(industry) {
     hoverId = setTimeout(fadeIt, smData.fadeDelay, industry.element, clone);
     smData.mouseOver++;
     trrack.apply("mouseOver", recordActivity("mouseOver"));
+
 
 }
 

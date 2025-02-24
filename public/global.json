@@ -33,7 +33,8 @@
     "demo-vega",
     "test-randomization",
     "test-skip-logic",
-    "demo-255chart"
+    "demo-255chart",
+    "demo-hindsight255chart"
   ],
   "configs": {
     "tutorial-simple-study": {
@@ -147,6 +148,9 @@
     },
     "demo-255chart": {
       "path": "demo-255chart/config.json"
+    },
+    "demo-hindsight255chart": {
+      "path": "demo-hindsight255chart/config.json"
     }
   }
 }

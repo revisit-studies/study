@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.1/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "255 Charts",
+    "title": "hindsight 255 Charts",
     "version": "pilot",
     "authors": [
       "The reVISit Team"
@@ -16,7 +16,7 @@
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "demo-255chart/assets/help.md",
+    "helpTextPath": "demo-hindsight255chart/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -27,7 +27,7 @@
   "components": {
     "consent": {
       "type": "markdown",
-      "path": "demo-255chart/assets/consent.md",
+      "path": "demo-hindsight255chart/assets/consent.md",
       "nextButtonLocation": "belowStimulus",
       "response": [
         {
@@ -41,15 +41,23 @@
     },
     "training": {
       "type": "website",
-      "path": "demo-255chart/assets/train.html",
+      "path": "demo-hindsight255chart/assets/train.html",
       "nextButtonLocation": "belowStimulus",
       "response": []
     },
     "255Chart": {
       "type": "website",
       "nextButtonLocation": "belowStimulus",
-      "path": "demo-255chart/assets/255charts/index.html",
-      "response": []
+      "path": "demo-hindsight255chart/assets/255charts/index.html",
+      "response": [
+        {
+          "id": "visit",
+          "prompt": "Answer:",
+          "location": "belowStimulus",
+          "type": "reactive",
+          "hidden": false
+        }
+      ]
     },
     "debrief": {
       "type": "questionnaire",
