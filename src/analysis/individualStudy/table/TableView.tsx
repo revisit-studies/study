@@ -257,6 +257,7 @@ export function TableView({
           incorrectAnswers: {}, // not used
           windowEvents: Object.values(record.answers).flatMap((a) => a.windowEvents),
           timedOut: false, // not used
+          parameters: {}, // not used
         }}
         key={`cell-${record.participantId}-total-duration`}
       />

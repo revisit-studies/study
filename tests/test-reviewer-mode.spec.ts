@@ -9,7 +9,8 @@ test('test', async ({ page }) => {
   await page.getByRole('tab', { name: 'All Trials View' }).click();
 
   await page.getByLabel('All Trials View').locator('a').filter({ hasText: 'barChart' }).click();
-  await page.frameLocator('iframe').getByRole('img').click();
+  const iframe = await page.frameLocator('iframe').getByRole('img');
+  await expect(iframe).toBeVisible();
 
   await page.getByLabel('All Trials View').locator('a').filter({ hasText: 'introduction' }).click();
   const introText = await page.getByText('Welcome to our study. This is');

@@ -3,6 +3,7 @@ import {
 } from 'react';
 import { Vega, VisualizationSpec, View } from 'react-vega';
 import { initializeTrrack, Registry } from '@trrack/core';
+import { VegaProps } from 'react-vega/lib/Vega';
 import { VegaComponent } from '../parser/types';
 import { getJsonAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
@@ -16,6 +17,8 @@ export interface VegaProvState {
     value: string | object;
   };
 }
+
+const InternalVega = Vega as unknown as React.FC<VegaProps>;
 
 export function VegaController({ currentConfig, provState }: { currentConfig: VegaComponent; provState?: VegaProvState }) {
   const storeDispatch = useStoreDispatch();
@@ -57,7 +60,7 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   }: Parameters<StimulusParams<unknown>['setAnswer']>[0]) => {
     storeDispatch(
       updateResponseBlockValidation({
-        location: 'sidebar',
+        location: 'stimulus',
         identifier,
         status,
         values: answers,
@@ -139,5 +142,5 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     return <div>Failed to load vega config</div>;
   }
 
-  return (<Vega spec={structuredClone(vegaConfig)} signalListeners={signalListeners} onNewView={(v) => setView(v)} />);
+  return (<InternalVega spec={structuredClone(vegaConfig)} signalListeners={signalListeners} onNewView={(v) => setView(v)} />);
 }
