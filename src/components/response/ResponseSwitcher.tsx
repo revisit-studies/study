@@ -14,6 +14,7 @@ import { StringInput } from './StringInput';
 import { TextAreaInput } from './TextAreaInput';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { MatrixInput } from './MatrixInput';
+import { ButtonsInput } from './ButtonsInput';
 
 export function ResponseSwitcher({
   response,
@@ -144,6 +145,15 @@ export function ResponseSwitcher({
           disabled={isDisabled || dontKnowCheckbox}
           response={response}
           answer={ans as { value: Record<string, string> }}
+          index={index}
+          enumerateQuestions={enumerateQuestions}
+        />
+      )}
+      {response.type === 'buttons' && (
+        <ButtonsInput
+          response={response}
+          disabled={isDisabled || dontKnowCheckbox}
+          answer={ans as { value: string }}
           index={index}
           enumerateQuestions={enumerateQuestions}
         />
