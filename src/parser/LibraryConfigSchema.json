@@ -202,7 +202,14 @@
         },
         "options": {
           "items": {
-            "$ref": "#/definitions/StringOption"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
           },
           "type": "array"
         },

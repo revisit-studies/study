@@ -504,7 +504,7 @@ export interface ReactiveResponse extends BaseResponse {
  */
 export interface ButtonsResponse extends BaseResponse {
   type: 'buttons';
-  options: StringOption[];
+  options: (StringOption | string)[];
 }
 
 export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | ReactiveResponse | MatrixResponse | ButtonsResponse;
