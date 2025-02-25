@@ -1,5 +1,5 @@
 import {
-  Box, Flex, Radio, Text,
+  Box, Flex, FocusTrap, Radio, Text,
 } from '@mantine/core';
 import { useState } from 'react';
 import { ButtonsResponse } from '../../parser/types';
@@ -32,39 +32,41 @@ export function ButtonsInput({
   const [checkedValue, setCheckedValue] = useState(answer.value ?? '');
 
   return (
-    <Radio.Group
-      name={`radioInput${response.id}`}
-      label={(
-        <Flex direction="row" wrap="nowrap" gap={4}>
-          {enumerateQuestions && <Box style={{ minWidth: 'fit-content', fontSize: 16, fontWeight: 500 }}>{`${index}. `}</Box>}
-          <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
-            <ReactMarkdownWrapper text={prompt} required={required} />
-          </Box>
-        </Flex>
+    <FocusTrap>
+      <Radio.Group
+        name={`radioInput${response.id}`}
+        label={(
+          <Flex direction="row" wrap="nowrap" gap={4}>
+            {enumerateQuestions && <Box style={{ minWidth: 'fit-content', fontSize: 16, fontWeight: 500 }}>{`${index}. `}</Box>}
+            <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
+              <ReactMarkdownWrapper text={prompt} required={required} />
+            </Box>
+          </Flex>
       )}
-      description={secondaryText}
-      key={response.id}
-      {...answer}
+        description={secondaryText}
+        key={response.id}
+        {...answer}
           // This overrides the answers error. Which..is bad?
-      error={generateErrorMessage(response, answer, optionsAsStringOptions)}
-      style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
-    >
-      <Flex justify="space-between" align="center" gap="xl" mt="xs">
-        {optionsAsStringOptions.map((radio) => (
-          <Radio.Card
-            key={radio.value}
-            value={radio.value}
-            disabled={disabled}
-            checked={checkedValue === radio.value}
-            onClick={() => setCheckedValue(radio.value)}
-            ta="center"
-            className={classes.root}
-            p="xs"
-          >
-            <Text>{radio.label}</Text>
-          </Radio.Card>
-        ))}
-      </Flex>
-    </Radio.Group>
+        error={generateErrorMessage(response, answer, optionsAsStringOptions)}
+        style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
+      >
+        <Flex justify="space-between" align="center" gap="xl" mt="xs">
+          {optionsAsStringOptions.map((radio) => (
+            <Radio.Card
+              key={radio.value}
+              value={radio.value}
+              disabled={disabled}
+              checked={checkedValue === radio.value}
+              onClick={() => setCheckedValue(radio.value)}
+              ta="center"
+              className={classes.root}
+              p="xs"
+            >
+              <Text>{radio.label}</Text>
+            </Radio.Card>
+          ))}
+        </Flex>
+      </Radio.Group>
+    </FocusTrap>
   );
 }
