@@ -64,7 +64,7 @@ export default function ParallelCoordinates({ v, onClick } : { v: number, onClic
         .remove();
       chart.selectAll(selector)
         .attr('transform', transform)
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-call, @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .call(axis as any);
     };
     // add Axis to chart

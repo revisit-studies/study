@@ -5,7 +5,6 @@
  *    Meant for easy understanding of the experiment code.
  */
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 import {
   useCallback,
   useEffect,

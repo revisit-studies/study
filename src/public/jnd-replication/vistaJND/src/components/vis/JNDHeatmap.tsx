@@ -82,7 +82,7 @@ export default function JND({ setAnswer, parameters } : StimulusParams<{r1: numb
         answers: { scatterSelections: participantSelections },
       });
     }
-  }, [counter, participantSelections]);
+  }, [counter, participantSelections, setAnswer]);
 
   if (counter === 50) {
     return (

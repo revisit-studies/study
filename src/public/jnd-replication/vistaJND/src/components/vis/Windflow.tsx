@@ -123,6 +123,7 @@ export default function Windflow({ v } : { v: number }) {
 
   useEffect(() => {
     createChart();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [v]);
   return (
     <svg
