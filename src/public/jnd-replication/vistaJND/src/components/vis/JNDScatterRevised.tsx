@@ -27,7 +27,7 @@ import ScatterWrapper from './ScatterWrapper';
  * r1 (base correlation value, does not change), r2 (other correlation value, does change
  * depending on the user's actions), above (a boolean determining whether it is an above or
  * below experiment)
- * @returns 2 scatter plots and a progress bar during the experiment or a message of completion
+ * @returns 2 scatter plots during the experiment or a message of completion
  * of the trial
  */
 export default function JND({ setAnswer, parameters } : StimulusParams<{r1: number, r2:number, above: boolean}>) {
@@ -98,9 +98,6 @@ export default function JND({ setAnswer, parameters } : StimulusParams<{r1: numb
       </Text>
       <Center>
         <ScatterWrapper onClick={onClick} r1={r1} r2={r2} />
-      </Center>
-      <Center style={{ marginTop: 20 }}>
-        <progress value={counter} max={50} />
       </Center>
     </Stack>
   );
