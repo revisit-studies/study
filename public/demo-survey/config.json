@@ -29,7 +29,7 @@
       "response": [
         {
           "id": "q-dropdown",
-          "prompt": "Dropdown example – which chart do you like best?",
+          "prompt": "Dropdown example – which chart do you like best?",
           "secondaryText": "You can specify secondary text to clarify your question.",
           "location": "aboveStimulus",
           "type": "dropdown",
