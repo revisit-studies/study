@@ -1,3 +1,4 @@
+import type { ComponentBlockWithOrderPath } from '../components/interface/StepsPanel';
 import { ComponentBlock, DynamicBlock, StudyConfig } from '../parser/types';
 import { isDynamicBlock } from '../parser/utils';
 import { Sequence } from '../store/types';
@@ -113,12 +114,12 @@ export function configSequenceToUniqueTrials(sequence: ComponentBlock | DynamicB
   return result;
 }
 
-export function addPathToComponentBlock(order: StudyConfig['sequence'] | string, orderPath: string): (StudyConfig['sequence'] & { orderPath: string }) | string {
+export function addPathToComponentBlock(order: StudyConfig['sequence'] | ComponentBlockWithOrderPath | string, orderPath: string): ComponentBlockWithOrderPath | string {
   if (typeof order === 'string') {
     return order;
   }
   if (isDynamicBlock(order)) {
-    return { ...order, orderPath };
+    return { ...order, orderPath, components: [] };
   }
   return {
     ...order, orderPath, order: order.order, components: order.components.map((o, i) => addPathToComponentBlock(o, `${orderPath}-${i}`)),

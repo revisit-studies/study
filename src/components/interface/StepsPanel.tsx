@@ -7,12 +7,15 @@ import { useDisclosure } from '@mantine/hooks';
 import { useCallback, useMemo, useState } from 'react';
 import { ComponentBlock, DynamicBlock, StudyConfig } from '../../parser/types';
 import { Sequence } from '../../store/types';
-import { deepCopy } from '../../utils/deepCopy';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import { useStoreSelector } from '../../store/store';
+import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 
-export type ComponentBlockWithOrderPath = Omit<ComponentBlock | DynamicBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]; interruptions?: { components: string[] }[] };
+export type ComponentBlockWithOrderPath =
+  Omit<ComponentBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]; interruptions?: { components: string[] }[] }
+  | (DynamicBlock & { orderPath: string; interruptions?: { components: string[] }[]; components: (ComponentBlockWithOrderPath | string)[]; });
 
 function findTaskIndexInSequence(sequence: Sequence, step: string, startIndex: number, requestedPath: string): number {
   let index = 0;
@@ -202,10 +205,17 @@ export function StepsPanel({
   analysisNavigation?: boolean;
 }) {
   // If the participantSequence is provided, reorder the components
-  let components = deepCopy(configSequence.components);
+  let components = structuredClone(configSequence.components);
   if (participantSequence && participantView) {
-    const reorderedComponents = reorderComponents(deepCopy(configSequence.components), deepCopy(participantSequence.components));
+    const reorderedComponents = reorderComponents(structuredClone(configSequence.components), structuredClone(participantSequence.components));
     components = reorderedComponents;
+  }
+
+  // Hacky. This call is not conditional, it either always happens or never happens. Not ideal.
+  let answers = {};
+  if (useIsAnalysis()) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks, @typescript-eslint/no-unused-vars
+    answers = useStoreSelector((state) => state.answers);
   }
 
   if (!participantView) {

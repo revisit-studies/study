@@ -13,7 +13,6 @@ import {
   useStoreDispatch, useStoreSelector, useStoreActions,
 } from '../../store/store';
 
-import { deepCopy } from '../../utils/deepCopy';
 import { NextButton } from '../NextButton';
 import { useAnswerField } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
@@ -122,7 +121,7 @@ export function ResponseBlock({
         location,
         identifier,
         status: answerValidator.isValid(),
-        values: deepCopy(answerValidator.values),
+        values: structuredClone(answerValidator.values),
         provenanceGraph,
       }),
     );

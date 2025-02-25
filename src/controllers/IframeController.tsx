@@ -2,7 +2,7 @@ import {
   useCallback, useEffect, useMemo, useRef,
 } from 'react';
 import { useDispatch } from 'react-redux';
-import { useCurrentComponent } from '../routes/utils';
+import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { StoredAnswer, WebsiteComponent } from '../parser/types';
 import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
@@ -16,9 +16,10 @@ const defaultStyle = {
 };
 
 export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: Record<string, StoredAnswer> }) {
-  const { setReactiveAnswers, setReactiveProvenance } = useStoreActions();
+  const { setReactiveAnswers, setReactiveProvenance, updateResponseBlockValidation } = useStoreActions();
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
+  const identifier = useCurrentIdentifier();
 
   const ref = useRef<HTMLIFrameElement>(null);
 
@@ -74,6 +75,12 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             break;
           case `${PREFIX}/ANSWERS`:
             storeDispatch(setReactiveAnswers(data.message));
+            storeDispatch(updateResponseBlockValidation({
+              location: 'stimulus',
+              identifier,
+              status: true,
+              values: data.message,
+            }));
             break;
           case `${PREFIX}/PROVENANCE`:
             storeDispatch(setReactiveProvenance(data.message));
