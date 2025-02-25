@@ -42,35 +42,33 @@ export default function JND({ setAnswer, parameters } : StimulusParams<{r1: numb
   const onClick = useCallback((n: number) => {
     setParticipantSelections([...participantSelections, { correct: n === 1 }]);
     setCounter(counter + 1);
+
+    const roundToTwo = (num: number) => parseFloat((Math.round(num * 100) / 100).toString());
+
     if (above && n === 2) {
       if (r2 < r1 || r2 - r1 <= 0.01) {
-        // correct and user converges graphs
         setCounter(50);
       } else {
-        // correct
-        setR2(Math.min(r2 - 0.01, 1));
+        setR2(roundToTwo(Math.max(r2 - 0.01, 0.01)));
       }
     } else if (above && n === 1) {
-      // incorrect
       if (r2 >= 1) {
         setR2(1);
       } else {
-        setR2(Math.max(r2 + 0.03, 0));
+        setR2(roundToTwo(Math.max(r2 + 0.03, 0.01)));
       }
     } else if (!above && n === 1) {
       if (r1 < r2 || r1 - r2 <= 0.01) {
-        // correct and user converges graphs
         setCounter(50);
       } else {
-        // correct
-        setR2(Math.min(r2 + 0.01, 1));
+        setR2(roundToTwo(Math.max(r2 + 0.01, 0.01)));
       }
     } else if (!above && n === 2) {
-      // incorrect
-      if (r2 <= 0) {
-        setR2(0);
+      if (r2 <= 0.01) {
+        setR2(0.01);
+      } else {
+        setR2(roundToTwo(Math.max(r2 - 0.03, 0.01)));
       }
-      setR2(Math.max(r2 - 0.03, 0));
     }
   }, [above, counter, participantSelections, r1, r2]);
 
@@ -82,7 +80,7 @@ export default function JND({ setAnswer, parameters } : StimulusParams<{r1: numb
         answers: { scatterSelections: participantSelections },
       });
     }
-  }, [counter, participantSelections]);
+  }, [counter, participantSelections, setAnswer]);
 
   if (counter === 50) {
     return (
