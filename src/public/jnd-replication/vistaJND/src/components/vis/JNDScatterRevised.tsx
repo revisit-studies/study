@@ -20,7 +20,7 @@ import { StimulusParams } from '../../../../../../store/types';
 import ScatterWrapper from './ScatterWrapper';
 
 /**
- * Displays user's experiemnt. (This includes 2 scatter plots and a progress bar).
+ * Displays user's experiemnt. (This includes 2 scatter plots).
  * Once completed (after 50 selections or the graphs converge) it nofifys the user
  * to continue on.
  * @param param0 - setAnswer is a function that fills the response, parameters are
