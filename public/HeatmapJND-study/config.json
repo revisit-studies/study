@@ -12,7 +12,7 @@
     "contactEmail": "contact@revisit.dev",
     "helpTextPath": "HeatmapJND-study/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
-    "withProgressBar": true,
+    "withProgressBar": false,
     "autoDownloadStudy": false,
     "sidebar": false,
     "urlParticipantIdParam": "PROLIFIC_PID",
