@@ -136,7 +136,7 @@ export interface NumberOption {
 }
 
 /**
- * The StringOption interface is used to define the options for a dropdown, radio, or checkbox response.
+ * The StringOption interface is used to define the options for a dropdown, radio, buttons, or checkbox response.
  * The label is the text that is displayed to the user, and the value is the value that is stored in the data file.
  */
 export interface StringOption {
