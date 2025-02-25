@@ -59,6 +59,7 @@ export function ButtonsInput({
             onClick={() => setCheckedValue(radio.value)}
             ta="center"
             className={classes.root}
+            p="xs"
           >
             <Text>{radio.label}</Text>
           </Radio.Card>
