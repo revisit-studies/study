@@ -29,6 +29,7 @@ export function SliderInput({
     secondaryText,
     snap,
     step,
+    withBar,
   } = response;
 
   const [min, max] = useMemo(() => [Math.min(...options.map((opt) => opt.value)), Math.max(...options.map((opt) => opt.value))], [options]);
@@ -60,6 +61,10 @@ export function SliderInput({
         classNames={{ markLabel: classes.markLabel }}
         restrictToMarks={snap}
         label={(value) => (snap ? null : value)}
+        styles={{
+          bar: !withBar ? { display: 'none' } : {},
+          mark: !withBar ? { borderColor: 'var(--mantine-color-gray-2)' } : {},
+        }}
       />
     </Input.Wrapper>
   );
