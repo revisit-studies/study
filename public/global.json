@@ -37,7 +37,8 @@
     "ScatterJND-study",
     "ParallelJND-study",
     "HexbinJND-study",
-    "HeatmapJND-study"
+    "HeatmapJND-study",
+    "demo-255chart"
   ],
   "configs": {
     "vis-search": {
@@ -164,6 +165,9 @@
     },
     "HeatmapJND-study": {
       "path": "HeatmapJND-study/config.json"
+    },
+    "demo-255chart": {
+        "path": "demo-255chart/config.json"
     }
   }
 }
