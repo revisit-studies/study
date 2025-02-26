@@ -406,6 +406,8 @@ export interface SliderResponse extends BaseResponse {
   snap?: boolean;
   /** The step value of the slider. If not provided (and snap not enabled), the step value is calculated as the range of the slider divided by 100. */
   step?: number;
+  /** Whether to render the slider with a bar to the left. Defaults to true. */
+  withBar?: boolean;
 }
 
 /**

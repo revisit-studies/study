@@ -1906,6 +1906,10 @@
           "const": "slider",
           "type": "string"
         },
+        "withBar": {
+          "description": "Whether to render the slider with a bar to the left. Defaults to true.",
+          "type": "boolean"
+        },
         "withDivider": {
           "description": "Renders the response with a trailing divider.",
           "type": "boolean"
