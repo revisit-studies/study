@@ -136,7 +136,7 @@ export interface NumberOption {
 }
 
 /**
- * The StringOption interface is used to define the options for a dropdown, radio, or checkbox response.
+ * The StringOption interface is used to define the options for a dropdown, radio, buttons, or checkbox response.
  * The label is the text that is displayed to the user, and the value is the value that is stored in the data file.
  */
 export interface StringOption {
@@ -481,7 +481,33 @@ export interface ReactiveResponse extends BaseResponse {
   type: 'reactive';
 }
 
-export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | ReactiveResponse | MatrixResponse;
+/**
+ * The ButtonsResponse interface is used to define the properties of a buttons response.
+ * ButtonsResponses render as a list of buttons that the participant can click. When a button is clicked, the value of the button is stored in the data file.
+ * Participants can cycle through the options using the arrow keys.
+ *
+ * Example:
+ * ```js
+ * {
+ *   "id": "buttonsResponse",
+ *   "type": "buttons",
+ *   "prompt": "Click a button",
+ *   "location": "belowStimulus",
+ *   "options": [
+ *     "Option 1",
+ *     "Option 2",
+ *     "Option 3"
+ *   ]
+ * }
+ * ```
+ * In this example, the participant can click one of the buttons labeled "Option 1", "Option 2", or "Option 3".
+ */
+export interface ButtonsResponse extends BaseResponse {
+  type: 'buttons';
+  options: (StringOption | string)[];
+}
+
+export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | ReactiveResponse | MatrixResponse | ButtonsResponse;
 
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.

@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.2/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/cursor-buttons/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Question Types and Form Elements Demo",
     "version": "pilot",
@@ -29,7 +29,7 @@
       "response": [
         {
           "id": "q-dropdown",
-          "prompt": "Dropdown example – which chart do you like best?",
+          "prompt": "Dropdown example – which chart do you like best?",
           "secondaryText": "You can specify secondary text to clarify your question.",
           "location": "aboveStimulus",
           "type": "dropdown",
@@ -187,6 +187,19 @@
               "label": "Good",
               "value": 100
             }
+          ]
+        },
+        {
+          "id": "q-buttons",
+          "type": "buttons",
+          "prompt": "Buttons example",
+          "secondaryText": "Buttons that function as radio buttons, but look like buttons. Control with the arrow keys.",
+          "location": "aboveStimulus",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
           ]
         }
       ]
