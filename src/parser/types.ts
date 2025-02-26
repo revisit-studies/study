@@ -404,6 +404,8 @@ export interface SliderResponse extends BaseResponse {
   startingValue?: number;
   /** Whether the slider should snap between values. Defaults to false. Slider snapping disables the label above the handle. */
   snap?: boolean;
+  /** The step value of the slider. If not provided (and snap not enabled), the step value is calculated as the range of the slider divided by 100. */
+  step?: number;
 }
 
 /**

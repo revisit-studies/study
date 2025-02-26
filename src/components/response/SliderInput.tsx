@@ -28,6 +28,7 @@ export function SliderInput({
     options,
     secondaryText,
     snap,
+    step,
   } = response;
 
   const [min, max] = useMemo(() => [Math.min(...options.map((opt) => opt.value)), Math.max(...options.map((opt) => opt.value))], [options]);
@@ -52,6 +53,7 @@ export function SliderInput({
         marks={options as SliderProps['marks']}
         min={min}
         max={max}
+        step={step ?? (snap ? 0.001 : (max - min) / 100)}
         {...answer}
         h={40}
         mt={4}
