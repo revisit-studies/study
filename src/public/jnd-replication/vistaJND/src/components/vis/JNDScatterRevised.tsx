@@ -10,9 +10,6 @@
  *    subgroups".
  */
 
-import {
-  useEffect, useState,
-} from 'react';
 import { Center, Stack, Text } from '@mantine/core';
 import { StimulusParams } from '../../../../../../store/types';
 import ScatterWrapper from './ScatterWrapper';
@@ -30,36 +27,23 @@ import { useNextStep } from '../../../../../../store/hooks/useNextStep';
  * of the trial
  */
 export default function JND({ setAnswer, parameters } : StimulusParams<{r1: number, r2:number, above: boolean, counter: number}>) {
-  const [counter, setCounter] = useState(parameters.counter);
-  const [participantSelections, setParticipantSelections] = useState<{correct: boolean}[]>([]);
   const { r1, r2, above } = parameters;
   const { goToNextStep } = useNextStep();
 
   const onClick = (n: number) => {
     // setParticipantSelections([...participantSelections, { correct: n === 1 }]);
     // setCounter(counter + 1);
-    console.log('n', n);
     setAnswer({
       status: true,
       answers: { scatterSelections: n === 1 },
     });
-    goToNextStep();
-    // setTimeout(() => {
-    //   goToNextStep();
-    // }, 2000);
+
+    setTimeout(() => {
+      goToNextStep();
+    }, 0);
   };
 
-  useEffect(() => {
-    if (counter === 50) {
-      setAnswer({
-        status: true,
-        provenanceGraph: undefined,
-        answers: { scatterSelections: participantSelections },
-      });
-    }
-  }, [counter, participantSelections, setAnswer]);
-
-  if (counter === 50) {
+  if (parameters.counter === 50) {
     return (
       <Text>Completed! Great job, please continue.</Text>
     );

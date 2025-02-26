@@ -10,8 +10,6 @@ export default function func({
 
   const roundToTwo = (num: number) => parseFloat((Math.round(num * 100) / 100).toString());
   // console.log('inside func');
-  console.log(answers);
-
   if (Array.isArray(answers.scatterSelections) && answers.scatterSelections.length > 0) {
     const scatterSelections = answers.scatterSelections as StoredAnswer[];
     const lastSelection = scatterSelections[scatterSelections.length - 1];
