@@ -25,12 +25,11 @@
       "response": [{ 
         "id": "scatterSelections",
         "prompt": "Select the option with the higher correlation",
-        "required": true,
+        "required": false,
         "location": "aboveStimulus",
-        "type": "numerical",
+        "type": "reactive", 
         "hidden": true
-      }
-      ]
+      }]
     },
     "practiceBase": {
     "type": "react-component",
@@ -100,6 +99,9 @@
       "type": "markdown",
       "path": "ParallelJND-study/assets/begin.md",
       "response": []
+    },
+    "trial": {
+      "baseComponent": "experimentRevised"
     },
     "trial1": {
       "baseComponent": "experimentRevised",
@@ -231,38 +233,33 @@
     }
   },
   "sequence": {
-  "order": "fixed",
-  "components": [
-    "introduction",
-    "training",
-    {
-      "order": "fixed",
-      "components": [
-        "practice1", "practice2", "practice3",
-        "practice4", "practice5", "practice6",
-        "practice7", "practice8", "practice9"
-      ]
-    },
-    "begin",
-    {
-      "order": "random",
-      "components": [
-          "trial1",
-          "trial2",
-          "trial3",
-          "trial4",
-          "trial5",
-          "trial6",
-          "trial7",
-          "trial8",
-          "trial9",
-          "trial10",
-          "trial11",
-          "trial12",
-          "trial13",
-          "trial14",
-          "trial15",
-          "trial16"
+    "order": "fixed",
+    "components": [
+      "introduction",
+      "training",
+      {
+        "order": "fixed",
+        "components": [
+          "practice1", "practice2", "practice3",
+          "practice4", "practice5", "practice6",
+          "practice7", "practice8", "practice9"
+        ]
+      },
+      "begin",
+      {
+        "order": "random",
+        "components": [
+          {
+            "order": "dynamic",
+            "id": "scatter1",
+            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+            "parameters": {
+              "r1": 0.1,
+              "r2": 0.6,
+              "above": true,
+              "name": "trial"
+            }
+          }
         ]
       }
     ]

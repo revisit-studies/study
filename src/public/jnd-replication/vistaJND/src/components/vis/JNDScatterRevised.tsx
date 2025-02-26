@@ -11,13 +11,12 @@
  */
 
 import {
-  useCallback,
-  useEffect,
-  useState,
+  useEffect, useState,
 } from 'react';
 import { Center, Stack, Text } from '@mantine/core';
 import { StimulusParams } from '../../../../../../store/types';
 import ScatterWrapper from './ScatterWrapper';
+import { useNextStep } from '../../../../../../store/hooks/useNextStep';
 
 /**
  * Displays user's experiemnt. (This includes 2 scatter plots).
@@ -30,47 +29,25 @@ import ScatterWrapper from './ScatterWrapper';
  * @returns 2 scatter plots during the experiment or a message of completion
  * of the trial
  */
-export default function JND({ setAnswer, parameters } : StimulusParams<{r1: number, r2:number, above: boolean}>) {
-  const [counter, setCounter] = useState(0);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [above, setAbove] = useState(parameters.above);
+export default function JND({ setAnswer, parameters } : StimulusParams<{r1: number, r2:number, above: boolean, counter: number}>) {
+  const [counter, setCounter] = useState(parameters.counter);
   const [participantSelections, setParticipantSelections] = useState<{correct: boolean}[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [r1, setR1] = useState(parameters.r1);
-  const [r2, setR2] = useState(parameters.r2);
+  const { r1, r2, above } = parameters;
+  const { goToNextStep } = useNextStep();
 
-  const onClick = useCallback((n: number) => {
-    setParticipantSelections([...participantSelections, { correct: n === 1 }]);
-    setCounter(counter + 1);
-
-    const roundToTwo = (num: number) => parseFloat((Math.round(num * 100) / 100).toString());
-
-    if (above && n === 2) {
-      if (r2 < r1 || r2 - r1 <= 0.01) {
-        setCounter(50);
-      } else {
-        setR2(roundToTwo(Math.max(r2 - 0.01, 0.01)));
-      }
-    } else if (above && n === 1) {
-      if (r2 >= 1) {
-        setR2(1);
-      } else {
-        setR2(roundToTwo(Math.max(r2 + 0.03, 0.01)));
-      }
-    } else if (!above && n === 1) {
-      if (r1 < r2 || r1 - r2 <= 0.01) {
-        setCounter(50);
-      } else {
-        setR2(roundToTwo(Math.max(r2 + 0.01, 0.01)));
-      }
-    } else if (!above && n === 2) {
-      if (r2 <= 0.01) {
-        setR2(0.01);
-      } else {
-        setR2(roundToTwo(Math.max(r2 - 0.03, 0.01)));
-      }
-    }
-  }, [above, counter, participantSelections, r1, r2]);
+  const onClick = (n: number) => {
+    // setParticipantSelections([...participantSelections, { correct: n === 1 }]);
+    // setCounter(counter + 1);
+    console.log('n', n);
+    setAnswer({
+      status: true,
+      answers: { scatterSelections: n === 1 },
+    });
+    goToNextStep();
+    // setTimeout(() => {
+    //   goToNextStep();
+    // }, 2000);
+  };
 
   useEffect(() => {
     if (counter === 50) {
@@ -97,7 +74,7 @@ export default function JND({ setAnswer, parameters } : StimulusParams<{r1: numb
         Select the option with the higher correlation
       </Text>
       <Center>
-        <ScatterWrapper onClick={onClick} r1={r1} r2={r2} />
+        <ScatterWrapper onClick={onClick} r1={r1} r2={r2} above={above} />
       </Center>
     </Stack>
   );

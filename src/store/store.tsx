@@ -207,12 +207,14 @@ export async function studyStoreCreator(
           provenanceGraph?: TrrackedProvenance;
         }>,
       ) => {
+        console.log('updateResponseBlockValidation', payload, JSON.parse(JSON.stringify(state.trialValidation)));
         if (!state.trialValidation[payload.identifier]) {
           return;
         }
         if (Object.keys(payload.values).length > 0) {
           const currentValues = state.trialValidation[payload.identifier][payload.location].values;
           state.trialValidation[payload.identifier][payload.location] = { valid: payload.status, values: { ...currentValues, ...payload.values } };
+          console.log(JSON.parse(JSON.stringify(state.trialValidation)))
         } else {
           state.trialValidation[payload.identifier][payload.location] = { valid: payload.status, values: {} };
         }

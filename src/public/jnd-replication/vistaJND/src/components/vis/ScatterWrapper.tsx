@@ -15,9 +15,10 @@ import ScatterPlots from './ScatterPlots';
  * @returns 2 Scatter Plots
  */
 export default function ScatterWrapper({
-  r1, r2, shouldReRender = true, onClick,
-}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number) => void}) {
+  r1, r2, above, shouldReRender = true, onClick,
+}: {r1: number; r2: number, above: boolean, shouldReRender?: boolean, onClick: (n: number) => void}) {
   const higherFirst = useMemo(() => Math.random() > 0.5, []);
+  // console.log('correlations', r1, r2, above);
 
   const [key, setKey] = useState<number>(0);
 
