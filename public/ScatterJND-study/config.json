@@ -12,7 +12,7 @@
     "contactEmail": "contact@revisit.dev",
     "helpTextPath": "ScatterJND-study/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
-    "withProgressBar": true,
+    "withProgressBar": false,
     "autoDownloadStudy": false,
     "sidebar": false,
     "urlParticipantIdParam": "PROLIFIC_PID",
@@ -31,7 +31,13 @@
         "hidden": true
       }
       ]
-    }
+    },
+    "practiceBase": {
+    "type": "react-component",
+    "path": "jnd-replication/vistaJND/src/components/vis/PracticeScatter.tsx",
+    "nextButtonLocation": "belowStimulus",
+    "response": []
+  }
   },
   "components": {
     "introduction": {
@@ -54,19 +60,41 @@
       "path": "ScatterJND-study/assets/training.md",
       "response": []
     },
-    "practice": {
-      "type": "react-component",
-      "path": "jnd-replication/vistaJND/src/components/vis/PracticeScatter.tsx",
-      "nextButtonLocation": "sidebar",
-      "response": [{ 
-        "id": "completed",
-        "prompt": "Did you complete the practice?",
-        "required": true,
-        "location": "aboveStimulus",
-        "type": "numerical",
-        "hidden": true
-      }
-      ]
+    "practice1": {
+      "baseComponent": "practiceBase",
+      "parameters": { "r1": 0.3, "r2": 0.7 }
+    },
+    "practice2": {
+      "baseComponent": "practiceBase",
+      "parameters": { "r1": 0.9, "r2": 0.6 }
+    },
+    "practice3": {
+      "baseComponent": "practiceBase",
+      "parameters": { "r1": 0.6, "r2": 0.3 }
+    },
+    "practice4": {
+      "baseComponent": "practiceBase",
+      "parameters": { "r1": 0.6, "r2": 0.9 }
+    },
+    "practice5": {
+      "baseComponent": "practiceBase",
+      "parameters": { "r1": 0.3, "r2": 0.1 }
+    },
+    "practice6": {
+      "baseComponent": "practiceBase",
+      "parameters": { "r1": 0.5, "r2": 0.3 }
+    },
+    "practice7": {
+      "baseComponent": "practiceBase",
+      "parameters": { "r1": 0.9, "r2": 0.8 }
+    },
+    "practice8": {
+      "baseComponent": "practiceBase",
+      "parameters": { "r1": 0.6, "r2": 0.7 }
+    },
+    "practice9": {
+      "baseComponent": "practiceBase",
+      "parameters": { "r1": 0.99, "r2": 0.9 }
     },
     "begin": {
       "type": "markdown",
@@ -203,15 +231,22 @@
     }
   },
   "sequence": {
-    "order": "fixed",
-    "components": [
-      "introduction",
-      "training",
-      "practice",
-      "begin",
-      {
-        "order": "random",
-        "components": [
+  "order": "fixed",
+  "components": [
+    "introduction",
+    "training",
+    {
+      "order": "fixed",
+      "components": [
+        "practice1", "practice2", "practice3",
+        "practice4", "practice5", "practice6",
+        "practice7", "practice8", "practice9"
+      ]
+    },
+    "begin",
+    {
+      "order": "random",
+      "components": [
           "trial1",
           "trial2",
           "trial3",

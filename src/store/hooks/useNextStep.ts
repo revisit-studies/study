@@ -9,7 +9,6 @@ import {
 } from '../store';
 import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
 
-import { deepCopy } from '../../utils/deepCopy';
 import { StoredAnswer, ValidationStatus } from '../types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useStoredAnswer } from './useStoredAnswer';
@@ -84,7 +83,7 @@ export function useNextStep() {
       return;
     }
     // Get answer from across the 3 response blocks and the provenance graph
-    const trialValidationCopy = deepCopy(trialValidation[identifier]);
+    const trialValidationCopy = structuredClone(trialValidation[identifier]);
     const answer = Object.values(trialValidationCopy).reduce((acc, curr) => {
       if (Object.hasOwn(curr, 'values')) {
         return { ...acc, ...(curr as ValidationStatus).values };

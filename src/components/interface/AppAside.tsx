@@ -18,7 +18,6 @@ import {
   useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../../store/store';
 import { useStudyId } from '../../routes/utils';
-import { deepCopy } from '../../utils/deepCopy';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { addPathToComponentBlock } from '../../utils/getSequenceFlatMap';
@@ -48,7 +47,7 @@ export function AppAside() {
   const isAnalysis = useIsAnalysis();
 
   const fullOrder = useMemo(() => {
-    let r = deepCopy(studyConfig.sequence) as ComponentBlockWithOrderPath;
+    let r = structuredClone(studyConfig.sequence) as ComponentBlockWithOrderPath;
     r = addPathToComponentBlock(r, 'root') as ComponentBlockWithOrderPath;
     r.components.push('end');
     return r;

@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from 'react-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
 import {
   useFlatSequence, useStoreActions, useStoreDispatch, useStoreSelector,
@@ -47,7 +47,7 @@ export function useCurrentComponent(): string {
 
   const currentComponent = useMemo(() => (typeof currentStep === 'number' ? getComponent(flatSequence[currentStep], studyConfig) : null), [currentStep, flatSequence, studyConfig]);
 
-  const [compName, setCompName] = useState<string | undefined>();
+  const compName = useRef(flatSequence[0]);
   const nextFunc:(({ components, answers, sequenceSoFar }: JumpFunctionParameters<unknown>) => JumpFunctionReturnVal) | null = useMemo(() => {
     if (typeof currentStep === 'number' && !currentComponent) {
       const block = findFuncBlock(flatSequence[currentStep], studyConfig.sequence);
@@ -80,7 +80,7 @@ export function useCurrentComponent(): string {
           components: [], answers: _answers, sequenceSoFar: [], customParameters: findFuncBlock(flatSequence[currentStep], studyConfig.sequence)?.parameters,
         });
         if (currCompName !== null) {
-          setCompName(currCompName);
+          compName.current = currCompName;
 
           storeDispatch(pushToFuncSequence({
             component: currCompName, funcName: flatSequence[currentStep], index: currentStep, funcIndex: funcIndex ? decryptIndex(funcIndex) : 0, parameters: _params || {},
@@ -91,14 +91,14 @@ export function useCurrentComponent(): string {
           navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${window.location.search}`);
         }
       } else {
-        setCompName(flatSequence[currentStep]);
+        compName.current = flatSequence[currentStep];
       }
     } else {
-      setCompName(currentStep.replace('reviewer-', ''));
+      compName.current = currentStep.replace('reviewer-', '');
     }
   }, [_answers, currentStep, flatSequence, funcIndex, navigate, nextFunc, pushToFuncSequence, setFuncParams, storeDispatch, studyConfig, studyId]);
 
-  return compName || flatSequence[0];
+  return compName.current;
 }
 
 export function useCurrentIdentifier(): string {
@@ -108,7 +108,7 @@ export function useCurrentIdentifier(): string {
   const currentComponent = useCurrentComponent();
 
   const { funcIndex } = useParams();
-  const identifier = funcIndex && typeof currentStep === 'number' ? `${participantSequence[currentStep]}_${currentStep}_${currentComponent}_${decryptIndex(funcIndex)}` : `${currentComponent}_${currentStep}`;
+  const identifier = useMemo(() => (funcIndex && typeof currentStep === 'number' ? `${participantSequence[currentStep]}_${currentStep}_${currentComponent}_${decryptIndex(funcIndex)}` : `${currentComponent}_${currentStep}`), [currentComponent, currentStep, funcIndex, participantSequence]);
 
   return identifier;
 }
