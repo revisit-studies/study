@@ -360,6 +360,9 @@
               },
               {
                 "$ref": "#/definitions/ComponentBlock"
+              },
+              {
+                "$ref": "#/definitions/DynamicBlock"
               }
             ]
           },
@@ -536,6 +539,36 @@
         "options",
         "prompt",
         "type"
+      ],
+      "type": "object"
+    },
+    "DynamicBlock": {
+      "additionalProperties": false,
+      "description": "The DynamicBlock interface is used to define a block where displayed components are controlled by a function. This is useful when you want to generate the sequence based on answers to previous questions or other factors.\n\nThe functionPath property is a path to the function that generates the components. This should be a relative path from the src/public folder.\n\nHere's an example of how to use the DynamicBlock:\n\n```js {   \"id\": \"funcBlock\",   \"order\": \"dynamic\",   \"functionPath\": \"<study-name>/assets/function.js\",   \"parameters\": {     \"param1\": \"value1\",     \"param2\": \"value2\"   } } ```",
+      "properties": {
+        "functionPath": {
+          "description": "The path to the function that generates the components. This should be a relative path from the src/public folder.",
+          "type": "string"
+        },
+        "id": {
+          "description": "The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property.",
+          "type": "string"
+        },
+        "order": {
+          "const": "dynamic",
+          "description": "The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed.",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters that are passed to the function. These can be used within your function to render different things.",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "order",
+        "functionPath"
       ],
       "type": "object"
     },
@@ -948,7 +981,15 @@
         },
         "sequences": {
           "additionalProperties": {
-            "$ref": "#/definitions/ComponentBlock"
+            "anyOf": [
+              {
+                "$ref": "#/definitions/ComponentBlock"
+              },
+              {
+                "$ref": "#/definitions/DynamicBlock"
+              }
+            ],
+            "description": "The order of the components in the study. This might include some randomness."
           },
           "description": "The order of the components in the study. This might include some randomness.",
           "type": "object"

@@ -3,12 +3,13 @@ import {
 } from 'react';
 import { Vega, VisualizationSpec, View } from 'react-vega';
 import { initializeTrrack, Registry } from '@trrack/core';
+import { VegaProps } from 'react-vega/lib/Vega';
 import { VegaComponent } from '../parser/types';
 import { getJsonAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { StimulusParams } from '../store/types';
-import { useCurrentComponent, useCurrentStep } from '../routes/utils';
+import { useCurrentIdentifier } from '../routes/utils';
 
 export interface VegaProvState {
   event: {
@@ -17,13 +18,16 @@ export interface VegaProvState {
   };
 }
 
+const InternalVega = Vega as unknown as React.FC<VegaProps>;
+
 export function VegaController({ currentConfig, provState }: { currentConfig: VegaComponent; provState?: VegaProvState }) {
-  const currentStep = useCurrentStep();
-  const currentComponent = useCurrentComponent();
   const storeDispatch = useStoreDispatch();
   const [vegaConfig, setVegaConfig] = useState<VisualizationSpec | null>(null);
   const [loading, setLoading] = useState(true);
-  const { updateResponseBlockValidation, setreactiveAnswers } = useStoreActions();
+
+  const identifier = useCurrentIdentifier();
+
+  const { updateResponseBlockValidation, setReactiveAnswers } = useStoreActions();
   const [view, setView] = useState<View>();
 
   const { actions, trrack } = useMemo(() => {
@@ -56,16 +60,16 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
   }: Parameters<StimulusParams<unknown>['setAnswer']>[0]) => {
     storeDispatch(
       updateResponseBlockValidation({
-        location: 'sidebar',
-        identifier: `${currentComponent}_${currentStep}`,
+        location: 'stimulus',
+        identifier,
         status,
         values: answers,
         provenanceGraph,
       }),
     );
 
-    storeDispatch(setreactiveAnswers(answers));
-  }, [currentComponent, currentStep, storeDispatch, setreactiveAnswers, updateResponseBlockValidation]);
+    storeDispatch(setReactiveAnswers(answers));
+  }, [storeDispatch, updateResponseBlockValidation, identifier, setReactiveAnswers]);
 
   const handleSignalEvt = useCallback((key: string, value: unknown) => {
     trrack.apply(key, actions.signalAction({
@@ -138,6 +142,5 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     return <div>Failed to load vega config</div>;
   }
 
-  // @ts-expect-error Vega type is not updated to match the new types from react 19
-  return (<Vega spec={structuredClone(vegaConfig)} signalListeners={signalListeners} onNewView={(v) => setView(v)} />);
+  return (<InternalVega spec={structuredClone(vegaConfig)} signalListeners={signalListeners} onNewView={(v) => setView(v)} />);
 }
