@@ -11,7 +11,7 @@ export default function func({
   let counter = 0;
   const findLatestTrial = (trialAnswers: Record<string, StoredAnswer>, position: number) => {
     const trialKeys = Object.keys(trialAnswers)
-      .filter((key) => key.startsWith(`${name}_${index}_trial_`))
+      .filter((key) => key.startsWith(`${name}`))
       .map((key) => ({ key, number: parseInt(key.split('_').pop()!, 10) }))
       .filter((entry) => !Number.isNaN(entry.number))
       .sort((a, b) => b.number - a.number);
@@ -25,7 +25,6 @@ export default function func({
       r1, r2, above, counter,
     } = answers[latestTrialKey].parameters);
   }
-  // console.log('r1:', r1, 'r2:', r2, 'above:', above, 'counter:', counter);
   const roundToTwo = (num: number) => parseFloat((Math.round(num * 100) / 100).toString());
 
   const lastAnswerName = findLatestTrial(answers, 1);
@@ -81,7 +80,6 @@ export default function func({
       const p13 = 1 - ftest(var1 / var3, group1.length - 1, group3.length - 1);
 
       if (p12 > 0.1 && p23 > 0.1 && p13 > 0.1) {
-        // console.log('Convergence detected at counter:', counter);
         return { component: null };
       }
     }

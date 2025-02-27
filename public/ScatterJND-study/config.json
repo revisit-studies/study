@@ -123,35 +123,73 @@
         "components": [
           {
             "order": "dynamic",
-            "id": "scatter1",
+            "id": "below3",
+            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+            "parameters": {
+              "r1": 0.3,
+              "r2": 0.1,
+              "above": false,
+              "name": "below3",
+              "index": 12
+            }
+          },{
+            "order": "dynamic",
+            "id": "above3",
             "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
             "parameters": {
               "r1": 0.3,
               "r2": 0.5,
               "above": true,
-              "name": "scatter1"
+              "name": "above3",
+              "index": 13
             }
           },
           {
             "order": "dynamic",
-            "id": "scatter2",
+            "id": "below6",
+            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+            "parameters": {
+              "r1": 0.6,
+              "r2": 0.5,
+              "above": false,
+              "name": "below6",
+              "index": 14
+            }
+          },
+          {
+            "order": "dynamic",
+            "id": "above6",
+            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+            "parameters": {
+              "r1": 0.6,
+              "r2": 0.7,
+              "above": true,
+              "name": "above6",
+              "index": 15
+            }
+          },
+          {
+            "order": "dynamic",
+            "id": "below9",
             "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
             "parameters": {
               "r1": 0.9,
               "r2": 0.8,
               "above": false,
-              "name": "scatter2"
+              "name": "below9",
+              "index": 16
             }
           },
           {
             "order": "dynamic",
-            "id": "scatter3",
+            "id": "above9",
             "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
             "parameters": {
-              "r1": 0.6,
-              "r2": 0.8,
+              "r1": 0.9,
+              "r2": 0.99,
               "above": true,
-              "name": "scatter3"
+              "name": "above9",
+              "index": 17
             }
           }
         ]
