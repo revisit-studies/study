@@ -17,7 +17,7 @@ import HeatmapPlots from './HeatmapPlots';
 export default function HeatmapWrapper({
   r1, r2, shouldReRender = true, onClick, shouldRandomize = true,
 }: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number) => void, shouldRandomize?: boolean}) {
-  const higherFirst = useMemo(() => (shouldRandomize ? Math.random() > 0.5 : true), [shouldRandomize]);
+  const higherFirst = useMemo(() => (shouldRandomize ? (Math.sin(Date.now()) * 10000) % 1 > 0.5 : true), [shouldRandomize]);
 
   const [key, setKey] = useState<number>(0);
 
