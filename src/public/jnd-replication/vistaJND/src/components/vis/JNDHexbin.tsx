@@ -10,14 +10,10 @@
  *    subgroups".
  */
 
-import {
-  useCallback,
-  useEffect,
-  useState,
-} from 'react';
 import { Center, Stack, Text } from '@mantine/core';
 import { StimulusParams } from '../../../../../../store/types';
 import HexbinWrapper from './HexbinWrapper';
+import { useNextStep } from '../../../../../../store/hooks/useNextStep';
 
 /**
  * Displays user's experiemnt. (This includes 2 hexbin plots).
@@ -30,61 +26,23 @@ import HexbinWrapper from './HexbinWrapper';
  * @returns 2 hexbin plots during the experiment or a message of completion
  * of the trial
  */
-export default function JND({ setAnswer, parameters } : StimulusParams<{r1: number, r2:number, above: boolean}>) {
-  const [counter, setCounter] = useState(0);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [above, setAbove] = useState(parameters.above);
-  const [participantSelections, setParticipantSelections] = useState<{correct: boolean}[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [r1, setR1] = useState(parameters.r1);
-  const [r2, setR2] = useState(parameters.r2);
+export default function JND({ setAnswer, parameters } : StimulusParams<{r1: number, r2:number, above: boolean, counter: number}>) {
+  const { r1, r2 } = parameters;
+  const { goToNextStep } = useNextStep();
 
-  const onClick = useCallback((n: number) => {
-    setParticipantSelections([...participantSelections, { correct: n === 1 }]);
-    setCounter(counter + 1);
-    if (above && n === 2) {
-      if (r2 < r1 || r2 - r1 <= 0.01) {
-        // correct and user converges graphs
-        setCounter(50);
-      } else {
-        // correct
-        setR2(Math.min(r2 - 0.01, 1));
-      }
-    } else if (above && n === 1) {
-      // incorrect
-      if (r2 >= 1) {
-        setR2(1);
-      } else {
-        setR2(Math.max(r2 + 0.03, 0));
-      }
-    } else if (!above && n === 1) {
-      if (r1 < r2 || r1 - r2 <= 0.01) {
-        // correct and user converges graphs
-        setCounter(50);
-      } else {
-        // correct
-        setR2(Math.min(r2 + 0.01, 1));
-      }
-    } else if (!above && n === 2) {
-      // incorrect
-      if (r2 <= 0) {
-        setR2(0);
-      }
-      setR2(Math.max(r2 - 0.03, 0));
-    }
-  }, [above, counter, participantSelections, r1, r2]);
+  const onClick = (n: number) => {
+    // setCounter(counter + 1);
+    setAnswer({
+      status: true,
+      answers: { scatterSelections: n },
+    });
 
-  useEffect(() => {
-    if (counter === 50) {
-      setAnswer({
-        status: true,
-        provenanceGraph: undefined,
-        answers: { scatterSelections: participantSelections },
-      });
-    }
-  }, [counter, participantSelections, setAnswer]);
+    setTimeout(() => {
+      goToNextStep();
+    }, 0);
+  };
 
-  if (counter === 50) {
+  if (parameters.counter === 50) {
     return (
       <Text>Completed! Great job, please continue.</Text>
     );
