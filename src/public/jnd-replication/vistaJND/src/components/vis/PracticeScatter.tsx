@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import {
   Center, Stack, Text,
 } from '@mantine/core';
+import { IconCircleCheck, IconCircleX } from '@tabler/icons-react';
 import ScatterWrapper from './ScatterWrapper';
 import { StimulusParams } from '../../../../../../store/types';
 
@@ -44,14 +45,27 @@ export default function PracticeScatter({
             textAlign: 'center', marginTop: '1rem', minHeight: '28px', fontSize: '18px', fontWeight: 'bold',
           }}
           >
-            {result === 'Correct' ? (
-              <span style={{ color: 'green' }}>
-                ✔
-                <span style={{ color: 'green' }}>Correct</span>
-              </span>
-            ) : (
-              <span style={{ color: 'red' }}>✘ Incorrect</span>
-            )}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              color: result === 'Correct' ? 'green' : 'red',
+            }}
+            >
+              {result === 'Correct' ? (
+                <>
+                  <IconCircleCheck size={18} stroke={2} />
+                  <span>Correct</span>
+                </>
+              ) : (
+                <>
+                  <IconCircleX size={18} stroke={2} />
+                  <span>Incorrect</span>
+                </>
+              )}
+            </div>
+
           </Text>
           <Text style={{ textAlign: 'center', marginTop: '1rem', minHeight: '28px' }}>{r1First ? `Left is ${r1}, right is ${r2}` : `Left is ${r2}, right is ${r1}`}</Text>
         </>
