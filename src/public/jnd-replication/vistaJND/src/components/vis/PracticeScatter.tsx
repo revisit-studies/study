@@ -10,13 +10,11 @@ export default function PracticeScatter({
   parameters,
 }: StimulusParams<{ r1: number; r2: number }>) {
   const [result, setResult] = useState<string | null>(null);
-  const [r1First, setR1First] = useState<boolean | null>(null);
   const { r1, r2 } = parameters;
 
   const onClick = useCallback(
-    (n: number, higherFirst?: boolean) => {
+    (n: number) => {
       if (result === null) {
-        setR1First(higherFirst ?? true);
         setResult((n === 1 && r1 > r2) || (n === 2 && r2 > r1) ? 'Correct' : 'Incorrect');
       }
     },
@@ -43,6 +41,7 @@ export default function PracticeScatter({
           r1={parameters.r1}
           r2={parameters.r2}
           shouldReRender={false}
+          shouldRandomize={false}
         />
       </Center>
       {result && (
@@ -73,7 +72,7 @@ export default function PracticeScatter({
             </div>
 
           </Text>
-          <Text style={{ textAlign: 'center', marginTop: '1rem', minHeight: '28px' }}>{r1First ? `A is ${r1}, B is ${r2}` : `A is ${r2}, B is ${r1}`}</Text>
+          <Text style={{ textAlign: 'center', marginTop: '1rem', minHeight: '28px' }}>{ `A is ${r1}, B is ${r2}`}</Text>
         </>
       )}
     </Stack>
