@@ -408,6 +408,8 @@ export interface SliderResponse extends BaseResponse {
   step?: number;
   /** Whether to render the slider with a bar to the left. Defaults to true. */
   withBar?: boolean;
+  /** Whether to render the slider with a NASA-tlx style. Defaults to false. */
+  tlxStyle?: boolean;
 }
 
 /**
