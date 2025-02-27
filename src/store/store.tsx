@@ -22,7 +22,7 @@ export async function studyStoreCreator(
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
 
-  const emptyAnswers: Record<string, StoredAnswer> = Object.fromEntries(flatSequence.filter((id) => id !== 'end')
+  const emptyAnswers: Record<string, StoredAnswer> = Object.fromEntries(flatSequence.filter((id) => id !== 'end' && config.components[id])
     .map((id, idx) => {
       const componentConfig = studyComponentToIndividualComponent(config.components[id] || {}, config);
 

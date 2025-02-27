@@ -8,17 +8,17 @@ export default function func({
   } = customParameters;
   const { name } = customParameters;
   let counter = 0;
-  const findLatestTrial = (trialAnswers: Record<string, StoredAnswer>) => {
+  const findLatestTrial = (trialAnswers: Record<string, StoredAnswer>, position: number) => {
     const trialKeys = Object.keys(trialAnswers)
-      .filter((key) => key.startsWith('scatter1_12_trial_'))
+      .filter((key) => key.startsWith(`${name}_`))
       .map((key) => ({ key, number: parseInt(key.split('_').pop()!, 10) }))
 
       .filter((entry) => !Number.isNaN(entry.number))
       .sort((a, b) => b.number - a.number);
 
-    return trialKeys.length > 0 ? trialKeys[0].key : null;
+    return trialKeys.length > position ? trialKeys[position].key : null;
   };
-  const latestTrialKey = findLatestTrial(answers);
+  const latestTrialKey = findLatestTrial(answers, 0);
   if (latestTrialKey && answers[latestTrialKey]?.parameters) {
     ({
       r1, r2, above, counter,
@@ -26,7 +26,9 @@ export default function func({
   }
 
   const roundToTwo = (num: number) => parseFloat((Math.round(num * 100) / 100).toString());
-  const lastAnswer = answers[`${name}_12_trial_${counter}`]?.answer?.scatterSelections;
+
+  const lastAnswerName = findLatestTrial(answers, 1);
+  const lastAnswer = lastAnswerName ? answers[lastAnswerName].answer.scatterSelections : null;
 
   if (lastAnswer) {
     const correctAnswer = above ? 2 : 1;

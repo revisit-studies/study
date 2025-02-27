@@ -11,7 +11,6 @@
  */
 
 import { Center, Stack, Text } from '@mantine/core';
-import { useState } from 'react';
 import { StimulusParams } from '../../../../../../store/types';
 import ScatterWrapper from './ScatterWrapper';
 import { useNextStep } from '../../../../../../store/hooks/useNextStep';
@@ -28,7 +27,7 @@ import { useNextStep } from '../../../../../../store/hooks/useNextStep';
  * of the trial
  */
 export default function JND({ setAnswer, parameters } : StimulusParams<{r1: number, r2:number, above: boolean, counter: number}>) {
-  const { r1, r2, above } = parameters;
+  const { r1, r2 } = parameters;
   const { goToNextStep } = useNextStep();
 
   const onClick = (n: number) => {
@@ -58,7 +57,7 @@ export default function JND({ setAnswer, parameters } : StimulusParams<{r1: numb
         Select the option with the higher correlation
       </Text>
       <Center>
-        <ScatterWrapper onClick={onClick} r1={r1} r2={r2} above={above} />
+        <ScatterWrapper onClick={onClick} r1={r1} r2={r2} />
       </Center>
     </Stack>
   );
