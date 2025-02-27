@@ -25,7 +25,7 @@ export function WithinTaskProvenance({
   colorMap.set('Root', 'var(--mantine-color-grape-3)');
   if (answer.provenanceGraph) {
     let idx = 0;
-    Object.entries(answer.provenanceGraph.nodes)
+    Object.entries(answer.provenanceGraph.stimulus?.nodes || {})
       .forEach((entry) => {
         const [, node] = entry;
         if (!colorMap.has(node.label)) {
@@ -37,11 +37,12 @@ export function WithinTaskProvenance({
 
   return (
     <g style={{ cursor: 'pointer' }}>
-      {answer.provenanceGraph ? Object.entries(answer.provenanceGraph.nodes).map((entry) => {
+      {answer.provenanceGraph ? Object.entries(answer.provenanceGraph.stimulus?.nodes || {}).map((entry) => {
         const [nodeId, node] = entry;
         return <g key={nodeId} onClick={() => setCurrentNode(nodeId, node.createdOn, taskName)}><rect fill={nodeId === currentNode ? '#e15759' : colorMap.get(node.label)} x={xScale(node.createdOn) - RECT_WIDTH / 2} y={height / 2 - RECT_HEIGHT / 2} width={RECT_WIDTH} height={RECT_HEIGHT} /></g>;
       }) : null}
-      {currentNode && answer.provenanceGraph && answer.provenanceGraph.nodes[currentNode] ? <rect fill="var(--mantine-color-blue-filled)" cx={xScale(answer.provenanceGraph.nodes[currentNode].createdOn)} cy={height / 2} r={5} /> : null}
+      {currentNode && answer.provenanceGraph && answer.provenanceGraph.stimulus?.nodes[currentNode]
+        && <rect fill="var(--mantine-color-blue-filled)" cx={xScale(answer.provenanceGraph.stimulus?.nodes[currentNode].createdOn)} cy={height / 2} r={5} />}
       <Affix position={{ bottom: 10, left: 10 }}>
         <Popover width={200} position="bottom" withArrow shadow="md">
           <Popover.Target>

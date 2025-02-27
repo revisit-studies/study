@@ -3,7 +3,9 @@ import {
 } from '@reduxjs/toolkit';
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
-import { ResponseBlockLocation, StudyConfig, StringOption } from '../parser/types';
+import {
+  ResponseBlockLocation, StudyConfig, StringOption, ValueOf,
+} from '../parser/types';
 import {
   StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata,
 } from './types';
@@ -29,8 +31,22 @@ export async function studyStoreCreator(
       return [
         `${id}_${idx}`,
         {
+
+          answer: {},
+          incorrectAnswers: {},
+          startTime: 0,
+          endTime: -1,
+          provenanceGraph: {
+            aboveStimulus: undefined,
+            belowStimulus: undefined,
+            stimulus: undefined,
+            sidebar: undefined,
+          },
+          windowEvents: [],
+          timedOut: false,
+          helpButtonClickedCount: 0,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          answer: {}, incorrectAnswers: {}, startTime: 0, endTime: -1, provenanceGraph: undefined, windowEvents: [], timedOut: false, helpButtonClickedCount: 0, parameters: Object.hasOwn(componentConfig, 'parameters') ? (componentConfig as any).parameters : {},
+          parameters: Object.hasOwn(componentConfig, 'parameters') ? (componentConfig as any).parameters : {},
         },
       ];
     }));
@@ -109,10 +125,32 @@ export async function studyStoreCreator(
 
         state.funcSequence[payload.payload.funcName].push(payload.payload.component);
         state.answers[`${payload.payload.funcName}_${payload.payload.index}_${payload.payload.component}_${payload.payload.funcIndex}`] = {
-          answer: {}, incorrectAnswers: {}, startTime: 0, endTime: -1, provenanceGraph: undefined, windowEvents: [], timedOut: false, helpButtonClickedCount: 0, parameters: payload.payload.parameters,
+          answer: {},
+          incorrectAnswers: {},
+          startTime: 0,
+          endTime: -1,
+          provenanceGraph: {
+            aboveStimulus: undefined,
+            belowStimulus: undefined,
+            stimulus: undefined,
+            sidebar: undefined,
+          },
+          windowEvents: [],
+          timedOut: false,
+          helpButtonClickedCount: 0,
+          parameters: payload.payload.parameters,
         };
         state.trialValidation[`${payload.payload.funcName}_${payload.payload.index}_${payload.payload.component}_${payload.payload.funcIndex}`] = {
-          aboveStimulus: { valid: false, values: {} }, belowStimulus: { valid: false, values: {} }, stimulus: { valid: componentConfig.response.every((response) => response.type !== 'reactive'), values: {} }, sidebar: { valid: false, values: {} },
+          aboveStimulus: { valid: false, values: {} },
+          belowStimulus: { valid: false, values: {} },
+          stimulus: { valid: componentConfig.response.every((response) => response.type !== 'reactive'), values: {} },
+          sidebar: { valid: false, values: {} },
+          provenanceGraph: {
+            aboveStimulus: undefined,
+            belowStimulus: undefined,
+            stimulus: undefined,
+            sidebar: undefined,
+          },
         };
       },
       toggleStudyBrowser: (state) => {
@@ -124,7 +162,7 @@ export async function studyStoreCreator(
       setAlertModal: (state, action: PayloadAction<{ show: boolean; message: string }>) => {
         state.alertModal = action.payload;
       },
-      setReactiveAnswers: (state, action: PayloadAction<Record<string, unknown>>) => {
+      setReactiveAnswers: (state, action: PayloadAction<Record<string, ValueOf<StoredAnswer['answer']>>>) => {
         state.reactiveAnswers = action.payload;
       },
       setReactiveProvenance: (state, action: PayloadAction<TrrackedProvenance | null>) => {
@@ -200,7 +238,7 @@ export async function studyStoreCreator(
         {
           payload,
         }: PayloadAction<{
-          location: ResponseBlockLocation | 'stimulus';
+          location: ResponseBlockLocation;
           identifier: string;
           status: boolean;
           values: object;
@@ -218,7 +256,7 @@ export async function studyStoreCreator(
         }
 
         if (payload.provenanceGraph) {
-          state.trialValidation[payload.identifier].provenanceGraph = payload.provenanceGraph;
+          state.trialValidation[payload.identifier].provenanceGraph[payload.location] = payload.provenanceGraph;
         }
       },
       saveTrialAnswer(

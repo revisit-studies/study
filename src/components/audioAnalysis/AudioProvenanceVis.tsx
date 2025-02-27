@@ -84,8 +84,8 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
 
       const trrack = initializeTrrack({ registry: reg, initialState: {} });
 
-      if (participant.answers[componentAndIndex].provenanceGraph) {
-        trrack.importObject(structuredClone(participant.answers[componentAndIndex].provenanceGraph!));
+      if (participant.answers[componentAndIndex].provenanceGraph.stimulus) {
+        trrack.importObject(structuredClone(participant.answers[componentAndIndex].provenanceGraph!.stimulus));
         storeDispatch(setAnalysisHasProvenance(true));
 
         trrackForTrial.current = trrack;
@@ -101,7 +101,7 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
     }
 
     if (componentAndIndex && participant && trrackForTrial.current) {
-      storeDispatch(saveAnalysisState(trrackForTrial.current.getState(participant.answers[componentAndIndex].provenanceGraph?.nodes[node])));
+      storeDispatch(saveAnalysisState(trrackForTrial.current.getState(participant.answers[componentAndIndex].provenanceGraph.stimulus?.nodes[node])));
 
       trrackForTrial.current.to(node);
     }
@@ -120,25 +120,25 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
       return;
     }
 
-    if (!currentNode || !provGraph.nodes[currentNode]) {
-      _setCurrentNode(provGraph.root as string);
+    if (!currentNode || !provGraph.stimulus?.nodes[currentNode]) {
+      _setCurrentNode(provGraph.stimulus?.root as string);
       return;
     }
 
-    let tempNode = provGraph.nodes[currentNode];
+    let tempNode = provGraph.stimulus?.nodes[currentNode];
 
     while (true) {
       if (playTime < tempNode.createdOn) {
         if (!isRootNode(tempNode)) {
           const parentNode = tempNode.parent;
 
-          tempNode = provGraph.nodes[parentNode];
+          tempNode = provGraph.stimulus?.nodes[parentNode];
         } else break;
       } else if (tempNode.children.length > 0) {
         const child = tempNode.children[0];
 
-        if (playTime > provGraph.nodes[child].createdOn) {
-          tempNode = provGraph.nodes[child];
+        if (playTime > provGraph.stimulus?.nodes[child].createdOn) {
+          tempNode = provGraph.stimulus?.nodes[child];
         } else break;
       } else break;
     }

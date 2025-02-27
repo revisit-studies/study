@@ -101,7 +101,7 @@ const generateValidation = (responses: Response[]) => {
 export function useAnswerField(responses: Response[], currentStep: string | number, storedAnswer: StoredAnswer['answer']) {
   const [_id, setId] = useState<string | number | null>(null);
 
-  const answerField = useForm({
+  const answerField = useForm<StoredAnswer['answer']>({
     initialValues: generateInitFields(responses, storedAnswer),
     validate: generateValidation(responses),
   });

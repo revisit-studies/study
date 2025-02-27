@@ -153,11 +153,13 @@ export const responseBlockLocations = [
   'sidebar',
   'aboveStimulus',
   'belowStimulus',
+  'stimulus',
 ] as const;
 /**
  * @ignore
  */
 export type ResponseBlockLocation = (typeof responseBlockLocations)[number];
+type ConfigResponseBlockLocation = Omit<ResponseBlockLocation, 'stimulus'>;
 
 /**
  * The BaseResponse interface is used to define the required fields for all responses.
@@ -174,7 +176,7 @@ export interface BaseResponse {
   /** Controls whether the response is required to be answered. Defaults to true. */
   required?: boolean;
   /** Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus` */
-  location?: ResponseBlockLocation;
+  location?: ConfigResponseBlockLocation;
   /** You can provide a required value, which makes it so a participant has to answer with that value. */
   requiredValue?: unknown;
   /** You can provide a required label, which makes it so a participant has to answer with a response that matches label. */
@@ -571,9 +573,9 @@ export interface BaseIndividualComponent {
   /** The text that is displayed on the next button. */
   nextButtonText?: string;
   /** The location of the next button. */
-  nextButtonLocation?: ResponseBlockLocation;
+  nextButtonLocation?: ConfigResponseBlockLocation;
   /** The location of the instructions. */
-  instructionLocation?: ResponseBlockLocation;
+  instructionLocation?: ConfigResponseBlockLocation;
   /** The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess. */
   correctAnswer?: Answer[];
   /** Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false. */
@@ -1450,6 +1452,12 @@ export type ParsedConfig<T> = T & {
  * Helper type to avoid writing Type | undefined | null
  */
 export type Nullable<T> = T | undefined | null;
+
+/**
+ * @ignore
+ * Helper type to get the value of a type
+ */
+export type ValueOf<T> = T[keyof T];
 
 /**
  * @ignore

@@ -1,7 +1,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
-// eslint-disable-next-line import/no-cycle
-import { ComponentBlock, SkipConditions, StudyConfig } from '../parser/types';
+import type {
+  ComponentBlock, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
+} from '../parser/types';
 import { type REVISIT_MODE } from '../storage/engines/StorageEngine';
 
 /**
@@ -40,7 +41,7 @@ export type TrialValidation = Record<
     belowStimulus: ValidationStatus;
     sidebar: ValidationStatus;
     stimulus: ValidationStatus;
-    provenanceGraph?: TrrackedProvenance;
+    provenanceGraph: Record<ResponseBlockLocation, TrrackedProvenance | undefined>;
   }
 >;
 
@@ -67,7 +68,7 @@ Each item in the window event is given a time, a position an event name, and som
 */
 export interface StoredAnswer {
   /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is the inputted value from the participant. */
-  answer: Record<string, string | number | boolean | string[] | Record<string, string>>;
+  answer: Record<string, string | number | boolean | string[] | Record<string, unknown>>;
   /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is a list of incorrect inputted values from the participant. Only relevant for trials with `provideFeedback` and correct answers enabled. */
   incorrectAnswers: Record<string, { id: string, value: unknown[] }>;
   /** Time that the user began interacting with the component in epoch milliseconds. */
@@ -75,7 +76,7 @@ export interface StoredAnswer {
   /** Time that the user ended interaction with the component in epoch milliseconds. */
   endTime: number;
   /** The entire provenance graph exported from a Trrack instance from a React component. This will only be present if you are using React components and you're utilizing [Trrack](https://apps.vdl.sci.utah.edu/trrack) */
-  provenanceGraph?: TrrackedProvenance,
+  provenanceGraph: Record<ResponseBlockLocation, TrrackedProvenance | undefined>;
   /** A list containing the time (in epoch milliseconds), the action (focus, input, kepress, mousedown, mouseup, mousemove, resize, scroll or visibility), and then either a coordinate pertaining to where the event took place on the screen or string related to such event. Below is an example of the windowEvents list.
 ```js
 "windowEvents": [
@@ -148,7 +149,7 @@ export interface StoreState {
   showHelpText: boolean;
   alertModal: { show: boolean, message: string };
   trialValidation: TrialValidation;
-  reactiveAnswers: Record<string, unknown>;
+  reactiveAnswers: Record<string, ValueOf<StoredAnswer['answer']>>;
   reactiveProvenance: TrrackedProvenance | null;
   otherTexts: Record<string, string>;
   metadata: ParticipantMetadata;

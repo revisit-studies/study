@@ -258,6 +258,12 @@ export function TableView({
           windowEvents: Object.values(record.answers).flatMap((a) => a.windowEvents),
           timedOut: false, // not used
           parameters: {}, // not used
+          provenanceGraph: {
+            aboveStimulus: undefined,
+            belowStimulus: undefined,
+            sidebar: undefined,
+            stimulus: undefined,
+          },
         }}
         key={`cell-${record.participantId}-total-duration`}
       />
