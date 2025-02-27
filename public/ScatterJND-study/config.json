@@ -54,6 +54,31 @@
         }
       ]
     },
+    "consent": {
+      "type": "markdown",
+      "path": "ScatterJND-study/assets/consent.md",
+      "nextButtonText": "Agree",
+      "response": [
+        {
+          "id": "signature",
+          "prompt": "Your signature",
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Please provide your signature"
+        },
+        {
+          "id": "accept",
+          "prompt": "Do you consent to the study and wish to continue?",
+          "requiredValue": "Accept",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Decline",
+            "Accept"
+          ]
+        }
+      ]
+    },
     "training": {
       "type": "markdown",
       "path": "ScatterJND-study/assets/training.md",
@@ -108,6 +133,7 @@
     "order": "fixed",
     "components": [
       "introduction",
+      "consent",
       "training",
       {
         "order": "fixed",
@@ -130,7 +156,7 @@
               "r2": 0.1,
               "above": false,
               "name": "below3",
-              "index": 12
+              "index": 13
             }
           },{
             "order": "dynamic",
@@ -141,7 +167,7 @@
               "r2": 0.5,
               "above": true,
               "name": "above3",
-              "index": 13
+              "index": 14
             }
           },
           {
@@ -153,7 +179,7 @@
               "r2": 0.5,
               "above": false,
               "name": "below6",
-              "index": 14
+              "index": 15
             }
           },
           {
@@ -165,7 +191,7 @@
               "r2": 0.7,
               "above": true,
               "name": "above6",
-              "index": 15
+              "index": 16
             }
           },
           {
@@ -177,7 +203,7 @@
               "r2": 0.8,
               "above": false,
               "name": "below9",
-              "index": 16
+              "index": 17
             }
           },
           {
@@ -189,7 +215,7 @@
               "r2": 0.99,
               "above": true,
               "name": "above9",
-              "index": 17
+              "index": 18
             }
           }
         ]
