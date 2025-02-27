@@ -24,7 +24,7 @@
       "path": "jnd-replication/vistaJND/src/components/vis/JNDHeatmap.tsx",
       "response": [{ 
         "id": "heatmapSelections",
-        "prompt": "Select the option with the higher correlation",
+        "prompt": "",
         "required": true,
         "location": "aboveStimulus",
         "type": "numerical",
