@@ -15,9 +15,9 @@ import ScatterPlots from './ScatterPlots';
  * @returns 2 Scatter Plots
  */
 export default function ScatterWrapper({
-  r1, r2, shouldReRender = true, onClick,
-}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number, higherFirst?: boolean) => void}) {
-  const higherFirst = useMemo(() => Math.random() > 0.5, []);
+  r1, r2, shouldReRender = true, onClick, shouldRandomize = true,
+}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number) => void, shouldRandomize?: boolean}) {
+  const higherFirst = useMemo(() => (shouldRandomize ? Math.random() > 0.5 : true), [shouldRandomize]);
 
   const [key, setKey] = useState<number>(0);
 
@@ -28,7 +28,7 @@ export default function ScatterWrapper({
   };
 
   const handleClick = (n: number) => {
-    onClick(n, higherFirst);
+    onClick(n);
     handleReset();
   };
 
