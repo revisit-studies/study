@@ -16,7 +16,7 @@ import ParallelCoordinates from './ParallelCoordinates';
  */
 export default function ParallelCoordinatesWrapper({
   r1, r2, shouldReRender = true, onClick,
-}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number) => void}) {
+}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number, higherFirst?: boolean) => void}) {
   const higherFirst = useMemo(() => Math.random() > 0.5, []);
 
   const [key, setKey] = useState<number>(0);
@@ -29,7 +29,7 @@ export default function ParallelCoordinatesWrapper({
   };
 
   const handleClick = (n: number) => {
-    onClick(n);
+    onClick(n, higherFirst);
     handleReset();
   };
 
