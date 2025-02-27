@@ -61,6 +61,12 @@ export async function studyStoreCreator(
           belowStimulus: { valid: false, values: {} },
           sidebar: { valid: false, values: {} },
           stimulus: { valid: !(componentConfig.response.some((response) => response.type === 'reactive' && response.required !== false)), values: {} },
+          provenanceGraph: {
+            aboveStimulus: undefined,
+            belowStimulus: undefined,
+            stimulus: undefined,
+            sidebar: undefined,
+          },
         },
       };
     }),
