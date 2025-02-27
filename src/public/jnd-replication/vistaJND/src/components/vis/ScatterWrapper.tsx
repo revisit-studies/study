@@ -16,21 +16,19 @@ import ScatterPlots from './ScatterPlots';
  */
 export default function ScatterWrapper({
   r1, r2, shouldReRender = true, onClick,
-}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number) => void}) {
+}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number, higherFirst?: boolean) => void}) {
   const higherFirst = useMemo(() => Math.random() > 0.5, []);
-  // console.log('correlations', r1, r2, above);
 
   const [key, setKey] = useState<number>(0);
 
   const handleReset = () => {
-    // Increment key to trigger re-render
     if (shouldReRender) {
       setKey((prevKey) => prevKey + 1);
     }
   };
 
   const handleClick = (n: number) => {
-    onClick(n);
+    onClick(n, higherFirst);
     handleReset();
   };
 
