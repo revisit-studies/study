@@ -22,6 +22,7 @@
     "experimentRevised": {
       "type": "react-component",
       "path": "jnd-replication/vistaJND/src/components/vis/JNDParallelRevised.tsx",
+      "nextButtonLocation": "sidebar",
       "response": [{ 
         "id": "parallelSelections",
         "prompt": "",
