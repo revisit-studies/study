@@ -12,6 +12,7 @@ import {
   useCallback, useEffect, useRef, useState,
 } from 'react';
 import { select } from 'd3-selection';
+import { PREFIX } from '../../../../../../utils/Prefix';
 
 const width = 300;
 const height = 300;
@@ -24,7 +25,7 @@ export default function HexbinPlots({ r, onClick } : { r: number, onClick: () =>
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const filePath = `/jnd-data/datasets/size_1000/dataset_${r}_size_1000.csv`;
+        const filePath = `${PREFIX}jnd-data/datasets/size_1000/dataset_${r}_size_1000.csv`;
 
         const response = await fetch(filePath);
         if (!response.ok) {

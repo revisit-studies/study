@@ -12,6 +12,7 @@ import {
   useCallback, useEffect, useRef, useState,
 } from 'react';
 import { select } from 'd3-selection';
+import { PREFIX } from '../../../../../../utils/Prefix';
 
 const width = 300;
 const height = 300;
@@ -24,7 +25,7 @@ export default function ParallelCoordinates({ v, onClick } : { v: number, onClic
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const filePath = `/jnd-data/datasets/size_100/dataset_${v}_size_100.csv`;
+        const filePath = `${PREFIX}jnd-data/datasets/size_100/dataset_${v}_size_100.csv`;
 
         const response = await fetch(filePath);
         if (!response.ok) {

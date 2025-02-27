@@ -10,6 +10,7 @@ import {
   useCallback, useEffect, useRef, useState,
 } from 'react';
 import { select } from 'd3-selection';
+import { PREFIX } from '../../../../../../utils/Prefix';
 
 const width = 400;
 const height = 40;
@@ -23,7 +24,7 @@ export default function HeatmapPlots({ r, onClick }: { r: number, onClick: () =>
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const filePath = `/jnd-data/datasets/size_100/dataset_${r}_size_100.csv`;
+        const filePath = `${PREFIX}jnd-data/datasets/size_100/dataset_${r}_size_100.csv`;
 
         const response = await fetch(filePath);
         if (!response.ok) {
