@@ -54,7 +54,13 @@ export default function JND({ setAnswer, parameters } : StimulusParams<{r1: numb
         textAlign: 'center', paddingBottom: '24px', fontSize: '18px', fontWeight: 'bold',
       }}
       >
-        Select the option with the higher correlation
+        Please select the visualization that appears to have a larger correlation. (This may be difficult, but try your best!) &nbsp
+      </Text>
+      <Text style={{
+        textAlign: 'center', paddingBottom: '24px', fontSize: '18px', fontWeight: 'bold',
+      }}
+      >
+        You can either click the buttons (A or B) or use the ‚left and right keys.
       </Text>
       <Center>
         <HeatmapWrapper onClick={onClick} r1={r1} r2={r2} />

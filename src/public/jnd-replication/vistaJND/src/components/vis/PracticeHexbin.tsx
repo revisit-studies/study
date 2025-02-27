@@ -26,10 +26,16 @@ export default function PracticeHexBin({
   return (
     <Stack style={{ width: '100%', height: '100%' }}>
       <Text style={{
+        textAlign: 'center', paddingBottom: '0px', fontSize: '18px', fontWeight: 'bold',
+      }}
+      >
+        Please select the visualization that appears to have a larger correlation. (This may be difficult, but try your best!)
+      </Text>
+      <Text style={{
         textAlign: 'center', paddingBottom: '24px', fontSize: '18px', fontWeight: 'bold',
       }}
       >
-        Select the option with the higher correlation
+        You can either click the buttons (A or B) or use the‚ left and right keys.
       </Text>
       <Center>
         <HexbinWrapper
