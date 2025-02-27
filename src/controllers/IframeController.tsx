@@ -39,11 +39,12 @@ export function IframeController({ currentConfig, provState, answers }: { curren
           type: `${PREFIX}/${tag}`,
           iframeId,
           message,
+          answers,
         },
         '*',
       );
     },
-    [ref, iframeId],
+    [iframeId, answers],
   );
 
   useEffect(() => {
@@ -94,7 +95,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, setReactiveProvenance]);
+  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, setReactiveProvenance, updateResponseBlockValidation, identifier]);
 
   return (
     <iframe

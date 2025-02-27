@@ -26,7 +26,7 @@
     const data = e.data;
     if (typeof data === 'object' && id === data.iframeId) {
       if (data.type === `${PREFIX}/STUDY_DATA` && onDataReceiveCallback) {
-        onDataReceiveCallback(data.message);
+        onDataReceiveCallback(data.message, data.answers);
       }
       if (data.type === `${PREFIX}/PROVENANCE` && onProvenanceReceiveCallback) {
         onProvenanceReceiveCallback(data.message);
