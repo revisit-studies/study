@@ -39,6 +39,8 @@ export default function JND({ setAnswer, parameters } : StimulusParams<{r1: numb
   const [r1, setR1] = useState(parameters.r1);
   const [r2, setR2] = useState(parameters.r2);
 
+  const roundToTwo = (value: number) => Math.round(value * 100) / 100;
+
   const onClick = useCallback((n: number) => {
     setParticipantSelections([...participantSelections, { correct: n === 1 }]);
     setCounter(counter + 1);
@@ -48,14 +50,14 @@ export default function JND({ setAnswer, parameters } : StimulusParams<{r1: numb
         setCounter(50);
       } else {
         // correct
-        setR2(Math.min(r2 - 0.01, 1));
+        setR2(roundToTwo(Math.min(r2 - 0.01, 0.01)));
       }
     } else if (above && n === 1) {
       // incorrect
       if (r2 >= 1) {
         setR2(1);
       } else {
-        setR2(Math.max(r2 + 0.03, 0));
+        setR2(roundToTwo(Math.max(r2 + 0.03, 0.01)));
       }
     } else if (!above && n === 1) {
       if (r1 < r2 || r1 - r2 <= 0.01) {
@@ -63,14 +65,14 @@ export default function JND({ setAnswer, parameters } : StimulusParams<{r1: numb
         setCounter(50);
       } else {
         // correct
-        setR2(Math.min(r2 + 0.01, 1));
+        setR2(roundToTwo(Math.min(r2 + 0.01, 0.01)));
       }
     } else if (!above && n === 2) {
       // incorrect
       if (r2 <= 0) {
         setR2(0);
       }
-      setR2(Math.max(r2 - 0.03, 0));
+      setR2(roundToTwo(Math.max(r2 - 0.03, 0.01)));
     }
   }, [above, counter, participantSelections, r1, r2]);
 
