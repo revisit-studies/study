@@ -1,0 +1,157 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.1/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "255 Charts",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2025-02-1",
+    "description": "255 Chart from the Hindsight study",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "255chart-study/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": false,
+    "windowEventDebounceTime": 200,
+    "recordStudyAudio": true
+  },
+  "importedLibraries": ["demographics"],
+  "components": {
+    "consent": {
+      "type": "markdown",
+      "path": "255chart-study/assets/consent.md",
+      "nextButtonLocation": "belowStimulus",
+      "response": [
+        {
+          "id": "q-short-text",
+          "prompt": "Your Prolific ID",
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Enter your prolific here"
+        }
+      ]
+    },
+    "training-control": {
+      "type": "website",
+      "path": "255chart-study/assets/trainingControl.html",
+      "nextButtonLocation": "belowStimulus",
+      "response": []
+    },
+    "training-search": {
+      "type": "website",
+      "path": "255chart-study/assets/trainingSearch.html",
+      "nextButtonLocation": "belowStimulus",
+      "response": []
+    },
+    "255ChartControl": {
+      "type": "website",
+      "nextButtonLocation": "belowStimulus",
+      "path": "255chart-study/assets/255charts/index.html",
+      "response": []
+    },
+    "255ChartSearch": {
+      "type": "website",
+      "nextButtonLocation": "belowStimulus",
+      "path": "255chart-study/assets/255charts-search/index.html",
+      "response": []
+    },
+    "findings": {
+      "description": "Findings",
+      "instruction": "Your Findings\n\nIn this section, please tell us about the findings you discovered in the data. \n\nUse the textbox with multiple paragraphs to separate your results, and list as many unique findings as you can.",
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "findings",
+          "prompt": "Write your findings here",
+          "location": "belowStimulus",
+          "type": "longText",
+          "placeholder": "Write your findings here",
+          "paramCapture": "FINDINGS"
+        }
+      ]
+    },
+    "explorationStrategy": {
+      "description": "Exploration Strategy",
+      "instruction": "**Your Exploration Strategy** \n\nIn this section, please tell us about the strategies you applied during exploration by answering the following questions.",
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "searched",
+          "prompt": "1. During exploration, did you actively search for items that you thought might be in the visualization?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": ["Yes", "No", "I'm not sure"],
+          "secondaryText": "If you answer yes, please provide more details in the questions 2-4."
+        },
+        {
+          "id": "searchedItems",
+          "prompt": "2. If you answered yes, which items did you actively search for?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        },
+        {
+          "id": "relatedToYou",
+          "prompt": "3. How are the ones you actively searched for related to you?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        },
+        {
+          "id": "difficulty",
+          "prompt": "4. How difficult was it to find them?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "I was not able to find them",
+            "It was very difficult to find them",
+            "It took me some time and effort to find them",
+            "It was very easy to find them"
+          ]
+        },
+        {
+          "id": "strategy",
+          "prompt": "5. Did you apply any particular strategy during exploration? What was your strategy? *",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": true
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "consent",
+      {
+        "order": "latinSquare",
+        "numSamples": 1,
+        "components": [
+          {
+            "order": "fixed",
+            "components": ["training-control", "255ChartControl"]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "training-search",
+              "255ChartSearch"
+            ]
+          }
+        ]
+      },
+      "findings",
+      "explorationStrategy",
+      "$demographics.co.demographics"
+    ]
+  }
+}

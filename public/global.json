@@ -39,7 +39,7 @@
     "ParallelJND-study",
     "HexbinJND-study",
     "HeatmapJND-study",
-    "demo-255chart"
+    "255chart-study"
   ],
   "configs": {
     "bubblechart-study": {
@@ -170,8 +170,8 @@
     "HeatmapJND-study": {
       "path": "HeatmapJND-study/config.json"
     },
-    "demo-255chart": {
-        "path": "demo-255chart/config.json"
+    "255chart-study": {
+        "path": "255chart-study/config.json"
     }
   }
 }

@@ -1,0 +1,117 @@
+<div id="debrief">
+
+<!-- ///////////////////////////// Findings ////////////////////////// -->
+<h1> Your Findings </h1>
+
+<p>
+In this section, please tell us about the findings you discovered in the data.<br> Add your findings by clicking "Add Finding". <br>
+Use the text boxes below to separate your results, and list as many unique findings as you can.
+</p>
+
+<div id='findings'>
+    <div id='findingBoxes'></div></br>
+    <input type='button' value='Add Finding' id='add'>
+</div>
+
+</br>
+
+<div id="invalidanswer" style="display: none">
+<p style="color: red">
+In order to proceed, please be sure to provide at least one finding.
+</p>
+</div>
+
+</div>
+
+<style>
+  .response {
+    margin-top: 16px;
+  }
+
+  #submitComments, #codebox {
+    margin-top: 16px;
+  }
+</style>
+
+<script>
+(function() {
+
+    // ---------------------------BEGIN: Findings---------------------------//
+    var counter = 0;
+    var MIN_FINDING = 0;
+    // Add the first # findings
+    for(var i = 0; i < MIN_FINDING; ++i){
+      addFunc(); 
+    }
+    
+    $("#add").click(addFunc);
+    $(".remove").click(removeFunc);
+
+    function addFunc(){
+          ++counter;
+          // Prevent too many boxes, just in case
+          if(counter > 1000){
+            alert("Too many boxes");
+            return false;
+          }   
+          // Add a finding box
+          // Add a remove button if not the first finding
+          var removeButtonHTML = counter > MIN_FINDING ? "<input type='button' value='remove' class='remove'>" : "";
+          var findingBoxHTML = "<div class='finding'></br><label>Finding "+counter+" </label>\n<textarea name='textarea' rows='2' cols='80'></textarea> "+removeButtonHTML+"</div>\n"
+          // Append HTML
+          var findingsHTML = $("#findingBoxes")
+          findingsHTML.append(findingBoxHTML)
+          // Add a remove button
+          findingsHTML.find(".remove").click(removeFunc);
+    }
+
+    function removeFunc() {
+            console.log("remove!")
+            --counter;
+            $(this).parent().remove();
+            console.log("removed!")
+    }
+    // ---------------------------END: Findings---------------------------//
+
+  var data    = {};
+
+  experimentr.showNext();
+  experimentr.release()
+
+  var findingArray = []
+  d3.select('#next-button')
+    .on('click', function () { 
+      // Findings
+      findingArray = []
+      $.each($('#findingBoxes > > textarea'), function(){
+        findingArray.push($(this).val())
+      })
+      
+
+      validate(); 
+    });
+
+  function validate() {
+    // Check validation
+    findingArray = findingArray.filter(function(e){return e !== ""})
+    var isValid = findingArray.length > 0;
+    
+
+    // store data if valid
+    if( isValid ) {
+      // hide the error message
+      d3.select('#invalidanswer').style("display", "none")
+      data['findings'] = JSON.stringify(findingArray)
+      // store the data
+      //console.log("data stored in findings: ")
+      //console.log(data)
+      experimentr.addData(data);
+      experimentr.next()
+    }
+    else
+    {
+      d3.select('#invalidanswer').style("display", "inline")
+    }
+  }
+}());
+</script>

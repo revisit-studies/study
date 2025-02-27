@@ -1,0 +1,98 @@
+<div id="consent">
+
+    <h2>Analysis using an Interactive Data Visualization</h2>
+
+    <p>
+        We will ask you to analyze a dataset using an interactive visualization. 
+        There is no time limit.
+        After you analyze the data, we will ask you to describe your findings.
+    </p>
+
+    <!-- <div class="hidden-md hidden-lg">
+        <div class="alert alert-danger" role="alert">
+            Please do not use mobile devices (touchscreen) for this task.
+        </div>
+    </div> -->
+
+    <!-- <div class="hidden-xs hidden-sm"> -->
+    <div>
+        <p>
+            Please enter your Amazon Worker Id. <strong>You may only complete this HIT once.</strong> Subsequent completions cannot be accepted:
+            <br>
+
+            <input type="text" id="workerId" name="workerId" disabled="true" size="30" />
+            <button id="checkId" type="button">Check ID</button>
+            <br>
+
+            <span id="invalidMessage">
+                Our records show that you have taken part in this study before, so we cannot allow you to take this HIT again at this time. Please contact us if you feel this is in error.
+            </span>
+        </p>
+
+        <!--
+        <div id="consentForm">
+        <p class="placeholder">Include an IRB or other consent form here. The DIV will automatically create a scrollable window.</p>
+        </div>
+        -->
+
+        <p>
+            <button id="consentYes" disabled="true" type="button">I Agree</button>
+        </p>
+
+        <p>
+            <strong>Note: </br>1. This HIT requires a modern browser. If you are not using Chrome or Firefox, the "I Agree" button may not activate even after entering your Worker ID. </br>2. Please do not use mobile devices (touchscreen) for this task.</strong>
+        </p>
+    </div>
+
+</div>
+
+<style>
+    #invalidMessage {
+        display: none;
+        color: red;
+    }
+    #consentForm {
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        height: 200px;
+        overflow-y: scroll;
+        padding: 15px;
+    }
+</style>
+
+<script>
+    (function () {
+        var data = {}
+        , workers = null;
+        init();
+        function init() {
+            experimentr.hideNext();
+            // load previous workers file
+            d3.json('modules/blocked-workers.json', function (err, d) {
+                workers = d;
+                d3.select('#workerId').attr('disabled', null);
+            });
+            d3.selectAll('#workerId')
+                    .on('keypress', function () {
+                        data.workerId = this.value;
+                    })
+                    .on('blur', function () {
+                        data.workerId = this.value;
+                    });
+            d3.select('#consentYes').on('click', experimentr.next);
+            d3.select('#checkId').on('click', validate);
+        }
+
+        function validate() {
+            if (data.workerId) {
+                experimentr.addData(data);
+                if (workers.indexOf(data.workerId) == -1) {
+                    d3.select('#consentYes').attr('disabled', null);
+                } else {
+                    d3.select('#invalidMessage').style('display', 'inline');
+                }
+            }
+        }
+
+    }());
+</script>
