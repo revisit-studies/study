@@ -12,7 +12,7 @@ import {
 } from 'react';
 import { select } from 'd3-selection';
 
-const width = 300;
+const width = 320;
 const height = 300;
 
 export default function ScatterPlots({ r, onClick } : { r: number, onClick: () => void}) {
@@ -21,7 +21,7 @@ export default function ScatterPlots({ r, onClick } : { r: number, onClick: () =
   const [isHover, setIsHover] = useState<boolean>(false);
 
   const margin = {
-    left: 40, top: 20, right: 20, bottom: 20,
+    left: 20, top: 20, right: 20, bottom: 20,
   };
   const innerHeight = height - margin.bottom;
   const innerWidth = width - margin.left - margin.right;
