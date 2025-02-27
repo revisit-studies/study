@@ -72,7 +72,7 @@ export default function PracticeHeatmap({
               )}
             </div>
           </Text>
-          <Text style={{ textAlign: 'center', marginTop: '1rem', minHeight: '28px' }}>{r1First ? `Left is ${r1}, right is ${r2}` : `Left is ${r2}, right is ${r1}`}</Text>
+          <Text style={{ textAlign: 'center', marginTop: '1rem', minHeight: '28px' }}>{r1First ? `A is ${r1}, B is ${r2}` : `A is ${r2}, B is ${r1}`}</Text>
         </>
       )}
 
