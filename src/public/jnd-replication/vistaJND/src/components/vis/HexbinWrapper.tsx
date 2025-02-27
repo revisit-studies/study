@@ -37,22 +37,22 @@ export default function HexbinWrapper({
     <Group style={{ gap: '40px' }}>
       <Stack style={{ alignItems: 'center' }}>
         <HexbinPlots key={key} onClick={() => handleClick(1)} r={r1} />
-        <Button onClick={() => handleClick(1)}>Left</Button>
+        <Button onClick={() => handleClick(1)}>A</Button>
       </Stack>
       <Stack style={{ alignItems: 'center' }}>
         <HexbinPlots key={key + 1} onClick={() => handleClick(2)} r={r2} />
-        <Button onClick={() => handleClick(2)}>Right</Button>
+        <Button onClick={() => handleClick(2)}>B</Button>
       </Stack>
     </Group>
   ) : (
     <Group style={{ gap: '40px' }}>
       <Stack style={{ alignItems: 'center' }}>
         <HexbinPlots key={key} onClick={() => handleClick(2)} r={r2} />
-        <Button onClick={() => handleClick(2)}>Left</Button>
+        <Button onClick={() => handleClick(2)}>A</Button>
       </Stack>
       <Stack style={{ alignItems: 'center' }}>
         <HexbinPlots key={key + 1} onClick={() => handleClick(1)} r={r1} />
-        <Button onClick={() => handleClick(1)}>Right</Button>
+        <Button onClick={() => handleClick(1)}>B</Button>
       </Stack>
     </Group>
   );
