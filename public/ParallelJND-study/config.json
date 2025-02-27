@@ -61,13 +61,6 @@
       "nextButtonText": "Agree",
       "response": [
         {
-          "id": "signature",
-          "prompt": "Your signature",
-          "location": "belowStimulus",
-          "type": "shortText",
-          "placeholder": "Please provide your signature"
-        },
-        {
           "id": "accept",
           "prompt": "Do you consent to the study and wish to continue?",
           "requiredValue": "Accept",
