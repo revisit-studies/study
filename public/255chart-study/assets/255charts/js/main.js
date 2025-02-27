@@ -31,8 +31,7 @@ var smData = {
 };
 
 var initialState = {
-    mouseOver: 0,
-    mouseMove: 0,
+    showTile:null,
     visited_sequence: "", //sequence string
 };
 
@@ -42,7 +41,20 @@ var trrack = initializeTrrack({
     registry
 });
 
+const hoverIndustry = trrack.getState().showTile;
+if(hoverIndustry != null)
+    showTile(hoverIndustry)
+else closeTile();
+
+
 trrack.currentChange(() => {
+    const hoverIndustry = trrack.getState().showTile;
+    console.log(hoverIndustry,'hoverIndustry')
+
+    if(hoverIndustry != null)
+        showTile(hoverIndustry)
+    else closeTile();
+
     Revisit.postProvenance(trrack.graph.backend);
 });
 
@@ -63,6 +75,9 @@ var fadeColor = '#000000';
 // }
 
 console.log("condition = " + smData.condition);
+
+//For trrack replay
+
 
 ///////////////////////////For Experiment End/////////////////////////////
 
@@ -364,6 +379,8 @@ function bindEvents() {
     $('#g-graphic').on('mouseover', '.emp-area', function () {
         closeTile();
         var industry = indexedCes[$(this).closest('.g-industry').attr('data-ces')];
+        trrack.apply("checkTile", recordActivity(industry));
+
         showTile(industry);
     });
 }
@@ -420,7 +437,6 @@ function drawBead(e) {
 
     //for Data Collection
     smData.mouseMove++;
-    trrack.apply("mouseMove", recordActivity("mouseMove"));
     if(currentVisit) {
         currentVisit.mousemove++;
         //console.log("current chart mousemove: " + currentVisit.mousemove);
@@ -504,7 +520,7 @@ function showTile(industry) {
     console.log('mousing into tile');
     hoverId = setTimeout(fadeIt, smData.fadeDelay, industry.element, clone);
     smData.mouseOver++;
-    trrack.apply("mouseOver", recordActivity("mouseOver"));
+    // trrack.apply("mouseOver", recordActivity("mouseOver"));
 
 }
 
