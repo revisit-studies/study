@@ -62,10 +62,4 @@ without penalty or loss of other benefits. The project
 investigators retain the right to cancel or postpone the
 experimental procedures at any time they see fit.
 
-### By signing below,
-You acknowledge that you have been informed about and consent to
-be a participant in the study described above. Make sure that your
-questions are answered to your satisfaction before signing. You
-are entitled to retain a copy of this consent agreement.
-
 
