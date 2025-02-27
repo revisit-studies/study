@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import {
   useStoreSelector,
@@ -20,6 +20,7 @@ import {
 } from '../../parser/types';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useIsAnalysis } from './useIsAnalysis';
+import { useEvent } from './useEvent';
 
 function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: string, componentConfig: IndividualComponent | InheritedComponent, studyConfig: StudyConfig) {
   const componentName = componentId.slice(0, componentId.lastIndexOf('_'));
@@ -78,10 +79,11 @@ export function useNextStep() {
   const startTime = useMemo(() => Date.now(), []);
 
   const windowEvents = useWindowEvents();
-  const goToNextStep = useCallback((collectData = true) => {
+  const goToNextStep = useEvent((collectData = true) => {
     if (typeof currentStep !== 'number') {
       return;
     }
+
     // Get answer from across the 3 response blocks and the provenance graph
     const trialValidationCopy = structuredClone(trialValidation[identifier]);
     const answer = Object.values(trialValidationCopy).reduce((acc, curr) => {
@@ -223,7 +225,7 @@ export function useNextStep() {
     } else {
       navigate(`/${studyId}/${encryptIndex(nextStep)}${window.location.search}`);
     }
-  }, [currentStep, trialValidation, identifier, otherTexts, storedAnswer, windowEvents, dataCollectionEnabled, sequence, answers, startTime, funcIndex, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, resetOtherText, setMatrixAnswersCheckbox, setMatrixAnswersRadio, studyConfig, participantSequence]);
+  });
 
   return {
     isNextDisabled,

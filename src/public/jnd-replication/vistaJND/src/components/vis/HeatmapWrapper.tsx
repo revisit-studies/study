@@ -16,7 +16,7 @@ import HeatmapPlots from './HeatmapPlots';
  */
 export default function HeatmapWrapper({
   r1, r2, shouldReRender = true, onClick,
-}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number) => void}) {
+}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number, higherFirst?: boolean) => void}) {
   const higherFirst = useMemo(() => Math.random() > 0.5, []);
 
   const [key, setKey] = useState<number>(0);
@@ -29,7 +29,7 @@ export default function HeatmapWrapper({
   };
 
   const handleClick = (n: number) => {
-    onClick(n);
+    onClick(n, higherFirst);
     handleReset();
   };
 
@@ -37,22 +37,22 @@ export default function HeatmapWrapper({
     <Group style={{ gap: '100px' }}>
       <Stack style={{ alignItems: 'center' }}>
         <HeatmapPlots key={key} onClick={() => handleClick(1)} r={r1} />
-        <Button onClick={() => handleClick(1)}>Left</Button>
+        <Button onClick={() => handleClick(1)}>A</Button>
       </Stack>
       <Stack style={{ alignItems: 'center' }}>
         <HeatmapPlots key={key + 1} onClick={() => handleClick(2)} r={r2} />
-        <Button onClick={() => handleClick(2)}>Right</Button>
+        <Button onClick={() => handleClick(2)}>B</Button>
       </Stack>
     </Group>
   ) : (
     <Group style={{ gap: '100px' }}>
       <Stack style={{ alignItems: 'center' }}>
         <HeatmapPlots key={key} onClick={() => handleClick(2)} r={r2} />
-        <Button onClick={() => handleClick(2)}>Left</Button>
+        <Button onClick={() => handleClick(2)}>A</Button>
       </Stack>
       <Stack style={{ alignItems: 'center' }}>
         <HeatmapPlots key={key + 1} onClick={() => handleClick(1)} r={r1} />
-        <Button onClick={() => handleClick(1)}>Right</Button>
+        <Button onClick={() => handleClick(1)}>B</Button>
       </Stack>
     </Group>
   );

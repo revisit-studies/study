@@ -39,11 +39,12 @@ export function IframeController({ currentConfig, provState, answers }: { curren
           type: `${PREFIX}/${tag}`,
           iframeId,
           message,
+          answers,
         },
         '*',
       );
     },
-    [ref, iframeId],
+    [iframeId, answers],
   );
 
   useEffect(() => {
