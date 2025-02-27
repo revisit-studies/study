@@ -25,6 +25,7 @@ export default function func({
       r1, r2, above, counter,
     } = answers[latestTrialKey].parameters);
   }
+  // console.log('r1 r2 above counter', r1, r2, above, counter);
   const roundToTwo = (num: number) => parseFloat((Math.round(num * 100) / 100).toString());
 
   const lastAnswerName = findLatestTrial(answers, 1);
@@ -37,7 +38,7 @@ export default function func({
     if (above && lastAnswerCorrect) {
       r2 = roundToTwo(Math.max(r2 - 0.01, 0.01));
     } else if (above && !lastAnswerCorrect) {
-      r2 = roundToTwo(Math.min(r2 + 0.03, 0.99));
+      r2 = roundToTwo(Math.min(r2 + 0.03, 1));
     } else if (!above && lastAnswerCorrect) {
       r2 = roundToTwo(Math.max(r2 + 0.01, 0.01));
     } else if (!above && !lastAnswerCorrect) {
