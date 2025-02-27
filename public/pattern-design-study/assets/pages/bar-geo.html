@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Geometric Texture Bar Chart</title>
+    <script src="../../../revisitUtilities/revisit-communicate.js"></script>
+
+
+    <script type="text/javascript" src="/pattern-design-study/assets/lib/jquery.min.js"></script>
+    <script type="text/javascript" src="/pattern-design-study/assets/lib/d3.v7.min.js"></script>
+
+    <link rel="stylesheet" href="/pattern-design-study/assets/lib/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="/pattern-design-study/assets/pages/texture_style.css">
+
+    <script src="/pattern-design-study/assets/tools/loading.js"></script>
+
+    <script type = "text/javascript" >
+        //when you click the back button of the browser, this script prevent you from going bac
+        function preventBack(){window.history.forward();}
+        setTimeout("preventBack()", 0);
+        window.onunload=function(){null};
+    </script>
+</head>
+<body>
+<div class="container">
+    <div class="row">
+        <div class="col">
+            <div id="toolbar"></div>
+        </div>
+
+    </div>
+
+    <div class="row gx-3">
+        <div class="col-auto legend_drag_div">
+            <div id = "legend"></div>
+            <div id="dragdrop" class="bg-light"></div>
+        </div>
+        <div class="col-auto">
+            <div id="chartDiv" class="chartDiv"></div>
+            <div id = "outlineDiv" style="padding-left: 200px;margin-top:-50px;"></div>
+        </div>
+        <div class="col-auto">
+            <div id="controllerDiv"></div>
+        </div>
+    </div>
+    <!-- <div class="row">
+        <div class="col">
+            <div id="loadingDiv" class="spinner-border text-primary float-end" role="status" style="display: none;margin-left: 10px;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <button id="bar_geo_next_btn" class="btn btn-primary float-end">Next
+            </button>
+
+        </div>
+    </div> -->
+</div>
+
+<script src="/pattern-design-study/assets/pages/texture_functions.js"></script>
+<script src="/pattern-design-study/assets/pages/texture_constants.js"></script>
+<script type="module">
+    // Move all code that uses createTrrack into this module script
+    import { createTrrack } from '/pattern-design-study/assets/pages/trrack.js';
+    const {trrack, actions: trrack_actions} = createTrrack()
+    
+    // Make trrack and actions globally available
+    window.trrack = trrack;
+    window.trrack_actions = trrack_actions;
+    window.action = trrack_actions;
+</script>
+<script>
+    Revisit.onDataReceive((data) => {
+        
+        localStorage.setItem("measurements", JSON.stringify({condition_chart: data.condition_chart, condition_texture: data.condition_texture}));
+
+
+
+
+    //     let task_description_measurements = JSON.parse(localStorage.getItem('measurements'))
+    // let task_description_condition_texture = task_description_measurements['condition_texture']
+    // let task_description_condition_chart = task_description_measurements['condition_chart']
+
+    // if(task_description_condition_chart == 2){ //map
+    //     document.getElementById('fruit_survey_description').innerHTML = 'This map shows the favorite vegetable of the residents of each French department.'
+    // }else{ //bar or pie
+    //     document.getElementById("This chart shows the result of a survey about people's favourite vegetables.")
+    // }
+
+
+
+
+    let timestamp_bar_geo_start = Date.now() //the starting time for this design
+    window.chartName = 'barGeo'
+    
+    drawToolbar('toolbar')
+    // drawDragDropInfo('dragdrop')
+    document.getElementById('toolbar').appendChild(drawSelectDefaultGeoTexture())
+    drawChartDiv('chartDiv', svgWidth, svgHeight, 'chart')
+    geoTextures(d3.select('#chartA'),fruits)
+    drawGeoControllers()
+
+    /**
+     * UI elements of geometric texture charts
+     */
+
+     const resetBtn = document.getElementById("resetBtn")
+    const dataBtn = document.getElementById("dataBtn")
+    const defaultDataBtn = document.getElementById('defaultDataBtn')
+
+    var parametersList
+    var parameters
+
+
+    const undoBtn = document.getElementById("undoBtn")
+    const redoBtn = document.getElementById("redoBtn")
+    const saveParametersBtn = document.getElementById("saveParameters")
+
+    /* Controllers */
+//pattern type: line, dot, grid
+    const lineRadio = document.getElementById("lineRadio")
+    const dotRadio = document.getElementById("dotRadio")
+    const gridRadio = document.getElementById("gridRadio")
+    window.patternTypeRadios = document.getElementsByClassName("patternTypeRadio")
+    window.patternType = [] //pattern type for each category
+
+//line texture controllers
+    const controlLineDensity = document.getElementById("controlLineDensity")
+    const controlLineRotate = document.getElementById("controlLineRotate")
+    const controlLineStrokeWidth = document.getElementById("controlLineStrokeWidth")
+    const controlLineX = document.getElementById("controlLineX")
+    const controlLineY = document.getElementById("controlLineY")
+
+    const controlLineAngle0 = document.getElementById("controlLineAngle0")
+    const controlLineAngle45 = document.getElementById("controlLineAngle45")
+    const controlLineAngle90 = document.getElementById("controlLineAngle90")
+    const controlLineAngle135 = document.getElementById("controlLineAngle135")
+
+    const controlLineBackgroundWhite = document.getElementById("controlLineBackgroundWhite")
+    const controlLineBackgroundBlack = document.getElementById("controlLineBackgroundBlack")
+    window.controlLineBackgroundRadios = document.getElementsByClassName("controlLineBackgroundRadio")
+
+
+    window.lineBackground = []
+
+    window.lineControllers = document.getElementsByClassName("lineController")
+
+//dot texture controllers
+    const controlDotDensity = document.getElementById("controlDotDensity")
+    const controlDotRotate = document.getElementById("controlDotRotate")
+    const controlDotSize = document.getElementById("controlDotSize")
+    const controlDotX = document.getElementById("controlDotX")
+    const controlDotY = document.getElementById("controlDotY")
+
+    const controlDotAngle0 = document.getElementById("controlDotAngle0")
+    const controlDotAngle45 = document.getElementById("controlDotAngle45")
+
+    const controlDotBackgroundWhite = document.getElementById("controlDotBackgroundWhite")
+    const controlDotBackgroundBlack = document.getElementById("controlDotBackgroundBlack")
+    window.controlDotBackgroundRadios = document.getElementsByClassName("controlDotBackgroundRadio")
+
+
+    window.dotBackground = []
+
+    const controlDotPrimitiveDot = document.getElementById("controlDotPrimitiveDot")
+    const controlDotPrimitiveCircle = document.getElementById("controlDotPrimitiveCircle")
+    window.controlDotPrimitiveRadios = document.getElementsByClassName("controlDotPrimitiveRadio")
+
+    window.dotPrimitive = []
+
+    const controlDotPrimitiveStrokeWidth = document.getElementById("controlDotPrimitiveStrokeWidth")
+
+    window.dotControllers = document.getElementsByClassName("dotController")
+
+
+//grid texture controllers
+    const controlGridDensity = document.getElementById("controlGridDensity")
+    const controlGridStrokeWidth = document.getElementById("controlGridStrokeWidth")
+    const controlGridX = document.getElementById("controlGridX")
+    const controlGridY = document.getElementById("controlGridY")
+
+
+    const controlGridAngle = document.getElementById("controlGridAngle")
+
+    const controlGridAngle15 = document.getElementById("controlGridAngle15")
+    const controlGridAngle30 = document.getElementById("controlGridAngle30")
+    const controlGridAngle45 = document.getElementById("controlGridAngle45")
+
+    const controlGridRotate = document.getElementById("controlGridRotate")
+    const controlGridRotate30 = document.getElementById("controlGridRotate30")
+    const controlGridRotate45 = document.getElementById("controlGridRotate45")
+    const controlGridRotate60 = document.getElementById("controlGridRotate60")
+
+
+    window.gridControllers = document.getElementsByClassName("gridController")
+
+    const controlGridBackgroundWhite = document.getElementById("controlGridBackgroundWhite")
+    const controlGridBackgroundBlack = document.getElementById("controlGridBackgroundBlack")
+    window.controlGridBackgroundRadios = document.getElementsByClassName("controlGridBackgroundRadio")
+
+    window.gridBackground = []
+
+
+//outline controller
+    const controlOutline = document.getElementById("controlOutline")
+
+// /* Indicator */
+    if(document.getElementsByClassName("indicator")){
+        window.indicators = document.getElementsByClassName("indicator") // we will create indicators later
+    }
+    var indicatorX = [] // transform x for each indicator
+    var indicatorY = [] // transoform y for each indicator
+
+    window.legendIndicators = document.getElementsByClassName("legendIndicator") //indicators beside legends
+    window.legendIndicatorX = []
+    window.legendIndicatorY = []
+
+    /* Legend */
+    window.legendLabels = document.getElementsByClassName("legendLabel") //texts in legends
+
+    /**
+     * UI elements of iconic texture charts
+     */
+    /* Pattern */
+    var iconPattern //<pattern> for iconPattern
+    window.iconBackground = []
+
+
+
+
+    /* Icon Style */
+//radio button for each icon style
+    const stroke = document.getElementById("strokeRadio")
+    const detail = document.getElementById("detailRadio")
+    const simpleStroke = document.getElementById('simpleStrokeRadio')
+    const simpleFill = document.getElementById('simpleFillRadio')
+
+
+    window.iconStyleRadios = document.getElementsByClassName("iconStyleRadio") //list of all icon style radio button
+
+//list of all icon style
+    window.iconStyleList = ["stroke", "detail",'simple_stroke','simple_fill']
+
+//images for each icon style
+    const strokeImg = document.getElementById("strokeImg")
+    const detailImg = document.getElementById("detailImg")
+    const simpleStrokeImg = document.getElementById('simpleStrokeImg')
+    const simpleFillImg = document.getElementById('simpleFillImg')
+
+
+//icon style for each bar
+    window.iconStyle = [] // list for all bars' icon style. iconStyle[i] = 1 means i-th bar's icon style is "detail"
+
+    /* Controllers */
+    const controlDensity = document.getElementById("controlDensity")
+    const controlSize = document.getElementById("controlSize")
+    const controlX = document.getElementById("controlX")
+    const controlY = document.getElementById("controlY")
+    const controlRotateIcon = document.getElementById("controlRotateIcon")
+    const controlRotate = document.getElementById("controlRotate")
+    const controlAngle0 = document.getElementById("controlAngle0")
+    const controlAngle90 = document.getElementById("controlAngle90")
+
+    const controlBackgroundWhite = document.getElementById("controlBackgroundWhite")
+    const controlBackgroundBlack = document.getElementById("controlBackgroundBlack")
+    window.controlBackgroundRadios = document.getElementsByClassName("controlBackgroundRadio")
+
+    var iconBackground = []
+
+
+    window.same = document.getElementsByClassName("same")
+
+// /* Indicator */ -- TODO: Geo和Icon Legend 部分重复了？
+    if(document.getElementsByClassName("indicator")){
+        var indicators = document.getElementsByClassName("indicator") // we will create indicators later
+    }
+    var indicatorX = [] // transform x for each indicator
+    var indicatorY = [] // transoform y for each indicator
+
+// const legendIndicators = document.getElementsByClassName("legendIndicator") //indicators beside legends
+
+    /* Legend */
+    window.legendImgs = document.getElementsByClassName("legendImg")
+
+// const legendLabels = document.getElementsByClassName("legendLabel") //texts in legends
+
+const selectDefaultTexture = document.getElementById("selectDefaultTexture")
+
+
+    window.controlHalo = document.getElementById("controlHalo")
+//end of UI elements
+
+//data
+let mydata = getDatasetForChart()
+    
+    drawGeoBarWithTexture(mydata, barWidth, barHeight, 'chart')
+    drawBarIndicators(mydata, barWidth, barHeight, 'chart', 30)
+
+    drawGeoLegend(fruits)
+
+    //initialize
+    geo_setInitialParameters(chartName)
+
+    setSelectCat(chartName)
+    //switch texture by drag and drop
+    // geo_switchTextures(chartName)
+
+    let measurements = JSON.parse(localStorage.getItem('measurements'))
+    let condition_texture = measurements['condition_texture']
+    // switch (condition_texture){
+    //     case 0: //geo_icon
+    //         document.getElementById('last_task').innerHTML=", but keep in mind that we will ask you to complete one other design after this one."
+    //         break;
+    //     case 1: //icon_geo
+    //         document.getElementById('last_task').innerHTML=". This is the last design task."
+    //         break;
+    // }
+    // document.getElementById('bar_geo_next_btn').onclick = function(){
+        //write data to measurements
+        // measurements['parameters_bar_geo'] = JSON.stringify(parameters)
+        // measurements['timestamp_design_finished_bar_geo'] = Date.now()
+
+        let timestamp_bar_geo_end = Date.now() //the end time for this design
+        let bar_geo_design_time = timestamp_bar_geo_end - timestamp_bar_geo_start // time used for this design
+
+        //send the svg of chart design to server
+        //remove the indicators
+        let indicatorsSVG = document.getElementById('indicator_group').outerHTML
+        let fullSVG = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="600" height="600">' + $("#chartA")[0].innerHTML + $("#chart")[0].innerHTML  + $("#chartWhiteStroke")[0].innerHTML + $("#chartBlackStroke")[0].innerHTML + '</svg>'
+        let svgData = fullSVG.replace(indicatorsSVG, '')
+
+        //send the svg and the parameters
+        let obj = {}
+        obj.svgData = svgData
+        obj.filename = 'bar_geo_'+ measurements['participant_id'] + '_v' + measurements['trial_num']
+        obj.parameters = parameters
+
+
+
+    })
+</script>
+
+
+
+</body>
+</html>

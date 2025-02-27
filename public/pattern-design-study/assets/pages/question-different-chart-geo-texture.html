@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Geometric Texture on Different Charts</title>
+    <script src="../../../revisitUtilities/revisit-communicate.js"></script>
+    <script type="text/javascript" src="/pattern-design-study/assets/lib/jquery.min.js"></script>
+    <script type="text/javascript" src="/pattern-design-study/assets/lib/d3.v7.min.js"></script>
+
+    <link rel="stylesheet" href="/pattern-design-study/assets/lib/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="/pattern-design-study/assets/pages/texture_style.css">
+
+    <script src="/pattern-design-study/assets/tools/loading.js"></script>
+
+    <script type = "text/javascript" >
+        //when you click the back button of the browser, this script prevent you from going bac
+        function preventBack(){window.history.forward();}
+        setTimeout("preventBack()", 0);
+        window.onunload=function(){null};
+    </script>
+</head>
+<body>
+<script src="/pattern-design-study/assets/pages/texture_functions.js"></script>
+<script src="/pattern-design-study/assets/pages/texture_constants.js"></script>
+
+<div class="container">
+    <!-- <div class="row">
+        <div class="col">
+                <h2>Different Chart Type - Geometric texture</h2>
+                <div class="alert alert-info already_answered_before" role="alert" style="display: none">
+                    If you have answered this question before and your answer has not changed, please just click:
+                    <button id="different_chart_geo_same_answer_btn" class="btn btn-outline-dark btn-sm">Same As Before</button>
+                </div>
+
+                <p>We applied the geometric texture you designed to <span id="another_charts"></span>. </p>
+            </div>
+    </div> -->
+    <div class="row" style="height: 600px">
+        <div class="col">
+            <div id="charts">
+                <div id="chart0Div" style="position:relative">
+                </div>
+                <div id="chart1Div" style="position:relative;left:600px">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    Revisit.onDataReceive((data, answers) => {
+        localStorage.setItem("measurements", JSON.stringify({condition_chart: data.condition_chart, condition_texture: data.condition_texture}));
+
+        let measurements = JSON.parse(localStorage.getItem('measurements'))
+
+//show the <div> to tell participant they can just answer "same" if they have already done a trial before
+if(measurements['trial_num'] > 0){
+    document.querySelectorAll('.already_answered_before').forEach(function(el) {
+        el.style.display = 'block';
+    })
+}
+
+let condition_texture = measurements['condition_texture']
+let condition_chart = measurements['condition_chart']
+
+/**
+     * UI elements of geometric texture charts
+     */
+
+     const resetBtn = document.getElementById("resetBtn")
+    const dataBtn = document.getElementById("dataBtn")
+    const defaultDataBtn = document.getElementById('defaultDataBtn')
+
+    var parametersList
+    var parameters
+
+
+    const undoBtn = document.getElementById("undoBtn")
+    const redoBtn = document.getElementById("redoBtn")
+    const saveParametersBtn = document.getElementById("saveParameters")
+
+    /* Controllers */
+//pattern type: line, dot, grid
+    const lineRadio = document.getElementById("lineRadio")
+    const dotRadio = document.getElementById("dotRadio")
+    const gridRadio = document.getElementById("gridRadio")
+    window.patternTypeRadios = document.getElementsByClassName("patternTypeRadio")
+    window.patternType = [] //pattern type for each category
+
+//line texture controllers
+    const controlLineDensity = document.getElementById("controlLineDensity")
+    const controlLineRotate = document.getElementById("controlLineRotate")
+    const controlLineStrokeWidth = document.getElementById("controlLineStrokeWidth")
+    const controlLineX = document.getElementById("controlLineX")
+    const controlLineY = document.getElementById("controlLineY")
+
+    const controlLineAngle0 = document.getElementById("controlLineAngle0")
+    const controlLineAngle45 = document.getElementById("controlLineAngle45")
+    const controlLineAngle90 = document.getElementById("controlLineAngle90")
+    const controlLineAngle135 = document.getElementById("controlLineAngle135")
+
+    const controlLineBackgroundWhite = document.getElementById("controlLineBackgroundWhite")
+    const controlLineBackgroundBlack = document.getElementById("controlLineBackgroundBlack")
+    window.controlLineBackgroundRadios = document.getElementsByClassName("controlLineBackgroundRadio")
+
+
+    window.lineBackground = []
+
+    window.lineControllers = document.getElementsByClassName("lineController")
+
+//dot texture controllers
+    const controlDotDensity = document.getElementById("controlDotDensity")
+    const controlDotRotate = document.getElementById("controlDotRotate")
+    const controlDotSize = document.getElementById("controlDotSize")
+    const controlDotX = document.getElementById("controlDotX")
+    const controlDotY = document.getElementById("controlDotY")
+
+    const controlDotAngle0 = document.getElementById("controlDotAngle0")
+    const controlDotAngle45 = document.getElementById("controlDotAngle45")
+
+    const controlDotBackgroundWhite = document.getElementById("controlDotBackgroundWhite")
+    const controlDotBackgroundBlack = document.getElementById("controlDotBackgroundBlack")
+    window.controlDotBackgroundRadios = document.getElementsByClassName("controlDotBackgroundRadio")
+
+
+    window.dotBackground = []
+
+    const controlDotPrimitiveDot = document.getElementById("controlDotPrimitiveDot")
+    const controlDotPrimitiveCircle = document.getElementById("controlDotPrimitiveCircle")
+    window.controlDotPrimitiveRadios = document.getElementsByClassName("controlDotPrimitiveRadio")
+
+    window.dotPrimitive = []
+
+    const controlDotPrimitiveStrokeWidth = document.getElementById("controlDotPrimitiveStrokeWidth")
+
+    window.dotControllers = document.getElementsByClassName("dotController")
+
+
+//grid texture controllers
+    const controlGridDensity = document.getElementById("controlGridDensity")
+    const controlGridStrokeWidth = document.getElementById("controlGridStrokeWidth")
+    const controlGridX = document.getElementById("controlGridX")
+    const controlGridY = document.getElementById("controlGridY")
+
+
+    const controlGridAngle = document.getElementById("controlGridAngle")
+
+    const controlGridAngle15 = document.getElementById("controlGridAngle15")
+    const controlGridAngle30 = document.getElementById("controlGridAngle30")
+    const controlGridAngle45 = document.getElementById("controlGridAngle45")
+
+    const controlGridRotate = document.getElementById("controlGridRotate")
+    const controlGridRotate30 = document.getElementById("controlGridRotate30")
+    const controlGridRotate45 = document.getElementById("controlGridRotate45")
+    const controlGridRotate60 = document.getElementById("controlGridRotate60")
+
+
+    window.gridControllers = document.getElementsByClassName("gridController")
+
+    const controlGridBackgroundWhite = document.getElementById("controlGridBackgroundWhite")
+    const controlGridBackgroundBlack = document.getElementById("controlGridBackgroundBlack")
+    window.controlGridBackgroundRadios = document.getElementsByClassName("controlGridBackgroundRadio")
+
+    window.gridBackground = []
+
+
+//outline controller
+    const controlOutline = document.getElementById("controlOutline")
+
+// /* Indicator */
+    if(document.getElementsByClassName("indicator")){
+        window.indicators = document.getElementsByClassName("indicator") // we will create indicators later
+    }
+    var indicatorX = [] // transform x for each indicator
+    var indicatorY = [] // transoform y for each indicator
+
+    window.legendIndicators = document.getElementsByClassName("legendIndicator") //indicators beside legends
+    window.legendIndicatorX = []
+    window.legendIndicatorY = []
+
+    /* Legend */
+    window.legendLabels = document.getElementsByClassName("legendLabel") //texts in legends
+
+    /**
+     * UI elements of iconic texture charts
+     */
+    /* Pattern */
+    var iconPattern //<pattern> for iconPattern
+    window.iconBackground = []
+
+
+
+
+    /* Icon Style */
+//radio button for each icon style
+    const stroke = document.getElementById("strokeRadio")
+    const detail = document.getElementById("detailRadio")
+    const simpleStroke = document.getElementById('simpleStrokeRadio')
+    const simpleFill = document.getElementById('simpleFillRadio')
+
+
+    window.iconStyleRadios = document.getElementsByClassName("iconStyleRadio") //list of all icon style radio button
+
+//list of all icon style
+    window.iconStyleList = ["stroke", "detail",'simple_stroke','simple_fill']
+
+//images for each icon style
+    const strokeImg = document.getElementById("strokeImg")
+    const detailImg = document.getElementById("detailImg")
+    const simpleStrokeImg = document.getElementById('simpleStrokeImg')
+    const simpleFillImg = document.getElementById('simpleFillImg')
+
+
+//icon style for each bar
+    window.iconStyle = [] // list for all bars' icon style. iconStyle[i] = 1 means i-th bar's icon style is "detail"
+
+    /* Controllers */
+    const controlDensity = document.getElementById("controlDensity")
+    const controlSize = document.getElementById("controlSize")
+    const controlX = document.getElementById("controlX")
+    const controlY = document.getElementById("controlY")
+    const controlRotateIcon = document.getElementById("controlRotateIcon")
+    const controlRotate = document.getElementById("controlRotate")
+    const controlAngle0 = document.getElementById("controlAngle0")
+    const controlAngle90 = document.getElementById("controlAngle90")
+
+    const controlBackgroundWhite = document.getElementById("controlBackgroundWhite")
+    const controlBackgroundBlack = document.getElementById("controlBackgroundBlack")
+    window.controlBackgroundRadios = document.getElementsByClassName("controlBackgroundRadio")
+
+    var iconBackground = []
+
+
+    window.same = document.getElementsByClassName("same")
+
+// /* Indicator */ -- TODO: Geo和Icon Legend 部分重复了？
+    if(document.getElementsByClassName("indicator")){
+        var indicators = document.getElementsByClassName("indicator") // we will create indicators later
+    }
+    var indicatorX = [] // transform x for each indicator
+    var indicatorY = [] // transoform y for each indicator
+
+// const legendIndicators = document.getElementsByClassName("legendIndicator") //indicators beside legends
+
+    /* Legend */
+    window.legendImgs = document.getElementsByClassName("legendImg")
+
+// const legendLabels = document.getElementsByClassName("legendLabel") //texts in legends
+
+const selectDefaultTexture = document.getElementById("selectDefaultTexture")
+
+
+    window.controlHalo = document.getElementById("controlHalo")
+//end of UI elements
+    drawChartDiv('chart0Div', svgWidth, svgHeight, 'chart0')
+    drawChartDiv('chart1Div', svgWidth, svgHeight, 'chart1')
+
+
+    let geo_parameters_key = ''
+    // let icon_parameters_key = ''
+
+    // let parameters = {}
+
+
+    switch (condition_chart) {
+        case 0: //bar, here we should compare geo_pie and geo_map
+            // document.getElementById('another_charts').innerHTML='a pie chart and a map'
+
+            // parametersList = JSON.parse(localStorage.getItem("barGeoparametersList") || "[]")
+            // parameters = parametersList[parametersList.length - 1]
+            // parameters['halo'] = 1
+
+            
+
+            geo_parameters_key = Object.keys(answers).find(k => k.startsWith("bar-geo"));
+            
+
+            if (geo_parameters_key) {
+                parameters = answers[geo_parameters_key]["answer"]["answer"]["parameters"];
+                console.log("got bar geo parameters");
+
+                parameters['halo'] = 1
+            } else {
+                console.log("bar geo parameters key not found");
+            }
+
+
+            para_geoTextures(d3.select('#chart0'),fruits, parameters, 'para')
+
+            drawGeoPieWithTextureFromParameters(defaultDataset, 'chart0', pieRadius, parameters, 'para')
+            drawGeoMapWithTextureFromParameters(defaultMapDataset, 'chart1', 'geo_d', parameters, 'para')
+
+            break;
+        case 1: //pie, here we should compare geo_bar and geo_map
+            // document.getElementById('another_charts').innerHTML='a bar chart and a map'
+
+            // parametersList = JSON.parse(localStorage.getItem("pieGeoparametersList") || "[]")
+            // parameters = parametersList[parametersList.length - 1]
+
+            geo_parameters_key = Object.keys(answers).find(k => k.startsWith("pie-geo"));
+            
+
+            if (geo_parameters_key) {
+                parameters = answers[geo_parameters_key]["answer"]["answer"]["parameters"];
+                console.log("got pie geo parameters");
+
+            } else {
+                console.log("pie geo parameters key not found");
+            }
+
+
+            para_geoTextures(d3.select('#chart0'),fruits, parameters, 'para')
+
+            drawGeoBarWithTextureFromParameters(defaultDataset, 'chart0', 400, 300, parameters, 'para')
+            drawGeoMapWithTextureFromParameters(defaultMapDataset, 'chart1', 'geo_d', parameters, 'para')
+
+            break;
+        case 2: //map, here we should compare geo_bar and geo_map
+            // document.getElementById('another_charts').innerHTML='a bar chart and a pie chart'
+
+            // parametersList = JSON.parse(localStorage.getItem("mapGeoparametersList") || "[]")
+            // parameters = parametersList[parametersList.length - 1]
+
+            geo_parameters_key = Object.keys(answers).find(k => k.startsWith("map-geo"));
+            
+
+            if (geo_parameters_key) {
+                parameters = answers[geo_parameters_key]["answer"]["answer"]["parameters"];
+                console.log("got map geo parameters");
+
+            } else {
+                console.log("map geo parameters key not found");
+            }
+
+
+            para_geoTextures(d3.select('#chart0'),fruits, parameters, 'para')
+
+            drawGeoBarWithTextureFromParameters(defaultDataset, 'chart0', barWidth, barHeight, parameters, 'para')
+            drawGeoPieWithTextureFromParameters(defaultDataset, 'chart1', pieRadius, parameters, 'para')
+
+            break;
+        default:
+            console.log(`has problem with condition_chart`);
+    }
+
+
+
+
+    })
+</script>
+
+<!-- <script>
+    //when clicking "Same As Before" button, fill the textarea with 'same'
+    document.getElementById('different_chart_geo_same_answer_btn').onclick = function (){
+        //fill the textarea of questions on this page with "same"
+        document.getElementById('different_chart_geo_textarea').value = 'same'
+
+        //record the answer
+        different_chart_geo_answer = 'same'
+
+        //record the answer status
+        different_chart_geo_answered = true
+
+        //enable the next button
+        document.getElementById('different_chart_geo_next_btn').disabled = false
+    }
+</script> -->
+
+
+
+<script>
+    // let nextBtn = document.getElementById('different_chart_geo_next_btn')
+
+    // let different_chart_geo_answered = false
+    // let different_chart_geo_answer = 'no_input'
+
+    // document.getElementById('different_chart_geo_textarea').oninput = function (){
+    //     if(this.value){
+    //         different_chart_geo_answered = true
+    //     }else{
+    //         different_chart_geo_answered = false
+    //     }
+
+    //     different_chart_geo_answer = this.value
+
+    //     if (different_chart_geo_answered){
+    //         nextBtn.disabled = false
+    //     }else{
+    //         nextBtn.disabled = true
+    //     }
+    // }
+
+    // document.getElementById('different_chart_geo_next_btn').onclick = function(){
+    //     //write data to measurements
+    //     measurements['different_chart_geo'] = '"'+different_chart_geo_answer+'"'
+
+    //     //update measurements to localStorage
+    //     localStorage.setItem('measurements', JSON.stringify(measurements))
+
+    //     //jump to next page
+    //     switch (condition_texture){
+    //         case 0: //geo_icon
+    //             window.location.href = 'question_different_chart_icon_texture.php';
+    //             break;
+    //         case 1: //icon_geo
+    //             measurements["timestamp_end"] = Date.now()
+
+    //             let date = new Date();
+    //             let y = date.getFullYear();
+    //             let m = date.getMonth() + 1;
+    //             let d = date.getDate();
+    //             let h = date.getHours();
+    //             let min = date.getMinutes();
+    //             let s = date.getSeconds();
+
+    //             // add leading zeros if necessary
+    //             if (m < 10) m = '0' + m;
+    //             if (d < 10) d = '0' + d;
+    //             if (h < 10) h = '0' + h;
+    //             if (min < 10) min = '0' + min;
+    //             if (s < 10) s = '0' + s;
+
+    //             let yymmdd = y + '' + m + '' + d;
+    //             let hhmmss = h + ':' + min + ':' + s;
+
+    //             let formattedDate = yymmdd + ' ' + hhmmss;
+
+    //             measurements["formatted_data_end"] = formattedDate
+
+
+
+    //             //update measurements to localStorage
+    //             localStorage.setItem('measurements', JSON.stringify(measurements))
+
+    //             //send json results to server
+    //             $.ajax({
+    //                 url: '../ajax/results_json.php', //path to the script who handles this
+    //                 type: 'POST',
+    //                 data: JSON.stringify(measurements),
+    //                 contentType: 'application/json',
+    //                 dataType: "json",
+    //                 async: false, // Make the request synchronous
+    //                 success: function (data) {
+    //                     console.log('success')
+    //                 }
+    //             })
+
+    //             //send csv results to server
+    //             $.ajax({
+    //                 url: '../ajax/results_csv.php', //path to the script who handles this
+    //                 type: 'POST',
+    //                 data: JSON.stringify(measurements),
+    //                 contentType: 'application/json',
+    //                 async: false, // Make the request synchronous
+    //                 success: function (data) {
+    //                     console.log('success')
+    //                 }
+    //             })
+    //             window.location.href = 'end.php';
+    //             break;
+    //     }
+    // }
+</script>
+
+</body>
+</html>
+
