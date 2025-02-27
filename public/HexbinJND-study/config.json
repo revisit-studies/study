@@ -55,6 +55,31 @@
         }
       ]
     },
+    "consent": {
+      "type": "markdown",
+      "path": "ScatterJND-study/assets/consent.md",
+      "nextButtonText": "Agree",
+      "response": [
+        {
+          "id": "signature",
+          "prompt": "Your signature",
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Please provide your signature"
+        },
+        {
+          "id": "accept",
+          "prompt": "Do you consent to the study and wish to continue?",
+          "requiredValue": "Accept",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Decline",
+            "Accept"
+          ]
+        }
+      ]
+    },
     "training": {
       "type": "markdown",
       "path": "HexbinJND-study/assets/training.md",
@@ -101,139 +126,15 @@
       "path": "ParallelJND-study/assets/begin.md",
       "response": []
     },
-    "trial1": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.1,
-        "r2": 0.6,
-        "above": true
-      }
-    },
-    "trial2": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.2,
-        "r2": 0.7,
-        "above": true
-      }
-    },
-    "trial3": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.2,
-        "r2": 0.1,
-        "above": false
-      }
-    },
-    "trial4": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.3,
-        "r2": 0.8,
-        "above": true
-      }
-    },
-    "trial5": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.3,
-        "r2": 0.1,
-        "above": false
-      }
-    },
-    "trial6": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.4,
-        "r2": 0.9,
-        "above": true
-      }
-    },
-    "trial7": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.4,
-        "r2": 0.2,
-        "above": false
-      }
-    },
-    "trial8": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.5,
-        "r2": 0.7,
-        "above": true
-      }
-    },
-    "trial9": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.5,
-        "r2": 0.3,
-        "above": false
-      }
-    },
-    "trial10": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.6,
-        "r2": 0.7,
-        "above": true
-      }
-    },
-    "trial11": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.6,
-        "r2": 0.4,
-        "above": false
-      }
-    },
-    "trial12": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.7,
-        "r2": 0.9,
-        "above": true
-      }
-    },
-    "trial13": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.7,
-        "r2": 0.5,
-        "above": false
-      }
-    },
-    "trial14": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.8,
-        "r2": 0.9,
-        "above": true
-      }
-    },
-    "trial15": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.8,
-        "r2": 0.4,
-        "above": false
-      }
-    },
-    "trial16": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.9,
-        "r2": 0.7,
-        "above": false
-      }
+    "trial": {
+      "baseComponent": "experimentRevised"
     }
   },
   "sequence": {
     "order": "fixed",
     "components": [
       "introduction",
+      "consent",
       "training",
       {
         "order": "fixed",
@@ -245,24 +146,79 @@
       },
       "begin",
       {
-        "order": "random",
+        "order": "fixed",
         "components": [
-          "trial1",
-          "trial2",
-          "trial3",
-          "trial4",
-          "trial5",
-          "trial6",
-          "trial7",
-          "trial8",
-          "trial9",
-          "trial10",
-          "trial11",
-          "trial12",
-          "trial13",
-          "trial14",
-          "trial15",
-          "trial16"
+          {
+            "order": "dynamic",
+            "id": "below3",
+            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+            "parameters": {
+              "r1": 0.3,
+              "r2": 0.1,
+              "above": false,
+              "name": "below3",
+              "index": 13
+            }
+          },{
+            "order": "dynamic",
+            "id": "above3",
+            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+            "parameters": {
+              "r1": 0.3,
+              "r2": 0.5,
+              "above": true,
+              "name": "above3",
+              "index": 14
+            }
+          },
+          {
+            "order": "dynamic",
+            "id": "below6",
+            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+            "parameters": {
+              "r1": 0.6,
+              "r2": 0.5,
+              "above": false,
+              "name": "below6",
+              "index": 15
+            }
+          },
+          {
+            "order": "dynamic",
+            "id": "above6",
+            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+            "parameters": {
+              "r1": 0.6,
+              "r2": 0.7,
+              "above": true,
+              "name": "above6",
+              "index": 16
+            }
+          },
+          {
+            "order": "dynamic",
+            "id": "below9",
+            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+            "parameters": {
+              "r1": 0.9,
+              "r2": 0.8,
+              "above": false,
+              "name": "below9",
+              "index": 17
+            }
+          },
+          {
+            "order": "dynamic",
+            "id": "above9",
+            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+            "parameters": {
+              "r1": 0.9,
+              "r2": 0.99,
+              "above": true,
+              "name": "above9",
+              "index": 18
+            }
+          }
         ]
       }
     ]
