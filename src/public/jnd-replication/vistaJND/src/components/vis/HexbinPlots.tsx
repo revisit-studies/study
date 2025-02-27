@@ -2,7 +2,7 @@
  * Authors: WPI Data Visualization Team
  * Modified by: The ReVISit Team
  * Description:
- *    This file contains the functionality to create a Hexbin Plot.
+ *    This file contains the functionality to create a Hexbin Plot using a pre-existing dataset.
  */
 
 import { scaleLinear } from 'd3-scale';
@@ -12,18 +12,45 @@ import {
   useCallback, useEffect, useRef, useState,
 } from 'react';
 import { select } from 'd3-selection';
-import { generateDataSetFixed } from '../../utils/dataGeneration';
 
 const width = 300;
 const height = 300;
 
 export default function HexbinPlots({ r, onClick } : { r: number, onClick: () => void }) {
   const d3Container = useRef(null);
-
+  const [data, setData] = useState<[number, number][]>([]);
   const [isHover, setIsHover] = useState<boolean>(false);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const filePath = `/jnd-data/datasets/size_1000/dataset_${r}_size_1000.csv`;
+
+        const response = await fetch(filePath);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch dataset: ${filePath}`);
+        }
+
+        const text = await response.text();
+        const rows = text.trim().split('\n').slice(1);
+
+        const parsedData = rows.map((row) => {
+          const [x, y] = row.split(',').map(Number);
+          return [x, y] as [number, number];
+        });
+
+        setData(parsedData);
+      } catch (error) {
+        console.error('Error loading dataset:', error);
+      }
+    };
+
+    fetchData();
+  }, [r]);
+
   const createChart = useCallback(() => {
-    const data: [number, number][] = generateDataSetFixed(r, Date.now().toString(), 1000) as [number, number][];
+    if (data.length === 0) return;
+
     const margin = {
       left: 40, top: 20, right: 20, bottom: 40,
     };
@@ -82,7 +109,7 @@ export default function HexbinPlots({ r, onClick } : { r: number, onClick: () =>
       .call(yAxis)
       .selectAll('line, text')
       .remove();
-  }, [r]);
+  }, [data]);
 
   useEffect(() => {
     createChart();
