@@ -6,6 +6,7 @@ export default function func({
   let {
     r1, r2, above,
   } = customParameters;
+  const { name } = customParameters;
   let counter = 0;
   const findLatestTrial = (trialAnswers: Record<string, StoredAnswer>) => {
     const trialKeys = Object.keys(trialAnswers)
@@ -17,50 +18,19 @@ export default function func({
 
     return trialKeys.length > 0 ? trialKeys[0].key : null;
   };
-  console.log('last trial', findLatestTrial(answers));
   const latestTrialKey = findLatestTrial(answers);
   if (latestTrialKey && answers[latestTrialKey]?.parameters) {
     ({
       r1, r2, above, counter,
     } = answers[latestTrialKey].parameters);
   }
-  // if (answers.scatter1_12_trial_0?.answer && Object.keys(answers.scatter1_12_trial_0?.answer).length !== 0) {
-  //   ({ counter } = answers.scatter1_12_trial_0.parameters);
-  //   const trialKey = `scatter1_12_trial_${customParameters.counter}`;
-  //   if (answers[trialKey]?.parameters) {
-  //     ({
-  //       r1, r2, above, counter,
-  //     } = answers.scatter1_12_trial_1.parameters);
-  //   }
-  // }
 
   const roundToTwo = (num: number) => parseFloat((Math.round(num * 100) / 100).toString());
-  console.log('counter', counter);
-  const lastAnswer = answers[`scatter1_12_trial_${counter}`]?.answer?.scatterSelections;
-  console.log('inside func');
-  console.log('last answer', lastAnswer);
-  console.log('all answers', answers);
-  console.log('parameters r1, r2, above', r1, r2, above);
-  if (answers?.scatter1_12_trial_1?.answer) {
-    if (Object.keys(answers.scatter1_12_trial_1.answer).length === 0) {
-      console.log('Answer is an empty object');
-    } else {
-      console.log('Answer is not an empty object');
-    }
-  }
-  // check if answers?.scatter1_12_trial_1?.answer this answer is not a empty object
-  // if it is not empty then we can
-  // console.log('Scatter Selections:', answers?.scatter1_12_trial_0?.answer?.scatterSelections);
-  // console.log('parameters:', customParameters);
-  if (lastAnswer) {
-    // const scatterSelections = answers.scatterSelections as StoredAnswer[];
-    // const lastSelection = scatterSelections[scatterSelections.length - 1];
-    // console.log(answers.scatterSelections);
+  const lastAnswer = answers[`${name}_12_trial_${counter}`]?.answer?.scatterSelections;
 
+  if (lastAnswer) {
     const correctAnswer = above ? 2 : 1;
     const lastAnswerCorrect = lastAnswer === correctAnswer;
-
-    console.log(`Last Answer: ${lastAnswer}, Expected: ${correctAnswer}, Correct: ${lastAnswerCorrect}`);
 
     if (above && lastAnswerCorrect) {
       if (r2 - r1 <= 0.01) {
@@ -81,7 +51,6 @@ export default function func({
     }
 
     counter += 1;
-    console.log(`Updated r1: ${r1}, Updated r2: ${r2}, Counter: ${counter}`);
   }
 
   if (counter === 10) {
