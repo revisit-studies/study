@@ -11,6 +11,7 @@
  */
 
 import { Center, Stack, Text } from '@mantine/core';
+import { useState } from 'react';
 import { StimulusParams } from '../../../../../../store/types';
 import ScatterWrapper from './ScatterWrapper';
 import { useNextStep } from '../../../../../../store/hooks/useNextStep';
@@ -31,11 +32,10 @@ export default function JND({ setAnswer, parameters } : StimulusParams<{r1: numb
   const { goToNextStep } = useNextStep();
 
   const onClick = (n: number) => {
-    // setParticipantSelections([...participantSelections, { correct: n === 1 }]);
     // setCounter(counter + 1);
     setAnswer({
       status: true,
-      answers: { scatterSelections: n === 1 },
+      answers: { scatterSelections: n },
     });
 
     setTimeout(() => {

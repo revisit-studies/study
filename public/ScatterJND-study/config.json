@@ -247,14 +247,36 @@
       },
       "begin",
       {
-        "order": "random",
+        "order": "fixed",
         "components": [
           {
             "order": "dynamic",
             "id": "scatter1",
             "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
             "parameters": {
-              "r1": 0.1,
+              "r1": 0.3,
+              "r2": 0.5,
+              "above": true,
+              "name": "trial"
+            }
+          },
+          {
+            "order": "dynamic",
+            "id": "scatter2",
+            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+            "parameters": {
+              "r1": 0.9,
+              "r2": 0.8,
+              "above": true,
+              "name": "trial"
+            }
+          },
+          {
+            "order": "dynamic",
+            "id": "scatter3",
+            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+            "parameters": {
+              "r1": 0.7,
               "r2": 0.6,
               "above": true,
               "name": "trial"
