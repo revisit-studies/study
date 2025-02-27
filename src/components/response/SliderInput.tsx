@@ -1,7 +1,5 @@
 import {
-  Box,
-  Flex,
-  Input, Slider, SliderProps,
+  Box, Flex, Input, Slider, SliderProps,
 } from '@mantine/core';
 import { useMemo } from 'react';
 import { SliderResponse } from '../../parser/types';
@@ -28,11 +26,15 @@ export function SliderInput({
     options,
     secondaryText,
     snap,
+    step,
+    withBar,
+    tlxStyle,
   } = response;
 
   const [min, max] = useMemo(() => [Math.min(...options.map((opt) => opt.value)), Math.max(...options.map((opt) => opt.value))], [options]);
-
+  const hasLabels = options.some((opt) => opt.label !== '');
   const errorMessage = generateErrorMessage(response, answer);
+
   return (
     <Input.Wrapper
       label={(
@@ -52,12 +54,28 @@ export function SliderInput({
         marks={options as SliderProps['marks']}
         min={min}
         max={max}
+        step={step ?? (snap ? 0.001 : (max - min) / 100)}
+        h={hasLabels ? 40 : undefined}
         {...answer}
-        h={40}
-        mt={4}
-        classNames={{ markLabel: classes.markLabel }}
+        classNames={{ track: tlxStyle ? classes.track : '' }}
         restrictToMarks={snap}
         label={(value) => (snap ? null : value)}
+        styles={(theme) => ({
+          mark: {
+            ...(tlxStyle ? {
+              height: 20, width: 1, marginTop: -6, marginLeft: 2, borderRadius: 0,
+            } : {}),
+            ...(withBar === false ? { borderColor: 'var(--mantine-color-gray-2)' } : {}),
+          },
+          bar: withBar === false || tlxStyle ? { display: 'none' } : {},
+          markLabel: {
+            fontSize: theme.fontSizes.sm,
+            color: theme.colors.gray[7],
+            transform: 'translate(calc((var(--mark-offset) * -1) + (var(--slider-size) / 2)), calc(var(--mantine-spacing-xs) / 2)',
+          },
+        })}
+        flex={1}
+        mt={tlxStyle ? 'sm' : 'xs'}
       />
     </Input.Wrapper>
   );

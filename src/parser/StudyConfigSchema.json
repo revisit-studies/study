@@ -1898,9 +1898,21 @@
           "description": "The starting value of the slider. Defaults to the minimum value.",
           "type": "number"
         },
+        "step": {
+          "description": "The step value of the slider. If not provided (and snap not enabled), the step value is calculated as the range of the slider divided by 100.",
+          "type": "number"
+        },
+        "tlxStyle": {
+          "description": "Whether to render the slider with a NASA-tlx style. Defaults to false.",
+          "type": "boolean"
+        },
         "type": {
           "const": "slider",
           "type": "string"
+        },
+        "withBar": {
+          "description": "Whether to render the slider with a bar to the left. Defaults to true.",
+          "type": "boolean"
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider.",
