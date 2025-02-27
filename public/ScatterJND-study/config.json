@@ -102,134 +102,6 @@
     },
     "trial": {
       "baseComponent": "experimentRevised"
-    },
-    "trial1": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.1,
-        "r2": 0.6,
-        "above": true
-      }
-    },
-    "trial2": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.2,
-        "r2": 0.7,
-        "above": true
-      }
-    },
-    "trial3": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.2,
-        "r2": 0.1,
-        "above": false
-      }
-    },
-    "trial4": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.3,
-        "r2": 0.8,
-        "above": true
-      }
-    },
-    "trial5": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.3,
-        "r2": 0.1,
-        "above": false
-      }
-    },
-    "trial6": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.4,
-        "r2": 0.9,
-        "above": true
-      }
-    },
-    "trial7": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.4,
-        "r2": 0.2,
-        "above": false
-      }
-    },
-    "trial8": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.5,
-        "r2": 0.7,
-        "above": true
-      }
-    },
-    "trial9": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.5,
-        "r2": 0.3,
-        "above": false
-      }
-    },
-    "trial10": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.6,
-        "r2": 0.7,
-        "above": true
-      }
-    },
-    "trial11": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.6,
-        "r2": 0.4,
-        "above": false
-      }
-    },
-    "trial12": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.7,
-        "r2": 0.9,
-        "above": true
-      }
-    },
-    "trial13": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.7,
-        "r2": 0.5,
-        "above": false
-      }
-    },
-    "trial14": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.8,
-        "r2": 0.9,
-        "above": true
-      }
-    },
-    "trial15": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.8,
-        "r2": 0.4,
-        "above": false
-      }
-    },
-    "trial16": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.9,
-        "r2": 0.7,
-        "above": false
-      }
     }
   },
   "sequence": {
@@ -257,7 +129,7 @@
               "r1": 0.3,
               "r2": 0.5,
               "above": true,
-              "name": "trial"
+              "name": "scatter1"
             }
           },
           {
@@ -267,8 +139,8 @@
             "parameters": {
               "r1": 0.9,
               "r2": 0.8,
-              "above": true,
-              "name": "trial"
+              "above": false,
+              "name": "scatter2"
             }
           },
           {
@@ -276,10 +148,10 @@
             "id": "scatter3",
             "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
             "parameters": {
-              "r1": 0.7,
-              "r2": 0.6,
+              "r1": 0.6,
+              "r2": 0.8,
               "above": true,
-              "name": "trial"
+              "name": "scatter3"
             }
           }
         ]
