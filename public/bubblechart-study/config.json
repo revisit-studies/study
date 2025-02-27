@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["The reVISit Team"],
     "date": "2023-04-28",
-    "description": "Vis search replication",
+    "description": "Bubblechart search replication",
     "organizations": ["University of Utah", "WPI", "University of Toronto"]
   },
   "uiConfig": {
@@ -121,14 +121,14 @@
             "It was very difficult to find them",
             "It took me some time and effort to find them",
             "It was very easy to find them"
-          ]
+          ],
+          "required": false
         },
         {
           "id": "strategy",
-          "prompt": "5. Did you apply any particular strategy during exploration? What was your strategy? *",
+          "prompt": "5. Did you apply any particular strategy during exploration? What was your strategy?",
           "location": "belowStimulus",
-          "type": "longText",
-          "required": true
+          "type": "longText"
         }
       ]
     }
