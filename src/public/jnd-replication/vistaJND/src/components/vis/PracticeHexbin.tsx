@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import {
   Center, Stack, Text,
 } from '@mantine/core';
+import { IconCircleCheck, IconCircleX } from '@tabler/icons-react';
 import HexbinWrapper from './HexbinWrapper';
 import { StimulusParams } from '../../../../../../store/types';
 
@@ -9,15 +10,17 @@ export default function PracticeHexBin({
   parameters,
 }: StimulusParams<{ r1: number; r2: number }>) {
   const [result, setResult] = useState<string | null>(null);
+  const [r1First, setR1First] = useState<boolean | null>(null);
+  const { r1, r2 } = parameters;
 
   const onClick = useCallback(
-    (n: number) => {
-      const { r1, r2 } = parameters;
+    (n: number, higherFirst?: boolean) => {
       if (result === null) {
+        setR1First(higherFirst ?? true);
         setResult((n === 1 && r1 > r2) || (n === 2 && r2 > r1) ? 'Correct' : 'Incorrect');
       }
     },
-    [parameters, result],
+    [r1, r2, result],
   );
 
   return (
@@ -36,7 +39,36 @@ export default function PracticeHexBin({
           shouldReRender={false}
         />
       </Center>
-      <Text style={{ textAlign: 'center', marginTop: '1rem', minHeight: '28px' }}>{result ?? ' '}</Text>
+      {result && (
+        <>
+          <Text style={{
+            textAlign: 'center', marginTop: '1rem', minHeight: '28px', fontSize: '18px', fontWeight: 'bold',
+          }}
+          >
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '8px',
+              color: result === 'Correct' ? 'green' : 'red',
+            }}
+            >
+              {result === 'Correct' ? (
+                <>
+                  <IconCircleCheck size={18} stroke={2} />
+                  <span>Correct</span>
+                </>
+              ) : (
+                <>
+                  <IconCircleX size={18} stroke={2} />
+                  <span>Incorrect</span>
+                </>
+              )}
+            </div>
+          </Text>
+          <Text style={{ textAlign: 'center', marginTop: '1rem', minHeight: '28px' }}>{r1First ? `Left is ${r1}, right is ${r2}` : `Left is ${r2}, right is ${r1}`}</Text>
+        </>
+      )}
     </Stack>
   );
 }
