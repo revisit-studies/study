@@ -73,6 +73,18 @@ export function SliderInput({
             color: theme.colors.gray[7],
             transform: 'translate(calc((var(--mark-offset) * -1) + (var(--slider-size) / 2)), calc(var(--mantine-spacing-xs) / 2)',
           },
+          // Red line thumb style
+          thumb: {
+            ...(tlxStyle ? {
+              borderColor: 'var(--mantine-color-red-6)',
+              width: 1,
+              borderWidth: 1,
+              height: 22,
+              borderRadius: 0,
+              backgroundColor: 'var(--mantine-color-red-6)',
+              transform: 'translate(-50%, -62%)',
+            } : {}),
+          },
         })}
         flex={1}
         mt={tlxStyle ? 'sm' : 'xs'}
