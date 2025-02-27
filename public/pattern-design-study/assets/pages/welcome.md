@@ -4,7 +4,7 @@ You are being invited to participate in a study titled **"Design Characterizatio
 
 The purpose of this study is to explore how to use black-and-white texture in visual data representations, like in the following historic examples:
 
-![Charts with black and white textures](/replication-studies/pattern-design-study/assets/img/welcome_teaser.png) 
+![Charts with black and white textures](./assets/img/welcome_teaser.png) 
 
 Please ensure that you are opening this experiment with the **Chrome** browser. You cannot navigate back to previous pages.
 
