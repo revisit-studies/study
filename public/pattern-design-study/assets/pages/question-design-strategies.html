@@ -7,13 +7,13 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Design Strategies</title>
     <script src="../../../revisitUtilities/revisit-communicate.js"></script>
-    <script type="text/javascript" src="/pattern-design-study/assets/lib/jquery.min.js"></script>
-    <script type="text/javascript" src="/pattern-design-study/assets/lib/d3.v7.min.js"></script>
+    <script type="text/javascript" src="../lib/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/d3.v7.min.js"></script>
 
-    <link rel="stylesheet" href="/pattern-design-study/assets/lib/bootstrap.css">
-    <link rel="stylesheet" type="text/css" href="/pattern-design-study/assets/pages/texture_style.css">
+    <link rel="stylesheet" href="../lib/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="./texture_style.css">
 
-    <script src="/pattern-design-study/assets/tools/loading.js"></script>
+    <script src="../tools/loading.js"></script>
 
     <script type = "text/javascript" >
         //when you click the back button of the browser, this script prevent you from going bac
@@ -49,51 +49,9 @@
         </div>
     </div>
 
-    <!-- <div class="row">
-        <div class="col">
-            <div class="content">
-                <div class="mb-3">
-                    <label for="strategy_goal"
-                           class="form-label"
-                    >
-                        1. What kind of <b>goals</b> did you want to achieve when you designed the representation?
-                    </label>
-                    <textarea
-                            class="form-control"
-                            id= "strategy_goal"
-                            rows="4"
-                            cols="80"
-                            placeholder="Please write your answer here."
-                    ></textarea>
-                </div>
-
-                <div id="strategy_first_design_div"
-                     class="mb-3"
-                >
-                    <label for="strategy_first_design_textarea"
-                           class="form-label"
-                    >
-                        2. When you chose the parameters for the <b><span id="first_design_texture_name"></span> textures</b>, did you use any methods or principles?
-                    </label>
-                </div>
-
-                <div id="strategy_second_design_div"
-                     class="mb-3"
-                >
-                    <label for="strategy_second_design_textarea"
-                           class="form-label"
-                    >
-                        3. When you chose the parameters for the <b><span id="second_design_texture_name"></span> textures</b>, did you use any methods or principles?
-                    </label>
-                </div>
-
-                <button id="strategy_next_btn" class="btn btn-primary float-end" disabled>Next</button>
-            </div>
-        </div>
-    </div> -->
 </div>
-<script src="/pattern-design-study/assets/pages/texture_functions.js"></script>
-<script src="/pattern-design-study/assets/pages/texture_constants.js"></script>
+<script src="./texture_functions.js"></script>
+<script src="./texture_constants.js"></script>
 <script>
     Revisit.onDataReceive((data, answers) => {
         console.log("Full answers object:", answers)
@@ -118,6 +76,7 @@
 
     let condition_chart = data.condition_chart
     let condition_texture = data.condition_texture
+    
     let condition_chart_name
     let condition_texture_name0
     let condition_texture_name1
