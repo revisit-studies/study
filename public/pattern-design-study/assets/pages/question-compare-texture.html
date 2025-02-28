@@ -38,10 +38,12 @@
     Revisit.onDataReceive((data, answers) => {
         localStorage.setItem("measurements", JSON.stringify({condition_chart: data.condition_chart, condition_texture: data.condition_texture}));
 
-        let measurements = JSON.parse(localStorage.getItem('measurements'))
-        let condition_texture = measurements['condition_texture']
-        let condition_chart = measurements['condition_chart']
+        // let measurements = JSON.parse(localStorage.getItem('measurements'))
+        // let condition_texture = measurements['condition_texture']
+        // let condition_chart = measurements['condition_chart']
 
+        let condition_texture = data.condition_texture;
+        let condition_chart = data.condition_chart;
 
         let geo_chart = -1
         let icon_chart = -1

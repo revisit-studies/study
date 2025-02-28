@@ -7,13 +7,13 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Geometric Texture on Different Charts</title>
     <script src="../../../revisitUtilities/revisit-communicate.js"></script>
-    <script type="text/javascript" src="/pattern-design-study/assets/lib/jquery.min.js"></script>
-    <script type="text/javascript" src="/pattern-design-study/assets/lib/d3.v7.min.js"></script>
+    <script type="text/javascript" src="../lib/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/d3.v7.min.js"></script>
 
-    <link rel="stylesheet" href="/pattern-design-study/assets/lib/bootstrap.css">
-    <link rel="stylesheet" type="text/css" href="/pattern-design-study/assets/pages/texture_style.css">
+    <link rel="stylesheet" href="../lib/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="../pages/texture_style.css">
 
-    <script src="/pattern-design-study/assets/tools/loading.js"></script>
+    <script src="../tools/loading.js"></script>
 
     <script type = "text/javascript" >
         //when you click the back button of the browser, this script prevent you from going bac
@@ -23,21 +23,10 @@
     </script>
 </head>
 <body>
-<script src="/pattern-design-study/assets/pages/texture_functions.js"></script>
-<script src="/pattern-design-study/assets/pages/texture_constants.js"></script>
+<script src="./texture_functions.js"></script>
+<script src="./texture_constants.js"></script>
 
 <div class="container">
-    <!-- <div class="row">
-        <div class="col">
-                <h2>Different Chart Type - Geometric texture</h2>
-                <div class="alert alert-info already_answered_before" role="alert" style="display: none">
-                    If you have answered this question before and your answer has not changed, please just click:
-                    <button id="different_chart_geo_same_answer_btn" class="btn btn-outline-dark btn-sm">Same As Before</button>
-                </div>
-
-                <p>We applied the geometric texture you designed to <span id="another_charts"></span>. </p>
-            </div>
-    </div> -->
     <div class="row" style="height: 600px">
         <div class="col">
             <div id="charts">
@@ -53,17 +42,20 @@
     Revisit.onDataReceive((data, answers) => {
         localStorage.setItem("measurements", JSON.stringify({condition_chart: data.condition_chart, condition_texture: data.condition_texture}));
 
-        let measurements = JSON.parse(localStorage.getItem('measurements'))
-
+        // let measurements = JSON.parse(localStorage.getItem('measurements'))
+        // let condition_texture = measurements['condition_texture']
+        // let condition_chart = measurements['condition_chart']
 //show the <div> to tell participant they can just answer "same" if they have already done a trial before
-if(measurements['trial_num'] > 0){
-    document.querySelectorAll('.already_answered_before').forEach(function(el) {
-        el.style.display = 'block';
-    })
-}
+// if(measurements['trial_num'] > 0){
+//     document.querySelectorAll('.already_answered_before').forEach(function(el) {
+//         el.style.display = 'block';
+//     })
+// }
 
-let condition_texture = measurements['condition_texture']
-let condition_chart = measurements['condition_chart']
+
+
+let condition_texture = data.condition_texture;
+let condition_chart = data.condition_chart;
 
 /**
      * UI elements of geometric texture charts
