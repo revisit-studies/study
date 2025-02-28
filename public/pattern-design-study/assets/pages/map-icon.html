@@ -7,13 +7,13 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Iconic Texture Map</title>
     <script src="../../../revisitUtilities/revisit-communicate.js"></script>
-    <script type="text/javascript" src="/pattern-design-study/assets/lib/jquery.min.js"></script>
-    <script type="text/javascript" src="/pattern-design-study/assets/lib/d3.v7.min.js"></script>
+    <script type="text/javascript" src="../lib/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/d3.v7.min.js"></script>
 
-    <link rel="stylesheet" href="/pattern-design-study/assets/lib/bootstrap.css">
-    <link rel="stylesheet" type="text/css" href="/pattern-design-study/assets/pages/texture_style.css">
+    <link rel="stylesheet" href="../lib/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="./texture_style.css">
 
-    <script src="/pattern-design-study/assets/tools/loading.js"></script>
+    <script src="../tools/loading.js"></script>
 
     <script type = "text/javascript" >
         //when you click the back button of the browser, this script prevent you from going bac
@@ -46,18 +46,11 @@
             </div>
         </div>
     </div>
-    <!-- <div class="row">
-        <div class="col">
-            <button id="map_icon_next_btn" class="btn btn-primary float-end">Next
-            </button>
-        </div>
-    </div> -->
-</div>
-<script src="/pattern-design-study/assets/pages/texture_functions.js"></script>
-<script src="/pattern-design-study/assets/pages/texture_constants.js"></script>
+<script src="./texture_functions.js"></script>
+<script src="./texture_constants.js"></script>
 <script type="module">
     // Move all code that uses createTrrack into this module script
-    import { createTrrack } from '/pattern-design-study/assets/pages/trrack.js';
+    import { createTrrack } from './trrack.js';
     const {trrack, actions: trrack_actions} = createTrrack()
     
     // Make trrack and actions globally available
@@ -82,11 +75,10 @@
         drawChartDiv('chartDiv', svgWidth, svgHeight, 'chart')
         iconTextures(d3.select('#chartA'),fruits)
         drawIconicControllers()
- /**
- * UI elements of geometric texture charts
- */
+/** UI elements */
 
- const resetBtn = document.getElementById("resetBtn")
+/** UI elements for toolbar */
+const resetBtn = document.getElementById("resetBtn")
 const dataBtn = document.getElementById("dataBtn")
 const defaultDataBtn = document.getElementById('defaultDataBtn')
 
@@ -98,101 +90,16 @@ const undoBtn = document.getElementById("undoBtn")
 const redoBtn = document.getElementById("redoBtn")
 const saveParametersBtn = document.getElementById("saveParameters")
 
-/* Controllers */
-//pattern type: line, dot, grid
-const lineRadio = document.getElementById("lineRadio")
-const dotRadio = document.getElementById("dotRadio")
-const gridRadio = document.getElementById("gridRadio")
-window.patternTypeRadios = document.getElementsByClassName("patternTypeRadio")
-window.patternType = [] //pattern type for each category
-
-//line texture controllers
-const controlLineDensity = document.getElementById("controlLineDensity")
-const controlLineRotate = document.getElementById("controlLineRotate")
-const controlLineStrokeWidth = document.getElementById("controlLineStrokeWidth")
-const controlLineX = document.getElementById("controlLineX")
-const controlLineY = document.getElementById("controlLineY")
-
-const controlLineAngle0 = document.getElementById("controlLineAngle0")
-const controlLineAngle45 = document.getElementById("controlLineAngle45")
-const controlLineAngle90 = document.getElementById("controlLineAngle90")
-const controlLineAngle135 = document.getElementById("controlLineAngle135")
-
-const controlLineBackgroundWhite = document.getElementById("controlLineBackgroundWhite")
-const controlLineBackgroundBlack = document.getElementById("controlLineBackgroundBlack")
-window.controlLineBackgroundRadios = document.getElementsByClassName("controlLineBackgroundRadio")
-
-
-window.lineBackground = []
-
-window.lineControllers = document.getElementsByClassName("lineController")
-
-//dot texture controllers
-const controlDotDensity = document.getElementById("controlDotDensity")
-const controlDotRotate = document.getElementById("controlDotRotate")
-const controlDotSize = document.getElementById("controlDotSize")
-const controlDotX = document.getElementById("controlDotX")
-const controlDotY = document.getElementById("controlDotY")
-
-const controlDotAngle0 = document.getElementById("controlDotAngle0")
-const controlDotAngle45 = document.getElementById("controlDotAngle45")
-
-const controlDotBackgroundWhite = document.getElementById("controlDotBackgroundWhite")
-const controlDotBackgroundBlack = document.getElementById("controlDotBackgroundBlack")
-window.controlDotBackgroundRadios = document.getElementsByClassName("controlDotBackgroundRadio")
-
-
-window.dotBackground = []
-
-const controlDotPrimitiveDot = document.getElementById("controlDotPrimitiveDot")
-const controlDotPrimitiveCircle = document.getElementById("controlDotPrimitiveCircle")
-window.controlDotPrimitiveRadios = document.getElementsByClassName("controlDotPrimitiveRadio")
-
-window.dotPrimitive = []
-
-const controlDotPrimitiveStrokeWidth = document.getElementById("controlDotPrimitiveStrokeWidth")
-
-window.dotControllers = document.getElementsByClassName("dotController")
-
-
-//grid texture controllers
-const controlGridDensity = document.getElementById("controlGridDensity")
-const controlGridStrokeWidth = document.getElementById("controlGridStrokeWidth")
-const controlGridX = document.getElementById("controlGridX")
-const controlGridY = document.getElementById("controlGridY")
-
-
-const controlGridAngle = document.getElementById("controlGridAngle")
-
-const controlGridAngle15 = document.getElementById("controlGridAngle15")
-const controlGridAngle30 = document.getElementById("controlGridAngle30")
-const controlGridAngle45 = document.getElementById("controlGridAngle45")
-
-const controlGridRotate = document.getElementById("controlGridRotate")
-const controlGridRotate30 = document.getElementById("controlGridRotate30")
-const controlGridRotate45 = document.getElementById("controlGridRotate45")
-const controlGridRotate60 = document.getElementById("controlGridRotate60")
-
-
-window.gridControllers = document.getElementsByClassName("gridController")
-
-const controlGridBackgroundWhite = document.getElementById("controlGridBackgroundWhite")
-const controlGridBackgroundBlack = document.getElementById("controlGridBackgroundBlack")
-window.controlGridBackgroundRadios = document.getElementsByClassName("controlGridBackgroundRadio")
-
-window.gridBackground = []
-
-
-//outline controller
-const controlOutline = document.getElementById("controlOutline")
-
-// /* Indicator */
+/* Indicator */
 if(document.getElementsByClassName("indicator")){
     window.indicators = document.getElementsByClassName("indicator") // we will create indicators later
 }
 var indicatorX = [] // transform x for each indicator
 var indicatorY = [] // transoform y for each indicator
 
+window.legendImgs = document.getElementsByClassName("legendImg")
+
+/** Legend **/
 window.legendIndicators = document.getElementsByClassName("legendIndicator") //indicators beside legends
 window.legendIndicatorX = []
 window.legendIndicatorY = []
@@ -200,15 +107,20 @@ window.legendIndicatorY = []
 /* Legend */
 window.legendLabels = document.getElementsByClassName("legendLabel") //texts in legends
 
-/**
- * UI elements of iconic texture charts
- */
+/** Controllers **/
+//outline controller
+const controlOutline = document.getElementById("controlOutline")
+const selectDefaultTexture = document.getElementById("selectDefaultTexture")
+
+
+window.controlHalo = document.getElementById("controlHalo")
+
+window.same = document.getElementsByClassName("same")
+
+/** UI elements of iconic texture charts */
 /* Pattern */
 var iconPattern //<pattern> for iconPattern
 window.iconBackground = []
-
-
-
 
 /* Icon Style */
 //radio button for each icon style
@@ -228,7 +140,6 @@ const strokeImg = document.getElementById("strokeImg")
 const detailImg = document.getElementById("detailImg")
 const simpleStrokeImg = document.getElementById('simpleStrokeImg')
 const simpleFillImg = document.getElementById('simpleFillImg')
-
 
 //icon style for each bar
 window.iconStyle = [] // list for all bars' icon style. iconStyle[i] = 1 means i-th bar's icon style is "detail"
@@ -250,27 +161,11 @@ window.controlBackgroundRadios = document.getElementsByClassName("controlBackgro
 var iconBackground = []
 
 
-window.same = document.getElementsByClassName("same")
-
-// /* Indicator */ -- TODO: Geo和Icon Legend 部分重复了？
-if(document.getElementsByClassName("indicator")){
-    var indicators = document.getElementsByClassName("indicator") // we will create indicators later
-}
-var indicatorX = [] // transform x for each indicator
-var indicatorY = [] // transoform y for each indicator
-
-// const legendIndicators = document.getElementsByClassName("legendIndicator") //indicators beside legends
-
-/* Legend */
-window.legendImgs = document.getElementsByClassName("legendImg")
 
 // const legendLabels = document.getElementsByClassName("legendLabel") //texts in legends
 
-const selectDefaultTexture = document.getElementById("selectDefaultTexture")
 
-
-window.controlHalo = document.getElementById("controlHalo")
-//end of UI elements
+/** end of UI elements */
 
 let mydata = getDatasetForMap()
 

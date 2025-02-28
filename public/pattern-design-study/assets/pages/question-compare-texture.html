@@ -7,11 +7,11 @@
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Compare Texture</title>
     <script src="../../../revisitUtilities/revisit-communicate.js"></script>
-    <script type="text/javascript" src="/pattern-design-study/assets/lib/jquery.min.js"></script>
-    <script type="text/javascript" src="/pattern-design-study/assets/lib/d3.v7.min.js"></script>
+    <script type="text/javascript" src="../lib/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/d3.v7.min.js"></script>
 
-    <link rel="stylesheet" href="/pattern-design-study/assets/lib/bootstrap.css">
-    <link rel="stylesheet" type="text/css" href="/pattern-design-study/assets/pages/texture_style.css">
+    <link rel="stylesheet" href="../lib/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="./texture_style.css">
 
     <script type = "text/javascript" >
         //when you click the back button of the browser, this script prevent you from going bac
@@ -22,18 +22,6 @@
 </head>
 <body>
 <div class="container">
-    <!-- <div class="row">
-        <div class="col">
-            <h2>Compare <span class="two_texture_types"></span></h2>
-            <div class="alert alert-info already_answered_before" role="alert" style="display:none">
-                If you have answered this question before and your answer has not changed, please just click:
-                <button id="compare_same_answer_btn" class="btn btn-outline-dark btn-sm">Same As Before</button>
-            </div>
-            <div>
-                <p>Here are your designs with both the <span class="two_texture_types"></span>.</p>
-            </div>
-        </div>
-    </div> -->
     <div class="row" style="height: 600px">
         <div class="col">
             <div id="charts" style="width: 100%;height: 600px">
@@ -43,8 +31,8 @@
         </div>
     </div>
 </div>
-<script src="/pattern-design-study/assets/pages/texture_functions.js"></script>
-<script src="/pattern-design-study/assets/pages/texture_constants.js"></script>
+<script src="./texture_functions.js"></script>
+<script src="./texture_constants.js"></script>
 
 <script>
     Revisit.onDataReceive((data, answers) => {

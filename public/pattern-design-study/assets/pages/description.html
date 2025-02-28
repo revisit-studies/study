@@ -58,40 +58,30 @@
 <script>
     Revisit.onDataReceive((data) => {
         localStorage.setItem("measurements", JSON.stringify({condition_chart: data.condition_chart}));
+
+            // Now safely use the data
+            let measurements = JSON.parse(localStorage.getItem('measurements'));
+            let condition_chart = measurements['condition_chart'];
+            console.log("description condition_chart: " + condition_chart);
+
+            switch (condition_chart) {
+                case 0:
+                    document.getElementById('chart_type').innerHTML = 'bar chart';
+                    break;
+                case 1:
+                    document.getElementById('chart_type').innerHTML = 'pie chart';
+                    break;
+                case 2:
+                    document.getElementById('chart_type').innerHTML = 'geographic map';
+                    break;
+                default:
+                    console.log(`has problem with condition_chart`);
+            }
     })
 </script>
 <script type="module">
-    // Wait for data to be loaded before proceeding
-    const dataLoadPromise = new Promise((resolve) => {
-        Revisit.onDataReceive((data) => {
-            localStorage.setItem("measurements", JSON.stringify({
-                condition_chart: data.condition_chart
-            }));
-            resolve();
-        });
-    });
 
-    // Wait for data to be loaded
-    await dataLoadPromise;
 
-    // Now safely use the data
-    let measurements = JSON.parse(localStorage.getItem('measurements'));
-    let condition_chart = measurements['condition_chart'];
-    console.log("description condition_chart: " + condition_chart);
-
-    switch (condition_chart) {
-        case 0:
-            document.getElementById('chart_type').innerHTML = 'bar chart';
-            break;
-        case 1:
-            document.getElementById('chart_type').innerHTML = 'pie chart';
-            break;
-        case 2:
-            document.getElementById('chart_type').innerHTML = 'geographic map';
-            break;
-        default:
-            console.log(`has problem with condition_chart`);
-    }
 </script>
 
 </body>

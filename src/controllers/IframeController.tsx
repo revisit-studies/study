@@ -10,7 +10,7 @@ import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 const PREFIX = '@REVISIT_COMMS';
 
 const defaultStyle = {
-  minHeight: '500px',
+  minHeight: '1200px',
   width: '100%',
   border: 0,
 };
