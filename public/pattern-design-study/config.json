@@ -133,7 +133,7 @@
           "condition_chart": 0,
           "condition_texture": 0
         },
-        "instruction": "**Get Familiar with the Texture Design Tool** \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
+        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
         "instructionLocation":"sidebar",
         "nextButtonLocation": "sidebar",
         "response": []
@@ -145,7 +145,7 @@
           "condition_chart": 0,
           "condition_texture": 1
         },
-        "instruction": "**Get Familiar with the Texture Design Tool** \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
+        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
         "instructionLocation":"sidebar",
         "nextButtonLocation": "sidebar",
         "response": []
@@ -157,7 +157,7 @@
           "condition_chart": 1,
           "condition_texture": 0
         },
-        "instruction": "**Get Familiar with the Texture Design Tool** \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
+        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
         "instructionLocation":"sidebar",
         "nextButtonLocation": "sidebar",
         "response": []
@@ -169,7 +169,7 @@
           "condition_chart": 1,
           "condition_texture": 1
         },
-        "instruction": "**Get Familiar with the Texture Design Tool** \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
+        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
         "instructionLocation":"sidebar",
         "nextButtonLocation": "sidebar",
         "response": []
@@ -193,7 +193,7 @@
           "condition_chart": 2,
           "condition_texture": 1
         },
-        "instruction": "**Get Familiar with the Texture Design Tool** \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
+        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
         "instructionLocation":"sidebar",
         "nextButtonLocation": "sidebar",
         "response": []
@@ -433,6 +433,8 @@
           "condition_chart": 0,
           "condition_texture": 0
         },
+        "instruction": "### Design Strategies \n\n You have completed the design of two charts, thanks a lot! Here are your two designs and some questions about your design strategies.",
+        "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
         "response": [
           {
@@ -465,6 +467,8 @@
           "condition_chart": 0,
           "condition_texture": 1
         },
+        "instruction": "### Design Strategies \n\n You have completed the design of two charts, thanks a lot! Here are your two designs and some questions about your design strategies.",
+        "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
         "response": [
           {
@@ -497,6 +501,8 @@
           "condition_chart": 1,
           "condition_texture": 0
         },
+        "instruction": "### Design Strategies \n\n You have completed the design of two charts, thanks a lot! Here are your two designs and some questions about your design strategies.",
+        "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
         "response": [
         {
@@ -529,6 +535,8 @@
           "condition_chart": 1,
           "condition_texture": 1
         },
+        "instruction": "### Design Strategies \n\n You have completed the design of two charts, thanks a lot! Here are your two designs and some questions about your design strategies.",
+        "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
         "response": [
         {
@@ -561,6 +569,8 @@
           "condition_chart": 2,
           "condition_texture": 0
         },
+        "instruction": "### Design Strategies \n\n You have completed the design of two charts, thanks a lot! Here are your two designs and some questions about your design strategies.",
+        "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
         "response": [
         {
@@ -593,6 +603,8 @@
           "condition_chart": 2,
           "condition_texture": 1
         },
+        "instruction": "### Design Strategies \n\n You have completed the design of two charts, thanks a lot! Here are your two designs and some questions about your design strategies.",
+        "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
         "response": [
         {
@@ -625,6 +637,8 @@
           "condition_chart": 0,
           "condition_texture": 0
         },
+        "instruction": "### Compare Textures \n\n Here are your designs with both the geometric and iconic textures.",
+        "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
         "response": [
         {
@@ -643,6 +657,8 @@
           "condition_chart": 0,
           "condition_texture": 1
         },
+        "instruction": "### Compare Textures \n\n Here are your designs with both the iconic and geometric textures.",
+        "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
         "response": [
         {
@@ -661,6 +677,8 @@
           "condition_chart": 1,
           "condition_texture": 0
         },
+        "instruction": "### Compare Textures \n\n Here are your designs with both the geometric and iconic textures.",
+        "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
         "response": [
         {
@@ -679,6 +697,8 @@
           "condition_chart": 1,
           "condition_texture": 1
         },
+        "instruction": "### Compare Textures \n\n Here are your designs with both the iconic and geometric textures.",
+        "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
         "response": [
         {
@@ -697,6 +717,8 @@
           "condition_chart": 2,
           "condition_texture": 0
         },
+        "instruction": "### Compare Textures \n\n Here are your designs with both the geometric and iconic textures.",
+        "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
         "response": [
         {
@@ -715,6 +737,8 @@
           "condition_chart": 2,
           "condition_texture": 1
         },
+        "instruction": "### Compare Textures \n\n Here are your designs with both the iconic and geometric textures.",
+        "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
         "response": [
         {
@@ -732,6 +756,8 @@
         "parameters": {
           "condition_chart": 0
         },
+        "instruction":"### Geometric Texture on Different Charts \n\n We applied the geometric texture you designed to a pie chart and a map.",
+        "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
         "response": [
         {
@@ -749,6 +775,8 @@
         "parameters": {
           "condition_chart": 1
         },
+        "instruction":"### Geometric Texture on Different Charts \n\n We applied the geometric texture you designed to a bar chart and a map.",
+        "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
         "response": [
         {
@@ -766,6 +794,8 @@
         "parameters": {
           "condition_chart": 2
         },
+        "instruction":"### Geometric Texture on Different Charts \n\n We applied the geometric texture you designed to a bar chart and a pie chart.",
+        "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
         "response": [
         {
@@ -783,6 +813,8 @@
         "parameters": {
           "condition_chart": 0
         },
+        "instruction":"### Iconic Texture on Different Charts \n\n We applied the iconic texture you designed to a pie chart and a map.",
+        "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
         "response": [
         {
@@ -800,6 +832,8 @@
         "parameters": {
           "condition_chart": 1
         },
+        "instruction":"### Iconic Texture on Different Charts \n\n We applied the iconic texture you designed to a bar chart and a map.",
+        "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
         "response": [
         {
@@ -817,6 +851,8 @@
         "parameters": {
           "condition_chart": 2
         },
+        "instruction":"### Iconic Texture on Different Charts \n\n We applied the iconic texture you designed to a bar chart and a pie chart.",
+        "instructionLocation": "sidebar",
         "nextButtonLocation": "sidebar",
         "response": [
         {

@@ -86,9 +86,12 @@
     localStorage.setItem("measurements", JSON.stringify({condition_chart: data.condition_chart, condition_texture: data.condition_texture}));
     
     // Now safely use the data
-    let measurements = JSON.parse(localStorage.getItem('measurements'));
-    let condition_chart = measurements['condition_chart'];
-    let condition_texture = measurements['condition_texture'];
+    // let measurements = JSON.parse(localStorage.getItem('measurements'));
+    // let condition_chart = measurements['condition_chart'];
+    // let condition_texture = measurements['condition_texture'];
+
+    let condition_chart = data.condition_chart;
+    let condition_texture = data.condition_texture;
     console.log('condition_chart:' + condition_chart);
     console.log('condition_texture:' + condition_texture);
 
