@@ -46,16 +46,6 @@
             <div id="controllerDiv"></div>
         </div>
     </div>
-    <!-- <div class="row">
-        <div class="col">
-            <div id="loadingDiv" class="spinner-border text-primary float-end" role="status" style="display: none;margin-left: 10px;">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-            <button id="bar_geo_next_btn" class="btn btn-primary float-end">Next
-            </button>
-
-        </div>
-    </div> -->
 </div>
 
 <script src="/pattern-design-study/assets/pages/texture_functions.js"></script>
@@ -73,25 +63,9 @@
 <script>
     Revisit.onDataReceive((data) => {
         
-        localStorage.setItem("measurements", JSON.stringify({condition_chart: data.condition_chart, condition_texture: data.condition_texture}));
+    localStorage.setItem("measurements", JSON.stringify({condition_chart: data.condition_chart, condition_texture: data.condition_texture}));
 
-
-
-
-    //     let task_description_measurements = JSON.parse(localStorage.getItem('measurements'))
-    // let task_description_condition_texture = task_description_measurements['condition_texture']
-    // let task_description_condition_chart = task_description_measurements['condition_chart']
-
-    // if(task_description_condition_chart == 2){ //map
-    //     document.getElementById('fruit_survey_description').innerHTML = 'This map shows the favorite vegetable of the residents of each French department.'
-    // }else{ //bar or pie
-    //     document.getElementById("This chart shows the result of a survey about people's favourite vegetables.")
-    // }
-
-
-
-
-    let timestamp_bar_geo_start = Date.now() //the starting time for this design
+    // let timestamp_bar_geo_start = Date.now() //the starting time for this design
     window.chartName = 'barGeo'
     
     drawToolbar('toolbar')
@@ -101,11 +75,11 @@
     geoTextures(d3.select('#chartA'),fruits)
     drawGeoControllers()
 
-    /**
-     * UI elements of geometric texture charts
-     */
+/** *
+ * UI elements for toolbar
+*/
 
-     const resetBtn = document.getElementById("resetBtn")
+    const resetBtn = document.getElementById("resetBtn")
     const dataBtn = document.getElementById("dataBtn")
     const defaultDataBtn = document.getElementById('defaultDataBtn')
 
@@ -117,6 +91,9 @@
     const redoBtn = document.getElementById("redoBtn")
     const saveParametersBtn = document.getElementById("saveParameters")
 
+    /**
+ * UI elements of geometric texture charts
+ */
     /* Controllers */
 //pattern type: line, dot, grid
     const lineRadio = document.getElementById("lineRadio")
@@ -219,38 +196,38 @@
     /* Legend */
     window.legendLabels = document.getElementsByClassName("legendLabel") //texts in legends
 
-    /**
-     * UI elements of iconic texture charts
-     */
-    /* Pattern */
-    var iconPattern //<pattern> for iconPattern
-    window.iconBackground = []
+//     /**
+//      * UI elements of iconic texture charts
+//      */
+//     /* Pattern */
+//     var iconPattern //<pattern> for iconPattern
+//     window.iconBackground = []
 
 
 
 
-    /* Icon Style */
-//radio button for each icon style
-    const stroke = document.getElementById("strokeRadio")
-    const detail = document.getElementById("detailRadio")
-    const simpleStroke = document.getElementById('simpleStrokeRadio')
-    const simpleFill = document.getElementById('simpleFillRadio')
+//     /* Icon Style */
+// //radio button for each icon style
+//     const stroke = document.getElementById("strokeRadio")
+//     const detail = document.getElementById("detailRadio")
+//     const simpleStroke = document.getElementById('simpleStrokeRadio')
+//     const simpleFill = document.getElementById('simpleFillRadio')
 
 
-    window.iconStyleRadios = document.getElementsByClassName("iconStyleRadio") //list of all icon style radio button
+//     window.iconStyleRadios = document.getElementsByClassName("iconStyleRadio") //list of all icon style radio button
 
-//list of all icon style
-    window.iconStyleList = ["stroke", "detail",'simple_stroke','simple_fill']
+// //list of all icon style
+//     window.iconStyleList = ["stroke", "detail",'simple_stroke','simple_fill']
 
-//images for each icon style
-    const strokeImg = document.getElementById("strokeImg")
-    const detailImg = document.getElementById("detailImg")
-    const simpleStrokeImg = document.getElementById('simpleStrokeImg')
-    const simpleFillImg = document.getElementById('simpleFillImg')
+// //images for each icon style
+//     const strokeImg = document.getElementById("strokeImg")
+//     const detailImg = document.getElementById("detailImg")
+//     const simpleStrokeImg = document.getElementById('simpleStrokeImg')
+//     const simpleFillImg = document.getElementById('simpleFillImg')
 
 
-//icon style for each bar
-    window.iconStyle = [] // list for all bars' icon style. iconStyle[i] = 1 means i-th bar's icon style is "detail"
+// //icon style for each bar
+//     window.iconStyle = [] // list for all bars' icon style. iconStyle[i] = 1 means i-th bar's icon style is "detail"
 
     /* Controllers */
     const controlDensity = document.getElementById("controlDensity")
@@ -271,12 +248,12 @@
 
     window.same = document.getElementsByClassName("same")
 
-// /* Indicator */ -- TODO: Geo和Icon Legend 部分重复了？
-    if(document.getElementsByClassName("indicator")){
-        var indicators = document.getElementsByClassName("indicator") // we will create indicators later
-    }
-    var indicatorX = [] // transform x for each indicator
-    var indicatorY = [] // transoform y for each indicator
+// /* Indicator */ 
+    // if(document.getElementsByClassName("indicator")){
+    //     var indicators = document.getElementsByClassName("indicator") // we will create indicators later
+    // }
+    // var indicatorX = [] // transform x for each indicator
+    // var indicatorY = [] // transoform y for each indicator
 
 // const legendIndicators = document.getElementsByClassName("legendIndicator") //indicators beside legends
 
@@ -306,35 +283,24 @@ let mydata = getDatasetForChart()
     //switch texture by drag and drop
     // geo_switchTextures(chartName)
 
-    let measurements = JSON.parse(localStorage.getItem('measurements'))
-    let condition_texture = measurements['condition_texture']
-    // switch (condition_texture){
-    //     case 0: //geo_icon
-    //         document.getElementById('last_task').innerHTML=", but keep in mind that we will ask you to complete one other design after this one."
-    //         break;
-    //     case 1: //icon_geo
-    //         document.getElementById('last_task').innerHTML=". This is the last design task."
-    //         break;
-    // }
-    // document.getElementById('bar_geo_next_btn').onclick = function(){
-        //write data to measurements
-        // measurements['parameters_bar_geo'] = JSON.stringify(parameters)
-        // measurements['timestamp_design_finished_bar_geo'] = Date.now()
+    // let measurements = JSON.parse(localStorage.getItem('measurements'))
+    // let condition_texture = measurements['condition_texture']
 
-        let timestamp_bar_geo_end = Date.now() //the end time for this design
-        let bar_geo_design_time = timestamp_bar_geo_end - timestamp_bar_geo_start // time used for this design
+
+        // let timestamp_bar_geo_end = Date.now() //the end time for this design
+        // let bar_geo_design_time = timestamp_bar_geo_end - timestamp_bar_geo_start // time used for this design
 
         //send the svg of chart design to server
         //remove the indicators
-        let indicatorsSVG = document.getElementById('indicator_group').outerHTML
-        let fullSVG = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="600" height="600">' + $("#chartA")[0].innerHTML + $("#chart")[0].innerHTML  + $("#chartWhiteStroke")[0].innerHTML + $("#chartBlackStroke")[0].innerHTML + '</svg>'
-        let svgData = fullSVG.replace(indicatorsSVG, '')
+        // let indicatorsSVG = document.getElementById('indicator_group').outerHTML
+        // let fullSVG = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="600" height="600">' + $("#chartA")[0].innerHTML + $("#chart")[0].innerHTML  + $("#chartWhiteStroke")[0].innerHTML + $("#chartBlackStroke")[0].innerHTML + '</svg>'
+        // let svgData = fullSVG.replace(indicatorsSVG, '')
 
         //send the svg and the parameters
-        let obj = {}
-        obj.svgData = svgData
-        obj.filename = 'bar_geo_'+ measurements['participant_id'] + '_v' + measurements['trial_num']
-        obj.parameters = parameters
+        // let obj = {}
+        // obj.svgData = svgData
+        // obj.filename = 'bar_geo_'+ measurements['participant_id'] + '_v' + measurements['trial_num']
+        // obj.parameters = parameters
 
 
 

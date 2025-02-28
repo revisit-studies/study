@@ -26,29 +26,6 @@
 <body>
 <div class="container">
 
-    <!-- <div class="row">
-        <div class="col bg-light textContent">
-            <h2>Now it’s your turn to design an effective set of textures for data visualization</h2>
-            <div style="width:680px">
-
-                <p>Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. <span id="fruit_survey_description"></span>
-                </p>
-                <p>
-                    Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.
-                </p>
-                <p>
-                    Please optimize for datasets in general. Click the change data set button (<img src="./img/icons/change_data.png" class="img-button-in-description">) to test your design on different random data sets, and click the default data set button (<img src="./img/icons/default_data.png" class="img-button-in-description">) to test your design on a default data set.
-                </p>
-                <p>
-                    When you finish designing, click on the <span style="color:#1E90FF;font-weight: bold">Next</span> button in the bottom right corner of the page.</p>
-                </p>
-            </div>
-            <p>
-                There is no time limit for this task<span id="last_task"></span>
-            </p>
-        </div>
-    </div> -->
-
     <div class="row">
         <div class="col">
             <div id="toolbar"></div>
@@ -69,12 +46,6 @@
             </div>
         </div>
     </div>
-    <!-- <div class="row">
-        <div class="col">
-            <button id="bar_icon_next_btn" class="btn btn-primary float-end">Next
-            </button>
-        </div>
-    </div> -->
 </div>
 <script src="/pattern-design-study/assets/pages/texture_functions.js"></script>
 <script src="/pattern-design-study/assets/pages/texture_constants.js"></script>
@@ -92,29 +63,10 @@
     Revisit.onDataReceive((data) => {
         localStorage.setItem("measurements", JSON.stringify({condition_chart: data.condition_chart, condition_texture: data.condition_texture}));
 
-        let timestamp_bar_icon_start = Date.now() //the starting time for this design
+        // let timestamp_bar_icon_start = Date.now() //the starting time for this design
 
-let measurements = JSON.parse(localStorage.getItem('measurements'))
-let condition_texture = measurements['condition_texture']
-// switch (condition_texture){
-//     case 0: //geo_icon
-//         document.getElementById('last_task').innerHTML=". This is the last design task."
-//         break;
-//     case 1: //icon_geo
-//         document.getElementById('last_task').innerHTML=", but keep in mind that we will ask you to complete one other design after this one."
-//         break;
-// }
-
-
-// let task_description_measurements = JSON.parse(localStorage.getItem('measurements'))
-// let task_description_condition_texture = task_description_measurements['condition_texture']
-// let task_description_condition_chart = task_description_measurements['condition_chart']
-
-// if(task_description_condition_chart == 2){ //map
-//     document.getElementById('fruit_survey_description').innerHTML = 'This map shows the favorite vegetable of the residents of each French department.'
-// }else{ //bar or pie
-//     document.getElementById("This chart shows the result of a survey about people's favourite vegetables.")
-// }
+        // let measurements = JSON.parse(localStorage.getItem('measurements'))
+        // let condition_texture = measurements['condition_texture']
 
 window.chartName = 'barIcon'
 const csvName = 'fruit'
@@ -125,11 +77,10 @@ drawChartDiv('chartDiv', svgWidth, svgHeight, 'chart')
 iconTextures(d3.select('#chartA'),fruits)
 drawIconicControllers()
 
- /**
- * UI elements of geometric texture charts
- */
+/** UI elements */
 
- const resetBtn = document.getElementById("resetBtn")
+/** UI elements for toolbar */
+const resetBtn = document.getElementById("resetBtn")
 const dataBtn = document.getElementById("dataBtn")
 const defaultDataBtn = document.getElementById('defaultDataBtn')
 
@@ -141,7 +92,33 @@ const undoBtn = document.getElementById("undoBtn")
 const redoBtn = document.getElementById("redoBtn")
 const saveParametersBtn = document.getElementById("saveParameters")
 
-/* Controllers */
+/* Indicator */
+if(document.getElementsByClassName("indicator")){
+    window.indicators = document.getElementsByClassName("indicator") // we will create indicators later
+}
+var indicatorX = [] // transform x for each indicator
+var indicatorY = [] // transoform y for each indicator
+
+window.legendImgs = document.getElementsByClassName("legendImg")
+
+/** Legend **/
+window.legendIndicators = document.getElementsByClassName("legendIndicator") //indicators beside legends
+window.legendIndicatorX = []
+window.legendIndicatorY = []
+
+/* Legend */
+window.legendLabels = document.getElementsByClassName("legendLabel") //texts in legends
+
+/** Controllers **/
+//outline controller
+const controlOutline = document.getElementById("controlOutline")
+const selectDefaultTexture = document.getElementById("selectDefaultTexture")
+
+
+window.controlHalo = document.getElementById("controlHalo")
+
+ /** UI elements of geometric texture charts */
+
 //pattern type: line, dot, grid
 const lineRadio = document.getElementById("lineRadio")
 const dotRadio = document.getElementById("dotRadio")
@@ -226,32 +203,12 @@ window.controlGridBackgroundRadios = document.getElementsByClassName("controlGri
 window.gridBackground = []
 
 
-//outline controller
-const controlOutline = document.getElementById("controlOutline")
-
-// /* Indicator */
-if(document.getElementsByClassName("indicator")){
-    window.indicators = document.getElementsByClassName("indicator") // we will create indicators later
-}
-var indicatorX = [] // transform x for each indicator
-var indicatorY = [] // transoform y for each indicator
-
-window.legendIndicators = document.getElementsByClassName("legendIndicator") //indicators beside legends
-window.legendIndicatorX = []
-window.legendIndicatorY = []
-
-/* Legend */
-window.legendLabels = document.getElementsByClassName("legendLabel") //texts in legends
-
 /**
  * UI elements of iconic texture charts
  */
 /* Pattern */
 var iconPattern //<pattern> for iconPattern
 window.iconBackground = []
-
-
-
 
 /* Icon Style */
 //radio button for each icon style
@@ -271,7 +228,6 @@ const strokeImg = document.getElementById("strokeImg")
 const detailImg = document.getElementById("detailImg")
 const simpleStrokeImg = document.getElementById('simpleStrokeImg')
 const simpleFillImg = document.getElementById('simpleFillImg')
-
 
 //icon style for each bar
 window.iconStyle = [] // list for all bars' icon style. iconStyle[i] = 1 means i-th bar's icon style is "detail"
@@ -293,27 +249,11 @@ window.controlBackgroundRadios = document.getElementsByClassName("controlBackgro
 var iconBackground = []
 
 
-window.same = document.getElementsByClassName("same")
-
-// /* Indicator */ -- TODO: Geo和Icon Legend 部分重复了？
-if(document.getElementsByClassName("indicator")){
-    var indicators = document.getElementsByClassName("indicator") // we will create indicators later
-}
-var indicatorX = [] // transform x for each indicator
-var indicatorY = [] // transoform y for each indicator
-
-// const legendIndicators = document.getElementsByClassName("legendIndicator") //indicators beside legends
-
-/* Legend */
-window.legendImgs = document.getElementsByClassName("legendImg")
-
+// window.same = document.getElementsByClassName("same")
 // const legendLabels = document.getElementsByClassName("legendLabel") //texts in legends
 
-const selectDefaultTexture = document.getElementById("selectDefaultTexture")
 
-
-window.controlHalo = document.getElementById("controlHalo")
-//end of UI elements
+/** end of UI elements */
 
 
 //data
@@ -329,84 +269,7 @@ setSelectCat(chartName)
 
 icon_switchTextures(chartName)
 
-// document.getElementById('bar_icon_next_btn').onclick = function(){
 
-//     //write data to measurements
-//     // measurements['parameters_bar_icon'] = JSON.stringify(parameters)
-//     // measurements['timestamp_design_finished_bar_icon'] = Date.now()
-
-//     let timestamp_bar_icon_end = Date.now() //the end time for this design
-//     let bar_icon_design_time = timestamp_bar_icon_end - timestamp_bar_icon_start // time used for this design
-
-//     //update measurements to localStorage
-//     localStorage.setItem('measurements', JSON.stringify(measurements))
-
-
-//     //send the svg of chart design to server
-//     //remove the indicators
-//     let indicatorsSVG = document.getElementById('indicator_group').outerHTML
-//     let fullSVG = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="600" height="600">' + $("#chartA")[0].innerHTML + $("#chart")[0].innerHTML  + $("#chartWhiteStroke")[0].innerHTML + $("#chartBlackStroke")[0].innerHTML + '</svg>'
-//     let svgData = fullSVG.replace(indicatorsSVG, '')
-
-//     //send the svg and the parameters
-//     let obj = {}
-//     obj.svgData = svgData
-//     obj.filename = 'bar_icon_'+ measurements['participant_id'] + '_v' + measurements['trial_num']
-//     obj.parameters = parameters
-
-//     $.ajax({
-//         url: '../ajax/results_svg.php',
-//         type: 'POST',
-//         data: JSON.stringify(obj),
-//         contentType: 'application/json',
-//         dataType: "json",
-//         async: false, // Make the request synchronous
-//         success: function () {
-//             console.log('success')
-//         },
-//         error:function (e){
-//             console.log('Getting svg failed')
-//         }
-//     })
-
-//     $.ajax({
-//         url: '../ajax/results_texture_parameters.php',
-//         type: 'POST',
-//         data: JSON.stringify(obj),
-//         contentType: 'application/json',
-//         dataType: "json",
-//         async: false, // Make the request synchronous
-//         success: function () {
-//             console.log('success')
-//         },
-//         error:function (e){
-//             console.log('Getting json failed')
-//         }
-//     })
-
-
-//     //jump to next page
-//     switch (condition_texture){
-//         case 0: //geo_icon: this design (bar_icon) is the second design
-
-//             measurements['second_design_time'] = bar_icon_design_time
-
-//             //update measurements to localStorage
-//             localStorage.setItem('measurements', JSON.stringify(measurements))
-
-//             window.location.href = 'question_design_strategies.php';
-//             break;
-//         case 1: //icon_geo: this design (bar_icon) is the first design
-
-//             measurements['first_design_time'] = bar_icon_design_time
-
-//             //update measurements to localStorage
-//             localStorage.setItem('measurements', JSON.stringify(measurements))
-
-//             window.location.href = 'between_two_design.php';
-//             break;
-//     }
-// }
 
     })
 </script>
