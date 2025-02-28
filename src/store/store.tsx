@@ -52,7 +52,7 @@ export async function studyStoreCreator(
     }));
   const emptyValidation: TrialValidation = Object.assign(
     {},
-    ...flatSequence.map((id, idx) => {
+    ...flatSequence.map((id, idx): TrialValidation => {
       const componentConfig = studyComponentToIndividualComponent(config.components[id] || { response: [] }, config);
 
       return {
