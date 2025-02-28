@@ -9,13 +9,13 @@
     <script src="../../../revisitUtilities/revisit-communicate.js"></script>
 
 
-    <script type="text/javascript" src="/pattern-design-study/assets/lib/jquery.min.js"></script>
-    <script type="text/javascript" src="/pattern-design-study/assets/lib/d3.v7.min.js"></script>
+    <script type="text/javascript" src="../lib/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/d3.v7.min.js"></script>
 
-    <link rel="stylesheet" href="/pattern-design-study/assets/lib/bootstrap.css">
-    <link rel="stylesheet" type="text/css" href="/pattern-design-study/assets/pages/texture_style.css">
+    <link rel="stylesheet" href="../lib/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="./texture_style.css">
 
-    <script src="/pattern-design-study/assets/tools/loading.js"></script>
+    <script src="../tools/loading.js"></script>
 
     <script type = "text/javascript" >
         //when you click the back button of the browser, this script prevent you from going bac
@@ -49,10 +49,10 @@
 </div>
 
 <script src="./texture_functions.js"></script>
-<script src="./assets/pages/texture_constants.js"></script>
+<script src="./texture_constants.js"></script>
 <script type="module">
     // Move all code that uses createTrrack into this module script
-    import { createTrrack } from '/pattern-design-study/assets/pages/trrack.js';
+    import { createTrrack } from './trrack.js';
     const {trrack, actions: trrack_actions} = createTrrack()
     
     // Make trrack and actions globally available
