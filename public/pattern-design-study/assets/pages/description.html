@@ -60,8 +60,8 @@
         localStorage.setItem("measurements", JSON.stringify({condition_chart: data.condition_chart}));
 
             // Now safely use the data
-            let measurements = JSON.parse(localStorage.getItem('measurements'));
-            let condition_chart = measurements['condition_chart'];
+            // let measurements = JSON.parse(localStorage.getItem('measurements'));
+            let condition_chart = data.condition_chart;
             console.log("description condition_chart: " + condition_chart);
 
             switch (condition_chart) {
