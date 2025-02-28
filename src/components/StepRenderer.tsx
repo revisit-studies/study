@@ -22,7 +22,6 @@ export function StepRenderer() {
 
   const showStudyBrowser = useStoreSelector((state) => state.showStudyBrowser);
   const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
-  const analysisHasProvenance = useStoreSelector((state) => state.analysisHasProvenance);
   const modes = useStoreSelector((state) => state.modes);
 
   // Attach event listeners
@@ -110,7 +109,7 @@ export function StepRenderer() {
         header={{ height: 70 }}
         navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !studyConfig.uiConfig.sidebar, mobile: !studyConfig.uiConfig.sidebar } }}
         aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
-        footer={{ height: (isAnalysis ? 50 : 0) + (analysisHasAudio ? 50 : 0) + (analysisHasProvenance ? 25 : 0) }}
+        footer={{ height: (isAnalysis ? 75 : 0) + (analysisHasAudio ? 50 : 0) }}
       >
         <AppNavBar />
         <AppAside />

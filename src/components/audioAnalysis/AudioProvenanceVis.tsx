@@ -43,10 +43,9 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
 
   const analysisIsPlaying = useStoreSelector((state) => state.analysisIsPlaying);
   const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
-  const analysisHasProvenance = useStoreSelector((state) => state.analysisHasProvenance);
 
   const {
-    saveAnalysisState, setAnalysisHasAudio, setAnalysisHasProvenance, setAnalysisIsPlaying,
+    saveAnalysisState, setAnalysisHasAudio, setAnalysisIsPlaying,
   } = useStoreActions();
   const storeDispatch = useStoreDispatch();
 
@@ -86,14 +85,11 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
 
       if (participant.answers[componentAndIndex].provenanceGraph.stimulus) {
         trrack.importObject(structuredClone(participant.answers[componentAndIndex].provenanceGraph!.stimulus));
-        storeDispatch(setAnalysisHasProvenance(true));
 
         trrackForTrial.current = trrack;
       }
-    } else {
-      storeDispatch(setAnalysisHasProvenance(false));
     }
-  }, [participant, componentAndIndex, storeDispatch, setAnalysisHasProvenance]);
+  }, [participant, componentAndIndex, storeDispatch]);
 
   const _setCurrentNode = useCallback((node: string | undefined) => {
     if (!node) {
@@ -159,11 +155,11 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
   }, [componentAndIndex, participant, playTime, setTimeString, startTime, totalAudioLength]);
 
   useEffect(() => {
-    if (!analysisHasAudio && analysisHasProvenance && participant) {
+    if (!analysisHasAudio && participant) {
       const length = participant.answers[componentAndIndex].endTime - participant.answers[componentAndIndex].startTime;
       setTotalAudioLength(length > -1 ? length / 1000 : 0);
     }
-  }, [analysisHasAudio, analysisHasProvenance, componentAndIndex, participant]);
+  }, [analysisHasAudio, componentAndIndex, participant]);
 
   const isAnalysis = useIsAnalysis();
   const wavesurfer = useRef<WaveSurferType | null>(null);
@@ -272,7 +268,7 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
               height={25}
             />
           ) : null}
-        {xScale && participant && (analysisHasAudio || analysisHasProvenance) ? <Timer duration={totalAudioLength * 1000} height={(analysisHasAudio ? 50 : 0) + (analysisHasProvenance ? 25 : 0)} isPlaying={analysisIsPlaying} startTime={startTime} width={width} xScale={xScale} updateTimer={_setPlayTime} /> : null}
+        {xScale && participant ? <Timer duration={totalAudioLength * 1000} height={(analysisHasAudio ? 50 : 0) + 25} isPlaying={analysisIsPlaying} startTime={startTime} width={width} xScale={xScale} updateTimer={_setPlayTime} /> : null}
       </Stack>
     </Group>
   );
