@@ -1,6 +1,6 @@
 ## Welcome
 
-You are being invited to participate in a study titled **"Design Characterization for Black-and-White Textures in Visualization."** This study is conducted by Tingying He, Petra Isenberg, and Tobias Isenberg from Inria and the University Paris-Saclay (France).
+You are being invited to participate in a study titled **"Design Characterization for Black-and-White Textures in Visualization."** This study is conducted by the reVISit team.
 
 The purpose of this study is to explore how to use black-and-white texture in visual data representations, like in the following historic examples:
 
