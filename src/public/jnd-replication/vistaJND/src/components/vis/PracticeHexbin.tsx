@@ -7,18 +7,24 @@ import HexbinWrapper from './HexbinWrapper';
 import { StimulusParams } from '../../../../../../store/types';
 
 export default function PracticeHexBin({
-  parameters,
-}: StimulusParams<{ r1: number; r2: number }>) {
+  setAnswer, parameters,
+}: StimulusParams<{ r1: number; r2: number, taskid: string }>) {
   const [result, setResult] = useState<string | null>(null);
-  const { r1, r2 } = parameters;
+  const { r1, r2, taskid } = parameters;
 
   const onClick = useCallback(
     (n: number) => {
-      if (result === null) {
-        setResult((n === 1 && r1 > r2) || (n === 2 && r2 > r1) ? 'Correct' : 'Incorrect');
-      }
+      const correct = (n === 1 && r1 > r2) || (n === 2 && r2 > r1);
+      setResult(correct ? 'Correct' : 'Incorrect');
+      setAnswer({
+        status: true,
+        provenanceGraph: undefined,
+        answers: {
+          [taskid]: correct,
+        },
+      });
     },
-    [r1, r2, result],
+    [r1, r2, setAnswer, taskid],
   );
 
   return (
