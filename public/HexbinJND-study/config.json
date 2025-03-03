@@ -36,8 +36,14 @@
     "practiceBase": {
       "type": "react-component",
       "path": "jnd-replication/vistaJND/src/components/vis/PracticeHexbin.tsx",
-      "nextButtonLocation": "belowStimulus",
-      "response": []
+      "response": [{
+        "id": "practiceResponse",
+        "prompt": "Complete the practice",
+        "hidden": true,
+        "required": true,
+        "type": "reactive",
+        "location": "aboveStimulus"
+      }]
     }
   },
   "components": {
@@ -81,39 +87,39 @@
     },
     "Hexbin plot T1 A:0.3 B:0.7": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.3, "r2": 0.7 }
+      "parameters": { "r1": 0.3, "r2": 0.7, "taskid": "practiceResponse" }
     },
     "Hexbin plot T2 A:0.9 B:0.6": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.9, "r2": 0.6 }
+      "parameters": { "r1": 0.9, "r2": 0.6, "taskid": "practiceResponse" }
     },
     "Hexbin plot T3 A:0.6 B:0.3": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.6, "r2": 0.3 }
+      "parameters": { "r1": 0.6, "r2": 0.3, "taskid": "practiceResponse" }
     },
     "Hexbin plot T4 A:0.6 B:0.9": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.6, "r2": 0.9 }
+      "parameters": { "r1": 0.6, "r2": 0.9, "taskid": "practiceResponse" }
     },
     "Hexbin plot T5 A:0.3 B:0.1": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.3, "r2": 0.1 }
+      "parameters": { "r1": 0.3, "r2": 0.1, "taskid": "practiceResponse" }
     },
     "Hexbin plot T6 A:0.5 B:0.3": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.5, "r2": 0.3 }
+      "parameters": { "r1": 0.5, "r2": 0.3, "taskid": "practiceResponse" }
     },
     "Hexbin plot T7 A:0.9 B:0.8": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.9, "r2": 0.8 }
+      "parameters": { "r1": 0.9, "r2": 0.8, "taskid": "practiceResponse" }
     },
     "Hexbin plot T8 A:0.6 B:0.7": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.6, "r2": 0.7 }
+      "parameters": { "r1": 0.6, "r2": 0.7, "taskid": "practiceResponse" }
     },
     "Hexbin plot T9 A:0.99 B:0.9": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.99, "r2": 0.9 }
+      "parameters": { "r1": 0.99, "r2": 0.9, "taskid": "practiceResponse" }
     },
     "begin": {
       "type": "markdown",
