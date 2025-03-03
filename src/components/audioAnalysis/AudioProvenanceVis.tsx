@@ -22,6 +22,8 @@ import { WithinTaskTimeline } from './WithinTaskTimeline';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { Timer } from './Timer';
 import { humanReadableDuration } from '../../utils/humanReadableDuration';
+import { ResponseBlockLocation } from '../../parser/types';
+import { useUpdateProvenance } from './useUpdateProvenance';
 
 const margin = {
   left: 0, top: 0, right: 0, bottom: 0,
@@ -35,7 +37,7 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Storage
   return null;
 }
 
-export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string) => void }) {
+export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: string) => void }) {
   const [searchParams] = useSearchParams();
   const participantId = useMemo(() => searchParams.get('participantId') || undefined, [searchParams]);
 
@@ -51,12 +53,19 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
 
   const currentComponent = useCurrentComponent();
   const currentStep = useCurrentStep();
-  useEffect(() => { storeDispatch(saveAnalysisState(null)); }, [currentStep, saveAnalysisState, storeDispatch]);
+  useEffect(() => { storeDispatch(saveAnalysisState({ prov: undefined, location: 'stimulus' })); }, [currentStep, saveAnalysisState, storeDispatch]);
 
   const [ref, { width }] = useResizeObserver();
   const [waveSurferWidth, setWaveSurferWidth] = useState<number>(0);
 
   const [currentNode, setCurrentNode] = useState<string | null>(null);
+  const [currentResponseNodes, setCurrentResponseNodes] = useState<Record<ResponseBlockLocation, string | undefined>>({
+    aboveStimulus: undefined,
+    belowStimulus: undefined,
+    sidebar: undefined,
+    stimulus: undefined,
+  });
+
   const [totalAudioLength, setTotalAudioLength] = useState<number>(0);
 
   const { value: participant, status } = useAsync(getParticipantData, [participantId, storageEngine]);
@@ -70,6 +79,12 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
   const trrackForTrial = useRef<Trrack<object, string> | null>(null);
 
   const componentAndIndex = useMemo(() => `${currentComponent}_${currentStep}`, [currentComponent, currentStep]);
+
+  useUpdateProvenance('aboveStimulus', playTime, participant?.answers[componentAndIndex].provenanceGraph.aboveStimulus, currentResponseNodes.aboveStimulus, (node, location) => setCurrentResponseNodes({ ...currentResponseNodes, [location]: node }));
+
+  useUpdateProvenance('belowStimulus', playTime, participant?.answers[componentAndIndex].provenanceGraph.belowStimulus, currentResponseNodes.belowStimulus, (node, location) => setCurrentResponseNodes({ ...currentResponseNodes, [location]: node }));
+
+  useUpdateProvenance('sidebar', playTime, participant?.answers[componentAndIndex].provenanceGraph.sidebar, currentResponseNodes.sidebar, (node, location) => setCurrentResponseNodes({ ...currentResponseNodes, [location]: node }));
 
   // Make sure we always pause analysis when we change participants or tasks
   useEffect(() => {
@@ -97,7 +112,7 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
     }
 
     if (componentAndIndex && participant && trrackForTrial.current) {
-      storeDispatch(saveAnalysisState(trrackForTrial.current.getState(participant.answers[componentAndIndex].provenanceGraph.stimulus?.nodes[node])));
+      storeDispatch(saveAnalysisState({ prov: trrackForTrial.current.getState(participant.answers[componentAndIndex].provenanceGraph.stimulus?.nodes[node]), location: 'stimulus' }));
 
       trrackForTrial.current.to(node);
     }
@@ -112,29 +127,29 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
     }
     const provGraph = participant.answers[componentAndIndex].provenanceGraph;
 
-    if (!provGraph) {
+    if (!provGraph.stimulus) {
       return;
     }
 
-    if (!currentNode || !provGraph.stimulus?.nodes[currentNode]) {
-      _setCurrentNode(provGraph.stimulus?.root as string);
+    if (!currentNode || !provGraph.stimulus.nodes[currentNode]) {
+      _setCurrentNode(provGraph.stimulus.root as string);
       return;
     }
 
-    let tempNode = provGraph.stimulus?.nodes[currentNode];
+    let tempNode = provGraph.stimulus.nodes[currentNode];
 
     while (true) {
       if (playTime < tempNode.createdOn) {
         if (!isRootNode(tempNode)) {
           const parentNode = tempNode.parent;
 
-          tempNode = provGraph.stimulus?.nodes[parentNode];
+          tempNode = provGraph.stimulus.nodes[parentNode];
         } else break;
       } else if (tempNode.children.length > 0) {
         const child = tempNode.children[0];
 
-        if (playTime > provGraph.stimulus?.nodes[child].createdOn) {
-          tempNode = provGraph.stimulus?.nodes[child];
+        if (playTime > provGraph.stimulus.nodes[child].createdOn) {
+          tempNode = provGraph.stimulus.nodes[child];
         } else break;
       } else break;
     }

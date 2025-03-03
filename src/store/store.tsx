@@ -75,7 +75,16 @@ export async function studyStoreCreator(
     {},
     ...flatSequence.map((id, idx) => ({
       [`${id}_${idx}`]: {
-        aboveStimulus: true, belowStimulus: true, sidebar: true, stimulus: true,
+        aboveStimulus: true,
+        belowStimulus: true,
+        sidebar: true,
+        stimulus: true,
+        provenanceGraph: {
+          aboveStimulus: undefined,
+          belowStimulus: undefined,
+          stimulus: undefined,
+          sidebar: undefined,
+        },
       },
     })),
   );
@@ -94,7 +103,14 @@ export async function studyStoreCreator(
     reactiveProvenance: null,
     otherTexts: {},
     metadata,
-    analysisProvState: null,
+    analysisProvState: {
+
+      aboveStimulus: undefined,
+      belowStimulus: undefined,
+      stimulus: undefined,
+      sidebar: undefined,
+
+    },
     analysisIsPlaying: false,
     analysisHasAudio: false,
     analysisHasProvenance: false,
@@ -180,8 +196,8 @@ export async function studyStoreCreator(
       resetOtherText: (state) => {
         state.otherTexts = {};
       },
-      saveAnalysisState(state, { payload }: PayloadAction<unknown>) {
-        state.analysisProvState = payload;
+      saveAnalysisState(state, { payload }: PayloadAction<{prov: unknown, location: ResponseBlockLocation}>) {
+        state.analysisProvState[payload.location] = payload.prov;
       },
       setAnalysisIsPlaying(state, { payload }: PayloadAction<boolean>) {
         state.analysisIsPlaying = payload;

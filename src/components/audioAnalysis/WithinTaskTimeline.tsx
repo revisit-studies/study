@@ -22,7 +22,15 @@ export function WithinTaskTimeline({
   const circles = useMemo(() => Object.entries(participantData.answers).filter((entry) => (trialName ? trialName === entry[0] : true)).map((entry) => {
     const [name, answer] = entry;
 
-    return <WithinTaskProvenance key={name} taskName={name} answer={answer} height={height} currentNode={currentNode} setCurrentNode={currentNodeCallback} xScale={xScale} />;
+    const allCircles = Object.keys(answer.provenanceGraph).map((provenanceArea) => {
+      const graph = answer.provenanceGraph[provenanceArea as keyof typeof answer.provenanceGraph];
+      if (graph) {
+        return <WithinTaskProvenance key={name} taskName={name} height={height} currentNode={currentNode} setCurrentNode={currentNodeCallback} xScale={xScale} provenance={graph} />;
+      }
+      return null;
+    });
+
+    return allCircles;
   }), [currentNode, currentNodeCallback, height, participantData.answers, trialName, xScale]);
 
   return (

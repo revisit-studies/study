@@ -49,7 +49,9 @@ export function ResponseBlock({
     updateResponseBlockValidation, toggleShowHelpText, saveIncorrectAnswer, incrementHelpCounter,
   } = useStoreActions();
   const currentStep = useCurrentStep();
-  const storedAnswer = status?.answer;
+  const currentProvenance: {form: Record<string, string | number | boolean | string[] | Record<string, unknown>> | undefined} = useStoreSelector((state) => state.analysisProvState[location]) as {form: Record<string, string | number | boolean | string[] | Record<string, unknown>> | undefined};
+
+  const storedAnswer = currentProvenance?.form || status?.answer;
 
   const studyId = useStudyId();
 
