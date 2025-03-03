@@ -70,7 +70,10 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             break;
           case `${PREFIX}/READY`:
             if (ref.current) {
-              ref.current.style.height = `${data.message.documentHeight}px`;
+              const iFrame = document.getElementById(data.iframeId) as HTMLIFrameElement;
+              if (iFrame && iFrame.contentWindow) {
+                ref.current.style.height = `${iFrame.contentWindow.document.body.scrollHeight.toString()}px`;
+              }
             }
             break;
           case `${PREFIX}/ANSWERS`:
@@ -94,11 +97,12 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, setReactiveProvenance]);
+  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, setReactiveProvenance, updateResponseBlockValidation, identifier]);
 
   return (
     <iframe
       ref={ref}
+      id={iframeId}
       src={
         currentConfig.path.startsWith('http')
           ? currentConfig.path
