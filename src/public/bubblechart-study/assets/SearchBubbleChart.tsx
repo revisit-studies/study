@@ -8,7 +8,7 @@ import {
 } from 'react';
 import * as d3 from 'd3';
 import {
-  Button, Group, Select, Text,
+  Button, Group, Select,
 } from '@mantine/core';
 import { Registry, initializeTrrack } from '@trrack/core';
 import cx from 'clsx';
@@ -333,11 +333,6 @@ function SearchBubbleChart({ parameters, setAnswer, provenanceState }: StimulusP
           </div>
         </div>
         )}
-      </div>
-      <div>
-        Click the following button only after you&apos;ve finished exploring --
-        {' '}
-        <Text c="blue">you cannot return to this page.</Text>
       </div>
     </div>
 

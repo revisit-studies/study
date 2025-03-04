@@ -14,10 +14,10 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": true,
-    "recordStudyAudio": true
+    "recordStudyAudio": true,
+    "sidebar": true
   },
-  "importedLibraries": ["demographics"],
+  "importedLibraries": ["demographics", "mic-check"],
   "components": {
     "introduction": {
       "type": "markdown",
@@ -31,58 +31,65 @@
           "placeholder": "Prolific Id",
           "paramCapture": "PROLIFIC_ID"
         }
-      ]
+      ],
+      "recordAudio": false
     },
     "instructionsWithSearch": {
       "type": "markdown",
       "path": "bubblechart-study/assets/instructions-foresight.md",
       "response": [],
-      "nextButtonText": "Start Exploring"
+      "nextButtonText": "Start Exploring",
+      "recordAudio": false
     },
     "instructionsWithoutSearch": {
       "type": "markdown",
       "path": "bubblechart-study/assets/instructions-control.md",
       "response": [],
-      "nextButtonText": "Start Exploring"
+      "nextButtonText": "Start Exploring",
+      "recordAudio": false
     },
     "bubbleChartWithSearch": {
       "description": "Desc",
-      "instruction": "Your task is to analyze this dataset of college information.\n On the following pages, you will be asked to briefly describe the findings you identified, and answer several questions on the understanding of the visualization. \n\n **How to Interact**: \n- Mouseover any of the circles to obtain a detailed view.\n- Use the text box at the top to search for specific college.",
+      "instruction": "Your task is to analyze this dataset of college information and describe the findings you identified in the textbox below. \n\n **How to Interact**: \n- Mouseover any of the circles to obtain a detailed view.\n- Use the text box at the top to search for specific college.",
       "type": "react-component",
       "path": "bubblechart-study/assets/SearchBubbleChart.tsx",
       "parameters": {
         "data": "assets/data/college.csv",
         "search": true
       },
-      "response": [],
+      "response": [
+        {
+          "id": "findings",
+          "prompt": "Your Findings\n\nUse the textbox below list as many unique findings as you can. Separate your findings into multiple paragraphs.",
+          "location": "sidebar",
+          "type": "longText",
+          "placeholder": "Write your findings here",
+          "paramCapture": "FINDINGS"
+        }
+      ],
       "nextButtonText": "I'm finished"
     },
     "bubbleChartWithoutSearch": {
       "description": "Desc",
-      "instruction": "Your task is to analyze this dataset of college information.\n On the following pages, you will be asked to briefly describe the findings you identified, and answer several questions on the understanding of the visualization. \n\n **How to Interact**: \n- Mouseover any of the circles to obtain a detailed view.",
+      "instruction": "Your task is to analyze this dataset of college information and describe the findings you identified in the textbox below. \n\n **How to Interact**: \n- Mouseover any of the circles to obtain a detailed view.",
       "type": "react-component",
       "path": "bubblechart-study/assets/SearchBubbleChart.tsx",
       "parameters": {
         "data": "assets/data/college.csv",
         "search": false
       },
-      "response": [],
-      "nextButtonText": "I'm finished"
-    },
-    "findings": {
-      "description": "Findings",
-      "instruction": "Your Findings\n\nIn this section, please tell us about the findings you discovered in the data. \n\nUse the textbox with multiple paragraphs to separate your results, and list as many unique findings as you can.",
-      "type": "questionnaire",
       "response": [
         {
           "id": "findings",
-          "prompt": "Write your findings here",
-          "location": "belowStimulus",
+          "prompt": "Your Findings\n\nUse the textbox below list as many unique findings as you can. Separate your findings into multiple paragraphs.",
+          "location": "sidebar",
           "type": "longText",
           "placeholder": "Write your findings here",
           "paramCapture": "FINDINGS"
         }
-      ]
+      ],
+      "nextButtonText": "I'm finished",
+      "recordAudio": true
     },
     "explorationStrategy": {
       "description": "Exploration Strategy",
@@ -130,13 +137,15 @@
           "location": "belowStimulus",
           "type": "longText"
         }
-      ]
+      ],
+      "recordAudio": false
     }
   },
   "sequence": {
     "order": "fixed",
     "components": [
       "introduction",
+      "$mic-check.co.audioTest",
       {
         "order": "latinSquare",
         "numSamples": 1,
@@ -154,7 +163,6 @@
           }
         ]
       },
-      "findings",
       "explorationStrategy",
       "$demographics.co.demographics"
     ]
