@@ -20,6 +20,7 @@ a{
 .legend_drag_div{
     display: flex;
     flex-direction: column;
+    padding: 0px;
 }
 
 .textContent {
@@ -31,7 +32,7 @@ a{
 
 }
 .chartDiv{
-    width: 600px;
+    width: 550px;
     height: 600px;
 }
 /*button image in the task description*/
@@ -60,6 +61,7 @@ form{
 }
 
 #legend div{
+    padding: 0px;
     margin-bottom:12px;
 }
 .densityController{

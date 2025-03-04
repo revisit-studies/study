@@ -30,13 +30,13 @@
           "path": "pattern-design-study/assets/pages/welcome.md",
           "instruction": "",
           "instructionLocation": "sidebar",
-          "nextButtonLocation": "sidebar",
+          "nextButtonLocation": "belowStimulus",
           "response": []
       },    
       "demographics": {
         "type": "questionnaire",
         "description": "Basic demographic questions including gender, age, and education",
-        "nextButtonLocation": "sidebar",
+        "nextButtonLocation": "belowStimulus",
         "response": [
           {
             "id": "gender",
@@ -82,7 +82,7 @@
         "nextButtonText": "Yes, I agree",
         "instruction": "",
         "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
+        "nextButtonLocation": "belowStimulus",
         "response": []
       },
       "between-two-design":{
@@ -90,7 +90,7 @@
         "path": "pattern-design-study/assets/pages/between-two-design.md",
         "instruction": "",
         "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
+        "nextButtonLocation": "belowStimulus",
         "response": []
       },
       "description_bar": {
@@ -99,7 +99,7 @@
         "parameters": {
           "condition_chart": 0
         },
-        "nextButtonLocation": "sidebar",
+        "nextButtonLocation": "belowStimulus",
         "instruction": "",
         "instructionLocation": "sidebar",
         "response": []
@@ -112,7 +112,7 @@
         },
         "instruction": "",
         "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
+        "nextButtonLocation": "belowStimulus",
         "response": []
       },
       "description_map": {
@@ -123,7 +123,7 @@
         },
         "instruction": "",
         "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
+        "nextButtonLocation": "belowStimulus",
         "response": []
       },
       "tutorial_bar_geo-icon": {
