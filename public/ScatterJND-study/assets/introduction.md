@@ -1,6 +1,12 @@
-# Introduction
+## What is correlation?
+Correlation, roughly defined, is the degree to which two variables are related.
+Below are several examples of correlation. The larger the r value-- 0.0 (small) to 1 (large)-- the more correlated the data. 
 
-Welcome to our study. This is a reVISit variation study of JND(Just Noticeable Difference) Scatter Plot experiment.
+In the main task, you will be shown several pairs of charts and asked to choose which visualization appears ***more correlated***.
 
-You will be given 2 graphs. Your job is to choose the graph that displays a higher correlation coefficent.
+Please review the examples below, and hit next at the bottom when you're ready for a practice section.
+
+(If you are familiar with correlation already, note that we treat negative and positive correlation the same.)
+
+
 ![Scatter Plot Correlation examples](./assets/ScatterPlotCorrelations.png)
