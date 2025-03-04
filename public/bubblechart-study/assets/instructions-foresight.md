@@ -15,4 +15,4 @@ and answer several questions on the understanding of the visualization.
 - Use the text box at the top to search for specific college.
 
 
-<img src="./assets/foresight-college.gif" style="max-width:800px">
+<video src="./assets/search.mkv" style="max-width:800px" controls loop />
