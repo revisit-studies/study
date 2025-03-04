@@ -22,9 +22,13 @@ export async function studyStoreCreator(
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
 
-  const emptyAnswers: Record<string, StoredAnswer> = Object.fromEntries(flatSequence.filter((id) => id !== 'end' && config.components[id])
+  const emptyAnswers: Record<string, StoredAnswer> = Object.fromEntries(flatSequence.filter((id) => id !== 'end')
     .map((id, idx) => {
       const componentConfig = studyComponentToIndividualComponent(config.components[id] || {}, config);
+
+      if (!config.components[id]) {
+        return null;
+      }
 
       return [
         `${id}_${idx}`,
@@ -33,7 +37,7 @@ export async function studyStoreCreator(
           answer: {}, incorrectAnswers: {}, startTime: 0, endTime: -1, provenanceGraph: undefined, windowEvents: [], timedOut: false, helpButtonClickedCount: 0, parameters: Object.hasOwn(componentConfig, 'parameters') ? (componentConfig as any).parameters : {},
         },
       ];
-    }));
+    }).filter((ans) => ans !== null));
   const emptyValidation: TrialValidation = Object.assign(
     {},
     ...flatSequence.map((id, idx) => {

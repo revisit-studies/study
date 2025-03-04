@@ -11,7 +11,7 @@ export default function func({
   let counter = 0;
   const findLatestTrial = (trialAnswers: Record<string, StoredAnswer>, position: number) => {
     const trialKeys = Object.keys(trialAnswers)
-      .filter((key) => key.startsWith(`${name}`))
+      .filter((key) => key.startsWith(`${name}_${index}_trial_`))
       .map((key) => ({ key, number: parseInt(key.split('_').pop()!, 10) }))
       .filter((entry) => !Number.isNaN(entry.number))
       .sort((a, b) => b.number - a.number);
