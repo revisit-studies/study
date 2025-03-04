@@ -80,11 +80,6 @@
         }
       ]
     },
-    "training": {
-      "type": "markdown",
-      "path": "ParallelJND-study/assets/training.md",
-      "response": []
-    },
     "Parallel Coordinates T1 A:0.3 B:0.7": {
       "baseComponent": "practiceBase",
       "parameters": { "r1": 0.3, "r2": 0.7, "taskid": "practiceResponse" }
@@ -133,9 +128,8 @@
   "sequence": {
     "order": "fixed",
     "components": [
-      "introduction",
       "consent",
-      "training",
+      "introduction",
       {
         "order": "fixed",
         "components": [
