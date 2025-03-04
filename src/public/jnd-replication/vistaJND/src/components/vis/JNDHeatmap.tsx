@@ -54,7 +54,7 @@ export default function JND({ setAnswer, parameters } : StimulusParams<{r1: numb
         textAlign: 'center', paddingBottom: '24px', fontSize: '18px', fontWeight: 'bold',
       }}
       >
-        Please select the visualization that appears to have a larger correlation. (This may be difficult, but try your best!) &nbsp
+        Please select the visualization that appears to have a larger correlation. (This may be difficult, but try your best!)
       </Text>
       <Text style={{
         textAlign: 'center', paddingBottom: '24px', fontSize: '18px', fontWeight: 'bold',
