@@ -25,7 +25,13 @@ export default function ParallelCoordinates({ v, onClick } : { v: number, onClic
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const filePath = `${PREFIX}jnd-data/datasets/size_100/dataset_${v}_size_100.csv`;
+        const baseCorrelations = [0.3, 0.6, 0.9];
+        const shouldScramble = baseCorrelations.includes(v);
+        const randomIndex = shouldScramble ? Math.floor(Math.random() * 5) + 1 : 1;
+
+        const filePath = shouldScramble
+          ? `${PREFIX}jnd-data/datasets/size_100/dataset_${v}_size_100_${randomIndex}.csv`
+          : `${PREFIX}jnd-data/datasets/size_100/dataset_${v}_size_100.csv`;
 
         const response = await fetch(filePath);
         if (!response.ok) {
