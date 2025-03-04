@@ -133,6 +133,11 @@
       "type": "markdown",
       "path": "ParallelJND-study/assets/break.md",
       "response": []
+    },
+    "debrief": {
+      "type": "markdown",
+      "path": "ScatterJND-study/assets/debrief.md",
+      "response": []
     }
   },
   "sequence": {
@@ -255,7 +260,8 @@
           "order": "fixed"
           }
         ]
-      }
+      },
+      "debrief"
     ]
   }
 }
