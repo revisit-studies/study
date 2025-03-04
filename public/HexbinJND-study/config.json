@@ -80,6 +80,11 @@
         }
       ]
     },
+    "training": {
+      "type": "markdown",
+      "path": "HexbinJND-study/assets/training.md",
+      "response": []
+    },
     "Hexbin plot T1 A:0.3 B:0.7": {
       "baseComponent": "practiceBase",
       "parameters": { "r1": 0.3, "r2": 0.7, "taskid": "practiceResponse" }
@@ -123,6 +128,16 @@
     },
     "trial": {
       "baseComponent": "experimentRevised"
+    },
+    "break": {
+      "type": "markdown",
+      "path": "HexbinJND-study/assets/break.md",
+      "response": []
+    },
+    "debrief": {
+      "type": "markdown",
+      "path": "ScatterJND-study/assets/debrief.md",
+      "response": []
     }
   },
   "sequence": {
@@ -130,6 +145,7 @@
     "components": [
       "consent",
       "introduction",
+      "training",
       {
         "order": "fixed",
         "components": [
@@ -143,78 +159,109 @@
         "order": "fixed",
         "components": [
           {
-            "order": "dynamic",
-            "id": "below3",
-            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
-            "parameters": {
-              "r1": 0.3,
-              "r2": 0.1,
-              "above": false,
-              "name": "below3",
-              "index": 13
-            }
-            },{
-            "order": "dynamic",
-            "id": "above3",
-            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
-            "parameters": {
-              "r1": 0.3,
-              "r2": 0.5,
-              "above": true,
-              "name": "above3",
-              "index": 14
-            }
+            "components":[{
+              "order": "dynamic",
+              "id": "below3",
+              "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+              "parameters": {
+                "r1": 0.3,
+                "r2": 0.1,
+                "above": false,
+                "name": "below3",
+                "index": 13
+              }
+            },
+            "break"
+            ],
+          "order": "fixed"
           },
           {
-            "order": "dynamic",
-            "id": "below6",
-            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
-            "parameters": {
-              "r1": 0.6,
-              "r2": 0.5,
-              "above": false,
-              "name": "below6",
-              "index": 15
-            }
+            "components":[{
+              "order": "dynamic",
+              "id": "above3",
+              "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+              "parameters": {
+                "r1": 0.3,
+                "r2": 0.5,
+                "above": true,
+                "name": "above3",
+                "index": 15
+              }
+            },
+            "break"
+            ],
+          "order": "fixed"
           },
           {
-            "order": "dynamic",
-            "id": "above6",
-            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
-            "parameters": {
-              "r1": 0.6,
-              "r2": 0.7,
-              "above": true,
-              "name": "above6",
-              "index": 16
-            }
+            "components":[{
+              "order": "dynamic",
+              "id": "below6",
+              "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+              "parameters": {
+                "r1": 0.6,
+                "r2": 0.5,
+                "above": false,
+                "name": "below6",
+                "index": 17
+              }
+            },
+            "break"
+            ],
+          "order": "fixed"
           },
           {
-            "order": "dynamic",
-            "id": "below9",
-            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
-            "parameters": {
-              "r1": 0.9,
-              "r2": 0.8,
-              "above": false,
-              "name": "below9",
-              "index": 17
-            }
+            "components":[{
+              "order": "dynamic",
+              "id": "above6",
+              "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+              "parameters": {
+                "r1": 0.6,
+                "r2": 0.7,
+                "above": true,
+                "name": "above6",
+                "index": 19
+              }
+            },
+            "break"
+            ],
+          "order": "fixed"
           },
           {
-            "order": "dynamic",
-            "id": "above9",
-            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
-            "parameters": {
-              "r1": 0.9,
-              "r2": 0.99,
-              "above": true,
-              "name": "above9",
-              "index": 18
+            "components":[{
+              "order": "dynamic",
+              "id": "below9",
+              "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+              "parameters": {
+                "r1": 0.9,
+                "r2": 0.8,
+                "above": false,
+                "name": "below9",
+                "index": 21
+              }
+            },
+            "break"
+            ],
+          "order": "fixed"
+          },
+          {
+            "components":[{
+              "order": "dynamic",
+              "id": "above9",
+              "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+              "parameters": {
+                "r1": 0.9,
+                "r2": 0.99,
+                "above": true,
+                "name": "above9",
+                "index": 23
+              }
             }
+            ],
+          "order": "fixed"
           }
         ]
-      }
+      },
+      "debrief"
     ]
   }
 }

@@ -107,7 +107,6 @@ export default function HeatmapPlots({ r, onClick }: { r: number, onClick: () =>
         display: 'inline-block',
         padding: '5px',
         border: isHover ? '4px solid cornflowerblue' : '4px solid transparent',
-        opacity: isHover ? 0.8 : 1,
         cursor: 'pointer',
       }}
     >
