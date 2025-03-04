@@ -8,6 +8,10 @@ import { Group, Stack, Button } from '@mantine/core';
 import { useMemo, useState } from 'react';
 import ParallelCoordinates from './ParallelCoordinates';
 
+function hashSeed(r1: number, r2: number) {
+  return Math.abs(Math.sin(r1 * 1000 + r2 * 1000)) % 1;
+}
+
 /**
  * Holds 2 Parallel Coordinate Plots
  * @param param0 - r1 is the correlation value for 1, r2 is the correlation value for 2,
@@ -17,7 +21,10 @@ import ParallelCoordinates from './ParallelCoordinates';
 export default function ParallelCoordinatesWrapper({
   r1, r2, shouldReRender = true, onClick, shouldRandomize = true,
 }: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number) => void, shouldRandomize?: boolean}) {
-  const higherFirst = useMemo(() => (shouldRandomize ? (Math.sin(Date.now()) * 10000) % 1 > 0.5 : true), [shouldRandomize]);
+  const higherFirst = useMemo(
+    () => (shouldRandomize ? hashSeed(r1, r2) > 0.5 : true),
+    [shouldRandomize, r1, r2],
+  );
 
   const [key, setKey] = useState<number>(0);
 
