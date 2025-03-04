@@ -51,8 +51,9 @@ export default function HeatmapPlots({ r, onClick }: { r: number, onClick: () =>
   const createChart = useCallback(() => {
     if (data.length === 0) return;
 
-    const xSorted = [...data.map((d) => d[0])].sort((a, b) => a - b);
-    const yCorrelated = data.map((d) => d[1]);
+    const sortedPairs = [...data].sort((a, b) => a[0] - b[0]);
+    const xSorted = sortedPairs.map((d) => d[0]);
+    const correlatedX = sortedPairs.map((d) => d[1]);
 
     const svg = select(d3Container.current)
       .attr('width', width)
@@ -75,14 +76,14 @@ export default function HeatmapPlots({ r, onClick }: { r: number, onClick: () =>
 
     svg.append('g')
       .selectAll('rect')
-      .data(yCorrelated)
+      .data(correlatedX)
       .enter()
       .append('rect')
-      .attr('x', (_, i) => i * (width / yCorrelated.length))
+      .attr('x', (_, i) => i * (width / correlatedX.length))
       .attr('y', height + spacing)
-      .attr('width', width / yCorrelated.length)
+      .attr('width', width / correlatedX.length)
       .attr('height', height)
-      .style('fill', (d) => d3.interpolateRdBu((d - d3.min(yCorrelated)!) / (d3.max(yCorrelated)! - d3.min(yCorrelated)!)))
+      .style('fill', (d) => d3.interpolateRdBu((d - d3.min(correlatedX)!) / (d3.max(correlatedX)! - d3.min(correlatedX)!)))
       .style('cursor', 'pointer')
       .on('click', onClick);
   }, [data, onClick]);
