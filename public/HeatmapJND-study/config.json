@@ -80,6 +80,11 @@
         }
       ]
     },
+    "training": {
+      "type": "markdown",
+      "path": "HeatmapJND-study/assets/training.md",
+      "response": []
+    },
     "Heatmap plot T1 A:0.3 B:0.7": {
       "baseComponent": "practiceBase",
       "parameters": { "r1": 0.3, "r2": 0.7, "taskid": "practiceResponse" }
@@ -135,6 +140,7 @@
     "components": [
       "consent",
       "introduction",
+      "training",
       {
         "order": "fixed",
         "components": [
@@ -157,7 +163,7 @@
                 "r2": 0.1,
                 "above": false,
                 "name": "below3",
-                "index": 12
+                "index": 13
               }
             },
             "break"
@@ -174,7 +180,7 @@
                 "r2": 0.5,
                 "above": true,
                 "name": "above3",
-                "index": 14
+                "index": 15
               }
             },
             "break"
@@ -191,7 +197,7 @@
                 "r2": 0.5,
                 "above": false,
                 "name": "below6",
-                "index": 16
+                "index": 17
               }
             },
             "break"
@@ -208,7 +214,7 @@
                 "r2": 0.7,
                 "above": true,
                 "name": "above6",
-                "index": 18
+                "index": 19
               }
             },
             "break"
@@ -225,7 +231,7 @@
                 "r2": 0.8,
                 "above": false,
                 "name": "below9",
-                "index": 20
+                "index": 21
               }
             },
             "break"
@@ -242,10 +248,9 @@
                 "r2": 0.99,
                 "above": true,
                 "name": "above9",
-                "index": 22
+                "index": 23
               }
-            },
-            "break"
+            }
             ],
           "order": "fixed"
           }
