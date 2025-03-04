@@ -25,7 +25,13 @@ export default function HexbinPlots({ r, onClick } : { r: number, onClick: () =>
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const filePath = `${PREFIX}jnd-data/datasets/size_1000/dataset_${r}_size_1000.csv`;
+        const baseCorrelations = [0.3, 0.6, 0.9];
+        const shouldScramble = baseCorrelations.includes(r);
+        const randomIndex = shouldScramble ? Math.floor(Math.random() * 5) + 1 : 1;
+
+        const filePath = shouldScramble
+          ? `${PREFIX}jnd-data/datasets/size_1000/dataset_${r}_size_1000_${randomIndex}.csv`
+          : `${PREFIX}jnd-data/datasets/size_1000/dataset_${r}_size_1000.csv`;
 
         const response = await fetch(filePath);
         if (!response.ok) {
