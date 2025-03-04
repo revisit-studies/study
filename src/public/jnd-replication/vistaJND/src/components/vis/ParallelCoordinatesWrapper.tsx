@@ -15,9 +15,9 @@ import ParallelCoordinates from './ParallelCoordinates';
  * @returns 2 Parallel Coordinate Plots
  */
 export default function ParallelCoordinatesWrapper({
-  r1, r2, shouldReRender = true, onClick,
-}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number) => void}) {
-  const higherFirst = useMemo(() => Math.random() > 0.5, []);
+  r1, r2, shouldReRender = true, onClick, shouldRandomize = true,
+}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number) => void, shouldRandomize?: boolean}) {
+  const higherFirst = useMemo(() => (shouldRandomize ? (Math.sin(Date.now()) * 10000) % 1 > 0.5 : true), [shouldRandomize]);
 
   const [key, setKey] = useState<number>(0);
 
@@ -37,22 +37,22 @@ export default function ParallelCoordinatesWrapper({
     <Group style={{ gap: '40px' }}>
       <Stack style={{ alignItems: 'center' }}>
         <ParallelCoordinates key={key} onClick={() => handleClick(1)} v={r1} />
-        <Button onClick={() => handleClick(1)}>Left</Button>
+        <Button onClick={() => handleClick(1)}>A</Button>
       </Stack>
       <Stack style={{ alignItems: 'center' }}>
         <ParallelCoordinates key={key + 1} onClick={() => handleClick(2)} v={r2} />
-        <Button onClick={() => handleClick(2)}>Right</Button>
+        <Button onClick={() => handleClick(2)}>B</Button>
       </Stack>
     </Group>
   ) : (
     <Group style={{ gap: '40px' }}>
       <Stack style={{ alignItems: 'center' }}>
         <ParallelCoordinates key={key} onClick={() => handleClick(2)} v={r2} />
-        <Button onClick={() => handleClick(2)}>Left</Button>
+        <Button onClick={() => handleClick(2)}>A</Button>
       </Stack>
       <Stack style={{ alignItems: 'center' }}>
         <ParallelCoordinates key={key + 1} onClick={() => handleClick(1)} v={r1} />
-        <Button onClick={() => handleClick(1)}>Right</Button>
+        <Button onClick={() => handleClick(1)}>B</Button>
       </Stack>
     </Group>
   );

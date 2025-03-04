@@ -11,8 +11,9 @@ import {
   useCallback, useEffect, useRef, useState,
 } from 'react';
 import { select } from 'd3-selection';
+import { PREFIX } from '../../../../../../utils/Prefix';
 
-const width = 300;
+const width = 320;
 const height = 300;
 
 export default function ScatterPlots({ r, onClick } : { r: number, onClick: () => void}) {
@@ -21,7 +22,7 @@ export default function ScatterPlots({ r, onClick } : { r: number, onClick: () =
   const [isHover, setIsHover] = useState<boolean>(false);
 
   const margin = {
-    left: 40, top: 20, right: 20, bottom: 20,
+    left: 20, top: 20, right: 20, bottom: 20,
   };
   const innerHeight = height - margin.bottom;
   const innerWidth = width - margin.left - margin.right;
@@ -29,7 +30,13 @@ export default function ScatterPlots({ r, onClick } : { r: number, onClick: () =
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const filePath = `/jnd-data/datasets/size_100/dataset_${r}_size_100.csv`;
+        const baseCorrelations = [0.3, 0.6, 0.9];
+        const shouldScramble = baseCorrelations.includes(r);
+        const randomIndex = shouldScramble ? Math.floor(Math.random() * 5) + 1 : 1;
+
+        const filePath = shouldScramble
+          ? `${PREFIX}jnd-data/datasets/size_100/dataset_${r}_size_100_${randomIndex}.csv`
+          : `${PREFIX}jnd-data/datasets/size_100/dataset_${r}_size_100.csv`;
 
         const response = await fetch(filePath);
 

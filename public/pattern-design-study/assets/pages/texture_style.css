@@ -1,0 +1,191 @@
+/*red border in tutorial*/
+.highlight-border{
+    /*border: 2px #ff0000 solid;*/
+    outline: 2px #ff0000 solid;
+
+    animation: blink 2s;
+    animation-iteration-count: infinite;
+}
+@keyframes blink { 50% { outline-color:#fff ; }  }
+
+body {
+    /*display: flex;*/
+    justify-content: center;
+}
+
+a{
+    margin: 5px;
+}
+
+.legend_drag_div{
+    display: flex;
+    flex-direction: column;
+    padding: 0px;
+}
+
+.textContent {
+    width:680px;
+}
+
+.form-check-inline{
+    margin-right:0.5rem;
+
+}
+.chartDiv{
+    width: 550px;
+    height: 600px;
+}
+/*button image in the task description*/
+.img-button-in-description{
+    height: 20px;
+    /*background-color: #f8f9fa;*/
+    /*padding: 10px;*/
+    /*border-radius:2px*/
+}
+
+#toolbar{
+    margin-bottom: 10px;
+    margin-top: 10px;
+}
+
+#toolbar img{
+    height: 20px;
+}
+
+form{
+    margin:10px 0px;
+}
+
+#legend{
+    float: left;
+}
+
+#legend div{
+    padding: 0px;
+    margin-bottom:12px;
+}
+.densityController{
+    transform: rotateY(180deg);
+}
+
+/* tick marks for the Desity Controller slider bar */
+.sliderticks {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 10px;
+}
+
+.sliderticks p {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    width: 1px;
+    background: #D3D3D3;
+    height: 10px;
+    line-height: 40px;
+    margin: 0 0 20px 0;
+}
+
+/* images in the pattern */
+.barImg{
+    transform:rotate(45deg);
+    transform-origin: center center;
+    transform-box: fill-box;
+}
+/* images in the pattern */
+.gridPatternLine{
+    transform-origin: center center;
+    transform-box: fill-box;
+}
+
+/* range inputs */
+input[type=range] {
+    height: 22px;
+    -webkit-appearance: none;
+    margin: 10px 5px;
+    width: 200px;
+}
+input[type=range]:focus {
+    outline: none;
+}
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 8px;
+    cursor: pointer;
+    animate: 0.2s;
+    box-shadow: 0px 0px 0px #000000;
+    background: #DEDEDE;
+    border-radius: 9px;
+    border: 0px solid #000000;
+}
+input[type=range]::-webkit-slider-thumb {
+    box-shadow: 0px 0px 0px #000000;
+    border: 0px solid #2497E3;
+    height: 16px;
+    width: 16px;
+    border-radius: 25px;
+    background: #1E90FF;
+    cursor: pointer;
+    -webkit-appearance: none;
+    margin-top: -4px;
+}
+input[type=range]:focus::-webkit-slider-runnable-track {
+    background: #DEDEDE;
+}
+input[type=range]::-moz-range-track {
+    width: 100%;
+    height: 8px;
+    cursor: pointer;
+    animate: 0.2s;
+    box-shadow: 0px 0px 0px #000000;
+    background: #DEDEDE;
+    border-radius: 9px;
+    border: 0px solid #000000;
+}
+input[type=range]::-moz-range-thumb {
+    box-shadow: 0px 0px 0px #000000;
+    border: 0px solid #2497E3;
+    height: 16px;
+    width: 16px;
+    border-radius: 25px;
+    background: #1E90FF;
+    cursor: pointer;
+}
+input[type=range]::-ms-track {
+    width: 100%;
+    height: 8px;
+    cursor: pointer;
+    animate: 0.2s;
+    background: transparent;
+    border-color: transparent;
+    color: transparent;
+}
+input[type=range]::-ms-fill-lower {
+    background: #DEDEDE;
+    border: 0px solid #000000;
+    border-radius: 18px;
+    box-shadow: 0px 0px 0px #000000;
+}
+input[type=range]::-ms-fill-upper {
+    background: #DEDEDE;
+    border: 0px solid #000000;
+    border-radius: 18px;
+    box-shadow: 0px 0px 0px #000000;
+}
+input[type=range]::-ms-thumb {
+    margin-top: 1px;
+    box-shadow: 0px 0px 0px #000000;
+    border: 0px solid #2497E3;
+    height: 16px;
+    width: 16px;
+    border-radius: 25px;
+    background: #1E90FF;
+    cursor: pointer;
+}
+input[type=range]:focus::-ms-fill-lower {
+    background: #DEDEDE;
+}
+input[type=range]:focus::-ms-fill-upper {
+    background: #DEDEDE;
+}

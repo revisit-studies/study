@@ -22,21 +22,28 @@
     "experimentRevised": {
       "type": "react-component",
       "path": "jnd-replication/vistaJND/src/components/vis/JNDScatterRevised.tsx",
+      "nextButtonLocation": "sidebar",
       "response": [{ 
         "id": "scatterSelections",
-        "prompt": "Select the option with the higher correlation",
-        "required": true,
+        "prompt": "",
+        "required": false,
         "location": "aboveStimulus",
-        "type": "numerical",
+        "type": "reactive", 
         "hidden": true
-      }
-      ]
+      }]
     },
     "practiceBase": {
     "type": "react-component",
     "path": "jnd-replication/vistaJND/src/components/vis/PracticeScatter.tsx",
-    "nextButtonLocation": "belowStimulus",
-    "response": []
+    "response": [
+      {
+        "id": "practiceResponse",
+        "prompt": "Complete the practice",
+        "hidden": true,
+        "required": true,
+        "type": "reactive",
+        "location": "aboveStimulus"
+      }]
   }
   },
   "components": {
@@ -55,214 +62,157 @@
         }
       ]
     },
-    "training": {
+    "consent": {
       "type": "markdown",
-      "path": "ScatterJND-study/assets/training.md",
-      "response": []
+      "path": "ScatterJND-study/assets/consent.md",
+      "nextButtonText": "Agree",
+      "response": [
+        {
+          "id": "accept",
+          "prompt": "Do you consent to the study and wish to continue?",
+          "requiredValue": "Accept",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Decline",
+            "Accept"
+          ]
+        }
+      ]
     },
-    "practice1": {
+    "Scatterplot T1 A:0.3 B:0.7": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.3, "r2": 0.7 }
+      "parameters": { "r1": 0.3, "r2": 0.7, "taskid": "practiceResponse" }
     },
-    "practice2": {
+    "Scatterplot T2 A:0.9 B:0.6": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.9, "r2": 0.6 }
+      "parameters": { "r1": 0.9, "r2": 0.6, "taskid": "practiceResponse" }
     },
-    "practice3": {
+    "Scatterplot T3 A:0.6 B:0.3": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.6, "r2": 0.3 }
+      "parameters": { "r1": 0.6, "r2": 0.3, "taskid": "practiceResponse" }
     },
-    "practice4": {
+    "Scatterplot T4 A:0.6 B:0.9": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.6, "r2": 0.9 }
+      "parameters": { "r1": 0.6, "r2": 0.9, "taskid": "practiceResponse" }
     },
-    "practice5": {
+    "Scatterplot T5 A:0.3 B:0.1": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.3, "r2": 0.1 }
+      "parameters": { "r1": 0.3, "r2": 0.1, "taskid": "practiceResponse" }
     },
-    "practice6": {
+    "Scatterplot T6 A:0.5 B:0.3": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.5, "r2": 0.3 }
+      "parameters": { "r1": 0.5, "r2": 0.3, "taskid": "practiceResponse" }
     },
-    "practice7": {
+    "Scatterplot T7 A:0.9 B:0.8": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.9, "r2": 0.8 }
+      "parameters": { "r1": 0.9, "r2": 0.8, "taskid": "practiceResponse" }
     },
-    "practice8": {
+    "Scatterplot T8 A:0.6 B:0.7": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.6, "r2": 0.7 }
+      "parameters": { "r1": 0.6, "r2": 0.7, "taskid": "practiceResponse" }
     },
-    "practice9": {
+    "Scatterplot T9 A:0.99 B:0.9": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.99, "r2": 0.9 }
+      "parameters": { "r1": 0.99, "r2": 0.9, "taskid": "practiceResponse" }
     },
     "begin": {
       "type": "markdown",
       "path": "ParallelJND-study/assets/begin.md",
       "response": []
     },
-    "trial1": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.1,
-        "r2": 0.6,
-        "above": true
-      }
-    },
-    "trial2": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.2,
-        "r2": 0.7,
-        "above": true
-      }
-    },
-    "trial3": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.2,
-        "r2": 0.1,
-        "above": false
-      }
-    },
-    "trial4": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.3,
-        "r2": 0.8,
-        "above": true
-      }
-    },
-    "trial5": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.3,
-        "r2": 0.1,
-        "above": false
-      }
-    },
-    "trial6": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.4,
-        "r2": 0.9,
-        "above": true
-      }
-    },
-    "trial7": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.4,
-        "r2": 0.2,
-        "above": false
-      }
-    },
-    "trial8": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.5,
-        "r2": 0.7,
-        "above": true
-      }
-    },
-    "trial9": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.5,
-        "r2": 0.3,
-        "above": false
-      }
-    },
-    "trial10": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.6,
-        "r2": 0.7,
-        "above": true
-      }
-    },
-    "trial11": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.6,
-        "r2": 0.4,
-        "above": false
-      }
-    },
-    "trial12": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.7,
-        "r2": 0.9,
-        "above": true
-      }
-    },
-    "trial13": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.7,
-        "r2": 0.5,
-        "above": false
-      }
-    },
-    "trial14": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.8,
-        "r2": 0.9,
-        "above": true
-      }
-    },
-    "trial15": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.8,
-        "r2": 0.4,
-        "above": false
-      }
-    },
-    "trial16": {
-      "baseComponent": "experimentRevised",
-      "parameters": {
-        "r1": 0.9,
-        "r2": 0.7,
-        "above": false
-      }
+    "trial": {
+      "baseComponent": "experimentRevised"
     }
   },
   "sequence": {
-  "order": "fixed",
-  "components": [
-    "introduction",
-    "training",
-    {
-      "order": "fixed",
-      "components": [
-        "practice1", "practice2", "practice3",
-        "practice4", "practice5", "practice6",
-        "practice7", "practice8", "practice9"
-      ]
-    },
-    "begin",
-    {
-      "order": "random",
-      "components": [
-          "trial1",
-          "trial2",
-          "trial3",
-          "trial4",
-          "trial5",
-          "trial6",
-          "trial7",
-          "trial8",
-          "trial9",
-          "trial10",
-          "trial11",
-          "trial12",
-          "trial13",
-          "trial14",
-          "trial15",
-          "trial16"
+    "order": "fixed",
+    "components": [
+      "consent",
+      "introduction",
+      {
+        "order": "fixed",
+        "components": [
+          "Scatterplot T1 A:0.3 B:0.7", "Scatterplot T2 A:0.9 B:0.6", "Scatterplot T3 A:0.6 B:0.3",
+          "Scatterplot T4 A:0.6 B:0.9", "Scatterplot T5 A:0.3 B:0.1", "Scatterplot T6 A:0.5 B:0.3",
+          "Scatterplot T7 A:0.9 B:0.8", "Scatterplot T8 A:0.6 B:0.7", "Scatterplot T9 A:0.99 B:0.9"
+        ]
+      },
+      "begin",
+      {
+        "order": "fixed",
+        "components": [
+          {
+            "order": "dynamic",
+            "id": "below3",
+            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+            "parameters": {
+              "r1": 0.3,
+              "r2": 0.1,
+              "above": false,
+              "name": "below3",
+              "index": 13
+            }
+          },{
+            "order": "dynamic",
+            "id": "above3",
+            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+            "parameters": {
+              "r1": 0.3,
+              "r2": 0.5,
+              "above": true,
+              "name": "above3",
+              "index": 14
+            }
+          },
+          {
+            "order": "dynamic",
+            "id": "below6",
+            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+            "parameters": {
+              "r1": 0.6,
+              "r2": 0.5,
+              "above": false,
+              "name": "below6",
+              "index": 15
+            }
+          },
+          {
+            "order": "dynamic",
+            "id": "above6",
+            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+            "parameters": {
+              "r1": 0.6,
+              "r2": 0.7,
+              "above": true,
+              "name": "above6",
+              "index": 16
+            }
+          },
+          {
+            "order": "dynamic",
+            "id": "below9",
+            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+            "parameters": {
+              "r1": 0.9,
+              "r2": 0.8,
+              "above": false,
+              "name": "below9",
+              "index": 17
+            }
+          },
+          {
+            "order": "dynamic",
+            "id": "above9",
+            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+            "parameters": {
+              "r1": 0.9,
+              "r2": 0.99,
+              "above": true,
+              "name": "above9",
+              "index": 18
+            }
+          }
         ]
       }
     ]

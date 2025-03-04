@@ -1,0 +1,601 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Tutorial</title>
+    <script src="../../../revisitUtilities/revisit-communicate.js"></script>
+
+
+    <script type="text/javascript" src="../lib/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/d3.v7.min.js"></script>
+
+    <link rel="stylesheet" href="../lib/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="./texture_style.css">
+
+    <script src="../tools/loading.js"></script>
+
+    <script type = "text/javascript" >
+        //when you click the back button of the browser, this script prevent you from going bac
+        function preventBack(){window.history.forward();}
+        setTimeout("preventBack()", 0);
+        window.onunload=function(){null};
+    </script>
+    <style>
+        .btn-outline-secondary{
+            border-color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <!-- <div class="row bg-light"> -->
+        <!-- <div class="col">
+            <h2>Training</h2>
+            <div id='tutorial_finished' style="display: none" class="textContent">
+                <p>Now you can play with the tool and try each function out. </p>
+                <p>Once you are familiar with the tool, click the <span style="color:#1E90FF;font-weight: bold">Start Real Experiment</span> button at the bottom right of the page to start the real experiment.</p>
+            </div>
+        </div>
+    </div> -->
+
+    <div class="row">
+        <div class="col">
+            <div id="toolbar"></div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-auto legend_drag_div">
+            <div id="legend"></div>
+            <div id="dragdrop" class="bg-light"></div>
+        </div>
+        <div class="col-auto">
+            <div id="chartDiv" class="chartDiv"></div>
+            <div id="outlineDiv" style="padding-left: 200px"></div>
+        </div>
+        <div class="col-auto">
+            <div id="controllerDiv">
+            </div>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col">
+            <!-- <button id="tutorial_next_btn" class="btn btn-primary float-end">Start Real Experiment</button> -->
+        </div>
+    </div>
+</div>
+
+<script src="./texture_functions.js"></script>
+<script src="./texture_constants.js"></script>
+<script type="module">
+    // Move all code that uses createTrrack into this module script
+    import { createTrrack } from '/pattern-design-study/assets/pages/trrack.js';
+    const {trrack, actions: trrack_actions} = createTrrack()
+    
+    // Make trrack and actions globally available
+    window.trrack = trrack;
+    window.trrack_actions = trrack_actions;
+    window.action = trrack_actions;
+</script>
+<script>
+    Revisit.onDataReceive((data) => {
+    localStorage.setItem("measurements", JSON.stringify({condition_chart: data.condition_chart, condition_texture: data.condition_texture}));
+    
+    // Now safely use the data
+    // let measurements = JSON.parse(localStorage.getItem('measurements'));
+    // let condition_chart = measurements['condition_chart'];
+    // let condition_texture = measurements['condition_texture'];
+
+    let condition_chart = data.condition_chart;
+    let condition_texture = data.condition_texture;
+    console.log('condition_chart:' + condition_chart);
+    console.log('condition_texture:' + condition_texture);
+
+    // Make these variables available globally
+    window.condition_chart = condition_chart;
+    window.condition_texture = condition_texture;
+    window.chartName = '';
+
+    // Initialize the page
+    let mydata;
+
+    // document.addEventListener('DOMContentLoaded', () => {
+    // Then initialize based on conditions
+    switch (condition_chart) {
+        case 0:
+            switch (condition_texture){
+                case 0:
+                    //draw bar geo texture tool
+                    window.chartName = 'barGeo';
+
+                    // First draw the toolbar
+                    drawToolbar('toolbar');
+                    // drawDragDropInfo('dragdrop');
+
+                    document.getElementById('toolbar').appendChild(drawSelectDefaultGeoTexture());
+                    drawChartDiv('chartDiv', svgWidth, svgHeight, 'chart');
+                    geoTextures(d3.select('#chartA'),fruits);
+                    drawGeoControllers();
+                    break;
+                case 1:
+                    //draw bar icon texture tool
+                    window.chartName = 'barIcon';
+
+                    // First draw the toolbar
+                    drawToolbar('toolbar');
+                    // drawDragDropInfo('dragdrop');
+
+                    drawIconLegend('legend',fruits);
+                    drawChartDiv('chartDiv', svgWidth, svgHeight, 'chart');
+                    iconTextures(d3.select('#chartA'),fruits);
+                    drawIconicControllers();
+                    break;
+            }
+            break;
+        case 1:
+            switch (condition_texture){
+                case 0:
+                    //draw pie geo texture tool
+                    window.chartName = "pieGeo";
+
+                    // First draw the toolbar
+                    drawToolbar('toolbar');
+                    // drawDragDropInfo('dragdrop');
+
+                    document.getElementById('toolbar').appendChild(drawSelectDefaultGeoTexture());
+                    drawChartDiv('chartDiv', svgWidth, svgHeight, 'chart');
+                    geoTextures(d3.select('#chartA'),fruits);
+                    drawGeoControllers();
+                    break;
+                case 1:
+                    //draw pie icon texture tool
+                    window.chartName = 'pieIcon';
+
+                    // First draw the toolbar
+                    drawToolbar('toolbar');
+                    // drawDragDropInfo('dragdrop');
+
+                    drawIconLegend('legend',fruits);
+                    drawChartDiv('chartDiv', svgWidth, svgHeight, 'chart');
+                    iconTextures(d3.select('#chartA'),fruits);
+                    drawIconicControllers();
+                    break;
+            }
+            break;
+        case 2:
+            switch (condition_texture){
+                case 0:
+                    //draw map geo texture tool
+                    window.chartName = "mapGeo";
+
+                    // First draw the toolbar
+                    drawToolbar('toolbar');
+                    // drawDragDropInfo('dragdrop');
+
+                    document.getElementById('toolbar').appendChild(drawSelectDefaultGeoTexture());
+                    drawChartDiv('chartDiv', svgWidth, svgHeight, 'chart');
+                    geoTextures(d3.select('#chartA'),fruits);
+                    drawGeoControllers();
+                    break;
+                case 1:
+                    //draw map icon texture tool
+                    window.chartName = "mapIcon";
+
+                    // First draw the toolbar
+                    drawToolbar('toolbar');
+                    // drawDragDropInfo('dragdrop');
+
+                    drawIconLegend('legend',fruits);
+                    drawChartDiv('chartDiv', svgWidth, svgHeight, 'chart');
+                    iconTextures(d3.select('#chartA'),fruits);
+                    drawIconicControllers();
+                    break;
+            }
+            break;
+        default:
+            console.log(`has problem with condition_chart`);
+    }
+
+    
+    /**
+     * UI elements of geometric texture charts
+     */
+
+     const resetBtn = document.getElementById("resetBtn")
+    const dataBtn = document.getElementById("dataBtn")
+    const defaultDataBtn = document.getElementById('defaultDataBtn')
+
+    var parametersList
+    var parameters
+
+
+    const undoBtn = document.getElementById("undoBtn")
+    const redoBtn = document.getElementById("redoBtn")
+    const saveParametersBtn = document.getElementById("saveParameters")
+
+    /* Controllers */
+//pattern type: line, dot, grid
+    const lineRadio = document.getElementById("lineRadio")
+    const dotRadio = document.getElementById("dotRadio")
+    const gridRadio = document.getElementById("gridRadio")
+    window.patternTypeRadios = document.getElementsByClassName("patternTypeRadio")
+    window.patternType = [] //pattern type for each category
+
+//line texture controllers
+    const controlLineDensity = document.getElementById("controlLineDensity")
+    const controlLineRotate = document.getElementById("controlLineRotate")
+    const controlLineStrokeWidth = document.getElementById("controlLineStrokeWidth")
+    const controlLineX = document.getElementById("controlLineX")
+    const controlLineY = document.getElementById("controlLineY")
+
+    const controlLineAngle0 = document.getElementById("controlLineAngle0")
+    const controlLineAngle45 = document.getElementById("controlLineAngle45")
+    const controlLineAngle90 = document.getElementById("controlLineAngle90")
+    const controlLineAngle135 = document.getElementById("controlLineAngle135")
+
+    const controlLineBackgroundWhite = document.getElementById("controlLineBackgroundWhite")
+    const controlLineBackgroundBlack = document.getElementById("controlLineBackgroundBlack")
+    window.controlLineBackgroundRadios = document.getElementsByClassName("controlLineBackgroundRadio")
+
+
+    window.lineBackground = []
+
+    window.lineControllers = document.getElementsByClassName("lineController")
+
+//dot texture controllers
+    const controlDotDensity = document.getElementById("controlDotDensity")
+    const controlDotRotate = document.getElementById("controlDotRotate")
+    const controlDotSize = document.getElementById("controlDotSize")
+    const controlDotX = document.getElementById("controlDotX")
+    const controlDotY = document.getElementById("controlDotY")
+
+    const controlDotAngle0 = document.getElementById("controlDotAngle0")
+    const controlDotAngle45 = document.getElementById("controlDotAngle45")
+
+    const controlDotBackgroundWhite = document.getElementById("controlDotBackgroundWhite")
+    const controlDotBackgroundBlack = document.getElementById("controlDotBackgroundBlack")
+    window.controlDotBackgroundRadios = document.getElementsByClassName("controlDotBackgroundRadio")
+
+
+    window.dotBackground = []
+
+    const controlDotPrimitiveDot = document.getElementById("controlDotPrimitiveDot")
+    const controlDotPrimitiveCircle = document.getElementById("controlDotPrimitiveCircle")
+    window.controlDotPrimitiveRadios = document.getElementsByClassName("controlDotPrimitiveRadio")
+
+    window.dotPrimitive = []
+
+    const controlDotPrimitiveStrokeWidth = document.getElementById("controlDotPrimitiveStrokeWidth")
+
+    window.dotControllers = document.getElementsByClassName("dotController")
+
+
+//grid texture controllers
+    const controlGridDensity = document.getElementById("controlGridDensity")
+    const controlGridStrokeWidth = document.getElementById("controlGridStrokeWidth")
+    const controlGridX = document.getElementById("controlGridX")
+    const controlGridY = document.getElementById("controlGridY")
+
+
+    const controlGridAngle = document.getElementById("controlGridAngle")
+
+    const controlGridAngle15 = document.getElementById("controlGridAngle15")
+    const controlGridAngle30 = document.getElementById("controlGridAngle30")
+    const controlGridAngle45 = document.getElementById("controlGridAngle45")
+
+    const controlGridRotate = document.getElementById("controlGridRotate")
+    const controlGridRotate30 = document.getElementById("controlGridRotate30")
+    const controlGridRotate45 = document.getElementById("controlGridRotate45")
+    const controlGridRotate60 = document.getElementById("controlGridRotate60")
+
+
+    window.gridControllers = document.getElementsByClassName("gridController")
+
+    const controlGridBackgroundWhite = document.getElementById("controlGridBackgroundWhite")
+    const controlGridBackgroundBlack = document.getElementById("controlGridBackgroundBlack")
+    window.controlGridBackgroundRadios = document.getElementsByClassName("controlGridBackgroundRadio")
+
+    window.gridBackground = []
+
+
+//outline controller
+    const controlOutline = document.getElementById("controlOutline")
+
+// /* Indicator */
+    if(document.getElementsByClassName("indicator")){
+        window.indicators = document.getElementsByClassName("indicator") // we will create indicators later
+    }
+    var indicatorX = [] // transform x for each indicator
+    var indicatorY = [] // transoform y for each indicator
+
+    window.legendIndicators = document.getElementsByClassName("legendIndicator") //indicators beside legends
+    window.legendIndicatorX = []
+    window.legendIndicatorY = []
+
+    /* Legend */
+    window.legendLabels = document.getElementsByClassName("legendLabel") //texts in legends
+
+    /**
+     * UI elements of iconic texture charts
+     */
+    /* Pattern */
+    var iconPattern //<pattern> for iconPattern
+    window.iconBackground = []
+
+
+
+
+    /* Icon Style */
+//radio button for each icon style
+    const stroke = document.getElementById("strokeRadio")
+    const detail = document.getElementById("detailRadio")
+    const simpleStroke = document.getElementById('simpleStrokeRadio')
+    const simpleFill = document.getElementById('simpleFillRadio')
+
+
+    window.iconStyleRadios = document.getElementsByClassName("iconStyleRadio") //list of all icon style radio button
+
+//list of all icon style
+    window.iconStyleList = ["stroke", "detail",'simple_stroke','simple_fill']
+
+//images for each icon style
+    const strokeImg = document.getElementById("strokeImg")
+    const detailImg = document.getElementById("detailImg")
+    const simpleStrokeImg = document.getElementById('simpleStrokeImg')
+    const simpleFillImg = document.getElementById('simpleFillImg')
+
+
+//icon style for each bar
+    window.iconStyle = [] // list for all bars' icon style. iconStyle[i] = 1 means i-th bar's icon style is "detail"
+
+    /* Controllers */
+    const controlDensity = document.getElementById("controlDensity")
+    const controlSize = document.getElementById("controlSize")
+    const controlX = document.getElementById("controlX")
+    const controlY = document.getElementById("controlY")
+    const controlRotateIcon = document.getElementById("controlRotateIcon")
+    const controlRotate = document.getElementById("controlRotate")
+    const controlAngle0 = document.getElementById("controlAngle0")
+    const controlAngle90 = document.getElementById("controlAngle90")
+
+    const controlBackgroundWhite = document.getElementById("controlBackgroundWhite")
+    const controlBackgroundBlack = document.getElementById("controlBackgroundBlack")
+    window.controlBackgroundRadios = document.getElementsByClassName("controlBackgroundRadio")
+
+    var iconBackground = []
+
+
+    window.same = document.getElementsByClassName("same")
+
+// /* Indicator */ -- TODO: Geo和Icon Legend 部分重复了？
+    if(document.getElementsByClassName("indicator")){
+        var indicators = document.getElementsByClassName("indicator") // we will create indicators later
+    }
+    var indicatorX = [] // transform x for each indicator
+    var indicatorY = [] // transoform y for each indicator
+
+// const legendIndicators = document.getElementsByClassName("legendIndicator") //indicators beside legends
+
+    /* Legend */
+    window.legendImgs = document.getElementsByClassName("legendImg")
+
+// const legendLabels = document.getElementsByClassName("legendLabel") //texts in legends
+
+const selectDefaultTexture = document.getElementById("selectDefaultTexture")
+
+
+    window.controlHalo = document.getElementById("controlHalo")
+//end of UI elements
+
+
+    switch (condition_chart) {
+        case 0:
+            switch (condition_texture){
+                case 0:
+                    mydata = getDatasetForChart()
+
+                    drawGeoBarWithTexture(mydata, barWidth, barHeight, 'chart')
+                    drawBarIndicators(mydata, barWidth, barHeight, 'chart', 30)
+
+                    drawGeoLegend(fruits)
+
+                    //initialize
+                    geo_setInitialParameters(chartName)
+
+                    setSelectCat(chartName)
+                    //switch texture by drag and drop
+                    geo_switchTextures(chartName)
+
+                    break;
+                case 1:
+                    //data
+                    mydata = getDatasetForChart()
+
+                    drawIconBarWithTexture(mydata, barWidth,barHeight, 'chart')
+                    drawBarIndicators(mydata, barWidth, barHeight, 'chart', 30)
+
+                    //initialize
+                    icon_setInitialParameters(chartName)
+
+                    setSelectCat(chartName)
+
+                    icon_switchTextures(chartName)
+                    break;
+            }
+            break;
+        case 1:
+            switch (condition_texture){
+                case 0:
+                    mydata = getDatasetForChart()
+
+                    drawGeoPieWithTexture(mydata, pieRadius, 'chart')
+                    drawPieIndicators(mydata, pieRadius, 'chart', 30)
+                    drawGeoLegend(fruits)
+                    //initialize
+                    geo_setInitialParameters(chartName)
+
+                    setSelectCat(chartName)
+                    //switch texture by drag and drop
+                    geo_switchTextures(chartName)
+                    break;
+                case 1:
+                    mydata = getDatasetForChart()
+
+                    drawIconPieWithTexture(mydata, pieRadius, 'chart')
+                    drawPieIndicators(mydata, pieRadius, 'chart', 30)
+
+                    //initialize
+                    icon_setInitialParameters(chartName)
+
+                    setSelectCat(chartName)
+                    //switch texture by drag and drop
+                    icon_switchTextures(chartName)
+                    break;
+            }
+            break;
+        case 2:
+            switch (condition_texture){
+                case 0:
+                    mydata = getDatasetForMap()
+
+                    drawGeoMapWithTexture(mydata, mapWidth, mapHeight, 'chart')
+                    drawGeoLegend(fruits)
+                    break;
+                case 1:
+                    mydata = getDatasetForMap()
+                    drawIconMapWithTexture(mydata, mapWidth, mapHeight, 'chart')
+                    break;
+            }
+            break;
+        default:
+            console.log(`has problem with condition_chart`);
+    }
+
+    // Initialize tour
+    if(localStorage.getItem('only_halo_tutorial') == -1){
+        document.getElementById('tutorial_finished').style.display = 'block';
+        document.getElementById('tutorial_next_btn').disabled = false;
+    }
+
+    let tour = new Tour({
+        onEnd: function (){
+            document.getElementById('tutorial_finished').style.display = 'block';
+            document.getElementById('tutorial_next_btn').disabled = false;
+        }
+    });
+
+    if(localStorage.getItem('only_halo_tutorial') == 1){ //if the participant already designed a bar chart, and this time they will design a pie or map, then we should notify them the halo controller
+        //bootstrap-tour uses localStorage to store the progress. Remove the relevant variables to let the tour start again.
+        if(localStorage.getItem('tour_current_step')){
+            localStorage.removeItem('tour_current_step')
+        }
+        if(localStorage.getItem('tour_end')){
+            localStorage.removeItem('tour_end')
+        }
+
+        tour.addStep({
+            element: "#controlHalo",
+            title: "Change the white halo width",
+            content: "We see you have already did our study before, but this time there will be a halo controller. You can change the white halo width by using this controller. Try it out right now."
+        })
+        localStorage.setItem('only_halo_tutorial', '-1') //this halo tutorial will never show again.
+    }
+
+    if(localStorage.getItem('only_halo_tutorial') == 0){
+        //if the texture order is geo-icon, we will see a tutorial for geo chart, and need the import default texture function.
+        if(condition_texture == 0){
+            tour.addStep({
+                element: "#selectDefaultTexture", // string (jQuery selector) - html element next to which the step popover should be shown
+                title: "Import default texture", // string - title of the popover
+                content: "You can select and import a default texture in the drop-down box. This function is available only for geometric textures, the default textures are inspired by historic examples. Try it out right now." // string - content of the popover
+            })
+        }
+
+        if(condition_chart == 2){ //for map, we say "texture in the map"
+            tour.addStep({
+                element: "#chart",
+                title: "Select texture to edit(1)",
+                content: "You can select each texture in the map to make edits by clicking on the texture on the chart. Try it out right now."
+            })
+        }else{ //for bar chart and pie chart, we say "texture in the chart"
+            tour.addStep({
+                element: "#chart",
+                title: "Select texture to edit(1)",
+                content: "You can select each texture in the chart to make edits by clicking on the texture on the chart. Try it out right now."
+            })
+        }
+        tour.addSteps([{
+            element: "#legend",
+            title: "Select texture to edit(2)",
+            content: "You can also select a texture to edit by clicking on the legend. Try it out right now."
+        },  {
+            element: "#controllerDiv",
+            title: "Edit texture",
+            content: "You can edit the parameters of the selected texture by using these controllers. Try it out right now."
+        }, {
+            element: "#chart",
+            title: "Drag and drop to switch texture",
+            content: "You can drag-and-drop from one texture to another on the chart or on the legend to switch the parameters of respective two textures. Try it out right now."
+        },{
+            element: "#controllerDiv",
+            title: "Edit all texture texture at the same time",
+            content: "If you check the checkbox after each parameter controller, you can change this parameter for all textures at the same time. Try it out right now."
+        }, {
+            element: "#controlOutline",
+            title: "Change the outline stroke width",
+            content: "You can change the outline stroke width by using this controller. Try it out right now."
+        },
+        ]);
+
+        //if the chart type is not bar chart, we need the Halo controller
+        if(condition_chart != 0){
+            tour.addStep({
+                element: "#controlHalo",
+                title: "Change the white halo width",
+                content: "You can change the white halo width by using this controller. Try it out right now."
+            })
+        }
+
+        tour.addSteps([
+            {
+                element: "#dataBtn",
+                title: "Change data set",
+                content: "You can change to a different, randomly selected data set to test your design. Try it out right now."
+            },{
+                element: "#defaultDataBtn",
+                title: "Default data set",
+                content: "You can test your design with the default data set. Try it out right now."
+            }, {
+                element: "#undoBtn",
+                title: "Undo",
+                content: "You can undo your operation on texture attributes. Try it out right now."
+            }, {
+                element: "#redoBtn",
+                title: "Redo",
+                content: "You can redo your operation on texture attributes. Try it out right now."
+            }, {
+                element: "#resetBtn",
+                title: "Reset",
+                content: "You can also reset all texture attributes to the default that we started with, if needed. Try it out right now."
+            }
+        ])
+    }
+
+    // Initialize and start the tour
+    tour.init();
+    tour.start();
+
+    // });
+})
+</script>
+
+
+</body>
+</html>
+
+
+
+

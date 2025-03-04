@@ -2,7 +2,7 @@
  * Authors: WPI Data Visualization Team
  * Modified by: The ReVISit Team
  * Description:
- *    This file contains the functionality to create a Heatmap Plot.
+ *    This file contains the functionality to create a Heatmap Plot using pre-existing dataset.
  */
 
 import * as d3 from 'd3';
@@ -10,7 +10,7 @@ import {
   useCallback, useEffect, useRef, useState,
 } from 'react';
 import { select } from 'd3-selection';
-import { generateCorrelatedDataset, generateDataSetFixed } from '../../utils/dataGeneration';
+import { PREFIX } from '../../../../../../utils/Prefix';
 
 const width = 400;
 const height = 40;
@@ -18,14 +18,48 @@ const spacing = 10;
 
 export default function HeatmapPlots({ r, onClick }: { r: number, onClick: () => void }) {
   const d3Container = useRef(null);
-  const seedRef = useRef(Date.now().toString());
-
+  const [data, setData] = useState<[number, number][]>([]);
   const [isHover, setIsHover] = useState<boolean>(false);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const baseCorrelations = [0.3, 0.6, 0.9];
+        const shouldScramble = baseCorrelations.includes(r);
+        const randomIndex = shouldScramble ? Math.floor(Math.random() * 5) + 1 : 1;
+
+        const filePath = shouldScramble
+          ? `${PREFIX}jnd-data/datasets/size_100/dataset_${r}_size_100_${randomIndex}.csv`
+          : `${PREFIX}jnd-data/datasets/size_100/dataset_${r}_size_100.csv`;
+
+        const response = await fetch(filePath);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch dataset: ${filePath}`);
+        }
+
+        const text = await response.text();
+        const rows = text.trim().split('\n').slice(1);
+
+        const parsedData = rows.map((row) => {
+          const [x, y] = row.split(',').map(Number);
+          return [x, y] as [number, number];
+        });
+
+        setData(parsedData);
+      } catch (error) {
+        console.error('Error loading dataset:', error);
+      }
+    };
+
+    fetchData();
+  }, [r]);
+
   const createChart = useCallback(() => {
-    const dataUnsorted: [number, number][] = generateDataSetFixed(1, seedRef.current) as [number, number][];
-    const xSorted = dataUnsorted.map((d) => d[0]).sort((a, b) => a - b);
-    const yCorrelated = generateCorrelatedDataset(xSorted, r, seedRef.current);
+    if (data.length === 0) return;
+
+    const sortedPairs = [...data].sort((a, b) => a[0] - b[0]);
+    const xSorted = sortedPairs.map((d) => d[0]);
+    const correlatedX = sortedPairs.map((d) => d[1]);
 
     const svg = select(d3Container.current)
       .attr('width', width)
@@ -48,17 +82,17 @@ export default function HeatmapPlots({ r, onClick }: { r: number, onClick: () =>
 
     svg.append('g')
       .selectAll('rect')
-      .data(yCorrelated)
+      .data(correlatedX)
       .enter()
       .append('rect')
-      .attr('x', (_, i) => i * (width / yCorrelated.length))
+      .attr('x', (_, i) => i * (width / correlatedX.length))
       .attr('y', height + spacing)
-      .attr('width', width / yCorrelated.length)
+      .attr('width', width / correlatedX.length)
       .attr('height', height)
-      .style('fill', (d) => d3.interpolateRdBu((d - d3.min(yCorrelated)!) / (d3.max(yCorrelated)! - d3.min(yCorrelated)!)))
+      .style('fill', (d) => d3.interpolateRdBu((d - d3.min(correlatedX)!) / (d3.max(correlatedX)! - d3.min(correlatedX)!)))
       .style('cursor', 'pointer')
       .on('click', onClick);
-  }, [r, onClick]);
+  }, [data, onClick]);
 
   useEffect(() => {
     createChart();

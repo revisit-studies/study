@@ -38,7 +38,8 @@
     "ScatterJND-study",
     "ParallelJND-study",
     "HexbinJND-study",
-    "HeatmapJND-study"
+    "HeatmapJND-study",
+    "pattern-design-study"
   ],
   "configs": {
     "bubblechart-study": {
@@ -168,6 +169,9 @@
     },
     "HeatmapJND-study": {
       "path": "HeatmapJND-study/config.json"
+    },
+    "pattern-design-study": {
+      "path": "pattern-design-study/config.json"
     }
   }
 }

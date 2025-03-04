@@ -2,7 +2,7 @@
  * Authors: WPI Data Visualization Team
  * Modified by: The ReVISit Team
  * Description:
- *    This file contains the functionality to create a Parallel Coordinates Plot.
+ *    This file loads a pre-generated dataset and renders a Parallel Coordinates Plot using D3.
  */
 
 import { scaleLinear } from 'd3-scale';
@@ -12,19 +12,52 @@ import {
   useCallback, useEffect, useRef, useState,
 } from 'react';
 import { select } from 'd3-selection';
-import { generateDataSetFixed } from '../../utils/dataGeneration';
+import { PREFIX } from '../../../../../../utils/Prefix';
 
 const width = 300;
 const height = 300;
 
-export default function ParallelCoordinates({ v, onClick } : { v: number, onClick: () => void}) {
+export default function ParallelCoordinates({ v, onClick } : { v: number, onClick: () => void }) {
   const d3Container = useRef(null);
-
+  const [data, setData] = useState<[number, number][]>([]);
   const [isHover, setIsHover] = useState<boolean>(false);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const baseCorrelations = [0.3, 0.6, 0.9];
+        const shouldScramble = baseCorrelations.includes(v);
+        const randomIndex = shouldScramble ? Math.floor(Math.random() * 5) + 1 : 1;
+
+        const filePath = shouldScramble
+          ? `${PREFIX}jnd-data/datasets/size_100/dataset_${v}_size_100_${randomIndex}.csv`
+          : `${PREFIX}jnd-data/datasets/size_100/dataset_${v}_size_100.csv`;
+
+        const response = await fetch(filePath);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch dataset: ${filePath}`);
+        }
+
+        const text = await response.text();
+        const rows = text.trim().split('\n').slice(1);
+
+        const parsedData = rows.map((row) => {
+          const [x, y] = row.split(',').map(Number);
+          return [x, y] as [number, number];
+        });
+
+        setData(parsedData);
+      } catch (error) {
+        console.error('Error loading dataset:', error);
+      }
+    };
+
+    fetchData();
+  }, [v]);
+
   const createChart = useCallback(() => {
-    const data = generateDataSetFixed(v, Date.now().toString());
-    // data in format [x1,y1], [x2,y2]
+    if (data.length === 0) return;
+
     const margin = {
       left: 40,
       top: 20,
@@ -35,20 +68,25 @@ export default function ParallelCoordinates({ v, onClick } : { v: number, onClic
     // consts
     const innerHeight = height - margin.bottom;
     const innerWidth = width - margin.left - margin.right;
-    const leftAry = data.map((d) => d[0]);
-    const rightAry = data.map((d) => d[1]);
+    const leftAry = data.map((d) => d[0]).filter((num) => !Number.isNaN(num));
+    const rightAry = data.map((d) => d[1]).filter((num) => !Number.isNaN(num));
+
+    if (leftAry.length === 0 || rightAry.length === 0) {
+      console.error('Invalid data:', data);
+      return;
+    }
+
+    const leftMin = d3.min(leftAry) ?? 0;
+    const leftMax = d3.max(leftAry) ?? 1;
+    const rightMin = d3.min(rightAry) ?? 0;
+    const rightMax = d3.max(rightAry) ?? 1;
+
+    const leftScale = scaleLinear().domain([leftMin, leftMax]).range([0, innerHeight]);
+    const rightScale = scaleLinear().domain([rightMin, rightMax]).range([0, innerHeight]);
+
     const svg = select(d3Container.current);
     svg.selectAll('*').remove();
 
-    // scale
-    const leftScale = scaleLinear().range([0, innerHeight]);
-    const rightScale = scaleLinear().range([0, innerHeight]);
-
-    // domain
-    leftScale.domain([d3.min(leftAry)!, d3.max(leftAry)!]).range([0, innerHeight]);
-    rightScale.domain([d3.min(rightAry)!, d3.max(rightAry)!]).range([0, innerHeight]);
-
-    // axis
     const leftAxis = axisLeft(leftScale).tickSize(0).tickValues([]);
     const rightAxis = axisLeft(rightScale).tickSize(0).tickValues([]);
     const leftAxisTransform = `translate(${margin.left},${margin.top})`;
@@ -67,9 +105,13 @@ export default function ParallelCoordinates({ v, onClick } : { v: number, onClic
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .call(axis as any);
     };
-    // add Axis to chart
+
     addAxistoChart(svg, '.x.axis', leftAxis, 'x axis', leftAxisTransform);
     addAxistoChart(svg, '.y.axis', rightAxis, 'y axis', rightAxisTransform);
+
+    // console.log('v:', v);
+    // console.log('Left Scale Domain:', leftMin, leftMax);
+    // console.log('Right Scale Domain:', rightMin, rightMax);
 
     // add lines
     svg.selectAll('.line')
@@ -79,10 +121,16 @@ export default function ParallelCoordinates({ v, onClick } : { v: number, onClic
       .style('stroke', 'grey')
       .style('stroke-width', 0.5)
       .attr('x1', margin.left)
-      .attr('y1', (d) => leftScale(d[0]) + margin.top)
+      .attr('y1', (d) => {
+        const y1 = leftScale(d[0]) + margin.top;
+        return Number.isNaN(y1) ? 0 : y1;
+      })
       .attr('x2', margin.left + innerWidth)
-      .attr('y2', (d) => rightScale(d[1]) + margin.top);
-  }, [v]);
+      .attr('y2', (d) => {
+        const y2 = rightScale(d[1]) + margin.top;
+        return Number.isNaN(y2) ? 0 : y2;
+      });
+  }, [data]);
 
   useEffect(() => {
     createChart();
@@ -96,10 +144,7 @@ export default function ParallelCoordinates({ v, onClick } : { v: number, onClic
       onMouseEnter={() => setIsHover(true)}
       onMouseLeave={() => setIsHover(false)}
     >
-      <g
-        id="d3Stuff"
-        ref={d3Container}
-      />
+      <g id="d3Stuff" ref={d3Container} />
       <rect
         onClick={onClick}
         x={0}

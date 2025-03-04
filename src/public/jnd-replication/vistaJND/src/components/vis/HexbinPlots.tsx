@@ -2,7 +2,7 @@
  * Authors: WPI Data Visualization Team
  * Modified by: The ReVISit Team
  * Description:
- *    This file contains the functionality to create a Hexbin Plot.
+ *    This file contains the functionality to create a Hexbin Plot using a pre-existing dataset.
  */
 
 import { scaleLinear } from 'd3-scale';
@@ -12,30 +12,66 @@ import {
   useCallback, useEffect, useRef, useState,
 } from 'react';
 import { select } from 'd3-selection';
-import { generateDataSetFixed } from '../../utils/dataGeneration';
+import { PREFIX } from '../../../../../../utils/Prefix';
 
 const width = 300;
 const height = 300;
 
 export default function HexbinPlots({ r, onClick } : { r: number, onClick: () => void }) {
   const d3Container = useRef(null);
-
+  const [data, setData] = useState<[number, number][]>([]);
   const [isHover, setIsHover] = useState<boolean>(false);
 
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const baseCorrelations = [0.3, 0.6, 0.9];
+        const shouldScramble = baseCorrelations.includes(r);
+        const randomIndex = shouldScramble ? Math.floor(Math.random() * 5) + 1 : 1;
+
+        const filePath = shouldScramble
+          ? `${PREFIX}jnd-data/datasets/size_1000/dataset_${r}_size_1000_${randomIndex}.csv`
+          : `${PREFIX}jnd-data/datasets/size_1000/dataset_${r}_size_1000.csv`;
+
+        const response = await fetch(filePath);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch dataset: ${filePath}`);
+        }
+
+        const text = await response.text();
+        const rows = text.trim().split('\n').slice(1);
+
+        const parsedData = rows.map((row) => {
+          const [x, y] = row.split(',').map(Number);
+          return [x, y] as [number, number];
+        });
+
+        setData(parsedData);
+      } catch (error) {
+        console.error('Error loading dataset:', error);
+      }
+    };
+
+    fetchData();
+  }, [r]);
+
   const createChart = useCallback(() => {
-    const data: [number, number][] = generateDataSetFixed(r, Date.now().toString(), 1000) as [number, number][];
+    if (data.length === 0) return;
+
     const margin = {
-      left: 0,
-      top: 20,
-      right: 20,
-      bottom: 1,
+      left: 40, top: 20, right: 20, bottom: 40,
     };
 
     const innerHeight = height - margin.bottom;
     const innerWidth = width - margin.left - margin.right;
 
-    const xScale = scaleLinear().domain([d3.min(data, (d) => d[0])!, d3.max(data, (d) => d[0])!]).range([0, innerWidth]);
-    const yScale = scaleLinear().domain([d3.min(data, (d) => d[1])!, d3.max(data, (d) => d[1])!]).range([innerHeight, 0]);
+    const xScale = scaleLinear()
+      .domain([d3.min(data, (d) => d[0])!, d3.max(data, (d) => d[0])!])
+      .range([0, innerWidth]);
+
+    const yScale = scaleLinear()
+      .domain([d3.min(data, (d) => d[1])!, d3.max(data, (d) => d[1])!])
+      .range([innerHeight, 0]);
 
     const hexbinGenerator = hexbin()
       .x((d: [number, number]) => xScale(d[0]))
@@ -51,10 +87,10 @@ export default function HexbinPlots({ r, onClick } : { r: number, onClick: () =>
 
     svg.selectAll('*').remove();
 
-    svg.append('g')
+    const chartGroup = svg.append('g')
       .attr('transform', `translate(${margin.left}, ${margin.top})`);
 
-    svg.append('g')
+    chartGroup.append('g')
       .selectAll('.hexagon')
       .data(hexbinData)
       .enter()
@@ -62,21 +98,25 @@ export default function HexbinPlots({ r, onClick } : { r: number, onClick: () =>
       .attr('class', 'hexagon')
       .attr('d', hexbinGenerator.hexagon())
       .attr('transform', (d) => `translate(${d.x}, ${d.y})`)
-      .style('fill', (d) => d3.interpolateBlues(d.length / d3.max(hexbinData, (hd) => hd.length)!)) // Dynamic lightness
+      .style('fill', (d) => d3.interpolateBlues(d.length / d3.max(hexbinData, (hd) => hd.length)!))
       .style('stroke', 'white')
       .style('stroke-width', '0.5px');
 
-    const xAxis = d3.axisBottom(xScale).ticks(0);
-    const yAxis = d3.axisLeft(yScale).ticks(0);
+    const xAxis = d3.axisBottom(xScale).tickFormat(() => '').tickSize(0);
+    const yAxis = d3.axisLeft(yScale).tickFormat(() => '').tickSize(0);
 
-    svg.append('g')
-      .attr('transform', `translate(${margin.left}, ${innerHeight})`)
-      .call(xAxis);
+    chartGroup.append('g')
+      .attr('transform', `translate(-10, ${innerHeight + 5})`)
+      .call(xAxis)
+      .selectAll('line, text')
+      .remove();
 
-    svg.append('g')
-      .attr('transform', `translate(${margin.left}, ${margin.top})`)
-      .call(yAxis);
-  }, [r]);
+    chartGroup.append('g')
+      .attr('transform', 'translate(-10, 5)')
+      .call(yAxis)
+      .selectAll('line, text')
+      .remove();
+  }, [data]);
 
   useEffect(() => {
     createChart();

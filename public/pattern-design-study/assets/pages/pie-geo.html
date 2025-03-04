@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Geometric Texture Pie Chart</title>
+    <script src="../../../revisitUtilities/revisit-communicate.js"></script>
+    <script type="text/javascript" src="../lib/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/d3.v7.min.js"></script>
+
+    <link rel="stylesheet" href="../lib/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="./texture_style.css">
+
+    <script src="../tools/loading.js"></script>
+
+    <script type = "text/javascript" >
+        //when you click the back button of the browser, this script prevent you from going bac
+        function preventBack(){window.history.forward();}
+        setTimeout("preventBack()", 0);
+        window.onunload=function(){null};
+    </script>
+</head>
+<body>
+<div class="container">
+
+    <div class="row">
+        <div class="col">
+            <div id="toolbar"></div>
+        </div>
+    </div>
+    <div class="row gx-3">
+        <div class="col-auto legend_drag_div">
+            <div id = "legend">
+            </div>
+            <div id="dragdrop" class="bg-light">
+            </div>
+        </div>
+        <div class="col-auto">
+            <div id="chartDiv" class="chartDiv"></div>
+            <div id = "outlineDiv" style="padding-left: 200px;"></div>
+        </div>
+        <div class="col-auto">
+            <div id="controllerDiv"></div>
+        </div>
+    </div>
+
+</div>
+<script src="./texture_functions.js"></script>
+<script src="./texture_constants.js"></script>
+<script type="module">
+    // Move all code that uses createTrrack into this module script
+    import { createTrrack } from './trrack.js';
+    const {trrack, actions: trrack_actions} = createTrrack()
+    
+    // Make trrack and actions globally available
+    window.trrack = trrack;
+    window.trrack_actions = trrack_actions;
+    window.action = trrack_actions;
+</script>
+<script>
+    Revisit.onDataReceive((data) => {
+        localStorage.setItem("measurements", JSON.stringify({condition_chart: data.condition_chart, condition_texture: data.condition_texture}));
+
+        let timestamp_pie_geo_start = Date.now() //the starting time for this design
+
+        let measurements = JSON.parse(localStorage.getItem('measurements'))
+        let condition_texture = measurements['condition_texture']
+
+        window.chartName = "pieGeo"
+
+        drawToolbar('toolbar')
+        drawDragDropInfo('dragdrop')
+        document.getElementById('toolbar').appendChild(drawSelectDefaultGeoTexture())
+        drawChartDiv('chartDiv', svgWidth, svgHeight, 'chart')
+        geoTextures(d3.select('#chart'),fruits)
+        drawGeoControllers()
+
+        /** UI elements */
+
+/** UI elements for toolbar */
+const resetBtn = document.getElementById("resetBtn")
+const dataBtn = document.getElementById("dataBtn")
+const defaultDataBtn = document.getElementById('defaultDataBtn')
+
+var parametersList
+var parameters
+
+
+const undoBtn = document.getElementById("undoBtn")
+const redoBtn = document.getElementById("redoBtn")
+const saveParametersBtn = document.getElementById("saveParameters")
+
+/* Indicator */
+if(document.getElementsByClassName("indicator")){
+    window.indicators = document.getElementsByClassName("indicator") // we will create indicators later
+}
+var indicatorX = [] // transform x for each indicator
+var indicatorY = [] // transoform y for each indicator
+
+window.legendImgs = document.getElementsByClassName("legendImg")
+
+/** Legend **/
+window.legendIndicators = document.getElementsByClassName("legendIndicator") //indicators beside legends
+window.legendIndicatorX = []
+window.legendIndicatorY = []
+
+/* Legend */
+window.legendLabels = document.getElementsByClassName("legendLabel") //texts in legends
+
+/** Controllers **/
+//outline controller
+const controlOutline = document.getElementById("controlOutline")
+const selectDefaultTexture = document.getElementById("selectDefaultTexture")
+
+
+window.controlHalo = document.getElementById("controlHalo")
+window.same = document.getElementsByClassName("same")
+ /** UI elements of geometric texture charts */
+
+//pattern type: line, dot, grid
+const lineRadio = document.getElementById("lineRadio")
+const dotRadio = document.getElementById("dotRadio")
+const gridRadio = document.getElementById("gridRadio")
+window.patternTypeRadios = document.getElementsByClassName("patternTypeRadio")
+window.patternType = [] //pattern type for each category
+
+//line texture controllers
+const controlLineDensity = document.getElementById("controlLineDensity")
+const controlLineRotate = document.getElementById("controlLineRotate")
+const controlLineStrokeWidth = document.getElementById("controlLineStrokeWidth")
+const controlLineX = document.getElementById("controlLineX")
+const controlLineY = document.getElementById("controlLineY")
+
+const controlLineAngle0 = document.getElementById("controlLineAngle0")
+const controlLineAngle45 = document.getElementById("controlLineAngle45")
+const controlLineAngle90 = document.getElementById("controlLineAngle90")
+const controlLineAngle135 = document.getElementById("controlLineAngle135")
+
+const controlLineBackgroundWhite = document.getElementById("controlLineBackgroundWhite")
+const controlLineBackgroundBlack = document.getElementById("controlLineBackgroundBlack")
+window.controlLineBackgroundRadios = document.getElementsByClassName("controlLineBackgroundRadio")
+
+
+window.lineBackground = []
+
+window.lineControllers = document.getElementsByClassName("lineController")
+
+//dot texture controllers
+const controlDotDensity = document.getElementById("controlDotDensity")
+const controlDotRotate = document.getElementById("controlDotRotate")
+const controlDotSize = document.getElementById("controlDotSize")
+const controlDotX = document.getElementById("controlDotX")
+const controlDotY = document.getElementById("controlDotY")
+
+const controlDotAngle0 = document.getElementById("controlDotAngle0")
+const controlDotAngle45 = document.getElementById("controlDotAngle45")
+
+const controlDotBackgroundWhite = document.getElementById("controlDotBackgroundWhite")
+const controlDotBackgroundBlack = document.getElementById("controlDotBackgroundBlack")
+window.controlDotBackgroundRadios = document.getElementsByClassName("controlDotBackgroundRadio")
+
+
+window.dotBackground = []
+
+const controlDotPrimitiveDot = document.getElementById("controlDotPrimitiveDot")
+const controlDotPrimitiveCircle = document.getElementById("controlDotPrimitiveCircle")
+window.controlDotPrimitiveRadios = document.getElementsByClassName("controlDotPrimitiveRadio")
+
+window.dotPrimitive = []
+
+const controlDotPrimitiveStrokeWidth = document.getElementById("controlDotPrimitiveStrokeWidth")
+
+window.dotControllers = document.getElementsByClassName("dotController")
+
+
+//grid texture controllers
+const controlGridDensity = document.getElementById("controlGridDensity")
+const controlGridStrokeWidth = document.getElementById("controlGridStrokeWidth")
+const controlGridX = document.getElementById("controlGridX")
+const controlGridY = document.getElementById("controlGridY")
+
+
+const controlGridAngle = document.getElementById("controlGridAngle")
+
+const controlGridAngle15 = document.getElementById("controlGridAngle15")
+const controlGridAngle30 = document.getElementById("controlGridAngle30")
+const controlGridAngle45 = document.getElementById("controlGridAngle45")
+
+const controlGridRotate = document.getElementById("controlGridRotate")
+const controlGridRotate30 = document.getElementById("controlGridRotate30")
+const controlGridRotate45 = document.getElementById("controlGridRotate45")
+const controlGridRotate60 = document.getElementById("controlGridRotate60")
+
+
+window.gridControllers = document.getElementsByClassName("gridController")
+
+const controlGridBackgroundWhite = document.getElementById("controlGridBackgroundWhite")
+const controlGridBackgroundBlack = document.getElementById("controlGridBackgroundBlack")
+window.controlGridBackgroundRadios = document.getElementsByClassName("controlGridBackgroundRadio")
+
+window.gridBackground = []
+
+
+
+/** end of UI elements */
+
+    //data
+    let mydata = getDatasetForChart()
+
+    drawGeoPieWithTexture(mydata, pieRadius, 'chart')
+    drawPieIndicators(mydata, pieRadius, 'chart', 30)
+    drawGeoLegend(fruits)
+    //initialize
+    geo_setInitialParameters(chartName)
+
+    setSelectCat(chartName)
+    //switch texture by drag and drop
+    // geo_switchTextures(chartName)
+
+    
+
+
+
+    })
+</script>
+
+
+</body>
+</html>
+
