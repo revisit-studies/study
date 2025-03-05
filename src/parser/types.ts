@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-cycle
 export type { ParticipantData } from '../storage/types';
 export type { StoredAnswer, ParticipantMetadata } from '../store/types';
 
