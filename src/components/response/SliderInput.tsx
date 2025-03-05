@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import { SliderResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
-import classes from './SliderInput.module.css';
+import classes from './css/SliderInput.module.css';
 
 export function SliderInput({
   response,
@@ -57,7 +57,7 @@ export function SliderInput({
         step={step ?? (snap ? 0.001 : (max - min) / 100)}
         h={hasLabels ? 40 : undefined}
         {...answer}
-        classNames={{ track: tlxStyle ? classes.track : '' }}
+        classNames={{ track: tlxStyle ? classes.track : '', bar: classes.fixDisabled }}
         restrictToMarks={snap}
         label={(value) => (snap ? null : value)}
         styles={(theme) => ({

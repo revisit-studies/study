@@ -1,11 +1,10 @@
 import {
   Box, Flex, FocusTrap, Radio, Text,
 } from '@mantine/core';
-import { useState } from 'react';
 import { ButtonsResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
-import classes from './ButtonsInput.module.css';
+import classes from './css/ButtonsInput.module.css';
 
 export function ButtonsInput({
   response,
@@ -28,8 +27,6 @@ export function ButtonsInput({
   } = response;
 
   const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
-
-  const [checkedValue, setCheckedValue] = useState(answer.value ?? '');
 
   return (
     <FocusTrap>
@@ -56,8 +53,6 @@ export function ButtonsInput({
               key={radio.value}
               value={radio.value}
               disabled={disabled}
-              checked={checkedValue === radio.value}
-              onClick={() => setCheckedValue(radio.value)}
               ta="center"
               className={classes.root}
               p="xs"

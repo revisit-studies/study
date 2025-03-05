@@ -1,6 +1,6 @@
 import { Box, Checkbox, Divider } from '@mantine/core';
 import { useSearchParams } from 'react-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { GetInputPropsReturnType, UseFormReturnType } from '@mantine/form/lib/types';
 import { IndividualComponent, Response, StoredAnswer } from '../../parser/types';
 import { CheckBoxInput } from './CheckBoxInput';
@@ -15,6 +15,7 @@ import { TextAreaInput } from './TextAreaInput';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { MatrixInput } from './MatrixInput';
 import { ButtonsInput } from './ButtonsInput';
+import classes from './css/Checkbox.module.css';
 
 export function ResponseSwitcher({
   response,
@@ -48,15 +49,20 @@ export function ResponseSwitcher({
     return disabled;
   }, [disabled, response.paramCapture, searchParams]);
 
-  const [dontKnowCheckbox, setDontKnowCheckbox] = useState(!!storedAnswer?.[`${response.id}-dontKnow`] || false);
-  useEffect(() => {
-    form.setFieldValue(`${response.id}-dontKnow`, dontKnowCheckbox.toString());
+  const dontKnowCheckbox = useMemo(() => {
+    if (response.withDontKnow) {
+      return form.values[`${response.id}-dontKnow`] === 'true';
+    }
+    return false;
+  }, [form.values, response.id, response.withDontKnow]);
+  const updateDontKnow = useCallback((dontKnowCheckboxUpdate: boolean) => {
+    form.setFieldValue(`${response.id}-dontKnow`, dontKnowCheckboxUpdate.toString());
     // reset answer value if dontKnowCheckbox changes
-    if (!dontKnowCheckbox) {
+    if (dontKnowCheckboxUpdate) {
       form.setFieldValue(response.id, response.type === 'checkbox' || response.type === 'reactive' ? [] : '');
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dontKnowCheckbox, response.id]);
+  }, [response.id]);
 
   return (
     <Box mb={response.withDivider || configInUse.responseDividers ? 'xl' : 'lg'}>
@@ -164,8 +170,9 @@ export function ResponseSwitcher({
           mt="xs"
           disabled={isDisabled}
           label="I don't know"
-          checked={dontKnowCheckbox}
-          onChange={(event) => setDontKnowCheckbox(event.currentTarget.checked)}
+          checked={form.values[`${response.id}-dontKnow`] === 'true'}
+          onChange={(event) => updateDontKnow(event.currentTarget.checked)}
+          classNames={{ input: classes.fixDisabledCheckbox, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
         />
       )}
 

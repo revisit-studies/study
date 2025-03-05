@@ -4,6 +4,7 @@ import {
 import { DropdownResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
+import classes from './css/Input.module.css';
 
 export function DropdownInput({
   response,
@@ -14,7 +15,7 @@ export function DropdownInput({
 }: {
   response: DropdownResponse;
   disabled: boolean;
-  answer: object;
+  answer: { value: string };
   index: number;
   enumerateQuestions: boolean;
 }) {
@@ -46,6 +47,7 @@ export function DropdownInput({
       size="md"
       {...answer}
       error={generateErrorMessage(response, answer, optionsAsStringOptions)}
+      classNames={{ input: classes.fixDisabled }}
     />
   );
 }
