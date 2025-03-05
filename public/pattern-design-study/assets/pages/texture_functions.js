@@ -4937,6 +4937,7 @@ function addParametersToList(chartName, parameters, trrack, actions){
     }
     // console.log(trrack.graph.backend)
     Revisit.postProvenance(trrack.graph.backend)
+    console.log(trrack.graph.backend)
 
     Revisit.postAnswers(
         {
