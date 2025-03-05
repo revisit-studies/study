@@ -133,7 +133,7 @@
           "condition_chart": 0,
           "condition_texture": 0
         },
-        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
+        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Next** button below.",
         "instructionLocation":"sidebar",
         "nextButtonLocation": "sidebar",
         "response": []
@@ -145,7 +145,7 @@
           "condition_chart": 0,
           "condition_texture": 1
         },
-        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
+        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Next** button below.",
         "instructionLocation":"sidebar",
         "nextButtonLocation": "sidebar",
         "response": []
@@ -157,7 +157,7 @@
           "condition_chart": 1,
           "condition_texture": 0
         },
-        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
+        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Next** button below.",
         "instructionLocation":"sidebar",
         "nextButtonLocation": "sidebar",
         "response": []
@@ -169,8 +169,7 @@
           "condition_chart": 1,
           "condition_texture": 1
         },
-        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
-        "instructionLocation":"sidebar",
+        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Next** button below.",
         "nextButtonLocation": "sidebar",
         "response": []
       },
@@ -181,7 +180,7 @@
           "condition_chart": 2,
           "condition_texture": 0
         },
-        "instruction": "**Get Familiar with the Texture Design Tool** \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
+        "instruction": "**Get Familiar with the Texture Design Tool** \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Next** button below.",
         "instructionLocation":"sidebar",
         "nextButtonLocation": "sidebar",
         "response": []
@@ -193,7 +192,7 @@
           "condition_chart": 2,
           "condition_texture": 1
         },
-        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
+        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Next** button below.",
         "instructionLocation":"sidebar",
         "nextButtonLocation": "sidebar",
         "response": []
