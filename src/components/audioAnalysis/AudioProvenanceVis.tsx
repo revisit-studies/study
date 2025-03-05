@@ -65,6 +65,7 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
     sidebar: undefined,
     stimulus: undefined,
   });
+  const [currentGlobalNode, setCurrentGlobalNode] = useState<{name: string, time: number} | null>(null);
 
   const [totalAudioLength, setTotalAudioLength] = useState<number>(0);
 
@@ -80,11 +81,22 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
 
   const componentAndIndex = useMemo(() => `${currentComponent}_${currentStep}`, [currentComponent, currentStep]);
 
-  useUpdateProvenance('aboveStimulus', playTime, participant?.answers[componentAndIndex].provenanceGraph.aboveStimulus, currentResponseNodes.aboveStimulus, (node, location) => setCurrentResponseNodes({ ...currentResponseNodes, [location]: node }));
+  const _setCurrentResponseNodes = useCallback((node: string | null, location: ResponseBlockLocation) => {
+    const graph = participant?.answers[componentAndIndex].provenanceGraph[location];
+    if (participant && graph && node) {
+      if (!currentGlobalNode || graph.nodes[node].createdOn > currentGlobalNode.time) {
+        setCurrentGlobalNode({ name: node || '', time: graph.nodes[node].createdOn });
+      }
+    }
 
-  useUpdateProvenance('belowStimulus', playTime, participant?.answers[componentAndIndex].provenanceGraph.belowStimulus, currentResponseNodes.belowStimulus, (node, location) => setCurrentResponseNodes({ ...currentResponseNodes, [location]: node }));
+    setCurrentResponseNodes({ ...currentResponseNodes, [location]: node });
+  }, [componentAndIndex, currentGlobalNode, currentResponseNodes, participant]);
 
-  useUpdateProvenance('sidebar', playTime, participant?.answers[componentAndIndex].provenanceGraph.sidebar, currentResponseNodes.sidebar, (node, location) => setCurrentResponseNodes({ ...currentResponseNodes, [location]: node }));
+  useUpdateProvenance('aboveStimulus', playTime, participant?.answers[componentAndIndex].provenanceGraph.aboveStimulus, currentResponseNodes.aboveStimulus, _setCurrentResponseNodes);
+
+  useUpdateProvenance('belowStimulus', playTime, participant?.answers[componentAndIndex].provenanceGraph.belowStimulus, currentResponseNodes.belowStimulus, _setCurrentResponseNodes);
+
+  useUpdateProvenance('sidebar', playTime, participant?.answers[componentAndIndex].provenanceGraph.sidebar, currentResponseNodes.sidebar, _setCurrentResponseNodes);
 
   // Make sure we always pause analysis when we change participants or tasks
   useEffect(() => {
@@ -117,8 +129,9 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
       trrackForTrial.current.to(node);
     }
 
+    _setCurrentResponseNodes(node, 'stimulus');
     setCurrentNode(node);
-  }, [participant, saveAnalysisState, storeDispatch, componentAndIndex]);
+  }, [componentAndIndex, participant, _setCurrentResponseNodes, storeDispatch, saveAnalysisState]);
 
   // use effect to control the current provenance node based on the changing playtime.
   useEffect(() => {
@@ -275,9 +288,7 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
             <WithinTaskTimeline
               xScale={xScale}
               trialName={componentAndIndex}
-              setPlayTime={_setPlayTime}
-              currentNode={currentNode}
-              setCurrentNode={_setCurrentNode}
+              currentNode={currentGlobalNode?.name || ''}
               participantData={participant}
               width={waveSurferWidth || width}
               height={25}

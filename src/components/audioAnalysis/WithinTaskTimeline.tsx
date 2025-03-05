@@ -17,7 +17,7 @@ export function WithinTaskTimeline({
     const allCircles = Object.keys(answer.provenanceGraph).map((provenanceArea) => {
       const graph = answer.provenanceGraph[provenanceArea as keyof typeof answer.provenanceGraph];
       if (graph) {
-        return <WithinTaskProvenance answer={participantData.answers[trialName]} key={name} height={height} currentNode={currentNode} xScale={xScale} provenance={graph} />;
+        return <WithinTaskProvenance answer={participantData.answers[trialName]} key={name + provenanceArea} height={height} currentNode={currentNode} xScale={xScale} provenance={graph} />;
       }
       return null;
     });
