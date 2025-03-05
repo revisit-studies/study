@@ -24,6 +24,7 @@ import { Timer } from './Timer';
 import { humanReadableDuration } from '../../utils/humanReadableDuration';
 import { ResponseBlockLocation } from '../../parser/types';
 import { useUpdateProvenance } from './useUpdateProvenance';
+import { useEvent } from '../../store/hooks/useEvent';
 
 const margin = {
   left: 0, top: 0, right: 0, bottom: 0,
@@ -81,16 +82,16 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
 
   const componentAndIndex = useMemo(() => `${currentComponent}_${currentStep}`, [currentComponent, currentStep]);
 
-  const _setCurrentResponseNodes = useCallback((node: string | null, location: ResponseBlockLocation) => {
+  const _setCurrentResponseNodes = useEvent((node: string | null, location: ResponseBlockLocation) => {
     const graph = participant?.answers[componentAndIndex].provenanceGraph[location];
     if (participant && graph && node) {
-      if (!currentGlobalNode || graph.nodes[node].createdOn > currentGlobalNode.time) {
+      if (!currentGlobalNode || graph.nodes[node].createdOn > currentGlobalNode.time || playTime < currentGlobalNode.time) {
         setCurrentGlobalNode({ name: node || '', time: graph.nodes[node].createdOn });
       }
     }
 
     setCurrentResponseNodes({ ...currentResponseNodes, [location]: node });
-  }, [componentAndIndex, currentGlobalNode, currentResponseNodes, participant]);
+  });
 
   useUpdateProvenance('aboveStimulus', playTime, participant?.answers[componentAndIndex].provenanceGraph.aboveStimulus, currentResponseNodes.aboveStimulus, _setCurrentResponseNodes);
 
