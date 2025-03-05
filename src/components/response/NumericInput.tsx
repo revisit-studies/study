@@ -2,6 +2,7 @@ import { Box, Flex, NumberInput } from '@mantine/core';
 import { NumericalResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
+import classes from './css/Input.module.css';
 
 export function NumericInput({
   response,
@@ -44,6 +45,7 @@ export function NumericInput({
       max={max}
       {...answer}
       error={generateErrorMessage(response, answer)}
+      classNames={{ input: classes.fixDisabled }}
     />
   );
 }

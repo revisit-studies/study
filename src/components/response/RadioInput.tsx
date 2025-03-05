@@ -7,6 +7,8 @@ import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { HorizontalHandler } from './HorizontalHandler';
 import { useStoreActions, useStoreDispatch } from '../../store/store';
+import classes from './css/Radio.module.css';
+import inputClasses from './css/Input.module.css';
 
 export function RadioInput({
   response,
@@ -86,6 +88,7 @@ export function RadioInput({
                   label: { display: !horizontal ? 'initial' : 'none' },
                 }}
                 onChange={() => setOtherSelected(false)}
+                classNames={{ radio: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
               />
             </div>
           ))}
@@ -105,8 +108,18 @@ export function RadioInput({
                 value="other"
                 checked={otherSelected}
                 onClick={(event) => setOtherSelected(event.currentTarget.checked)}
-                label={!horizontal && <Input mt={-8} placeholder="Other" disabled={!otherSelected} value={otherValue} onChange={(event) => setOtherValue(event.currentTarget.value)} />}
+                label={!horizontal && (
+                <Input
+                  mt={-8}
+                  placeholder="Other"
+                  disabled={!otherSelected}
+                  value={otherValue}
+                  onChange={(event) => setOtherValue(event.currentTarget.value)}
+                  classNames={{ input: inputClasses.fixDisabled }}
+                />
+                )}
                 mt={0}
+                classNames={{ radio: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
               />
             </div>
           )}
@@ -114,7 +127,15 @@ export function RadioInput({
         <Text>{rightLabel}</Text>
       </Group>
       {horizontal && withOther && (
-        <Input mt="sm" placeholder="Other" disabled={!otherSelected} value={otherValue} onChange={(event) => setOtherValue(event.currentTarget.value)} w={216} />
+        <Input
+          mt="sm"
+          placeholder="Other"
+          disabled={!otherSelected}
+          value={otherValue}
+          onChange={(event) => setOtherValue(event.currentTarget.value)}
+          w={216}
+          classNames={{ input: inputClasses.fixDisabled }}
+        />
       )}
     </Radio.Group>
   );
