@@ -6,7 +6,7 @@ import { TrrackedProvenance } from '../../store/types';
 import { useStoreActions, useStoreDispatch } from '../../store/store';
 import { ResponseBlockLocation } from '../../parser/types';
 
-export function useUpdateProvenance(location: ResponseBlockLocation, playTime: number, provGraph: TrrackedProvenance | undefined, currentNode: string | undefined, setCurrentNode: (node: string, _location: ResponseBlockLocation) => void) {
+export function useUpdateProvenance(location: ResponseBlockLocation, playTime: number, provGraph: TrrackedProvenance | undefined, currentNode: string | undefined, setCurrentNode: (node: string | null, _location: ResponseBlockLocation) => void) {
   const {
     saveAnalysisState,
   } = useStoreActions();
@@ -26,9 +26,10 @@ export function useUpdateProvenance(location: ResponseBlockLocation, playTime: n
 
   useEffect(() => {
     if (!provGraph) {
-      return;
-    }
-    if (!provGraph) {
+      if (currentNode) {
+        setCurrentNode(null, location);
+        storeDispatch(saveAnalysisState({ prov: null, location }));
+      }
       return;
     }
 
