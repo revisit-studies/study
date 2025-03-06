@@ -153,7 +153,7 @@ export interface StoreState {
   reactiveProvenance: TrrackedProvenance | null;
   otherTexts: Record<string, string>;
   metadata: ParticipantMetadata;
-  analysisProvState: Record<ResponseBlockLocation, unknown | undefined>;
+  analysisProvState: Record<ResponseBlockLocation, { form: StoredAnswer['answer'] } | undefined>;
   analysisIsPlaying: boolean;
   analysisHasAudio: boolean;
   analysisHasProvenance: boolean;

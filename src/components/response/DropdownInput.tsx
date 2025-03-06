@@ -46,6 +46,7 @@ export function DropdownInput({
       radius="md"
       size="md"
       {...answer}
+      value={answer.value === '' ? null : answer.value}
       error={generateErrorMessage(response, answer, optionsAsStringOptions)}
       classNames={{ input: classes.fixDisabled }}
     />

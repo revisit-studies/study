@@ -49,9 +49,9 @@ export function ResponseBlock({
     updateResponseBlockValidation, toggleShowHelpText, saveIncorrectAnswer, incrementHelpCounter,
   } = useStoreActions();
   const currentStep = useCurrentStep();
-  const currentProvenance: {form: Record<string, string | number | boolean | string[] | Record<string, unknown>> | undefined} = useStoreSelector((state) => state.analysisProvState[location]) as {form: Record<string, string | number | boolean | string[] | Record<string, unknown>> | undefined};
+  const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]);
 
-  const storedAnswer = currentProvenance?.form || status?.answer;
+  const storedAnswer = useMemo(() => currentProvenance?.form || status?.answer, [currentProvenance, status]);
 
   const studyId = useStudyId();
 
@@ -257,10 +257,12 @@ export function ResponseBlock({
                       type: response.type === 'checkbox' ? 'checkbox' : 'input',
                     }),
                   }}
+                  dontKnowCheckbox={{
+                    ...answerValidator.getInputProps(`${response.id}-dontKnow`, { type: 'checkbox' }),
+                  }}
                   response={response}
                   index={index + 1}
                   configInUse={configInUse}
-                  form={answerValidator}
                 />
                 {alertConfig[response.id]?.visible && (
                   <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>

@@ -32,8 +32,11 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
   responses.forEach((response) => {
     const answer = storedAnswer ? storedAnswer[response.id] : {};
 
+    const dontKnowAnswer = storedAnswer && storedAnswer[`${response.id}-dontKnow`] !== undefined ? storedAnswer[`${response.id}-dontKnow`] : false;
+    const dontKnowObj = response.withDontKnow ? { [`${response.id}-dontKnow`]: dontKnowAnswer } : {};
+
     if (answer) {
-      initObj = { ...initObj, [response.id]: answer };
+      initObj = { ...initObj, [response.id]: answer, ...dontKnowObj };
     } else {
       let initField: string | string[] | object | null = '';
       if (response.paramCapture) {
@@ -48,7 +51,6 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
         initField = response.startingValue.toString();
       }
 
-      const dontKnowObj = response.withDontKnow ? { [`${response.id}-dontKnow`]: '' } : {};
       initObj = { ...initObj, [response.id]: initField, ...dontKnowObj };
     }
   });
