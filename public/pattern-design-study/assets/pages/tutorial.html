@@ -79,6 +79,56 @@
     window.trrack = trrack;
     window.trrack_actions = trrack_actions;
     window.action = trrack_actions;
+    Revisit.onProvenanceReceive((state) => {
+
+        if(window.condition_chart == 0 && window.condition_texture == 0){
+            parameters = state['bargeo']
+        }
+        else if(window.condition_chart == 0 && window.condition_texture == 1){
+            parameters = state['baricon']
+        }
+        else    if(window.condition_chart == 1 && window.condition_texture == 0){
+            parameters = state['piegeo']
+        }
+        else if(window.condition_chart == 1 && window.condition_texture == 1){
+            parameters = state['pieicon']
+        }
+        else if(window.condition_chart == 2 && window.condition_texture == 0){
+            parameters = state['mapgeo']
+        }
+        else if(window.condition_chart == 2 && window.condition_texture == 1){
+            parameters = state['mapicon']
+        }else{
+            console.log('cannot find the parameters based on condition_chart and condition_texture');
+        }
+
+            //we redraw the textures of all categories, based on the new parameters
+            for(let i = 0; i < fruits.length; i++){
+                //since geometric texture and iconic texture have different parameters set, here we need to distinguish them
+                if(chartName.endsWith('Geo')){
+                    console.log('geo redraw')
+                    //draw textures for category i
+                    geo_getParameters(i)
+                    geo_setCatPattern(i)
+                }
+                if(chartName.endsWith('Icon')){
+                    console.log('icon redraw')
+                    //draw textures for category i
+                    icon_getParameters(i)
+                    icon_setCatPattern(i, patternSize)
+                }
+            }
+
+            let controlOutline = document.getElementById('controlOutline')
+            controlOutline.value = parameters['outline']
+
+            if(document.getElementById('halo')){
+                let controlHalo = document.getElementById('controlHalo')
+                controlHalo.value = parameters['halo']
+            }
+            drawOutline('chart_outline', parameters['outline'], 'chart_halo', parameters['halo'])
+        }
+    )
 </script>
 <script>
     Revisit.onDataReceive((data) => {
@@ -89,10 +139,10 @@
     // let condition_chart = measurements['condition_chart'];
     // let condition_texture = measurements['condition_texture'];
 
-    let condition_chart = data.condition_chart;
-    let condition_texture = data.condition_texture;
-    console.log('condition_chart:' + condition_chart);
-    console.log('condition_texture:' + condition_texture);
+    window.condition_chart = data.condition_chart;
+    window.condition_texture = data.condition_texture;
+    console.log('condition_chart:' + window.condition_chart);
+    console.log('condition_texture:' + window.condition_texture);
 
     // Make these variables available globally
     window.condition_chart = condition_chart;
