@@ -61,8 +61,9 @@
     window.action = trrack_actions;
     Revisit.onProvenanceReceive((state) => {
         // console.log('provenance', state)
-            parameters = state['bargeo']
+            parameters = state['pieicon']
             //we redraw the textures of all categories, based on the new parameters
+            
             for(let i = 0; i < fruits.length; i++){
                 //since geometric texture and iconic texture have different parameters set, here we need to distinguish them
                 if(chartName.endsWith('Geo')){
