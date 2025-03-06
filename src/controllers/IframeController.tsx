@@ -88,6 +88,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             }));
             break;
           case `${PREFIX}/PROVENANCE`:
+            storeDispatch(setReactiveProvenance(data.message));
             storeDispatch(updateProvenance({
               location: 'stimulus',
               identifier,
