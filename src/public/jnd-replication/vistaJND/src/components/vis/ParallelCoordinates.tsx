@@ -59,7 +59,7 @@ export default function ParallelCoordinates({ v, onClick } : { v: number, onClic
     if (data.length === 0) return;
 
     const margin = {
-      left: 40,
+      left: 20,
       top: 20,
       right: 20,
       bottom: 20,
