@@ -100,7 +100,6 @@ export async function studyStoreCreator(
     alertModal: { show: false, message: '' },
     trialValidation: Object.keys(answers).length > 0 ? allValid : emptyValidation,
     reactiveAnswers: {},
-    reactiveProvenance: null,
     metadata,
     analysisProvState: {
       aboveStimulus: undefined,
@@ -185,9 +184,6 @@ export async function studyStoreCreator(
       setReactiveAnswers: (state, action: PayloadAction<Record<string, ValueOf<StoredAnswer['answer']>>>) => {
         state.reactiveAnswers = action.payload;
       },
-      setReactiveProvenance: (state, action: PayloadAction<TrrackedProvenance | null>) => {
-        state.reactiveProvenance = action.payload;
-      },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       saveAnalysisState(state, { payload }: PayloadAction<{prov: any, location: ResponseBlockLocation}>) {
         state.analysisProvState[payload.location] = payload.prov;
@@ -263,29 +259,12 @@ export async function studyStoreCreator(
         if (!state.trialValidation[payload.identifier]) {
           return;
         }
+        const currentValues = state.trialValidation[payload.identifier]?.[payload.location]?.values;
+
         if (Object.keys(payload.values).length > 0) {
-          const currentValues = state.trialValidation[payload.identifier][payload.location].values;
           state.trialValidation[payload.identifier][payload.location] = { valid: payload.status, values: { ...currentValues, ...payload.values } };
         } else {
-          state.trialValidation[payload.identifier][payload.location] = { valid: payload.status, values: {} };
-        }
-
-        if (payload.provenanceGraph) {
-          state.trialValidation[payload.identifier].provenanceGraph[payload.location] = payload.provenanceGraph;
-        }
-      },
-      updateProvenance: (
-        state,
-        {
-          payload,
-        }: PayloadAction<{
-          location: ResponseBlockLocation;
-          identifier: string;
-          provenanceGraph?: TrrackedProvenance;
-        }>,
-      ) => {
-        if (!state.trialValidation[payload.identifier]) {
-          return;
+          state.trialValidation[payload.identifier][payload.location] = { valid: payload.status, values: currentValues || {} };
         }
 
         if (payload.provenanceGraph) {

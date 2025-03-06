@@ -17,7 +17,7 @@ const defaultStyle = {
 
 export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: Record<string, StoredAnswer> }) {
   const {
-    setReactiveAnswers, setReactiveProvenance, updateResponseBlockValidation, updateProvenance,
+    setReactiveAnswers, updateResponseBlockValidation,
   } = useStoreActions();
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
@@ -88,10 +88,11 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             }));
             break;
           case `${PREFIX}/PROVENANCE`:
-            storeDispatch(setReactiveProvenance(data.message));
-            storeDispatch(updateProvenance({
+            storeDispatch(updateResponseBlockValidation({
               location: 'stimulus',
               identifier,
+              values: {},
+              status: true,
               provenanceGraph: data.message,
             }));
             break;
@@ -104,7 +105,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, setReactiveProvenance, updateResponseBlockValidation, identifier, updateProvenance]);
+  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateResponseBlockValidation, identifier]);
 
   return (
     <iframe

@@ -151,7 +151,6 @@ export interface StoreState {
   alertModal: { show: boolean, message: string };
   trialValidation: TrialValidation;
   reactiveAnswers: Record<string, ValueOf<StoredAnswer['answer']>>;
-  reactiveProvenance: TrrackedProvenance | null;
   metadata: ParticipantMetadata;
   analysisProvState: Record<ConfigResponseBlockLocation, FormElementProvenance | undefined> & { stimulus: unknown | undefined };
   analysisIsPlaying: boolean;
