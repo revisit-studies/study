@@ -345,6 +345,12 @@ function SearchBubbleChart({ parameters, setAnswer, provenanceState }: StimulusP
         </div>
         )}
       </div>
+      <div>
+        Click the following button only after you&apos;ve finished exploring &mdash;
+        {' '}
+        <strong>you cannot return to this page.</strong>
+      </div>
+
     </div>
 
   );

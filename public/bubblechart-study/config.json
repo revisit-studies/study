@@ -19,13 +19,31 @@
   },
   "importedLibraries": ["demographics", "mic-check"],
   "components": {
+    "consent": {
+      "type": "markdown",
+      "path": "bubblechart-study/assets/consent.md",
+      "nextButtonText": "Agree",
+      "response": [
+        {
+          "id": "accept",
+          "prompt": "Do you consent to the study and wish to continue?",
+          "requiredValue": "Accept",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Decline",
+            "Accept"
+          ]
+        }
+      ]
+    },
     "introduction": {
       "type": "markdown",
       "path": "bubblechart-study/assets/introduction.md",
       "response": [
         {
           "id": "prolificId",
-          "prompt": "Please enter your prolificId",
+          "prompt": "Please enter your prolific ID",
           "location": "belowStimulus",
           "type": "shortText",
           "placeholder": "Prolific Id",
@@ -58,14 +76,6 @@
         "search": true
       },
       "response": [
-        {
-          "id": "findings",
-          "prompt": "Your Findings\n\nUse the textbox below list as many unique findings as you can. Separate your findings into multiple paragraphs.",
-          "location": "sidebar",
-          "type": "longText",
-          "placeholder": "Write your findings here",
-          "paramCapture": "FINDINGS"
-        }
       ],
       "nextButtonText": "I'm finished"
     },
@@ -79,14 +89,6 @@
         "search": false
       },
       "response": [
-        {
-          "id": "findings",
-          "prompt": "Your Findings\n\nUse the textbox below list as many unique findings as you can. Separate your findings into multiple paragraphs.",
-          "location": "sidebar",
-          "type": "longText",
-          "placeholder": "Write your findings here",
-          "paramCapture": "FINDINGS"
-        }
       ],
       "nextButtonText": "I'm finished",
       "recordAudio": true
@@ -97,8 +99,15 @@
       "type": "questionnaire",
       "response": [
         {
+          "id": "findings",
+          "prompt": "1. Your Findings\n\nUse the textbox below list as many unique findings as you can. Separate your findings into multiple paragraphs.",
+          "location": "belowStimulus",
+          "type": "longText",
+          "placeholder": "Write your findings here"
+        },
+        {
           "id": "searched",
-          "prompt": "1. During exploration, did you actively search for items that you thought might be in the visualization?",
+          "prompt": "2. During exploration, did you actively search for items that you thought might be in the visualization?",
           "location": "belowStimulus",
           "type": "radio",
           "options": ["Yes", "No", "I'm not sure"],
@@ -106,21 +115,21 @@
         },
         {
           "id": "searchedItems",
-          "prompt": "2. If you answered yes, which items did you actively search for?",
+          "prompt": "3. If you answered yes, which items did you actively search for?",
           "location": "belowStimulus",
           "type": "longText",
           "required": false
         },
         {
           "id": "relatedToYou",
-          "prompt": "3. How are the ones you actively searched for related to you?",
+          "prompt": "4. How are the ones you actively searched for related to you?",
           "location": "belowStimulus",
           "type": "longText",
           "required": false
         },
         {
           "id": "difficulty",
-          "prompt": "4. How difficult was it to find them?",
+          "prompt": "5. How difficult was it to find them?",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -133,7 +142,7 @@
         },
         {
           "id": "strategy",
-          "prompt": "5. Did you apply any particular strategy during exploration? What was your strategy?",
+          "prompt": "6. Did you apply any particular strategy during exploration? What was your strategy?",
           "location": "belowStimulus",
           "type": "longText"
         }
@@ -144,6 +153,7 @@
   "sequence": {
     "order": "fixed",
     "components": [
+      "consent",
       "introduction",
       "$mic-check.co.audioTest",
       {
