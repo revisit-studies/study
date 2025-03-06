@@ -43,7 +43,7 @@ export function ComponentController() {
   const audioStream = useRef<MediaRecorder | null>(null);
   const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
   const { setIsRecording } = useStoreActions();
-  const analysisProvState = useStoreSelector((state) => state.analysisProvState);
+  const analysisProvState = useStoreSelector((state) => state.analysisProvState.stimulus);
 
   const isAnalysis = useIsAnalysis();
 

@@ -16,7 +16,9 @@ const defaultStyle = {
 };
 
 export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: Record<string, StoredAnswer> }) {
-  const { setReactiveAnswers, setReactiveProvenance, updateResponseBlockValidation } = useStoreActions();
+  const {
+    setReactiveAnswers, updateResponseBlockValidation,
+  } = useStoreActions();
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
   const identifier = useCurrentIdentifier();
@@ -70,7 +72,10 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             break;
           case `${PREFIX}/READY`:
             if (ref.current) {
-              ref.current.style.height = `${data.message.documentHeight}px`;
+              const iFrame = document.getElementById(data.iframeId) as HTMLIFrameElement;
+              if (iFrame && iFrame.contentWindow) {
+                ref.current.style.height = `${iFrame.contentWindow.document.body.scrollHeight.toString()}px`;
+              }
             }
             break;
           case `${PREFIX}/ANSWERS`:
@@ -83,7 +88,13 @@ export function IframeController({ currentConfig, provState, answers }: { curren
             }));
             break;
           case `${PREFIX}/PROVENANCE`:
-            storeDispatch(setReactiveProvenance(data.message));
+            storeDispatch(updateResponseBlockValidation({
+              location: 'stimulus',
+              identifier,
+              values: {},
+              status: true,
+              provenanceGraph: data.message,
+            }));
             break;
           default:
             break;
@@ -94,11 +105,12 @@ export function IframeController({ currentConfig, provState, answers }: { curren
     window.addEventListener('message', handler);
 
     return () => window.removeEventListener('message', handler);
-  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, setReactiveProvenance]);
+  }, [storeDispatch, dispatch, iframeId, currentConfig, sendMessage, setReactiveAnswers, updateResponseBlockValidation, identifier]);
 
   return (
     <iframe
       ref={ref}
+      id={iframeId}
       src={
         currentConfig.path.startsWith('http')
           ? currentConfig.path

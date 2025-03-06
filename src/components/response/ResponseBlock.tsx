@@ -4,6 +4,7 @@ import {
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { Registry, initializeTrrack } from '@trrack/core';
 import {
   IndividualComponent,
   ResponseBlockLocation,
@@ -16,7 +17,7 @@ import {
 import { NextButton } from '../NextButton';
 import { useAnswerField } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
-import { StoredAnswer, TrrackedProvenance } from '../../store/types';
+import { FormElementProvenance, StoredAnswer } from '../../store/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 
 type Props = {
@@ -48,7 +49,9 @@ export function ResponseBlock({
     updateResponseBlockValidation, toggleShowHelpText, saveIncorrectAnswer, incrementHelpCounter,
   } = useStoreActions();
   const currentStep = useCurrentStep();
-  const storedAnswer = status?.answer;
+  const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]) as FormElementProvenance | undefined;
+
+  const storedAnswer = useMemo(() => currentProvenance?.form || status?.answer, [currentProvenance, status]);
 
   const studyId = useStudyId();
 
@@ -64,9 +67,32 @@ export function ResponseBlock({
   })), [responses]);
 
   const answerValidator = useAnswerField(responsesWithDefaults, currentStep, storedAnswer || {});
-  const [provenanceGraph, setProvenanceGraph] = useState<TrrackedProvenance | undefined>(undefined);
+  // Set up trrack to store provenance graph of the answerValidator status
+  const { actions, trrack } = useMemo(() => {
+    const reg = Registry.create();
+
+    const updateFormAction = reg.register('update', (state, payload: StoredAnswer['answer']) => {
+      state.form = payload;
+      return state;
+    });
+
+    const trrackInst = initializeTrrack({
+      registry: reg,
+      initialState: {
+        form: null,
+      },
+    });
+
+    return {
+      actions: {
+        updateFormAction,
+      },
+      trrack: trrackInst,
+    };
+  }, []);
+
   const reactiveAnswers = useStoreSelector((state) => state.reactiveAnswers);
-  const reactiveProvenance = useStoreSelector((state) => state.reactiveProvenance);
+
   const matrixAnswers = useStoreSelector((state) => state.matrixAnswers);
 
   const hasCorrectAnswerFeedback = configInUse?.provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
@@ -83,16 +109,10 @@ export function ResponseBlock({
     const ReactiveResponse = responsesWithDefaults.find((r) => r.type === 'reactive');
     if (reactiveAnswers && ReactiveResponse) {
       const answerId = ReactiveResponse.id;
-      answerValidator.setValues({ ...answerValidator.values, [answerId]: reactiveAnswers[answerId] });
+      answerValidator.setValues({ ...answerValidator.values, [answerId]: reactiveAnswers[answerId] as string[] });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reactiveAnswers]);
-
-  useEffect(() => {
-    if (reactiveProvenance) {
-      setProvenanceGraph(reactiveProvenance);
-    }
-  }, [reactiveProvenance]);
 
   useEffect(() => {
     // Checks if there are any matrix responses.
@@ -116,17 +136,19 @@ export function ResponseBlock({
   }, [matrixAnswers]);
 
   useEffect(() => {
+    trrack.apply('update', actions.updateFormAction(structuredClone(answerValidator.values)));
+
     storeDispatch(
       updateResponseBlockValidation({
         location,
         identifier,
         status: answerValidator.isValid(),
         values: structuredClone(answerValidator.values),
-        provenanceGraph,
+        provenanceGraph: trrack.graph.backend,
       }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answerValidator.values, identifier, location, storeDispatch, updateResponseBlockValidation, provenanceGraph]);
+  }, [answerValidator.values, identifier, location, storeDispatch, updateResponseBlockValidation]);
   const [alertConfig, setAlertConfig] = useState(Object.fromEntries(responsesWithDefaults.map((response) => ([response.id, {
     visible: false,
     title: 'Correct Answer',
@@ -236,10 +258,15 @@ export function ResponseBlock({
                       type: response.type === 'checkbox' ? 'checkbox' : 'input',
                     }),
                   }}
+                  dontKnowCheckbox={{
+                    ...answerValidator.getInputProps(`${response.id}-dontKnow`, { type: 'checkbox' }),
+                  }}
+                  otherInput={{
+                    ...answerValidator.getInputProps(`${response.id}-other`),
+                  }}
                   response={response}
                   index={index + 1}
                   configInUse={configInUse}
-                  form={answerValidator}
                 />
                 {alertConfig[response.id]?.visible && (
                   <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>

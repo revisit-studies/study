@@ -22,6 +22,9 @@ import { WithinTaskTimeline } from './WithinTaskTimeline';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { Timer } from './Timer';
 import { humanReadableDuration } from '../../utils/humanReadableDuration';
+import { ResponseBlockLocation } from '../../parser/types';
+import { useUpdateProvenance } from './useUpdateProvenance';
+import { useEvent } from '../../store/hooks/useEvent';
 
 const margin = {
   left: 0, top: 0, right: 0, bottom: 0,
@@ -35,7 +38,7 @@ function getParticipantData(trrackId: string | undefined, storageEngine: Storage
   return null;
 }
 
-export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string) => void }) {
+export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: string) => void }) {
   const [searchParams] = useSearchParams();
   const participantId = useMemo(() => searchParams.get('participantId') || undefined, [searchParams]);
 
@@ -43,21 +46,28 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
 
   const analysisIsPlaying = useStoreSelector((state) => state.analysisIsPlaying);
   const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
-  const analysisHasProvenance = useStoreSelector((state) => state.analysisHasProvenance);
 
   const {
-    saveAnalysisState, setAnalysisHasAudio, setAnalysisHasProvenance, setAnalysisIsPlaying,
+    saveAnalysisState, setAnalysisHasAudio, setAnalysisIsPlaying,
   } = useStoreActions();
   const storeDispatch = useStoreDispatch();
 
   const currentComponent = useCurrentComponent();
   const currentStep = useCurrentStep();
-  useEffect(() => { storeDispatch(saveAnalysisState(null)); }, [currentStep, saveAnalysisState, storeDispatch]);
+  useEffect(() => { storeDispatch(saveAnalysisState({ prov: undefined, location: 'stimulus' })); }, [currentStep, saveAnalysisState, storeDispatch]);
 
   const [ref, { width }] = useResizeObserver();
   const [waveSurferWidth, setWaveSurferWidth] = useState<number>(0);
 
   const [currentNode, setCurrentNode] = useState<string | null>(null);
+  const [currentResponseNodes, setCurrentResponseNodes] = useState<Record<ResponseBlockLocation, string | undefined>>({
+    aboveStimulus: undefined,
+    belowStimulus: undefined,
+    sidebar: undefined,
+    stimulus: undefined,
+  });
+  const [currentGlobalNode, setCurrentGlobalNode] = useState<{name: string, time: number} | null>(null);
+
   const [totalAudioLength, setTotalAudioLength] = useState<number>(0);
 
   const { value: participant, status } = useAsync(getParticipantData, [participantId, storageEngine]);
@@ -72,6 +82,23 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
 
   const componentAndIndex = useMemo(() => `${currentComponent}_${currentStep}`, [currentComponent, currentStep]);
 
+  const _setCurrentResponseNodes = useEvent((node: string | null, location: ResponseBlockLocation) => {
+    const graph = participant?.answers[componentAndIndex].provenanceGraph[location];
+    if (participant && graph && node) {
+      if (!currentGlobalNode || graph.nodes[node].createdOn > currentGlobalNode.time || playTime < currentGlobalNode.time) {
+        setCurrentGlobalNode({ name: node || '', time: graph.nodes[node].createdOn });
+      }
+    }
+
+    setCurrentResponseNodes({ ...currentResponseNodes, [location]: node });
+  });
+
+  useUpdateProvenance('aboveStimulus', playTime, participant?.answers[componentAndIndex].provenanceGraph.aboveStimulus, currentResponseNodes.aboveStimulus, _setCurrentResponseNodes);
+
+  useUpdateProvenance('belowStimulus', playTime, participant?.answers[componentAndIndex].provenanceGraph.belowStimulus, currentResponseNodes.belowStimulus, _setCurrentResponseNodes);
+
+  useUpdateProvenance('sidebar', playTime, participant?.answers[componentAndIndex].provenanceGraph.sidebar, currentResponseNodes.sidebar, _setCurrentResponseNodes);
+
   // Make sure we always pause analysis when we change participants or tasks
   useEffect(() => {
     storeDispatch(setAnalysisIsPlaying(false));
@@ -84,16 +111,13 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
 
       const trrack = initializeTrrack({ registry: reg, initialState: {} });
 
-      if (participant.answers[componentAndIndex].provenanceGraph) {
-        trrack.importObject(structuredClone(participant.answers[componentAndIndex].provenanceGraph!));
-        storeDispatch(setAnalysisHasProvenance(true));
+      if (participant.answers[componentAndIndex].provenanceGraph.stimulus) {
+        trrack.importObject(structuredClone(participant.answers[componentAndIndex].provenanceGraph!.stimulus));
 
         trrackForTrial.current = trrack;
       }
-    } else {
-      storeDispatch(setAnalysisHasProvenance(false));
     }
-  }, [participant, componentAndIndex, storeDispatch, setAnalysisHasProvenance]);
+  }, [participant, componentAndIndex, storeDispatch]);
 
   const _setCurrentNode = useCallback((node: string | undefined) => {
     if (!node) {
@@ -101,13 +125,14 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
     }
 
     if (componentAndIndex && participant && trrackForTrial.current) {
-      storeDispatch(saveAnalysisState(trrackForTrial.current.getState(participant.answers[componentAndIndex].provenanceGraph?.nodes[node])));
+      storeDispatch(saveAnalysisState({ prov: trrackForTrial.current.getState(participant.answers[componentAndIndex].provenanceGraph.stimulus?.nodes[node]), location: 'stimulus' }));
 
       trrackForTrial.current.to(node);
     }
 
+    _setCurrentResponseNodes(node, 'stimulus');
     setCurrentNode(node);
-  }, [participant, saveAnalysisState, storeDispatch, componentAndIndex]);
+  }, [componentAndIndex, participant, _setCurrentResponseNodes, storeDispatch, saveAnalysisState]);
 
   // use effect to control the current provenance node based on the changing playtime.
   useEffect(() => {
@@ -116,29 +141,29 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
     }
     const provGraph = participant.answers[componentAndIndex].provenanceGraph;
 
-    if (!provGraph) {
+    if (!provGraph.stimulus) {
       return;
     }
 
-    if (!currentNode || !provGraph.nodes[currentNode]) {
-      _setCurrentNode(provGraph.root as string);
+    if (!currentNode || !provGraph.stimulus.nodes[currentNode]) {
+      _setCurrentNode(provGraph.stimulus.root as string);
       return;
     }
 
-    let tempNode = provGraph.nodes[currentNode];
+    let tempNode = provGraph.stimulus.nodes[currentNode];
 
     while (true) {
       if (playTime < tempNode.createdOn) {
         if (!isRootNode(tempNode)) {
           const parentNode = tempNode.parent;
 
-          tempNode = provGraph.nodes[parentNode];
+          tempNode = provGraph.stimulus.nodes[parentNode];
         } else break;
       } else if (tempNode.children.length > 0) {
         const child = tempNode.children[0];
 
-        if (playTime > provGraph.nodes[child].createdOn) {
-          tempNode = provGraph.nodes[child];
+        if (playTime > provGraph.stimulus.nodes[child].createdOn) {
+          tempNode = provGraph.stimulus.nodes[child];
         } else break;
       } else break;
     }
@@ -159,11 +184,11 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
   }, [componentAndIndex, participant, playTime, setTimeString, startTime, totalAudioLength]);
 
   useEffect(() => {
-    if (!analysisHasAudio && analysisHasProvenance && participant) {
+    if (!analysisHasAudio && participant) {
       const length = participant.answers[componentAndIndex].endTime - participant.answers[componentAndIndex].startTime;
       setTotalAudioLength(length > -1 ? length / 1000 : 0);
     }
-  }, [analysisHasAudio, analysisHasProvenance, componentAndIndex, participant]);
+  }, [analysisHasAudio, componentAndIndex, participant]);
 
   const isAnalysis = useIsAnalysis();
   const wavesurfer = useRef<WaveSurferType | null>(null);
@@ -264,15 +289,13 @@ export function AnalysisPopout({ setTimeString }: { setTimeString: (time: string
             <WithinTaskTimeline
               xScale={xScale}
               trialName={componentAndIndex}
-              setPlayTime={_setPlayTime}
-              currentNode={currentNode}
-              setCurrentNode={_setCurrentNode}
+              currentNode={currentGlobalNode?.name || ''}
               participantData={participant}
               width={waveSurferWidth || width}
               height={25}
             />
           ) : null}
-        {xScale && participant && (analysisHasAudio || analysisHasProvenance) ? <Timer duration={totalAudioLength * 1000} height={(analysisHasAudio ? 50 : 0) + (analysisHasProvenance ? 25 : 0)} isPlaying={analysisIsPlaying} startTime={startTime} width={width} xScale={xScale} updateTimer={_setPlayTime} /> : null}
+        {xScale && participant ? <Timer duration={totalAudioLength * 1000} height={(analysisHasAudio ? 50 : 0) + 25} isPlaying={analysisIsPlaying} startTime={startTime} width={width} xScale={xScale} updateTimer={_setPlayTime} /> : null}
       </Stack>
     </Group>
   );
