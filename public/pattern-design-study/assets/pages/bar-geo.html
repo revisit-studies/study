@@ -60,26 +60,19 @@
     window.trrack_actions = trrack_actions;
     window.action = trrack_actions;
     Revisit.onProvenanceReceive((state) => {
-        console.log('provenance', state)
-        // //we get parametersList from localStorage
-        // let parametersList = JSON.parse(localStorage.getItem(chartName+'parametersList') || '[]')
-        // if(parametersList.length > 0){
-        //     //we get the parameters that is pointed by the pointer
-        //     parameters = parametersList[pointer]
-
-            // console.log(parameters)
+        // console.log('provenance', state)
             parameters = state['bargeo']
             //we redraw the textures of all categories, based on the new parameters
             for(let i = 0; i < fruits.length; i++){
                 //since geometric texture and iconic texture have different parameters set, here we need to distinguish them
                 if(chartName.endsWith('Geo')){
-                    console.log('geo redo')
+                    console.log('geo redraw')
                     //draw textures for category i
                     geo_getParameters(i)
                     geo_setCatPattern(i)
                 }
                 if(chartName.endsWith('Icon')){
-                    console.log('icon redo')
+                    console.log('icon redraw')
                     //draw textures for category i
                     icon_getParameters(i)
                     icon_setCatPattern(i, patternSize)
