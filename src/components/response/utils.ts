@@ -1,7 +1,7 @@
 import { useForm } from '@mantine/form';
 import { useEffect, useState } from 'react';
 import {
-  CheckboxResponse, NumberOption, Response, StringOption,
+  CheckboxResponse, NumberOption, RadioResponse, Response, StringOption,
 } from '../../parser/types';
 import { StoredAnswer } from '../../store/types';
 
@@ -35,8 +35,16 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
     const dontKnowAnswer = storedAnswer && storedAnswer[`${response.id}-dontKnow`] !== undefined ? storedAnswer[`${response.id}-dontKnow`] : false;
     const dontKnowObj = response.withDontKnow ? { [`${response.id}-dontKnow`]: dontKnowAnswer } : {};
 
+    const otherAnswer = storedAnswer && storedAnswer[`${response.id}-other`] !== undefined ? storedAnswer[`${response.id}-other`] : '';
+    const otherObj = (response as RadioResponse | CheckboxResponse).withOther ? { [`${response.id}-other`]: otherAnswer } : {};
+
     if (answer) {
-      initObj = { ...initObj, [response.id]: answer, ...dontKnowObj };
+      initObj = {
+        ...initObj,
+        [response.id]: answer,
+        ...dontKnowObj,
+        ...otherObj,
+      };
     } else {
       let initField: string | string[] | object | null = '';
       if (response.paramCapture) {
@@ -51,7 +59,12 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
         initField = response.startingValue.toString();
       }
 
-      initObj = { ...initObj, [response.id]: initField, ...dontKnowObj };
+      initObj = {
+        ...initObj,
+        [response.id]: initField,
+        ...dontKnowObj,
+        ...otherObj,
+      };
     }
   });
 

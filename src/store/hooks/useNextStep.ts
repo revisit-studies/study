@@ -49,7 +49,6 @@ export function useNextStep() {
   const sequence = useStoreSelector((state) => state.sequence);
   const answers = useStoreSelector((state) => state.answers);
   const modes = useStoreSelector((state) => state.modes);
-  const otherTexts = useStoreSelector((state) => state.otherTexts);
   const studyConfig = useStudyConfig();
 
   const { funcIndex } = useParams();
@@ -57,7 +56,7 @@ export function useNextStep() {
 
   const storeDispatch = useStoreDispatch();
   const {
-    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox, resetOtherText,
+    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox,
   } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
@@ -90,16 +89,6 @@ export function useNextStep() {
       }
       return acc;
     }, {}) as StoredAnswer['answer'];
-    // Set the other text in the answer
-    Object.entries(otherTexts).forEach(([key, value]) => {
-      if (Array.isArray(answer[key]) && (answer[key] as string[]).includes('__other')) {
-        (answer[key] as string[]) = (answer[key] as string[]).filter((item) => item !== '__other');
-        (answer[key] as string[]).push(`other:${value}`);
-      }
-      if (typeof answer[key] === 'string' && answer[key] === '__other') {
-        answer[key] = `other:${value}`;
-      }
-    });
     const { provenanceGraph } = trialValidationCopy;
     const endTime = Date.now();
 
@@ -136,7 +125,6 @@ export function useNextStep() {
         );
       }
       storeDispatch(setReactiveAnswers({}));
-      storeDispatch(resetOtherText());
       storeDispatch(setMatrixAnswersCheckbox(null));
       storeDispatch(setMatrixAnswersRadio(null));
     }
@@ -223,7 +211,7 @@ export function useNextStep() {
     } else {
       navigate(`/${studyId}/${encryptIndex(nextStep)}${window.location.search}`);
     }
-  }, [currentStep, trialValidation, identifier, otherTexts, storedAnswer, windowEvents, dataCollectionEnabled, sequence, answers, startTime, funcIndex, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, resetOtherText, setMatrixAnswersCheckbox, setMatrixAnswersRadio, studyConfig, participantSequence]);
+  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, sequence, answers, startTime, funcIndex, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, studyConfig, participantSequence]);
 
   return {
     isNextDisabled,

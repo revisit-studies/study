@@ -260,6 +260,9 @@ export function ResponseBlock({
                   dontKnowCheckbox={{
                     ...answerValidator.getInputProps(`${response.id}-dontKnow`, { type: 'checkbox' }),
                   }}
+                  otherInput={{
+                    ...answerValidator.getInputProps(`${response.id}-other`),
+                  }}
                   response={response}
                   index={index + 1}
                   configInUse={configInUse}

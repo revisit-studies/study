@@ -101,7 +101,6 @@ export async function studyStoreCreator(
     trialValidation: Object.keys(answers).length > 0 ? allValid : emptyValidation,
     reactiveAnswers: {},
     reactiveProvenance: null,
-    otherTexts: {},
     metadata,
     analysisProvState: {
 
@@ -189,12 +188,6 @@ export async function studyStoreCreator(
       },
       setReactiveProvenance: (state, action: PayloadAction<TrrackedProvenance | null>) => {
         state.reactiveProvenance = action.payload;
-      },
-      setOtherText: (state, action: PayloadAction<{ key: string, value: string }>) => {
-        state.otherTexts[action.payload.key] = action.payload.value;
-      },
-      resetOtherText: (state) => {
-        state.otherTexts = {};
       },
       saveAnalysisState(state, { payload }: PayloadAction<{prov: unknown, location: ResponseBlockLocation}>) {
         state.analysisProvState[payload.location] = payload.prov;

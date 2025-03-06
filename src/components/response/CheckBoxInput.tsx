@@ -1,12 +1,11 @@
 import {
   Box, Checkbox, Flex, Input,
 } from '@mantine/core';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { CheckboxResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { HorizontalHandler } from './HorizontalHandler';
-import { useStoreActions, useStoreDispatch } from '../../store/store';
 import classes from './css/Checkbox.module.css';
 import inputClasses from './css/Input.module.css';
 
@@ -16,12 +15,14 @@ export function CheckBoxInput({
   answer,
   index,
   enumerateQuestions,
+  otherValue,
 }: {
   response: CheckboxResponse;
   disabled: boolean;
   answer: object;
   index: number;
   enumerateQuestions: boolean;
+  otherValue?: object;
 }) {
   const {
     prompt,
@@ -35,13 +36,6 @@ export function CheckBoxInput({
   const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
 
   const [otherSelected, setOtherSelected] = useState(false);
-  const [otherValue, setOtherValue] = useState('');
-
-  const { setOtherText } = useStoreActions();
-  const storeDispatch = useStoreDispatch();
-  useEffect(() => {
-    storeDispatch(setOtherText({ key: response.id, value: otherValue }));
-  }, [otherValue, response.id, setOtherText, storeDispatch]);
 
   const error = useMemo(() => generateErrorMessage(response, answer, optionsAsStringOptions), [response, answer, optionsAsStringOptions]);
 
@@ -83,8 +77,7 @@ export function CheckBoxInput({
                   mt={-8}
                   placeholder="Other"
                   disabled={!otherSelected}
-                  value={otherValue}
-                  onChange={(event) => setOtherValue(event.currentTarget.value)}
+                  {...otherValue}
                   classNames={{ input: inputClasses.fixDisabled }}
                 />
               )}
@@ -98,8 +91,7 @@ export function CheckBoxInput({
           mt="sm"
           placeholder="Other"
           disabled={!otherSelected}
-          value={otherValue}
-          onChange={(event) => setOtherValue(event.currentTarget.value)}
+          {...otherValue}
           w={216}
           classNames={{ input: inputClasses.fixDisabled }}
         />

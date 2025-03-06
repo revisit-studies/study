@@ -26,6 +26,7 @@ export function ResponseSwitcher({
   index,
   configInUse,
   dontKnowCheckbox,
+  otherInput,
 }: {
   response: Response;
   answer: GetInputPropsReturnType;
@@ -33,9 +34,11 @@ export function ResponseSwitcher({
   index: number;
   configInUse: IndividualComponent;
   dontKnowCheckbox?: GetInputPropsReturnType;
+  otherInput?: GetInputPropsReturnType;
 }) {
   const ans = (Object.keys(storedAnswer || {}).length > 0 ? { value: storedAnswer![response.id] } : answer) || { value: undefined };
   const dontKnowValue = (Object.keys(storedAnswer || {}).length > 0 ? { checked: storedAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined };
+  const otherValue = (Object.keys(storedAnswer || {}).length > 0 ? { value: storedAnswer![`${response.id}-other`] } : otherInput) || { value: undefined };
   const disabled = Object.keys(storedAnswer || {}).length > 0;
 
   const [searchParams] = useSearchParams();
@@ -136,6 +139,7 @@ export function ResponseSwitcher({
           answer={ans as { value: string }}
           index={index}
           enumerateQuestions={enumerateQuestions}
+          otherValue={otherValue}
         />
       )}
       {response.type === 'checkbox' && (
@@ -145,6 +149,7 @@ export function ResponseSwitcher({
           answer={ans as { value: string[] }}
           index={index}
           enumerateQuestions={enumerateQuestions}
+          otherValue={otherValue}
         />
       )}
       {response.type === 'reactive' && (

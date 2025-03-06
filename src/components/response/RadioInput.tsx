@@ -1,12 +1,11 @@
 import {
   Box, Flex, Group, Input, Radio, rem, Text,
 } from '@mantine/core';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { RadioResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { HorizontalHandler } from './HorizontalHandler';
-import { useStoreActions, useStoreDispatch } from '../../store/store';
 import classes from './css/Radio.module.css';
 import inputClasses from './css/Input.module.css';
 
@@ -17,13 +16,15 @@ export function RadioInput({
   index,
   enumerateQuestions,
   stretch,
+  otherValue,
 }: {
   response: RadioResponse;
   disabled: boolean;
   answer: object;
   index: number;
   enumerateQuestions: boolean;
-  stretch?: boolean
+  stretch?: boolean;
+  otherValue?: object;
 }) {
   const {
     prompt,
@@ -39,13 +40,6 @@ export function RadioInput({
   const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
 
   const [otherSelected, setOtherSelected] = useState(false);
-  const [otherValue, setOtherValue] = useState('');
-
-  const { setOtherText } = useStoreActions();
-  const storeDispatch = useStoreDispatch();
-  useEffect(() => {
-    storeDispatch(setOtherText({ key: response.id, value: otherValue }));
-  }, [otherValue, response.id, setOtherText, storeDispatch]);
 
   return (
     <Radio.Group
@@ -113,8 +107,7 @@ export function RadioInput({
                   mt={-8}
                   placeholder="Other"
                   disabled={!otherSelected}
-                  value={otherValue}
-                  onChange={(event) => setOtherValue(event.currentTarget.value)}
+                  {...otherValue}
                   classNames={{ input: inputClasses.fixDisabled }}
                 />
                 )}
@@ -131,8 +124,7 @@ export function RadioInput({
           mt="sm"
           placeholder="Other"
           disabled={!otherSelected}
-          value={otherValue}
-          onChange={(event) => setOtherValue(event.currentTarget.value)}
+          {...otherValue}
           w={216}
           classNames={{ input: inputClasses.fixDisabled }}
         />

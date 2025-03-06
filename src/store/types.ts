@@ -151,7 +151,6 @@ export interface StoreState {
   trialValidation: TrialValidation;
   reactiveAnswers: Record<string, ValueOf<StoredAnswer['answer']>>;
   reactiveProvenance: TrrackedProvenance | null;
-  otherTexts: Record<string, string>;
   metadata: ParticipantMetadata;
   analysisProvState: Record<ResponseBlockLocation, { form: StoredAnswer['answer'] } | undefined>;
   analysisIsPlaying: boolean;
