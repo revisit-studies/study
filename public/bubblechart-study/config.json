@@ -19,13 +19,31 @@
   },
   "importedLibraries": ["demographics", "mic-check"],
   "components": {
+    "consent": {
+      "type": "markdown",
+      "path": "bubblechart-study/assets/consent.md",
+      "nextButtonText": "Agree",
+      "response": [
+        {
+          "id": "accept",
+          "prompt": "Do you consent to the study and wish to continue?",
+          "requiredValue": "Accept",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Decline",
+            "Accept"
+          ]
+        }
+      ]
+    },
     "introduction": {
       "type": "markdown",
       "path": "bubblechart-study/assets/introduction.md",
       "response": [
         {
           "id": "prolificId",
-          "prompt": "Please enter your prolificId",
+          "prompt": "Please enter your prolific ID",
           "location": "belowStimulus",
           "type": "shortText",
           "placeholder": "Prolific Id",
@@ -144,6 +162,7 @@
   "sequence": {
     "order": "fixed",
     "components": [
+      "consent",
       "introduction",
       "$mic-check.co.audioTest",
       {
