@@ -43,22 +43,22 @@ export default function ScatterWrapper({
     <Group style={{ gap: '40px' }}>
       <Stack style={{ alignItems: 'center' }}>
         <ScatterPlots key={key} onClick={() => handleClick(1)} r={r1} />
-        <Button onClick={() => handleClick(1)}>A</Button>
+        <Button style={{ marginLeft: '-30px' }} onClick={() => handleClick(1)}>A</Button>
       </Stack>
       <Stack style={{ alignItems: 'center' }}>
         <ScatterPlots key={key + 1} onClick={() => handleClick(2)} r={r2} />
-        <Button onClick={() => handleClick(2)}>B</Button>
+        <Button style={{ marginLeft: '-30px' }} onClick={() => handleClick(2)}>B</Button>
       </Stack>
     </Group>
   ) : (
     <Group style={{ gap: '40px' }}>
       <Stack style={{ alignItems: 'center' }}>
         <ScatterPlots key={key} onClick={() => handleClick(2)} r={r2} />
-        <Button onClick={() => handleClick(2)}>A</Button>
+        <Button style={{ marginLeft: '-30px' }} onClick={() => handleClick(2)}>A</Button>
       </Stack>
       <Stack style={{ alignItems: 'center' }}>
         <ScatterPlots key={key + 1} onClick={() => handleClick(1)} r={r1} />
-        <Button onClick={() => handleClick(1)}>B</Button>
+        <Button style={{ marginLeft: '-30px' }} onClick={() => handleClick(1)}>B</Button>
       </Stack>
     </Group>
   );
