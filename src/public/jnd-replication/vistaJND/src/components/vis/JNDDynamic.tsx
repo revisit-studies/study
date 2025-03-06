@@ -1,6 +1,6 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
-import { variance, ftest } from 'jstat';
+import { variance } from 'jstat';
 import { JumpFunctionParameters, JumpFunctionReturnVal, StoredAnswer } from '../../../../../../store/types';
 
 export default function func({
@@ -25,7 +25,7 @@ export default function func({
       r1, r2, above, counter,
     } = answers[latestTrialKey].parameters);
   }
-  // console.log('r1 r2 above counter', r1, r2, above, counter);
+
   const roundToTwo = (num: number) => parseFloat((Math.round(num * 100) / 100).toString());
 
   const lastAnswerName = findLatestTrial(answers, 1);
@@ -76,11 +76,17 @@ export default function func({
       const var2 = variance(group2);
       const var3 = variance(group3);
 
-      const p12 = 1 - ftest(var1 / var2, group1.length - 1, group2.length - 1);
-      const p23 = 1 - ftest(var2 / var3, group2.length - 1, group3.length - 1);
-      const p13 = 1 - ftest(var1 / var3, group1.length - 1, group3.length - 1);
+      const avg1 = group1.reduce((sum, val) => sum + val, 0) / group1.length;
+      const avg2 = group2.reduce((sum, val) => sum + val, 0) / group2.length;
+      const avg3 = group3.reduce((sum, val) => sum + val, 0) / group3.length;
 
-      if (p12 > 0.1 && p23 > 0.1 && p13 > 0.1) {
+      const varAvgSub = variance([avg1, avg2, avg3]);
+
+      const avgVarSub = (var1 + var2 + var3) / 3;
+
+      const fscore = varAvgSub / avgVarSub;
+
+      if (fscore < 0.25) {
         return { component: null };
       }
     }
