@@ -92,6 +92,7 @@ export function ResponseBlock({
   }, []);
 
   const reactiveAnswers = useStoreSelector((state) => state.reactiveAnswers);
+
   const matrixAnswers = useStoreSelector((state) => state.matrixAnswers);
 
   const hasCorrectAnswerFeedback = configInUse?.provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);

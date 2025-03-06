@@ -131,6 +131,10 @@
     document.getElementById("undo").onclick = () => trrack.undo();
     document.getElementById("redo").onclick = () => trrack.redo();
 
+    Revisit.onProvenanceReceive((prov) => {
+        dotActions.update(prov.dots);
+    })
+
 </script>
 
 </html>

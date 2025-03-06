@@ -274,6 +274,24 @@ export async function studyStoreCreator(
           state.trialValidation[payload.identifier].provenanceGraph[payload.location] = payload.provenanceGraph;
         }
       },
+      updateProvenance: (
+        state,
+        {
+          payload,
+        }: PayloadAction<{
+          location: ResponseBlockLocation;
+          identifier: string;
+          provenanceGraph?: TrrackedProvenance;
+        }>,
+      ) => {
+        if (!state.trialValidation[payload.identifier]) {
+          return;
+        }
+
+        if (payload.provenanceGraph) {
+          state.trialValidation[payload.identifier].provenanceGraph[payload.location] = payload.provenanceGraph;
+        }
+      },
       saveTrialAnswer(
         state,
         {
