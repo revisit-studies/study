@@ -17,7 +17,7 @@ import {
 import { NextButton } from '../NextButton';
 import { useAnswerField } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
-import { StoredAnswer } from '../../store/types';
+import { FormElementProvenance, StoredAnswer } from '../../store/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 
 type Props = {
@@ -49,7 +49,7 @@ export function ResponseBlock({
     updateResponseBlockValidation, toggleShowHelpText, saveIncorrectAnswer, incrementHelpCounter,
   } = useStoreActions();
   const currentStep = useCurrentStep();
-  const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]);
+  const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]) as FormElementProvenance | undefined;
 
   const storedAnswer = useMemo(() => currentProvenance?.form || status?.answer, [currentProvenance, status]);
 

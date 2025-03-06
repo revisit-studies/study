@@ -103,7 +103,6 @@ export async function studyStoreCreator(
     reactiveProvenance: null,
     metadata,
     analysisProvState: {
-
       aboveStimulus: undefined,
       belowStimulus: undefined,
       stimulus: undefined,
@@ -189,7 +188,8 @@ export async function studyStoreCreator(
       setReactiveProvenance: (state, action: PayloadAction<TrrackedProvenance | null>) => {
         state.reactiveProvenance = action.payload;
       },
-      saveAnalysisState(state, { payload }: PayloadAction<{prov: unknown, location: ResponseBlockLocation}>) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      saveAnalysisState(state, { payload }: PayloadAction<{prov: any, location: ResponseBlockLocation}>) {
         state.analysisProvState[payload.location] = payload.prov;
       },
       setAnalysisIsPlaying(state, { payload }: PayloadAction<boolean>) {

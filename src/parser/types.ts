@@ -148,17 +148,8 @@ export interface StringOption {
 /**
  * @ignore
  */
-export const responseBlockLocations = [
-  'sidebar',
-  'aboveStimulus',
-  'belowStimulus',
-  'stimulus',
-] as const;
-/**
- * @ignore
- */
-export type ResponseBlockLocation = (typeof responseBlockLocations)[number];
-type ConfigResponseBlockLocation = Omit<ResponseBlockLocation, 'stimulus'>;
+export type ResponseBlockLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus' | 'stimulus';
+export type ConfigResponseBlockLocation = Exclude<ResponseBlockLocation, 'stimulus'>;
 
 /**
  * The BaseResponse interface is used to define the required fields for all responses.

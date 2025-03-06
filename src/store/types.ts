@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import type {
-  ComponentBlock, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
+  ComponentBlock, ConfigResponseBlockLocation, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
 } from '../parser/types';
 import { type REVISIT_MODE } from '../storage/engines/StorageEngine';
 
@@ -138,6 +138,7 @@ export interface Sequence {
   skip?: SkipConditions;
 }
 
+export type FormElementProvenance = { form: StoredAnswer['answer'] };
 export interface StoreState {
   studyId: string;
   participantId: string;
@@ -152,7 +153,7 @@ export interface StoreState {
   reactiveAnswers: Record<string, ValueOf<StoredAnswer['answer']>>;
   reactiveProvenance: TrrackedProvenance | null;
   metadata: ParticipantMetadata;
-  analysisProvState: Record<ResponseBlockLocation, { form: StoredAnswer['answer'] } | undefined>;
+  analysisProvState: Record<ConfigResponseBlockLocation, FormElementProvenance | undefined> & { stimulus: unknown | undefined };
   analysisIsPlaying: boolean;
   analysisHasAudio: boolean;
   analysisHasProvenance: boolean;
