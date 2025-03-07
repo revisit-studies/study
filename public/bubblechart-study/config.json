@@ -95,15 +95,16 @@
     },
     "explorationStrategy": {
       "description": "Exploration Strategy",
-      "instruction": "**Your Exploration Strategy** \n\nIn this section, please tell us about the strategies you applied during exploration by answering the following questions.",
+      "instruction": "**Your Exploration Strategy** \n\n In this section, please tell us about the strategies you applied during exploration by answering the following questions.",
       "type": "questionnaire",
       "response": [
         {
           "id": "findings",
-          "prompt": "1. Your Findings\n\nUse the textbox below list as many unique findings as you can. Separate your findings into multiple paragraphs.",
+          "prompt": "1. Your Findings",
           "location": "belowStimulus",
           "type": "longText",
-          "placeholder": "Write your findings here"
+          "placeholder": "Write your findings here",
+          "secondaryText": "Use the textbox below list as many unique findings as you can."
         },
         {
           "id": "searched",

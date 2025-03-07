@@ -15,4 +15,4 @@ and answer several questions on the understanding of the visualization.
 - Use the text box at the top to search for specific college.
 
 
-<video src="./assets/search.mkv" style="max-width:800px" controls loop />
+<video src="./assets/search.mkv" style="max-width:800px" controls loop autoplay muted />
