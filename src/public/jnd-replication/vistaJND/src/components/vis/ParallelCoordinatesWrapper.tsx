@@ -5,7 +5,9 @@
  */
 
 import { Group, Stack, Button } from '@mantine/core';
-import { useMemo, useState } from 'react';
+import {
+  useMemo, useState, useEffect, useRef,
+} from 'react';
 import ParallelCoordinates from './ParallelCoordinates';
 
 function hashSeed(r1: number, r2: number) {
@@ -27,6 +29,8 @@ export default function ParallelCoordinatesWrapper({
   );
 
   const [key, setKey] = useState<number>(0);
+  const buttonARef = useRef<HTMLButtonElement | null>(null);
+  const buttonBRef = useRef<HTMLButtonElement | null>(null);
 
   const handleReset = () => {
     // Increment key to trigger re-render
@@ -40,26 +44,42 @@ export default function ParallelCoordinatesWrapper({
     handleReset();
   };
 
+  // Keybinding for left (A) and right (B)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft' && buttonARef.current) {
+        buttonARef.current.click();
+      } else if (event.key === 'ArrowRight' && buttonBRef.current) {
+        buttonBRef.current.click();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   return higherFirst ? (
     <Group style={{ gap: '40px' }}>
       <Stack style={{ alignItems: 'center' }}>
         <ParallelCoordinates key={key} onClick={() => handleClick(1)} v={r1} shouldNegate={shouldNegate} />
-        <Button onClick={() => handleClick(1)}>A</Button>
+        <Button ref={buttonARef} style={{ marginLeft: '-30px' }} onClick={() => handleClick(1)}>A</Button>
       </Stack>
       <Stack style={{ alignItems: 'center' }}>
         <ParallelCoordinates key={key + 1} onClick={() => handleClick(2)} v={r2} shouldNegate={shouldNegate} />
-        <Button onClick={() => handleClick(2)}>B</Button>
+        <Button ref={buttonBRef} style={{ marginLeft: '-30px' }} onClick={() => handleClick(2)}>B</Button>
       </Stack>
     </Group>
   ) : (
     <Group style={{ gap: '40px' }}>
       <Stack style={{ alignItems: 'center' }}>
         <ParallelCoordinates key={key} onClick={() => handleClick(2)} v={r2} shouldNegate={shouldNegate} />
-        <Button onClick={() => handleClick(2)}>A</Button>
+        <Button ref={buttonARef} style={{ marginLeft: '-30px' }} onClick={() => handleClick(2)}>A</Button>
       </Stack>
       <Stack style={{ alignItems: 'center' }}>
         <ParallelCoordinates key={key + 1} onClick={() => handleClick(1)} v={r1} shouldNegate={shouldNegate} />
-        <Button onClick={() => handleClick(1)}>B</Button>
+        <Button ref={buttonBRef} style={{ marginLeft: '-30px' }} onClick={() => handleClick(1)}>B</Button>
       </Stack>
     </Group>
   );
