@@ -19,8 +19,8 @@ function hashSeed(r1: number, r2: number) {
  * @returns 2 Scatter Plots
  */
 export default function ScatterWrapper({
-  r1, r2, shouldReRender = true, onClick, shouldRandomize = true,
-}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number) => void, shouldRandomize?: boolean}) {
+  r1, r2, shouldReRender = true, onClick, shouldRandomize = true, shouldNegate = false,
+}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number) => void, shouldRandomize?: boolean, shouldNegate?: boolean}) {
   const higherFirst = useMemo(
     () => (shouldRandomize ? hashSeed(r1, r2) > 0.5 : true),
     [shouldRandomize, r1, r2],
@@ -42,22 +42,22 @@ export default function ScatterWrapper({
   return higherFirst ? (
     <Group style={{ gap: '40px' }}>
       <Stack style={{ alignItems: 'center' }}>
-        <ScatterPlots key={key} onClick={() => handleClick(1)} r={r1} />
+        <ScatterPlots key={key} onClick={() => handleClick(1)} r={r1} shouldNegate={shouldNegate} />
         <Button style={{ marginLeft: '-30px' }} onClick={() => handleClick(1)}>A</Button>
       </Stack>
       <Stack style={{ alignItems: 'center' }}>
-        <ScatterPlots key={key + 1} onClick={() => handleClick(2)} r={r2} />
+        <ScatterPlots key={key + 1} onClick={() => handleClick(2)} r={r2} shouldNegate={shouldNegate} />
         <Button style={{ marginLeft: '-30px' }} onClick={() => handleClick(2)}>B</Button>
       </Stack>
     </Group>
   ) : (
     <Group style={{ gap: '40px' }}>
       <Stack style={{ alignItems: 'center' }}>
-        <ScatterPlots key={key} onClick={() => handleClick(2)} r={r2} />
+        <ScatterPlots key={key} onClick={() => handleClick(2)} r={r2} shouldNegate={shouldNegate} />
         <Button style={{ marginLeft: '-30px' }} onClick={() => handleClick(2)}>A</Button>
       </Stack>
       <Stack style={{ alignItems: 'center' }}>
-        <ScatterPlots key={key + 1} onClick={() => handleClick(1)} r={r1} />
+        <ScatterPlots key={key + 1} onClick={() => handleClick(1)} r={r1} shouldNegate={shouldNegate} />
         <Button style={{ marginLeft: '-30px' }} onClick={() => handleClick(1)}>B</Button>
       </Stack>
     </Group>

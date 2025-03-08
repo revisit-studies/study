@@ -5,9 +5,10 @@ import { JumpFunctionParameters, JumpFunctionReturnVal, StoredAnswer } from '../
 
 export default function func({
   answers, customParameters,
-}: JumpFunctionParameters<{r1: number, r2: number, above: boolean, counter: number, name: string, index: number}>): JumpFunctionReturnVal {
+}: JumpFunctionParameters<{r1: number, r2: number, above: boolean, counter: number, name: string, index: number, shouldNegate?: boolean}>): JumpFunctionReturnVal {
   let { r1, r2, above } = customParameters;
   const { name, index } = customParameters;
+  const shouldNegate = customParameters.shouldNegate || false;
   let counter = 0;
   const findLatestTrial = (trialAnswers: Record<string, StoredAnswer>, position: number) => {
     const trialKeys = Object.keys(trialAnswers)
@@ -99,7 +100,7 @@ export default function func({
   return {
     component: 'trial',
     parameters: {
-      r1, r2, above, counter,
+      r1, r2, above, counter, shouldNegate,
     },
   };
 }
