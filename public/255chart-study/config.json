@@ -20,7 +20,7 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": false,
+    "sidebar": true,
     "windowEventDebounceTime": 200,
     "recordStudyAudio": true
   },
@@ -43,30 +43,52 @@
     "training-control": {
       "type": "website",
       "path": "255chart-study/assets/trainingControl.html",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "response": []
     },
     "training-search": {
       "type": "website",
       "path": "255chart-study/assets/trainingSearch.html",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "response": []
     },
     "255ChartControl": {
       "type": "website",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "path": "255chart-study/assets/255charts/index.html",
-      "response": []
+      "instruction": "<p>Five years since the end of the recent Recession, the economy has finally regained the nine million jobs it lost. Each line below shows how the number of jobs has changed for a particular industry over the past 10 years. </p> \nYour task is to analyze this dataset on economy from a popular news website. \n",
+      "description": "Desc",
+      "response": [
+        {
+          "id": "control",
+          "prompt": "<b>Your Findings</b>\n\n Please tell us about the findings you discovered in the data.",
+          "location": "sidebar",
+          "type": "longText",
+          "placeholder": "Write your answer here",
+          "paramCapture": "FINDINGS"
+        }
+      ]
     },
     "255ChartSearch": {
       "type": "website",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "path": "255chart-study/assets/255charts-search/index.html",
-      "response": []
+      "instruction": "<p>Five years since the end of the recent Recession, the economy has finally regained the nine million jobs it lost. Each line below shows how the number of jobs has changed for a particular industry over the past 10 years. </p> \nYour task is to analyze this dataset on economy from a popular news website. \n",
+      "description": "Desc",
+      "response": [
+        {
+          "id": "control",
+          "prompt": "<b>Your Findings</b>\n\n Please tell us about the findings you discovered in the data.",
+          "location": "sidebar",
+          "type": "longText",
+          "placeholder": "Write your answer here",
+          "paramCapture": "FINDINGS"
+        }
+      ]
     },
     "findings": {
       "description": "Findings",
-      "instruction": "Your Findings\n\nIn this section, please tell us about the findings you discovered in the data. \n\nUse the textbox with multiple paragraphs to separate your results, and list as many unique findings as you can.",
+      "instruction": "Your Findings\n\n please tell us about the findings you discovered in the data. Please list as many unique findings as you can.",
       "type": "questionnaire",
       "response": [
         {
