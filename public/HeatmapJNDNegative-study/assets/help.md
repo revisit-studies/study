@@ -11,4 +11,4 @@ Please review the examples below, and hit next at the bottom when you're ready f
 (If you are familiar with correlation already, note that we treat negative and positive correlation the same.)
 
 ## Examples
-![Scatter Plot Correlation examples](./assets/ScatterPlotCorrelations.png)
+![10 Scatter Plot Correlation examples ranging from 0.1 to 1.0](./assets/redblueheatmap.png)
