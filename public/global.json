@@ -41,7 +41,8 @@
     "HeatmapJND-study",
     "pattern-design-study",
     "ScatterJNDNegative-study",
-    "ParallelJNDNegative-study"
+    "ParallelJNDNegative-study",
+    "HexbinJNDNegative-study"
   ],
   "configs": {
     "bubblechart-study": {
@@ -180,6 +181,9 @@
     },
     "ParallelJNDNegative-study": {
       "path": "ParallelJNDNegative-study/config.json"
+    },
+    "HexbinJNDNegative-study": {
+      "path": "HexbinJNDNegative-study/config.json"
     }
   }
 }
