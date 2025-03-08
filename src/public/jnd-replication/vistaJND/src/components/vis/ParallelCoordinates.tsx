@@ -17,7 +17,7 @@ import { PREFIX } from '../../../../../../utils/Prefix';
 const width = 300;
 const height = 300;
 
-export default function ParallelCoordinates({ v, onClick } : { v: number, onClick: () => void }) {
+export default function ParallelCoordinates({ v, onClick, shouldNegate = false } : { v: number, onClick: () => void, shouldNegate?: boolean }) {
   const d3Container = useRef(null);
   const [data, setData] = useState<[number, number][]>([]);
   const [isHover, setIsHover] = useState<boolean>(false);
@@ -43,6 +43,9 @@ export default function ParallelCoordinates({ v, onClick } : { v: number, onClic
 
         const parsedData = rows.map((row) => {
           const [x, y] = row.split(',').map(Number);
+          if (shouldNegate) {
+            return [x, 1 - y] as [number, number];
+          }
           return [x, y] as [number, number];
         });
 

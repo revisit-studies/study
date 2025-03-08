@@ -19,8 +19,8 @@ function hashSeed(r1: number, r2: number) {
  * @returns 2 Parallel Coordinate Plots
  */
 export default function ParallelCoordinatesWrapper({
-  r1, r2, shouldReRender = true, onClick, shouldRandomize = true,
-}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number) => void, shouldRandomize?: boolean}) {
+  r1, r2, shouldReRender = true, onClick, shouldRandomize = true, shouldNegate = false,
+}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number) => void, shouldRandomize?: boolean, shouldNegate?: boolean}) {
   const higherFirst = useMemo(
     () => (shouldRandomize ? hashSeed(r1, r2) > 0.5 : true),
     [shouldRandomize, r1, r2],
@@ -43,22 +43,22 @@ export default function ParallelCoordinatesWrapper({
   return higherFirst ? (
     <Group style={{ gap: '40px' }}>
       <Stack style={{ alignItems: 'center' }}>
-        <ParallelCoordinates key={key} onClick={() => handleClick(1)} v={r1} />
+        <ParallelCoordinates key={key} onClick={() => handleClick(1)} v={r1} shouldNegate={shouldNegate} />
         <Button onClick={() => handleClick(1)}>A</Button>
       </Stack>
       <Stack style={{ alignItems: 'center' }}>
-        <ParallelCoordinates key={key + 1} onClick={() => handleClick(2)} v={r2} />
+        <ParallelCoordinates key={key + 1} onClick={() => handleClick(2)} v={r2} shouldNegate={shouldNegate} />
         <Button onClick={() => handleClick(2)}>B</Button>
       </Stack>
     </Group>
   ) : (
     <Group style={{ gap: '40px' }}>
       <Stack style={{ alignItems: 'center' }}>
-        <ParallelCoordinates key={key} onClick={() => handleClick(2)} v={r2} />
+        <ParallelCoordinates key={key} onClick={() => handleClick(2)} v={r2} shouldNegate={shouldNegate} />
         <Button onClick={() => handleClick(2)}>A</Button>
       </Stack>
       <Stack style={{ alignItems: 'center' }}>
-        <ParallelCoordinates key={key + 1} onClick={() => handleClick(1)} v={r1} />
+        <ParallelCoordinates key={key + 1} onClick={() => handleClick(1)} v={r1} shouldNegate={shouldNegate} />
         <Button onClick={() => handleClick(1)}>B</Button>
       </Stack>
     </Group>
