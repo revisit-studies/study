@@ -43,13 +43,13 @@
     "training-control": {
       "type": "website",
       "path": "255chart-study/assets/trainingControl.html",
-      "nextButtonLocation": "sidebar",
+      "nextButtonLocation": "belowStimulus",
       "response": []
     },
     "training-search": {
       "type": "website",
       "path": "255chart-study/assets/trainingSearch.html",
-      "nextButtonLocation": "sidebar",
+      "nextButtonLocation": "belowStimulus",
       "response": []
     },
     "255ChartControl": {

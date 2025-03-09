@@ -10,13 +10,10 @@ var registry = Registry.create();
 var recordActivity = registry.register(
     "record-activity",
     (state, task) => {
-        if (task === "mouseOver") {
-            state.mouseOver++;
-        } else if(task === "mouseMove") {
-            state.mouseMove++;
-        } else {
-            state.visited_sequence += (task + "-");
-        }
+        console.log('trrack applied', task)
+        state.activeIndustry = task;
+        state.mouseOver++;
+
     }
 );
 
@@ -31,8 +28,9 @@ var smData = {
 };
 
 var initialState = {
-    showTile:null,
-    visited_sequence: "", //sequence string
+    activeIndustry:null,
+    mouseOver: 0,
+    // visited_sequence: "", //sequence string
 };
 
 // Initialize Trrack
@@ -41,22 +39,33 @@ var trrack = initializeTrrack({
     registry
 });
 
-const hoverIndustry = trrack.getState().showTile;
+const hoverIndustry = trrack.getState().activeIndustry;
 if(hoverIndustry != null)
     showTile(hoverIndustry)
 else closeTile();
 
 
 trrack.currentChange(() => {
-    const hoverIndustry = trrack.getState().showTile;
-    console.log(hoverIndustry,'hoverIndustry')
-
-    if(hoverIndustry != null)
-        showTile(hoverIndustry)
-    else closeTile();
 
     Revisit.postProvenance(trrack.graph.backend);
 });
+
+
+
+Revisit.onProvenanceReceive((prov)=>{
+
+    closeTile()
+    const hoverIndustry = indexedCes[prov.activeIndustry];
+    console.log(hoverIndustry,'hoverIndustry')
+    if(hoverIndustry != null){
+        showTile(hoverIndustry)
+
+
+
+
+    }
+
+})
 
 var visitedArray = [];
 var currentVisit = null;
@@ -325,7 +334,7 @@ function fadeIt(it, clone)
     //track the visted sequence
     var code = $(clone).attr('data-ces');
     smData.visited_sequence += (code + "-");
-    trrack.apply("visited", recordActivity(code));
+    // trrack.apply("visited", recordActivity(code));
 
     //visited array
     var startTime = Date.now();
@@ -376,13 +385,16 @@ function bindEvents() {
 
    // });
 
+    //check
     $('#g-graphic').on('mouseover', '.emp-area', function () {
         closeTile();
         var industry = indexedCes[$(this).closest('.g-industry').attr('data-ces')];
-        trrack.apply("checkTile", recordActivity(industry));
-
+        console.log($(this).closest('.g-industry').attr('data-ces'),'industry')
+        trrack.apply("hoverIndustry", recordActivity($(this).closest('.g-industry').attr('data-ces')));
         showTile(industry);
     });
+
+
 }
 
 function showJobs(industry, datapoint, wagepoint, el) {
@@ -433,6 +445,7 @@ function drawBead(e) {
     var bead = el.select('.a-bead');
     // bead.attr('cx', x).attr('cy', y);
     bead.attr("transform", "translate(-2.5, 0) translate(" + (x + (neg ? 4 : 0)) + "," + (y + (neg ? 7 : -7)) + ") rotate(" + (neg ? 180 : 0) + ")");
+    console.log(industry,datapoint,wagepoint,el)
     showJobs(industry, datapoint, wagepoint, el);
 
     //for Data Collection
@@ -478,6 +491,8 @@ function closeTile() {
         }, 500);
         // fade code
         console.log('mousing out of tile');
+        //check
+        trrack.apply("hoverIndustry", recordActivity(null));
         clearTimeout(hoverId);
 
     }
@@ -485,6 +500,7 @@ function closeTile() {
 }
 
 function showTile(industry) {
+    console.log(industry,'industry in showtile')
     if (isMobile)
         return;
     var el = $(industry.element);
