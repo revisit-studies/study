@@ -2743,6 +2743,7 @@ function geo_selectCat(i){
         if(document.getElementById("sameLineDensity").checked == false){
             geo_setCatPattern(i)
         }
+        addParametersToList(chartName, parameters, trrack, action)
     }
 
     controlLineStrokeWidth.oninput = function(){
@@ -3739,6 +3740,7 @@ function geo_getParameters(i){
 
     //line
     controlLineDensity.value = parameters["linePattern"+i+"Density"]
+    console.log("controlLineDensity", controlLineDensity.value)
     controlLineStrokeWidth.max = parameters["linePattern"+i+"StrokeWidthMax"]
     controlLineStrokeWidth.value = parameters["linePattern"+i+"StrokeWidth"]
     controlLineX.value = parameters["linePattern"+i+"X"]
@@ -3759,7 +3761,7 @@ function geo_getParameters(i){
     controlDotPrimitiveStrokeWidth.value = parameters["dotPattern"+i+"PrimitiveStrokeWidth"]
 
     //grid
-     controlGridDensity.value = parameters["gridPattern"+i+"Density"]
+    controlGridDensity.value = parameters["gridPattern"+i+"Density"]
     controlGridStrokeWidth.max = parameters["gridPattern"+i+"StrokeWidthMax"]
     controlGridStrokeWidth.value = parameters["gridPattern"+i+"StrokeWidth"]
     controlGridX.value = parameters["gridPattern"+i+"X"]
