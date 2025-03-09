@@ -135,6 +135,111 @@
       "path": "HexbinJND-study/assets/break.md",
       "response": []
     },
+    "survey": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q-age",
+          "prompt": "Your age:",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "18-25",
+            "25-39",
+            "40-49",
+            "50-59",
+            "60+",
+            "Unspecified"
+          ]
+        },
+        {
+          "id": "q-gender",
+          "prompt": "Your gender:",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Male",
+            "Female",
+            "Unspecified"
+          ]
+        },
+        {
+          "id": "q-handedness",
+          "prompt": "Are you left or right handed?",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Right",
+            "Left",
+            "Unspecified"
+          ]
+        },
+        {
+          "id": "q-degree",
+          "prompt": "Highest degree obtained:",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "High School",
+            "Bachelors",
+            "Masters",
+            "PhD",
+            "Other"
+          ]
+        },
+        {
+          "id": "q-monitor",
+          "prompt": "Your monitor size is closest to:",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "9\" or smaller",
+            "11\"",
+            "13\"",
+            "15\"",
+            "17\"",
+            "19\"",
+            "21\"",
+            "23\" or larger",
+            "I'm not sure"
+          ]
+        },
+        {
+          "id": "q-visualization-experience",
+          "prompt": "How familiar are you with visualizations like the ones you saw here?",
+          "secondaryText": "1 (Not familiar at all) - 5 (Very familiar)",
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "rightLabel": "Very familiar",
+          "leftLabel": "Not familiar at all"
+        },
+        {
+          "id": "q-statistical-concepts",
+          "prompt": "How familiar are you with statistical concepts like Pearson’s correlation coefficient?",
+          "secondaryText": "1 (Not familiar at all) - 5 (Very familiar)",
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "rightLabel": "Very familiar",
+          "leftLabel": "Not familiar at all"
+        },
+        {
+          "id": "q-strategy",
+          "prompt": "Briefly describe the visual strategy you used to detect which chart was more correlated.",
+          "location": "aboveStimulus",
+          "type": "longText",
+          "placeholder": "Enter your answer here"
+        },
+        {
+          "id": "q-comments",
+          "prompt": "Please leave any additional comments below.",
+          "location": "aboveStimulus",
+          "type": "longText",
+          "placeholder": "Enter your comments here"
+        }
+      ]
+    },
     "debrief": {
       "type": "markdown",
       "path": "ScatterJND-study/assets/debrief.md",
@@ -262,6 +367,7 @@
           }
         ]
       },
+      "survey",
       "debrief"
     ]
   }
