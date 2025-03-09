@@ -18,10 +18,12 @@
 <script src="js/libs/queue.min.js" type="text/javascript"></script>
 <script src="js/libs/underscore-min.js" type="text/javascript"></script>
 <script src="js/libs/extData.js" type="text/javascript"></script>
-<script src="js/main.js" type="text/javascript"></script>
+<script src="js/main.js" type="module"></script>
 <!-- Libs for autocomplete -->
 <link rel="stylesheet" href="css/easy-autocomplete.css">
 <script src="js/libs/jquery.easy-autocomplete.js"></script>
+<script src="../../../revisitUtilities/revisit-communicate.js"></script>
+
 
 <style>
     * {
@@ -134,7 +136,7 @@
         <br>
         <br>
         <!-- floating search box -->
-        <div id="search-box" style="display: none;padding-left: 20px">
+        <div id="search-box" style="display: inline;padding-left: 20px">
             <span><strong>Search: </strong></span>
             <input id="search-input" type="text" placeholder="Search for industry..." value="" style="border-color: orange;width: 300px">
             <button id="search-reset">Reset Search</button>

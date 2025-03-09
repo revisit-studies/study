@@ -1,4 +1,4 @@
-/* 
+/*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
@@ -7,6 +7,8 @@
 /*global queue, labels*/
 
 ///////////////////////////For Experiment Begin/////////////////////////////
+import { Registry, initializeTrrack } from 'https://cdn.jsdelivr.net/npm/@trrack/core@1.3.0/+esm'
+
 var userData = {
     "condition": "",
     "searchLog": [],
@@ -19,13 +21,12 @@ var currentSearch = null;
 var lineHoverId = null
 
 // Set the condition
-if (Math.random() > 0.375) {
+if (Math.random() > 0) {
     userData.condition = "foresight";
 } else {
     userData.condition = "control";
 }
 
-console.log("condition = " + userData.condition);
 
 var NAME_ATTR = 'nytlabel';
 
@@ -33,7 +34,6 @@ var NAME_ATTR = 'nytlabel';
 
 // Single function for put chart into specified target
 function load255Chart(id) {
-
     // screen size detection
     userData['windowWidth'] = $(window).width();
     userData['windowHeight'] = $(window).height();
@@ -42,7 +42,7 @@ function load255Chart(id) {
     if(userData.condition == "control")
     {
             d3.selectAll('.foresightTraining').style('display','none');
-    } 
+    }
 
     $(function () {
         var wholegraphic = $('<div class="whole-graphic">\n\
@@ -136,13 +136,13 @@ function boot(err, cesData, wageData) {
     //search
     searchData = cesData;
     loadSearchBox();
-    
+
 
     renderGraphic();
 
-    bindEvents(); 
+    bindEvents();
 
-    transitionBetween(true); 
+    transitionBetween(true);
 
     renderKey();
 
@@ -152,6 +152,7 @@ function loadSearchBox(){
     // Load the searchbox if foresight condition
     if(userData.condition === "foresight")
     {
+        console.log('enable search')
         d3.select('#hit').select('#search-box').style('display','inline')
         enableSearch()
     }
@@ -404,7 +405,7 @@ function showTile(industry) {
         $(window).on('mouseover', closeTile);
     });
 
-    // Set visit 
+    // Set visit
     recordVisit(industry['nytlabel'])
 }
 
@@ -418,7 +419,7 @@ function recordVisit(item) {
         currentVisit = null;
         //console.log(userData['visitLog'])
     }
-    
+
     // start a new visit
     if(!currentVisit && item){
         //console.log(item)
@@ -571,7 +572,7 @@ function renderCharts(industries) {
     };
 
     render = window.render = function () {
-        
+
         // Set minimum width and height
         var everythingHeight = $(window).height() - totalHeightFudge;
         var everythingWidth = $(window).width()
@@ -649,7 +650,7 @@ function transitionBetween() {
 function setSector() {
     var top = 0;
     //var realSector = currentSector != noSector;
-    realSector = false;
+    var realSector = false;
     //display == all
     top = $('#g-graphic').offset().top;
 
@@ -1064,7 +1065,7 @@ function enableSearch(){
             searchChooseItem();
         });
     }
-    
+
     // Search choosen item
     function searchChooseItem() {
         searchFilter(searchInput.val().toLowerCase());
@@ -1104,10 +1105,9 @@ function enableSearch(){
             //console.log("searching for: "+currentSearch.content+" #="+currentSearch.selectedCharts)
         }
 
-        
+
 
     }
-
     // Click button to reset
     $("#search-reset").click(function () {
         resetSearch();
@@ -1130,3 +1130,38 @@ function enableSearch(){
         searchInput.val("");
     }
 };
+
+export {
+    load255Chart,
+    boot,
+    toggleMobile,
+    wageClassify,
+    findWageBreaks,
+    classify,
+    bindEvents,
+    showJobs,
+    mouseoverAChart,
+    drawBead,
+    hideBead,
+    closeTile,
+    showTile,
+    eachMonth,
+    processCesData,
+    renderGraphic,
+    renderIndustry,
+    renderCharts,
+    togglePlacement,
+    place,
+    move,
+    transitionBetween,
+    setSector,
+    renderChart,
+    toggleKey,
+    renderKey,
+    renderLegend,
+    recordSearch,
+    enableSearch,
+    searchData,
+    userData
+};
+

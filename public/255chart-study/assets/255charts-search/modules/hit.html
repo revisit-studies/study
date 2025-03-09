@@ -2,8 +2,9 @@
   <div>
   </div>
 
-  <script>
-  ( function() {
+  <script type="module">
+    import {load255Chart,searchData,userData} from './js/main.js';
+    ( function() {
     var data  = {};
 
 
@@ -22,8 +23,8 @@
 
       // "click here when you're finished" on bottom ends it
       d3.select('#finished')
-      .on('click', function() { 
-        console.log("finished"); 
+      .on('click', function() {
+        console.log("finished");
         recordSearch(null);
         validate();
        });
@@ -60,7 +61,7 @@
       userData.visitLog = JSON.stringify(userData.visitLog);
       userData.searchLog = JSON.stringify(userData.searchLog)
       //console.log(userData);
-      
+
       // Wrap up
       experimentr.addData(userData);
       experimentr.endTimer('exploration');
