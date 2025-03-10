@@ -8,6 +8,50 @@
 
 ///////////////////////////For Experiment Begin/////////////////////////////
 import { Registry, initializeTrrack } from 'https://cdn.jsdelivr.net/npm/@trrack/core@1.3.0/+esm'
+var registry = Registry.create();
+var recordActivity = registry.register(
+    "record-activity",
+    (state, task) => {
+        console.log('trrack applied', task)
+        state.activeIndustry = task;
+        state.mouseOver++;
+
+    }
+);
+
+var initialState = {
+    activeIndustry:null,
+    mouseOver: 0,
+    // visited_sequence: "", //sequence string
+};
+
+// Initialize Trrack
+var trrack = initializeTrrack({
+    initialState,
+    registry
+});
+
+const hoverIndustry = trrack.getState().activeIndustry;
+if(hoverIndustry != null)
+    showTile(hoverIndustry)
+else closeTile();
+
+
+trrack.currentChange(() => {
+
+    Revisit.postProvenance(trrack.graph.backend);
+});
+
+Revisit.onProvenanceReceive((prov)=>{
+
+    closeTile()
+    const hoverIndustry = indexedCes[prov.activeIndustry];
+    console.log(hoverIndustry,'hoverIndustry')
+    if(hoverIndustry != null){
+        showTile(hoverIndustry)
+    }
+})
+
 
 var userData = {
     "condition": "",
@@ -285,6 +329,8 @@ function bindEvents() {
             lineHoverId = setTimeout(showTile, waitTime, industry);
             //console.log("Set!! "+lineHoverId)
         }
+        trrack.apply("hoverIndustry", recordActivity($(this).closest('.g-industry').attr('data-ces')));
+
 
         //showTile(industry);
     });
@@ -380,6 +426,8 @@ function closeTile() {
 
     }
     openTile = null;
+    //check
+    trrack.apply("hoverIndustry", recordActivity(null));
 }
 
 function showTile(industry) {

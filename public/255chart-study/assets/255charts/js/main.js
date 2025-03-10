@@ -59,12 +59,7 @@ Revisit.onProvenanceReceive((prov)=>{
     console.log(hoverIndustry,'hoverIndustry')
     if(hoverIndustry != null){
         showTile(hoverIndustry)
-
-
-
-
     }
-
 })
 
 var visitedArray = [];
@@ -389,7 +384,7 @@ function bindEvents() {
     $('#g-graphic').on('mouseover', '.emp-area', function () {
         closeTile();
         var industry = indexedCes[$(this).closest('.g-industry').attr('data-ces')];
-        console.log($(this).closest('.g-industry').attr('data-ces'),'industry')
+        // console.log($(this).closest('.g-industry').attr('data-ces'),'industry')
         trrack.apply("hoverIndustry", recordActivity($(this).closest('.g-industry').attr('data-ces')));
         showTile(industry);
     });
