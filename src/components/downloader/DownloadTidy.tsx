@@ -96,7 +96,8 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
       const duration = trialAnswer.endTime === -1 ? undefined : trialAnswer.endTime - trialAnswer.startTime;
       const cleanedDuration = getCleanedDuration(trialAnswer);
 
-      const rows = Object.entries(trialAnswer.answer).map(([key, value]) => {
+      const answersToLoopOver = Object.keys(trialAnswer.answer).length === 0 ? { '': undefined } : trialAnswer.answer;
+      const rows = Object.entries(answersToLoopOver).map(([key, value]) => {
         const tidyRow: TidyRow = {
           participantId: participant.participantId,
           trialId,
@@ -188,7 +189,7 @@ async function getTableData(selectedProperties: Property[], data: ParticipantDat
   }));
 
   const rows = allData.map((partData) => partData[0]);
-  const newHeaders = allData.map((partData) => partData[1]).flat();
+  const newHeaders = new Set(allData.map((partData) => partData[1]).flat());
 
   const flatRows = rows.flat().sort((a, b) => (a !== b ? a.participantId.localeCompare(b.participantId) : a.trialOrder - b.trialOrder));
 
