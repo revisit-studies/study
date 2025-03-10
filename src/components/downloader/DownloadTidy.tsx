@@ -54,6 +54,7 @@ export const REQUIRED_PROPS = [
   'trialId',
   'trialOrder',
   'responseId',
+  'parameters',
 ] as const;
 
 type OptionalProperty = (typeof OPTIONAL_COMMON_PROPS)[number];
@@ -84,12 +85,17 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
       trialOrder: null,
       responseId: 'participantTags',
       answer: JSON.stringify(participant.participantTags),
+      parameters: null,
     },
     ...Object.entries(participant.answers).map(([trialIdentifier, trialAnswer]) => {
       // Get the whole component, including the base component if there is inheritance
       const trialId = trialIdentifier.split('_').slice(0, -1).join('_');
-      const trialOrder = parseInt(`${trialIdentifier.split('_').at(-1)}`, 10);
-      const trialConfig = studyConfig.components[trialId];
+      const dynamicTrialId = trialIdentifier.split('_').slice(2, -1).join('_');
+
+      const isDynamic = !studyConfig.components[trialId];
+
+      const trialOrder = isDynamic ? `${parseInt(`${trialIdentifier.split('_').at(1)}`, 10)}__${parseInt(`${trialIdentifier.split('_').at(-1)}`, 10)}` : parseInt(`${trialIdentifier.split('_').at(-1)}`, 10);
+      const trialConfig = studyConfig.components[trialId] || studyConfig.components[dynamicTrialId];
       const completeComponent: IndividualComponent = isInheritedComponent(trialConfig) && trialConfig.baseComponent && studyConfig.baseComponents
         ? merge({}, studyConfig.baseComponents[trialConfig.baseComponent], trialConfig)
         : trialConfig;
@@ -103,6 +109,7 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
           trialId,
           trialOrder,
           responseId: key,
+          parameters: JSON.stringify(trialAnswer.parameters),
         };
 
         const response = completeComponent.response.find((resp) => resp.id === key);
