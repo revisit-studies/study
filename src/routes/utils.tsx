@@ -90,8 +90,8 @@ export function useCurrentComponent(): string {
             funcName: flatSequence[currentStep],
             index: currentStep,
             funcIndex: funcIndex ? decryptIndex(funcIndex) : 0,
-            parameters: _params || {},
-            correctAnswer: correctAnswer || [],
+            parameters: _params || undefined,
+            correctAnswer: correctAnswer || undefined,
           }));
         } else {
           navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${window.location.search}`);

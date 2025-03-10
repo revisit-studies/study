@@ -259,6 +259,8 @@ export function TableView({
           timedOut: false, // not used
           parameters: {}, // not used
           correctAnswer: [], // not used
+          trialOrder: '', // not used
+          componentName: '', // not used
           provenanceGraph: {
             aboveStimulus: undefined,
             belowStimulus: undefined,

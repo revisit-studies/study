@@ -28,11 +28,17 @@ export async function studyStoreCreator(
     .map((id, idx) => {
       const componentConfig = studyComponentToIndividualComponent(config.components[id] || {}, config);
 
+      // Make sure we dont include dynamic blocks as empty answers
+      if (!config.components[id]) {
+        return null;
+      }
+
       return [
         `${id}_${idx}`,
         {
-
           answer: {},
+          trialOrder: `${idx}`,
+          componentName: id,
           incorrectAnswers: {},
           startTime: 0,
           endTime: -1,
@@ -50,7 +56,7 @@ export async function studyStoreCreator(
           correctAnswer: Object.hasOwn(componentConfig, 'correctAnswer') ? componentConfig.correctAnswer! : [],
         },
       ];
-    }));
+    }).filter((ans) => ans !== null));
   const emptyValidation: TrialValidation = Object.assign(
     {},
     ...flatSequence.map((id, idx): TrialValidation => {
@@ -129,10 +135,11 @@ export async function studyStoreCreator(
         state.isRecording = payload.payload;
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      pushToFuncSequence(state, payload: PayloadAction<{component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any>, correctAnswer: Answer[]}>) {
+      pushToFuncSequence(state, payload: PayloadAction<{component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any> | undefined, correctAnswer: Answer[] | undefined}>) {
         if (!state.funcSequence[payload.payload.funcName]) {
           state.funcSequence[payload.payload.funcName] = [];
         }
+
         if (state.funcSequence[payload.payload.funcName].length > payload.payload.funcIndex) {
           return;
         }
@@ -143,6 +150,8 @@ export async function studyStoreCreator(
         state.answers[`${payload.payload.funcName}_${payload.payload.index}_${payload.payload.component}_${payload.payload.funcIndex}`] = {
           answer: {},
           incorrectAnswers: {},
+          componentName: payload.payload.component,
+          trialOrder: `${payload.payload.index}_${payload.payload.funcIndex}`,
           startTime: 0,
           endTime: -1,
           provenanceGraph: {
@@ -154,9 +163,9 @@ export async function studyStoreCreator(
           windowEvents: [],
           timedOut: false,
           helpButtonClickedCount: 0,
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          parameters: Object.keys(payload.payload.parameters).length > 0 ? payload.payload.parameters : (componentConfig as any).parameters,
-          correctAnswer: (payload.payload.correctAnswer.length > 0 ? payload.payload.correctAnswer : componentConfig.correctAnswer) || [],
+
+          parameters: payload.payload.parameters || ('parameters' in componentConfig ? componentConfig.parameters : {}) || {},
+          correctAnswer: payload.payload.correctAnswer || componentConfig.correctAnswer || [],
         };
         state.trialValidation[`${payload.payload.funcName}_${payload.payload.index}_${payload.payload.component}_${payload.payload.funcIndex}`] = {
           aboveStimulus: { valid: false, values: {} },

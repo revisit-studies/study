@@ -62,7 +62,7 @@ type MetaProperty = `meta-${string}`;
 export type Property = OptionalProperty | RequiredProperty | MetaProperty;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type TidyRow = Prettify<Record<RequiredProperty, any> & Partial<Record<OptionalProperty | MetaProperty, any>>>;
+export type TidyRow = Prettify<Record<RequiredProperty, any> & Partial<Record<OptionalProperty | MetaProperty, any>>> & Record<string, number | string[] | boolean | string | null>;
 
 export function download(graph: string, filename: string) {
   const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(graph)}`;
@@ -74,9 +74,11 @@ export function download(graph: string, filename: string) {
   downloadAnchorNode.remove();
 }
 
-function participantDataToRows(participant: ParticipantData, properties: Property[], studyConfig: StudyConfig): TidyRow[] {
+function participantDataToRows(participant: ParticipantData, properties: Property[], studyConfig: StudyConfig): [TidyRow[], string[]] {
   const percentComplete = ((Object.entries(participant.answers).filter(([_, entry]) => entry.endTime !== -1).length / (getSequenceFlatMap(participant.sequence).length - 1)) * 100).toFixed(2);
-  return [
+  const newHeaders = new Set<string>();
+
+  return [[
     {
       participantId: participant.participantId,
       trialId: 'participantTags',
@@ -84,10 +86,10 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
       responseId: 'participantTags',
       answer: JSON.stringify(participant.participantTags),
     },
-    ...Object.entries(participant.answers).map(([trialIdentifier, trialAnswer]) => {
+    ...Object.values(participant.answers).map((trialAnswer) => {
       // Get the whole component, including the base component if there is inheritance
-      const trialId = trialIdentifier.split('_').slice(0, -1).join('_');
-      const trialOrder = parseInt(`${trialIdentifier.split('_').at(-1)}`, 10);
+      const trialId = trialAnswer.componentName;
+      const { trialOrder } = trialAnswer;
       const trialConfig = studyConfig.components[trialId];
       const completeComponent = studyComponentToIndividualComponent(trialConfig, studyConfig);
 
@@ -101,6 +103,11 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
           trialOrder,
           responseId: key,
         };
+
+        Object.entries(trialAnswer.parameters).forEach(([_key, _value]) => {
+          tidyRow[`parameters_${_key}`] = _value;
+          newHeaders.add(`parameters_${_key}`);
+        });
 
         const response = completeComponent.response.find((resp) => resp.id === key);
         if (properties.includes('status')) {
@@ -160,7 +167,7 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
       }).flat();
 
       return rows;
-    }).flat()];
+    }).flat()], Array.from(newHeaders)];
 }
 
 async function getTableData(selectedProperties: Property[], data: ParticipantData[], storageEngine: StorageEngine | undefined, studyId: string) {
@@ -174,15 +181,18 @@ async function getTableData(selectedProperties: Property[], data: ParticipantDat
   const allConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
 
   const header = combinedProperties;
-  const rows = await Promise.all(data.map(async (participant) => {
+  const allData = await Promise.all(data.map(async (participant) => {
     const partDataToRows = await participantDataToRows(participant, combinedProperties, allConfigs[participant.participantConfigHash]);
 
     return partDataToRows;
   }));
 
+  const rows = allData.map((partData) => partData[0]);
+  const newHeaders = allData.map((partData) => partData[1]).flat();
+
   const flatRows = rows.flat().sort((a, b) => (a !== b ? a.participantId.localeCompare(b.participantId) : a.trialOrder - b.trialOrder));
 
-  return { header, rows: flatRows };
+  return { header: [...header, ...newHeaders], rows: flatRows };
 }
 
 export function DownloadTidy({

@@ -7,7 +7,9 @@ import {
   useAreResponsesValid,
   useFlatSequence,
 } from '../store';
-import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
+import {
+  useCurrentIdentifier, useCurrentStep, useStudyId,
+} from '../../routes/utils';
 
 import { StoredAnswer, ValidationStatus } from '../types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
@@ -43,7 +45,6 @@ function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: st
 export function useNextStep() {
   const currentStep = useCurrentStep();
   const participantSequence = useFlatSequence();
-  const currentComponent = useCurrentComponent();
 
   const trialValidation = useStoreSelector((state) => state.trialValidation);
   const sequence = useStoreSelector((state) => state.sequence);
@@ -52,7 +53,7 @@ export function useNextStep() {
   const studyConfig = useStudyConfig();
 
   const { funcIndex } = useParams();
-  const identifier = funcIndex && typeof currentStep === 'number' ? `${participantSequence[currentStep]}_${currentStep}_${currentComponent}_${decryptIndex(funcIndex)}` : `${currentComponent}_${currentStep}`;
+  const identifier = useCurrentIdentifier();
 
   const storeDispatch = useStoreDispatch();
   const {
@@ -93,7 +94,7 @@ export function useNextStep() {
     const endTime = Date.now();
 
     const {
-      incorrectAnswers, helpButtonClickedCount, parameters, correctAnswer,
+      incorrectAnswers, helpButtonClickedCount, parameters, correctAnswer, trialOrder, componentName,
     } = storedAnswer;
 
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
@@ -111,10 +112,13 @@ export function useNextStep() {
         helpButtonClickedCount,
         parameters,
         correctAnswer,
+        trialOrder,
+        componentName,
       };
       storeDispatch(
         saveTrialAnswer({
           identifier,
+
           ...toSave,
         }),
       );
@@ -191,7 +195,7 @@ export function useNextStep() {
           }
 
           // Check the candidates and count the number of correct and incorrect answers
-          const correctAnswers = componentsToCheck.map(([componentName, responseObj]) => checkAllAnswersCorrect(responseObj.answer, componentName, studyConfig.components[componentName.slice(0, componentName.lastIndexOf('_'))], studyConfig));
+          const correctAnswers = componentsToCheck.map(([_componentName, responseObj]) => checkAllAnswersCorrect(responseObj.answer, _componentName, studyConfig.components[componentName.slice(0, componentName.lastIndexOf('_'))], studyConfig));
           const numCorrect = correctAnswers.filter((correct) => correct).length;
           const numIncorrect = correctAnswers.length - numCorrect;
 
