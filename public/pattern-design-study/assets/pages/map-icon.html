@@ -71,23 +71,6 @@
                 icon_setCatPattern(selectedCat, patternSize)
             }
 
-            // //we redraw the textures of all categories, based on the new parameters
-            // for(let i = 0; i < fruits.length; i++){
-            //     //since geometric texture and iconic texture have different parameters set, here we need to distinguish them
-            //     if(chartName.endsWith('Geo')){
-            //         console.log('geo redraw')
-            //         //draw textures for category i
-            //         geo_getParameters(i)
-            //         geo_setCatPattern(i)
-            //     }
-            //     if(chartName.endsWith('Icon')){
-            //         console.log('icon redraw')
-            //         //draw textures for category i
-            //         icon_getParameters(i)
-            //         icon_setCatPattern(i, patternSize)
-            //     }
-            // }
-
             let controlOutline = document.getElementById('controlOutline')
             controlOutline.value = parameters['outline']
 

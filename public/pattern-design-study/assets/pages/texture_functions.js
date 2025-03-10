@@ -27,7 +27,7 @@ function drawDragDropInfo(dragdropID){
 
 
     let dragdropParaText = document.createElement('span')
-    dragdropParaText.innerHTML = '<b>drag and drop</b> on textures to switch texture parameters'
+    dragdropParaText.innerHTML = '<b>drag and drop</b> on patterns to switch pattern parameters'
     dragdropPara.appendChild(dragdropParaText)
     dragdropPara.style.width = '150px'
     dragdropPara.style.fontSize = '16px';
@@ -46,7 +46,7 @@ function drawToolbar(toolbarID){
 
     let fruitIndicatorPara = document.createElement('p')
     toolbar.appendChild(fruitIndicatorPara)
-    fruitIndicatorPara.innerHTML = 'Now you are designing texture for <span id="fruitName" style="color:#1E90FF;font-weight: bold"></span>'
+    fruitIndicatorPara.innerHTML = 'Now you are designing pattern for <span id="fruitName" style="color:#1E90FF;font-weight: bold"></span>'
     fruitIndicatorPara.style.display = 'inline'
     fruitIndicatorPara.style.marginLeft = '50px'
 
@@ -120,7 +120,7 @@ function appendButtonToToolbar(toolbar, buttonID, buttonTitle, imgSrc){
  */
 function drawSelectDefaultGeoTexture(){ //export the node <form>
     let form = document.createElement('form')
-    let formText = document.createTextNode('Import default textures')
+    let formText = document.createTextNode('Import default patterns')
     form.appendChild(formText)
 
     let select = document.createElement('select')
@@ -1023,7 +1023,7 @@ function drawGeoControllers(){ //draw controllers for geometric texture page
     gridControllersDiv.style.display = 'none'
 
 
-    $('#patternTypeDiv').append(drawRadios('Texture Type', ['Line', 'Dot', 'Grid'], ['lineRadio', 'dotRadio', 'gridRadio'], 'patternTypeRadio', 'patternTypeRadio'))
+    $('#patternTypeDiv').append(drawRadios('Pattern Type', ['Line', 'Dot', 'Grid'], ['lineRadio', 'dotRadio', 'gridRadio'], 'patternTypeRadio', 'patternTypeRadio'))
     $('#lineRadio').parents()[1].append(drawCheckbox('samePatternType','same','for all'))
 
     //line controllers
@@ -1051,7 +1051,7 @@ function drawGeoControllers(){ //draw controllers for geometric texture page
     //texture position
     $('#lineControllersDiv').append(document.createElement('br')) //blank line
 
-    $('#lineControllersDiv').append(document.createElement('p').appendChild(document.createTextNode('Texture Position')))
+    $('#lineControllersDiv').append(document.createElement('p').appendChild(document.createTextNode('Pattern Position')))
 
     $('#lineControllersDiv').append(drawSlider('Move Left-Right','controlLineX', 'lineController', '-100', '100', '0', '0.1'))
     $('#controlLineX').parents()[0].append(drawCheckbox('sameLineX','same','for all lines'))
@@ -1089,7 +1089,7 @@ function drawGeoControllers(){ //draw controllers for geometric texture page
     //texture position
     $('#dotControllersDiv').append(document.createElement('br')) //blank line
 
-    $('#dotControllersDiv').append(document.createElement('p').appendChild(document.createTextNode('Texture Position')))
+    $('#dotControllersDiv').append(document.createElement('p').appendChild(document.createTextNode('Pattern Position')))
 
     $('#dotControllersDiv').append(drawSlider('Move Left-Right','controlDotX', 'dotController', '-100', '100', '0', '0.1'))
     $('#controlDotX').parents()[0].append(drawCheckbox('sameDotX','same','for all dots'))
@@ -1129,7 +1129,7 @@ function drawGeoControllers(){ //draw controllers for geometric texture page
     //texture position
     $('#gridControllersDiv').append(document.createElement('br')) //blank line
 
-    $('#gridControllersDiv').append(document.createElement('p').appendChild(document.createTextNode('Texture Position')))
+    $('#gridControllersDiv').append(document.createElement('p').appendChild(document.createTextNode('Pattern Position')))
 
     $('#gridControllersDiv').append(drawSlider('Move Left-Right','controlGridX', 'gridController', '-100', '100', '0', '0.1'))
     $('#controlGridX').parents()[0].append(drawCheckbox('sameGridX','same','for all grids'))
@@ -3947,7 +3947,7 @@ function geo_switchTextures(chartName){
                         .attr('class')
 
                     if(dropClassName == null){
-                        console.log('please drop the texture to part of the chart')
+                        console.log('please drop the pattern to part of the chart')
                     }else{
 
                         k = dropClassName[dropClassName.length - 1]
@@ -4054,8 +4054,10 @@ function geo_selectDefaultTexture(){
         controlHalo.value = parameters['halo']
     }
 
-    parametersList.push(cloneParameters(parameters))
-    localStorage.setItem(chartName+'parametersList', JSON.stringify(parametersList))
+    addParametersToList(chartName, parameters)
+    revisitPostParameters(chartName, parameters, trrack, action)
+    // parametersList.push(cloneParameters(parameters))
+    // localStorage.setItem(chartName+'parametersList', JSON.stringify(parametersList))
 }
 
 /** iconic texture editing functions */
@@ -4902,7 +4904,7 @@ function icon_switchTextures(chartName){
                     let dropClassName = d3.select(document.elementFromPoint(event.sourceEvent.clientX, event.sourceEvent.clientY))
                         .attr('class')
                     if(dropClassName == null){
-                        console.log('please drop the texture to another texture on the chart')
+                        console.log('please drop the pattern to another pattern on the chart')
                     }else{
 
                         k = dropClassName[dropClassName.length - 1]

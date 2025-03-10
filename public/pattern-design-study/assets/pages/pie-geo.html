@@ -57,6 +57,8 @@
         // console.log('provenance', state)
             parameters = state['piegeo']
             //we redraw the textures of all categories, based on the new parameters
+
+            let selectedCat = parameters['selectedCat']
             if(chartName.endsWith('Geo')){
                     console.log('geo redraw')
                     //draw textures for category i
