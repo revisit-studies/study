@@ -1479,13 +1479,14 @@ function drawGeoBarWithTexture(data, width, height, chart){
     //set Outline controller
     controlOutline.oninput = function(){
         drawOutline('chart_outline', controlOutline.value)
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlOutline.onchange = function(){
         parameters['outline'] = controlOutline.value
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
 }
@@ -1648,14 +1649,14 @@ function drawGeoPieWithTexture(data, radius, chart){
         drawOutline('chart_outline', controlOutline.value, 'chart_halo', controlHalo.value)
         // arcBlackStroke.style('stroke-width', controlOutline.value)
         // arcWhiteStroke.style('stroke-width', parseFloat(controlHalo.value) + parseFloat(controlOutline.value))
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlHalo.oninput = function(){
         drawOutline('chart_outline', controlOutline.value, 'chart_halo', controlHalo.value)
         // arcBlackStroke.style('stroke-width', controlOutline.value)
         // arcWhiteStroke.style('stroke-width', parseFloat(controlHalo.value) + parseFloat(controlOutline.value))
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
 
@@ -1663,14 +1664,16 @@ function drawGeoPieWithTexture(data, radius, chart){
 
         parameters["outline"] = controlOutline.value
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlHalo.onchange = function(){
 
         parameters["halo"] = controlHalo.value
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 }
 
@@ -1731,19 +1734,19 @@ function drawGeoMapWithTexture(data, width, height, chart){
         })
 
         //initialize: for map, we have to put this initialize function here in the Promise.
-        geo_setInitialParameters()
+        geo_setInitialParameters(chartName)
 
         // change Map's outline based on the value of outline controller
         controlOutline.oninput = function(){
             drawOutline('chart_outline', controlOutline.value, 'chart_halo', controlHalo.value)
             // drawMapOutline(data, controlOutline.value, controlHalo.value)
-            addParametersToList(chartName, parameters, trrack, action)
+            revisitPostParameters(chartName, parameters, trrack, action)
         }
 
         controlHalo.oninput = function(){
             drawOutline('chart_outline', controlOutline.value, 'chart_halo', controlHalo.value)
             // drawMapHalo(data, controlOutline.value, controlHalo.value)
-            addParametersToList(chartName, parameters, trrack, action)
+            revisitPostParameters(chartName, parameters, trrack, action)
         }
 
 
@@ -1751,14 +1754,16 @@ function drawGeoMapWithTexture(data, width, height, chart){
 
             parameters["outline"] = controlOutline.value
 
-            addParametersToList(chartName, parameters, trrack, action)
+            addParametersToList(chartName, parameters)
+            revisitPostParameters(chartName, parameters, trrack, action)
         }
 
         controlHalo.onchange = function(){
 
             parameters["halo"] = controlHalo.value
 
-            addParametersToList(chartName, parameters, trrack, action)
+            addParametersToList(chartName, parameters)
+            revisitPostParameters(chartName, parameters, trrack, action)
         }
 
         for(let i=0; i < fruits.length;i++){
@@ -1817,12 +1822,13 @@ function drawIconBarWithTexture(data, width, height, chart){
     controlOutline.oninput = function(){
         drawOutline('chart_outline', controlOutline.value)
         // bars.style('stroke-width', controlOutline.value)
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
     controlOutline.onchange = function(){
         parameters['outline'] = controlOutline.value
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
 
@@ -1918,7 +1924,7 @@ function drawIconMapWithTexture(data, width, height, chart){
             //     d3.select("#dBlackStroke" + e.CODE_DEPT)
             //         .attr('stroke-width', controlOutline.value)
             // })
-            addParametersToList(chartName, parameters, trrack, action)
+            revisitPostParameters(chartName, parameters, trrack, action)
         }
 
         controlHalo.oninput = function(){
@@ -1930,21 +1936,23 @@ function drawIconMapWithTexture(data, width, height, chart){
             //     d3.select("#dBlackStroke" + e.CODE_DEPT)
             //         .attr('stroke-width', controlOutline.value)
             // })
-            addParametersToList(chartName, parameters, trrack, action)
+            revisitPostParameters(chartName, parameters, trrack, action)
         }
 
         controlOutline.onchange = function(){
 
             parameters["outline"] = controlOutline.value
 
-            addParametersToList(chartName, parameters, trrack, action)
+            addParametersToList(chartName, parameters)
+            revisitPostParameters(chartName, parameters, trrack, action)
         }
 
         controlHalo.onchange = function(){
 
             parameters["halo"] = controlHalo.value
 
-            addParametersToList(chartName, parameters, trrack, action)
+            addParametersToList(chartName, parameters)
+            revisitPostParameters(chartName, parameters, trrack, action)
         }
 
 
@@ -2015,27 +2023,30 @@ function drawIconPieWithTexture(data, radius, chart){
         drawOutline('chart_outline', controlOutline.value, 'chart_halo', controlHalo.value)
         // arcBlackStroke.style('stroke-width', controlOutline.value)
         // arcWhiteStroke.style('stroke-width', parseFloat(controlHalo.value)+ parseFloat(controlOutline.value)+ parseFloat(controlOutline.value))
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlHalo.oninput = function(){
         drawOutline('chart_outline', controlOutline.value, 'chart_halo', controlHalo.value)
         // arcBlackStroke.style('stroke-width', controlOutline.value)
         // arcWhiteStroke.style('stroke-width', parseFloat(controlHalo.value) + parseFloat(controlOutline.value))
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlOutline.onchange = function(){
 
         parameters['outline'] = controlOutline.value
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlHalo.onchange = function(){
 
         parameters["halo"] = controlHalo.value
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
 }
@@ -2685,6 +2696,7 @@ function drawOutline(chart_outline_class, outlineValue, chart_halo_class,haloVal
 function geo_selectCat(i){
     console.log('select cat:'+i)
 
+
     //update the text for fruit indicator
     let fruitName = document.getElementById('fruitName')
     fruitName.innerHTML = fruits[i]
@@ -2708,7 +2720,7 @@ function geo_selectCat(i){
                 geo_setCatPattern(i)
             }
 
-            addParametersToList(chartName, parameters, trrack, action)
+            addParametersToList(chartName, parameters)
         }
     }
 
@@ -2718,7 +2730,8 @@ function geo_selectCat(i){
     //line texture controller
     for(let j = 0; j < lineControllers.length; j++){
         lineControllers[j].onchange = function(){
-            addParametersToList(chartName, parameters, trrack, action)
+            addParametersToList(chartName, parameters)
+            revisitPostParameters(chartName, parameters, trrack, action)
         }
     }
 
@@ -2743,6 +2756,7 @@ function geo_selectCat(i){
         if(document.getElementById("sameLineDensity").checked == false){
             geo_setCatPattern(i)
         }
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlLineStrokeWidth.oninput = function(){
@@ -2759,7 +2773,7 @@ function geo_selectCat(i){
         if(document.getElementById("sameLineStrokeWidth").checked == false){
             geo_setCatPattern(i)
         }
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlLineX.oninput = function(){
@@ -2779,6 +2793,7 @@ function geo_selectCat(i){
         if(document.getElementById("sameLineX").checked == false){
             geo_setCatPattern(i)
         }
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlLineY.oninput = function(){
@@ -2798,7 +2813,7 @@ function geo_selectCat(i){
         if(document.getElementById("sameLineY").checked == false){
             geo_setCatPattern(i)
         }
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlLineRotate.oninput = function(){
@@ -2817,7 +2832,7 @@ function geo_selectCat(i){
         if(document.getElementById("sameLineRotate").checked == false){
             geo_setCatPattern(i)
         }
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
 
@@ -2842,7 +2857,8 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlLineAngle45.onclick = function(){
@@ -2864,7 +2880,8 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlLineAngle90.onclick = function(){
@@ -2886,7 +2903,8 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlLineAngle135.onclick = function(){
@@ -2908,7 +2926,8 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlLineBackgroundWhite.onclick = function(){
@@ -2930,7 +2949,8 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlLineBackgroundBlack.onclick = function(){
@@ -2952,7 +2972,8 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
 
@@ -2963,7 +2984,8 @@ function geo_selectCat(i){
         // }
 
         dotControllers[j].onchange = function(){
-            addParametersToList(chartName, parameters, trrack, action)
+            addParametersToList(chartName, parameters)
+            revisitPostParameters(chartName, parameters, trrack, action)
         }
     }
 
@@ -2991,7 +3013,7 @@ function geo_selectCat(i){
         if(document.getElementById("sameDotDensity").checked == false){
             geo_setCatPattern(i)
         }
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlDotSize.oninput = function(){
@@ -3012,7 +3034,7 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlDotRotate.oninput = function(){
@@ -3033,7 +3055,7 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlDotAngle0.onclick = function(){
@@ -3055,7 +3077,8 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlDotAngle45.onclick = function(){
@@ -3077,7 +3100,8 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
 
@@ -3104,7 +3128,8 @@ function geo_selectCat(i){
         }
 
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlDotBackgroundBlack.onclick = function(){
@@ -3127,7 +3152,8 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlDotPrimitiveDot.onclick = function(){
@@ -3149,7 +3175,8 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlDotPrimitiveCircle.onclick = function(){
@@ -3171,7 +3198,7 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
     }
 
     controlDotPrimitiveStrokeWidth.oninput = function(){
@@ -3188,6 +3215,7 @@ function geo_selectCat(i){
         if(document.getElementById("sameDotPrimitiveStrokeWidth").checked == false){
             geo_setCatPattern(i)
         }
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlDotX.oninput = function(){
@@ -3208,7 +3236,7 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlDotY.oninput = function(){
@@ -3228,7 +3256,7 @@ function geo_selectCat(i){
         if(document.getElementById("sameDotY").checked == false){
             geo_setCatPattern(i)
         }
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     //grid texture controller
@@ -3238,7 +3266,8 @@ function geo_selectCat(i){
         // }
 
         gridControllers[j].onchange = function(){
-            addParametersToList(chartName, parameters, trrack, action)
+            addParametersToList(chartName, parameters)
+            revisitPostParameters(chartName, parameters, trrack, action)
         }
     }
 
@@ -3271,7 +3300,7 @@ function geo_selectCat(i){
         if(document.getElementById("sameGridDensity").checked == false){
             geo_setCatPattern(i)
         }
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlGridStrokeWidth.oninput = function(){
@@ -3290,7 +3319,7 @@ function geo_selectCat(i){
         if(document.getElementById("sameGridStrokeWidth").checked == false){
             geo_setCatPattern(i)
         }
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlGridAngle.oninput = function(){
@@ -3315,7 +3344,7 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
 
@@ -3344,7 +3373,8 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlGridAngle30.onclick = function(){
@@ -3371,7 +3401,8 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlGridAngle45.onclick = function(){
@@ -3398,7 +3429,8 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlGridRotate.oninput = function(){
@@ -3422,6 +3454,7 @@ function geo_selectCat(i){
         if(document.getElementById("sameGridRotate").checked == false){
             geo_setCatPattern(i)
         }
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
 
@@ -3449,7 +3482,8 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlGridRotate45.onclick = function(){
@@ -3476,7 +3510,8 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlGridRotate60.onclick = function(){
@@ -3503,7 +3538,8 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
 
@@ -3529,7 +3565,8 @@ function geo_selectCat(i){
         }
 
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlGridBackgroundBlack.onclick = function(){
@@ -3553,7 +3590,8 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlGridX.oninput = function(){
@@ -3581,7 +3619,7 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlGridY.oninput = function(){
@@ -3609,7 +3647,7 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
 
@@ -3647,8 +3685,14 @@ function geo_selectCat(i){
     }
 }
 
+
 //set initial parameters when the window loads
-function geo_setInitialParameters(){
+function geo_setInitialParameters(chartName){
+    console.log("geo_setInitialParameters", chartName)
+
+    
+    // parameters["chartName"] = chartName
+    
 
 
     //if we did not save parameters in the local storage
@@ -3679,11 +3723,17 @@ function geo_setInitialParameters(){
     //set selectedCat
     if(localStorage.getItem(chartName + "_selectedCat") == null){
         geo_selectCat(0)
+        parameters["selectedCat"] = 0
+        addParametersToList(chartName, parameters)
     }else{
         geo_selectCat(Number(localStorage.getItem(chartName + "_selectedCat")))
+        parameters["selectedCat"] = Number(localStorage.getItem(chartName + "_selectedCat"))
+        addParametersToList(chartName, parameters)
     }
 
     getSameCheckboxesStatus(chartName)
+    revisitPostParameters(chartName, parameters, trrack, action)
+    
 }
 
 
@@ -3739,6 +3789,8 @@ function geo_getParameters(i){
 
     //line
     controlLineDensity.value = parameters["linePattern"+i+"Density"]
+    // console.log("aaaaadocument.getElementById('controlLineDensity').value", document.getElementById("controlLineDensity").value)
+    // console.log("controlLineDensity", controlLineDensity.value)
     controlLineStrokeWidth.max = parameters["linePattern"+i+"StrokeWidthMax"]
     controlLineStrokeWidth.value = parameters["linePattern"+i+"StrokeWidth"]
     controlLineX.value = parameters["linePattern"+i+"X"]
@@ -3749,6 +3801,15 @@ function geo_getParameters(i){
     //dot
     controlDotRotate.value = parameters["dotPattern"+i+"Rotate"]
     controlDotDensity.value = parameters["dotPattern"+i+"Density"]
+    // console.log("aaacontrolDotDensity", controlDotDensity.value)
+    // console.log("aaadocument.getElementById('controlDotDensity').value", document.getElementById("controlDotDensity").value)
+   
+        // var Dotslider = document.getElementById("controlDotDensity")
+        // Dotslider.value = parameters["dotPattern"+i+"Density"]
+        // Dotslider.dispatchEvent(new Event('input'))
+
+    // Dotslider.value = parameters["dotPattern"+i+"Density"]
+    // Dotslider.dispatchEvent(new Event('input'))
     controlDotSize.max = parameters["dotPattern"+i+"SizeMax"]
     controlDotSize.value = parameters["dotPattern"+i+"Size"]
     controlDotX.value = parameters["dotPattern"+i+"X"]
@@ -3759,7 +3820,7 @@ function geo_getParameters(i){
     controlDotPrimitiveStrokeWidth.value = parameters["dotPattern"+i+"PrimitiveStrokeWidth"]
 
     //grid
-     controlGridDensity.value = parameters["gridPattern"+i+"Density"]
+    controlGridDensity.value = parameters["gridPattern"+i+"Density"]
     controlGridStrokeWidth.max = parameters["gridPattern"+i+"StrokeWidthMax"]
     controlGridStrokeWidth.value = parameters["gridPattern"+i+"StrokeWidth"]
     controlGridX.value = parameters["gridPattern"+i+"X"]
@@ -3775,6 +3836,9 @@ function geo_getParameters(i){
  */
 function geo_defaultParameters(){
     parameters = {}
+    parameters["chartName"] = chartName
+    parameters["selectedCat"] = 0
+
     for(let i = 0; i < fruits.length; i++){
         patternType[i] = 0
 
@@ -3972,7 +4036,7 @@ function geo_switchTextures(chartName){
                         dropParameters = {}
 
                         geo_setCatPattern(i)
-                        addParametersToList(chartName, parameters, trrack, action)
+                        addParametersToList(chartName, parameters)
 
                         geo_selectCat(k)
                     }
@@ -4000,6 +4064,9 @@ function geo_selectDefaultTexture(){
 /** iconic texture editing functions */
 //choose i-th Cat as the target for all controllers
 function icon_selectCat(i){ //i: i-th Cat
+
+
+    
     //update the text for fruit indicator
     let fruitName = document.getElementById('fruitName')
     fruitName.innerHTML = fruits[i]
@@ -4034,11 +4101,13 @@ function icon_selectCat(i){ //i: i-th Cat
             icon_setCatPattern(i, patternSize)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlSize.onchange = function(){
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlDensity.oninput = function () {
@@ -4113,11 +4182,12 @@ function icon_selectCat(i){ //i: i-th Cat
 
             icon_setCatPattern(i, patternSize)
         }
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlDensity.onchange = function(){
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlX.oninput = function () {
@@ -4149,11 +4219,12 @@ function icon_selectCat(i){ //i: i-th Cat
             }
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlX.onchange = function(){
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     //We can only select one of these two checkbox: #sameX and #regionX
@@ -4201,7 +4272,7 @@ function icon_selectCat(i){ //i: i-th Cat
             }
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     //We can only select one of these two checkbox: #sameY and #regionY
@@ -4218,7 +4289,7 @@ function icon_selectCat(i){ //i: i-th Cat
 
 
     controlY.onchange = function(){
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
     }
 
     controlRotateIcon.oninput = function () {
@@ -4239,11 +4310,12 @@ function icon_selectCat(i){ //i: i-th Cat
             icon_setCatPattern(i, patternSize)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlRotateIcon.onchange = function(){
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlRotate.oninput = function () {
@@ -4253,11 +4325,12 @@ function icon_selectCat(i){ //i: i-th Cat
         if(document.getElementById("sameRotate").checked == false){
             icon_setCatPattern(i, patternSize)
         }
-        addParametersToList(chartName, parameters, trrack, action)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlRotate.onchange = function(){
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     // controlAngle0.onclick = function(){
@@ -4271,7 +4344,7 @@ function icon_selectCat(i){ //i: i-th Cat
     //     }
     //
     //
-    //     addParametersToList(chartName, parameters, trrack, action)
+    //     addParametersToList(chartName, parameters)
     // }
 
     controlAngle90.onclick = function(){
@@ -4284,7 +4357,8 @@ function icon_selectCat(i){ //i: i-th Cat
             icon_setCatPattern(i, patternSize)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
 
     }
 
@@ -4314,7 +4388,8 @@ function icon_selectCat(i){ //i: i-th Cat
                 icon_setCatPattern(i, patternSize)
             }
 
-            addParametersToList(chartName, parameters, trrack, action)
+            addParametersToList(chartName, parameters)
+            revisitPostParameters(chartName, parameters, trrack, action)
         }
     }
 
@@ -4328,7 +4403,8 @@ function icon_selectCat(i){ //i: i-th Cat
             icon_setCatPattern(i, patternSize)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
 
     }
 
@@ -4342,7 +4418,8 @@ function icon_selectCat(i){ //i: i-th Cat
             icon_setCatPattern(i, patternSize)
         }
 
-        addParametersToList(chartName, parameters, trrack, action)
+        addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
 
@@ -4404,10 +4481,16 @@ function icon_setInitialParameters(chartName){
     //set selectedCat
     if(localStorage.getItem(chartName + "_selectedCat") == null){
         icon_selectCat(0)
+        parameters["selectedCat"] = 0
+        addParametersToList(chartName, parameters)
     }else{
         icon_selectCat(Number(localStorage.getItem(chartName + "_selectedCat")))
+        parameters["selectedCat"] = Number(localStorage.getItem(chartName + "_selectedCat"))
+        addParametersToList(chartName, parameters)
     }
+
     getSameCheckboxesStatus(chartName)
+    revisitPostParameters(chartName, parameters, trrack, action)
 }
 
 function icon_setParameters(i){ //write the value of texture parameter controllers to the Object parameters
@@ -4438,6 +4521,9 @@ function icon_getParameters(i){ //write the value in Object parameters to textur
 
 function icon_defaultParameters(chartName){
     parameters = {}
+    parameters["chartName"] = chartName
+    parameters["selectedCat"] = 0
+
     for(let i = 0; i < fruits.length; i++){
 
         //we do not need iconStyle[i] = 0, because in the function icon_setCatPattern, we will set iconStyle[i] based on iconStyleRadios
@@ -4476,7 +4562,8 @@ function icon_defaultParameters(chartName){
 
 
 
-    addParametersToList(chartName, parameters, trrack, action)
+    addParametersToList(chartName, parameters)
+    revisitPostParameters(chartName, parameters, trrack, action)
 
     // parametersList = []
     // parametersList.push(cloneParameters(parameters))
@@ -4867,7 +4954,7 @@ function icon_switchTextures(chartName){
 
                         dropParameters = {}
                         icon_setCatPattern(i, patternSize)
-                        addParametersToList(chartName, parameters, trrack, action)
+                        addParametersToList(chartName, parameters)
                     }
 
                 }))
@@ -4934,26 +5021,13 @@ function cloneParameters(parameters) { //parametersList.push(parameters) will ca
 }
 
 /**
- * add parameters to parametersList, and updata the parametersList in the localStorage.
- * use it every time when we change parameters -- any action we do to textures will change its parameters
+ * post parameters to Revisit
  * @param chartName
- * @param parameters the new parameters we want to add to parametersList
+ * @param parameters
+ * @param trrack
+ * @param actions
  */
-function addParametersToList(chartName, parameters, trrack, actions){
-
-    //get the original parametersList from localStorage
-    let parametersList = JSON.parse(localStorage.getItem(chartName+'parametersList') || '[]')
-
-    //add the new parameters into parametersList
-    parametersList.push(cloneParameters(parameters))
-
-    //update the parametersList in the localStorage
-    localStorage.setItem(chartName+'parametersList', JSON.stringify(parametersList))
-
-    //move the pointer to the end of paramtersList. This pointer is used for undo and redo function.
-    let pointer = parametersList.length - 1
-    localStorage.setItem(chartName+'pointer', pointer)
-
+function revisitPostParameters(chartName, parameters, trrack, actions){
     if(chartName === 'barGeo'){
         trrack.apply("BarGeoParameters", actions.updateBarGeoParameters(cloneParameters(parameters)))
         console.log('barGeoParameters applied')
@@ -4986,7 +5060,30 @@ function addParametersToList(chartName, parameters, trrack, actions){
         }
     )
     console.log("postAnswers")
-    console.log(parameters)
+    // console.log(parameters)
+        
+}
+
+/**
+ * add parameters to parametersList, and updata the parametersList in the localStorage.
+ * use it every time when we change parameters -- any action we do to textures will change its parameters
+ * @param chartName
+ * @param parameters the new parameters we want to add to parametersList
+ */
+function addParametersToList(chartName, parameters){
+    //get the original parametersList from localStorage
+    let parametersList = JSON.parse(localStorage.getItem(chartName+'parametersList') || '[]')
+
+    //add the new parameters into parametersList
+    parametersList.push(cloneParameters(parameters))
+
+    //update the parametersList in the localStorage
+    localStorage.setItem(chartName+'parametersList', JSON.stringify(parametersList))
+
+    //move the pointer to the end of paramtersList. This pointer is used for undo and redo function.
+    let pointer = parametersList.length - 1
+    localStorage.setItem(chartName+'pointer', pointer)
+
 }
 
 function saveParameters(chartName){
@@ -5023,6 +5120,11 @@ function setSelectCat(chartName){
                 }
 
                 localStorage.setItem(chartName + '_selectedCat', i)
+
+                parameters["chartName"] = chartName
+                parameters["selectedCat"] = i
+                console.log("parameters", parameters)
+                addParametersToList(chartName, parameters)
             })
     }
 }

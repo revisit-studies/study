@@ -5,7 +5,9 @@
  */
 
 import { Group, Stack, Button } from '@mantine/core';
-import { useMemo, useState } from 'react';
+import {
+  useMemo, useState, useEffect, useRef,
+} from 'react';
 import HeatmapPlots from './HeatmapPlots';
 
 function hashSeed(r1: number, r2: number) {
@@ -19,14 +21,16 @@ function hashSeed(r1: number, r2: number) {
  * @returns 2 Scatter Plots
  */
 export default function HeatmapWrapper({
-  r1, r2, shouldReRender = true, onClick, shouldRandomize = true,
-}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number) => void, shouldRandomize?: boolean}) {
+  r1, r2, shouldReRender = true, onClick, shouldRandomize = true, shouldNegate = false,
+}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number) => void, shouldRandomize?: boolean, shouldNegate?: boolean}) {
   const higherFirst = useMemo(
     () => (shouldRandomize ? hashSeed(r1, r2) > 0.5 : true),
     [shouldRandomize, r1, r2],
   );
 
   const [key, setKey] = useState<number>(0);
+  const buttonARef = useRef<HTMLButtonElement | null>(null);
+  const buttonBRef = useRef<HTMLButtonElement | null>(null);
 
   const handleReset = () => {
     // Increment key to trigger re-render
@@ -40,26 +44,42 @@ export default function HeatmapWrapper({
     handleReset();
   };
 
+  // Keybinding for left (A) and right (B)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'ArrowLeft' && buttonARef.current) {
+        buttonARef.current.click();
+      } else if (event.key === 'ArrowRight' && buttonBRef.current) {
+        buttonBRef.current.click();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   return higherFirst ? (
     <Group style={{ gap: '100px' }}>
       <Stack style={{ alignItems: 'center' }}>
-        <HeatmapPlots key={key} onClick={() => handleClick(1)} r={r1} />
-        <Button onClick={() => handleClick(1)}>A</Button>
+        <HeatmapPlots key={key} onClick={() => handleClick(1)} r={r1} shouldNegate={shouldNegate} />
+        <Button ref={buttonARef} style={{ marginLeft: '-30px' }} onClick={() => handleClick(1)}>A</Button>
       </Stack>
       <Stack style={{ alignItems: 'center' }}>
-        <HeatmapPlots key={key + 1} onClick={() => handleClick(2)} r={r2} />
-        <Button onClick={() => handleClick(2)}>B</Button>
+        <HeatmapPlots key={key + 1} onClick={() => handleClick(2)} r={r2} shouldNegate={shouldNegate} />
+        <Button ref={buttonBRef} style={{ marginLeft: '-30px' }} onClick={() => handleClick(2)}>B</Button>
       </Stack>
     </Group>
   ) : (
     <Group style={{ gap: '100px' }}>
       <Stack style={{ alignItems: 'center' }}>
-        <HeatmapPlots key={key} onClick={() => handleClick(2)} r={r2} />
-        <Button onClick={() => handleClick(2)}>A</Button>
+        <HeatmapPlots key={key} onClick={() => handleClick(2)} r={r2} shouldNegate={shouldNegate} />
+        <Button ref={buttonARef} style={{ marginLeft: '-30px' }} onClick={() => handleClick(2)}>A</Button>
       </Stack>
       <Stack style={{ alignItems: 'center' }}>
-        <HeatmapPlots key={key + 1} onClick={() => handleClick(1)} r={r1} />
-        <Button onClick={() => handleClick(1)}>B</Button>
+        <HeatmapPlots key={key + 1} onClick={() => handleClick(1)} r={r1} shouldNegate={shouldNegate} />
+        <Button ref={buttonBRef} style={{ marginLeft: '-30px' }} onClick={() => handleClick(1)}>B</Button>
       </Stack>
     </Group>
   );

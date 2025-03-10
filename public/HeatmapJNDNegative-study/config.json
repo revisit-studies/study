@@ -1,16 +1,16 @@
 {
   "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-    "title": "Parallel Coordinates JND Study",
+    "title": "Heatmap Plot JND Study with Negative Correlations",
     "version": "pilot",
     "authors": ["The reVISit Team"],
-    "date": "2024-06-26",
-    "description": "This is a reVISt variation study of JND(Just Noticeable Difference) Parallel Coordinates Plot experiment.",
+    "date": "2024-12-26",
+    "description": "This is a reVISit variation study of JND(Just Noticeable Difference) Heatmap Plot experiment with Negative Correlations.",
     "organizations": ["University of Utah", "WPI", "University of Toronto"]
   },
   "uiConfig": {
     "contactEmail": "contact@revisit.dev",
-    "helpTextPath": "ParallelJND-study/assets/help.md",
+    "helpTextPath": "HeatmapJNDNegative-study/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": false,
     "autoDownloadStudy": false,
@@ -22,10 +22,10 @@
   "baseComponents": {
     "experimentRevised": {
       "type": "react-component",
-      "path": "jnd-replication/vistaJND/src/components/vis/JNDParallelRevised.tsx",
+      "path": "jnd-replication/vistaJND/src/components/vis/JNDHeatmap.tsx",
       "nextButtonLocation": "sidebar",
       "response": [{ 
-        "id": "parallelSelections",
+        "id": "heatmapSelections",
         "prompt": "",
         "required": true,
         "location": "aboveStimulus",
@@ -36,7 +36,7 @@
     },
     "practiceBase": {
       "type": "react-component",
-      "path": "jnd-replication/vistaJND/src/components/vis/PracticeParallel.tsx",
+      "path": "jnd-replication/vistaJND/src/components/vis/PracticeHeatmap.tsx",
       "response": [{
         "id": "practiceResponse",
         "prompt": "Complete the practice",
@@ -50,22 +50,22 @@
   "components": {
     "introduction": {
       "type": "markdown",
-      "path": "ParallelJND-study/assets/introduction.md",
+      "path": "HeatmapJNDNegative-study/assets/introduction.md",
       "response": [
         {
-            "id": "prolificId",
-            "prompt": "Please enter your Prolific ID",
-            "required": true,
-            "location": "belowStimulus",
-            "type": "shortText",
-            "placeholder": "Prolific ID",
-            "paramCapture": "PROLIFIC_PID"
+          "id": "prolificId",
+          "prompt": "Please enter your Prolific ID",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Prolific ID",
+          "paramCapture": "PROLIFIC_PID"
         }
       ]
     },
     "consent": {
       "type": "markdown",
-      "path": "ParallelJND-study/assets/consent.md",
+      "path": "HeatmapJNDNegative-study/assets/consent.md",
       "nextButtonText": "Agree",
       "response": [
         {
@@ -83,48 +83,48 @@
     },
     "training": {
       "type": "markdown",
-      "path": "ParallelJND-study/assets/training.md",
+      "path": "HeatmapJNDNegative-study/assets/training.md",
       "response": []
     },
-    "Parallel Coordinates T1 A:0.3 B:0.7": {
+    "Heatmap plot T1 A:0.3 B:0.7": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.3, "r2": 0.7, "taskid": "practiceResponse" }
+      "parameters": { "r1": 0.3, "r2": 0.7, "taskid": "practiceResponse", "shouldNegate": true }
     },
-    "Parallel Coordinates T2 A:0.9 B:0.6": {
+    "Heatmap plot T2 A:0.9 B:0.6": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.9, "r2": 0.6, "taskid": "practiceResponse" }
+      "parameters": { "r1": 0.9, "r2": 0.6, "taskid": "practiceResponse", "shouldNegate": true }
     },
-    "Parallel Coordinates T3 A:0.6 B:0.3": {
+    "Heatmap plot T3 A:0.6 B:0.3": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.6, "r2": 0.3, "taskid": "practiceResponse" }
+      "parameters": { "r1": 0.6, "r2": 0.3, "taskid": "practiceResponse", "shouldNegate": true }
     },
-    "Parallel Coordinates T4 A:0.6 B:0.9": {
+    "Heatmap plot T4 A:0.6 B:0.9": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.6, "r2": 0.9, "taskid": "practiceResponse" }
+      "parameters": { "r1": 0.6, "r2": 0.9, "taskid": "practiceResponse", "shouldNegate": true }
     },
-    "Parallel Coordinates T5 A:0.3 B:0.1": {
+    "Heatmap plot T5 A:0.3 B:0.1": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.3, "r2": 0.1, "taskid": "practiceResponse" }
+      "parameters": { "r1": 0.3, "r2": 0.1, "taskid": "practiceResponse", "shouldNegate": true }
     },
-    "Parallel Coordinates T6 A:0.5 B:0.3": {
+    "Heatmap plot T6 A:0.5 B:0.3": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.5, "r2": 0.3, "taskid": "practiceResponse" }
+      "parameters": { "r1": 0.5, "r2": 0.3, "taskid": "practiceResponse", "shouldNegate": true }
     },
-    "Parallel Coordinates T7 A:0.9 B:0.8": {
+    "Heatmap plot T7 A:0.9 B:0.8": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.9, "r2": 0.8, "taskid": "practiceResponse" }
+      "parameters": { "r1": 0.9, "r2": 0.8, "taskid": "practiceResponse", "shouldNegate": true }
     },
-    "Parallel Coordinates T8 A:0.6 B:0.7": {
+    "Heatmap plot T8 A:0.6 B:0.7": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.6, "r2": 0.7, "taskid": "practiceResponse" }
+      "parameters": { "r1": 0.6, "r2": 0.7, "taskid": "practiceResponse", "shouldNegate": true }
     },
-    "Parallel Coordinates T9 A:0.99 B:0.9": {
+    "Heatmap plot T9 A:0.99 B:0.9": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.99, "r2": 0.9, "taskid": "practiceResponse" }
+      "parameters": { "r1": 0.99, "r2": 0.9, "taskid": "practiceResponse", "shouldNegate": true }
     },
     "begin": {
       "type": "markdown",
-      "path": "ParallelJND-study/assets/begin.md",
+      "path": "HeatmapJNDNegative-study/assets/begin.md",
       "response": []
     },
     "trial": {
@@ -132,7 +132,7 @@
     },
     "break": {
       "type": "markdown",
-      "path": "ParallelJND-study/assets/break.md",
+      "path": "HeatmapJNDNegative-study/assets/break.md",
       "response": []
     },
     "survey": {
@@ -242,7 +242,7 @@
     },
     "debrief": {
       "type": "markdown",
-      "path": "ScatterJND-study/assets/debrief.md",
+      "path": "HeatmapJNDNegative-study/assets/debrief.md",
       "response": []
     }
   },
@@ -255,9 +255,9 @@
       {
         "order": "fixed",
         "components": [
-          "Parallel Coordinates T1 A:0.3 B:0.7", "Parallel Coordinates T2 A:0.9 B:0.6", "Parallel Coordinates T3 A:0.6 B:0.3",
-          "Parallel Coordinates T4 A:0.6 B:0.9", "Parallel Coordinates T5 A:0.3 B:0.1", "Parallel Coordinates T6 A:0.5 B:0.3",
-          "Parallel Coordinates T7 A:0.9 B:0.8", "Parallel Coordinates T8 A:0.6 B:0.7", "Parallel Coordinates T9 A:0.99 B:0.9"
+          "Heatmap plot T1 A:0.3 B:0.7", "Heatmap plot T2 A:0.9 B:0.6", "Heatmap plot T3 A:0.6 B:0.3",
+          "Heatmap plot T4 A:0.6 B:0.9", "Heatmap plot T5 A:0.3 B:0.1", "Heatmap plot T6 A:0.5 B:0.3",
+          "Heatmap plot T7 A:0.9 B:0.8", "Heatmap plot T8 A:0.6 B:0.7", "Heatmap plot T9 A:0.99 B:0.9"
         ]
       },
       "begin",
@@ -274,7 +274,8 @@
                 "r2": 0.1,
                 "above": false,
                 "name": "below3",
-                "index": 13
+                "index": 13,
+                "shouldNegate": true
               }
             },
             "break"
@@ -291,7 +292,8 @@
                 "r2": 0.5,
                 "above": true,
                 "name": "above3",
-                "index": 15
+                "index": 15,
+                "shouldNegate": true
               }
             },
             "break"
@@ -308,7 +310,8 @@
                 "r2": 0.5,
                 "above": false,
                 "name": "below6",
-                "index": 17
+                "index": 17,
+                "shouldNegate": true
               }
             },
             "break"
@@ -325,7 +328,8 @@
                 "r2": 0.7,
                 "above": true,
                 "name": "above6",
-                "index": 19
+                "index": 19,
+                "shouldNegate": true
               }
             },
             "break"
@@ -342,7 +346,8 @@
                 "r2": 0.8,
                 "above": false,
                 "name": "below9",
-                "index": 21
+                "index": 21,
+                "shouldNegate": true
               }
             },
             "break"
@@ -359,7 +364,8 @@
                 "r2": 0.99,
                 "above": true,
                 "name": "above9",
-                "index": 23
+                "index": 23,
+                "shouldNegate": true
               }
             }
             ],
