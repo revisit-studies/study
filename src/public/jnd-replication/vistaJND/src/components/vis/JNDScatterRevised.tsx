@@ -26,8 +26,10 @@ import { useNextStep } from '../../../../../../store/hooks/useNextStep';
  * @returns 2 scatter plots during the experiment or a message of completion
  * of the trial
  */
-export default function JND({ setAnswer, parameters } : StimulusParams<{r1: number, r2:number, above: boolean, counter: number, shouldNegate: boolean}>) {
-  const { r1, r2, shouldNegate } = parameters;
+export default function JND({ setAnswer, parameters } : StimulusParams<{r1: number, r2:number, above: boolean, counter: number, shouldNegate: boolean, higherFirst: boolean}>) {
+  const {
+    r1, r2, shouldNegate, higherFirst,
+  } = parameters;
   const { goToNextStep } = useNextStep();
 
   const onClick = (n: number) => {
@@ -63,7 +65,7 @@ export default function JND({ setAnswer, parameters } : StimulusParams<{r1: numb
         You can either click the buttons (A or B) or use the‚ left and right keys.
       </Text>
       <Center>
-        <ScatterWrapper onClick={onClick} r1={r1} r2={r2} shouldNegate={shouldNegate} />
+        <ScatterWrapper onClick={onClick} r1={r1} r2={r2} shouldNegate={shouldNegate} higherFirst={higherFirst} />
       </Center>
     </Stack>
   );

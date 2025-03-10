@@ -1,6 +1,7 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
 import { variance } from 'jstat';
+import seedrandom from 'seedrandom';
 import { JumpFunctionParameters, JumpFunctionReturnVal, StoredAnswer } from '../../../../../../store/types';
 
 export default function func({
@@ -9,6 +10,9 @@ export default function func({
   let { r1, r2, above } = customParameters;
   const { name, index } = customParameters;
   const shouldNegate = customParameters.shouldNegate || false;
+  const randomNum = seedrandom(Date.now().toString())();
+  const higherFirst = randomNum > 0.5;
+
   let counter = 0;
   const findLatestTrial = (trialAnswers: Record<string, StoredAnswer>, position: number) => {
     const trialKeys = Object.keys(trialAnswers)
@@ -100,7 +104,7 @@ export default function func({
   return {
     component: 'trial',
     parameters: {
-      r1, r2, above, counter, shouldNegate,
+      r1, r2, above, counter, shouldNegate, higherFirst,
     },
   };
 }
