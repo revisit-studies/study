@@ -34,9 +34,15 @@ export default function JND({ setAnswer, parameters } : StimulusParams<{r1: numb
 
   const onClick = (n: number) => {
     // setCounter(counter + 1);
+    let answerDirection = '';
+    if (n === 1) {
+      answerDirection = higherFirst ? 'left' : 'right';
+    } else {
+      answerDirection = higherFirst ? 'right' : 'left';
+    }
     setAnswer({
       status: true,
-      answers: { scatterSelections: n },
+      answers: { scatterSelections: { n, answerDirection } },
     });
 
     setTimeout(() => {
