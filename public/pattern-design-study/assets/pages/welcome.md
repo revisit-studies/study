@@ -1,8 +1,8 @@
 ## Welcome
 
-You are being invited to participate in a study titled **"Design Characterization for Black-and-White Textures in Visualization."** This study is conducted by the reVISit team.
+You are being invited to participate in a study titled **"Design Characterization for Black-and-White patterns in Visualization."** This study is conducted by the reVISit team.
 
-The purpose of this study is to explore how to use black-and-white texture in visual data representations, like in the following historic examples:
+The purpose of this study is to explore how to use black-and-white pattern in visual data representations, like in the following historic examples:
 
 ![Charts with black and white textures](./assets/img/welcome_teaser.png) 
 

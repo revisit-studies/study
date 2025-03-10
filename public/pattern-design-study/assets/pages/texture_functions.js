@@ -2361,22 +2361,41 @@ function undo(chartName){
             //we get the parameters that is pointed by the pointer
             parameters = parametersList[pointer]
 
-            //we redraw the textures of all categories, based on the new parameters
-            for(let i = 0; i < fruits.length; i++){
-                //since geometric texture and iconic texture have different parameters set, here we need to distinguish them
-                if(chartName.endsWith('Geo')){
-                    console.log('geo redo')
+            let selectedCat = parameters['selectedCat']
+            console.log('undo selectedCat:', selectedCat)
+
+            if(chartName.endsWith('Geo')){
+                    console.log('geo redraw')
                     //draw textures for category i
-                    geo_getParameters(i)
-                    geo_setCatPattern(i)
+                    geo_getParameters(selectedCat)
+                    geo_setCatPattern(selectedCat)
+                    geo_selectCat(selectedCat)
                 }
-                if(chartName.endsWith('Icon')){
-                    console.log('icon redo')
-                    //draw textures for category i
-                    icon_getParameters(i)
-                    icon_setCatPattern(i, patternSize)
-                }
+            if(chartName.endsWith('Icon')){
+                console.log('icon redraw')
+                //draw textures for category i
+                icon_getParameters(selectedCat)
+                icon_setCatPattern(selectedCat, patternSize)
+                icon_selectCat(selectedCat)
             }
+
+
+            //we redraw the textures of all categories, based on the new parameters
+            // for(let i = 0; i < fruits.length; i++){
+            //     //since geometric texture and iconic texture have different parameters set, here we need to distinguish them
+            //     if(chartName.endsWith('Geo')){
+            //         console.log('geo redo')
+            //         //draw textures for category i
+            //         geo_getParameters(i)
+            //         geo_setCatPattern(i)
+            //     }
+            //     if(chartName.endsWith('Icon')){
+            //         console.log('icon redo')
+            //         //draw textures for category i
+            //         icon_getParameters(i)
+            //         icon_setCatPattern(i, patternSize)
+            //     }
+            // }
 
             let controlOutline = document.getElementById('controlOutline')
             controlOutline.value = parameters['outline']
@@ -2414,21 +2433,38 @@ function redo(chartName){
 
                 //we get the parameters that is pointed by the pointer
                 parameters = parametersList[pointer]
-
-                //we redraw the textures of all categories, based on the new parameters
-                for(let i = 0; i < fruits.length; i++){
-                    //since geometric texture and iconic texture have different parameters set, here we need to distinguish them
-                    if(chartName.endsWith('Geo')){
+                let selectedCat = parameters['selectedCat']
+                console.log('undo selectedCat:', selectedCat)
+    
+                if(chartName.endsWith('Geo')){
+                        console.log('geo redraw')
                         //draw textures for category i
-                        geo_getParameters(i)
-                        geo_setCatPattern(i)
+                        geo_getParameters(selectedCat)
+                        geo_setCatPattern(selectedCat)
+                        geo_selectCat(selectedCat)
                     }
-                    if(chartName.endsWith('Icon')){
-                        //draw textures for category i
-                        icon_getParameters(i)
-                        icon_setCatPattern(i, patternSize)
-                    }
+                if(chartName.endsWith('Icon')){
+                    console.log('icon redraw')
+                    //draw textures for category i
+                    icon_getParameters(selectedCat)
+                    icon_setCatPattern(selectedCat, patternSize)
+                    icon_selectCat(selectedCat)
                 }
+    
+                // //we redraw the textures of all categories, based on the new parameters
+                // for(let i = 0; i < fruits.length; i++){
+                //     //since geometric texture and iconic texture have different parameters set, here we need to distinguish them
+                //     if(chartName.endsWith('Geo')){
+                //         //draw textures for category i
+                //         geo_getParameters(i)
+                //         geo_setCatPattern(i)
+                //     }
+                //     if(chartName.endsWith('Icon')){
+                //         //draw textures for category i
+                //         icon_getParameters(i)
+                //         icon_setCatPattern(i, patternSize)
+                //     }
+                // }
                 let controlOutline = document.getElementById('controlOutline')
                 controlOutline.value = parameters['outline']
 
@@ -2694,7 +2730,7 @@ function drawOutline(chart_outline_class, outlineValue, chart_halo_class,haloVal
 
 //set i-th category as the target for all texture parameter controllers + set controllers value
 function geo_selectCat(i){
-    console.log('select cat:'+i)
+    console.log('geo select cat:'+i)
 
 
     //update the text for fruit indicator
@@ -2719,8 +2755,6 @@ function geo_selectCat(i){
                 patternType[i] = j
                 geo_setCatPattern(i)
             }
-
-            addParametersToList(chartName, parameters)
         }
     }
 
@@ -2856,9 +2890,6 @@ function geo_selectCat(i){
         if(document.getElementById("sameLineRotate").checked == false){
             geo_setCatPattern(i)
         }
-
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlLineAngle45.onclick = function(){
@@ -2880,8 +2911,6 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlLineAngle90.onclick = function(){
@@ -2903,8 +2932,6 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlLineAngle135.onclick = function(){
@@ -2926,8 +2953,6 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlLineBackgroundWhite.onclick = function(){
@@ -2949,8 +2974,7 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
+
     }
 
     controlLineBackgroundBlack.onclick = function(){
@@ -2972,8 +2996,6 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
 
@@ -3076,9 +3098,6 @@ function geo_selectCat(i){
         if(document.getElementById("sameDotRotate").checked == false){
             geo_setCatPattern(i)
         }
-
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlDotAngle45.onclick = function(){
@@ -3128,8 +3147,6 @@ function geo_selectCat(i){
         }
 
 
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlDotBackgroundBlack.onclick = function(){
@@ -3151,9 +3168,6 @@ function geo_selectCat(i){
         if(document.getElementById("sameDotBackground").checked == false){
             geo_setCatPattern(i)
         }
-
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlDotPrimitiveDot.onclick = function(){
@@ -3175,8 +3189,6 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlDotPrimitiveCircle.onclick = function(){
@@ -3198,7 +3210,6 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters)
     }
 
     controlDotPrimitiveStrokeWidth.oninput = function(){
@@ -3373,8 +3384,7 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
+
     }
 
     controlGridAngle30.onclick = function(){
@@ -3401,8 +3411,6 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlGridAngle45.onclick = function(){
@@ -3429,8 +3437,6 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlGridRotate.oninput = function(){
@@ -3482,8 +3488,6 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlGridRotate45.onclick = function(){
@@ -3510,8 +3514,6 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlGridRotate60.onclick = function(){
@@ -3538,8 +3540,6 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
 
@@ -3565,8 +3565,6 @@ function geo_selectCat(i){
         }
 
 
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlGridBackgroundBlack.onclick = function(){
@@ -3590,8 +3588,6 @@ function geo_selectCat(i){
             geo_setCatPattern(i)
         }
 
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlGridX.oninput = function(){
@@ -3786,6 +3782,7 @@ function geo_getParameters(i){
 
     //pattern type: line, dot, grid
     patternType[i] = parameters["patternType"+i]
+    patternTypeRadios[patternType[i]].checked = true
 
     //line
     controlLineDensity.value = parameters["linePattern"+i+"Density"]
@@ -4101,7 +4098,6 @@ function icon_selectCat(i){ //i: i-th Cat
             icon_setCatPattern(i, patternSize)
         }
 
-        addParametersToList(chartName, parameters)
         revisitPostParameters(chartName, parameters, trrack, action)
     }
 
@@ -4290,6 +4286,7 @@ function icon_selectCat(i){ //i: i-th Cat
 
     controlY.onchange = function(){
         addParametersToList(chartName, parameters)
+        revisitPostParameters(chartName, parameters, trrack, action)
     }
 
     controlRotateIcon.oninput = function () {
@@ -4356,10 +4353,6 @@ function icon_selectCat(i){ //i: i-th Cat
         if(document.getElementById("sameRotate").checked == false){
             icon_setCatPattern(i, patternSize)
         }
-
-        addParametersToList(chartName, parameters)
-        revisitPostParameters(chartName, parameters, trrack, action)
-
     }
 
 
@@ -4381,6 +4374,7 @@ function icon_selectCat(i){ //i: i-th Cat
                     legendImgs[k].setAttribute("href", "#" + iconStyleList[iconStyle[i]] + "_"+ fruits[k]+"_fix")
 
                     parameters["iconPattern"+k+"IconStyle"] = m
+                    
                 }
 
             }
@@ -4482,14 +4476,14 @@ function icon_setInitialParameters(chartName){
     if(localStorage.getItem(chartName + "_selectedCat") == null){
         icon_selectCat(0)
         parameters["selectedCat"] = 0
-        addParametersToList(chartName, parameters)
+        
     }else{
         icon_selectCat(Number(localStorage.getItem(chartName + "_selectedCat")))
         parameters["selectedCat"] = Number(localStorage.getItem(chartName + "_selectedCat"))
-        addParametersToList(chartName, parameters)
     }
 
     getSameCheckboxesStatus(chartName)
+    addParametersToList(chartName, parameters)
     revisitPostParameters(chartName, parameters, trrack, action)
 }
 
@@ -4507,7 +4501,10 @@ function icon_setParameters(i){ //write the value of texture parameter controlle
 }
 
 function icon_getParameters(i){ //write the value in Object parameters to texture parameter controllers
+    console.log('icon get parameters for category:', i)
     iconStyle[i] = parameters["iconPattern"+i+"IconStyle"]
+    iconStyleRadios[iconStyle[i]].checked = true
+    console.log('iconStyleRadios:', iconStyle[i])
     controlDensity.value = parameters["iconPattern"+i+"Density"]
     controlSize.max = parameters["iconPattern"+i+"SizeMax"]
     controlSize.value = parameters["iconPattern"+i+"Size"]
@@ -4516,6 +4513,7 @@ function icon_getParameters(i){ //write the value in Object parameters to textur
     controlRotateIcon.value = parameters["iconPattern"+i+"RotateIcon"]
     controlRotate.value = parameters["iconPattern"+i+"Rotate"]
     iconBackground[i] = parameters["iconPattern"+i+"Background"]
+    controlBackgroundRadios[iconBackground[i]].checked = true
     // controlOutline.value = parameters["outline"]
 }
 

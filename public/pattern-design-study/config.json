@@ -36,7 +36,7 @@
     "tutorial": {
       "type": "website",
       "path": "pattern-design-study/assets/pages/tutorial.html",
-      "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Next** button below.",
+      "instruction": "### Get Familiar with the Pattern Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Next** button below.",
       "instructionLocation": "sidebar",
       "nextButtonLocation": "sidebar",
       "response": []
@@ -141,14 +141,14 @@
         },
         {
           "id": "design-strategies-geometric-textures",
-          "prompt": "When you chose the parameters for the **geometric textures**, did you use any methods or principles?",
+          "prompt": "When you chose the parameters for the **geometric patterns**, did you use any methods or principles?",
           "location": "sidebar",
           "type": "longText",
           "placeholder": "Please write your answer here."
         },
         {
           "id": "design-strategies-iconic-textures",
-          "prompt": "When you chose the parameters for the **iconic textures**, did you use any methods or principles?",
+          "prompt": "When you chose the parameters for the **iconic patterns**, did you use any methods or principles?",
           "location": "sidebar",
           "type": "longText",
           "placeholder": "Please write your answer here."
@@ -175,14 +175,14 @@
         },
         {
           "id": "design-strategies-iconic-textures",
-          "prompt": "When you chose the parameters for the **iconic textures**, did you use any methods or principles?",
+          "prompt": "When you chose the parameters for the **iconic patterns**, did you use any methods or principles?",
           "location": "sidebar",
           "type": "longText",
           "placeholder": "Please write your answer here."
         },
         {
           "id": "design-strategies-geometric-textures",
-          "prompt": "When you chose the parameters for the **geometric textures**, did you use any methods or principles?",
+          "prompt": "When you chose the parameters for the **geometric patterns**, did you use any methods or principles?",
           "location": "sidebar",
           "type": "longText",
           "placeholder": "Please write your answer here."
@@ -196,13 +196,13 @@
         "condition_chart": 0,
         "condition_texture": 0
       },
-      "instruction": "### Compare Textures \n\n Here are your designs with both the geometric and iconic textures.",
+      "instruction": "### Compare Patterns \n\n Here are your designs with both the geometric and iconic patterns.",
       "instructionLocation": "sidebar",
       "nextButtonLocation": "sidebar",
       "response": [
         {
           "id": "compare-texture",
-          "prompt": "What's your general impression, experience, or take-away about using geometric and iconic textures for data representation?",
+          "prompt": "What's your general impression, experience, or take-away about using geometric and iconic patterns for data representation?",
           "location": "sidebar",
           "type": "longText",
           "placeholder": "Please write your answer here."
@@ -216,13 +216,13 @@
         "condition_chart": 0,
         "condition_texture": 0
       },
-      "instruction": "### Compare Textures \n\n Here are your designs with both the iconic and geometric textures.",
+      "instruction": "### Compare Patterns \n\n Here are your designs with both the iconic and geometric patterns.",
       "instructionLocation": "sidebar",
       "nextButtonLocation": "sidebar",
       "response": [
         {
           "id": "compare-texture",
-          "prompt": "What's your general impression, experience, or take-away about using geometric and iconic textures for data representation?",
+          "prompt": "What's your general impression, experience, or take-away about using geometric and iconic patterns for data representation?",
           "location": "sidebar",
           "type": "longText",
           "placeholder": "Please write your answer here."
@@ -395,7 +395,7 @@
         "condition_chart": 0,
         "condition_texture": 0
       },
-      "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task, but keep in mind that we will ask you to complete one other design after this one."
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task, but keep in mind that we will ask you to complete one other design after this one."
     },
     "bar-geo_icon-geo": {
       "baseComponent": "bar-geo",
@@ -403,7 +403,7 @@
         "condition_chart": 0,
         "condition_texture": 0
       },
-      "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
     },
     "bar-icon_geo-icon": {
       "baseComponent": "bar-icon",
@@ -411,7 +411,7 @@
         "condition_chart": 0,
         "condition_texture": 0
       },
-      "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
     },
     "bar-icon_icon-geo": {
       "baseComponent": "bar-icon",
@@ -419,7 +419,7 @@
         "condition_chart": 0,
         "condition_texture": 0
       },
-      "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\n When you finish designing, click on the **Next** button. There is no time limit for this task, but keep in mind that we will ask you to complete one other design after this one."
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\n When you finish designing, click on the **Next** button. There is no time limit for this task, but keep in mind that we will ask you to complete one other design after this one."
     },
     "pie-geo_geo-icon": {
       "baseComponent": "pie-geo",
@@ -427,7 +427,7 @@
         "condition_chart": 1,
         "condition_texture": 0
       },
-      "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\n When you finish designing, click on the **Next** button. There is no time limit for this task, but keep in mind that we will ask you to complete one other design after this one."
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\n When you finish designing, click on the **Next** button. There is no time limit for this task, but keep in mind that we will ask you to complete one other design after this one."
     },
     "pie-geo_icon-geo": {
       "baseComponent": "pie-geo",
@@ -435,7 +435,7 @@
         "condition_chart": 1,
         "condition_texture": 1
       },
-      "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\n When you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\n When you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
     },
     "pie-icon_geo-icon": {
       "baseComponent": "pie-icon",
@@ -443,7 +443,7 @@
         "condition_chart": 1,
         "condition_texture": 0
       },
-      "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\n When you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\n When you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
     },
     "pie-icon_icon-geo": {
       "baseComponent": "pie-icon",
@@ -451,7 +451,7 @@
         "condition_chart": 1,
         "condition_texture": 1
       },
-      "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task, but keep in mind that we will ask you to complete one other design after this one."
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task, but keep in mind that we will ask you to complete one other design after this one."
     },
     "map-geo_geo-icon": {
       "baseComponent": "map-geo",
@@ -459,7 +459,7 @@
         "condition_chart": 2,
         "condition_texture": 0
       },
-      "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This map shows the favorite vegetable of the residents of each French department. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This map shows the favorite vegetable of the residents of each French department. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
     },
     "map-geo_icon-geo": {
       "baseComponent": "map-geo",
@@ -467,7 +467,7 @@
         "condition_chart": 2,
         "condition_texture": 1
       },
-      "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This map shows the favorite vegetable of the residents of each French department. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This map shows the favorite vegetable of the residents of each French department. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
     },
     "map-icon_geo-icon": {
       "baseComponent": "map-icon",
@@ -475,7 +475,7 @@
         "condition_chart": 2,
         "condition_texture": 0
       },
-      "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This map shows the favorite vegetable of the residents of each French department. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This map shows the favorite vegetable of the residents of each French department. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
     },
     "map-icon_icon-geo": {
       "baseComponent": "map-icon",
@@ -483,7 +483,7 @@
         "condition_chart": 2,
         "condition_texture": 1
       },
-      "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This map shows the favorite vegetable of the residents of each French department. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This map shows the favorite vegetable of the residents of each French department. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
     },
     "question-design-strategies_bar_geo-icon": {
       "baseComponent": "question-design-strategies-geo",
@@ -574,35 +574,35 @@
       "parameters": {
         "condition_chart": 0
       },
-      "instruction": "### Geometric Texture on Different Charts \n\n We applied the geometric texture you designed to a pie chart and a map."
+      "instruction": "### Geometric Pattern on Different Charts \n\n We applied the geometric pattern you designed to a pie chart and a map."
     },
     "question-different-chart-geo_pie": {
       "baseComponent": "question-different-chart-geo",
       "parameters": {
         "condition_chart": 1
       },
-      "instruction": "### Geometric Texture on Different Charts \n\n We applied the geometric texture you designed to a bar chart and a map."
+      "instruction": "### Geometric Pattern on Different Charts \n\n We applied the geometric pattern you designed to a bar chart and a map."
     },
     "question-different-chart-geo_map": {
       "baseComponent": "question-different-chart-geo",
       "parameters": {
         "condition_chart": 2
       },
-      "instruction": "### Geometric Texture on Different Charts \n\n We applied the geometric texture you designed to a bar chart and a pie chart."
+      "instruction": "### Geometric Pattern on Different Charts \n\n We applied the geometric pattern you designed to a bar chart and a pie chart."
     },
     "question-different-chart-icon_bar": {
       "baseComponent": "question-different-chart-icon",
       "parameters": {
         "condition_chart": 0
       },
-      "instruction": "### Iconic Texture on Different Charts \n\n We applied the iconic texture you designed to a pie chart and a map."
+      "instruction": "### Iconic Pattern on Different Charts \n\n We applied the iconic pattern you designed to a pie chart and a map."
     },
     "question-different-chart-icon_pie": {
       "baseComponent": "question-different-chart-icon",
       "parameters": {
         "condition_chart": 1
       },
-      "instruction": "### Iconic Texture on Different Charts \n\n We applied the iconic texture you designed to a bar chart and a map."
+      "instruction": "### Iconic Pattern on Different Charts \n\n We applied the iconic pattern you designed to a bar chart and a map."
     },
     "question-different-chart-icon_map": {
       "baseComponent": "question-different-chart-icon",
