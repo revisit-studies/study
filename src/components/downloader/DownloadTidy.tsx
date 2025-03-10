@@ -16,18 +16,17 @@ import {
   IconBrandPython, IconLayoutColumns, IconTableExport, IconX,
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
-import merge from 'lodash.merge';
 import { ParticipantData } from '../../storage/types';
 import {
-  Answer, IndividualComponent, Prettify, StudyConfig,
+  Answer, Prettify, StudyConfig,
 } from '../../parser/types';
-import { isInheritedComponent } from '../../parser/utils';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { StorageEngine } from '../../storage/engines/StorageEngine';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useAsync } from '../../store/hooks/useAsync';
 import { getCleanedDuration } from '../../utils/getCleanedDuration';
 import { showNotification } from '../../utils/notifications';
+import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 
 export const OPTIONAL_COMMON_PROPS = [
   'status',
@@ -90,9 +89,7 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
       const trialId = trialIdentifier.split('_').slice(0, -1).join('_');
       const trialOrder = parseInt(`${trialIdentifier.split('_').at(-1)}`, 10);
       const trialConfig = studyConfig.components[trialId];
-      const completeComponent: IndividualComponent = isInheritedComponent(trialConfig) && trialConfig.baseComponent && studyConfig.baseComponents
-        ? merge({}, studyConfig.baseComponents[trialConfig.baseComponent], trialConfig)
-        : trialConfig;
+      const completeComponent = studyComponentToIndividualComponent(trialConfig, studyConfig);
 
       const duration = trialAnswer.endTime === -1 ? undefined : trialAnswer.endTime - trialAnswer.startTime;
       const cleanedDuration = getCleanedDuration(trialAnswer);

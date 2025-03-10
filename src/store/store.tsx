@@ -154,8 +154,9 @@ export async function studyStoreCreator(
           windowEvents: [],
           timedOut: false,
           helpButtonClickedCount: 0,
-          parameters: payload.payload.parameters,
-          correctAnswer: payload.payload.correctAnswer,
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          parameters: Object.keys(payload.payload.parameters).length > 0 ? payload.payload.parameters : (componentConfig as any).parameters,
+          correctAnswer: (payload.payload.correctAnswer.length > 0 ? payload.payload.correctAnswer : componentConfig.correctAnswer) || [],
         };
         state.trialValidation[`${payload.payload.funcName}_${payload.payload.index}_${payload.payload.component}_${payload.payload.funcIndex}`] = {
           aboveStimulus: { valid: false, values: {} },
