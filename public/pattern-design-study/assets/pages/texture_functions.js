@@ -1734,7 +1734,7 @@ function drawGeoMapWithTexture(data, width, height, chart){
         })
 
         //initialize: for map, we have to put this initialize function here in the Promise.
-        geo_setInitialParameters()
+        geo_setInitialParameters(chartName)
 
         // change Map's outline based on the value of outline controller
         controlOutline.oninput = function(){
@@ -2695,6 +2695,7 @@ function drawOutline(chart_outline_class, outlineValue, chart_halo_class,haloVal
 //set i-th category as the target for all texture parameter controllers + set controllers value
 function geo_selectCat(i){
     console.log('select cat:'+i)
+
 
     //update the text for fruit indicator
     let fruitName = document.getElementById('fruitName')
@@ -3686,7 +3687,12 @@ function geo_selectCat(i){
 
 
 //set initial parameters when the window loads
-function geo_setInitialParameters(){
+function geo_setInitialParameters(chartName){
+    console.log("geo_setInitialParameters", chartName)
+
+    
+    // parameters["chartName"] = chartName
+    
 
 
     //if we did not save parameters in the local storage
@@ -3717,8 +3723,12 @@ function geo_setInitialParameters(){
     //set selectedCat
     if(localStorage.getItem(chartName + "_selectedCat") == null){
         geo_selectCat(0)
+        parameters["selectedCat"] = 0
+        addParametersToList(chartName, parameters)
     }else{
         geo_selectCat(Number(localStorage.getItem(chartName + "_selectedCat")))
+        parameters["selectedCat"] = Number(localStorage.getItem(chartName + "_selectedCat"))
+        addParametersToList(chartName, parameters)
     }
 
     getSameCheckboxesStatus(chartName)
@@ -3779,7 +3789,8 @@ function geo_getParameters(i){
 
     //line
     controlLineDensity.value = parameters["linePattern"+i+"Density"]
-    console.log("controlLineDensity", controlLineDensity.value)
+    // console.log("aaaaadocument.getElementById('controlLineDensity').value", document.getElementById("controlLineDensity").value)
+    // console.log("controlLineDensity", controlLineDensity.value)
     controlLineStrokeWidth.max = parameters["linePattern"+i+"StrokeWidthMax"]
     controlLineStrokeWidth.value = parameters["linePattern"+i+"StrokeWidth"]
     controlLineX.value = parameters["linePattern"+i+"X"]
@@ -3790,6 +3801,15 @@ function geo_getParameters(i){
     //dot
     controlDotRotate.value = parameters["dotPattern"+i+"Rotate"]
     controlDotDensity.value = parameters["dotPattern"+i+"Density"]
+    // console.log("aaacontrolDotDensity", controlDotDensity.value)
+    // console.log("aaadocument.getElementById('controlDotDensity').value", document.getElementById("controlDotDensity").value)
+   
+        // var Dotslider = document.getElementById("controlDotDensity")
+        // Dotslider.value = parameters["dotPattern"+i+"Density"]
+        // Dotslider.dispatchEvent(new Event('input'))
+
+    // Dotslider.value = parameters["dotPattern"+i+"Density"]
+    // Dotslider.dispatchEvent(new Event('input'))
     controlDotSize.max = parameters["dotPattern"+i+"SizeMax"]
     controlDotSize.value = parameters["dotPattern"+i+"Size"]
     controlDotX.value = parameters["dotPattern"+i+"X"]
@@ -3816,6 +3836,9 @@ function geo_getParameters(i){
  */
 function geo_defaultParameters(){
     parameters = {}
+    parameters["chartName"] = chartName
+    parameters["selectedCat"] = 0
+
     for(let i = 0; i < fruits.length; i++){
         patternType[i] = 0
 
@@ -4041,6 +4064,9 @@ function geo_selectDefaultTexture(){
 /** iconic texture editing functions */
 //choose i-th Cat as the target for all controllers
 function icon_selectCat(i){ //i: i-th Cat
+
+
+    
     //update the text for fruit indicator
     let fruitName = document.getElementById('fruitName')
     fruitName.innerHTML = fruits[i]
@@ -4455,9 +4481,14 @@ function icon_setInitialParameters(chartName){
     //set selectedCat
     if(localStorage.getItem(chartName + "_selectedCat") == null){
         icon_selectCat(0)
+        parameters["selectedCat"] = 0
+        addParametersToList(chartName, parameters)
     }else{
         icon_selectCat(Number(localStorage.getItem(chartName + "_selectedCat")))
+        parameters["selectedCat"] = Number(localStorage.getItem(chartName + "_selectedCat"))
+        addParametersToList(chartName, parameters)
     }
+
     getSameCheckboxesStatus(chartName)
     revisitPostParameters(chartName, parameters, trrack, action)
 }
@@ -4490,6 +4521,9 @@ function icon_getParameters(i){ //write the value in Object parameters to textur
 
 function icon_defaultParameters(chartName){
     parameters = {}
+    parameters["chartName"] = chartName
+    parameters["selectedCat"] = 0
+
     for(let i = 0; i < fruits.length; i++){
 
         //we do not need iconStyle[i] = 0, because in the function icon_setCatPattern, we will set iconStyle[i] based on iconStyleRadios
@@ -5086,6 +5120,11 @@ function setSelectCat(chartName){
                 }
 
                 localStorage.setItem(chartName + '_selectedCat', i)
+
+                parameters["chartName"] = chartName
+                parameters["selectedCat"] = i
+                console.log("parameters", parameters)
+                addParametersToList(chartName, parameters)
             })
     }
 }

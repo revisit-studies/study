@@ -62,22 +62,39 @@
     Revisit.onProvenanceReceive((state) => {
         // console.log('provenance', state)
             parameters = state['bargeo']
-            //we redraw the textures of all categories, based on the new parameters
-            for(let i = 0; i < fruits.length; i++){
-                //since geometric texture and iconic texture have different parameters set, here we need to distinguish them
-                if(chartName.endsWith('Geo')){
+            console.log("parameters", parameters)
+
+            let selectedCat = parameters['selectedCat']
+
+            if(chartName.endsWith('Geo')){
                     console.log('geo redraw')
                     //draw textures for category i
-                    geo_getParameters(i)
-                    geo_setCatPattern(i)
+                    geo_getParameters(selectedCat)
+                    geo_setCatPattern(selectedCat)
                 }
-                if(chartName.endsWith('Icon')){
-                    console.log('icon redraw')
-                    //draw textures for category i
-                    icon_getParameters(i)
-                    icon_setCatPattern(i, patternSize)
-                }
+            if(chartName.endsWith('Icon')){
+                console.log('icon redraw')
+                //draw textures for category i
+                icon_getParameters(selectedCat)
+                icon_setCatPattern(selectedCat, patternSize)
             }
+
+            //we redraw the textures of all categories, based on the new parameters
+            // for(let i = 0; i < fruits.length; i++){
+            //     //since geometric texture and iconic texture have different parameters set, here we need to distinguish them
+            //     if(chartName.endsWith('Geo')){
+            //         console.log('geo redraw')
+            //         //draw textures for category i
+            //         geo_getParameters(i)
+            //         geo_setCatPattern(i)
+            //     }
+            //     if(chartName.endsWith('Icon')){
+            //         console.log('icon redraw')
+            //         //draw textures for category i
+            //         icon_getParameters(i)
+            //         icon_setCatPattern(i, patternSize)
+            //     }
+            // }
 
             let controlOutline = document.getElementById('controlOutline')
             controlOutline.value = parameters['outline']
@@ -87,6 +104,7 @@
                 controlHalo.value = parameters['halo']
             }
             drawOutline('chart_outline', parameters['outline'], 'chart_halo', parameters['halo'])
+            console.log("controlLineDensity", controlLineDensity.value)
         }
     )
 </script>
@@ -310,29 +328,6 @@ let mydata = getDatasetForChart()
     geo_setInitialParameters(chartName)
 
     setSelectCat(chartName)
-    //switch texture by drag and drop
-    // geo_switchTextures(chartName)
-
-    // let measurements = JSON.parse(localStorage.getItem('measurements'))
-    // let condition_texture = measurements['condition_texture']
-
-
-        // let timestamp_bar_geo_end = Date.now() //the end time for this design
-        // let bar_geo_design_time = timestamp_bar_geo_end - timestamp_bar_geo_start // time used for this design
-
-        //send the svg of chart design to server
-        //remove the indicators
-        // let indicatorsSVG = document.getElementById('indicator_group').outerHTML
-        // let fullSVG = '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="600" height="600">' + $("#chartA")[0].innerHTML + $("#chart")[0].innerHTML  + $("#chartWhiteStroke")[0].innerHTML + $("#chartBlackStroke")[0].innerHTML + '</svg>'
-        // let svgData = fullSVG.replace(indicatorsSVG, '')
-
-        //send the svg and the parameters
-        // let obj = {}
-        // obj.svgData = svgData
-        // obj.filename = 'bar_geo_'+ measurements['participant_id'] + '_v' + measurements['trial_num']
-        // obj.parameters = parameters
-
-
 
     })
 </script>
