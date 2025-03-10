@@ -6,13 +6,9 @@
 
 import { Group, Stack, Button } from '@mantine/core';
 import {
-  useMemo, useState, useEffect, useRef,
+  useState, useEffect, useRef,
 } from 'react';
 import HeatmapPlots from './HeatmapPlots';
-
-function hashSeed(r1: number, r2: number) {
-  return Math.abs(Math.sin(r1 * 1000 + r2 * 1000)) % 1;
-}
 
 /**
  * Holds 2 Scatter Plots
@@ -21,13 +17,8 @@ function hashSeed(r1: number, r2: number) {
  * @returns 2 Scatter Plots
  */
 export default function HeatmapWrapper({
-  r1, r2, shouldReRender = true, onClick, shouldRandomize = true, shouldNegate = false,
-}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number) => void, shouldRandomize?: boolean, shouldNegate?: boolean}) {
-  const higherFirst = useMemo(
-    () => (shouldRandomize ? hashSeed(r1, r2) > 0.5 : true),
-    [shouldRandomize, r1, r2],
-  );
-
+  r1, r2, shouldReRender = true, onClick, shouldNegate = false, higherFirst = true,
+}: {r1: number; r2: number, shouldReRender?: boolean, onClick: (n: number) => void, shouldNegate?: boolean, higherFirst?: boolean}) {
   const [key, setKey] = useState<number>(0);
   const buttonARef = useRef<HTMLButtonElement | null>(null);
   const buttonBRef = useRef<HTMLButtonElement | null>(null);
