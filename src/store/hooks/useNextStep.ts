@@ -92,7 +92,9 @@ export function useNextStep() {
     const { provenanceGraph } = trialValidationCopy;
     const endTime = Date.now();
 
-    const { incorrectAnswers, helpButtonClickedCount, parameters } = storedAnswer;
+    const {
+      incorrectAnswers, helpButtonClickedCount, parameters, correctAnswer,
+    } = storedAnswer;
 
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
@@ -108,6 +110,7 @@ export function useNextStep() {
         timedOut: !collectData,
         helpButtonClickedCount,
         parameters,
+        correctAnswer,
       };
       storeDispatch(
         saveTrialAnswer({

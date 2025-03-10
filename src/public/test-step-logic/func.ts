@@ -9,5 +9,5 @@ export default function func({ answers, customParameters } : JumpFunctionParamet
     return { component: null };
   }
 
-  return { component: 'reactComponent', parameters: { n: topAnswerLength || 0 } };
+  return { component: 'reactComponent', parameters: { n: topAnswerLength || 0 }, correctAnswer: [{ id: 'test', answer: 'correct' }] };
 }

@@ -4,7 +4,7 @@ import {
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import {
-  ResponseBlockLocation, StudyConfig, StringOption, ValueOf,
+  ResponseBlockLocation, StudyConfig, StringOption, ValueOf, Answer,
 } from '../parser/types';
 import {
   StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata,
@@ -47,6 +47,7 @@ export async function studyStoreCreator(
           helpButtonClickedCount: 0,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           parameters: Object.hasOwn(componentConfig, 'parameters') ? (componentConfig as any).parameters : {},
+          correctAnswer: Object.hasOwn(componentConfig, 'correctAnswer') ? componentConfig.correctAnswer! : [],
         },
       ];
     }));
@@ -115,7 +116,6 @@ export async function studyStoreCreator(
     matrixAnswers: {},
     participantId,
     funcSequence: {},
-    funcParams: undefined,
   };
 
   const storeSlice = createSlice({
@@ -128,11 +128,8 @@ export async function studyStoreCreator(
       setIsRecording(state, payload: PayloadAction<boolean>) {
         state.isRecording = payload.payload;
       },
-      setFuncParams(state, payload: PayloadAction<unknown | undefined>) {
-        state.funcParams = payload.payload;
-      },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      pushToFuncSequence(state, payload: PayloadAction<{component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any>}>) {
+      pushToFuncSequence(state, payload: PayloadAction<{component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any>, correctAnswer: Answer[]}>) {
         if (!state.funcSequence[payload.payload.funcName]) {
           state.funcSequence[payload.payload.funcName] = [];
         }
@@ -158,6 +155,7 @@ export async function studyStoreCreator(
           timedOut: false,
           helpButtonClickedCount: 0,
           parameters: payload.payload.parameters,
+          correctAnswer: payload.payload.correctAnswer,
         };
         state.trialValidation[`${payload.payload.funcName}_${payload.payload.index}_${payload.payload.component}_${payload.payload.funcIndex}`] = {
           aboveStimulus: { valid: false, values: {} },
@@ -271,26 +269,8 @@ export async function studyStoreCreator(
           state.trialValidation[payload.identifier].provenanceGraph[payload.location] = payload.provenanceGraph;
         }
       },
-      saveTrialAnswer(
-        state,
-        {
-          payload,
-        }: PayloadAction<{ identifier: string } & StoredAnswer>,
-      ) {
-        const {
-          identifier, answer, startTime, endTime, provenanceGraph, windowEvents, timedOut, incorrectAnswers, helpButtonClickedCount, parameters,
-        } = payload;
-        state.answers[identifier] = {
-          incorrectAnswers,
-          answer,
-          startTime,
-          endTime,
-          provenanceGraph,
-          windowEvents,
-          timedOut,
-          helpButtonClickedCount,
-          parameters,
-        };
+      saveTrialAnswer(state, { payload }: PayloadAction<{ identifier: string } & StoredAnswer>) {
+        state.answers[payload.identifier] = { ...payload };
       },
       incrementHelpCounter(
         state,
@@ -298,10 +278,7 @@ export async function studyStoreCreator(
           payload,
         }: PayloadAction<{ identifier: string }>,
       ) {
-        const {
-          identifier,
-        } = payload;
-        state.answers[identifier].helpButtonClickedCount += 1;
+        state.answers[payload.identifier].helpButtonClickedCount += 1;
       },
       saveIncorrectAnswer(
         state,

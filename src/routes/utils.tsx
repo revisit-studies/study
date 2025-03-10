@@ -45,7 +45,7 @@ export function useCurrentComponent(): string {
   const navigate = useNavigate();
   const studyId = useStudyId();
   const storeDispatch = useStoreDispatch();
-  const { pushToFuncSequence, setFuncParams } = useStoreActions();
+  const { pushToFuncSequence } = useStoreActions();
 
   const currentComponent = useMemo(() => (typeof currentStep === 'number' ? getComponent(flatSequence[currentStep], studyConfig) : null), [currentStep, flatSequence, studyConfig]);
 
@@ -79,17 +79,20 @@ export function useCurrentComponent(): string {
 
       // in a func component
       if (!component && nextFunc !== null) {
-        const { component: currCompName, parameters: _params } = nextFunc({
+        const { component: currCompName, parameters: _params, correctAnswer } = nextFunc({
           components: [], answers: _answers, sequenceSoFar: [], customParameters: findFuncBlock(flatSequence[currentStep], studyConfig.sequence)?.parameters,
         });
         if (currCompName !== null) {
           setCompName(currCompName);
 
           storeDispatch(pushToFuncSequence({
-            component: currCompName, funcName: flatSequence[currentStep], index: currentStep, funcIndex: funcIndex ? decryptIndex(funcIndex) : 0, parameters: _params || {},
+            component: currCompName,
+            funcName: flatSequence[currentStep],
+            index: currentStep,
+            funcIndex: funcIndex ? decryptIndex(funcIndex) : 0,
+            parameters: _params || {},
+            correctAnswer: correctAnswer || [],
           }));
-
-          storeDispatch(setFuncParams(_params));
         } else {
           navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${window.location.search}`);
         }
@@ -99,7 +102,7 @@ export function useCurrentComponent(): string {
     } else {
       setCompName(currentStep.replace('reviewer-', ''));
     }
-  }, [_answers, currentStep, flatSequence, funcIndex, navigate, nextFunc, pushToFuncSequence, setFuncParams, storeDispatch, studyConfig, studyId]);
+  }, [_answers, currentStep, flatSequence, funcIndex, navigate, nextFunc, pushToFuncSequence, storeDispatch, studyConfig, studyId]);
 
   return currentComponent ? typeof currentStep === 'number' ? flatSequence[currentStep] : currentStep.replace('reviewer-', '') : compName;
 }

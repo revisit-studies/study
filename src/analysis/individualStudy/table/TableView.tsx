@@ -258,6 +258,7 @@ export function TableView({
           windowEvents: Object.values(record.answers).flatMap((a) => a.windowEvents),
           timedOut: false, // not used
           parameters: {}, // not used
+          correctAnswer: [], // not used
           provenanceGraph: {
             aboveStimulus: undefined,
             belowStimulus: undefined,
