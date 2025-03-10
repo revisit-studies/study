@@ -17,9 +17,7 @@ import {
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
 import { ParticipantData } from '../../storage/types';
-import {
-  Answer, Prettify, StudyConfig,
-} from '../../parser/types';
+import { Prettify, StudyConfig } from '../../parser/types';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { StorageEngine } from '../../storage/engines/StorageEngine';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
@@ -139,7 +137,9 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
           tidyRow.answer = value;
         }
         if (properties.includes('correctAnswer')) {
-          const correctAnswer = (completeComponent.correctAnswer as Answer[])?.find((ans) => ans.id === key)?.answer;
+          const configCorrectAnswer = completeComponent.correctAnswer?.find((ans) => ans.id === key)?.answer;
+          const answerCorrectAnswer = trialAnswer.correctAnswer.find((ans) => ans.id === key)?.answer;
+          const correctAnswer = answerCorrectAnswer || configCorrectAnswer;
           tidyRow.correctAnswer = typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer;
         }
         if (properties.includes('responseMin')) {
