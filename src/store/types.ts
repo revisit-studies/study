@@ -69,7 +69,7 @@ Each item in the window event is given a time, a position an event name, and som
 */
 export interface StoredAnswer {
   /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is the inputted value from the participant. */
-  answer: Record<string, string | number | boolean | string[] | Record<string, unknown>>;
+  answer: Record<string, string | number | boolean | string[]>;
   /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is a list of incorrect inputted values from the participant. Only relevant for trials with `provideFeedback` and correct answers enabled. */
   incorrectAnswers: Record<string, { id: string, value: unknown[] }>;
   /** Time that the user began interacting with the component in epoch milliseconds. */
@@ -135,7 +135,7 @@ export interface StimulusParams<T, S = never> {
   parameters: T;
   provenanceState?: S;
   answers: Record<string, StoredAnswer>;
-  setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
+  setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: StoredAnswer['answer'] }) => void
 }
 
 export interface Sequence {
