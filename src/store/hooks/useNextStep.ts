@@ -75,7 +75,8 @@ export function useNextStep() {
 
   const navigate = useNavigate();
 
-  const startTime = useMemo(() => Date.now(), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const startTime = useMemo(() => Date.now(), [funcIndex, currentStep]);
 
   const windowEvents = useWindowEvents();
   const goToNextStep = useCallback((collectData = true) => {
