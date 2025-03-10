@@ -19,9 +19,18 @@ var recordActivity = registry.register(
     }
 );
 
+var recordSearchActivity = registry.register(
+    "record-search",
+    (state, task) => {
+        console.log(task,'task')
+        state.search = task;
+    }
+);
+
 var initialState = {
     activeIndustry:null,
     mouseOver: 0,
+    search: '',
     // visited_sequence: "", //sequence string
 };
 
@@ -42,15 +51,7 @@ trrack.currentChange(() => {
     Revisit.postProvenance(trrack.graph.backend);
 });
 
-Revisit.onProvenanceReceive((prov)=>{
 
-    closeTile()
-    const hoverIndustry = indexedCes[prov.activeIndustry];
-    console.log(hoverIndustry,'hoverIndustry')
-    if(hoverIndustry != null){
-        showTile(hoverIndustry)
-    }
-})
 
 
 var userData = {
@@ -1069,10 +1070,15 @@ function recordSearch(query){
             currentSearch = {}
             currentSearch['id'] = userData['searchLog'].length;
             currentSearch['start'] = Date.now();
-            currentSearch['content'] = query
+
             currentSearch['selectedCharts'] = 0;
         }
-    }
+        console.log('search')
+        console.log(query,'query')
+        trrack.apply("useSearch", recordSearchActivity(query));
+
+
+}
 
 
 // Search box
@@ -1177,6 +1183,20 @@ function enableSearch(){
         // Clear search input box
         searchInput.val("");
     }
+
+    Revisit.onProvenanceReceive((prov)=>{
+
+        closeTile()
+        const hoverIndustry = indexedCes[prov.activeIndustry];
+        const searchKeyword = prov.search;
+        if(hoverIndustry != null){
+            showTile(hoverIndustry)
+        }
+        searchFilter(searchKeyword)
+        $("#search-input").val(searchKeyword);
+
+    })
+
 };
 
 export {
