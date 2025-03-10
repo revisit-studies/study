@@ -21,7 +21,7 @@ visualizations, especially correlation values.
 
 #### Tasks
 The study contains 300 questions about data visualizations. It will take 
-approximately 20-25 minutes to finish this study. For each question, you will be shown 
+approximately 15 minutes to finish this study. For each question, you will be shown 
 two visualizations and asked which visualization has a higher correlation value. We suggest maximizing your browser window as some charts can be on the larger side.
 
 #### Risks to study participants
