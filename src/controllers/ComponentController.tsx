@@ -152,6 +152,10 @@ export function ComponentController() {
     return <StudyEnd />;
   }
 
+  if (currentComponent === '__dynamicLoading') {
+    return null;
+  }
+
   // Handle failed training
   if (currentComponent === '__trainingFailed') {
     return <TrainingFailed />;

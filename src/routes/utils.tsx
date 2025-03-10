@@ -49,7 +49,7 @@ export function useCurrentComponent(): string {
 
   const currentComponent = useMemo(() => (typeof currentStep === 'number' ? getComponent(flatSequence[currentStep], studyConfig) : null), [currentStep, flatSequence, studyConfig]);
 
-  const [compName, setCompName] = useState(flatSequence[0]);
+  const [compName, setCompName] = useState('__dynamicLoading');
 
   const nextFunc:(({ components, answers, sequenceSoFar }: JumpFunctionParameters<unknown>) => JumpFunctionReturnVal) | null = useMemo(() => {
     if (typeof currentStep === 'number' && !currentComponent) {
@@ -94,17 +94,17 @@ export function useCurrentComponent(): string {
             correctAnswer: correctAnswer || undefined,
           }));
         } else {
+          setCompName('__dynamicLoading');
           navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${window.location.search}`);
         }
-      } else {
-        setCompName(flatSequence[currentStep]);
       }
-    } else {
-      setCompName(currentStep.replace('reviewer-', ''));
     }
   }, [_answers, currentStep, flatSequence, funcIndex, navigate, nextFunc, pushToFuncSequence, storeDispatch, studyConfig, studyId]);
 
-  return currentComponent ? typeof currentStep === 'number' ? flatSequence[currentStep] : currentStep.replace('reviewer-', '') : compName;
+  return (typeof currentStep === 'number' && flatSequence[currentStep] === 'end' ? 'end'
+    : currentComponent ? (
+      typeof currentStep === 'number' ? flatSequence[currentStep] : currentStep.replace('reviewer-', '')
+    ) : compName);
 }
 
 export function useCurrentIdentifier(): string {
