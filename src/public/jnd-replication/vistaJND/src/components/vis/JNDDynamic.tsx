@@ -59,17 +59,24 @@ export default function func({
   }
 
   if (latestRealTrialKey && answers[latestRealTrialKey]?.answer) {
-    lastRealAnswer = answers[latestRealTrialKey].answer.scatterSelections;
+    const { scatterSelections } = answers[latestRealTrialKey].answer;
+    if (typeof scatterSelections === 'object' && scatterSelections !== null && 'n' in scatterSelections) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      lastRealAnswer = scatterSelections.n;
+    }
   }
-
-  const lastAnswerName = findLatestTrial(answers, 1);
-  const lastAnswer = lastAnswerName ? answers[lastAnswerName].answer.scatterSelections : null;
+  const lastAnswerName = findLatestRealTrial(answers, 1);
+  const lastAnswer = lastAnswerName && typeof answers[lastAnswerName].answer.scatterSelections === 'object' && 'n' in answers[lastAnswerName].answer.scatterSelections
+    ? answers[lastAnswerName].answer.scatterSelections.n
+    : null;
+  const lastAnswerDirection = lastAnswerName && typeof answers[lastAnswerName].answer.scatterSelections === 'object' && 'answerDirection' in answers[lastAnswerName].answer.scatterSelections
+    ? answers[lastAnswerName].answer.scatterSelections.answerDirection
+    : null;
 
   if (counter > 0 && counter % 10 === 0 && counter < 50) { /// Attention check block
     isAttentionCheck = true;
     higherFirst = true;
-
-    if (lastRealAnswer === 1) {
+    if (lastAnswerDirection === 'left') {
       r1 = 0.01;
       r2 = 1.0;
       above = true;
@@ -82,14 +89,12 @@ export default function func({
     isAttentionCheck = false;
 
     if (lastRealTrialParams) {
-      r1 = lastRealTrialParams.r1;
-      r2 = lastRealTrialParams.r2;
-      above = lastRealTrialParams.above;
+      ({ r1, r2, above } = lastRealTrialParams);
     }
 
     if (lastAnswer) {
       const correctAnswer = above ? 2 : 1;
-      const lastAnswerCorrect = lastAnswer === correctAnswer;
+      const lastAnswerCorrect = Number(lastAnswer) === correctAnswer;
 
       if (above && lastAnswerCorrect) {
         r2 = roundToTwo(Math.max(r2 - 0.01, 0.01));
