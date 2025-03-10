@@ -49,7 +49,6 @@ export default function PracticeHeatmap({
           r1={parameters.r1}
           r2={parameters.r2}
           shouldReRender={false}
-          shouldRandomize={false}
           shouldNegate={shouldNegate}
         />
       </Center>
