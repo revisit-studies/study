@@ -59,20 +59,21 @@ export default function func({
   }
 
   if (latestRealTrialKey && answers[latestRealTrialKey]?.answer) {
-    const scatterSelections = answers[latestRealTrialKey].answer;
-    if (typeof scatterSelections === 'object' && scatterSelections !== null && 'n' in scatterSelections) {
-      lastRealAnswer = scatterSelections.n;
-    }
+    lastRealAnswer = answers[latestRealTrialKey].answer.scatterSelections;
   }
   const lastAnswerName = findLatestRealTrial(answers, 1);
-  const lastAnswer = lastAnswerName && typeof answers[lastAnswerName].answer === 'object' && 'n' in answers[lastAnswerName].answer
-    ? answers[lastAnswerName].answer.n
-    : null;
+  const lastAnswer = lastAnswerName && answers[lastAnswerName].answer.scatterSelections;
 
   let lastAnswerDirection = '';
-  if (lastRealAnswer === 1) {
+  if (lastRealAnswer) {
+    if (lastRealTrialParams && lastRealTrialParams.above) { /// above is true (r2 > r1) and answer is correct (r2)
+      lastAnswerDirection = lastRealTrialParams && lastRealTrialParams.higherFirst ? 'right' : 'left'; // higher first means r1 is on the left
+    } else { /// above is false (r1 > r2) and answer is correct (r1)
+      lastAnswerDirection = lastRealTrialParams && lastRealTrialParams.higherFirst ? 'left' : 'right';
+    }
+  } else if (lastRealTrialParams && lastRealTrialParams.above) { // answer incorrect(r1) and above is true (r2 > r1), correct answer r2
     lastAnswerDirection = lastRealTrialParams && lastRealTrialParams.higherFirst ? 'left' : 'right';
-  } else {
+  } else { // answer incorrect(r2) and above is false (r1 > r2), correct r1
     lastAnswerDirection = lastRealTrialParams && lastRealTrialParams.higherFirst ? 'right' : 'left';
   }
 
@@ -95,19 +96,10 @@ export default function func({
       ({ r1, r2, above } = lastRealTrialParams);
     }
 
-    if (lastAnswer) {
-      const correctAnswer = above ? 2 : 1;
-      const lastAnswerCorrect = Number(lastAnswer) === correctAnswer;
-
-      if (above && lastAnswerCorrect) {
-        r2 = roundToTwo(Math.max(r2 - 0.01, 0.01));
-      } else if (above && !lastAnswerCorrect) {
-        r2 = roundToTwo(Math.min(r2 + 0.03, 1));
-      } else if (!above && lastAnswerCorrect) {
-        r2 = roundToTwo(Math.max(r2 + 0.01, 0.01));
-      } else if (!above && !lastAnswerCorrect) {
-        r2 = roundToTwo(Math.max(r2 - 0.03, 0.01));
-      }
+    if (lastAnswer) { // Correct answer
+      r2 = roundToTwo(above ? Math.max(r2 - 0.01, 0.01) : Math.max(r2 + 0.01, 0.01));
+    } else { // Incorrect answer
+      r2 = roundToTwo(above ? Math.min(r2 + 0.03, 1) : Math.max(r2 - 0.03, 0.01));
     }
   }
 
@@ -166,5 +158,6 @@ export default function func({
     parameters: {
       r1, r2, above, counter, shouldNegate, higherFirst, isAttentionCheck,
     },
+    correctAnswer: [{ id: 'scatterSelections', answer: true }],
   };
 }
