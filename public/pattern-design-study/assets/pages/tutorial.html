@@ -13,33 +13,40 @@
     <script type="text/javascript" src="../lib/d3.v7.min.js"></script>
     <script type="text/javascript" src="../lib/bootstrap-tour-standalone.min.js"></script>
     <link rel="stylesheet" href="../lib/bootstrap.css">
+    <link rel="stylesheet" href="../lib/bootstrap-tour-standalone.min.css">
     <link rel="stylesheet" type="text/css" href="./texture_style.css">
 
     <script src="../tools/loading.js"></script>
 
-    <script type = "text/javascript" >
-        //when you click the back button of the browser, this script prevent you from going bac
-        function preventBack(){window.history.forward();}
-        setTimeout("preventBack()", 0);
-        window.onunload=function(){null};
-    </script>
     <style>
         .btn-outline-secondary{
             border-color: #6c757d;
+        }
+        
+        /* Add Bootstrap Tour styles */
+        .tour-backdrop {
+            opacity: 0.5;
+        }
+        
+        .tour-step-backdrop {
+            z-index: 1051;
+        }
+        
+        .tour-step-background {
+            z-index: 1052;
+        }
+        
+        .tour {
+            z-index: 1053;
+        }
+        
+        .popover[class*="tour-"] {
+            z-index: 1054;
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <!-- <div class="row bg-light"> -->
-        <!-- <div class="col">
-            <h2>Training</h2>
-            <div id='tutorial_finished' style="display: none" class="textContent">
-                <p>Now you can play with the tool and try each function out. </p>
-                <p>Once you are familiar with the tool, click the <span style="color:#1E90FF;font-weight: bold">Next</span> button below.</p>
-            </div>
-        </div>
-    </div> -->
 
     <div class="row">
         <div class="col">
@@ -50,7 +57,6 @@
     <div class="row">
         <div class="col-auto legend_drag_div">
             <div id="legend"></div>
-            <div id="dragdrop" class="bg-light"></div>
         </div>
         <div class="col-auto">
             <div id="chartDiv" class="chartDiv"></div>
@@ -63,7 +69,6 @@
     </div>
     <div class="row">
         <div class="col">
-            <!-- <button id="tutorial_next_btn" class="btn btn-primary float-end">Start Real Experiment</button> -->
         </div>
     </div>
 </div>
@@ -101,23 +106,20 @@
         }else{
             console.log('cannot find the parameters based on condition_chart and condition_texture');
         }
+        let selectedCat = parameters['selectedCat']
 
-            //we redraw the textures of all categories, based on the new parameters
-            for(let i = 0; i < fruits.length; i++){
-                //since geometric texture and iconic texture have different parameters set, here we need to distinguish them
-                if(chartName.endsWith('Geo')){
-                    console.log('geo redraw')
-                    //draw textures for category i
-                    geo_getParameters(i)
-                    geo_setCatPattern(i)
-                }
-                if(chartName.endsWith('Icon')){
-                    console.log('icon redraw')
-                    //draw textures for category i
-                    icon_getParameters(i)
-                    icon_setCatPattern(i, patternSize)
-                }
+        if(chartName.endsWith('Geo')){
+                console.log('geo redraw')
+                //draw textures for category i
+                geo_getParameters(selectedCat)
+                geo_setCatPattern(selectedCat)
             }
+        if(chartName.endsWith('Icon')){
+            console.log('icon redraw')
+            //draw textures for category i
+            icon_getParameters(selectedCat)
+            icon_setCatPattern(selectedCat, patternSize)
+        }
 
             let controlOutline = document.getElementById('controlOutline')
             controlOutline.value = parameters['outline']
@@ -131,22 +133,31 @@
     )
 </script>
 <script>
+    // Add this before tour initialization
+    // console.log("Setting up tour...");
+    
+    let tour = new Tour({
+        debug: true,
+        onStart: function() {
+            // console.log("Tour started");
+        },
+        onStep: function(tour) {
+            // console.log("Current step:", tour.getCurrentStep());
+        },
+        onEnd: function() {
+            // console.log("Tour ended");
+        }
+    });
+
     Revisit.onDataReceive((data) => {
     localStorage.setItem("measurements", JSON.stringify({condition_chart: data.condition_chart, condition_texture: data.condition_texture}));
     
-    // Now safely use the data
-    // let measurements = JSON.parse(localStorage.getItem('measurements'));
-    // let condition_chart = measurements['condition_chart'];
-    // let condition_texture = measurements['condition_texture'];
 
     window.condition_chart = data.condition_chart;
     window.condition_texture = data.condition_texture;
     console.log('condition_chart:' + window.condition_chart);
     console.log('condition_texture:' + window.condition_texture);
 
-    // Make these variables available globally
-    window.condition_chart = condition_chart;
-    window.condition_texture = condition_texture;
     window.chartName = '';
 
     // Initialize the page
@@ -457,7 +468,7 @@ const selectDefaultTexture = document.getElementById("selectDefaultTexture")
 
                     setSelectCat(chartName)
                     //switch texture by drag and drop
-                    geo_switchTextures(chartName)
+                    // geo_switchTextures(chartName)
 
                     break;
                 case 1:
@@ -472,7 +483,7 @@ const selectDefaultTexture = document.getElementById("selectDefaultTexture")
 
                     setSelectCat(chartName)
 
-                    icon_switchTextures(chartName)
+                    // icon_switchTextures(chartName)
                     break;
             }
             break;
@@ -502,7 +513,7 @@ const selectDefaultTexture = document.getElementById("selectDefaultTexture")
 
                     setSelectCat(chartName)
                     //switch texture by drag and drop
-                    icon_switchTextures(chartName)
+                    // icon_switchTextures(chartName)
                     break;
             }
             break;
@@ -525,74 +536,69 @@ const selectDefaultTexture = document.getElementById("selectDefaultTexture")
     }
 
     // Initialize tour
-    if(localStorage.getItem('only_halo_tutorial') == -1){
-        document.getElementById('tutorial_finished').style.display = 'block';
-        document.getElementById('tutorial_next_btn').disabled = false;
-    }
+    // if(localStorage.getItem('only_halo_tutorial') == -1){
+        // document.getElementById('tutorial_finished').style.display = 'block';
+        // document.getElementById('tutorial_next_btn').disabled = false;
+    // }
 
-    let tour = new Tour({
-        onEnd: function (){
-            document.getElementById('tutorial_finished').style.display = 'block';
-            document.getElementById('tutorial_next_btn').disabled = false;
-        }
-    });
+    // if(localStorage.getItem('only_halo_tutorial') == 1){ //if the participant already designed a bar chart, and this time they will design a pie or map, then we should notify them the halo controller
+    //     //bootstrap-tour uses localStorage to store the progress. Remove the relevant variables to let the tour start again.
+    //     if(localStorage.getItem('tour_current_step')){
+    //         localStorage.removeItem('tour_current_step')
+    //     }
+    //     if(localStorage.getItem('tour_end')){
+    //         localStorage.removeItem('tour_end')
+    //     }
 
-    if(localStorage.getItem('only_halo_tutorial') == 1){ //if the participant already designed a bar chart, and this time they will design a pie or map, then we should notify them the halo controller
-        //bootstrap-tour uses localStorage to store the progress. Remove the relevant variables to let the tour start again.
-        if(localStorage.getItem('tour_current_step')){
-            localStorage.removeItem('tour_current_step')
-        }
-        if(localStorage.getItem('tour_end')){
-            localStorage.removeItem('tour_end')
-        }
+    //     tour.addStep({
+    //         element: "#controlHalo",
+    //         title: "Change the white halo width",
+    //         content: "We see you have already did our study before, but this time there will be a halo controller. You can change the white halo width by using this controller. Try it out right now."
+    //     })
+    //     localStorage.setItem('only_halo_tutorial', '-1') //this halo tutorial will never show again.
+    // }
 
-        tour.addStep({
-            element: "#controlHalo",
-            title: "Change the white halo width",
-            content: "We see you have already did our study before, but this time there will be a halo controller. You can change the white halo width by using this controller. Try it out right now."
-        })
-        localStorage.setItem('only_halo_tutorial', '-1') //this halo tutorial will never show again.
-    }
-
-    if(localStorage.getItem('only_halo_tutorial') == 0){
+    // if(localStorage.getItem('only_halo_tutorial') == 0){
         //if the texture order is geo-icon, we will see a tutorial for geo chart, and need the import default texture function.
         if(condition_texture == 0){
             tour.addStep({
                 element: "#selectDefaultTexture", // string (jQuery selector) - html element next to which the step popover should be shown
-                title: "Import default texture", // string - title of the popover
-                content: "You can select and import a default texture in the drop-down box. This function is available only for geometric textures, the default textures are inspired by historic examples. Try it out right now." // string - content of the popover
+                title: "Import default pattern", // string - title of the popover
+                content: "You can select and import a default pattern in the drop-down box. This function is available only for geometric patterns, the default patterns are inspired by historic examples. Try it out right now." // string - content of the popover
             })
         }
 
         if(condition_chart == 2){ //for map, we say "texture in the map"
             tour.addStep({
                 element: "#chart",
-                title: "Select texture to edit(1)",
-                content: "You can select each texture in the map to make edits by clicking on the texture on the chart. Try it out right now."
+                title: "Select pattern to edit(1)",
+                content: "You can select each pattern in the map to make edits by clicking on the pattern on the chart. Try it out right now."
             })
         }else{ //for bar chart and pie chart, we say "texture in the chart"
             tour.addStep({
                 element: "#chart",
-                title: "Select texture to edit(1)",
-                content: "You can select each texture in the chart to make edits by clicking on the texture on the chart. Try it out right now."
+                title: "Select pattern to edit(1)",
+                content: "You can select each pattern in the chart to make edits by clicking on the pattern on the chart. Try it out right now."
             })
         }
         tour.addSteps([{
             element: "#legend",
-            title: "Select texture to edit(2)",
-            content: "You can also select a texture to edit by clicking on the legend. Try it out right now."
+            title: "Select pattern to edit(2)",
+            content: "You can also select a pattern to edit by clicking on the legend. Try it out right now."
         },  {
             element: "#controllerDiv",
-            title: "Edit texture",
-            content: "You can edit the parameters of the selected texture by using these controllers. Try it out right now."
-        }, {
-            element: "#chart",
-            title: "Drag and drop to switch texture",
-            content: "You can drag-and-drop from one texture to another on the chart or on the legend to switch the parameters of respective two textures. Try it out right now."
-        },{
+            title: "Edit pattern",
+            content: "You can edit the parameters of the selected pattern by using these controllers. Try it out right now."
+        }, 
+        // {
+        //     element: "#chart",
+        //     title: "Drag and drop to switch texture",
+        //     content: "You can drag-and-drop from one texture to another on the chart or on the legend to switch the parameters of respective two textures. Try it out right now."
+        // },
+        {
             element: "#controllerDiv",
-            title: "Edit all texture texture at the same time",
-            content: "If you check the checkbox after each parameter controller, you can change this parameter for all textures at the same time. Try it out right now."
+            title: "Edit all pattern at the same time",
+            content: "If you check the checkbox after each parameter controller, you can change this parameter for all patterns at the same time. Try it out right now."
         }, {
             element: "#controlOutline",
             title: "Change the outline stroke width",
@@ -621,18 +627,18 @@ const selectDefaultTexture = document.getElementById("selectDefaultTexture")
             }, {
                 element: "#undoBtn",
                 title: "Undo",
-                content: "You can undo your operation on texture attributes. Try it out right now."
+                content: "You can undo your operation on pattern attributes. Try it out right now."
             }, {
                 element: "#redoBtn",
                 title: "Redo",
-                content: "You can redo your operation on texture attributes. Try it out right now."
+                content: "You can redo your operation on pattern attributes. Try it out right now."
             }, {
                 element: "#resetBtn",
                 title: "Reset",
-                content: "You can also reset all texture attributes to the default that we started with, if needed. Try it out right now."
+                content: "You can also reset all pattern attributes to the default that we started with, if needed. Try it out right now."
             }
         ])
-    }
+    // }
 
     // Initialize and start the tour
     tour.init();
