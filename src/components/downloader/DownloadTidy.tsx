@@ -18,7 +18,6 @@ import {
 import { useCallback, useMemo, useState } from 'react';
 import { ParticipantData } from '../../storage/types';
 import { Prettify, StudyConfig } from '../../parser/types';
-import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { StorageEngine } from '../../storage/engines/StorageEngine';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useAsync } from '../../store/hooks/useAsync';
@@ -73,7 +72,7 @@ export function download(graph: string, filename: string) {
 }
 
 function participantDataToRows(participant: ParticipantData, properties: Property[], studyConfig: StudyConfig): [TidyRow[], string[]] {
-  const percentComplete = ((Object.entries(participant.answers).filter(([_, entry]) => entry.endTime !== -1).length / (getSequenceFlatMap(participant.sequence).length - 1)) * 100).toFixed(2);
+  const percentComplete = ((Object.entries(participant.answers).filter(([_, entry]) => entry.endTime !== -1).length / (Object.entries(participant.answers).length)) * 100).toFixed(2);
   const newHeaders = new Set<string>();
 
   return [[
