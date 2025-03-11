@@ -94,32 +94,24 @@ export function useNextStep() {
     const { provenanceGraph } = trialValidationCopy;
     const endTime = Date.now();
 
-    const {
-      incorrectAnswers, helpButtonClickedCount, parameters, correctAnswer, trialOrder, componentName,
-    } = storedAnswer;
+    const { componentName } = storedAnswer;
 
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
 
     if (dataCollectionEnabled && storedAnswer.endTime === -1) { // === -1 means the answer has not been saved yet
       const toSave = {
+        ...storedAnswer,
         answer: collectData ? answer : {},
         startTime,
         endTime,
-        incorrectAnswers,
         provenanceGraph,
         windowEvents: currentWindowEvents,
         timedOut: !collectData,
-        helpButtonClickedCount,
-        parameters,
-        correctAnswer,
-        trialOrder,
-        componentName,
       };
       storeDispatch(
         saveTrialAnswer({
           identifier,
-
           ...toSave,
         }),
       );
@@ -149,7 +141,11 @@ export function useNextStep() {
     const answersWithNewAnswer = {
       ...answers,
       [identifier]: {
-        answer, startTime, endTime, provenanceGraph, windowEvents: currentWindowEvents,
+        answer,
+        startTime,
+        endTime,
+        provenanceGraph,
+        windowEvents: currentWindowEvents,
       },
     };
 

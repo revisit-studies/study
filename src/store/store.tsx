@@ -128,30 +128,32 @@ export async function studyStoreCreator(
     name: 'storeSlice',
     initialState,
     reducers: {
-      setConfig(state, payload: PayloadAction<StudyConfig>) {
-        state.config = payload.payload;
+      setConfig(state, { payload }: PayloadAction<StudyConfig>) {
+        state.config = payload;
       },
-      setIsRecording(state, payload: PayloadAction<boolean>) {
-        state.isRecording = payload.payload;
+      setIsRecording(state, { payload }: PayloadAction<boolean>) {
+        state.isRecording = payload;
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      pushToFuncSequence(state, payload: PayloadAction<{component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any> | undefined, correctAnswer: Answer[] | undefined}>) {
-        if (!state.funcSequence[payload.payload.funcName]) {
-          state.funcSequence[payload.payload.funcName] = [];
+      pushToFuncSequence(state, { payload }: PayloadAction<{component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any> | undefined, correctAnswer: Answer[] | undefined}>) {
+        if (!state.funcSequence[payload.funcName]) {
+          state.funcSequence[payload.funcName] = [];
         }
 
-        if (state.funcSequence[payload.payload.funcName].length > payload.payload.funcIndex) {
+        if (state.funcSequence[payload.funcName].length > payload.funcIndex) {
           return;
         }
 
-        const componentConfig = studyComponentToIndividualComponent(state.config.components[payload.payload.component] || { response: [] }, config);
+        const componentConfig = studyComponentToIndividualComponent(state.config.components[payload.component] || { response: [] }, config);
 
-        state.funcSequence[payload.payload.funcName].push(payload.payload.component);
-        state.answers[`${payload.payload.funcName}_${payload.payload.index}_${payload.payload.component}_${payload.payload.funcIndex}`] = {
+        const identifier = `${payload.funcName}_${payload.index}_${payload.component}_${payload.funcIndex}`;
+
+        state.funcSequence[payload.funcName].push(payload.component);
+        state.answers[identifier] = {
           answer: {},
           incorrectAnswers: {},
-          componentName: payload.payload.component,
-          trialOrder: `${payload.payload.index}_${payload.payload.funcIndex}`,
+          componentName: payload.component,
+          trialOrder: `${payload.index}_${payload.funcIndex}`,
           startTime: 0,
           endTime: -1,
           provenanceGraph: {
@@ -164,10 +166,10 @@ export async function studyStoreCreator(
           timedOut: false,
           helpButtonClickedCount: 0,
 
-          parameters: payload.payload.parameters || ('parameters' in componentConfig ? componentConfig.parameters : {}) || {},
-          correctAnswer: payload.payload.correctAnswer || componentConfig.correctAnswer || [],
+          parameters: payload.parameters || ('parameters' in componentConfig ? componentConfig.parameters : {}) || {},
+          correctAnswer: payload.correctAnswer || componentConfig.correctAnswer || [],
         };
-        state.trialValidation[`${payload.payload.funcName}_${payload.payload.index}_${payload.payload.component}_${payload.payload.funcIndex}`] = {
+        state.trialValidation[identifier] = {
           aboveStimulus: { valid: false, values: {} },
           belowStimulus: { valid: false, values: {} },
           stimulus: { valid: componentConfig.response.every((response) => response.type !== 'reactive'), values: {} },
