@@ -57,7 +57,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
       }
       // If we're in a dynamic block, guess a maximum of 30 steps
       if (typeof currentStep === 'number' && currentStep <= idx && step !== 'end') {
-        return 30;
+        return 55;
       }
       // Otherwise, count the number of answers for this dynamic block
       return Object.entries(answers).filter(([key, _]) => key.includes(`${step}_`)).length;
