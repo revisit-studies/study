@@ -68,7 +68,7 @@
     },
     "bubbleChartWithSearch": {
       "description": "Desc",
-      "instruction": "Your task is to analyze this dataset of college information and describe the findings you identified in the textbox below. \n\n **How to Interact**: \n- Mouseover any of the circles to obtain a detailed view.\n- Use the text box at the top to search for specific college.",
+      "instruction": "Your task is to analyze this dataset of college information and describe the findings you identified in in the next page. \n\n **How to Interact**: \n- Mouseover any of the circles to obtain a detailed view.\n- Use the text box at the top to search for specific college.",
       "type": "react-component",
       "path": "bubblechart-study/assets/SearchBubbleChart.tsx",
       "parameters": {
@@ -81,7 +81,7 @@
     },
     "bubbleChartWithoutSearch": {
       "description": "Desc",
-      "instruction": "Your task is to analyze this dataset of college information and describe the findings you identified in the textbox below. \n\n **How to Interact**: \n- Mouseover any of the circles to obtain a detailed view.",
+      "instruction": "Your task is to analyze this dataset of college information and describe the findings you identified in in the next page. \n\n **How to Interact**: \n- Mouseover any of the circles to obtain a detailed view.",
       "type": "react-component",
       "path": "bubblechart-study/assets/SearchBubbleChart.tsx",
       "parameters": {
