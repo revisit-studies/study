@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-cycle
 import { ParticipantMetadata, Sequence, StoredAnswer } from '../store/types';
 
 /**

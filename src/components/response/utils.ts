@@ -1,7 +1,7 @@
 import { useForm } from '@mantine/form';
 import { useEffect, useState } from 'react';
 import {
-  CheckboxResponse, NumberOption, Response, StringOption,
+  CheckboxResponse, NumberOption, RadioResponse, Response, StringOption,
 } from '../../parser/types';
 import { StoredAnswer } from '../../store/types';
 
@@ -32,8 +32,19 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
   responses.forEach((response) => {
     const answer = storedAnswer ? storedAnswer[response.id] : {};
 
+    const dontKnowAnswer = storedAnswer && storedAnswer[`${response.id}-dontKnow`] !== undefined ? storedAnswer[`${response.id}-dontKnow`] : false;
+    const dontKnowObj = response.withDontKnow ? { [`${response.id}-dontKnow`]: dontKnowAnswer } : {};
+
+    const otherAnswer = storedAnswer && storedAnswer[`${response.id}-other`] !== undefined ? storedAnswer[`${response.id}-other`] : '';
+    const otherObj = (response as RadioResponse | CheckboxResponse).withOther ? { [`${response.id}-other`]: otherAnswer } : {};
+
     if (answer) {
-      initObj = { ...initObj, [response.id]: answer };
+      initObj = {
+        ...initObj,
+        [response.id]: answer,
+        ...dontKnowObj,
+        ...otherObj,
+      };
     } else {
       let initField: string | string[] | object | null = '';
       if (response.paramCapture) {
@@ -48,8 +59,12 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
         initField = response.startingValue.toString();
       }
 
-      const dontKnowObj = response.withDontKnow ? { [`${response.id}-dontKnow`]: '' } : {};
-      initObj = { ...initObj, [response.id]: initField, ...dontKnowObj };
+      initObj = {
+        ...initObj,
+        [response.id]: initField,
+        ...dontKnowObj,
+        ...otherObj,
+      };
     }
   });
 
@@ -101,7 +116,7 @@ const generateValidation = (responses: Response[]) => {
 export function useAnswerField(responses: Response[], currentStep: string | number, storedAnswer: StoredAnswer['answer']) {
   const [_id, setId] = useState<string | number | null>(null);
 
-  const answerField = useForm({
+  const answerField = useForm<StoredAnswer['answer']>({
     initialValues: generateInitFields(responses, storedAnswer),
     validate: generateValidation(responses),
   });

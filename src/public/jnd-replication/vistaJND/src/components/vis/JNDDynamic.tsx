@@ -59,18 +59,18 @@ export default function func({
   }
 
   if (latestRealTrialKey && answers[latestRealTrialKey]?.answer) {
-    const { scatterSelections } = answers[latestRealTrialKey].answer;
+    const scatterSelections = answers[latestRealTrialKey].answer;
     if (typeof scatterSelections === 'object' && scatterSelections !== null && 'n' in scatterSelections) {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       lastRealAnswer = scatterSelections.n;
     }
   }
   const lastAnswerName = findLatestRealTrial(answers, 1);
-  const lastAnswer = lastAnswerName && typeof answers[lastAnswerName].answer.scatterSelections === 'object' && 'n' in answers[lastAnswerName].answer.scatterSelections
-    ? answers[lastAnswerName].answer.scatterSelections.n
+  const lastAnswer = lastAnswerName && typeof answers[lastAnswerName].answer === 'object' && 'n' in answers[lastAnswerName].answer
+    ? answers[lastAnswerName].answer.n
     : null;
-  const lastAnswerDirection = lastAnswerName && typeof answers[lastAnswerName].answer.scatterSelections === 'object' && 'answerDirection' in answers[lastAnswerName].answer.scatterSelections
-    ? answers[lastAnswerName].answer.scatterSelections.answerDirection
+  const lastAnswerDirection = lastAnswerName && typeof answers[lastAnswerName].answer === 'object' && 'answerDirection' in answers[lastAnswerName].answer
+    ? answers[lastAnswerName].answer.answerDirection
     : null;
 
   if (counter > 0 && counter % 10 === 0 && counter < 50) { /// Attention check block

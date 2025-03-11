@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-cycle
 export type { ParticipantData } from '../storage/types';
 export type { StoredAnswer, ParticipantMetadata } from '../store/types';
 
@@ -136,7 +135,7 @@ export interface NumberOption {
 }
 
 /**
- * The StringOption interface is used to define the options for a dropdown, radio, or checkbox response.
+ * The StringOption interface is used to define the options for a dropdown, radio, buttons, or checkbox response.
  * The label is the text that is displayed to the user, and the value is the value that is stored in the data file.
  */
 export interface StringOption {
@@ -149,15 +148,8 @@ export interface StringOption {
 /**
  * @ignore
  */
-export const responseBlockLocations = [
-  'sidebar',
-  'aboveStimulus',
-  'belowStimulus',
-] as const;
-/**
- * @ignore
- */
-export type ResponseBlockLocation = (typeof responseBlockLocations)[number];
+export type ResponseBlockLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus' | 'stimulus';
+export type ConfigResponseBlockLocation = Exclude<ResponseBlockLocation, 'stimulus'>;
 
 /**
  * The BaseResponse interface is used to define the required fields for all responses.
@@ -174,7 +166,7 @@ export interface BaseResponse {
   /** Controls whether the response is required to be answered. Defaults to true. */
   required?: boolean;
   /** Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus` */
-  location?: ResponseBlockLocation;
+  location?: ConfigResponseBlockLocation;
   /** You can provide a required value, which makes it so a participant has to answer with that value. */
   requiredValue?: unknown;
   /** You can provide a required label, which makes it so a participant has to answer with a response that matches label. */
@@ -404,6 +396,12 @@ export interface SliderResponse extends BaseResponse {
   startingValue?: number;
   /** Whether the slider should snap between values. Defaults to false. Slider snapping disables the label above the handle. */
   snap?: boolean;
+  /** The step value of the slider. If not provided (and snap not enabled), the step value is calculated as the range of the slider divided by 100. */
+  step?: number;
+  /** Whether to render the slider with a bar to the left. Defaults to true. */
+  withBar?: boolean;
+  /** Whether to render the slider with a NASA-tlx style. Defaults to false. */
+  tlxStyle?: boolean;
 }
 
 /**
@@ -481,7 +479,33 @@ export interface ReactiveResponse extends BaseResponse {
   type: 'reactive';
 }
 
-export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | ReactiveResponse | MatrixResponse;
+/**
+ * The ButtonsResponse interface is used to define the properties of a buttons response.
+ * ButtonsResponses render as a list of buttons that the participant can click. When a button is clicked, the value of the button is stored in the data file.
+ * Participants can cycle through the options using the arrow keys.
+ *
+ * Example:
+ * ```js
+ * {
+ *   "id": "buttonsResponse",
+ *   "type": "buttons",
+ *   "prompt": "Click a button",
+ *   "location": "belowStimulus",
+ *   "options": [
+ *     "Option 1",
+ *     "Option 2",
+ *     "Option 3"
+ *   ]
+ * }
+ * ```
+ * In this example, the participant can click one of the buttons labeled "Option 1", "Option 2", or "Option 3".
+ */
+export interface ButtonsResponse extends BaseResponse {
+  type: 'buttons';
+  options: (StringOption | string)[];
+}
+
+export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | ReactiveResponse | MatrixResponse | ButtonsResponse;
 
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.
@@ -539,9 +563,9 @@ export interface BaseIndividualComponent {
   /** The text that is displayed on the next button. */
   nextButtonText?: string;
   /** The location of the next button. */
-  nextButtonLocation?: ResponseBlockLocation;
+  nextButtonLocation?: ConfigResponseBlockLocation;
   /** The location of the instructions. */
-  instructionLocation?: ResponseBlockLocation;
+  instructionLocation?: ConfigResponseBlockLocation;
   /** The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess. */
   correctAnswer?: Answer[];
   /** Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false. */
@@ -1418,6 +1442,12 @@ export type ParsedConfig<T> = T & {
  * Helper type to avoid writing Type | undefined | null
  */
 export type Nullable<T> = T | undefined | null;
+
+/**
+ * @ignore
+ * Helper type to get the value of a type
+ */
+export type ValueOf<T> = T[keyof T];
 
 /**
  * @ignore

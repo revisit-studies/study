@@ -7,7 +7,9 @@ import {
   useAreResponsesValid,
   useFlatSequence,
 } from '../store';
-import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
+import {
+  useCurrentIdentifier, useCurrentStep, useStudyId,
+} from '../../routes/utils';
 
 import { StoredAnswer, ValidationStatus } from '../types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
@@ -44,21 +46,19 @@ function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: st
 export function useNextStep() {
   const currentStep = useCurrentStep();
   const participantSequence = useFlatSequence();
-  const currentComponent = useCurrentComponent();
 
   const trialValidation = useStoreSelector((state) => state.trialValidation);
   const sequence = useStoreSelector((state) => state.sequence);
   const answers = useStoreSelector((state) => state.answers);
   const modes = useStoreSelector((state) => state.modes);
-  const otherTexts = useStoreSelector((state) => state.otherTexts);
   const studyConfig = useStudyConfig();
 
   const { funcIndex } = useParams();
-  const identifier = funcIndex && typeof currentStep === 'number' ? `${participantSequence[currentStep]}_${currentStep}_${currentComponent}_${decryptIndex(funcIndex)}` : `${currentComponent}_${currentStep}`;
+  const identifier = useCurrentIdentifier();
 
   const storeDispatch = useStoreDispatch();
   const {
-    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox, resetOtherText,
+    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox,
   } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
@@ -76,7 +76,8 @@ export function useNextStep() {
 
   const navigate = useNavigate();
 
-  const startTime = useMemo(() => Date.now(), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const startTime = useMemo(() => Date.now(), [funcIndex, currentStep]);
 
   const windowEvents = useWindowEvents();
   const goToNextStep = useEvent((collectData = true) => {
@@ -92,35 +93,23 @@ export function useNextStep() {
       }
       return acc;
     }, {}) as StoredAnswer['answer'];
-    // Set the other text in the answer
-    Object.entries(otherTexts).forEach(([key, value]) => {
-      if (Array.isArray(answer[key]) && (answer[key] as string[]).includes('__other')) {
-        (answer[key] as string[]) = (answer[key] as string[]).filter((item) => item !== '__other');
-        (answer[key] as string[]).push(`other:${value}`);
-      }
-      if (typeof answer[key] === 'string' && answer[key] === '__other') {
-        answer[key] = `other:${value}`;
-      }
-    });
     const { provenanceGraph } = trialValidationCopy;
     const endTime = Date.now();
 
-    const { incorrectAnswers, helpButtonClickedCount, parameters } = storedAnswer;
+    const { componentName } = storedAnswer;
 
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
 
     if (dataCollectionEnabled && storedAnswer.endTime === -1) { // === -1 means the answer has not been saved yet
       const toSave = {
+        ...storedAnswer,
         answer: collectData ? answer : {},
         startTime,
         endTime,
-        incorrectAnswers,
         provenanceGraph,
         windowEvents: currentWindowEvents,
         timedOut: !collectData,
-        helpButtonClickedCount,
-        parameters,
       };
       storeDispatch(
         saveTrialAnswer({
@@ -138,7 +127,6 @@ export function useNextStep() {
         );
       }
       storeDispatch(setReactiveAnswers({}));
-      storeDispatch(resetOtherText());
       storeDispatch(setMatrixAnswersCheckbox(null));
       storeDispatch(setMatrixAnswersRadio(null));
     }
@@ -155,7 +143,11 @@ export function useNextStep() {
     const answersWithNewAnswer = {
       ...answers,
       [identifier]: {
-        answer, startTime, endTime, provenanceGraph, windowEvents: currentWindowEvents,
+        answer,
+        startTime,
+        endTime,
+        provenanceGraph,
+        windowEvents: currentWindowEvents,
       },
     };
 
@@ -202,7 +194,7 @@ export function useNextStep() {
           }
 
           // Check the candidates and count the number of correct and incorrect answers
-          const correctAnswers = componentsToCheck.map(([componentName, responseObj]) => checkAllAnswersCorrect(responseObj.answer, componentName, studyConfig.components[componentName.slice(0, componentName.lastIndexOf('_'))], studyConfig));
+          const correctAnswers = componentsToCheck.map(([_componentName, responseObj]) => checkAllAnswersCorrect(responseObj.answer, _componentName, studyConfig.components[componentName.slice(0, componentName.lastIndexOf('_'))], studyConfig));
           const numCorrect = correctAnswers.filter((correct) => correct).length;
           const numIncorrect = correctAnswers.length - numCorrect;
 

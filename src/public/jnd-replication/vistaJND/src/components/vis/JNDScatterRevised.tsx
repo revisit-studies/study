@@ -42,7 +42,7 @@ export default function JND({ setAnswer, parameters } : StimulusParams<{r1: numb
     }
     setAnswer({
       status: true,
-      answers: { scatterSelections: { n, answerDirection } },
+      answers: { n, answerDirection },
     });
 
     setTimeout(() => {

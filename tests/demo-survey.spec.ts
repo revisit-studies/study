@@ -45,6 +45,8 @@ test('test', async ({ page }) => {
     await checkboxes2.nth(i).click();
   }
 
+  await page.getByRole('radio', { name: 'Option 4' }).nth(0).click();
+
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check that the thank you message is displayed

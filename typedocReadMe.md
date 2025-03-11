@@ -55,10 +55,11 @@ Numerical responses via fields or sliders:
 - [NumericalResponse](interfaces/NumericalResponse.md)
 - [SliderResponse](interfaces/SliderResponse.md)
 
-Choices of items via checkboxes or drop-downs: 
+Choices of items via checkboxes, drop-downs, or buttons: 
 - [CheckboxResponse](interfaces/CheckboxResponse.md)
 - [RadioResponse](interfaces/RadioResponse.md)
 - [DropdownResponse](interfaces/DropdownResponse.md)
+- [ButtonsResponse](interfaces/ButtonsResponse.md)
 
 Likert-style rating scales: 
 - [LikertResponse](interfaces/LikertResponse.md)
