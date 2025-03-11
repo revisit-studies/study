@@ -28,7 +28,7 @@ import { useNextStep } from '../../../../../../store/hooks/useNextStep';
  */
 export default function JND({ setAnswer, parameters } : StimulusParams<{r1: number, r2:number, above: boolean, counter: number, shouldNegate: boolean, higherFirst: boolean}>) {
   const {
-    r1, r2, shouldNegate, higherFirst,
+    r1, r2, shouldNegate, higherFirst, above,
   } = parameters;
   const { goToNextStep } = useNextStep();
 
@@ -36,7 +36,7 @@ export default function JND({ setAnswer, parameters } : StimulusParams<{r1: numb
     // setCounter(counter + 1);
     setAnswer({
       status: true,
-      answers: { scatterSelections: n },
+      answers: { scatterSelections: above ? n === 2 : n === 1 },
     });
 
     setTimeout(() => {
