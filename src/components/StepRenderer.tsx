@@ -37,8 +37,11 @@ export function StepRenderer() {
     }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
 
     // Keyboard
-    const keypressListener = debounce((e: KeyboardEvent) => {
-      windowEvents.current.push([Date.now(), 'keypress', e.key]);
+    const keydownListener = debounce((e: KeyboardEvent) => {
+      windowEvents.current.push([Date.now(), 'keydown', e.key]);
+    }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
+    const keyupListener = debounce((e: KeyboardEvent) => {
+      windowEvents.current.push([Date.now(), 'keyup', e.key]);
     }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
 
     // Mouse/Pointer/Touch
@@ -72,7 +75,8 @@ export function StepRenderer() {
 
     window.addEventListener('focus', focusListener, true);
     window.addEventListener('input', inputListener as () => void);
-    window.addEventListener('keypress', keypressListener);
+    window.addEventListener('keydown', keydownListener);
+    window.addEventListener('keyup', keyupListener);
     window.addEventListener('mousedown', mouseDownListener);
     window.addEventListener('mouseup', mouseUpListener);
     window.addEventListener('resize', resizeListener);
@@ -83,9 +87,10 @@ export function StepRenderer() {
     return () => {
       window.removeEventListener('focus', focusListener, true);
       window.removeEventListener('input', inputListener as () => void);
-      window.removeEventListener('keypress', keypressListener);
-      window.addEventListener('mousedown', mouseDownListener);
-      window.addEventListener('mouseup', mouseUpListener);
+      window.removeEventListener('keydown', keydownListener);
+      window.removeEventListener('keyup', keyupListener);
+      window.removeEventListener('mousedown', mouseDownListener);
+      window.removeEventListener('mouseup', mouseUpListener);
       window.removeEventListener('resize', resizeListener);
       window.removeEventListener('mousemove', mouseMoveListener);
       window.removeEventListener('scroll', scrollListener);
