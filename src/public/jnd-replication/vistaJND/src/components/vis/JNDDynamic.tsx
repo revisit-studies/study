@@ -61,7 +61,6 @@ export default function func({
   if (latestRealTrialKey && answers[latestRealTrialKey]?.answer) {
     const scatterSelections = answers[latestRealTrialKey].answer;
     if (typeof scatterSelections === 'object' && scatterSelections !== null && 'n' in scatterSelections) {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       lastRealAnswer = scatterSelections.n;
     }
   }
@@ -69,9 +68,13 @@ export default function func({
   const lastAnswer = lastAnswerName && typeof answers[lastAnswerName].answer === 'object' && 'n' in answers[lastAnswerName].answer
     ? answers[lastAnswerName].answer.n
     : null;
-  const lastAnswerDirection = lastAnswerName && typeof answers[lastAnswerName].answer === 'object' && 'answerDirection' in answers[lastAnswerName].answer
-    ? answers[lastAnswerName].answer.answerDirection
-    : null;
+
+  let lastAnswerDirection = '';
+  if (lastRealAnswer === 1) {
+    lastAnswerDirection = lastRealTrialParams && lastRealTrialParams.higherFirst ? 'left' : 'right';
+  } else {
+    lastAnswerDirection = lastRealTrialParams && lastRealTrialParams.higherFirst ? 'right' : 'left';
+  }
 
   if (counter > 0 && counter % 10 === 0 && counter < 50) { /// Attention check block
     isAttentionCheck = true;
