@@ -45,11 +45,13 @@ export function useCurrentComponent(): string {
   const navigate = useNavigate();
   const studyId = useStudyId();
   const storeDispatch = useStoreDispatch();
-  const { pushToFuncSequence, setFuncParams } = useStoreActions();
+  const { pushToFuncSequence } = useStoreActions();
 
-  const currentComponent = useMemo(() => (typeof currentStep === 'number' ? getComponent(flatSequence[currentStep], studyConfig) : null), [currentStep, flatSequence, studyConfig]);
+  const [indexWhenSettingComponentName, setIndexWhenSettingComponentName] = useState<number | null>(null);
 
-  const [compName, setCompName] = useState(flatSequence[0]);
+  const currentComponent = useMemo(() => (typeof currentStep === 'number' ? getComponent(flatSequence[currentStep], studyConfig) : currentStep.includes('reviewer-') ? currentStep : null), [currentStep, flatSequence, studyConfig]);
+
+  const [compName, setCompName] = useState('__dynamicLoading');
 
   const nextFunc:(({ components, answers, sequenceSoFar }: JumpFunctionParameters<unknown>) => JumpFunctionReturnVal) | null = useMemo(() => {
     if (typeof currentStep === 'number' && !currentComponent) {
@@ -79,29 +81,40 @@ export function useCurrentComponent(): string {
 
       // in a func component
       if (!component && nextFunc !== null) {
-        const { component: currCompName, parameters: _params } = nextFunc({
+        const { component: currCompName, parameters: _params, correctAnswer } = nextFunc({
           components: [], answers: _answers, sequenceSoFar: [], customParameters: findFuncBlock(flatSequence[currentStep], studyConfig.sequence)?.parameters,
         });
         if (currCompName !== null) {
-          setCompName(currCompName);
+          if (funcIndex) {
+            setCompName(currCompName);
+            setIndexWhenSettingComponentName(decryptIndex(funcIndex));
 
-          storeDispatch(pushToFuncSequence({
-            component: currCompName, funcName: flatSequence[currentStep], index: currentStep, funcIndex: funcIndex ? decryptIndex(funcIndex) : 0, parameters: _params || {},
-          }));
-
-          storeDispatch(setFuncParams(_params));
+            storeDispatch(pushToFuncSequence({
+              component: currCompName,
+              funcName: flatSequence[currentStep],
+              index: currentStep,
+              funcIndex: funcIndex ? decryptIndex(funcIndex) : 0,
+              parameters: _params || undefined,
+              correctAnswer: correctAnswer || undefined,
+            }));
+          }
         } else {
+          setCompName('__dynamicLoading');
+          setIndexWhenSettingComponentName(null);
+
           navigate(`/${studyId}/${encryptIndex(currentStep + 1)}${window.location.search}`);
         }
-      } else {
-        setCompName(flatSequence[currentStep]);
       }
-    } else {
-      setCompName(currentStep.replace('reviewer-', ''));
     }
-  }, [_answers, currentStep, flatSequence, funcIndex, navigate, nextFunc, pushToFuncSequence, setFuncParams, storeDispatch, studyConfig, studyId]);
+  }, [_answers, currentStep, flatSequence, funcIndex, navigate, nextFunc, pushToFuncSequence, storeDispatch, studyConfig, studyId]);
 
-  return currentComponent ? typeof currentStep === 'number' ? flatSequence[currentStep] : currentStep.replace('reviewer-', '') : compName;
+  if (typeof currentStep === 'number' && flatSequence[currentStep] === 'end') {
+    return 'end';
+  } if (currentComponent) {
+    return typeof currentStep === 'number' ? flatSequence[currentStep] : currentStep.replace('reviewer-', '');
+  }
+
+  return indexWhenSettingComponentName !== null && funcIndex && decryptIndex(funcIndex) === indexWhenSettingComponentName ? compName : '__dynamicLoading';
 }
 
 export function useCurrentIdentifier(): string {

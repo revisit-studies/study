@@ -4,7 +4,7 @@ import {
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import {
-  ResponseBlockLocation, StudyConfig, StringOption, ValueOf,
+  ResponseBlockLocation, StudyConfig, StringOption, ValueOf, Answer,
 } from '../parser/types';
 import {
   StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata,
@@ -28,11 +28,17 @@ export async function studyStoreCreator(
     .map((id, idx) => {
       const componentConfig = studyComponentToIndividualComponent(config.components[id] || {}, config);
 
+      // Make sure we dont include dynamic blocks as empty answers
+      if (!config.components[id]) {
+        return null;
+      }
+
       return [
         `${id}_${idx}`,
         {
-
           answer: {},
+          trialOrder: `${idx}`,
+          componentName: id,
           incorrectAnswers: {},
           startTime: 0,
           endTime: -1,
@@ -47,9 +53,10 @@ export async function studyStoreCreator(
           helpButtonClickedCount: 0,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           parameters: Object.hasOwn(componentConfig, 'parameters') ? (componentConfig as any).parameters : {},
+          correctAnswer: Object.hasOwn(componentConfig, 'correctAnswer') ? componentConfig.correctAnswer! : [],
         },
       ];
-    }));
+    }).filter((ans) => ans !== null));
   const emptyValidation: TrialValidation = Object.assign(
     {},
     ...flatSequence.map((id, idx): TrialValidation => {
@@ -115,37 +122,38 @@ export async function studyStoreCreator(
     matrixAnswers: {},
     participantId,
     funcSequence: {},
-    funcParams: undefined,
   };
 
   const storeSlice = createSlice({
     name: 'storeSlice',
     initialState,
     reducers: {
-      setConfig(state, payload: PayloadAction<StudyConfig>) {
-        state.config = payload.payload;
+      setConfig(state, { payload }: PayloadAction<StudyConfig>) {
+        state.config = payload;
       },
-      setIsRecording(state, payload: PayloadAction<boolean>) {
-        state.isRecording = payload.payload;
-      },
-      setFuncParams(state, payload: PayloadAction<unknown | undefined>) {
-        state.funcParams = payload.payload;
+      setIsRecording(state, { payload }: PayloadAction<boolean>) {
+        state.isRecording = payload;
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      pushToFuncSequence(state, payload: PayloadAction<{component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any>}>) {
-        if (!state.funcSequence[payload.payload.funcName]) {
-          state.funcSequence[payload.payload.funcName] = [];
+      pushToFuncSequence(state, { payload }: PayloadAction<{component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any> | undefined, correctAnswer: Answer[] | undefined}>) {
+        if (!state.funcSequence[payload.funcName]) {
+          state.funcSequence[payload.funcName] = [];
         }
-        if (state.funcSequence[payload.payload.funcName].length > payload.payload.funcIndex) {
+
+        if (state.funcSequence[payload.funcName].length > payload.funcIndex) {
           return;
         }
 
-        const componentConfig = studyComponentToIndividualComponent(state.config.components[payload.payload.component] || { response: [] }, config);
+        const componentConfig = studyComponentToIndividualComponent(state.config.components[payload.component] || { response: [] }, config);
 
-        state.funcSequence[payload.payload.funcName].push(payload.payload.component);
-        state.answers[`${payload.payload.funcName}_${payload.payload.index}_${payload.payload.component}_${payload.payload.funcIndex}`] = {
+        const identifier = `${payload.funcName}_${payload.index}_${payload.component}_${payload.funcIndex}`;
+
+        state.funcSequence[payload.funcName].push(payload.component);
+        state.answers[identifier] = {
           answer: {},
           incorrectAnswers: {},
+          componentName: payload.component,
+          trialOrder: `${payload.index}_${payload.funcIndex}`,
           startTime: 0,
           endTime: -1,
           provenanceGraph: {
@@ -157,9 +165,11 @@ export async function studyStoreCreator(
           windowEvents: [],
           timedOut: false,
           helpButtonClickedCount: 0,
-          parameters: payload.payload.parameters,
+
+          parameters: payload.parameters || ('parameters' in componentConfig ? componentConfig.parameters : {}) || {},
+          correctAnswer: payload.correctAnswer || componentConfig.correctAnswer || [],
         };
-        state.trialValidation[`${payload.payload.funcName}_${payload.payload.index}_${payload.payload.component}_${payload.payload.funcIndex}`] = {
+        state.trialValidation[identifier] = {
           aboveStimulus: { valid: false, values: {} },
           belowStimulus: { valid: false, values: {} },
           stimulus: { valid: componentConfig.response.every((response) => response.type !== 'reactive'), values: {} },
@@ -271,26 +281,8 @@ export async function studyStoreCreator(
           state.trialValidation[payload.identifier].provenanceGraph[payload.location] = payload.provenanceGraph;
         }
       },
-      saveTrialAnswer(
-        state,
-        {
-          payload,
-        }: PayloadAction<{ identifier: string } & StoredAnswer>,
-      ) {
-        const {
-          identifier, answer, startTime, endTime, provenanceGraph, windowEvents, timedOut, incorrectAnswers, helpButtonClickedCount, parameters,
-        } = payload;
-        state.answers[identifier] = {
-          incorrectAnswers,
-          answer,
-          startTime,
-          endTime,
-          provenanceGraph,
-          windowEvents,
-          timedOut,
-          helpButtonClickedCount,
-          parameters,
-        };
+      saveTrialAnswer(state, { payload }: PayloadAction<{ identifier: string } & StoredAnswer>) {
+        state.answers[payload.identifier] = { ...payload };
       },
       incrementHelpCounter(
         state,
@@ -298,10 +290,7 @@ export async function studyStoreCreator(
           payload,
         }: PayloadAction<{ identifier: string }>,
       ) {
-        const {
-          identifier,
-        } = payload;
-        state.answers[identifier].helpButtonClickedCount += 1;
+        state.answers[payload.identifier].helpButtonClickedCount += 1;
       },
       saveIncorrectAnswer(
         state,

@@ -64,7 +64,7 @@
             "type": "string"
           },
           "instructionLocation": {
-            "$ref": "#/definitions/ResponseBlockLocation",
+            "$ref": "#/definitions/ConfigResponseBlockLocation",
             "description": "The location of the instructions."
           },
           "meta": {
@@ -81,7 +81,7 @@
             "type": "number"
           },
           "nextButtonLocation": {
-            "$ref": "#/definitions/ResponseBlockLocation",
+            "$ref": "#/definitions/ConfigResponseBlockLocation",
             "description": "The location of the next button."
           },
           "nextButtonText": {
@@ -197,7 +197,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "options": {
@@ -274,7 +274,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "maxSelections": {
@@ -437,6 +437,14 @@
       ],
       "type": "object"
     },
+    "ConfigResponseBlockLocation": {
+      "enum": [
+        "sidebar",
+        "aboveStimulus",
+        "belowStimulus"
+      ],
+      "type": "string"
+    },
     "DeterministicInterruption": {
       "additionalProperties": false,
       "description": "The DeterministicInterruption interface is used to define an interruption that will be shown at a specific location in the block.\n\nFor example, if you want to show an interruption after the second component in the block, you would set firstLocation to 2. If you want to show an interruption after every 3 components, you would set spacing to 3. If you want to show an interruption after the second component and then every 3 components, you would set firstLocation to 2 and spacing to 3.\n\nThe components property is an array of the components that will be inserted at the location specified by firstLocation and spacing. These components should reference components in the StudyConfig.components section of the config.\n\nHere's an example of how to use the DeterministicInterruption:\n\n```js { \"order\": \"fixed\", \"components\": [ \"component1\", \"component2\", \"component3\", \"component4\", \"component5\", \"component6\" ], \"interruptions\": [ {   \"firstLocation\": 2,   \"spacing\": 3,   \"components\": [     \"interruption1\",     \"interruption2\"   ] } ] } ```\n\nThe resulting sequence array could be:\n\n```js [ [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"], [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"], [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"], ... ] ```",
@@ -477,7 +485,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "options": {
@@ -600,7 +608,7 @@
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the instructions."
         },
         "meta": {
@@ -617,7 +625,7 @@
           "type": "number"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button."
         },
         "nextButtonText": {
@@ -806,7 +814,7 @@
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the instructions."
         },
         "meta": {
@@ -823,7 +831,7 @@
           "type": "number"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button."
         },
         "nextButtonText": {
@@ -954,7 +962,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "numItems": {
@@ -1022,7 +1030,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "paramCapture": {
@@ -1100,7 +1108,7 @@
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the instructions."
         },
         "meta": {
@@ -1117,7 +1125,7 @@
           "type": "number"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button."
         },
         "nextButtonText": {
@@ -1203,7 +1211,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "paramCapture": {
@@ -1293,7 +1301,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "max": {
@@ -1379,7 +1387,7 @@
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the instructions."
         },
         "meta": {
@@ -1396,7 +1404,7 @@
           "type": "number"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button."
         },
         "nextButtonText": {
@@ -1458,7 +1466,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "options": {
@@ -1583,7 +1591,7 @@
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the instructions."
         },
         "meta": {
@@ -1600,7 +1608,7 @@
           "type": "number"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button."
         },
         "nextButtonText": {
@@ -1664,7 +1672,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "paramCapture": {
@@ -1786,14 +1794,6 @@
         }
       ]
     },
-    "ResponseBlockLocation": {
-      "enum": [
-        "sidebar",
-        "aboveStimulus",
-        "belowStimulus"
-      ],
-      "type": "string"
-    },
     "ShortTextResponse": {
       "additionalProperties": false,
       "description": "The ShortTextResponse interface is used to define the properties of a short text response. ShortTextResponses render as a text input that accepts any text and can optionally have a placeholder.\n\n```js { \"id\": \"q-short-text\", \"prompt\": \"Short text example\", \"location\": \"aboveStimulus\", \"type\": \"shortText\", \"placeholder\": \"Enter your answer here\" } ```",
@@ -1807,7 +1807,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "paramCapture": {
@@ -1890,7 +1890,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "options": {
@@ -2213,7 +2213,7 @@
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the instructions."
         },
         "meta": {
@@ -2230,7 +2230,7 @@
           "type": "number"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button."
         },
         "nextButtonText": {
@@ -2300,7 +2300,7 @@
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the instructions."
         },
         "meta": {
@@ -2317,7 +2317,7 @@
           "type": "number"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button."
         },
         "nextButtonText": {
@@ -2395,7 +2395,7 @@
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the instructions."
         },
         "meta": {
@@ -2412,7 +2412,7 @@
           "type": "number"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button."
         },
         "nextButtonText": {
@@ -2490,7 +2490,7 @@
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the instructions."
         },
         "meta": {
@@ -2507,7 +2507,7 @@
           "type": "number"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button."
         },
         "nextButtonText": {

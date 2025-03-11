@@ -4,12 +4,14 @@ import {
 import { Vega, VisualizationSpec, View } from 'react-vega';
 import { initializeTrrack, Registry } from '@trrack/core';
 import { VegaProps } from 'react-vega/lib/Vega';
-import { VegaComponent } from '../parser/types';
+import { ValueOf, VegaComponent } from '../parser/types';
 import { getJsonAssetByPath } from '../utils/getStaticAsset';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreActions, useStoreDispatch } from '../store/store';
 import { StimulusParams } from '../store/types';
 import { useCurrentIdentifier } from '../routes/utils';
+
+type Listeners = { [key: string]: (key: string, value: { responseId: string, response: string | number }) => void };
 
 export interface VegaProvState {
   event: {
@@ -78,8 +80,8 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     }));
   }, [actions, trrack]);
 
-  const handleRevisitAnswer = useCallback((key: string, value: unknown) => {
-    const { responseId, response } = value as { responseId: string, response: unknown };
+  const handleRevisitAnswer = useCallback((key: string, value: Parameters<ValueOf<Listeners>>[1]) => {
+    const { responseId, response } = value;
 
     setAnswer({
       status: true,
@@ -90,7 +92,6 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     });
   }, [setAnswer, trrack.graph.backend]);
 
-  type Listeners = { [key: string]: (key: string, value: unknown) => void };
   const signalListeners = useMemo(() => {
     const signals = vegaConfig?.config?.signals;
     if (!signals) return {};
@@ -142,5 +143,5 @@ export function VegaController({ currentConfig, provState }: { currentConfig: Ve
     return <div>Failed to load vega config</div>;
   }
 
-  return (<InternalVega spec={structuredClone(vegaConfig)} signalListeners={signalListeners} onNewView={(v) => setView(v)} />);
+  return (<InternalVega spec={structuredClone(vegaConfig)} signalListeners={signalListeners as never} onNewView={(v) => setView(v)} />);
 }

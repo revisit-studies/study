@@ -21,7 +21,9 @@ import {
   IconSchema,
   IconUserPlus,
 } from '@tabler/icons-react';
-import { useEffect, useRef, useState } from 'react';
+import {
+  useEffect, useMemo, useRef, useState,
+} from 'react';
 import { useHref } from 'react-router';
 import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
 import {
@@ -36,6 +38,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
   const studyConfig = useStoreSelector((state) => state.config);
   const metadata = useStoreSelector((state) => state.metadata);
 
+  const answers = useStoreSelector((state) => state.answers);
   const flatSequence = useFlatSequence();
   const storeDispatch = useStoreDispatch();
   const { toggleShowHelpText, toggleStudyBrowser, incrementHelpCounter } = useStoreActions();
@@ -45,8 +48,23 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
 
   const currentStep = useCurrentStep();
 
-  const progressBarMax = flatSequence.length - 1;
-  const progressPercent = typeof currentStep === 'number' ? (currentStep / progressBarMax) * 100 : 0;
+  const progressPercent = useMemo(() => {
+    const answered = Object.values(answers).filter((answer) => answer.endTime > -1).length;
+    const total = flatSequence.map((step, idx) => {
+      // If the step is a component, it adds 1 to the total
+      if (studyConfig.components[step]) {
+        return 1;
+      }
+      // If we're in a dynamic block, guess a maximum of 30 steps
+      if (typeof currentStep === 'number' && currentStep <= idx && step !== 'end') {
+        return 55;
+      }
+      // Otherwise, count the number of answers for this dynamic block
+      return Object.entries(answers).filter(([key, _]) => key.includes(`${step}_`)).length;
+    }).reduce((a, b) => a + b, 0);
+
+    return (answered / total) * 100;
+  }, [answers, currentStep, flatSequence, studyConfig.components]);
 
   const [menuOpened, setMenuOpened] = useState(false);
 
