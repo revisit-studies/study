@@ -1,9 +1,8 @@
 import {
-  Badge, Box, NavLink, Popover, Text, Tooltip,
+  Badge, Box, NavLink, HoverCard, Text, Tooltip, Code,
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { IconArrowsShuffle, IconBrain, IconPackageImport } from '@tabler/icons-react';
-import { useDisclosure } from '@mantine/hooks';
 import { useCallback, useMemo, useState } from 'react';
 import { ComponentBlock, DynamicBlock, StudyConfig } from '../../parser/types';
 import { Sequence } from '../../store/types';
@@ -12,6 +11,7 @@ import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useStoreSelector } from '../../store/store';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
+import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 
 export type ComponentBlockWithOrderPath =
   Omit<ComponentBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]; interruptions?: { components: string[] }[] }
@@ -113,9 +113,8 @@ function StepItem({
   const studyId = useStudyId();
   const navigate = useNavigate();
   const currentStep = useCurrentStep();
-  const [opened, { close, open }] = useDisclosure(false);
 
-  const task = step in studyConfig.components && studyConfig.components[step];
+  const task = studyConfig.components[step] && studyComponentToIndividualComponent(studyConfig.components[step], studyConfig);
 
   const stepIndex = subSequence && subSequence.components.slice(startIndex).includes(step) ? findTaskIndexInSequence(fullSequence, step, startIndex, subSequence.orderPath) : -1;
 
@@ -137,55 +136,76 @@ function StepItem({
   const cleanedStep = step.includes('$') && coOrComponents && step.includes(coOrComponents) ? step.split(coOrComponents).at(-1) : step;
 
   return (
-    <Popover withinPortal position="left" withArrow arrowSize={10} shadow="md" opened={opened} offset={20}>
-      <Popover.Target>
-        <Box
-          onMouseEnter={open}
-          onMouseLeave={close}
-        >
-          <NavLink
-            active={active}
-            style={{
-              lineHeight: '32px',
-              height: '32px',
-            }}
-            label={(
-              <Box>
-                {interruption && <IconBrain size={16} style={{ marginRight: 4, marginBottom: -2 }} color="orange" />}
-                {step !== cleanedStep && (
-                  <IconPackageImport size={16} style={{ marginRight: 4, marginBottom: -2 }} color="var(--mantine-color-blue-outline)" />
-                )}
-                <Text size="sm" span={active} fw={active ? '700' : undefined} display="inline">{cleanedStep}</Text>
-              </Box>
-            )}
-            onClick={navigateTo}
-            disabled={disabled}
-          />
-        </Box>
-      </Popover.Target>
-      {task && (task.description || task.meta) && (
-        <Popover.Dropdown onMouseLeave={close}>
-          <Box>
+    <HoverCard withinPortal position="left" withArrow arrowSize={10} shadow="md" offset={0}>
+      <HoverCard.Target>
+        <NavLink
+          active={active}
+          style={{
+            lineHeight: '32px',
+            height: '32px',
+          }}
+          label={(
+            <Box>
+              {interruption && <IconBrain size={16} style={{ marginRight: 4, marginBottom: -2 }} color="orange" />}
+              {step !== cleanedStep && (
+                <IconPackageImport size={16} style={{ marginRight: 4, marginBottom: -2 }} color="var(--mantine-color-blue-outline)" />
+              )}
+              <Text size="sm" span={active} fw={active ? '700' : undefined} display="inline" style={{ textWrap: 'nowrap' }}>{cleanedStep}</Text>
+            </Box>
+          )}
+          onClick={navigateTo}
+          disabled={disabled}
+        />
+      </HoverCard.Target>
+      {task && (
+        <HoverCard.Dropdown>
+          <Box mah={700} style={{ overflow: 'auto' }}>
+            <Box>
+              <Text fw={900} display="inline-block" mr={2}>
+                Name:
+              </Text>
+              {' '}
+              <Text fw={400} component="span">
+                {cleanedStep}
+              </Text>
+            </Box>
             {task.description && (
             <Box>
               <Text fw={900} display="inline-block" mr={2}>
                 Description:
               </Text>
+              {' '}
               <Text fw={400} component="span">
                 {task.description}
               </Text>
             </Box>
             )}
+            <Box>
+              <Text fw={900} display="inline-block" mr={2}>
+                Response:
+              </Text>
+              {' '}
+              <Code block>{JSON.stringify(task.response, null, 2)}</Code>
+            </Box>
+            {task.correctAnswer && (
+              <Box>
+                <Text fw={900} display="inline-block" mr={2}>
+                  Correct Answer:
+                </Text>
+                {' '}
+                <Code block>{JSON.stringify(task.correctAnswer, null, 2)}</Code>
+              </Box>
+            )}
             {task.meta && (
             <Box>
               <Text fw="900" component="span">Task Meta: </Text>
-              <Text component="pre" style={{ margin: 0, padding: 0 }}>{`${JSON.stringify(task.meta, null, 2)}`}</Text>
+              <Code block>{JSON.stringify(task.meta, null, 2)}</Code>
             </Box>
             )}
           </Box>
-        </Popover.Dropdown>
+        </HoverCard.Dropdown>
       )}
-    </Popover>
+    </HoverCard>
   );
 }
 
