@@ -1,5 +1,5 @@
 import {
-  useCallback, useEffect, useMemo, useRef,
+  useCallback, useEffect, useMemo, useRef, useState,
 } from 'react';
 import { useDispatch } from 'react-redux';
 import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
@@ -10,7 +10,6 @@ import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 const PREFIX = '@REVISIT_COMMS';
 
 const defaultStyle = {
-  minHeight: '500px',
   width: '100%',
   border: 0,
 };
@@ -22,6 +21,7 @@ export function IframeController({ currentConfig, provState, answers }: { curren
   const storeDispatch = useStoreDispatch();
   const dispatch = useDispatch();
   const identifier = useCurrentIdentifier();
+  const [height, setHeight] = useState(800);
 
   const ref = useRef<HTMLIFrameElement>(null);
 
@@ -116,7 +116,8 @@ export function IframeController({ currentConfig, provState, answers }: { curren
           ? currentConfig.path
           : `${BASE_PREFIX}${currentConfig.path}?trialid=${currentComponent}&id=${iframeId}`
       }
-      style={defaultStyle}
+      style={{ ...defaultStyle, height }}
+      onLoad={() => setHeight((ref.current?.contentWindow?.document.body.scrollHeight || 750) + 20)}
     />
   );
 }
