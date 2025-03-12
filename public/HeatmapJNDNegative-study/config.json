@@ -262,7 +262,7 @@
       },
       "begin",
       {
-        "order": "fixed",
+        "order": "latinSquare",
         "components": [
           {
             "components":[{
@@ -274,7 +274,6 @@
                 "r2": 0.1,
                 "above": false,
                 "name": "below3",
-                "index": 13,
                 "shouldNegate": true
               }
             },
@@ -292,7 +291,6 @@
                 "r2": 0.5,
                 "above": true,
                 "name": "above3",
-                "index": 15,
                 "shouldNegate": true
               }
             },
@@ -310,7 +308,6 @@
                 "r2": 0.5,
                 "above": false,
                 "name": "below6",
-                "index": 17,
                 "shouldNegate": true
               }
             },
@@ -328,7 +325,6 @@
                 "r2": 0.7,
                 "above": true,
                 "name": "above6",
-                "index": 19,
                 "shouldNegate": true
               }
             },
@@ -346,7 +342,6 @@
                 "r2": 0.8,
                 "above": false,
                 "name": "below9",
-                "index": 21,
                 "shouldNegate": true
               }
             },
@@ -364,10 +359,10 @@
                 "r2": 0.99,
                 "above": true,
                 "name": "above9",
-                "index": 23,
                 "shouldNegate": true
               }
-            }
+            },
+            "break"
             ],
           "order": "fixed"
           }
