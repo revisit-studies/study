@@ -25,7 +25,7 @@
       "path": "jnd-replication/vistaJND/src/components/vis/JNDParallelRevised.tsx",
       "nextButtonLocation": "sidebar",
       "response": [{ 
-        "id": "parallelSelections",
+        "id": "scatterSelections",
         "prompt": "",
         "required": true,
         "location": "aboveStimulus",
