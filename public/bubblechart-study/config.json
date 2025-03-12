@@ -14,84 +14,101 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": true,
-    "recordStudyAudio": true
+    "recordStudyAudio": true,
+    "sidebar": true
   },
-  "importedLibraries": ["demographics"],
+  "importedLibraries": ["demographics", "mic-check"],
   "components": {
+    "consent": {
+      "type": "markdown",
+      "path": "bubblechart-study/assets/consent.md",
+      "nextButtonText": "Agree",
+      "response": [
+        {
+          "id": "accept",
+          "prompt": "Do you consent to the study and wish to continue?",
+          "requiredValue": "Accept",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Decline",
+            "Accept"
+          ]
+        }
+      ]
+    },
     "introduction": {
       "type": "markdown",
       "path": "bubblechart-study/assets/introduction.md",
       "response": [
         {
           "id": "prolificId",
-          "prompt": "Please enter your prolificId",
+          "prompt": "Please enter your prolific ID",
           "location": "belowStimulus",
           "type": "shortText",
           "placeholder": "Prolific Id",
           "paramCapture": "PROLIFIC_ID"
         }
-      ]
+      ],
+      "recordAudio": false
     },
     "instructionsWithSearch": {
       "type": "markdown",
       "path": "bubblechart-study/assets/instructions-foresight.md",
       "response": [],
-      "nextButtonText": "Start Exploring"
+      "nextButtonText": "Start Exploring",
+      "recordAudio": false
     },
     "instructionsWithoutSearch": {
       "type": "markdown",
       "path": "bubblechart-study/assets/instructions-control.md",
       "response": [],
-      "nextButtonText": "Start Exploring"
+      "nextButtonText": "Start Exploring",
+      "recordAudio": false
     },
     "bubbleChartWithSearch": {
       "description": "Desc",
-      "instruction": "Your task is to analyze this dataset of college information.\n On the following pages, you will be asked to briefly describe the findings you identified, and answer several questions on the understanding of the visualization. \n\n **How to Interact**: \n- Mouseover any of the circles to obtain a detailed view.\n- Use the text box at the top to search for specific college.",
+      "instruction": "Your task is to analyze this dataset of college information and describe the findings you identified in the next page. \n\n **How to Interact**: \n- Mouseover any of the circles to obtain a detailed view.\n- Use the text box at the top to search for specific college.\n\n**Note**: Your audio is be recorded in this page. Please verbalize your thought process as you go analyze the dataset.",
       "type": "react-component",
       "path": "bubblechart-study/assets/SearchBubbleChart.tsx",
       "parameters": {
         "data": "assets/data/college.csv",
         "search": true
       },
-      "response": [],
+      "response": [
+      ],
       "nextButtonText": "I'm finished"
     },
     "bubbleChartWithoutSearch": {
       "description": "Desc",
-      "instruction": "Your task is to analyze this dataset of college information.\n On the following pages, you will be asked to briefly describe the findings you identified, and answer several questions on the understanding of the visualization. \n\n **How to Interact**: \n- Mouseover any of the circles to obtain a detailed view.",
+      "instruction": "Your task is to analyze this dataset of college information and describe the findings you identified in the next page. \n\n **How to Interact**: \n- Mouseover any of the circles to obtain a detailed view.",
       "type": "react-component",
       "path": "bubblechart-study/assets/SearchBubbleChart.tsx",
       "parameters": {
         "data": "assets/data/college.csv",
         "search": false
       },
-      "response": [],
-      "nextButtonText": "I'm finished"
+      "response": [
+      ],
+      "nextButtonText": "I'm finished",
+      "recordAudio": true
     },
-    "findings": {
-      "description": "Findings",
-      "instruction": "Your Findings\n\nIn this section, please tell us about the findings you discovered in the data. \n\nUse the textbox with multiple paragraphs to separate your results, and list as many unique findings as you can.",
+    "explorationStrategy": {
+      "description": "Exploration Strategy",
+      "instruction": "**Your Exploration Strategy** \n\n In this section, please tell us about the strategies you applied during exploration by answering the following questions.",
       "type": "questionnaire",
       "response": [
         {
           "id": "findings",
-          "prompt": "Write your findings here",
+          "prompt": "1. Your Findings",
           "location": "belowStimulus",
           "type": "longText",
           "placeholder": "Write your findings here",
-          "paramCapture": "FINDINGS"
-        }
-      ]
-    },
-    "explorationStrategy": {
-      "description": "Exploration Strategy",
-      "instruction": "**Your Exploration Strategy** \n\nIn this section, please tell us about the strategies you applied during exploration by answering the following questions.",
-      "type": "questionnaire",
-      "response": [
+          "secondaryText": "Use the textbox below list as many unique findings as you can."
+        },
         {
           "id": "searched",
-          "prompt": "1. During exploration, did you actively search for items that you thought might be in the visualization?",
+          "prompt": "2. During exploration, did you actively search for items that you thought might be in the visualization?",
           "location": "belowStimulus",
           "type": "radio",
           "options": ["Yes", "No", "I'm not sure"],
@@ -99,21 +116,21 @@
         },
         {
           "id": "searchedItems",
-          "prompt": "2. If you answered yes, which items did you actively search for?",
+          "prompt": "3. If you answered yes, which items did you actively search for?",
           "location": "belowStimulus",
           "type": "longText",
           "required": false
         },
         {
           "id": "relatedToYou",
-          "prompt": "3. How are the ones you actively searched for related to you?",
+          "prompt": "4. How are the ones you actively searched for related to you?",
           "location": "belowStimulus",
           "type": "longText",
           "required": false
         },
         {
           "id": "difficulty",
-          "prompt": "4. How difficult was it to find them?",
+          "prompt": "5. How difficult was it to find them?",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -126,17 +143,20 @@
         },
         {
           "id": "strategy",
-          "prompt": "5. Did you apply any particular strategy during exploration? What was your strategy?",
+          "prompt": "6. Did you apply any particular strategy during exploration? What was your strategy?",
           "location": "belowStimulus",
           "type": "longText"
         }
-      ]
+      ],
+      "recordAudio": false
     }
   },
   "sequence": {
     "order": "fixed",
     "components": [
+      "consent",
       "introduction",
+      "$mic-check.co.audioTest",
       {
         "order": "latinSquare",
         "numSamples": 1,
@@ -154,7 +174,6 @@
           }
         ]
       },
-      "findings",
       "explorationStrategy",
       "$demographics.co.demographics"
     ]

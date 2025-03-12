@@ -16,12 +16,14 @@
     "autoDownloadStudy": false,
     "sidebar": false,
     "urlParticipantIdParam": "PROLIFIC_PID",
-    "studyEndMsg": "**Thank you for completing the study. You may click this link and return to Prolific**: [yourProlificLink](yourProlificLink)"
+    "studyEndMsg": "**Thank you for completing the study. You may click this link and return to Prolific**: [yourProlificLink](yourProlificLink)",
+    "nextOnEnter": true
   },
   "baseComponents": {
     "experimentRevised": {
       "type": "react-component",
       "path": "jnd-replication/vistaJND/src/components/vis/JNDHexbin.tsx",
+      "nextButtonLocation": "sidebar",
       "response": [{ 
         "id": "hexbinSelections",
         "prompt": "",
@@ -35,8 +37,14 @@
     "practiceBase": {
       "type": "react-component",
       "path": "jnd-replication/vistaJND/src/components/vis/PracticeHexbin.tsx",
-      "nextButtonLocation": "belowStimulus",
-      "response": []
+      "response": [{
+        "id": "practiceResponse",
+        "prompt": "Complete the practice",
+        "hidden": true,
+        "required": true,
+        "type": "reactive",
+        "location": "aboveStimulus"
+      }]
     }
   },
   "components": {
@@ -45,28 +53,21 @@
       "path": "HexbinJND-study/assets/introduction.md",
       "response": [
         {
-            "id": "prolificId",
-            "prompt": "Please enter your Prolific ID",
-            "required": true,
-            "location": "belowStimulus",
-            "type": "shortText",
-            "placeholder": "Prolific ID",
-            "paramCapture": "PROLIFIC_PID"
+          "id": "prolificId",
+          "prompt": "Please enter your Prolific ID",
+          "required": true,
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Prolific ID",
+          "paramCapture": "PROLIFIC_PID"
         }
       ]
     },
     "consent": {
       "type": "markdown",
-      "path": "ScatterJND-study/assets/consent.md",
+      "path": "HexbinJND-study/assets/consent.md",
       "nextButtonText": "Agree",
       "response": [
-        {
-          "id": "signature",
-          "prompt": "Your signature",
-          "location": "belowStimulus",
-          "type": "shortText",
-          "placeholder": "Please provide your signature"
-        },
         {
           "id": "accept",
           "prompt": "Do you consent to the study and wish to continue?",
@@ -85,63 +86,178 @@
       "path": "HexbinJND-study/assets/training.md",
       "response": []
     },
-    "practice1": {
+    "Hexbin plot T1 A:0.3 B:0.7": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.3, "r2": 0.7 }
+      "parameters": { "r1": 0.3, "r2": 0.7, "taskid": "practiceResponse" }
     },
-    "practice2": {
+    "Hexbin plot T2 A:0.9 B:0.6": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.9, "r2": 0.6 }
+      "parameters": { "r1": 0.9, "r2": 0.6, "taskid": "practiceResponse" }
     },
-    "practice3": {
+    "Hexbin plot T3 A:0.6 B:0.3": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.6, "r2": 0.3 }
+      "parameters": { "r1": 0.6, "r2": 0.3, "taskid": "practiceResponse" }
     },
-    "practice4": {
+    "Hexbin plot T4 A:0.6 B:0.9": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.6, "r2": 0.9 }
+      "parameters": { "r1": 0.6, "r2": 0.9, "taskid": "practiceResponse" }
     },
-    "practice5": {
+    "Hexbin plot T5 A:0.3 B:0.1": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.3, "r2": 0.1 }
+      "parameters": { "r1": 0.3, "r2": 0.1, "taskid": "practiceResponse" }
     },
-    "practice6": {
+    "Hexbin plot T6 A:0.5 B:0.3": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.5, "r2": 0.3 }
+      "parameters": { "r1": 0.5, "r2": 0.3, "taskid": "practiceResponse" }
     },
-    "practice7": {
+    "Hexbin plot T7 A:0.9 B:0.8": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.9, "r2": 0.8 }
+      "parameters": { "r1": 0.9, "r2": 0.8, "taskid": "practiceResponse" }
     },
-    "practice8": {
+    "Hexbin plot T8 A:0.6 B:0.7": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.6, "r2": 0.7 }
+      "parameters": { "r1": 0.6, "r2": 0.7, "taskid": "practiceResponse" }
     },
-    "practice9": {
+    "Hexbin plot T9 A:0.99 B:0.9": {
       "baseComponent": "practiceBase",
-      "parameters": { "r1": 0.99, "r2": 0.9 }
+      "parameters": { "r1": 0.99, "r2": 0.9, "taskid": "practiceResponse" }
     },
     "begin": {
       "type": "markdown",
-      "path": "ParallelJND-study/assets/begin.md",
+      "path": "HexbinJND-study/assets/begin.md",
       "response": []
     },
     "trial": {
       "baseComponent": "experimentRevised"
+    },
+    "break": {
+      "type": "markdown",
+      "path": "HexbinJND-study/assets/break.md",
+      "response": []
+    },
+    "survey": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q-age",
+          "prompt": "Your age:",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "18-25",
+            "25-39",
+            "40-49",
+            "50-59",
+            "60+",
+            "Unspecified"
+          ]
+        },
+        {
+          "id": "q-gender",
+          "prompt": "Your gender:",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Male",
+            "Female",
+            "Unspecified"
+          ]
+        },
+        {
+          "id": "q-handedness",
+          "prompt": "Are you left or right handed?",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Right",
+            "Left",
+            "Unspecified"
+          ]
+        },
+        {
+          "id": "q-degree",
+          "prompt": "Highest degree obtained:",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "High School",
+            "Bachelors",
+            "Masters",
+            "PhD",
+            "Other"
+          ]
+        },
+        {
+          "id": "q-monitor",
+          "prompt": "Your monitor size is closest to:",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "9\" or smaller",
+            "11\"",
+            "13\"",
+            "15\"",
+            "17\"",
+            "19\"",
+            "21\"",
+            "23\" or larger",
+            "I'm not sure"
+          ]
+        },
+        {
+          "id": "q-visualization-experience",
+          "prompt": "How familiar are you with visualizations like the ones you saw here?",
+          "secondaryText": "1 (Not familiar at all) - 5 (Very familiar)",
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "rightLabel": "Very familiar",
+          "leftLabel": "Not familiar at all"
+        },
+        {
+          "id": "q-statistical-concepts",
+          "prompt": "How familiar are you with statistical concepts like Pearson’s correlation coefficient?",
+          "secondaryText": "1 (Not familiar at all) - 5 (Very familiar)",
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "rightLabel": "Very familiar",
+          "leftLabel": "Not familiar at all"
+        },
+        {
+          "id": "q-strategy",
+          "prompt": "Briefly describe the visual strategy you used to detect which chart was more correlated.",
+          "location": "aboveStimulus",
+          "type": "longText",
+          "placeholder": "Enter your answer here"
+        },
+        {
+          "id": "q-comments",
+          "prompt": "Please leave any additional comments below.",
+          "location": "aboveStimulus",
+          "type": "longText",
+          "placeholder": "Enter your comments here"
+        }
+      ]
+    },
+    "debrief": {
+      "type": "markdown",
+      "path": "ScatterJND-study/assets/debrief.md",
+      "response": []
     }
   },
   "sequence": {
     "order": "fixed",
     "components": [
-      "introduction",
       "consent",
+      "introduction",
       "training",
       {
         "order": "fixed",
         "components": [
-          "practice1", "practice2", "practice3",
-          "practice4", "practice5", "practice6",
-          "practice7", "practice8", "practice9"
+          "Hexbin plot T1 A:0.3 B:0.7", "Hexbin plot T2 A:0.9 B:0.6", "Hexbin plot T3 A:0.6 B:0.3",
+          "Hexbin plot T4 A:0.6 B:0.9", "Hexbin plot T5 A:0.3 B:0.1", "Hexbin plot T6 A:0.5 B:0.3",
+          "Hexbin plot T7 A:0.9 B:0.8", "Hexbin plot T8 A:0.6 B:0.7", "Hexbin plot T9 A:0.99 B:0.9"
         ]
       },
       "begin",
@@ -149,78 +265,110 @@
         "order": "fixed",
         "components": [
           {
-            "order": "dynamic",
-            "id": "below3",
-            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
-            "parameters": {
-              "r1": 0.3,
-              "r2": 0.1,
-              "above": false,
-              "name": "below3",
-              "index": 13
-            }
-          },{
-            "order": "dynamic",
-            "id": "above3",
-            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
-            "parameters": {
-              "r1": 0.3,
-              "r2": 0.5,
-              "above": true,
-              "name": "above3",
-              "index": 14
-            }
+            "components":[{
+              "order": "dynamic",
+              "id": "below3",
+              "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+              "parameters": {
+                "r1": 0.3,
+                "r2": 0.1,
+                "above": false,
+                "name": "below3",
+                "index": 13
+              }
+            },
+            "break"
+            ],
+          "order": "fixed"
           },
           {
-            "order": "dynamic",
-            "id": "below6",
-            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
-            "parameters": {
-              "r1": 0.6,
-              "r2": 0.5,
-              "above": false,
-              "name": "below6",
-              "index": 15
-            }
+            "components":[{
+              "order": "dynamic",
+              "id": "above3",
+              "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+              "parameters": {
+                "r1": 0.3,
+                "r2": 0.5,
+                "above": true,
+                "name": "above3",
+                "index": 15
+              }
+            },
+            "break"
+            ],
+          "order": "fixed"
           },
           {
-            "order": "dynamic",
-            "id": "above6",
-            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
-            "parameters": {
-              "r1": 0.6,
-              "r2": 0.7,
-              "above": true,
-              "name": "above6",
-              "index": 16
-            }
+            "components":[{
+              "order": "dynamic",
+              "id": "below6",
+              "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+              "parameters": {
+                "r1": 0.6,
+                "r2": 0.5,
+                "above": false,
+                "name": "below6",
+                "index": 17
+              }
+            },
+            "break"
+            ],
+          "order": "fixed"
           },
           {
-            "order": "dynamic",
-            "id": "below9",
-            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
-            "parameters": {
-              "r1": 0.9,
-              "r2": 0.8,
-              "above": false,
-              "name": "below9",
-              "index": 17
-            }
+            "components":[{
+              "order": "dynamic",
+              "id": "above6",
+              "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+              "parameters": {
+                "r1": 0.6,
+                "r2": 0.7,
+                "above": true,
+                "name": "above6",
+                "index": 19
+              }
+            },
+            "break"
+            ],
+          "order": "fixed"
           },
           {
-            "order": "dynamic",
-            "id": "above9",
-            "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
-            "parameters": {
-              "r1": 0.9,
-              "r2": 0.99,
-              "above": true,
-              "name": "above9",
-              "index": 18
+            "components":[{
+              "order": "dynamic",
+              "id": "below9",
+              "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+              "parameters": {
+                "r1": 0.9,
+                "r2": 0.8,
+                "above": false,
+                "name": "below9",
+                "index": 21
+              }
+            },
+            "break"
+            ],
+          "order": "fixed"
+          },
+          {
+            "components":[{
+              "order": "dynamic",
+              "id": "above9",
+              "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+              "parameters": {
+                "r1": 0.9,
+                "r2": 0.99,
+                "above": true,
+                "name": "above9",
+                "index": 23
+              }
             }
+            ],
+          "order": "fixed"
           }
         ]
-      }
+      },
+      "survey",
+      "debrief"
     ]
   }
 }

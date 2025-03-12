@@ -26,15 +26,17 @@ import { useNextStep } from '../../../../../../store/hooks/useNextStep';
  * @returns 2 heatmap plots during the experiment or a message of completion
  * of the trial
  */
-export default function JND({ setAnswer, parameters } : StimulusParams<{r1: number, r2:number, above: boolean, counter: number}>) {
-  const { r1, r2 } = parameters;
+export default function JND({ setAnswer, parameters } : StimulusParams<{r1: number, r2:number, above: boolean, counter: number, shouldNegate: boolean, higherFirst: boolean}>) {
+  const {
+    r1, r2, shouldNegate, higherFirst, above,
+  } = parameters;
   const { goToNextStep } = useNextStep();
 
   const onClick = (n: number) => {
     // setCounter(counter + 1);
     setAnswer({
       status: true,
-      answers: { scatterSelections: n },
+      answers: { scatterSelections: above ? n === 2 : n === 1 },
     });
 
     setTimeout(() => {
@@ -54,16 +56,16 @@ export default function JND({ setAnswer, parameters } : StimulusParams<{r1: numb
         textAlign: 'center', paddingBottom: '24px', fontSize: '18px', fontWeight: 'bold',
       }}
       >
-        Please select the visualization that appears to have a larger correlation. (This may be difficult, but try your best!) &nbsp
+        Please select the visualization that appears to have a larger correlation. (This may be difficult, but try your best!)
       </Text>
       <Text style={{
         textAlign: 'center', paddingBottom: '24px', fontSize: '18px', fontWeight: 'bold',
       }}
       >
-        You can either click the buttons (A or B) or use the ‚left and right keys.
+        You can either click the buttons (A or B) or use the‚ left and right keys.
       </Text>
       <Center>
-        <HeatmapWrapper onClick={onClick} r1={r1} r2={r2} />
+        <HeatmapWrapper onClick={onClick} r1={r1} r2={r2} shouldNegate={shouldNegate} higherFirst={higherFirst} />
       </Center>
     </Stack>
   );

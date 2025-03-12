@@ -1,0 +1,24 @@
+.fixDisabled {
+  &:disabled, &[data-disabled] {
+    background-color: inherit !important;
+    opacity: 1 !important;
+
+    &:checked {
+      background-color: var(--checkbox-color) !important;
+    }
+
+    &:not(:checked) {
+      background-color: var(--input-bg) !important;
+    }
+  }
+}
+
+.fixDisabledIcon {
+  color: var(--mantine-color-white) !important;
+}
+
+.fixDisabledLabel {
+  &[data-disabled] {
+    color: var(--input-color) !important;
+  }
+}

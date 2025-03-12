@@ -11,11 +11,12 @@ import {
   useCallback, useEffect, useRef, useState,
 } from 'react';
 import { select } from 'd3-selection';
+import { PREFIX } from '../../../../../../utils/Prefix';
 
 const width = 320;
 const height = 300;
 
-export default function ScatterPlots({ r, onClick } : { r: number, onClick: () => void}) {
+export default function ScatterPlots({ r, onClick, shouldNegate = false } : { r: number, onClick: () => void, shouldNegate?: boolean }) {
   const d3Container = useRef(null);
   const [data, setData] = useState<[number, number][]>([]);
   const [isHover, setIsHover] = useState<boolean>(false);
@@ -29,7 +30,13 @@ export default function ScatterPlots({ r, onClick } : { r: number, onClick: () =
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const filePath = `/jnd-data/datasets/size_100/dataset_${r}_size_100.csv`;
+        const baseCorrelations = [0.3, 0.6, 0.9];
+        const shouldScramble = baseCorrelations.includes(r);
+        const randomIndex = shouldScramble ? Math.floor(Math.random() * 5) + 1 : 1;
+
+        const filePath = shouldScramble
+          ? `${PREFIX}jnd-data/datasets/size_100/dataset_${r}_size_100_${randomIndex}.csv`
+          : `${PREFIX}jnd-data/datasets/size_100/dataset_${r}_size_100.csv`;
 
         const response = await fetch(filePath);
 
@@ -42,6 +49,9 @@ export default function ScatterPlots({ r, onClick } : { r: number, onClick: () =
 
         const parsedData = rows.map((row) => {
           const [x, y] = row.split(',').map(Number);
+          if (shouldNegate) {
+            return [x, 1 - y] as [number, number];
+          }
           return [x, y] as [number, number];
         });
 

@@ -1,0 +1,7 @@
+.fixDisabled {
+  &:disabled, [data-disabled] {
+    background-color: var(--input-bg) !important;
+    color: var(--input-color) !important;
+    opacity: 1 !important;
+  }
+}

@@ -22,7 +22,6 @@ export function StepRenderer() {
 
   const showStudyBrowser = useStoreSelector((state) => state.showStudyBrowser);
   const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
-  const analysisHasProvenance = useStoreSelector((state) => state.analysisHasProvenance);
   const modes = useStoreSelector((state) => state.modes);
 
   // Attach event listeners
@@ -38,8 +37,11 @@ export function StepRenderer() {
     }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
 
     // Keyboard
-    const keypressListener = debounce((e: KeyboardEvent) => {
-      windowEvents.current.push([Date.now(), 'keypress', e.key]);
+    const keydownListener = debounce((e: KeyboardEvent) => {
+      windowEvents.current.push([Date.now(), 'keydown', e.key]);
+    }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
+    const keyupListener = debounce((e: KeyboardEvent) => {
+      windowEvents.current.push([Date.now(), 'keyup', e.key]);
     }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
 
     // Mouse/Pointer/Touch
@@ -73,7 +75,8 @@ export function StepRenderer() {
 
     window.addEventListener('focus', focusListener, true);
     window.addEventListener('input', inputListener as () => void);
-    window.addEventListener('keypress', keypressListener);
+    window.addEventListener('keydown', keydownListener);
+    window.addEventListener('keyup', keyupListener);
     window.addEventListener('mousedown', mouseDownListener);
     window.addEventListener('mouseup', mouseUpListener);
     window.addEventListener('resize', resizeListener);
@@ -84,9 +87,10 @@ export function StepRenderer() {
     return () => {
       window.removeEventListener('focus', focusListener, true);
       window.removeEventListener('input', inputListener as () => void);
-      window.removeEventListener('keypress', keypressListener);
-      window.addEventListener('mousedown', mouseDownListener);
-      window.addEventListener('mouseup', mouseUpListener);
+      window.removeEventListener('keydown', keydownListener);
+      window.removeEventListener('keyup', keyupListener);
+      window.removeEventListener('mousedown', mouseDownListener);
+      window.removeEventListener('mouseup', mouseUpListener);
       window.removeEventListener('resize', resizeListener);
       window.removeEventListener('mousemove', mouseMoveListener);
       window.removeEventListener('scroll', scrollListener);
@@ -110,7 +114,7 @@ export function StepRenderer() {
         header={{ height: 70 }}
         navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !studyConfig.uiConfig.sidebar, mobile: !studyConfig.uiConfig.sidebar } }}
         aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
-        footer={{ height: (isAnalysis ? 50 : 0) + (analysisHasAudio ? 50 : 0) + (analysisHasProvenance ? 25 : 0) }}
+        footer={{ height: (isAnalysis ? 75 : 0) + (analysisHasAudio ? 50 : 0) }}
       >
         <AppNavBar />
         <AppAside />

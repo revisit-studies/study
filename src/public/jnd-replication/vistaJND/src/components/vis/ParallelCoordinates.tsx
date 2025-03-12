@@ -12,11 +12,12 @@ import {
   useCallback, useEffect, useRef, useState,
 } from 'react';
 import { select } from 'd3-selection';
+import { PREFIX } from '../../../../../../utils/Prefix';
 
 const width = 300;
 const height = 300;
 
-export default function ParallelCoordinates({ v, onClick } : { v: number, onClick: () => void }) {
+export default function ParallelCoordinates({ v, onClick, shouldNegate = false } : { v: number, onClick: () => void, shouldNegate?: boolean }) {
   const d3Container = useRef(null);
   const [data, setData] = useState<[number, number][]>([]);
   const [isHover, setIsHover] = useState<boolean>(false);
@@ -24,7 +25,13 @@ export default function ParallelCoordinates({ v, onClick } : { v: number, onClic
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const filePath = `/jnd-data/datasets/size_100/dataset_${v}_size_100.csv`;
+        const baseCorrelations = [0.3, 0.6, 0.9];
+        const shouldScramble = baseCorrelations.includes(v);
+        const randomIndex = shouldScramble ? Math.floor(Math.random() * 5) + 1 : 1;
+
+        const filePath = shouldScramble
+          ? `${PREFIX}jnd-data/datasets/size_100/dataset_${v}_size_100_${randomIndex}.csv`
+          : `${PREFIX}jnd-data/datasets/size_100/dataset_${v}_size_100.csv`;
 
         const response = await fetch(filePath);
         if (!response.ok) {
@@ -36,6 +43,9 @@ export default function ParallelCoordinates({ v, onClick } : { v: number, onClic
 
         const parsedData = rows.map((row) => {
           const [x, y] = row.split(',').map(Number);
+          if (shouldNegate) {
+            return [x, 1 - y] as [number, number];
+          }
           return [x, y] as [number, number];
         });
 
@@ -52,7 +62,7 @@ export default function ParallelCoordinates({ v, onClick } : { v: number, onClic
     if (data.length === 0) return;
 
     const margin = {
-      left: 40,
+      left: 20,
       top: 20,
       right: 20,
       bottom: 20,

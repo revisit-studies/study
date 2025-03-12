@@ -14,4 +14,4 @@ and answer several questions on the understanding of the visualization.
 - Mouseover any of the circles to obtain a detailed view.
 
 
-<img src="./assets/control-college.gif" style="max-width:800px">
+<video src="./assets/no-search.mkv" style="max-width:800px" controls loop autoplay muted />

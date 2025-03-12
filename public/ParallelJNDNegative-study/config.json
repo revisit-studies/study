@@ -1,0 +1,380 @@
+{
+  "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Parallel Coordinates JND Study with Negative Correlations",
+    "version": "pilot",
+    "authors": ["The reVISit Team"],
+    "date": "2024-06-26",
+    "description": "This is a reVISt variation study of JND(Just Noticeable Difference) Parallel Coordinates Plot experiment with Negative Correlations.",
+    "organizations": ["University of Utah", "WPI", "University of Toronto"]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "ParallelJNDNegative-study/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": false,
+    "autoDownloadStudy": false,
+    "sidebar": false,
+    "urlParticipantIdParam": "PROLIFIC_PID",
+    "studyEndMsg": "**Thank you for completing the study. You may click this link and return to Prolific**: [yourProlificLink](yourProlificLink)",
+    "nextOnEnter": true
+  },
+  "baseComponents": {
+    "experimentRevised": {
+      "type": "react-component",
+      "path": "jnd-replication/vistaJND/src/components/vis/JNDParallelRevised.tsx",
+      "nextButtonLocation": "sidebar",
+      "response": [{ 
+        "id": "parallelSelections",
+        "prompt": "",
+        "required": true,
+        "location": "aboveStimulus",
+        "type": "numerical",
+        "hidden": true
+      }
+      ]
+    },
+    "practiceBase": {
+      "type": "react-component",
+      "path": "jnd-replication/vistaJND/src/components/vis/PracticeParallel.tsx",
+      "response": [{
+        "id": "practiceResponse",
+        "prompt": "Complete the practice",
+        "hidden": true,
+        "required": true,
+        "type": "reactive",
+        "location": "aboveStimulus"
+      }]
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "ParallelJNDNegative-study/assets/introduction.md",
+      "response": [
+        {
+            "id": "prolificId",
+            "prompt": "Please enter your Prolific ID",
+            "required": true,
+            "location": "belowStimulus",
+            "type": "shortText",
+            "placeholder": "Prolific ID",
+            "paramCapture": "PROLIFIC_PID"
+        }
+      ]
+    },
+    "consent": {
+      "type": "markdown",
+      "path": "ParallelJNDNegative-study/assets/consent.md",
+      "nextButtonText": "Agree",
+      "response": [
+        {
+          "id": "accept",
+          "prompt": "Do you consent to the study and wish to continue?",
+          "requiredValue": "Accept",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Decline",
+            "Accept"
+          ]
+        }
+      ]
+    },
+    "training": {
+      "type": "markdown",
+      "path": "ParallelJNDNegative-study/assets/training.md",
+      "response": []
+    },
+    "Parallel Coordinates T1 A:0.3 B:0.7": {
+      "baseComponent": "practiceBase",
+      "parameters": { "r1": 0.3, "r2": 0.7, "taskid": "practiceResponse", "shouldNegate": true }
+    },
+    "Parallel Coordinates T2 A:0.9 B:0.6": {
+      "baseComponent": "practiceBase",
+      "parameters": { "r1": 0.9, "r2": 0.6, "taskid": "practiceResponse", "shouldNegate": true }
+    },
+    "Parallel Coordinates T3 A:0.6 B:0.3": {
+      "baseComponent": "practiceBase",
+      "parameters": { "r1": 0.6, "r2": 0.3, "taskid": "practiceResponse", "shouldNegate": true }
+    },
+    "Parallel Coordinates T4 A:0.6 B:0.9": {
+      "baseComponent": "practiceBase",
+      "parameters": { "r1": 0.6, "r2": 0.9, "taskid": "practiceResponse", "shouldNegate": true }
+    },
+    "Parallel Coordinates T5 A:0.3 B:0.1": {
+      "baseComponent": "practiceBase",
+      "parameters": { "r1": 0.3, "r2": 0.1, "taskid": "practiceResponse", "shouldNegate": true }
+    },
+    "Parallel Coordinates T6 A:0.5 B:0.3": {
+      "baseComponent": "practiceBase",
+      "parameters": { "r1": 0.5, "r2": 0.3, "taskid": "practiceResponse", "shouldNegate": true }
+    },
+    "Parallel Coordinates T7 A:0.9 B:0.8": {
+      "baseComponent": "practiceBase",
+      "parameters": { "r1": 0.9, "r2": 0.8, "taskid": "practiceResponse", "shouldNegate": true }
+    },
+    "Parallel Coordinates T8 A:0.6 B:0.7": {
+      "baseComponent": "practiceBase",
+      "parameters": { "r1": 0.6, "r2": 0.7, "taskid": "practiceResponse", "shouldNegate": true }
+    },
+    "Parallel Coordinates T9 A:0.99 B:0.9": {
+      "baseComponent": "practiceBase",
+      "parameters": { "r1": 0.99, "r2": 0.9, "taskid": "practiceResponse", "shouldNegate": true }
+    },
+    "begin": {
+      "type": "markdown",
+      "path": "ParallelJNDNegative-study/assets/begin.md",
+      "response": []
+    },
+    "trial": {
+      "baseComponent": "experimentRevised"
+    },
+    "break": {
+      "type": "markdown",
+      "path": "ParallelJNDNegative-study/assets/break.md",
+      "response": []
+    },
+    "survey": {
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "q-age",
+          "prompt": "Your age:",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "18-25",
+            "25-39",
+            "40-49",
+            "50-59",
+            "60+",
+            "Unspecified"
+          ]
+        },
+        {
+          "id": "q-gender",
+          "prompt": "Your gender:",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Male",
+            "Female",
+            "Unspecified"
+          ]
+        },
+        {
+          "id": "q-handedness",
+          "prompt": "Are you left or right handed?",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "Right",
+            "Left",
+            "Unspecified"
+          ]
+        },
+        {
+          "id": "q-degree",
+          "prompt": "Highest degree obtained:",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "High School",
+            "Bachelors",
+            "Masters",
+            "PhD",
+            "Other"
+          ]
+        },
+        {
+          "id": "q-monitor",
+          "prompt": "Your monitor size is closest to:",
+          "location": "aboveStimulus",
+          "type": "radio",
+          "options": [
+            "9\" or smaller",
+            "11\"",
+            "13\"",
+            "15\"",
+            "17\"",
+            "19\"",
+            "21\"",
+            "23\" or larger",
+            "I'm not sure"
+          ]
+        },
+        {
+          "id": "q-visualization-experience",
+          "prompt": "How familiar are you with visualizations like the ones you saw here?",
+          "secondaryText": "1 (Not familiar at all) - 5 (Very familiar)",
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "rightLabel": "Very familiar",
+          "leftLabel": "Not familiar at all"
+        },
+        {
+          "id": "q-statistical-concepts",
+          "prompt": "How familiar are you with statistical concepts like Pearson’s correlation coefficient?",
+          "secondaryText": "1 (Not familiar at all) - 5 (Very familiar)",
+          "location": "aboveStimulus",
+          "type": "likert",
+          "numItems": 5,
+          "rightLabel": "Very familiar",
+          "leftLabel": "Not familiar at all"
+        },
+        {
+          "id": "q-strategy",
+          "prompt": "Briefly describe the visual strategy you used to detect which chart was more correlated.",
+          "location": "aboveStimulus",
+          "type": "longText",
+          "placeholder": "Enter your answer here"
+        },
+        {
+          "id": "q-comments",
+          "prompt": "Please leave any additional comments below.",
+          "location": "aboveStimulus",
+          "type": "longText",
+          "placeholder": "Enter your comments here"
+        }
+      ]
+    },
+    "debrief": {
+      "type": "markdown",
+      "path": "ParallelJNDNegative-study/assets/debrief.md",
+      "response": []
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "consent",
+      "introduction",
+      "training",
+      {
+        "order": "fixed",
+        "components": [
+          "Parallel Coordinates T1 A:0.3 B:0.7", "Parallel Coordinates T2 A:0.9 B:0.6", "Parallel Coordinates T3 A:0.6 B:0.3",
+          "Parallel Coordinates T4 A:0.6 B:0.9", "Parallel Coordinates T5 A:0.3 B:0.1", "Parallel Coordinates T6 A:0.5 B:0.3",
+          "Parallel Coordinates T7 A:0.9 B:0.8", "Parallel Coordinates T8 A:0.6 B:0.7", "Parallel Coordinates T9 A:0.99 B:0.9"
+        ]
+      },
+      "begin",
+      {
+        "order": "fixed",
+        "components": [
+          {
+            "components":[{
+              "order": "dynamic",
+              "id": "below3",
+              "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+              "parameters": {
+                "r1": 0.3,
+                "r2": 0.1,
+                "above": false,
+                "name": "below3",
+                "index": 13,
+                "shouldNegate": true
+              }
+            },
+            "break"
+            ],
+          "order": "fixed"
+          },
+          {
+            "components":[{
+              "order": "dynamic",
+              "id": "above3",
+              "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+              "parameters": {
+                "r1": 0.3,
+                "r2": 0.5,
+                "above": true,
+                "name": "above3",
+                "index": 15,
+                "shouldNegate": true
+              }
+            },
+            "break"
+            ],
+          "order": "fixed"
+          },
+          {
+            "components":[{
+              "order": "dynamic",
+              "id": "below6",
+              "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+              "parameters": {
+                "r1": 0.6,
+                "r2": 0.5,
+                "above": false,
+                "name": "below6",
+                "index": 17,
+                "shouldNegate": true
+              }
+            },
+            "break"
+            ],
+          "order": "fixed"
+          },
+          {
+            "components":[{
+              "order": "dynamic",
+              "id": "above6",
+              "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+              "parameters": {
+                "r1": 0.6,
+                "r2": 0.7,
+                "above": true,
+                "name": "above6",
+                "index": 19,
+                "shouldNegate": true
+              }
+            },
+            "break"
+            ],
+          "order": "fixed"
+          },
+          {
+            "components":[{
+              "order": "dynamic",
+              "id": "below9",
+              "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+              "parameters": {
+                "r1": 0.9,
+                "r2": 0.8,
+                "above": false,
+                "name": "below9",
+                "index": 21,
+                "shouldNegate": true
+              }
+            },
+            "break"
+            ],
+          "order": "fixed"
+          },
+          {
+            "components":[{
+              "order": "dynamic",
+              "id": "above9",
+              "functionPath": "jnd-replication/vistaJND/src/components/vis/JNDDynamic.tsx",
+              "parameters": {
+                "r1": 0.9,
+                "r2": 0.99,
+                "above": true,
+                "name": "above9",
+                "index": 23,
+                "shouldNegate": true
+              }
+            }
+            ],
+          "order": "fixed"
+          }
+        ]
+      },
+      "survey",
+      "debrief"
+    ]
+  }
+}

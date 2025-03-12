@@ -6,6 +6,7 @@ There is no time limit.
 
 After you analyze the data, we will ask you to describe your findings. 
 
-**Note**
+Your audio will be recorded when the interactive visualization is displayed to you.
+Please verbalize your thought process as you analyze the dataset.
 
-Please do not use mobile devices (touchscreen) for this task. 
+**Note**: Please do not use mobile devices (touchscreen) for this task. 

@@ -8,7 +8,7 @@ import {
 } from 'react';
 import * as d3 from 'd3';
 import {
-  Button, Group, Select, Text,
+  Button, ComboboxItem, Group, OptionsFilter, Select,
 } from '@mantine/core';
 import { Registry, initializeTrrack } from '@trrack/core';
 import cx from 'clsx';
@@ -33,6 +33,16 @@ const pack = d3.pack<DataModel>()
 
 const margin = {
   left: 0, right: 100, top: 0, bottom: 0,
+};
+
+const optionsFilter: OptionsFilter = ({ options, search }) => {
+  if (search.toLocaleLowerCase().trim() === '') {
+    return [];
+  }
+  const filtered = (options as ComboboxItem[]).filter((option) => option.label.toLowerCase().trim().includes(search.toLowerCase().trim()));
+
+  filtered.sort((a, b) => a.label.localeCompare(b.label));
+  return filtered;
 };
 
 function formatData(inputData: DataModel[]): d3.HierarchyNode<DataModel> {
@@ -296,6 +306,7 @@ function SearchBubbleChart({ parameters, setAnswer, provenanceState }: StimulusP
           searchable
           searchValue={searchValue}
           onSearchChange={handleSearchValueChange}
+          filter={optionsFilter}
           onChange={setSelectedValue}
           label="Search"
           placeholder="Search for college..."
@@ -335,10 +346,11 @@ function SearchBubbleChart({ parameters, setAnswer, provenanceState }: StimulusP
         )}
       </div>
       <div>
-        Click the following button only after you&apos;ve finished exploring --
+        Click the following button only after you&apos;ve finished exploring &mdash;
         {' '}
-        <Text c="blue">you cannot return to this page.</Text>
+        <strong>you cannot return to this page.</strong>
       </div>
+
     </div>
 
   );

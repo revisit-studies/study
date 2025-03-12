@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Iconic Texture Map</title>
+    <script src="../../../revisitUtilities/revisit-communicate.js"></script>
+    <script type="text/javascript" src="../lib/jquery.min.js"></script>
+    <script type="text/javascript" src="../lib/d3.v7.min.js"></script>
+
+    <link rel="stylesheet" href="../lib/bootstrap.css">
+    <link rel="stylesheet" type="text/css" href="./texture_style.css">
+
+    <script src="../tools/loading.js"></script>
+
+
+</head>
+<body>
+<div class="container">
+
+    <div class="row">
+        <div class="col">
+            <div id="toolbar"></div>
+        </div>
+    </div>
+
+    <div class="row gx-3">
+        <div class="col-auto legend_drag_div">
+            <div id="legend"></div>
+            <div id="dragdrop" class="bg-light">
+            </div>
+        </div>
+        <div class="col-auto">
+            <div id="chartDiv" class="chartDiv"></div>
+            <div id="outlineDiv" style="padding-left: 200px;margin-top:-50px;"></div>
+        </div>
+        <div class="col-auto">
+            <div id="controllerDiv">
+            </div>
+        </div>
+    </div>
+<script src="./texture_functions.js"></script>
+<script src="./texture_constants.js"></script>
+<script type="module">
+    // Move all code that uses createTrrack into this module script
+    import { createTrrack } from './trrack.js';
+    const {trrack, actions: trrack_actions} = createTrrack()
+    
+    // Make trrack and actions globally available
+    window.trrack = trrack;
+    window.trrack_actions = trrack_actions;
+    window.action = trrack_actions;
+    Revisit.onProvenanceReceive((state) => {
+        // console.log('provenance', state)
+            parameters = state['mapicon']
+
+            let selectedCat = parameters['selectedCat']
+
+            if(chartName.endsWith('Geo')){
+                    console.log('geo redraw')
+                    //draw textures for category i
+                    geo_getParameters(selectedCat)
+                    geo_setCatPattern(selectedCat)
+                }
+            if(chartName.endsWith('Icon')){
+                console.log('icon redraw')
+                //draw textures for category i
+                icon_getParameters(selectedCat)
+                icon_setCatPattern(selectedCat, patternSize)
+            }
+
+            let controlOutline = document.getElementById('controlOutline')
+            controlOutline.value = parameters['outline']
+
+            if(document.getElementById('halo')){
+                let controlHalo = document.getElementById('controlHalo')
+                controlHalo.value = parameters['halo']
+            }
+            drawOutline('chart_outline', parameters['outline'], 'chart_halo', parameters['halo'])
+        }
+    )
+</script>
+
+<script>
+    Revisit.onDataReceive((data) => {
+        localStorage.setItem("measurements", JSON.stringify({condition_chart: data.condition_chart, condition_texture: data.condition_texture}));
+        let timestamp_map_icon_start = Date.now() //the starting time for this design
+
+        let measurements = JSON.parse(localStorage.getItem('measurements'))
+        let condition_texture = measurements['condition_texture']
+
+        window.chartName = "mapIcon"
+        const csvName = "random"
+        drawToolbar('toolbar')
+        // drawDragDropInfo('dragdrop')
+        drawIconLegend('legend',fruits)
+        drawChartDiv('chartDiv', svgWidth, svgHeight, 'chart')
+        iconTextures(d3.select('#chartA'),fruits)
+        drawIconicControllers()
+/** UI elements */
+
+/** UI elements for toolbar */
+const resetBtn = document.getElementById("resetBtn")
+const dataBtn = document.getElementById("dataBtn")
+const defaultDataBtn = document.getElementById('defaultDataBtn')
+
+var parametersList
+var parameters
+
+
+const undoBtn = document.getElementById("undoBtn")
+const redoBtn = document.getElementById("redoBtn")
+const saveParametersBtn = document.getElementById("saveParameters")
+
+/* Indicator */
+if(document.getElementsByClassName("indicator")){
+    window.indicators = document.getElementsByClassName("indicator") // we will create indicators later
+}
+var indicatorX = [] // transform x for each indicator
+var indicatorY = [] // transoform y for each indicator
+
+window.legendImgs = document.getElementsByClassName("legendImg")
+
+/** Legend **/
+window.legendIndicators = document.getElementsByClassName("legendIndicator") //indicators beside legends
+window.legendIndicatorX = []
+window.legendIndicatorY = []
+
+/* Legend */
+window.legendLabels = document.getElementsByClassName("legendLabel") //texts in legends
+
+/** Controllers **/
+//outline controller
+const controlOutline = document.getElementById("controlOutline")
+const selectDefaultTexture = document.getElementById("selectDefaultTexture")
+
+
+window.controlHalo = document.getElementById("controlHalo")
+
+window.same = document.getElementsByClassName("same")
+
+/** UI elements of iconic texture charts */
+/* Pattern */
+var iconPattern //<pattern> for iconPattern
+window.iconBackground = []
+
+/* Icon Style */
+//radio button for each icon style
+const stroke = document.getElementById("strokeRadio")
+const detail = document.getElementById("detailRadio")
+const simpleStroke = document.getElementById('simpleStrokeRadio')
+const simpleFill = document.getElementById('simpleFillRadio')
+
+
+window.iconStyleRadios = document.getElementsByClassName("iconStyleRadio") //list of all icon style radio button
+
+//list of all icon style
+window.iconStyleList = ["stroke", "detail",'simple_stroke','simple_fill']
+
+//images for each icon style
+const strokeImg = document.getElementById("strokeImg")
+const detailImg = document.getElementById("detailImg")
+const simpleStrokeImg = document.getElementById('simpleStrokeImg')
+const simpleFillImg = document.getElementById('simpleFillImg')
+
+//icon style for each bar
+window.iconStyle = [] // list for all bars' icon style. iconStyle[i] = 1 means i-th bar's icon style is "detail"
+
+/* Controllers */
+const controlDensity = document.getElementById("controlDensity")
+const controlSize = document.getElementById("controlSize")
+const controlX = document.getElementById("controlX")
+const controlY = document.getElementById("controlY")
+const controlRotateIcon = document.getElementById("controlRotateIcon")
+const controlRotate = document.getElementById("controlRotate")
+const controlAngle0 = document.getElementById("controlAngle0")
+const controlAngle90 = document.getElementById("controlAngle90")
+
+const controlBackgroundWhite = document.getElementById("controlBackgroundWhite")
+const controlBackgroundBlack = document.getElementById("controlBackgroundBlack")
+window.controlBackgroundRadios = document.getElementsByClassName("controlBackgroundRadio")
+
+var iconBackground = []
+
+
+
+// const legendLabels = document.getElementsByClassName("legendLabel") //texts in legends
+
+
+/** end of UI elements */
+
+let mydata = getDatasetForMap()
+
+drawIconMapWithTexture(mydata, mapWidth, mapHeight, 'chart')
+//Initialize
+// icon_setInitialParameters(chartName)
+    })
+</script>
+
+
+</body>
+</html>

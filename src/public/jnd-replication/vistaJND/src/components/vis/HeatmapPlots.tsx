@@ -10,12 +10,20 @@ import {
   useCallback, useEffect, useRef, useState,
 } from 'react';
 import { select } from 'd3-selection';
+import { PREFIX } from '../../../../../../utils/Prefix';
 
 const width = 400;
 const height = 40;
 const spacing = 10;
 
-export default function HeatmapPlots({ r, onClick }: { r: number, onClick: () => void }) {
+function generateCorrelatedX(xSorted: number[], correlation: number): number[] {
+  const numPoints = xSorted.length;
+  const epsilon = Array.from({ length: numPoints }, () => d3.randomNormal(0, 0.3 + 0.7 * (1 - Math.abs(correlation)))());
+
+  return xSorted.map((x, i) => correlation * x + Math.sqrt(1 - correlation ** 2) * epsilon[i]);
+}
+
+export default function HeatmapPlots({ r, onClick, shouldNegate = false }: { r: number, onClick: () => void, shouldNegate?: boolean }) {
   const d3Container = useRef(null);
   const [data, setData] = useState<[number, number][]>([]);
   const [isHover, setIsHover] = useState<boolean>(false);
@@ -23,7 +31,13 @@ export default function HeatmapPlots({ r, onClick }: { r: number, onClick: () =>
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const filePath = `/jnd-data/datasets/size_100/dataset_${r}_size_100.csv`;
+        const baseCorrelations = [0.3, 0.6, 0.9];
+        const shouldScramble = baseCorrelations.includes(r);
+        const randomIndex = shouldScramble ? Math.floor(Math.random() * 5) + 1 : 1;
+
+        const filePath = shouldScramble
+          ? `${PREFIX}jnd-data/datasets/size_100/dataset_${r}_size_100_${randomIndex}.csv`
+          : `${PREFIX}jnd-data/datasets/size_100/dataset_${r}_size_100.csv`;
 
         const response = await fetch(filePath);
         if (!response.ok) {
@@ -50,8 +64,9 @@ export default function HeatmapPlots({ r, onClick }: { r: number, onClick: () =>
   const createChart = useCallback(() => {
     if (data.length === 0) return;
 
-    const xSorted = [...data.map((d) => d[0])].sort((a, b) => a - b);
-    const yCorrelated = data.map((d) => d[1]);
+    const sortedPairs = [...data].sort((a, b) => a[0] - b[0]);
+    const xSorted = sortedPairs.map((d) => d[0]);
+    const correlatedX = shouldNegate ? generateCorrelatedX(xSorted, -r) : sortedPairs.map((d) => d[1]);
 
     const svg = select(d3Container.current)
       .attr('width', width)
@@ -74,17 +89,18 @@ export default function HeatmapPlots({ r, onClick }: { r: number, onClick: () =>
 
     svg.append('g')
       .selectAll('rect')
-      .data(yCorrelated)
+      .data(correlatedX)
       .enter()
       .append('rect')
-      .attr('x', (_, i) => i * (width / yCorrelated.length))
+      .attr('x', (_, i) => i * (width / correlatedX.length))
       .attr('y', height + spacing)
-      .attr('width', width / yCorrelated.length)
+      .attr('width', width / correlatedX.length)
       .attr('height', height)
-      .style('fill', (d) => d3.interpolateRdBu((d - d3.min(yCorrelated)!) / (d3.max(yCorrelated)! - d3.min(yCorrelated)!)))
+      .style('fill', (d) => d3.interpolateRdBu((d - d3.min(correlatedX)!) / (d3.max(correlatedX)! - d3.min(correlatedX)!)))
       .style('cursor', 'pointer')
       .on('click', onClick);
-  }, [data, onClick]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, r]);
 
   useEffect(() => {
     createChart();
@@ -99,7 +115,6 @@ export default function HeatmapPlots({ r, onClick }: { r: number, onClick: () =>
         display: 'inline-block',
         padding: '5px',
         border: isHover ? '4px solid cornflowerblue' : '4px solid transparent',
-        opacity: isHover ? 0.8 : 1,
         cursor: 'pointer',
       }}
     >
