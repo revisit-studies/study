@@ -151,8 +151,8 @@
       "response": [
         {
           "id": "cost-effective",
-          "type": "dropdown",
-          "prompt": "Which coin is least cost effective to produce?",
+          "type": "radio",
+          "prompt": "Which coin is most effective to produce?",
           "location": "sidebar",
           "options": [
             "Penny",
@@ -164,8 +164,8 @@
         },
         {
           "id": "cost-ineffective",
-          "type": "radio",
-          "prompt": "Which coin is least most effective to produce?",
+          "type": "dropdown",
+          "prompt": "Which coin is least cost effective to produce?",
           "location": "sidebar",
           "options": [
             "Penny",
@@ -260,7 +260,7 @@
     },
     "reactiveWebsite": {
       "type": "website",
-      "path": "demo-html-input/assets/bar-chart-interaction.html",
+      "path": "tutorial/assets/bar-chart-interaction.html",
       "instructionLocation": "aboveStimulus",
       "description": "A trial for the user to click the larges bar",
       "instruction": "Click on the largest bar",
