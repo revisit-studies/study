@@ -5,6 +5,8 @@ import { ChangeEvent } from 'react';
 import { MatrixResponse, StringOption } from '../../parser/types';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { useStoreDispatch, useStoreActions } from '../../store/store';
+import checkboxClasses from './css/Checkbox.module.css';
+import radioClasses from './css/Radio.module.css';
 
 function CheckboxComponent({
   _choices,
@@ -39,6 +41,7 @@ function CheckboxComponent({
           checked={answer.value[question.label].split('|').includes(checkbox.value)}
           onChange={(event) => onChange(event, question.label, checkbox)}
           value={checkbox.value}
+          classNames={{ input: checkboxClasses.fixDisabled, icon: checkboxClasses.fixDisabledIcon }}
         />
       ))}
     </div>
@@ -88,6 +91,7 @@ function RadioGroupComponent({
             disabled={disabled}
             value={radio.value}
             key={`${radio.label}-${idx}`}
+            classNames={{ radio: radioClasses.fixDisabled, icon: radioClasses.fixDisabledIcon }}
           />
         ))}
       </div>

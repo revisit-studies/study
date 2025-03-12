@@ -1,0 +1,16 @@
+.track {
+  &::before {
+    top: 12px;
+    height: 5px;
+    left: -2px;
+    width: calc(100% + 4px);
+    border-radius: 0;
+  }
+}
+
+.fixDisabled {
+  &:disabled, &[data-disabled] {
+    background-color: var(--slider-color) !important;
+    opacity: 1 !important;
+  }
+}

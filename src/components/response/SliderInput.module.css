@@ -1,3 +1,0 @@
-.markLabel {
-  transform: translate(calc((var(--mark-offset) * -1) + (var(--slider-size) / 2)), calc(var(--mantine-spacing-xs) / 2));
-}

@@ -15,12 +15,7 @@
 
     <script src="../tools/loading.js"></script>
 
-    <script type = "text/javascript" >
-        //when you click the back button of the browser, this script prevent you from going bac
-        function preventBack(){window.history.forward();}
-        setTimeout("preventBack()", 0);
-        window.onunload=function(){null};
-    </script>
+
 </head>
 <body>
 <div class="container">
@@ -58,6 +53,51 @@
     window.trrack = trrack;
     window.trrack_actions = trrack_actions;
     window.action = trrack_actions;
+    Revisit.onProvenanceReceive((state) => {
+        // console.log('provenance', state)
+            parameters = state['piegeo']
+            //we redraw the textures of all categories, based on the new parameters
+
+            let selectedCat = parameters['selectedCat']
+            if(chartName.endsWith('Geo')){
+                    console.log('geo redraw')
+                    //draw textures for category i
+                    geo_getParameters(selectedCat)
+                    geo_setCatPattern(selectedCat)
+                }
+            if(chartName.endsWith('Icon')){
+                console.log('icon redraw')
+                //draw textures for category i
+                icon_getParameters(selectedCat)
+                icon_setCatPattern(selectedCat, patternSize)
+            }
+            // for(let i = 0; i < fruits.length; i++){
+            //     //since geometric texture and iconic texture have different parameters set, here we need to distinguish them
+            //     if(chartName.endsWith('Geo')){
+            //         console.log('geo redraw')
+            //         //draw textures for category i
+            //         geo_getParameters(i)
+            //         geo_setCatPattern(i)
+            //     }
+            //     if(chartName.endsWith('Icon')){
+            //         console.log('icon redraw')
+            //         //draw textures for category i
+            //         icon_getParameters(i)
+            //         icon_setCatPattern(i, patternSize)
+            //     }
+            // }
+
+
+            let controlOutline = document.getElementById('controlOutline')
+            controlOutline.value = parameters['outline']
+
+            if(document.getElementById('halo')){
+                let controlHalo = document.getElementById('controlHalo')
+                controlHalo.value = parameters['halo']
+            }
+            drawOutline('chart_outline', parameters['outline'], 'chart_halo', parameters['halo'])
+        }
+    )
 </script>
 <script>
     Revisit.onDataReceive((data) => {

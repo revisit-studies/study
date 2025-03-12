@@ -2,6 +2,7 @@ import { Box, Flex, TextInput } from '@mantine/core';
 import { ShortTextResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
+import classes from './css/Input.module.css';
 
 export function StringInput({
   response,
@@ -42,6 +43,7 @@ export function StringInput({
         // This is necessary so the component doesnt switch from uncontrolled to controlled, which can cause issues.
       value={answer.value || ''}
       error={generateErrorMessage(response, answer)}
+      classNames={{ input: classes.fixDisabled }}
     />
   );
 }

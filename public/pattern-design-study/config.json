@@ -1,510 +1,137 @@
 {
   "$schema": "https://raw.githubusercontent.com/reVISit-studies/study/main/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
-      "title": "Recreate Pattern Design Study",
-      "version": "pilot",
-      "authors": [
-          "Tingying He"
-      ],
-      "date": "2025-01-20",
-      "description": "Recreate the pattern design study",
-      "organizations": [
-          "University of Utah",
-          "INRIA"
-      ]
+    "title": "Recreate Pattern Design Study",
+    "version": "pilot",
+    "authors": [
+      "Tingying He"
+    ],
+    "date": "2025-01-20",
+    "description": "Recreate the pattern design study",
+    "organizations": [
+      "University of Utah",
+      "INRIA"
+    ]
   },
   "uiConfig": {
-      "contactEmail": "contact@revisit.dev",
-      "helpTextPath": "pattern-design-study/assets/help.md",
-      "logoPath": "revisitAssets/revisitLogoSquare.svg",
-      "withProgressBar": true,
-      "autoDownloadStudy": false,
-      "sidebar": true
-  },  
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "pattern-design-study/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true
+  },
   "importedLibraries": [
     "demographics"
   ],
-  "components": {
-      "welcome": {
-          "type": "markdown",
-          "path": "pattern-design-study/assets/pages/welcome.md",
-          "instruction": "",
-          "instructionLocation": "sidebar",
-          "nextButtonLocation": "belowStimulus",
-          "response": []
-      },    
-      "demographics": {
-        "type": "questionnaire",
-        "description": "Basic demographic questions including gender, age, and education",
-        "nextButtonLocation": "belowStimulus",
-        "response": [
-          {
-            "id": "gender",
-            "prompt": "What is your **gender**?",
-            "required": true,
-            "location": "aboveStimulus",
-            "type": "radio",
-            "withOther": true,
-            "options": [
-              "Woman",
-              "Man",
-              "Non-binary / Genderqueer / Third gender",
-              "Genderfluid / Gender non-conforming",
-              "Questioning",
-              "Prefer not to say"
-            ]
-          },
-          {
-            "id": "age",
-            "prompt": "What is your **age**?",
-            "required": true,
-            "location": "aboveStimulus",
-            "type": "numerical",
-            "placeholder": "Enter your age, range from 0 - 120",
-            "max": 120,
-            "min": 0
-          },
-          {
-            "id": "experience",
-            "prompt": "For how many years have you worked or studied in the field of visualization design?",
-            "required": true,
-            "location": "aboveStimulus",
-            "type": "numerical",
-            "placeholder": "Enter your years of experience, range from 0 - 120",
-            "max": 120,
-            "min": 0
-          }
-        ]
-      },
-      "consent": {
-        "type": "markdown",
-        "path": "pattern-design-study/assets/pages/consent.md",
-        "nextButtonText": "Yes, I agree",
-        "instruction": "",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "belowStimulus",
-        "response": []
-      },
-      "between-two-design":{
-        "type": "markdown",
-        "path": "pattern-design-study/assets/pages/between-two-design.md",
-        "instruction": "",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "belowStimulus",
-        "response": []
-      },
-      "description_bar": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/description.html",
-        "parameters": {
-          "condition_chart": 0
-        },
-        "nextButtonLocation": "belowStimulus",
-        "instruction": "",
-        "instructionLocation": "sidebar",
-        "response": []
-      },
-      "description_pie": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/description.html",
-        "parameters": {
-          "condition_chart": 1
-        },
-        "instruction": "",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "belowStimulus",
-        "response": []
-      },
-      "description_map": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/description.html",
-        "parameters": {
-          "condition_chart": 2
-        },
-        "instruction": "",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "belowStimulus",
-        "response": []
-      },
-      "tutorial_bar_geo-icon": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/tutorial.html",
-        "parameters": {
-          "condition_chart": 0,
-          "condition_texture": 0
-        },
-        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
-        "instructionLocation":"sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": []
-      },
-      "tutorial_bar_icon-geo": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/tutorial.html",
-        "parameters": {
-          "condition_chart": 0,
-          "condition_texture": 1
-        },
-        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
-        "instructionLocation":"sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": []
-      },
-      "tutorial_pie_geo-icon": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/tutorial.html",
-        "parameters": {
-          "condition_chart": 1,
-          "condition_texture": 0
-        },
-        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
-        "instructionLocation":"sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": []
-      },
-      "tutorial_pie_icon-geo": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/tutorial.html",
-        "parameters": {
-          "condition_chart": 1,
-          "condition_texture": 1
-        },
-        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
-        "instructionLocation":"sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": []
-      },
-      "tutorial_map_geo-icon": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/tutorial.html",
-        "parameters": {
-          "condition_chart": 2,
-          "condition_texture": 0
-        },
-        "instruction": "**Get Familiar with the Texture Design Tool** \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
-        "instructionLocation":"sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": []
-      },
-      "tutorial_map_icon-geo": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/tutorial.html",
-        "parameters": {
-          "condition_chart": 2,
-          "condition_texture": 1
-        },
-        "instruction": "### Get Familiar with the Texture Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Start Real Experiment** button at the bottom right of the page to start the real experiment.",
-        "instructionLocation":"sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": []
-      },
-      "bar-geo_geo-icon": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/bar-geo.html", 
-        "parameters": {
-          "condition_chart": 0,
-          "condition_texture": 0
-        },
-        "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task, but keep in mind that we will ask you to complete one other design after this one.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-          {
-            "id": "answer",
-            "prompt": "get-measurements", 
-            "hidden": true,
-            "type": "reactive"
-          }
-        ]
-      },
-      "bar-geo_icon-geo": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/bar-geo.html", 
-        "parameters": {
-          "condition_chart": 0,
-          "condition_texture": 0
-        },
-        "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-          {
-            "id": "answer",
-            "prompt": "get-measurements", 
-            "hidden": true,
-            "type": "reactive"
-          }
-        ]
-      },
-      "bar-icon_geo-icon": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/bar-icon.html",
-        "parameters": {
-          "condition_chart": 0,
-          "condition_texture": 0
-        },
-        "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-          {
-            "id": "answer",
-            "prompt": "get-measurements", 
-            "hidden": true,
-            "type": "reactive"
-          }
-        ]
-      },
-      "bar-icon_icon-geo": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/bar-icon.html",
-        "parameters": {
-          "condition_chart": 0,
-          "condition_texture": 0
-        },
-        "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\n When you finish designing, click on the **Next** button. There is no time limit for this task, but keep in mind that we will ask you to complete one other design after this one.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-          {
-            "id": "answer",
-            "prompt": "get-measurements", 
-            "hidden": true,
-            "type": "reactive"
-          }
-        ]
-      },
-      "pie-geo_geo-icon": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/pie-geo.html",
-        "parameters": {
-          "condition_chart": 1,
-          "condition_texture": 0
-        },
-        "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\n When you finish designing, click on the **Next** button. There is no time limit for this task, but keep in mind that we will ask you to complete one other design after this one.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-          {
-            "id": "answer",
-            "prompt": "get-measurements", 
-            "hidden": true,
-            "type": "reactive"
-          }
-        ]
-      },
-      "pie-geo_icon-geo": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/pie-geo.html",
-        "parameters": {
-          "condition_chart": 1,
-          "condition_texture": 1
-        },
-        "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\n When you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-          {
-            "id": "answer",
-            "prompt": "get-measurements", 
-            "hidden": true,
-            "type": "reactive"
-          }
-        ]
-      },
-      "pie-icon_geo-icon": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/pie-icon.html",
-        "parameters": {
-          "condition_chart": 1,
-          "condition_texture": 0
-        },
-        "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\n When you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-          {
-            "id": "answer",
-            "prompt": "get-measurements", 
-            "hidden": true,
-            "type": "reactive"
-          }
-        ]
-      },
-      "pie-icon_icon-geo": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/pie-icon.html",
-        "parameters": {
-          "condition_chart": 1,
-          "condition_texture": 1
-        },
-        "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task, but keep in mind that we will ask you to complete one other design after this one.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-          {
-            "id": "answer",
-            "prompt": "get-measurements", 
-            "hidden": true,
-            "type": "reactive"
-          }
-        ]
-      },
-      "map-geo_geo-icon": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/map-geo.html",
-        "parameters": {
-          "condition_chart": 2,
-          "condition_texture": 0
-        },
-        "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This map shows the favorite vegetable of the residents of each French department. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-          {
-            "id": "answer",
-            "prompt": "get-measurements", 
-            "hidden": true,
-            "type": "reactive"
-          }
-        ]
-      },
-      "map-geo_icon-geo": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/map-geo.html",
-        "parameters": {
-          "condition_chart": 2,
-          "condition_texture": 1
-        },
-        "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This map shows the favorite vegetable of the residents of each French department. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-          {
-            "id": "answer",
-            "prompt": "get-measurements", 
-            "hidden": true,
-            "type": "reactive"
-          }
-        ]
-      },
-      "map-icon_geo-icon": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/map-icon.html",
-        "parameters": {
-          "condition_chart": 2,
-          "condition_texture": 0
-        },
-        "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This map shows the favorite vegetable of the residents of each French department. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-          {
-            "id": "answer",
-            "prompt": "get-measurements", 
-            "hidden": true,
-            "type": "reactive"
-          }
-        ]
-      },
-      "map-icon_icon-geo": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/map-icon.html",
-        "parameters": {
-          "condition_chart": 2,
-          "condition_texture": 1
-        },
-        "instruction": "### Now it's your turn to design an effective set of textures for data visualization.\n\n Imagine you are asked to create a chart with texture for a high-resolution e-ink display which can only show black and white content. This map shows the favorite vegetable of the residents of each French department. \n\n Please adjust the texture parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-          {
-            "id": "answer",
-            "prompt": "get-measurements", 
-            "hidden": true,
-            "type": "reactive"
-          }
-        ]
-      },
-      "question-design-strategies_bar_geo-icon": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/question-design-strategies.html",
-        "parameters": {
-          "condition_chart": 0,
-          "condition_texture": 0
-        },
-        "instruction": "### Design Strategies \n\n You have completed the design of two charts, thanks a lot! Here are your two designs and some questions about your design strategies.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-          {
-            "id": "design-strategies-goals",
-            "prompt": "What kind of **goals** did you want to achieve when you designed the representation?",
-            "location": "sidebar",
-            "type": "longText",
-            "placeholder": "Please write your answer here."
-          },
-          {
-            "id": "design-strategies-geometric-textures",
-            "prompt": "When you chose the parameters for the **geometric textures**, did you use any methods or principles?",
-            "location": "sidebar",
-            "type": "longText",
-            "placeholder": "Please write your answer here."
-          },
-          {
-            "id": "design-strategies-iconic-textures",
-            "prompt": "When you chose the parameters for the **iconic textures**, did you use any methods or principles?",
-            "location": "sidebar",
-            "type": "longText",
-            "placeholder": "Please write your answer here."
-          }
+  "baseComponents": {
+    "description": {
+      "type": "website",
+      "path": "pattern-design-study/assets/pages/description.html",
+      "nextButtonLocation": "belowStimulus",
+      "instruction": "",
+      "instructionLocation": "sidebar",
+      "response": []
+    },
+    "tutorial": {
+      "type": "website",
+      "path": "pattern-design-study/assets/pages/tutorial.html",
+      "instruction": "### Get Familiar with the Pattern Design Tool \n\n Now you can play with the tool and try each function out. Once you are familiar with the tool, click the **Next** button below.",
+      "instructionLocation": "sidebar",
+      "nextButtonLocation": "sidebar",
+      "response": []
+    },
+    "bar-geo": {
+      "type": "website",
+      "path": "pattern-design-study/assets/pages/bar-geo.html",
+      "instructionLocation": "sidebar",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "answer",
+          "prompt": "get-measurements",
+          "hidden": true,
+          "type": "reactive"
+        }
       ]
-      },
-      "question-design-strategies_bar_icon-geo": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/question-design-strategies.html",
-        "parameters": {
-          "condition_chart": 0,
-          "condition_texture": 1
-        },
-        "instruction": "### Design Strategies \n\n You have completed the design of two charts, thanks a lot! Here are your two designs and some questions about your design strategies.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-          {
-            "id": "design-strategies-goals",
-            "prompt": "What kind of **goals** did you want to achieve when you designed the representation?",
-            "location": "sidebar",
-            "type": "longText",
-            "placeholder": "Please write your answer here."
-          },
-          {
-            "id": "design-strategies-iconic-textures",
-            "prompt": "When you chose the parameters for the **iconic textures**, did you use any methods or principles?",
-            "location": "sidebar",
-            "type": "longText",
-            "placeholder": "Please write your answer here."
-          },
-          {
-            "id": "design-strategies-geometric-textures",
-            "prompt": "When you chose the parameters for the **geometric textures**, did you use any methods or principles?",
-            "location": "sidebar",
-            "type": "longText",
-            "placeholder": "Please write your answer here."
-          }
+    },
+    "bar-icon": {
+      "type": "website",
+      "path": "pattern-design-study/assets/pages/bar-icon.html",
+      "instructionLocation": "sidebar",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "answer",
+          "prompt": "get-measurements",
+          "hidden": true,
+          "type": "reactive"
+        }
       ]
-      },
-      "question-design-strategies_pie_geo-icon": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/question-design-strategies.html",
-        "parameters": {
-          "condition_chart": 1,
-          "condition_texture": 0
-        },
-        "instruction": "### Design Strategies \n\n You have completed the design of two charts, thanks a lot! Here are your two designs and some questions about your design strategies.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
+    },
+    "pie-geo": {
+      "type": "website",
+      "path": "pattern-design-study/assets/pages/pie-geo.html",
+      "instructionLocation": "sidebar",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "answer",
+          "prompt": "get-measurements",
+          "hidden": true,
+          "type": "reactive"
+        }
+      ]
+    },
+    "pie-icon": {
+      "type": "website",
+      "path": "pattern-design-study/assets/pages/pie-icon.html",
+      "instructionLocation": "sidebar",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "answer",
+          "prompt": "get-measurements",
+          "hidden": true,
+          "type": "reactive"
+        }
+      ]
+    },
+    "map-geo": {
+      "type": "website",
+      "path": "pattern-design-study/assets/pages/map-geo.html",
+      "instructionLocation": "sidebar",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "answer",
+          "prompt": "get-measurements",
+          "hidden": true,
+          "type": "reactive"
+        }
+      ]
+    },
+    "map-icon": {
+      "type": "website",
+      "path": "pattern-design-study/assets/pages/map-icon.html",
+      "instructionLocation": "sidebar",
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "answer",
+          "prompt": "get-measurements",
+          "hidden": true,
+          "type": "reactive"
+        }
+      ]
+    },
+    "question-design-strategies-geo": {
+      "type": "website",
+      "path": "pattern-design-study/assets/pages/question-design-strategies.html",
+      "instruction": "### Design Strategies \n\n You have completed the design of two charts, thanks a lot! Here are your two designs and some questions about your design strategies.",
+      "instructionLocation": "sidebar",
+      "nextButtonLocation": "sidebar",
+      "response": [
         {
           "id": "design-strategies-goals",
           "prompt": "What kind of **goals** did you want to achieve when you designed the representation?",
@@ -514,31 +141,31 @@
         },
         {
           "id": "design-strategies-geometric-textures",
-          "prompt": "When you chose the parameters for the **geometric textures**, did you use any methods or principles?",
+          "prompt": "When you chose the parameters for the **geometric patterns**, did you use any methods or principles?",
           "location": "sidebar",
           "type": "longText",
           "placeholder": "Please write your answer here."
         },
         {
           "id": "design-strategies-iconic-textures",
-          "prompt": "When you chose the parameters for the **iconic textures**, did you use any methods or principles?",
+          "prompt": "When you chose the parameters for the **iconic patterns**, did you use any methods or principles?",
           "location": "sidebar",
           "type": "longText",
           "placeholder": "Please write your answer here."
         }
       ]
+    },
+    "question-design-strategies-icon": {
+      "type": "website",
+      "path": "pattern-design-study/assets/pages/question-design-strategies.html",
+      "parameters": {
+        "condition_chart": 0,
+        "condition_texture": 1
       },
-      "question-design-strategies_pie_icon-geo": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/question-design-strategies.html",
-        "parameters": {
-          "condition_chart": 1,
-          "condition_texture": 1
-        },
-        "instruction": "### Design Strategies \n\n You have completed the design of two charts, thanks a lot! Here are your two designs and some questions about your design strategies.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
+      "instruction": "### Design Strategies \n\n You have completed the design of two charts, thanks a lot! Here are your two designs and some questions about your design strategies.",
+      "instructionLocation": "sidebar",
+      "nextButtonLocation": "sidebar",
+      "response": [
         {
           "id": "design-strategies-goals",
           "prompt": "What kind of **goals** did you want to achieve when you designed the representation?",
@@ -548,218 +175,66 @@
         },
         {
           "id": "design-strategies-iconic-textures",
-          "prompt": "When you chose the parameters for the **iconic textures**, did you use any methods or principles?",
+          "prompt": "When you chose the parameters for the **iconic patterns**, did you use any methods or principles?",
           "location": "sidebar",
           "type": "longText",
           "placeholder": "Please write your answer here."
         },
         {
           "id": "design-strategies-geometric-textures",
-          "prompt": "When you chose the parameters for the **geometric textures**, did you use any methods or principles?",
+          "prompt": "When you chose the parameters for the **geometric patterns**, did you use any methods or principles?",
           "location": "sidebar",
           "type": "longText",
           "placeholder": "Please write your answer here."
         }
       ]
+    },
+    "question-compare-texture-geo": {
+      "type": "website",
+      "path": "pattern-design-study/assets/pages/question-compare-texture.html",
+      "parameters": {
+        "condition_chart": 0,
+        "condition_texture": 0
       },
-      "question-design-strategies_map_geo-icon": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/question-design-strategies.html",
-        "parameters": {
-          "condition_chart": 2,
-          "condition_texture": 0
-        },
-        "instruction": "### Design Strategies \n\n You have completed the design of two charts, thanks a lot! Here are your two designs and some questions about your design strategies.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-        {
-          "id": "design-strategies-goals",
-          "prompt": "What kind of **goals** did you want to achieve when you designed the representation?",
-          "location": "sidebar",
-          "type": "longText",
-          "placeholder": "Please write your answer here."
-        },
-        {
-          "id": "design-strategies-geometric-textures",
-          "prompt": "When you chose the parameters for the **geometric textures**, did you use any methods or principles?",
-          "location": "sidebar",
-          "type": "longText",
-          "placeholder": "Please write your answer here."
-        },
-        {
-          "id": "design-strategies-iconic-textures",
-          "prompt": "When you chose the parameters for the **iconic textures**, did you use any methods or principles?",
-          "location": "sidebar",
-          "type": "longText",
-          "placeholder": "Please write your answer here."
-        }
-      ]
-      },
-      "question-design-strategies_map_icon-geo": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/question-design-strategies.html",
-        "parameters": {
-          "condition_chart": 2,
-          "condition_texture": 1
-        },
-        "instruction": "### Design Strategies \n\n You have completed the design of two charts, thanks a lot! Here are your two designs and some questions about your design strategies.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-        {
-          "id": "design-strategies-goals",
-          "prompt": "What kind of **goals** did you want to achieve when you designed the representation?",
-          "location": "sidebar",
-          "type": "longText",
-          "placeholder": "Please write your answer here."
-        },
-        {
-          "id": "design-strategies-iconic-textures",
-          "prompt": "When you chose the parameters for the **iconic textures**, did you use any methods or principles?",
-          "location": "sidebar",
-          "type": "longText",
-          "placeholder": "Please write your answer here."
-        },
-        {
-          "id": "design-strategies-geometric-textures",
-          "prompt": "When you chose the parameters for the **geometric textures**, did you use any methods or principles?",
-          "location": "sidebar",
-          "type": "longText",
-          "placeholder": "Please write your answer here."
-        }
-      ]
-      },
-      "question-compare-texture_bar_geo-icon": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/question-compare-texture.html",
-        "parameters": {
-          "condition_chart": 0,
-          "condition_texture": 0
-        },
-        "instruction": "### Compare Textures \n\n Here are your designs with both the geometric and iconic textures.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
+      "instruction": "### Compare Patterns \n\n Here are your designs with both the geometric and iconic patterns.",
+      "instructionLocation": "sidebar",
+      "nextButtonLocation": "sidebar",
+      "response": [
         {
           "id": "compare-texture",
-          "prompt": "What's your general impression, experience, or take-away about using geometric and iconic textures for data representation?",
+          "prompt": "What's your general impression, experience, or take-away about using geometric and iconic patterns for data representation?",
           "location": "sidebar",
           "type": "longText",
           "placeholder": "Please write your answer here."
         }
       ]
+    },
+    "question-compare-texture-icon": {
+      "type": "website",
+      "path": "pattern-design-study/assets/pages/question-compare-texture.html",
+      "parameters": {
+        "condition_chart": 0,
+        "condition_texture": 0
       },
-      "question-compare-texture_bar_icon-geo": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/question-compare-texture.html",
-        "parameters": {
-          "condition_chart": 0,
-          "condition_texture": 1
-        },
-        "instruction": "### Compare Textures \n\n Here are your designs with both the iconic and geometric textures.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
+      "instruction": "### Compare Patterns \n\n Here are your designs with both the iconic and geometric patterns.",
+      "instructionLocation": "sidebar",
+      "nextButtonLocation": "sidebar",
+      "response": [
         {
           "id": "compare-texture",
-          "prompt": "What's your general impression, experience, or take-away about using geometric and iconic textures for data representation?",
+          "prompt": "What's your general impression, experience, or take-away about using geometric and iconic patterns for data representation?",
           "location": "sidebar",
           "type": "longText",
           "placeholder": "Please write your answer here."
         }
       ]
-      },
-      "question-compare-texture_pie_geo-icon": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/question-compare-texture.html",
-        "parameters": {
-          "condition_chart": 1,
-          "condition_texture": 0
-        },
-        "instruction": "### Compare Textures \n\n Here are your designs with both the geometric and iconic textures.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-        {
-          "id": "compare-texture",
-          "prompt": "What's your general impression, experience, or take-away about using geometric and iconic textures for data representation?",
-          "location": "sidebar",
-          "type": "longText",
-          "placeholder": "Please write your answer here."
-        }
-      ]
-      },
-      "question-compare-texture_pie_icon-geo": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/question-compare-texture.html",
-        "parameters": {
-          "condition_chart": 1,
-          "condition_texture": 1
-        },
-        "instruction": "### Compare Textures \n\n Here are your designs with both the iconic and geometric textures.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-        {
-          "id": "compare-texture",
-          "prompt": "What's your general impression, experience, or take-away about using geometric and iconic textures for data representation?",
-          "location": "sidebar",
-          "type": "longText",
-          "placeholder": "Please write your answer here."
-        }
-      ]
-      },
-      "question-compare-texture_map_geo-icon": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/question-compare-texture.html",
-        "parameters": {
-          "condition_chart": 2,
-          "condition_texture": 0
-        },
-        "instruction": "### Compare Textures \n\n Here are your designs with both the geometric and iconic textures.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-        {
-          "id": "compare-texture",
-          "prompt": "What's your general impression, experience, or take-away about using geometric and iconic textures for data representation?",
-          "location": "sidebar",
-          "type": "longText",
-          "placeholder": "Please write your answer here."
-        }
-      ]
-      },
-      "question-compare-texture_map_icon-geo": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/question-compare-texture.html",
-        "parameters": {
-          "condition_chart": 2,
-          "condition_texture": 1
-        },
-        "instruction": "### Compare Textures \n\n Here are your designs with both the iconic and geometric textures.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-        {
-          "id": "compare-texture",
-          "prompt": "What's your general impression, experience, or take-away about using geometric and iconic textures for data representation?",
-          "location": "sidebar",
-          "type": "longText",
-          "placeholder": "Please write your answer here."
-        }
-      ]
-      },
-      "question-different-chart-geo_bar": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/question-different-chart-geo-texture.html",
-        "parameters": {
-          "condition_chart": 0
-        },
-        "instruction":"### Geometric Texture on Different Charts \n\n We applied the geometric texture you designed to a pie chart and a map.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
+    },
+    "question-different-chart-geo": {
+      "type": "website",
+      "path": "pattern-design-study/assets/pages/question-different-chart-geo-texture.html",
+      "instructionLocation": "sidebar",
+      "nextButtonLocation": "sidebar",
+      "response": [
         {
           "id": "different-chart-geo",
           "prompt": "Do you think they still work in this context? Please explain.",
@@ -768,200 +243,470 @@
           "placeholder": "Please write your answer here."
         }
       ]
-      },
-      "question-different-chart-geo_pie": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/question-different-chart-geo-texture.html",
-        "parameters": {
-          "condition_chart": 1
-        },
-        "instruction":"### Geometric Texture on Different Charts \n\n We applied the geometric texture you designed to a bar chart and a map.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-        {
-          "id": "different-chart-geo",
-          "prompt": "Do you think they still work in this context? Please explain.",
-          "location": "sidebar",
-          "type": "longText",
-          "placeholder": "Please write your answer here."
-        }
-      ]
-      },
-      "question-different-chart-geo_map": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/question-different-chart-geo-texture.html",
-        "parameters": {
-          "condition_chart": 2
-        },
-        "instruction":"### Geometric Texture on Different Charts \n\n We applied the geometric texture you designed to a bar chart and a pie chart.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-        {
-          "id": "different-chart-geo",
-          "prompt": "Do you think they still work in this context? Please explain.",
-          "location": "sidebar",
-          "type": "longText",
-          "placeholder": "Please write your answer here."
-        }
-      ]
-      },
-      "question-different-chart-icon_bar": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/question-different-chart-icon-texture.html",
-        "parameters": {
-          "condition_chart": 0
-        },
-        "instruction":"### Iconic Texture on Different Charts \n\n We applied the iconic texture you designed to a pie chart and a map.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
+    },
+    "question-different-chart-icon": {
+      "type": "website",
+      "path": "pattern-design-study/assets/pages/question-different-chart-icon-texture.html",
+      "instructionLocation": "sidebar",
+      "nextButtonLocation": "sidebar",
+      "response": [
         {
           "id": "different-chart-icon",
           "prompt": "Do you think they still work in this context? Please explain.",
           "location": "sidebar",
           "type": "longText",
           "placeholder": "Please write your answer here."
-        }
-      ]
-      },
-      "question-different-chart-icon_pie": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/question-different-chart-icon-texture.html",
-        "parameters": {
-          "condition_chart": 1
-        },
-        "instruction":"### Iconic Texture on Different Charts \n\n We applied the iconic texture you designed to a bar chart and a map.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-        {
-          "id": "different-chart-icon",
-          "prompt": "Do you think they still work in this context? Please explain.",
-          "location": "sidebar",
-          "type": "longText",
-          "placeholder": "Please write your answer here."
-        }
-      ]
-      },
-      "question-different-chart-icon_map": {
-        "type": "website",
-        "path": "pattern-design-study/assets/pages/question-different-chart-icon-texture.html",
-        "parameters": {
-          "condition_chart": 2
-        },
-        "instruction":"### Iconic Texture on Different Charts \n\n We applied the iconic texture you designed to a bar chart and a pie chart.",
-        "instructionLocation": "sidebar",
-        "nextButtonLocation": "sidebar",
-        "response": [
-        {
-          "id": "different-chart-icon",
-          "prompt": "Do you think they still work in this context? Please explain.",
-          "location": "sidebar",
-          "type": "longText",
-          "placeholder": "Please write your answer here."
-        }
-      ]
-      }
-  },
-  "sequence": {
-  "order": "fixed",
-  "components": [
-    "welcome",
-    "consent",
-    "demographics",
-    {
-      "order": "latinSquare",
-      "numSamples": 1,
-      "components": [
-        {
-          "order": "fixed",
-          "components": [
-            "description_bar",
-            "tutorial_bar_geo-icon",
-            "bar-geo_geo-icon",
-            "between-two-design",
-            "bar-icon_geo-icon",
-            "question-design-strategies_bar_geo-icon",
-            "question-compare-texture_bar_geo-icon",
-            "question-different-chart-geo_bar",
-            "question-different-chart-icon_bar"
-          ]
-        },
-        {
-          "order": "fixed",
-          "components": [
-            "description_bar",
-            "tutorial_bar_icon-geo",
-            "bar-icon_icon-geo",
-            "between-two-design",
-            "bar-geo_icon-geo",
-            "question-design-strategies_bar_icon-geo",
-            "question-compare-texture_bar_icon-geo",
-            "question-different-chart-geo_bar",
-            "question-different-chart-icon_bar"
-          ]
-        },
-        {
-          "order": "fixed",
-          "components": [
-            "description_pie",
-            "tutorial_pie_geo-icon",
-            "pie-geo_geo-icon",
-            "between-two-design",
-            "pie-icon_geo-icon",
-            "question-design-strategies_pie_geo-icon",
-            "question-compare-texture_pie_geo-icon",
-            "question-different-chart-geo_pie",
-            "question-different-chart-icon_pie"
-          ]
-        },
-        {
-          "order": "fixed",
-          "components": [
-            "description_pie",
-            "tutorial_pie_icon-geo",
-            "pie-icon_icon-geo",
-            "between-two-design",
-            "pie-geo_icon-geo",
-            "question-design-strategies_pie_icon-geo",
-            "question-compare-texture_pie_icon-geo",
-            "question-different-chart-geo_pie",
-            "question-different-chart-icon_pie"
-          ]
-        },
-        {
-          "order": "fixed",
-          "components": [
-            "description_map",
-            "tutorial_map_geo-icon",
-            "map-geo_geo-icon",
-            "between-two-design",
-            "map-icon_geo-icon",
-            "question-design-strategies_map_geo-icon",
-            "question-compare-texture_map_geo-icon",
-            "question-different-chart-geo_map",
-            "question-different-chart-icon_map"
-          ]
-        },
-        {
-          "order": "fixed",
-          "components": [
-            "description_map",
-            "tutorial_map_icon-geo",
-            "map-icon_icon-geo",
-            "between-two-design",
-            "map-geo_icon-geo",
-            "question-design-strategies_map_icon-geo",
-            "question-compare-texture_map_icon-geo",
-            "question-different-chart-geo_map",
-            "question-different-chart-icon_map"
-          ]
         }
       ]
     }
-  ]
-}
-
+  },
+  "components": {
+    "welcome": {
+      "type": "markdown",
+      "path": "pattern-design-study/assets/pages/welcome.md",
+      "instruction": "",
+      "instructionLocation": "sidebar",
+      "nextButtonLocation": "belowStimulus",
+      "response": []
+    },
+    "demographics": {
+      "type": "questionnaire",
+      "description": "Basic demographic questions including gender, age, and education",
+      "nextButtonLocation": "belowStimulus",
+      "response": [
+        {
+          "id": "gender",
+          "prompt": "What is your **gender**?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "radio",
+          "withOther": true,
+          "options": [
+            "Woman",
+            "Man",
+            "Non-binary / Genderqueer / Third gender",
+            "Genderfluid / Gender non-conforming",
+            "Questioning",
+            "Prefer not to say"
+          ]
+        },
+        {
+          "id": "age",
+          "prompt": "What is your **age**?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "numerical",
+          "placeholder": "Enter your age, range from 0 - 120",
+          "max": 120,
+          "min": 0
+        },
+        {
+          "id": "experience",
+          "prompt": "For how many years have you worked or studied in the field of visualization design?",
+          "required": true,
+          "location": "aboveStimulus",
+          "type": "numerical",
+          "placeholder": "Enter your years of experience, range from 0 - 120",
+          "max": 120,
+          "min": 0
+        }
+      ]
+    },
+    "consent": {
+      "type": "markdown",
+      "path": "pattern-design-study/assets/pages/consent.md",
+      "nextButtonText": "Yes, I agree",
+      "instruction": "",
+      "instructionLocation": "sidebar",
+      "nextButtonLocation": "belowStimulus",
+      "response": []
+    },
+    "between-two-design": {
+      "type": "markdown",
+      "path": "pattern-design-study/assets/pages/between-two-design.md",
+      "instruction": "",
+      "instructionLocation": "sidebar",
+      "nextButtonLocation": "belowStimulus",
+      "response": []
+    },
+    "description_bar": {
+      "baseComponent": "description",
+      "parameters": {
+        "condition_chart": 0
+      }
+    },
+    "description_pie": {
+      "baseComponent": "description",
+      "parameters": {
+        "condition_chart": 1
+      }
+    },
+    "description_map": {
+      "baseComponent": "description",
+      "parameters": {
+        "condition_chart": 2
+      }
+    },
+    "tutorial_bar_geo-icon": {
+      "baseComponent": "tutorial",
+      "parameters": {
+        "condition_chart": 0,
+        "condition_texture": 0
+      }
+    },
+    "tutorial_bar_icon-geo": {
+      "baseComponent": "tutorial",
+      "parameters": {
+        "condition_chart": 0,
+        "condition_texture": 1
+      }
+    },
+    "tutorial_pie_geo-icon": {
+      "baseComponent": "tutorial",
+      "parameters": {
+        "condition_chart": 1,
+        "condition_texture": 0
+      }
+    },
+    "tutorial_pie_icon-geo": {
+      "baseComponent": "tutorial",
+      "parameters": {
+        "condition_chart": 1,
+        "condition_texture": 1
+      }
+    },
+    "tutorial_map_geo-icon": {
+      "baseComponent": "tutorial",
+      "parameters": {
+        "condition_chart": 2,
+        "condition_texture": 0
+      }
+    },
+    "tutorial_map_icon-geo": {
+      "baseComponent": "tutorial",
+      "parameters": {
+        "condition_chart": 2,
+        "condition_texture": 1
+      }
+    },
+    "bar-geo_geo-icon": {
+      "baseComponent": "bar-geo",
+      "parameters": {
+        "condition_chart": 0,
+        "condition_texture": 0
+      },
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task, but keep in mind that we will ask you to complete one other design after this one."
+    },
+    "bar-geo_icon-geo": {
+      "baseComponent": "bar-geo",
+      "parameters": {
+        "condition_chart": 0,
+        "condition_texture": 0
+      },
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
+    },
+    "bar-icon_geo-icon": {
+      "baseComponent": "bar-icon",
+      "parameters": {
+        "condition_chart": 0,
+        "condition_texture": 0
+      },
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
+    },
+    "bar-icon_icon-geo": {
+      "baseComponent": "bar-icon",
+      "parameters": {
+        "condition_chart": 0,
+        "condition_texture": 0
+      },
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\n When you finish designing, click on the **Next** button. There is no time limit for this task, but keep in mind that we will ask you to complete one other design after this one."
+    },
+    "pie-geo_geo-icon": {
+      "baseComponent": "pie-geo",
+      "parameters": {
+        "condition_chart": 1,
+        "condition_texture": 0
+      },
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\n When you finish designing, click on the **Next** button. There is no time limit for this task, but keep in mind that we will ask you to complete one other design after this one."
+    },
+    "pie-geo_icon-geo": {
+      "baseComponent": "pie-geo",
+      "parameters": {
+        "condition_chart": 1,
+        "condition_texture": 1
+      },
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\n When you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
+    },
+    "pie-icon_geo-icon": {
+      "baseComponent": "pie-icon",
+      "parameters": {
+        "condition_chart": 1,
+        "condition_texture": 0
+      },
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\n When you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
+    },
+    "pie-icon_icon-geo": {
+      "baseComponent": "pie-icon",
+      "parameters": {
+        "condition_chart": 1,
+        "condition_texture": 1
+      },
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task, but keep in mind that we will ask you to complete one other design after this one."
+    },
+    "map-geo_geo-icon": {
+      "baseComponent": "map-geo",
+      "parameters": {
+        "condition_chart": 2,
+        "condition_texture": 0
+      },
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This map shows the favorite vegetable of the residents of each French department. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
+    },
+    "map-geo_icon-geo": {
+      "baseComponent": "map-geo",
+      "parameters": {
+        "condition_chart": 2,
+        "condition_texture": 1
+      },
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This map shows the favorite vegetable of the residents of each French department. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
+    },
+    "map-icon_geo-icon": {
+      "baseComponent": "map-icon",
+      "parameters": {
+        "condition_chart": 2,
+        "condition_texture": 0
+      },
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This map shows the favorite vegetable of the residents of each French department. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
+    },
+    "map-icon_icon-geo": {
+      "baseComponent": "map-icon",
+      "parameters": {
+        "condition_chart": 2,
+        "condition_texture": 1
+      },
+      "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This map shows the favorite vegetable of the residents of each French department. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
+    },
+    "question-design-strategies_bar_geo-icon": {
+      "baseComponent": "question-design-strategies-geo",
+      "parameters": {
+        "condition_chart": 0,
+        "condition_texture": 0
+      }
+    },
+    "question-design-strategies_bar_icon-geo": {
+      "baseComponent": "question-design-strategies-icon",
+      "parameters": {
+        "condition_chart": 0,
+        "condition_texture": 1
+      }
+    },
+    "question-design-strategies_pie_geo-icon": {
+      "baseComponent": "question-design-strategies-geo",
+      "parameters": {
+        "condition_chart": 1,
+        "condition_texture": 0
+      }
+    },
+    "question-design-strategies_pie_icon-geo": {
+      "baseComponent": "question-design-strategies-icon",
+      "parameters": {
+        "condition_chart": 1,
+        "condition_texture": 1
+      }
+    },
+    "question-design-strategies_map_geo-icon": {
+      "baseComponent": "question-design-strategies-geo",
+      "parameters": {
+        "condition_chart": 2,
+        "condition_texture": 0
+      }
+    },
+    "question-design-strategies_map_icon-geo": {
+      "baseComponent": "question-design-strategies-icon",
+      "parameters": {
+        "condition_chart": 2,
+        "condition_texture": 1
+      }
+    },
+    "question-compare-texture_bar_geo-icon": {
+      "baseComponent": "question-compare-texture-geo",
+      "parameters": {
+        "condition_chart": 0,
+        "condition_texture": 0
+      }
+    },
+    "question-compare-texture_bar_icon-geo": {
+      "baseComponent": "question-compare-texture-icon",
+      "parameters": {
+        "condition_chart": 0,
+        "condition_texture": 1
+      }
+    },
+    "question-compare-texture_pie_geo-icon": {
+      "baseComponent": "question-compare-texture-geo",
+      "parameters": {
+        "condition_chart": 1,
+        "condition_texture": 0
+      }
+    },
+    "question-compare-texture_pie_icon-geo": {
+      "baseComponent": "question-compare-texture-icon",
+      "parameters": {
+        "condition_chart": 1,
+        "condition_texture": 1
+      }
+    },
+    "question-compare-texture_map_geo-icon": {
+      "baseComponent": "question-compare-texture-geo",
+      "parameters": {
+        "condition_chart": 2,
+        "condition_texture": 0
+      }
+    },
+    "question-compare-texture_map_icon-geo": {
+      "baseComponent": "question-compare-texture-icon",
+      "parameters": {
+        "condition_chart": 2,
+        "condition_texture": 1
+      }
+    },
+    "question-different-chart-geo_bar": {
+      "baseComponent": "question-different-chart-geo",
+      "parameters": {
+        "condition_chart": 0
+      },
+      "instruction": "### Geometric Pattern on Different Charts \n\n We applied the geometric pattern you designed to a pie chart and a map."
+    },
+    "question-different-chart-geo_pie": {
+      "baseComponent": "question-different-chart-geo",
+      "parameters": {
+        "condition_chart": 1
+      },
+      "instruction": "### Geometric Pattern on Different Charts \n\n We applied the geometric pattern you designed to a bar chart and a map."
+    },
+    "question-different-chart-geo_map": {
+      "baseComponent": "question-different-chart-geo",
+      "parameters": {
+        "condition_chart": 2
+      },
+      "instruction": "### Geometric Pattern on Different Charts \n\n We applied the geometric pattern you designed to a bar chart and a pie chart."
+    },
+    "question-different-chart-icon_bar": {
+      "baseComponent": "question-different-chart-icon",
+      "parameters": {
+        "condition_chart": 0
+      },
+      "instruction": "### Iconic Pattern on Different Charts \n\n We applied the iconic pattern you designed to a pie chart and a map."
+    },
+    "question-different-chart-icon_pie": {
+      "baseComponent": "question-different-chart-icon",
+      "parameters": {
+        "condition_chart": 1
+      },
+      "instruction": "### Iconic Pattern on Different Charts \n\n We applied the iconic pattern you designed to a bar chart and a map."
+    },
+    "question-different-chart-icon_map": {
+      "baseComponent": "question-different-chart-icon",
+      "parameters": {
+        "condition_chart": 2
+      }
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "welcome",
+      "consent",
+      "demographics",
+      {
+        "order": "latinSquare",
+        "numSamples": 1,
+        "components": [
+          {
+            "order": "fixed",
+            "components": [
+              "description_bar",
+              "tutorial_bar_geo-icon",
+              "bar-geo_geo-icon",
+              "between-two-design",
+              "bar-icon_geo-icon",
+              "question-design-strategies_bar_geo-icon",
+              "question-compare-texture_bar_geo-icon",
+              "question-different-chart-geo_bar",
+              "question-different-chart-icon_bar"
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "description_bar",
+              "tutorial_bar_icon-geo",
+              "bar-icon_icon-geo",
+              "between-two-design",
+              "bar-geo_icon-geo",
+              "question-design-strategies_bar_icon-geo",
+              "question-compare-texture_bar_icon-geo",
+              "question-different-chart-geo_bar",
+              "question-different-chart-icon_bar"
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "description_pie",
+              "tutorial_pie_geo-icon",
+              "pie-geo_geo-icon",
+              "between-two-design",
+              "pie-icon_geo-icon",
+              "question-design-strategies_pie_geo-icon",
+              "question-compare-texture_pie_geo-icon",
+              "question-different-chart-geo_pie",
+              "question-different-chart-icon_pie"
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "description_pie",
+              "tutorial_pie_icon-geo",
+              "pie-icon_icon-geo",
+              "between-two-design",
+              "pie-geo_icon-geo",
+              "question-design-strategies_pie_icon-geo",
+              "question-compare-texture_pie_icon-geo",
+              "question-different-chart-geo_pie",
+              "question-different-chart-icon_pie"
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "description_map",
+              "tutorial_map_geo-icon",
+              "map-geo_geo-icon",
+              "between-two-design",
+              "map-icon_geo-icon",
+              "question-design-strategies_map_geo-icon",
+              "question-compare-texture_map_geo-icon",
+              "question-different-chart-geo_map",
+              "question-different-chart-icon_map"
+            ]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "description_map",
+              "tutorial_map_icon-geo",
+              "map-icon_icon-geo",
+              "between-two-design",
+              "map-geo_icon-geo",
+              "question-design-strategies_map_icon-geo",
+              "question-compare-texture_map_icon-geo",
+              "question-different-chart-geo_map",
+              "question-different-chart-icon_map"
+            ]
+          }
+        ]
+      }
+    ]
+  }
 }

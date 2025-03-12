@@ -1,19 +1,43 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-expect-error
-import { variance, ftest } from 'jstat';
+import { variance } from 'jstat';
+import seedrandom from 'seedrandom';
 import { JumpFunctionParameters, JumpFunctionReturnVal, StoredAnswer } from '../../../../../../store/types';
 
 export default function func({
   answers, customParameters,
-}: JumpFunctionParameters<{r1: number, r2: number, above: boolean, counter: number, name: string, index: number}>): JumpFunctionReturnVal {
+}: JumpFunctionParameters<{r1: number, r2: number, above: boolean, counter: number, name: string, index: number, shouldNegate?: boolean}>): JumpFunctionReturnVal {
   let { r1, r2, above } = customParameters;
   const { name, index } = customParameters;
+  const shouldNegate = customParameters.shouldNegate || false;
+  let higherFirst = seedrandom(Date.now().toString())() > 0.5;
+  const roundToTwo = (num: number) => parseFloat((Math.round(num * 100) / 100).toString());
+
   let counter = 0;
+  let isAttentionCheck = false;
+
   const findLatestTrial = (trialAnswers: Record<string, StoredAnswer>, position: number) => {
     const trialKeys = Object.keys(trialAnswers)
       .filter((key) => key.startsWith(`${name}_${index}_trial_`))
-      .map((key) => ({ key, number: parseInt(key.split('_').pop()!, 10) }))
+      .map((key) => ({
+        key,
+        number: parseInt(key.split('_').pop()!, 10),
+      }))
       .filter((entry) => !Number.isNaN(entry.number))
+      .sort((a, b) => b.number - a.number);
+
+    return trialKeys.length > position ? trialKeys[position].key : null;
+  };
+
+  const findLatestRealTrial = (trialAnswers: Record<string, StoredAnswer>, position: number) => {
+    const trialKeys = Object.keys(trialAnswers)
+      .filter((key) => key.startsWith(`${name}_${index}_trial_`))
+      .map((key) => ({
+        key,
+        number: parseInt(key.split('_').pop()!, 10),
+        isAttentionCheck: trialAnswers[key]?.parameters?.isAttentionCheck || false,
+      }))
+      .filter((entry) => !Number.isNaN(entry.number) && !entry.isAttentionCheck) // Ignoring attention checks here
       .sort((a, b) => b.number - a.number);
 
     return trialKeys.length > position ? trialKeys[position].key : null;
@@ -22,31 +46,64 @@ export default function func({
   const latestTrialKey = findLatestTrial(answers, 0);
   if (latestTrialKey && answers[latestTrialKey]?.parameters) {
     ({
-      r1, r2, above, counter,
+      r1, r2, above, counter, isAttentionCheck,
     } = answers[latestTrialKey].parameters);
   }
-  // console.log('r1 r2 above counter', r1, r2, above, counter);
-  const roundToTwo = (num: number) => parseFloat((Math.round(num * 100) / 100).toString());
 
-  const lastAnswerName = findLatestTrial(answers, 1);
-  const lastAnswer = lastAnswerName ? answers[lastAnswerName].answer.scatterSelections : null;
+  const latestRealTrialKey = findLatestRealTrial(answers, 0);
+  let lastRealAnswer = null;
+  let lastRealTrialParams = null;
 
-  if (lastAnswer) {
-    const correctAnswer = above ? 2 : 1;
-    const lastAnswerCorrect = lastAnswer === correctAnswer;
+  if (latestRealTrialKey && answers[latestRealTrialKey]?.parameters) {
+    lastRealTrialParams = answers[latestRealTrialKey].parameters;
+  }
 
-    if (above && lastAnswerCorrect) {
-      r2 = roundToTwo(Math.max(r2 - 0.01, 0.01));
-    } else if (above && !lastAnswerCorrect) {
-      r2 = roundToTwo(Math.min(r2 + 0.03, 1));
-    } else if (!above && lastAnswerCorrect) {
-      r2 = roundToTwo(Math.max(r2 + 0.01, 0.01));
-    } else if (!above && !lastAnswerCorrect) {
-      r2 = roundToTwo(Math.max(r2 - 0.03, 0.01));
+  if (latestRealTrialKey && answers[latestRealTrialKey]?.answer) {
+    lastRealAnswer = answers[latestRealTrialKey].answer.scatterSelections;
+  }
+  const lastAnswerName = findLatestRealTrial(answers, 1);
+  const lastAnswer = lastAnswerName && answers[lastAnswerName].answer.scatterSelections;
+
+  let lastAnswerDirection = '';
+  if (lastRealAnswer) {
+    if (lastRealTrialParams && lastRealTrialParams.above) { /// above is true (r2 > r1) and answer is correct (r2)
+      lastAnswerDirection = lastRealTrialParams && lastRealTrialParams.higherFirst ? 'right' : 'left'; // higher first means r1 is on the left
+    } else { /// above is false (r1 > r2) and answer is correct (r1)
+      lastAnswerDirection = lastRealTrialParams && lastRealTrialParams.higherFirst ? 'left' : 'right';
+    }
+  } else if (lastRealTrialParams && lastRealTrialParams.above) { // answer incorrect(r1) and above is true (r2 > r1), correct answer r2
+    lastAnswerDirection = lastRealTrialParams && lastRealTrialParams.higherFirst ? 'left' : 'right';
+  } else { // answer incorrect(r2) and above is false (r1 > r2), correct r1
+    lastAnswerDirection = lastRealTrialParams && lastRealTrialParams.higherFirst ? 'right' : 'left';
+  }
+
+  if (counter > 0 && counter % 10 === 0 && counter < 50) { /// Attention check block
+    isAttentionCheck = true;
+    higherFirst = true;
+    if (lastAnswerDirection === 'left') {
+      r1 = 0.01;
+      r2 = 1.0;
+      above = true;
+    } else {
+      r1 = 1.0;
+      r2 = 0.01;
+      above = false;
+    }
+  } else {
+    isAttentionCheck = false;
+
+    if (lastRealTrialParams) {
+      ({ r1, r2, above } = lastRealTrialParams);
     }
 
-    counter += 1;
+    if (lastAnswer) { // Correct answer
+      r2 = roundToTwo(above ? Math.max(r2 - 0.01, 0.01) : Math.max(r2 + 0.01, 0.01));
+    } else { // Incorrect answer
+      r2 = roundToTwo(above ? Math.min(r2 + 0.03, 1) : Math.max(r2 - 0.03, 0.01));
+    }
   }
+
+  counter += 1;
 
   if (above && r2 <= r1) { // Tie breaking
     r2 = roundToTwo(r1 + 0.02); // Force r2 above r1
@@ -76,11 +133,17 @@ export default function func({
       const var2 = variance(group2);
       const var3 = variance(group3);
 
-      const p12 = 1 - ftest(var1 / var2, group1.length - 1, group2.length - 1);
-      const p23 = 1 - ftest(var2 / var3, group2.length - 1, group3.length - 1);
-      const p13 = 1 - ftest(var1 / var3, group1.length - 1, group3.length - 1);
+      const avg1 = group1.reduce((sum, val) => sum + val, 0) / group1.length;
+      const avg2 = group2.reduce((sum, val) => sum + val, 0) / group2.length;
+      const avg3 = group3.reduce((sum, val) => sum + val, 0) / group3.length;
 
-      if (p12 > 0.1 && p23 > 0.1 && p13 > 0.1) {
+      const varAvgSub = variance([avg1, avg2, avg3]);
+
+      const avgVarSub = (var1 + var2 + var3) / 3;
+
+      const fscore = varAvgSub / avgVarSub;
+
+      if (fscore < 0.25) {
         return { component: null };
       }
     }
@@ -93,7 +156,8 @@ export default function func({
   return {
     component: 'trial',
     parameters: {
-      r1, r2, above, counter,
+      r1, r2, above, counter, shouldNegate, higherFirst, isAttentionCheck,
     },
+    correctAnswer: [{ id: 'scatterSelections', answer: true }],
   };
 }

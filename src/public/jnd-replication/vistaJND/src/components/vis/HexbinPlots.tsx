@@ -17,7 +17,7 @@ import { PREFIX } from '../../../../../../utils/Prefix';
 const width = 300;
 const height = 300;
 
-export default function HexbinPlots({ r, onClick } : { r: number, onClick: () => void }) {
+export default function HexbinPlots({ r, onClick, shouldNegate = false } : { r: number, onClick: () => void, shouldNegate?: boolean }) {
   const d3Container = useRef(null);
   const [data, setData] = useState<[number, number][]>([]);
   const [isHover, setIsHover] = useState<boolean>(false);
@@ -43,6 +43,9 @@ export default function HexbinPlots({ r, onClick } : { r: number, onClick: () =>
 
         const parsedData = rows.map((row) => {
           const [x, y] = row.split(',').map(Number);
+          if (shouldNegate) {
+            return [x, 1 - y] as [number, number];
+          }
           return [x, y] as [number, number];
         });
 

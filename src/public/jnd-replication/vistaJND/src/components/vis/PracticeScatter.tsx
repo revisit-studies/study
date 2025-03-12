@@ -8,9 +8,11 @@ import { StimulusParams } from '../../../../../../store/types';
 
 export default function PracticeScatter({
   setAnswer, parameters,
-}: StimulusParams<{ r1: number; r2: number, taskid: string }>) {
+}: StimulusParams<{ r1: number; r2: number, taskid: string, shouldNegate: boolean }>) {
   const [result, setResult] = useState<string | null>(null);
-  const { r1, r2, taskid } = parameters;
+  const {
+    r1, r2, taskid, shouldNegate,
+  } = parameters;
 
   const onClick = useCallback(
     (n: number) => {
@@ -47,7 +49,7 @@ export default function PracticeScatter({
           r1={parameters.r1}
           r2={parameters.r2}
           shouldReRender={false}
-          shouldRandomize={false}
+          shouldNegate={shouldNegate}
         />
       </Center>
       {result && (
@@ -78,7 +80,7 @@ export default function PracticeScatter({
             </div>
 
           </Text>
-          <Text style={{ textAlign: 'center', marginTop: '1rem', minHeight: '28px' }}>{ `A is ${r1}, B is ${r2}`}</Text>
+          <Text style={{ textAlign: 'center', marginTop: '1rem', minHeight: '28px' }}>{ `A is ${shouldNegate ? '-' : ''}${r1}, B is ${shouldNegate ? '-' : ''}${r2}`}</Text>
         </>
       )}
     </Stack>

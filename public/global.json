@@ -39,7 +39,11 @@
     "ParallelJND-study",
     "HexbinJND-study",
     "HeatmapJND-study",
-    "pattern-design-study"
+    "pattern-design-study",
+    "ScatterJNDNegative-study",
+    "ParallelJNDNegative-study",
+    "HexbinJNDNegative-study",
+    "HeatmapJNDNegative-study"
   ],
   "configs": {
     "bubblechart-study": {
@@ -172,6 +176,18 @@
     },
     "pattern-design-study": {
       "path": "pattern-design-study/config.json"
+    },
+    "ScatterJNDNegative-study": {
+      "path": "ScatterJNDNegative-study/config.json"
+    },
+    "ParallelJNDNegative-study": {
+      "path": "ParallelJNDNegative-study/config.json"
+    },
+    "HexbinJNDNegative-study": {
+      "path": "HexbinJNDNegative-study/config.json"
+    },
+    "HeatmapJNDNegative-study": {
+      "path": "HeatmapJNDNegative-study/config.json"
     }
   }
 }

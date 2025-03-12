@@ -68,7 +68,7 @@
     }
 
 
-    /**
+/**
      * UI elements of geometric texture charts
      */
 
@@ -257,12 +257,11 @@ const selectDefaultTexture = document.getElementById("selectDefaultTexture")
 
     window.controlHalo = document.getElementById("controlHalo")
 //end of UI elements
-
-
-    drawChartDiv('chart0Div', svgWidth, svgHeight, 'chart0')
+drawChartDiv('chart0Div', svgWidth, svgHeight, 'chart0')
     drawChartDiv('chart1Div', svgWidth, svgHeight, 'chart1')
 
     let geo_parameters_key = ''
+
     let icon_parameters_key = ''
 
     let geo_parameters = {}
@@ -270,11 +269,15 @@ const selectDefaultTexture = document.getElementById("selectDefaultTexture")
 
     switch (condition_chart) {
         case 0: //bar
+            condition_chart_name = 'bar'
             // geo_parametersList = JSON.parse(localStorage.getItem("barGeoparametersList") || "[]")
             // geo_parameters = geo_parametersList[geo_parametersList.length - 1]
 
             // icon_parametersList = JSON.parse(localStorage.getItem("barIconparametersList") || "[]")
             // icon_parameters = icon_parametersList[icon_parametersList.length - 1]
+
+
+    
             geo_parameters_key = Object.keys(answers).find(k => k.startsWith("bar-geo"));
             
 
@@ -294,7 +297,6 @@ const selectDefaultTexture = document.getElementById("selectDefaultTexture")
                 console.log("bar icon parameters key not found");
             }
 
-
             para_geoTextures(d3.select('#chart0'),fruits, geo_parameters, 'para')
             para_iconTextures(d3.select('#chart0'), fruits, icon_parameters, 'para')
 
@@ -303,6 +305,7 @@ const selectDefaultTexture = document.getElementById("selectDefaultTexture")
 
             break;
         case 1: //pie
+            condition_chart_name = 'pie'
             // geo_parametersList = JSON.parse(localStorage.getItem("pieGeoparametersList") || "[]")
             // geo_parameters = geo_parametersList[geo_parametersList.length - 1]
 
@@ -310,7 +313,7 @@ const selectDefaultTexture = document.getElementById("selectDefaultTexture")
             // icon_parameters = icon_parametersList[icon_parametersList.length - 1]
 
             geo_parameters_key = Object.keys(answers).find(k => k.startsWith("pie-geo"));
-            
+            console.log("Found geo key:", geo_parameters_key);
 
             if (geo_parameters_key) {
                 geo_parameters = answers[geo_parameters_key]["answer"]["answer"]["parameters"];
@@ -319,7 +322,8 @@ const selectDefaultTexture = document.getElementById("selectDefaultTexture")
                 console.log("pie geo parameters key not found");
             }
 
-            icon_parameters_key = Object.keys(answers).find(k => k.startsWith("bar-icon"));
+            icon_parameters_key = Object.keys(answers).find(k => k.startsWith("pie-icon"));
+            console.log("Found icon key:", icon_parameters_key);
 
             if (icon_parameters_key) {
                 icon_parameters = answers[icon_parameters_key]["answer"]["answer"]["parameters"];
@@ -327,7 +331,6 @@ const selectDefaultTexture = document.getElementById("selectDefaultTexture")
             } else {
                 console.log("pie icon parameters key not found");
             }
-
 
             para_geoTextures(d3.select('#chart0'),fruits, geo_parameters, 'para')
             para_iconTextures(d3.select('#chart0'), fruits, icon_parameters, 'para')
@@ -337,6 +340,7 @@ const selectDefaultTexture = document.getElementById("selectDefaultTexture")
 
             break;
         case 2: //map
+            condition_chart_name = 'map'
 
             // geo_parametersList = JSON.parse(localStorage.getItem("mapGeoparametersList") || "[]")
             // geo_parameters = geo_parametersList[geo_parametersList.length - 1]
@@ -345,7 +349,7 @@ const selectDefaultTexture = document.getElementById("selectDefaultTexture")
             // icon_parameters = icon_parametersList[icon_parametersList.length - 1]
 
             geo_parameters_key = Object.keys(answers).find(k => k.startsWith("map-geo"));
-            
+            console.log("geo_parameters_key", geo_parameters_key)
 
             if (geo_parameters_key) {
                 geo_parameters = answers[geo_parameters_key]["answer"]["answer"]["parameters"];
@@ -354,7 +358,8 @@ const selectDefaultTexture = document.getElementById("selectDefaultTexture")
                 console.log("map geo parameters key not found");
             }
 
-            icon_parameters_key = Object.keys(answers).find(k => k.startsWith("bar-icon"));
+            icon_parameters_key = Object.keys(answers).find(k => k.startsWith("map-icon"));
+            console.log("icon_parameters_key", icon_parameters_key)
 
             if (icon_parameters_key) {
                 icon_parameters = answers[icon_parameters_key]["answer"]["answer"]["parameters"];
@@ -362,7 +367,6 @@ const selectDefaultTexture = document.getElementById("selectDefaultTexture")
             } else {
                 console.log("map icon parameters key not found");
             }
-
 
             para_geoTextures(d3.select('#chart0'),fruits, geo_parameters, 'para')
             para_iconTextures(d3.select('#chart0'), fruits, icon_parameters, 'para')
