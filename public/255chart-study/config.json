@@ -56,7 +56,7 @@
       "type": "website",
       "nextButtonLocation": "sidebar",
       "path": "255chart-study/assets/255charts/index.html",
-      "instruction": "<p>Five years since the end of the recent Recession, the economy has finally regained the nine million jobs it lost. Each line below shows how the number of jobs has changed for a particular industry over the past 10 years. </p> \nYour task is to analyze this dataset on economy from a popular news website. \n",
+      "instruction": "<p>Five years since the end of the recent Recession, the economy has finally regained the nine million jobs it lost. Each line below shows how the number of jobs has changed for a particular industry over the past 10 years. </p> \n <b>Your task</b> is to analyze this dataset on economy from a popular news website. <br></br> <p><b>How to interact: </b></p><p> - Mouseover an individual line to bring up a more detailed chart.</p>",
       "description": "Desc",
       "response": [
         {
@@ -72,7 +72,7 @@
       "type": "website",
       "nextButtonLocation": "sidebar",
       "path": "255chart-study/assets/255charts-search/index.html",
-      "instruction": "<p>Five years since the end of the recent Recession, the economy has finally regained the nine million jobs it lost. Each line below shows how the number of jobs has changed for a particular industry over the past 10 years. </p> \nYour task is to analyze this dataset on economy from a popular news website. \n",
+      "instruction": "<p>Five years since the end of the recent Recession, the economy has finally regained the nine million jobs it lost. Each line below shows how the number of jobs has changed for a particular industry over the past 10 years. </p> \n <b>Your task</b> is to analyze this dataset on economy from a popular news website. <br></br> <p><b>How to interact: </b></p><p> - Mouseover an individual line to bring up a more detailed chart.</p><p> - Use the text box at the top to search for specific charts.</p>",
       "description": "Desc",
       "response": [
         {
@@ -87,7 +87,8 @@
           "prompt": "Answer:",
           "location": "sidebar",
           "type": "reactive",
-          "hidden": true
+          "hidden": true,
+          "required": false
         }
       ]
     },
@@ -97,11 +98,12 @@
       "type": "questionnaire",
       "response": [
         {
-          "id": "hoverCount",
-          "prompt": "Answer:",
-          "location": "sidebar",
-          "type": "reactive",
-          "hidden": false
+          "id": "findings",
+          "prompt": "Write your findings here",
+          "location": "belowStimulus",
+          "type": "longText",
+          "placeholder": "Write your findings here",
+          "paramCapture": "FINDINGS"
         }
       ]
     },

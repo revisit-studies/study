@@ -43,6 +43,7 @@ else closeTile();
 
 
 trrack.currentChange(() => {
+    console.log(userData)
     Revisit.postAnswers({
         ["visit"]: [...userData.visitLog],
         ["search"]: [...userData.searchLog]

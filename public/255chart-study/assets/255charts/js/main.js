@@ -45,7 +45,6 @@ else closeTile();
 trrack.currentChange(() => {
     Revisit.postAnswers({
         ["visit"]: [...userData.visitLog],
-        ["search"]: [...userData.searchLog]
     });
     Revisit.postProvenance(trrack.graph.backend);
 });
