@@ -28,14 +28,16 @@
 
       let spacing = height / barData.length;
 
-      let min = d3.min(barData);
-      let max = d3.max(barData);
+      let min = d3.min([0, d3.min(barData)]);
+      let max = d3.max([0, d3.max(barData)]);
 
       let xScale = d3.scaleLinear().domain([min, max]).range([0, width]).nice();
 
+      let color_extend= d3.max([Math.abs(min), Math.abs(max)]);
+
       let color = d3
         .scaleLinear()
-        .domain([min, 0, max])
+        .domain([color_extend*-1, 0, color_extend])
         .range(['darkred', 'lightgray', 'steelblue']);
 
       let xAxis = d3.axisBottom();
