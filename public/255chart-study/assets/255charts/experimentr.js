@@ -78,11 +78,11 @@ experimentr = function() {
 
   // The HTTP POST code for saving experiment data.
   experimentr.save = function(d) {
-    // d3.xhr('/')
-    //   .header("Content-Type", "application/json")
-    //   .post(JSON.stringify(data), function(err, res) {
-    //     if(err) console.log(err);
-    //   });
+    d3.xhr('/foresight/')
+      .header("Content-Type", "application/json")
+      .post(JSON.stringify(data), function(err, res) {
+        if(err) console.log(err);
+      });
   }
 
   // Merges object o2 into o1.

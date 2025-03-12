@@ -397,6 +397,7 @@ and open the template in the editor.
   shape-rendering: optimizeSpeed;
   opacity: 0;
   transition: opacity 0.5s;
+  display: none
 }
 .is-open .emp-area,
 .show-table .emp-area {
@@ -412,7 +413,7 @@ and open the template in the editor.
 }
 .g-industry .emp-realline,
 .nobubbles .emp-bubble {
-  pointer-events: none;
+  pointer-events: auto;
 }
 .nobubbles .emp-realline,
 .emp-bubble.is-active {
@@ -704,7 +705,7 @@ and open the template in the editor.
     font-weight: 200;
     line-height: 16px;
     padding: 1px 7px 2px;
-}
+}  
 .i-link:hover, .about-key:hover {
 
   background: #ddd;

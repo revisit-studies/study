@@ -3,8 +3,8 @@
   </div>
 
   <script type="module">
-    import {load255Chart,smData} from './js/main.js';
-  ( function() {
+    import {load255Chart,searchData,userData} from './js/main.js';
+    ( function() {
     var data  = {};
 
 
@@ -23,30 +23,51 @@
 
       // "click here when you're finished" on bottom ends it
       d3.select('#finished')
-      .on('click', function() { console.log("finished"); validate(); });
+      .on('click', function() {
+        console.log("finished");
+        recordSearch(null);
+        validate();
+       });
+    }
+
+    function generateActiveSearchArray(){
+      //generate a list of uniqueVisit
+      userData['uniqueVisitArray'] = userData.visitLog.map(function(d){
+        return d['chartCode'];
+      })
+      // add search with name perfectly matched
+      var searchArray = userData.searchLog.map(function(d){
+        return d['content'].toLowerCase()
+      })
+      searchData = searchData.map(function(d){return d[NAME_ATTR].toLowerCase()})
+      searchArray = _.unique(searchArray)
+      //console.log(searchArray)
+      searchArray = searchData.filter(function(option){
+        for(var searched in searchArray){
+          if(searchArray[searched] === option)
+            return true;
+        }
+        return false;
+      })
+      userData['uniqueVisitArray'] = userData['uniqueVisitArray'].concat(searchArray)
+      userData['uniqueVisitArray']  = _.unique(userData['uniqueVisitArray'], function(d){return d.toLowerCase()})
     }
 
     function validate() {
-      // Gather our data
-      var visited = d3.selectAll('.expVisited');
-      //visitedData
-      smData.visitedData = JSON.stringify(visitedArray);
-      console.log('Number visited: ', visited[0].length);
-      console.log('Detailed Data: ', smData);
 
-      data.mouseOver = smData.mouseOver;
-      data.mouseMove = smData.mouseMove;
-      data.fadeDelay = smData.fadeDelay;
-      data.condition = smData.condition;
-      data.visited_sequence = smData.visited_sequence;
-      data.visitedData = smData.visitedData;
-      data.visited = visited[0].length;
+      generateActiveSearchArray();
+
+      //stringify visitLog and searchLog
+      userData.visitLog = JSON.stringify(userData.visitLog);
+      userData.searchLog = JSON.stringify(userData.searchLog)
+      //console.log(userData);
 
       // Wrap up
-      experimentr.addData(data);
+      experimentr.addData(userData);
       experimentr.endTimer('exploration');
       d3.select('#hit').style('display', 'none');
       experimentr.next();
+
     }
 
   }());

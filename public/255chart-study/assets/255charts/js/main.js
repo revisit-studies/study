@@ -5,34 +5,28 @@
  */
 
 /*global queue, labels*/
+
+///////////////////////////For Experiment Begin/////////////////////////////
 import { Registry, initializeTrrack } from 'https://cdn.jsdelivr.net/npm/@trrack/core@1.3.0/+esm'
 var registry = Registry.create();
 var recordActivity = registry.register(
     "record-activity",
     (state, task) => {
-        console.log('trrack applied', task)
         state.activeIndustry = task;
-        state.mouseOver++;
-
     }
 );
 
-const taskId = 'hoverCount';
-
-
-///////////////////////////For Experiment Begin/////////////////////////////
-var smData = {
-    "mouseOver": 0,
-    "mouseMove": 0,
-    "fadeDelay": 800,
-    "condition": "",
-    "visited_sequence": "", //sequence string
-    "visitedData": ""   //visited data table (JSON Array)
-};
+var recordSearchActivity = registry.register(
+    "record-search",
+    (state, task) => {
+        console.log(task,'task')
+        state.search = task;
+    }
+);
 
 var initialState = {
     activeIndustry:null,
-    mouseOver: 0,
+    search: '',
     // visited_sequence: "", //sequence string
 };
 
@@ -49,47 +43,48 @@ else closeTile();
 
 
 trrack.currentChange(() => {
-
+    Revisit.postAnswers({
+        ["visit"]: [...userData.visitLog],
+        ["search"]: [...userData.searchLog]
+    });
     Revisit.postProvenance(trrack.graph.backend);
 });
 
-
-
-Revisit.onProvenanceReceive((prov)=>{
-
-    closeTile()
-    const hoverIndustry = indexedCes[prov.activeIndustry];
-    console.log(hoverIndustry,'hoverIndustry')
-    if(hoverIndustry != null){
-        showTile(hoverIndustry)
-    }
-})
-
-var visitedArray = [];
+var userData = {
+    "condition": "",
+    "searchLog": [],
+    "visitLog": []   //visited data table (JSON Array)
+};
 var currentVisit = null;
+var currentSearch = null;
 
-var hoverId = '';
-var hoverMap = [];
+// For timeout
+var lineHoverId = null
 
-/***For encoding: drop shadow***/
-var fadeColor = '#000000';
+// Set the condition
+if (Math.random() < 0) {
+    userData.condition = "foresight";
+} else {
+    userData.condition = "control";
+}
 
 
-// if (Math.random() > 0.5) {
-//     smData.condition = "fade";
-// } else {
-    smData.condition = "nofade";
-// }
-
-console.log("condition = " + smData.condition);
-
-//For trrack replay
-
+var NAME_ATTR = 'nytlabel';
 
 ///////////////////////////For Experiment End/////////////////////////////
 
 // Single function for put chart into specified target
 function load255Chart(id) {
+    // screen size detection
+    userData['windowWidth'] = $(window).width();
+    userData['windowHeight'] = $(window).height();
+
+             //instructions
+    if(userData.condition == "control")
+    {
+            d3.selectAll('.foresightTraining').style('display','none');
+    }
+
     $(function () {
         var wholegraphic = $('<div class="whole-graphic">\n\
       <div class="graphic-wrapper"><div id="g-graphic">\n\
@@ -169,6 +164,8 @@ toggleMobile();
 var chartWidth = isMobile ? 230 : 185;
 var chartHeight = 220;
 
+var searchData;
+
 // Get the party started.
 function boot(err, cesData, wageData) {
     if (cesData)
@@ -176,66 +173,30 @@ function boot(err, cesData, wageData) {
     if (wageData)
         window.originalWageData = wageData;
     processCesData();
-    addFilterDropShadow();
-//  renderTable(); //not needed
+
+    //search
+    searchData = cesData;
+    loadSearchBox();
+
+
     renderGraphic();
-//  renderSparkline(); //not needed
-    bindEvents(); //TODO
-//  startFixie(); //not needed
-    transitionBetween(true); //TODO
-//  toggleKey(); //not needed
-    renderKey(); //not needed
-//  cloneToStaticSpots(); //not needed
+
+    bindEvents();
+
+    transitionBetween(true);
+
+    renderKey();
+
 }
 
-function addFilterDropShadow() {
-    // filters go in defs element
-
-    var defs = d3.select('#g-graphic').select('svg').append("defs");
-//var defs = g.append("g").append("defs");
-
-// create filter with id #drop-shadow
-// height=130% so that the shadow is not clipped
-    var filter = defs.append("filter")
-            .attr("id", "drop-shadow")
-            .attr("height", "130%");
-
-// SourceAlpha refers to opacity of graphic that this filter will be applied to
-// convolve that with a Gaussian with standard deviation 3 and store result
-// in blur
-    filter.append("feGaussianBlur")
-            .attr("in", "SourceAlpha")
-            .attr("stdDeviation", 3)
-            .attr("result", "blur");
-
-// translate output of Gaussian blur to the right and downwards with 2px
-// store result in offsetBlur
-    filter.append("feOffset")
-            .attr("in", "blur")
-            .attr("dx", 0)
-            .attr("dy", 3)
-            //.style("stroke", 'yellow')
-            .attr("result", "offsetBlur");
-
-    filter.append("feFlood")
-            .attr("in", "offsetBlur")
-            .attr("flood-color", fadeColor) //"#3d3d3d"
-            .attr("flood-opacity", "1")
-            .attr("result", "offsetColor");
-    filter.append("feComposite")
-            .attr("in", "offsetColor")
-            .attr("in2", "offsetBlur")
-            .attr("operator", "in")
-            .attr("result", "offsetBlur");
-
-// overlay original SourceGraphic over translated blurred opacity by using
-// feMerge filter. Order of specifying inputs is important!
-    var feMerge = filter.append("feMerge");
-
-    feMerge.append("feMergeNode")
-            .attr("in", "offsetBlur")
-    feMerge.append("feMergeNode")
-            .attr("in", "SourceGraphic");
+function loadSearchBox(){
+    // Load the searchbox if foresight condition
+    if(userData.condition === "foresight")
+    {
+        console.log('enable search')
+        d3.select('#hit').select('#search-box').style('display','inline')
+        enableSearch()
+    }
 }
 
 
@@ -267,6 +228,7 @@ function findWageBreaks(ces) {
 }
 
 function classify(industry, data) {
+
     data || (data = industry.data);
     var factor = 0.06;
     var emps = _.pluck(data, 'employment');
@@ -307,59 +269,29 @@ function classify(industry, data) {
     }
     if (gainsCount + lossesCount < 1 || lossesCount === 0 && gainedThroughRecession) {
         classification = 'unaffected';
+        //e0++;
     } else if (industry.empLast > preRecessionPeakEmp + (factor * preRecessionPeakEmp)) {
         classification = 'recovered-and-grown';
+        //i2++;
         // } else if (yoys[yoyIndex07] < -factor || yoys[yoyIndex08] < -factor || yoys[yoyIndex09] < -factor) {
     } else {
         if (industry.empLast > preRecessionPeakEmp - (factor * preRecessionPeakEmp)) {
             classification = 'recovered';
+            //i1++;
         } else if (industry.chgSinceQ4Oh7 < factor) {
             if (industry.empFirst > industry.empdec07 + ((factor / 3) * industry.empdec07) && industry.empLast < industry.empdec09 - (industry.empdec09 * (factor / 2))) {
                 classification = 'collapsed';
+                //d2++;
             } else {
                 classification = 'not-recovered';
+                //d1++;
             }
         }
     }
     industry.classification = classification;
+
 }
 
-function fadeIt(it, clone)
-{
-    d3.select(it)
-            .classed('expVisited', true);
-
-    //track the visted sequence
-    var code = $(clone).attr('data-ces');
-    smData.visited_sequence += (code + "-");
-    // trrack.apply("visited", recordActivity(code));
-
-    //visited array
-    var startTime = Date.now();
-    currentVisit = {"code":code, "start":Date.now(), "mousemove":0};
-
-    if (smData.condition != "fade")
-        return;
-
-    //console.log(d3.select(clone[0]).select('.a-chart'))
-    // d3.select(clone[0])
-    //     .style('background','#e3e3e3');//#e3e3e3 //#d9d9d9
-    // d3.select(clone[0]).select('.industry-header')
-    //     .style('background','#e3e3e3');
-
-    d3.select(clone[0]).select('.emp-area')
-    //.style("stroke",'#gray');
-        .style('opacity',1);
-
-//  d3.select(it).select('.emp-line')
-//     .style("filter", "url(#drop-shadow)");
-
-    d3.select(it).select('.emp-line')
-            .style('stroke-width',3)
-            .style("opacity", 0.8);
-
-    console.log('fade triggered');
-}
 
 function bindEvents() {
 
@@ -367,32 +299,43 @@ function bindEvents() {
         $(window).scrollTop(0);
     });
 
-    $('#graphic-layer').on('mouseover', '.a-chart', mouseoverAChart);
+    // $('#graphic-layer').on('mouseover', '.a-chart', mouseoverAChart);
 
     $('body').on('mousemove', '.is-open .a-chart, .show-table .a-chart', drawBead);
 
     $('body').on('mouseout', '.is-open .a-chart, .show-table .a-chart', hideBead);
 
-   // $('.whole-graphic').on('mouseover touchstart', '.i-link', function () {
-   //     //if (isMobile)
-   //     //    return;
-   //     closeTile();
-   //     //var industry = indexedCes[$(this).attr('data-ces')];
-   //     var industry = indexedCes[$(this).closest('.g-industry').attr('data-ces')];
-   //     showTile(industry);
+    // $('.whole-graphic').on('mouseover touchstart', '.i-link', function () {
+    //     //if (isMobile)
+    //     //    return;
+    //     closeTile();
+    //     //var industry = indexedCes[$(this).attr('data-ces')];
+    //     var industry = indexedCes[$(this).closest('.g-industry').attr('data-ces')];
+    //     showTile(industry);
 
-   // });
+    // });
 
-    //check
-    $('#g-graphic').on('mouseover', '.emp-area', function () {
+    $('#g-graphic').on('mouseover', '.emp-line', function () {
         closeTile();
         var industry = indexedCes[$(this).closest('.g-industry').attr('data-ces')];
-        // console.log($(this).closest('.g-industry').attr('data-ces'),'industry')
+
+        // If in search mode and not selected --> delay
+        var waitTime = $(".whole-graphic").hasClass("search-active") && !$(this).closest('.g-industry').hasClass("search-selected") ? 500 : 0
+        if (lineHoverId === null)
+        {
+            lineHoverId = setTimeout(showTile, waitTime, industry);
+            //console.log("Set!! "+lineHoverId)
+        }
         trrack.apply("hoverIndustry", recordActivity($(this).closest('.g-industry').attr('data-ces')));
-        showTile(industry);
+
+
+        //showTile(industry);
     });
 
-
+    $('#g-graphic').on('mouseout', '.emp-line', function () {
+        clearTimeout(lineHoverId)
+        lineHoverId = null
+    });
 }
 
 function showJobs(industry, datapoint, wagepoint, el) {
@@ -415,6 +358,7 @@ function mouseoverAChart(e) {
 
 function drawBead(e) {
     e.preventDefault();
+
     if (isMobile)
         return;
 
@@ -439,18 +383,15 @@ function drawBead(e) {
     var neg = datapoint.employment < industry.empFirst || (datapoint.employment === industry.empFirst && empSecond < industry.empFirst);
     var x = chartX(datapoint.date);
     var y = industry.chartY(datapoint.employment);
-    var el = d3.select(industry.clone || industry.element);
+    var el = d3.select(industry.clone);
     var bead = el.select('.a-bead');
     // bead.attr('cx', x).attr('cy', y);
     bead.attr("transform", "translate(-2.5, 0) translate(" + (x + (neg ? 4 : 0)) + "," + (y + (neg ? 7 : -7)) + ") rotate(" + (neg ? 180 : 0) + ")");
-    // console.log(industry,datapoint,wagepoint,el)
     showJobs(industry, datapoint, wagepoint, el);
 
-    //for Data Collection
-    smData.mouseMove++;
-    if(currentVisit) {
-        currentVisit.mousemove++;
-        //console.log("current chart mousemove: " + currentVisit.mousemove);
+    //Record user data
+    if (currentVisit) {
+        currentVisit['mousemove']++;
     }
 }
 
@@ -469,15 +410,7 @@ function closeTile() {
         return;
     $(window).off('mouseover', closeTile);
     if (openTile) {
-        //visited mark
-        if(currentVisit && $(openTile.industry).attr('cescode') == currentVisit.code)
-        {
-            currentVisit.end = Date.now();
-            currentVisit.duration = currentVisit.end - currentVisit.start + smData.fadeDelay;
-            visitedArray.push(currentVisit);
-            console.log("visited: "+ currentVisit.duration);
-            currentVisit = null;
-        }
+        recordVisit(null); //record the current visit
 
         //close tile
         openTile.original.removeClass('no-label');
@@ -487,29 +420,18 @@ function closeTile() {
         _.delay(function () {
             openTileRef.remove();
         }, 500);
-        // fade code
-        console.log('mousing out of tile');
-        //check
-        trrack.apply("hoverIndustry", recordActivity(null));
-        clearTimeout(hoverId);
 
     }
     openTile = null;
+    //check
+    trrack.apply("hoverIndustry", recordActivity(null));
 }
 
 function showTile(industry) {
-    console.log(industry,'industry in showtile')
     if (isMobile)
         return;
     var el = $(industry.element);
     var clone = el.clone();
-
-    //fade && not visited
-    if(smData.condition == "fade" && !el.is('.expVisited'))
-    {
-        d3.select(clone[0]).select('.emp-area')
-            .style('opacity',0.4);
-    }
 
     clone.industry = industry;
     industry.clone = clone[0];
@@ -528,14 +450,30 @@ function showTile(industry) {
         $(window).on('mouseover', closeTile);
     });
 
+    // Set visit
+    recordVisit(industry['nytlabel'])
+}
 
+function recordVisit(item) {
 
-    // Fade code
-    console.log('mousing into tile');
-    hoverId = setTimeout(fadeIt, smData.fadeDelay, industry.element, clone);
-    smData.mouseOver++;
-    // trrack.apply("mouseOver", recordActivity("mouseOver"));
+    // record previous
+    if(currentVisit && currentVisit['chartCode'] !== item){
+        currentVisit['end'] = Date.now()
+        currentVisit['duration'] = currentVisit['end'] - currentVisit['start'];
+        userData['visitLog'].push(currentVisit);
+        currentVisit = null;
+        //console.log(userData['visitLog'])
+    }
 
+    // start a new visit
+    if(!currentVisit && item){
+        //console.log(item)
+        currentVisit = {}
+        currentVisit['start'] = Date.now();
+        currentVisit['chartCode'] = item;
+        currentVisit['searchId'] = currentSearch ? currentSearch['id'] : -1;
+        currentVisit['mousemove'] = 0;
+    }
 }
 
 
@@ -553,7 +491,15 @@ function eachMonth(callback) {
     });
 }
 
+    // var i2 = 0;
+    // var i1 = 0;
+    // var e0 = 0;
+    // var d1 = 0;
+    // var d2 = 0;
+
 function processCesData() {
+
+
     var ces = originalCesData;
     var wages = _.indexBy(originalWageData, function (row) {
         return row.seriesid.replace(/(^CES0?|03$)/g, '');
@@ -606,6 +552,12 @@ function processCesData() {
         }
         classify(row);
     }
+
+    // console.log(i2)
+    // console.log(i1)
+    // console.log(e0)
+    // console.log(d1)
+    // console.log(d2)
 
     findWageBreaks(ces);
     _.each(ces, wageClassify);
@@ -665,13 +617,17 @@ function renderCharts(industries) {
     };
 
     render = window.render = function () {
-        //$('#whole-graphic').addClass('notransition');
+
+        // Set minimum width and height
         var everythingHeight = $(window).height() - totalHeightFudge;
+        var everythingWidth = $(window).width()
 
         if (everythingHeight < 800)
             everythingHeight = 800;
+        if(everythingWidth < 800)
+            everythingWidth = 800
 
-        $('#g-graphic, .graphic-layer').css({height: everythingHeight, width: $(window).width()});
+        $('#g-graphic, .graphic-layer').css({height: everythingHeight, width: everythingWidth});
 
         spaceWidth = $('#g-graphic').width();
         spaceHeight = $('#g-graphic').height();
@@ -696,6 +652,8 @@ function renderCharts(industries) {
     };
 
     render();
+
+    window.render = render;
 
 }
 
@@ -770,7 +728,7 @@ function setSector() {
 
 var MARGIN_UP = 102;
 var cMargin = {top: 10 + MARGIN_UP, right: 5, bottom: 16, left: 35},
-cWidth = chartWidth - cMargin.left - cMargin.right,
+        cWidth = chartWidth - cMargin.left - cMargin.right,
         cHeight = chartHeight - cMargin.top - cMargin.bottom;
 
 var chartX;
@@ -888,6 +846,7 @@ function renderChart(industry) {
             .attr("class", "y axis")
             .call(yAxis);
 
+
     var line = g.append("path")
             .datum(data)
             .attr("class", "emp-line emp-realline")
@@ -895,25 +854,28 @@ function renderChart(industry) {
             .style('fill', 'none')
             .attr("d", lineArea);
 
-    if(smData.condition == "fade")
+    if (userData.condition == "fade")
     {
         /***For encoding: opacity***/
-            line.style('opacity', 0.4);
+        line.style('opacity', 0.4);
     }
     industry.line = line;
+
 
     g.append("path")
             .datum(data)
             .attr("class", "emp-area")
-            .attr("d", area);
+            .attr("d", area)
+    //.style("display","none");
 
-    d3.selectAll("svg.a-chart g")
-            .on("mouseover", function (d) {
-                d3.select(this).classed("hover", true);
-            })
-            .on("mouseout", function (d) {
-                d3.select(this).classed("hover", false);
-            });
+
+    // d3.selectAll("svg.a-chart g")
+    //         .on("mouseover", function (d) {
+    //             d3.select(this).classed("hover", true);
+    //         })
+    //         .on("mouseout", function (d) {
+    //             d3.select(this).classed("hover", false);
+    //         });
 
     var bead = g.append('g')
             .attr("transform", "translate(-1000,-1000)")
@@ -1081,19 +1043,165 @@ function renderLegend() {
 
 // Re-render chart when window resize
 $(window).on('resize', _.debounce(function () {
-    render();
+    userData['windowWidth'] = $(window).width();
+    userData['windowHeight'] = $(window).height();
+    window.render();
 }, 50));
 
+function recordSearch(query){
+        // record the previous one
+        if(currentSearch != null)
+        {
+            currentSearch.end = Date.now();
+            currentSearch.duration = currentSearch.end - currentSearch.start;
+            userData.searchLog.push(currentSearch);
+            currentSearch = null
+            //debug log
+            //console.log("searchLog=")
+            //console.log(userData.searchLog)
+        }
+        // start a new one
+        if(!currentSearch && query){
+            //console.log(query)
+            currentSearch = {}
+            currentSearch['id'] = userData['searchLog'].length;
+            currentSearch['start'] = Date.now();
+
+            currentSearch['selectedCharts'] = 0;
+        }
+        console.log('search')
+        console.log(query,'query')
+        trrack.apply("useSearch", recordSearchActivity(query));
+
+
+}
+
+
+// Search box
+function enableSearch(){
+
+    var searchInput = $("#search-input");
+
+    // Get options for auto complete
+    function getSearchOptions(data) {
+        var optionsData = [];
+            if (data && data.length > 0) {
+                for (var i = 0; i < data.length; i++) {
+                    optionsData.push(data[i]['nytlabel']);
+                }
+            }
+            initSearchBox(optionsData);
+    }
+    getSearchOptions(searchData);
+
+    // Init search box with auto complete
+    function initSearchBox(options) {
+        // Invoke auto complete for search box
+        var searchOptions = {
+            data: options,
+            list: {
+                maxNumberOfElements: 300,
+                match: {enabled: true},
+                onChooseEvent: function () {
+                    searchChooseItem();
+                }
+            }
+        };
+        searchInput.easyAutocomplete(searchOptions);
+
+        // Start searching when typing in search box
+        searchInput.on("input", function (e) {
+            e.preventDefault();
+            searchChooseItem();
+        });
+    }
+
+    // Search choosen item
+    function searchChooseItem() {
+        searchFilter(searchInput.val().toLowerCase());
+    }
+
+    function searchFilter(value) {
+
+        recordSearch(value);
+
+        // Reset and return if empty
+        if (value === "") {
+            resetSearch();
+            return;
+        }
+
+        // Start Filtering
+        // Fade all lines and boxes
+        $(".g-industry").removeClass("search-selected");
+        $(".whole-graphic").addClass("search-active");
+
+        // Make contains case-insensitive
+        $.expr[":"].contains = $.expr.createPseudo(function (arg) {
+            return function (elem) {
+                return $(elem).text().toUpperCase().indexOf(arg.toUpperCase()) >= 0;
+            };
+        });
+
+        // Unfade selected elements
+        var selectedCharts = $(".industry-title:contains('" + value + "')")
+        if (value && selectedCharts) {
+            // Unfade
+            selectedCharts
+                    .closest(".g-industry")
+                    .addClass("search-selected");
+            // Record current search
+            currentSearch.selectedCharts = selectedCharts.length
+            //console.log("searching for: "+currentSearch.content+" #="+currentSearch.selectedCharts)
+        }
+
+
+
+    }
+    // Click button to reset
+    $("#search-reset").click(function () {
+        resetSearch();
+    });
+
+    // Press ESC to reset
+    $(document).keydown(function (e) {
+        if (e.which === 27) //ESC
+            resetSearch();
+    });
+
+    function resetSearch() {
+        // Reset faded elemnets
+        $(".whole-graphic").removeClass("search-active");
+        $(".g-industry").removeClass("search-selected");
+        // Reset search
+        recordSearch(null)
+        currentSearch = null;
+        // Clear search input box
+        searchInput.val("");
+    }
+
+    Revisit.onProvenanceReceive((prov)=>{
+
+        closeTile()
+        const hoverIndustry = indexedCes[prov.activeIndustry];
+        const searchKeyword = prov.search;
+        if(hoverIndustry != null){
+            showTile(hoverIndustry)
+        }
+        searchFilter(searchKeyword)
+        $("#search-input").val(searchKeyword);
+
+    })
+
+};
 
 export {
     load255Chart,
     boot,
-    addFilterDropShadow,
     toggleMobile,
     wageClassify,
     findWageBreaks,
     classify,
-    fadeIt,
     bindEvents,
     showJobs,
     mouseoverAChart,
@@ -1115,5 +1223,9 @@ export {
     toggleKey,
     renderKey,
     renderLegend,
-    smData
+    recordSearch,
+    enableSearch,
+    searchData,
+    userData
 };
+
