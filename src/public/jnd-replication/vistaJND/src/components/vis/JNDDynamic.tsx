@@ -6,9 +6,9 @@ import { JumpFunctionParameters, JumpFunctionReturnVal, StoredAnswer } from '../
 
 export default function func({
   answers, customParameters,
-}: JumpFunctionParameters<{r1: number, r2: number, above: boolean, counter: number, name: string, index: number, shouldNegate?: boolean}>): JumpFunctionReturnVal {
+}: JumpFunctionParameters<{r1: number, r2: number, above: boolean, counter: number, name: string, shouldNegate?: boolean}>): JumpFunctionReturnVal {
   let { r1, r2, above } = customParameters;
-  const { name, index } = customParameters;
+  const { name } = customParameters;
   const shouldNegate = customParameters.shouldNegate || false;
   let higherFirst = seedrandom(Date.now().toString())() > 0.5;
   const roundToTwo = (num: number) => parseFloat((Math.round(num * 100) / 100).toString());
@@ -18,7 +18,7 @@ export default function func({
 
   const findLatestTrial = (trialAnswers: Record<string, StoredAnswer>, position: number) => {
     const trialKeys = Object.keys(trialAnswers)
-      .filter((key) => key.startsWith(`${name}_${index}_trial_`))
+      .filter((key) => key.startsWith(`${name}`) && key.includes('trial'))
       .map((key) => ({
         key,
         number: parseInt(key.split('_').pop()!, 10),
@@ -31,7 +31,7 @@ export default function func({
 
   const findLatestRealTrial = (trialAnswers: Record<string, StoredAnswer>, position: number) => {
     const trialKeys = Object.keys(trialAnswers)
-      .filter((key) => key.startsWith(`${name}_${index}_trial_`))
+      .filter((key) => key.startsWith(`${name}`) && key.includes('trial'))
       .map((key) => ({
         key,
         number: parseInt(key.split('_').pop()!, 10),
@@ -44,6 +44,7 @@ export default function func({
   };
 
   const latestTrialKey = findLatestTrial(answers, 0);
+  const index = latestTrialKey && parseInt(latestTrialKey.split('_')[1], 10);
   if (latestTrialKey && answers[latestTrialKey]?.parameters) {
     ({
       r1, r2, above, counter, isAttentionCheck,
