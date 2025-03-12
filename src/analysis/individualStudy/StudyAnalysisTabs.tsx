@@ -20,6 +20,21 @@ import { StatsView } from './stats/StatsView';
 import { AllReplays } from './replay/AllReplays';
 import { parseStudyConfig } from '../../parser/parser';
 
+function sortByStartTime(a: ParticipantData, b: ParticipantData) {
+  const aStartTimes = Object.values(a.answers).map((answer) => answer.startTime).filter((startTime) => startTime !== undefined).sort();
+  const bStartTimes = Object.values(b.answers).map((answer) => answer.startTime).filter((startTime) => startTime !== undefined).sort();
+  if (aStartTimes.length === 0 || bStartTimes.length === 0) {
+    if (aStartTimes.length > 0) {
+      return -1;
+    }
+    if (bStartTimes.length > 0) {
+      return 1;
+    }
+    return b.participantIndex - a.participantIndex;
+  }
+  return bStartTimes[0] - aStartTimes[0];
+}
+
 export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig; }) {
   const { studyId } = useParams();
   const [expData, setExpData] = useState<ParticipantData[]>([]);
@@ -75,7 +90,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     const comp = expData.filter((d) => !d.rejected && d.completed);
     const prog = expData.filter((d) => !d.rejected && !d.completed);
     const rej = expData.filter((d) => d.rejected);
-    setVisibleParticipants([...comp, ...prog, ...rej]);
+    setVisibleParticipants([...comp, ...prog, ...rej].sort(sortByStartTime));
     return [comp, prog, rej];
   }, [expData]);
 
@@ -90,7 +105,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
     if (value.includes('rejected')) {
       participants.push(...rejected);
     }
-    setVisibleParticipants(participants);
+    setVisibleParticipants(participants.sort(sortByStartTime));
   }, [completed, inProgress, rejected]);
 
   return (

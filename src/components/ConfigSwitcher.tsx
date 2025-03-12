@@ -19,8 +19,6 @@ import { REVISIT_MODE } from '../storage/engines/StorageEngine';
 import { FirebaseStorageEngine } from '../storage/engines/FirebaseStorageEngine';
 import { useAuth } from '../store/hooks/useAuth';
 
-const REVISIT_GITHUB_PUBLIC = 'https://github.com/revisit-studies/study/tree/main/public/';
-
 function StudyCard({ configName, config, url }: { configName: string; config: ParsedConfig<StudyConfig>; url: string }) {
   const { storageEngine } = useStorageEngine();
 
@@ -109,7 +107,7 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
               <Anchor
                 target="_blank"
                 onClick={(e) => e.stopPropagation()}
-                href={`${REVISIT_GITHUB_PUBLIC}${url}`}
+                href={`${import.meta.env.VITE_REPO_URL}${url}`}
               >
                 View source:
                 {' '}

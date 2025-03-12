@@ -1,6 +1,6 @@
-import { StoredAnswer } from '../store/types';
+import { EventType } from '../store/types';
 
-export function getCleanedDuration(answer: StoredAnswer) {
+export function getCleanedDuration(answer: { startTime: number; endTime: number; windowEvents: EventType[] }): number | undefined {
   const duration = answer.endTime === -1 ? undefined : answer.endTime - answer.startTime;
   const visibilityEvents = (answer.windowEvents || [])
     .filter((event) => event !== undefined)
