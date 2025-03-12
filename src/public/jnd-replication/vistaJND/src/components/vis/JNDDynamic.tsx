@@ -78,7 +78,7 @@ export default function func({
     lastAnswerDirection = lastRealTrialParams && lastRealTrialParams.higherFirst ? 'right' : 'left';
   }
 
-  if (counter > 0 && counter % 10 === 0 && counter < 50) { /// Attention check block
+  if (counter > 0 && counter % 10 === 9 && counter < 50) { /// Attention check block
     isAttentionCheck = true;
     higherFirst = true;
     if (lastAnswerDirection === 'left') {
@@ -104,8 +104,6 @@ export default function func({
     }
   }
 
-  counter += 1;
-
   if (above && r2 <= r1) { // Tie breaking
     r2 = roundToTwo(r1 + 0.02); // Force r2 above r1
   } else if (!above && r2 >= r1) {
@@ -113,18 +111,25 @@ export default function func({
   }
 
   // **Check Convergence with F-test**
-  if (counter >= 24) {
+  if (counter >= 26) {
     const differences: number[] = [];
 
-    for (let i = counter - 24; i < counter; i += 1) {
+    for (let i = counter - 26; i < counter; i += 1) {
       const trialKey = `${name}_${index}_trial_${i}`;
-      if (answers[trialKey]?.parameters) {
+      if (answers[trialKey]?.parameters && !answers[trialKey]?.parameters.isAttentionCheck) {
         const trialR1 = answers[trialKey].parameters.r1;
         const trialR2 = answers[trialKey].parameters.r2;
         differences.push(Math.abs(trialR2 - trialR1));
       }
     }
-
+    if (differences.length === 23) { // injecting another trial when there are 3 attention check trials
+      const key = `${name}_${index}_trial_${counter - 27}`;
+      if (answers[key]?.parameters && !answers[key]?.parameters.isAttentionCheck) {
+        const trialR1 = answers[key].parameters.r1;
+        const trialR2 = answers[key].parameters.r2;
+        differences.push(Math.abs(trialR2 - trialR1));
+      }
+    }
     if (differences.length === 24) {
       const group1 = differences.slice(0, 8);
       const group2 = differences.slice(8, 16);
@@ -150,9 +155,11 @@ export default function func({
     }
   }
 
-  if (counter >= 50) {
+  if (counter > 50) {
     return { component: null };
   }
+
+  counter += 1;
 
   return {
     component: 'trial',
