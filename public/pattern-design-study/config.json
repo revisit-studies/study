@@ -401,7 +401,7 @@
       "baseComponent": "bar-geo",
       "parameters": {
         "condition_chart": 0,
-        "condition_texture": 0
+        "condition_texture": 1
       },
       "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\nWhen you finish designing, click on the **Next** button. There is no time limit for this task. This is the last design task."
     },
@@ -417,7 +417,7 @@
       "baseComponent": "bar-icon",
       "parameters": {
         "condition_chart": 0,
-        "condition_texture": 0
+        "condition_texture": 1
       },
       "instruction": "### Now it's your turn to design an effective set of patterns for data visualization.\n\n Imagine you are asked to create a chart with pattern for a high-resolution e-ink display which can only show black and white content. This chart shows the result of a survey about people's favourite vegetables. \n\n Please adjust the pattern parameters to create an aesthetically pleasing and readable visualization.\n\n Please optimize for datasets in general. Click the change data set button to test your design on different random data sets, and click the default data set button to test your design on a default data set.\n\n When you finish designing, click on the **Next** button. There is no time limit for this task, but keep in mind that we will ask you to complete one other design after this one."
     },
