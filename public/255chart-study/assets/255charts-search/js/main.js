@@ -12,10 +12,7 @@ var registry = Registry.create();
 var recordActivity = registry.register(
     "record-activity",
     (state, task) => {
-        console.log('trrack applied', task)
         state.activeIndustry = task;
-        state.mouseOver++;
-
     }
 );
 
@@ -29,7 +26,6 @@ var recordSearchActivity = registry.register(
 
 var initialState = {
     activeIndustry:null,
-    mouseOver: 0,
     search: '',
     // visited_sequence: "", //sequence string
 };
@@ -47,12 +43,12 @@ else closeTile();
 
 
 trrack.currentChange(() => {
-
+    Revisit.postAnswers({
+        ["visit"]: [...userData.visitLog],
+        ["search"]: [...userData.searchLog]
+    });
     Revisit.postProvenance(trrack.graph.backend);
 });
-
-
-
 
 var userData = {
     "condition": "",

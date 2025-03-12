@@ -17,6 +17,9 @@ var recordActivity = registry.register(
     }
 );
 
+const taskId = 'hoverCount';
+
+
 ///////////////////////////For Experiment Begin/////////////////////////////
 var smData = {
     "mouseOver": 0,
@@ -440,7 +443,7 @@ function drawBead(e) {
     var bead = el.select('.a-bead');
     // bead.attr('cx', x).attr('cy', y);
     bead.attr("transform", "translate(-2.5, 0) translate(" + (x + (neg ? 4 : 0)) + "," + (y + (neg ? 7 : -7)) + ") rotate(" + (neg ? 180 : 0) + ")");
-    console.log(industry,datapoint,wagepoint,el)
+    // console.log(industry,datapoint,wagepoint,el)
     showJobs(industry, datapoint, wagepoint, el);
 
     //for Data Collection
