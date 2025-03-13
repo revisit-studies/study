@@ -1,7 +1,7 @@
 import { Suspense, useCallback } from 'react';
 import { ModuleNamespace } from 'vite/types/hot';
-import { ReactComponent } from '../parser/types';
-import { StimulusParams, StoredAnswer } from '../store/types';
+import { ParticipantData, ReactComponent } from '../parser/types';
+import { StimulusParams } from '../store/types';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { useStoreDispatch, useStoreActions } from '../store/store';
 import { useCurrentIdentifier } from '../routes/utils';
@@ -12,7 +12,7 @@ const modules = import.meta.glob(
   { eager: true },
 );
 
-export function ReactComponentController({ currentConfig, provState, answers }: { currentConfig: ReactComponent; provState?: unknown, answers: Record<string, StoredAnswer> }) {
+export function ReactComponentController({ currentConfig, provState, answers }: { currentConfig: ReactComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
   const reactPath = `../public/${currentConfig.path}`;
   const StimulusComponent = reactPath in modules ? (modules[reactPath] as ModuleNamespace).default : null;
   const identifier = useCurrentIdentifier();

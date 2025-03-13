@@ -4,7 +4,7 @@ import {
 import { createContext, useContext } from 'react';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import {
-  ResponseBlockLocation, StudyConfig, StringOption, ValueOf, Answer,
+  ResponseBlockLocation, StudyConfig, StringOption, ValueOf, Answer, ParticipantData,
 } from '../parser/types';
 import {
   StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata,
@@ -18,13 +18,13 @@ export async function studyStoreCreator(
   config: StudyConfig,
   sequence: Sequence,
   metadata: ParticipantMetadata,
-  answers: Record<string, StoredAnswer>,
+  answers: ParticipantData['answers'],
   modes: Record<REVISIT_MODE, boolean>,
   participantId: string,
 ) {
   const flatSequence = getSequenceFlatMap(sequence);
 
-  const emptyAnswers: Record<string, StoredAnswer> = Object.fromEntries(flatSequence.filter((id) => id !== 'end')
+  const emptyAnswers: ParticipantData['answers'] = Object.fromEntries(flatSequence.filter((id) => id !== 'end')
     .map((id, idx) => {
       const componentConfig = studyComponentToIndividualComponent(config.components[id] || {}, config);
 

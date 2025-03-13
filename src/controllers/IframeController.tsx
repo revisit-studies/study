@@ -4,7 +4,7 @@ import {
 import { useDispatch } from 'react-redux';
 import { useCurrentComponent, useCurrentIdentifier } from '../routes/utils';
 import { useStoreDispatch, useStoreActions } from '../store/store';
-import { StoredAnswer, WebsiteComponent } from '../parser/types';
+import { ParticipantData, WebsiteComponent } from '../parser/types';
 import { PREFIX as BASE_PREFIX } from '../utils/Prefix';
 
 const PREFIX = '@REVISIT_COMMS';
@@ -14,7 +14,7 @@ const defaultStyle = {
   border: 0,
 };
 
-export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: Record<string, StoredAnswer> }) {
+export function IframeController({ currentConfig, provState, answers }: { currentConfig: WebsiteComponent; provState?: unknown, answers: ParticipantData['answers'] }) {
   const {
     setReactiveAnswers, updateResponseBlockValidation,
   } = useStoreActions();
