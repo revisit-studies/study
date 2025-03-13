@@ -9,9 +9,10 @@ import { Sequence } from '../../store/types';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
-import { useStoreSelector } from '../../store/store';
+import { useFlatSequence, useStoreSelector } from '../../store/store';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { PREFIX } from '../../utils/Prefix';
 
 export type ComponentBlockWithOrderPath =
   Omit<ComponentBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]; interruptions?: { components: string[] }[] }
@@ -29,8 +30,12 @@ function findTaskIndexInSequence(sequence: Sequence, step: string, startIndex: n
       }
       index += 1;
     } else {
-      // See if the task is in the nested sequence
-      index += findTaskIndexInSequence(component, step, startIndex, requestedPath);
+      if (component.order === 'dynamic') {
+        index += 1;
+      } else {
+        // See if the task is in the nested sequence
+        index += findTaskIndexInSequence(component, step, startIndex, requestedPath);
+      }
 
       // If the task is in the nested sequence, break the loop. We need includes, because we need to break the loop if the task is in the nested sequence
       if (requestedPath.includes(component.orderPath)) {
@@ -252,16 +257,25 @@ export function StepsPanel({
 
   const [isPanelOpened, setIsPanelOpened] = useState<boolean>(sequenceStepsLength > 0);
 
+  const currentStep = useCurrentStep();
+  const flatSequence = useFlatSequence();
+  const dynamicBlockActive = typeof currentStep === 'number' && configSequence.order === 'dynamic' && flatSequence[currentStep] === configSequence.id;
+
+  const studyId = useStudyId();
+  const navigate = useNavigate();
+  const navigateTo = () => navigate(`${PREFIX}${studyId}/${encryptIndex(flatSequence.indexOf(configSequence.id!))}/${encryptIndex(0)}`);
+
   return (
     <NavLink
       key={configSequence.id}
+      active={dynamicBlockActive}
       label={(
         <Box
           style={{
             opacity: sequenceStepsLength > 0 ? 1 : 0.5,
           }}
         >
-          <Text size="sm" display="inline" fw={700}>
+          <Text size="sm" display="inline" fw={dynamicBlockActive ? 900 : 700}>
             {configSequence.id ? configSequence.id : configSequence.order}
           </Text>
           {configSequence.order === 'random' || configSequence.order === 'latinSquare' ? (
@@ -282,7 +296,7 @@ export function StepsPanel({
         </Box>
             )}
       opened={isPanelOpened}
-      onClick={() => setIsPanelOpened(!isPanelOpened)}
+      onClick={() => (configSequence.order === 'dynamic' ? navigateTo() : setIsPanelOpened(!isPanelOpened))}
       childrenOffset={32}
       style={{
         lineHeight: '32px',
