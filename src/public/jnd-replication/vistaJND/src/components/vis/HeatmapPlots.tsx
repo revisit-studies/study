@@ -16,13 +16,6 @@ const width = 400;
 const height = 40;
 const spacing = 10;
 
-function generateCorrelatedX(xSorted: number[], correlation: number): number[] {
-  const numPoints = xSorted.length;
-  const epsilon = Array.from({ length: numPoints }, () => d3.randomNormal(0, 0.3 + 0.7 * (1 - Math.abs(correlation)))());
-
-  return xSorted.map((x, i) => correlation * x + Math.sqrt(1 - correlation ** 2) * epsilon[i]);
-}
-
 export default function HeatmapPlots({ r, onClick, shouldNegate = false }: { r: number, onClick: () => void, shouldNegate?: boolean }) {
   const d3Container = useRef(null);
   const [data, setData] = useState<[number, number][]>([]);
@@ -66,7 +59,7 @@ export default function HeatmapPlots({ r, onClick, shouldNegate = false }: { r: 
 
     const sortedPairs = [...data].sort((a, b) => a[0] - b[0]);
     const xSorted = sortedPairs.map((d) => d[0]);
-    const correlatedX = shouldNegate ? generateCorrelatedX(xSorted, -r) : sortedPairs.map((d) => d[1]);
+    const correlatedX = shouldNegate ? sortedPairs.map((d) => 1 - d[1]) : sortedPairs.map((d) => d[1]);
 
     const svg = select(d3Container.current)
       .attr('width', width)
@@ -83,7 +76,7 @@ export default function HeatmapPlots({ r, onClick, shouldNegate = false }: { r: 
       .attr('y', 0)
       .attr('width', width / xSorted.length)
       .attr('height', height)
-      .style('fill', (d) => d3.interpolateRdBu((d - d3.min(xSorted)!) / (d3.max(xSorted)! - d3.min(xSorted)!)))
+      .style('fill', (d) => d3.interpolateRdBu(d / 1))
       .style('cursor', 'pointer')
       .on('click', onClick);
 
@@ -96,7 +89,7 @@ export default function HeatmapPlots({ r, onClick, shouldNegate = false }: { r: 
       .attr('y', height + spacing)
       .attr('width', width / correlatedX.length)
       .attr('height', height)
-      .style('fill', (d) => d3.interpolateRdBu((d - d3.min(correlatedX)!) / (d3.max(correlatedX)! - d3.min(correlatedX)!)))
+      .style('fill', (d) => d3.interpolateRdBu(d / 1))
       .style('cursor', 'pointer')
       .on('click', onClick);
   // eslint-disable-next-line react-hooks/exhaustive-deps
