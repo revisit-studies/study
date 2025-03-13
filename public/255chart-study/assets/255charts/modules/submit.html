@@ -1,0 +1,150 @@
+<div id="debrief">
+
+<h1> (3/3) Demographics </h1>
+
+<p>
+Thank you! Before you submit, please fill out the following demographics form.
+</p>
+
+<div id="age">Your age: <strong style="color: red">*</strong>
+    <div id="ages">
+        <input type="radio" id="a1" name="age" value="18-25"> 18-25
+        <input type="radio" id="a2" name="age" value="25-39"> 25-39
+        <input type="radio" id="a3" name="age" value="40-49"> 40-49
+        <input type="radio" id="a4" name="age" value="50-59"> 50-59
+        <input type="radio" id="a5" name="age" value="60+"> 60+
+        <input type="radio" id="a6" name="age" value="Unspecified"> Unspecified
+    </div>
+</div>
+<br>
+<div id="sex">Your gender: <strong style="color: red">*</strong>
+    <div id="sexes">
+        <input type="radio" id="s1" name="sex" value="Male"> Male
+        <input type="radio" id="s2" name="sex" value="Female"> Female
+        <input type="radio" id="s3" name="sex" value="Unspecified"> Unspecified
+    </div>
+</div>
+<br>
+<div id="handed">Are you left or right handed: <strong style="color: red">*</strong>
+    <div id="handedness">
+        <input type="radio" id="s1" name="handed" value="Right"> Right
+        <input type="radio" id="s2" name="handed" value="Left"> Left
+        <input type="radio" id="s3" name="handed" value="Unspecified"> Unspecified
+    </div>
+</div>
+<br>
+<div id="degree">Highest degree obtained: <strong style="color: red">*</strong>
+    <div id="degrees">
+        <input type="radio" id="d1" name="degree" value="High School"> High School
+        <input type="radio" id="d2" name="degree" value="Bachelors"> Bachelors
+        <input type="radio" id="d3" name="degree" value="Masters"> Masters
+        <input type="radio" id="d4" name="degree" value="PhD"> PhD
+        <input type="radio" id="d5" name="degree" value="Other"> Other Professional Degree
+        <input type="radio" id="s3" name="handed" value="Unspecified"> Unspecified
+    </div>
+</div>
+<br>
+<div id="screen_size">Your screen size is closest to: <strong style="color: red">*</strong>
+    <div id="screen_sizes">
+        <input type="radio" id="m4" name="screen_size" value="9 or smaller"> 9" or smaller
+        <input type="radio" id="m4" name="screen_size" value=11> 11"
+        <input type="radio" id="m4" name="screen_size" value=13> 13"
+        <input type="radio" id="m4" name="screen_size" value=15> 15"
+        <input type="radio" id="m4" name="screen_size" value=17> 17"
+        <input type="radio" id="m4" name="screen_size" value=19> 19"
+        <input type="radio" id="m4" name="screen_size" value=21> 21"
+        <input type="radio" id="m5" name="screen_size" value="23 or larger"> 23" or larger
+        <input type="radio" id="m5" name="screen_size" value="unsure"> I'm not sure
+    </div>
+</div>
+<br>
+<div id="visualizations">How familiar are you with data visualizations (1 not familiar at all, 7 very familiar)? <strong style="color: red">*</strong>
+    <div id="visualizationfam"> 
+        <input type="radio" id="sc1" name="vis_experience" value=1> 1
+        <input type="radio" id="sc2" name="vis_experience" value=2> 2
+        <input type="radio" id="sc3" name="vis_experience" value=3> 3
+        <input type="radio" id="sc4" name="vis_experience" value=4> 4
+        <input type="radio" id="sc5" name="vis_experience" value=5> 5
+        <input type="radio" id="sc6" name="vis_experience" value=6> 6
+        <input type="radio" id="sc7" name="vis_experience" value=7> 7
+     </div>
+</div>
+
+<br>
+<div class="submit">
+  <p>Please share anything else you'd like to tell us here:</p>
+  <textarea name="comment_additional" rows="4" cols="80"></textarea>
+</div>
+
+
+<p><strong>A code for Mechanical Turk will display below after you submit successfully.</strong></p>
+
+<div id="invalidanswer" style="display: none">
+<p style="color: red">
+In order to submit successfully, please be sure to answer all the questions with "*".
+</p>
+</div>
+
+<button id="submitComments" type="button">Submit</button>
+
+
+<div id="codebox" style="display: none">
+<p>
+<strong>Please copy and paste the following code back on Mechanical Turk before closing this window:</strong>
+</p>
+<h2 id="postId"></h2>
+</div>
+
+<div id="submitFeedback"></div>
+
+</div>
+
+<style>
+  .response {
+    margin-top: 16px;
+  }
+
+  #submitComments, #codebox {
+    margin-top: 16px;
+  }
+</style>
+
+<script>
+(function() {
+
+  var postId  = experimentr.postId
+    , data    = {};
+
+  experimentr.hideNext()
+
+  d3.select("#postId").text(postId);
+  
+  d3.select('#submitComments')
+    .on('click', function () { 
+          $.each($(':checked, textarea'), function(d){
+                        data[$(this).attr('name')] = $(this).val()
+                })
+          validate(); 
+      });
+
+  function validate() {
+    // Check validation
+    var isValid = data.age && data.sex && data.degree && data.screen_size && data.vis_experience
+
+    // Print code and store data if valid
+    if( isValid ) {
+      
+      //console.log(data)
+      experimentr.addData(data);
+      d3.select('#submitComments').attr('disabled', 'true');
+      d3.select('#submitFeedback').text('Submit Successful');
+      d3.select("#codebox")
+        .style("display", "inline");
+    }
+    else
+    {
+      d3.select('#invalidanswer').style("display", "inline")
+    }
+  }
+}());
+</script>

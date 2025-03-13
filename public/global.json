@@ -39,6 +39,7 @@
     "ParallelJND-study",
     "HexbinJND-study",
     "HeatmapJND-study",
+    "255chart-study",
     "pattern-design-study",
     "ScatterJNDNegative-study",
     "ParallelJNDNegative-study",
@@ -173,6 +174,9 @@
     },
     "HeatmapJND-study": {
       "path": "HeatmapJND-study/config.json"
+    },
+    "255chart-study": {
+      "path": "255chart-study/config.json"
     },
     "pattern-design-study": {
       "path": "pattern-design-study/config.json"

@@ -1,0 +1,62 @@
+<div id="training">
+
+<h2>Instructions</h2>
+
+<p> In the next page, you will explore an interactive visualization. </p>
+
+<p><strong>Task: </strong></p>
+<p>Your task is to analyze this dataset on economy from a popular news website. On the following pages, you will be asked to briefly describe the findings you identified, and answer questions on your understanding of the visualization.</p>
+
+<p><strong>How to Interact:</strong></p>
+<p>>> Mouseover an individual line to bring up a more detailed chart.</p>
+
+<div id="foresightTraining" class="foresightTraining">
+<p>>> Use the text box at the top to search for specific charts.</p>
+</div>
+
+<img id="trainingImg" src="" style="width:600px">
+
+<p>
+<button id="start" type="button">Start Exploring >></button>
+</p>
+
+
+</div>
+
+<style>
+  #fadeInstruction {
+    display: none;
+  }
+  #consentForm {
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    height: 200px;
+    overflow-y: scroll;
+    padding: 15px;
+  }
+</style>
+
+<script>
+(function() {
+
+  experimentr.hideNext();
+  experimentr.startTimer('training');
+
+  d3.select('#start').on('click', function() {
+    experimentr.endTimer('training');
+    experimentr.next();
+  });
+
+  //instructions
+  if(userData.condition == "control")
+  {
+	   d3.select('#training').select('#foresightTraining').style('display','none');
+  }
+
+  //training image
+  var imgsrc = "img/"+ userData.condition + ".gif";
+  d3.select('#training').select('#trainingImg').attr('src',imgsrc);
+  
+
+}());
+</script>

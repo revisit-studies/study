@@ -1,0 +1,137 @@
+<div id="debrief">
+
+<!-- ///////////////////////////// Strategy ////////////////////////// -->
+<h1> (2/3) Your Exploration Strategy </h1>
+
+<p>In this section, please tell us about the strategies you applied during exploration by answering the following questions.</p>
+
+<div class="question">
+    <p>1. During exploration, did you actively search for items that you thought might be in the visualization? <strong style="color: red">*</strong><br><span style="font-style: italic;font-size:0.9em;padding-left: 15px">For example, someone who works in computing may be interested in the “Computer systems design and programming” industry.</span></p>
+    <ul class="answer">
+        <input type="radio" name="strategy1_personal" value="yes"> Yes<br>
+        <input type="radio" name="strategy1_personal" value="no"> No<br>
+        <input type="radio" name="strategy1_personal" value="not sure"> I'm not sure.<br>
+    </ul>
+</div>
+
+<p><strong>Skip 2-4 if you did not select "Yes" above.</strong></p>
+
+<div class="question">
+    <p>2. If yes, which of the following items did you actively search for?</p>
+    <div height="30" style="overflow:auto;" id="visitedItem"></div>
+    <!-- <p>If they are not covered in the list above, please write them down here:</p> -->
+    <textarea name="strategy2_search_content" rows="2" cols="80"></textarea>
+</div>
+
+<br>
+
+<div class="question">
+    <p>3. How are the ones you actively searched for related to you?</p>
+    <textarea name="strategy_3_how_related" rows="2" cols="80"></textarea>
+</div>
+
+<br>
+
+<div class="question">
+    <p>4. How difficult was it to find them?</p>
+    <ul class="answer">
+        <input type="radio" name="strategy4_difficulty" value="0"> I was not able to find them<br>
+        <input type="radio" name="strategy4_difficulty" value="1"> It was very difficult to find them<br>
+        <input type="radio" name="strategy4_difficulty" value="2"> It took me some time and effort to find them<br>
+        <input type="radio" name="strategy4_difficulty" value="3"> It was very easy to find them<br/>
+    </ul>
+        <br>
+</div>
+
+<div class="question">
+    <p>5. Did you apply any particular strategy during exploration? What was your strategy? <strong style="color: red">*</strong></p>
+    <textarea name="strategy5_strategy" rows="2" cols="80"></textarea>
+</div>
+
+</br>
+
+<div id="invalidanswer" style="display: none">
+<p style="color: red">
+In order to proceed, please be sure to answer all the questions with "*".
+</p>
+</div>
+
+
+<div id="codebox" style="display: none">
+<p>
+<strong>Please copy and paste the following code back on Mechanical Turk before closing this window:</strong>
+
+
+<style>
+  .response {
+    margin-top: 16px;
+  }
+
+  #submitComments, #codebox {
+    margin-top: 16px;
+  }
+</style>
+
+<script>
+(function() {
+  
+    // ---------------------------BEGIN: Strategies---------------------------//
+    // list the visited items
+    var visitListHTML = ""
+    //debug
+    //userData.uniqueVisit = 1;
+    //userData.uniqueVisitArray = ["sadfwe lksdjf oisdf", "bssdsfsssb ssfffs dsefddav"]
+
+    if(!userData.uniqueVisitArray || userData.uniqueVisitArray.length === 0){
+      visitListHTML = "<p>We could not identify the items you explored. Please write them down here:</p>"
+    }else{
+      //visitListHTML += "<p> You visited or searched the following items. Please select items you actively searched for.</p>"
+      visitListHTML += "<div id='visitlist' style='border: 1px solid grey; max-height:200px; max-width:400px; overflow:auto'>"
+      userData.uniqueVisitArray.forEach(function(item){
+        visitListHTML += "<input style='margin-left:5px; margin-right:5px' type='checkbox' value='"+ item +"' id='" + item + "'><label for='" + item + "'> " + item + "</label><br>"
+      })
+      visitListHTML += "</div>"
+      visitListHTML += "<p>If they are not covered in the list above, please write them down here:</p>"
+    }
+    $("#visitedItem").append(visitListHTML)
+
+    // ---------------------------END: Strategies---------------------------//
+
+  var data    = {};
+
+  experimentr.release()
+
+  data.activeSearchArray = []
+  d3.select('#next-button')
+    .on('click', function () { 
+      $.each($('#visitlist > [type="checkbox"]:checked'),function(d){
+        data.activeSearchArray.push($(this).val())
+      })
+      $.each($('[type="radio"]:checked, textarea'), function(d){
+        data[$(this).attr('name')] = $(this).val()
+      })
+      validate(); 
+    });
+
+  function validate() {
+    // Check validation
+    var isValid = data['strategy1_personal'] && data['strategy5_strategy'] !== ""
+    // Print code and store data if valid
+    if( isValid ) {
+      // hide the error message
+      d3.select('#invalidanswer').style("display", "none")
+      //stringify
+      data.activeSearchArray = JSON.stringify(data.activeSearchArray)
+      // store the data
+      //console.log("data stored in strategy: ")
+      //console.log(data)
+      experimentr.addData(data);
+      experimentr.next()
+    }
+    else
+    {
+      d3.select('#invalidanswer').style("display", "inline")
+    }
+  }
+}());
+</script>
