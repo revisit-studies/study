@@ -107,7 +107,7 @@ export function GlobalConfigParser() {
                 )}
             />
             <Route
-              path="/analysis/stats/:studyId/:tab/:trialId?"
+              path="/analysis/stats/:studyId/:analysisTab/:trialId?"
               element={(
                 <>
                   <PageTitle title="ReVISit | Analysis" />
