@@ -4,7 +4,9 @@ import {
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { IconArrowsShuffle, IconBrain, IconPackageImport } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
-import { ComponentBlock, DynamicBlock, StudyConfig } from '../../parser/types';
+import {
+  ComponentBlock, DynamicBlock, ParticipantData, StudyConfig,
+} from '../../parser/types';
 import { Sequence } from '../../store/types';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
@@ -126,10 +128,11 @@ function StepItem({
 
   const stepIndex = subSequence && subSequence.components.slice(startIndex).includes(step) ? findTaskIndexInSequence(fullSequence, step, startIndex, subSequence.orderPath) : -1;
 
-  const { trialId, funcIndex } = useParams();
+  const { trialId, funcIndex, analysisTab } = useParams();
   const [searchParams] = useSearchParams();
   const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
-  const flatSequence = useFlatSequence();
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const flatSequence = analysisTab ? [] : useFlatSequence();
 
   const analysisActive = trialId === step;
   const dynamicActive = parentActive && parentBlock && funcIndex ? startIndex === decryptIndex(funcIndex) : false;
@@ -243,7 +246,12 @@ export function StepsPanel({
   }
 
   // Hacky. This call is not conditional, it either always happens or never happens. Not ideal.
-  const answers = useStoreSelector((state) => state.answers);
+  const { analysisTab } = useParams();
+  let answers: ParticipantData['answers'] = {};
+  if (!analysisTab) {
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    answers = useStoreSelector((state) => state.answers);
+  }
 
   if (!participantView) {
     // Add interruptions to the sequence
@@ -260,7 +268,8 @@ export function StepsPanel({
   const [isPanelOpened, setIsPanelOpened] = useState<boolean>(sequenceStepsLength > 0);
 
   const currentStep = useCurrentStep();
-  const flatSequence = useFlatSequence();
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const flatSequence = analysisTab ? [] : useFlatSequence();
   const dynamicBlockActive = typeof currentStep === 'number' && configSequence.order === 'dynamic' && flatSequence[currentStep] === configSequence.id;
 
   const studyId = useStudyId();
@@ -292,7 +301,7 @@ export function StepsPanel({
           ) : null}
           {participantView && (
             <Badge ml={5} variant="light">
-              {configSequence.order === 'dynamic' ? `${Object.keys(answers).filter((keys) => keys.startsWith(`${configSequence.id}_`)).length - 1} / ?` : `${sequenceStepsLength}/${orderSteps.length}`}
+              {configSequence.order === 'dynamic' ? `${Object.keys(answers).filter((keys) => keys.startsWith(`${configSequence.id}_`)).length} / ?` : `${sequenceStepsLength}/${orderSteps.length}`}
             </Badge>
           )}
           {participantView && configSequence.interruptions && (
@@ -303,7 +312,7 @@ export function StepsPanel({
         </Box>
             )}
       opened={isPanelOpened}
-      onClick={() => (configSequence.order === 'dynamic' ? navigateTo() : setIsPanelOpened(!isPanelOpened))}
+      onClick={() => (configSequence.order === 'dynamic' && !analysisNavigation && participantView ? navigateTo() : setIsPanelOpened(!isPanelOpened))}
       childrenOffset={32}
       style={{
         lineHeight: '32px',
