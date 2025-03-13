@@ -3,12 +3,12 @@ import {
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import { IconArrowsShuffle, IconBrain, IconPackageImport } from '@tabler/icons-react';
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ComponentBlock, DynamicBlock, StudyConfig } from '../../parser/types';
 import { Sequence } from '../../store/types';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
-import { encryptIndex } from '../../utils/encryptDecryptIndex';
+import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useFlatSequence, useStoreSelector } from '../../store/store';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { PREFIX } from '../../utils/Prefix';
@@ -103,6 +103,8 @@ function StepItem({
   studyConfig,
   subSequence,
   analysisNavigation,
+  parentBlock,
+  parentActive,
 }: {
   step: string;
   disabled: boolean;
@@ -113,6 +115,8 @@ function StepItem({
   studyConfig: StudyConfig;
   subSequence?: Sequence;
   analysisNavigation?: boolean;
+  parentBlock: Sequence;
+  parentActive: boolean;
 }) {
   const studyId = useStudyId();
   const navigate = useNavigate();
@@ -122,17 +126,20 @@ function StepItem({
 
   const stepIndex = subSequence && subSequence.components.slice(startIndex).includes(step) ? findTaskIndexInSequence(fullSequence, step, startIndex, subSequence.orderPath) : -1;
 
-  const { trialId } = useParams();
+  const { trialId, funcIndex } = useParams();
   const [searchParams] = useSearchParams();
   const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
+  const flatSequence = useFlatSequence();
 
   const analysisActive = trialId === step;
-  const studyActive = participantView ? currentStep === stepIndex : currentStep === `reviewer-${step}`;
+  const dynamicActive = parentActive && parentBlock && funcIndex ? startIndex === decryptIndex(funcIndex) : false;
+  const studyActive = participantView ? (currentStep === stepIndex || dynamicActive) : currentStep === `reviewer-${step}`;
   const active = analysisNavigation ? analysisActive : studyActive;
 
-  const analysisNavigateTo = useCallback(() => (trialId ? navigate(`./../${step}`) : navigate(`./${step}`)), [navigate, step, trialId]);
-  const studyNavigateTo = () => (participantView ? (participantId ? navigate(`/${studyId}/${encryptIndex(stepIndex)}?participantId=${participantId}`) : navigate(`/${studyId}/${encryptIndex(stepIndex)}`)) : navigate(`/${studyId}/reviewer-${step}`));
-  const navigateTo = analysisNavigation ? analysisNavigateTo : studyNavigateTo;
+  const analysisNavigateTo = trialId ? `./../${step}` : `./${step}`;
+  const dynamicNavigateTo = parentBlock.order === 'dynamic' ? `${PREFIX}${studyId}/${encryptIndex(flatSequence.indexOf(parentBlock.id!))}/${encryptIndex(startIndex)}` : '';
+  const studyNavigateTo = participantView ? (participantId ? `${PREFIX}${studyId}/${encryptIndex(stepIndex)}?participantId=${participantId}` : (parentBlock.order === 'dynamic' ? dynamicNavigateTo : `${PREFIX}${studyId}/${encryptIndex(stepIndex)}`)) : `${PREFIX}${studyId}/reviewer-${step}`;
+  const navigateTo = analysisNavigation ? () => navigate(analysisNavigateTo) : () => navigate(studyNavigateTo);
 
   const coOrComponents = step.includes('.co.')
     ? '.co.'
@@ -158,7 +165,7 @@ function StepItem({
             </Box>
           )}
           onClick={navigateTo}
-          disabled={disabled}
+          disabled={disabled && parentBlock.order !== 'dynamic'}
         />
       </HoverCard.Target>
       {task && (
@@ -319,6 +326,8 @@ export function StepsPanel({
                   studyConfig={studyConfig}
                   subSequence={participantSequence}
                   analysisNavigation={analysisNavigation}
+                  parentBlock={configSequence}
+                  parentActive={dynamicBlockActive}
                 />
               );
             }
