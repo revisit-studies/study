@@ -10,7 +10,6 @@ import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useFlatSequence, useStoreSelector } from '../../store/store';
-import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 import { PREFIX } from '../../utils/Prefix';
 
@@ -237,11 +236,7 @@ export function StepsPanel({
   }
 
   // Hacky. This call is not conditional, it either always happens or never happens. Not ideal.
-  let answers = {};
-  if (useIsAnalysis()) {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
-    answers = useStoreSelector((state) => state.answers);
-  }
+  const answers = useStoreSelector((state) => state.answers);
 
   if (!participantView) {
     // Add interruptions to the sequence
@@ -264,6 +259,11 @@ export function StepsPanel({
   const studyId = useStudyId();
   const navigate = useNavigate();
   const navigateTo = () => navigate(`${PREFIX}${studyId}/${encryptIndex(flatSequence.indexOf(configSequence.id!))}/${encryptIndex(0)}`);
+
+  const toLoopOver = [
+    ...components,
+    ...Object.entries(answers).filter(([key, _]) => key.includes(`${configSequence.id}_`)).map(([_, value]) => value.componentName),
+  ];
 
   return (
     <NavLink
@@ -305,7 +305,7 @@ export function StepsPanel({
     >
       {isPanelOpened ? (
         <Box style={{ borderLeft: '1px solid #e9ecef' }}>
-          {components.map((step, idx) => {
+          {toLoopOver.map((step, idx) => {
             if (typeof step === 'string') {
               return (
                 <StepItem
