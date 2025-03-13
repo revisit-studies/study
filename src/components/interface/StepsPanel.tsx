@@ -2,7 +2,9 @@ import {
   Badge, Box, NavLink, HoverCard, Text, Tooltip, Code,
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { IconArrowsShuffle, IconBrain, IconPackageImport } from '@tabler/icons-react';
+import {
+  IconArrowsShuffle, IconBrain, IconCheck, IconPackageImport, IconX,
+} from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import {
   ComponentBlock, DynamicBlock, ParticipantData, StudyConfig,
@@ -151,8 +153,11 @@ function StepItem({
     : (step.includes('.components.') ? '.components.' : false);
   const cleanedStep = step.includes('$') && coOrComponents && step.includes(coOrComponents) ? step.split(coOrComponents).at(-1) : step;
 
-  const matchingAnswer = parentBlock.order === 'dynamic' ? Object.entries(answers).find(([key, _]) => key.startsWith(`${parentBlock.id}_${flatSequence.indexOf(parentBlock.id!)}_${cleanedStep}_${startIndex}`)) : undefined;
+  const matchingAnswer = parentBlock.order === 'dynamic' ? Object.entries(answers).find(([key, _]) => key === `${parentBlock.id}_${flatSequence.indexOf(parentBlock.id!)}_${cleanedStep}_${startIndex}`) : Object.entries(answers).find(([key, _]) => key === `${cleanedStep}_${startIndex}`);
   const taskAnswer: StoredAnswer | null = matchingAnswer ? matchingAnswer[1] : null;
+
+  const correctAnswer = taskAnswer && taskAnswer.correctAnswer.length > 0 && Object.keys(taskAnswer.answer).length > 0 && taskAnswer.correctAnswer;
+  const correct = correctAnswer && taskAnswer && Object.values(correctAnswer).every((value) => taskAnswer.answer[value.id] === value.answer);
 
   return (
     <HoverCard withinPortal position="left" withArrow arrowSize={10} shadow="md" offset={0}>
@@ -167,8 +172,16 @@ function StepItem({
             <Box>
               {interruption && <IconBrain size={16} style={{ marginRight: 4, marginBottom: -2 }} color="orange" />}
               {step !== cleanedStep && (
-                <IconPackageImport size={16} style={{ marginRight: 4, marginBottom: -2 }} color="var(--mantine-color-blue-outline)" />
+                <IconPackageImport size={16} style={{ marginRight: 4, marginBottom: -2 }} color="blue" />
               )}
+              {taskAnswer && correctAnswer ? (
+                correct ? (
+                  <IconCheck size={16} style={{ marginRight: 4, marginBottom: -2 }} color="green" />
+                )
+                  : (
+                    <IconX size={16} style={{ marginRight: 4, marginBottom: -2 }} color="red" />
+                  )
+              ) : null}
               <Text size="sm" span={active} fw={active ? '700' : undefined} display="inline" style={{ textWrap: 'nowrap' }}>{cleanedStep}</Text>
             </Box>
           )}
