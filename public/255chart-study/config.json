@@ -24,11 +24,29 @@
     "windowEventDebounceTime": 200,
     "recordStudyAudio": true
   },
-  "importedLibraries": ["demographics"],
+  "importedLibraries": ["demographics", "mic-check"],
   "components": {
     "consent": {
       "type": "markdown",
       "path": "255chart-study/assets/consent.md",
+      "nextButtonText": "Agree",
+      "response": [
+        {
+          "id": "accept",
+          "prompt": "Do you consent to the study and wish to continue?",
+          "requiredValue": "Accept",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Decline",
+            "Accept"
+          ]
+        }
+      ]
+    },
+    "introduction": {
+      "type": "markdown",
+      "path": "255chart-study/assets/introduction.md",
       "nextButtonLocation": "belowStimulus",
       "response": [
         {
@@ -38,19 +56,22 @@
           "type": "shortText",
           "placeholder": "Enter your prolific here"
         }
-      ]
+      ],
+      "recordAudio": false
     },
     "training-control": {
       "type": "website",
       "path": "255chart-study/assets/trainingControl.html",
       "nextButtonLocation": "belowStimulus",
-      "response": []
+      "response": [],
+      "recordAudio": false
     },
     "training-search": {
       "type": "website",
       "path": "255chart-study/assets/trainingSearch.html",
       "nextButtonLocation": "belowStimulus",
-      "response": []
+      "response": [],
+      "recordAudio": false
     },
     "255ChartControl": {
       "type": "website",
@@ -92,29 +113,22 @@
         }
       ]
     },
-    "findings": {
-      "description": "Findings",
-      "instruction": "Your Findings\n\n please tell us about the findings you discovered in the data. Please list as many unique findings as you can.",
+    "explorationStrategy": {
+      "description": "Exploration Strategy",
+      "instruction": "**Your Exploration Strategy** \n\n In this section, please tell us about the strategies you applied during exploration by answering the following questions.",
       "type": "questionnaire",
       "response": [
         {
           "id": "findings",
-          "prompt": "Write your findings here",
+          "prompt": "1. Your Findings",
           "location": "belowStimulus",
           "type": "longText",
           "placeholder": "Write your findings here",
-          "paramCapture": "FINDINGS"
-        }
-      ]
-    },
-    "explorationStrategy": {
-      "description": "Exploration Strategy",
-      "instruction": "**Your Exploration Strategy** \n\nIn this section, please tell us about the strategies you applied during exploration by answering the following questions.",
-      "type": "questionnaire",
-      "response": [
+          "secondaryText": "Use the textbox below list as many unique findings as you can."
+        },
         {
           "id": "searched",
-          "prompt": "1. During exploration, did you actively search for items that you thought might be in the visualization?",
+          "prompt": "2. During exploration, did you actively search for items that you thought might be in the visualization?",
           "location": "belowStimulus",
           "type": "radio",
           "options": ["Yes", "No", "I'm not sure"],
@@ -122,21 +136,21 @@
         },
         {
           "id": "searchedItems",
-          "prompt": "2. If you answered yes, which items did you actively search for?",
+          "prompt": "3. If you answered yes, which items did you actively search for?",
           "location": "belowStimulus",
           "type": "longText",
           "required": false
         },
         {
           "id": "relatedToYou",
-          "prompt": "3. How are the ones you actively searched for related to you?",
+          "prompt": "4. How are the ones you actively searched for related to you?",
           "location": "belowStimulus",
           "type": "longText",
           "required": false
         },
         {
           "id": "difficulty",
-          "prompt": "4. How difficult was it to find them?",
+          "prompt": "5. How difficult was it to find them?",
           "location": "belowStimulus",
           "type": "radio",
           "options": [
@@ -144,22 +158,25 @@
             "It was very difficult to find them",
             "It took me some time and effort to find them",
             "It was very easy to find them"
-          ]
+          ],
+          "required": false
         },
         {
           "id": "strategy",
-          "prompt": "5. Did you apply any particular strategy during exploration? What was your strategy? *",
+          "prompt": "6. Did you apply any particular strategy during exploration? What was your strategy?",
           "location": "belowStimulus",
-          "type": "longText",
-          "required": true
+          "type": "longText"
         }
-      ]
+      ],
+      "recordAudio": false
     }
   },
   "sequence": {
     "order": "fixed",
     "components": [
       "consent",
+      "introduction",
+      "$mic-check.co.audioTest",
       {
         "order": "latinSquare",
         "numSamples": 1,
@@ -177,7 +194,6 @@
           }
         ]
       },
-      "findings",
       "explorationStrategy",
       "$demographics.co.demographics"
     ]

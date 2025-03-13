@@ -43,8 +43,10 @@ else closeTile();
 
 
 trrack.currentChange(() => {
+    console.log(userData)
     Revisit.postAnswers({
         ["visit"]: [...userData.visitLog],
+        ["search"]: [...userData.searchLog]
     });
     Revisit.postProvenance(trrack.graph.backend);
 });
@@ -61,12 +63,12 @@ var currentSearch = null;
 var lineHoverId = null
 
 // Set the condition
-if (Math.random() < 0) {
-    userData.condition = "foresight";
-} else {
-    userData.condition = "control";
-}
-
+// if (Math.random() > 0) {
+//     userData.condition = "foresight";
+// } else {
+//     userData.condition = "control";
+// }
+userData.condition = "control";
 
 var NAME_ATTR = 'nytlabel';
 
@@ -79,10 +81,10 @@ function load255Chart(id) {
     userData['windowHeight'] = $(window).height();
 
              //instructions
-    if(userData.condition == "control")
-    {
+    // if(userData.condition == "control")
+    // {
             d3.selectAll('.foresightTraining').style('display','none');
-    }
+    // }
 
     $(function () {
         var wholegraphic = $('<div class="whole-graphic">\n\
@@ -190,12 +192,12 @@ function boot(err, cesData, wageData) {
 
 function loadSearchBox(){
     // Load the searchbox if foresight condition
-    if(userData.condition === "foresight")
-    {
-        console.log('enable search')
+    // if(userData.condition === "foresight")
+    // {
+    //     console.log('enable search')
         d3.select('#hit').select('#search-box').style('display','inline')
         enableSearch()
-    }
+    // }
 }
 
 
@@ -1180,6 +1182,7 @@ function enableSearch(){
     }
 
     Revisit.onProvenanceReceive((prov)=>{
+        console.log(prov)
 
         closeTile()
         const hoverIndustry = indexedCes[prov.activeIndustry];

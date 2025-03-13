@@ -63,12 +63,12 @@ var currentSearch = null;
 var lineHoverId = null
 
 // Set the condition
-if (Math.random() > 0) {
-    userData.condition = "foresight";
-} else {
-    userData.condition = "control";
-}
-
+// if (Math.random() > 0) {
+//     userData.condition = "foresight";
+// } else {
+//     userData.condition = "control";
+// }
+userData.condition = "foresight";
 
 var NAME_ATTR = 'nytlabel';
 
@@ -1182,6 +1182,7 @@ function enableSearch(){
     }
 
     Revisit.onProvenanceReceive((prov)=>{
+        console.log(prov)
 
         closeTile()
         const hoverIndustry = indexedCes[prov.activeIndustry];
