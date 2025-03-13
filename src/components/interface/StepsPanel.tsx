@@ -141,8 +141,8 @@ function StepItem({
 
   const analysisNavigateTo = trialId ? `./../${step}` : `./${step}`;
   const dynamicNavigateTo = parentBlock.order === 'dynamic' ? `${PREFIX}${studyId}/${encryptIndex(flatSequence.indexOf(parentBlock.id!))}/${encryptIndex(startIndex)}` : '';
-  const studyNavigateTo = participantView ? (participantId ? `${PREFIX}${studyId}/${encryptIndex(stepIndex)}?participantId=${participantId}` : (parentBlock.order === 'dynamic' ? dynamicNavigateTo : `${PREFIX}${studyId}/${encryptIndex(stepIndex)}`)) : `${PREFIX}${studyId}/reviewer-${step}`;
-  const navigateTo = analysisNavigation ? () => navigate(analysisNavigateTo) : () => navigate(studyNavigateTo);
+  const studyNavigateTo = participantView ? (parentBlock.order === 'dynamic' ? dynamicNavigateTo : `${PREFIX}${studyId}/${encryptIndex(stepIndex)}`) : `${PREFIX}${studyId}/reviewer-${step}`;
+  const navigateTo = analysisNavigation ? () => navigate(analysisNavigateTo) : () => navigate(`${studyNavigateTo}${participantId ? `?participantId=${participantId}` : ''}`);
 
   const coOrComponents = step.includes('.co.')
     ? '.co.'
@@ -267,18 +267,21 @@ export function StepsPanel({
 
   const [isPanelOpened, setIsPanelOpened] = useState<boolean>(sequenceStepsLength > 0);
 
+  const [searchParams] = useSearchParams();
+  const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
   const currentStep = useCurrentStep();
   // eslint-disable-next-line react-hooks/rules-of-hooks
   const flatSequence = analysisTab ? [] : useFlatSequence();
   const dynamicBlockActive = typeof currentStep === 'number' && configSequence.order === 'dynamic' && flatSequence[currentStep] === configSequence.id;
+  const indexofDynamicBlock = (configSequence.id && flatSequence.indexOf(configSequence.id)) || -1;
 
   const studyId = useStudyId();
   const navigate = useNavigate();
-  const navigateTo = () => navigate(`${PREFIX}${studyId}/${encryptIndex(flatSequence.indexOf(configSequence.id!))}/${encryptIndex(0)}`);
+  const navigateTo = () => navigate(`${PREFIX}${studyId}/${encryptIndex(indexofDynamicBlock)}/${encryptIndex(0)}${participantId ? `?participantId=${participantId}` : ''}`);
 
   const toLoopOver = [
     ...components,
-    ...Object.entries(answers).filter(([key, _]) => key.includes(`${configSequence.id}_`)).map(([_, value]) => value.componentName),
+    ...Object.entries(answers).filter(([key, _]) => key.startsWith(`${configSequence.id}_${indexofDynamicBlock}_`)).map(([_, value]) => value.componentName),
   ];
 
   return (
