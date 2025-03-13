@@ -167,6 +167,10 @@
           },
           {
             "order": "fixed",
+            "components": ["instructionsWithSearch", "bubbleChartWithSearch"]
+          },
+          {
+            "order": "fixed",
             "components": [
               "instructionsWithoutSearch",
               "bubbleChartWithoutSearch"
