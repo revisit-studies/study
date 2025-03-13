@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.0.2/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/255charts/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Passing Data from reVISit to HTML and back",
     "version": "pilot",
@@ -72,6 +72,7 @@
           1.3,
           0.82,
           0.4,
+          -0.3,
           0.3
         ]
       }

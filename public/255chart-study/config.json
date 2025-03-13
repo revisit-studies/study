@@ -1,0 +1,201 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/255charts/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "255 Charts",
+    "version": "pilot",
+    "authors": [
+      "The reVISit Team"
+    ],
+    "date": "2025-02-1",
+    "description": "255 Chart from the Hindsight study",
+    "organizations": [
+      "University of Utah",
+      "WPI",
+      "University of Toronto"
+    ]
+  },
+  "uiConfig": {
+    "contactEmail": "contact@revisit.dev",
+    "helpTextPath": "255chart-study/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true,
+    "windowEventDebounceTime": 200,
+    "recordStudyAudio": true
+  },
+  "importedLibraries": ["demographics", "mic-check"],
+  "components": {
+    "consent": {
+      "type": "markdown",
+      "path": "255chart-study/assets/consent.md",
+      "nextButtonText": "Agree",
+      "response": [
+        {
+          "id": "accept",
+          "prompt": "Do you consent to the study and wish to continue?",
+          "requiredValue": "Accept",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "Decline",
+            "Accept"
+          ]
+        }
+      ]
+    },
+    "introduction": {
+      "type": "markdown",
+      "path": "255chart-study/assets/introduction.md",
+      "nextButtonLocation": "belowStimulus",
+      "response": [
+        {
+          "id": "q-short-text",
+          "prompt": "Your Prolific ID",
+          "location": "belowStimulus",
+          "type": "shortText",
+          "placeholder": "Enter your prolific here"
+        }
+      ],
+      "recordAudio": false
+    },
+    "training-control": {
+      "type": "website",
+      "path": "255chart-study/assets/trainingControl.html",
+      "nextButtonLocation": "belowStimulus",
+      "response": [],
+      "recordAudio": false
+    },
+    "training-search": {
+      "type": "website",
+      "path": "255chart-study/assets/trainingSearch.html",
+      "nextButtonLocation": "belowStimulus",
+      "response": [],
+      "recordAudio": false
+    },
+    "255ChartControl": {
+      "type": "website",
+      "nextButtonLocation": "sidebar",
+      "path": "255chart-study/assets/255charts/index.html",
+      "instruction": "<p>Five years since the end of the recent Recession, the economy has finally regained the nine million jobs it lost. Each line below shows how the number of jobs has changed for a particular industry over the past 10 years. </p> \n <b>Your task</b> is to analyze this dataset on economy from a popular news website. <br></br> <p><b>How to interact: </b></p><p> - Mouseover an individual line to bring up a more detailed chart.</p>",
+      "description": "Desc",
+      "response": [
+        {
+          "id": "visit",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "reactive",
+          "hidden": true
+        }
+      ]
+    },
+    "255ChartSearch": {
+      "type": "website",
+      "nextButtonLocation": "sidebar",
+      "path": "255chart-study/assets/255charts-search/index.html",
+      "instruction": "<p>Five years since the end of the recent Recession, the economy has finally regained the nine million jobs it lost. Each line below shows how the number of jobs has changed for a particular industry over the past 10 years. </p> \n <b>Your task</b> is to analyze this dataset on economy from a popular news website. <br></br> <p><b>How to interact: </b></p><p> - Mouseover an individual line to bring up a more detailed chart.</p><p> - Use the text box at the top to search for specific charts.</p>",
+      "description": "Desc",
+      "response": [
+        {
+          "id": "visit",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "reactive",
+          "hidden": true
+        },
+        {
+          "id": "search",
+          "prompt": "Answer:",
+          "location": "sidebar",
+          "type": "reactive",
+          "hidden": true,
+          "required": false
+        }
+      ]
+    },
+    "explorationStrategy": {
+      "description": "Exploration Strategy",
+      "instruction": "**Your Exploration Strategy** \n\n In this section, please tell us about the strategies you applied during exploration by answering the following questions.",
+      "type": "questionnaire",
+      "response": [
+        {
+          "id": "findings",
+          "prompt": "1. Your Findings",
+          "location": "belowStimulus",
+          "type": "longText",
+          "placeholder": "Write your findings here",
+          "secondaryText": "Use the textbox below list as many unique findings as you can."
+        },
+        {
+          "id": "searched",
+          "prompt": "2. During exploration, did you actively search for items that you thought might be in the visualization?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": ["Yes", "No", "I'm not sure"],
+          "secondaryText": "If you answer yes, please provide more details in the questions 2-4."
+        },
+        {
+          "id": "searchedItems",
+          "prompt": "3. If you answered yes, which items did you actively search for?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        },
+        {
+          "id": "relatedToYou",
+          "prompt": "4. How are the ones you actively searched for related to you?",
+          "location": "belowStimulus",
+          "type": "longText",
+          "required": false
+        },
+        {
+          "id": "difficulty",
+          "prompt": "5. How difficult was it to find them?",
+          "location": "belowStimulus",
+          "type": "radio",
+          "options": [
+            "I was not able to find them",
+            "It was very difficult to find them",
+            "It took me some time and effort to find them",
+            "It was very easy to find them"
+          ],
+          "required": false
+        },
+        {
+          "id": "strategy",
+          "prompt": "6. Did you apply any particular strategy during exploration? What was your strategy?",
+          "location": "belowStimulus",
+          "type": "longText"
+        }
+      ],
+      "recordAudio": false
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "consent",
+      "introduction",
+      "$mic-check.co.audioTest",
+      {
+        "order": "latinSquare",
+        "numSamples": 1,
+        "components": [
+          {
+            "order": "fixed",
+            "components": ["training-control", "255ChartControl"]
+          },
+          {
+            "order": "fixed",
+            "components": [
+              "training-search",
+              "255ChartSearch"
+            ]
+          }
+        ]
+      },
+      "explorationStrategy",
+      "$demographics.co.demographics"
+    ]
+  }
+}

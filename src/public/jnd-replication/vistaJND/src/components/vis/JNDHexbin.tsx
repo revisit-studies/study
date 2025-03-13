@@ -44,12 +44,6 @@ export default function JND({ setAnswer, parameters } : StimulusParams<{r1: numb
     }, 0);
   };
 
-  if (parameters.counter === 50) {
-    return (
-      <Text>Completed! Great job, please continue.</Text>
-    );
-  }
-
   return (
     <Stack style={{ width: '100%', height: '100%' }}>
       <Text style={{
