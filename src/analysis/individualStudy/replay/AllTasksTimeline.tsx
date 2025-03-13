@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { JSX, useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
 import {
   Center, Group, Stack, Tooltip, Text, Divider, Button, Badge,
@@ -13,6 +13,7 @@ import { encryptIndex } from '../../../utils/encryptDecryptIndex';
 import { humanReadableDuration } from '../../../utils/humanReadableDuration';
 import { StudyConfig } from '../../../parser/types';
 import { PREFIX } from '../../../utils/Prefix';
+import { participantName } from '../../../utils/participantName';
 
 const LABEL_GAP = 25;
 const CHARACTER_SIZE = 8;
@@ -95,6 +96,7 @@ export function AllTasksTimeline({
         line: <SingleTaskLabelLines key={name} labelHeight={currentHeight * LABEL_GAP} answer={answer} height={height} xScale={xScale} />,
         label: (
           <Tooltip
+            key={`${name}-tooltip`}
             withinPortal
             position="bottom-start"
             px={4}
@@ -164,17 +166,7 @@ export function AllTasksTimeline({
     });
   }, [xScale, height, participantData.answers]);
 
-  const partName = useMemo(() => {
-    if (studyConfig?.uiConfig && studyConfig.uiConfig.participantNameField) {
-      const [task, response] = studyConfig.uiConfig.participantNameField.split('.');
-      const fullTaskName = Object.keys(participantData.answers).find((a) => a.startsWith(task));
-
-      if (fullTaskName) {
-        return `${participantData.answers[fullTaskName].answer[response]}`;
-      }
-    }
-    return null;
-  }, [participantData.answers, studyConfig]);
+  const partName = useMemo(() => participantName(participantData, studyConfig), [participantData, studyConfig]);
 
   const completionTime = useMemo(() => {
     if (!participantData.answers || Object.entries(participantData.answers).length === 0) {
@@ -197,7 +189,7 @@ export function AllTasksTimeline({
             {participantData.participantIndex
               ? (
                 <Text>
-                  {`P-${participantData.participantIndex < 10 ? '0' : 'none'}${participantData.participantIndex}`}
+                  {`P-${participantData.participantIndex.toString().padStart(3, '0')}`}
                 </Text>
               ) : null }
 

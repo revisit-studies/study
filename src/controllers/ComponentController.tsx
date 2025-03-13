@@ -1,7 +1,6 @@
 import {
   Suspense, useEffect, useMemo, useRef, useState,
 } from 'react';
-import merge from 'lodash.merge';
 import { useSearchParams } from 'react-router';
 import { Center, Loader } from '@mantine/core';
 import { ResponseBlock } from '../components/response/ResponseBlock';
@@ -10,10 +9,9 @@ import { ImageController } from './ImageController';
 import { ReactComponentController } from './ReactComponentController';
 import { MarkdownController } from './MarkdownController';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
-import { useCurrentComponent, useCurrentStep } from '../routes/utils';
+import { useCurrentComponent, useCurrentIdentifier, useCurrentStep } from '../routes/utils';
 import { useStoredAnswer } from '../store/hooks/useStoredAnswer';
 import { ReactMarkdownWrapper } from '../components/ReactMarkdownWrapper';
-import { isInheritedComponent } from '../parser/utils';
 import { IndividualComponent } from '../parser/types';
 import { useDisableBrowserBack } from '../utils/useDisableBrowserBack';
 import { useStorageEngine } from '../storage/storageEngineHooks';
@@ -27,20 +25,24 @@ import { TimedOut } from '../components/TimedOut';
 import { findBlockForStep } from '../utils/getSequenceFlatMap';
 import { VegaController, VegaProvState } from './VegaController';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
+import { VideoController } from './VideoController';
+import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 
 // current active stimuli presented to the user
 export function ComponentController() {
   // Get the config for the current step
   const studyConfig = useStudyConfig();
   const currentStep = useCurrentStep();
-  const currentComponent = useCurrentComponent() || 'Notfound';
+  const currentComponent = useCurrentComponent();
+
   const stepConfig = studyConfig.components[currentComponent];
   const { storageEngine } = useStorageEngine();
 
+  const answers = useStoreSelector((store) => store.answers);
   const audioStream = useRef<MediaRecorder | null>(null);
   const [prevTrialName, setPrevTrialName] = useState<string | null>(null);
   const { setIsRecording } = useStoreActions();
-  const analysisProvState = useStoreSelector((state) => state.analysisProvState);
+  const analysisProvState = useStoreSelector((state) => state.analysisProvState.stimulus);
 
   const isAnalysis = useIsAnalysis();
 
@@ -132,13 +134,26 @@ export function ComponentController() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentStep, storageEngine, sequence]);
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const currentConfig = useMemo(() => (currentComponent !== 'end' && !currentComponent.startsWith('__') && isInheritedComponent(stepConfig) && studyConfig.baseComponents ? merge({}, studyConfig.baseComponents?.[stepConfig.baseComponent], stepConfig) as IndividualComponent : stepConfig as IndividualComponent), [stepConfig, studyConfig]);
+  const currentIdentifier = useCurrentIdentifier();
+  const currentConfig = useMemo(() => {
+    const toReturn = currentComponent && currentComponent !== 'end' && !currentComponent.startsWith('__') && studyComponentToIndividualComponent(stepConfig, studyConfig) as IndividualComponent;
+    if (typeof toReturn === 'object') {
+      const funcParams = answers[currentIdentifier]?.parameters;
+      const funcCorrectAnswer = answers[currentIdentifier]?.correctAnswer;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return { ...toReturn, parameters: funcParams || (toReturn as any).parameters || undefined, correctAnswer: funcCorrectAnswer || (toReturn as any).correctAnswer || undefined };
+    }
+    return toReturn as unknown as IndividualComponent;
+  }, [answers, currentComponent, currentIdentifier, stepConfig, studyConfig]);
 
   // We're not using hooks below here, so we can return early if we're at the end of the study.
   // This avoids issues with the component config being undefined for the end of the study.
   if (currentComponent === 'end') {
     return <StudyEnd />;
+  }
+
+  if (currentComponent === '__dynamicLoading') {
+    return null;
   }
 
   // Handle failed training
@@ -179,10 +194,11 @@ export function ComponentController() {
 
       <Suspense key={`${currentStep}-stimulus`} fallback={<div>Loading...</div>}>
         {currentConfig.type === 'markdown' && <MarkdownController currentConfig={currentConfig} />}
-        {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} />}
+        {currentConfig.type === 'website' && <IframeController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
         {currentConfig.type === 'image' && <ImageController currentConfig={currentConfig} />}
-        {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} />}
+        {currentConfig.type === 'react-component' && <ReactComponentController currentConfig={currentConfig} provState={analysisProvState} answers={answers} />}
         {currentConfig.type === 'vega' && <VegaController currentConfig={currentConfig} provState={analysisProvState as VegaProvState} />}
+        {currentConfig.type === 'video' && <VideoController currentConfig={currentConfig} />}
 
       </Suspense>
 

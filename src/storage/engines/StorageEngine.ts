@@ -1,7 +1,7 @@
 import { User } from '@firebase/auth';
 import { Timestamp } from 'firebase/firestore';
 import { StudyConfig } from '../../parser/types';
-import { ParticipantMetadata, Sequence, StoredAnswer } from '../../store/types';
+import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 
 export interface StoredUser {
@@ -59,7 +59,7 @@ export abstract class StorageEngine {
 
   abstract clearCurrentParticipantId(): Promise<void>;
 
-  abstract saveAnswers(answers: Record<string, StoredAnswer>): Promise<void>;
+  abstract saveAnswers(answers: ParticipantData['answers']): Promise<void>;
 
   abstract setSequenceArray(latinSquare: Sequence[]): Promise<void>;
 
@@ -85,7 +85,7 @@ export abstract class StorageEngine {
 
   abstract nextParticipant(): Promise<void>;
 
-  abstract verifyCompletion(answers: Record<string, StoredAnswer>): Promise<boolean>;
+  abstract verifyCompletion(answers: ParticipantData['answers']): Promise<boolean>;
 
   abstract validateUser(user: UserWrapped | null, refresh?: boolean): Promise<boolean>;
 

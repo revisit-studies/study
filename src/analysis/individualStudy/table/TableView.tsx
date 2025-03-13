@@ -2,19 +2,18 @@ import {
   Box, Spoiler, Stack, Table, Text, Flex, Checkbox, Button, Tooltip, LoadingOverlay, Group, Select, Space, Modal, TextInput,
 } from '@mantine/core';
 import {
-  IconCheck, IconProgress,
-  IconSearch,
-  IconX,
+  IconCheck, IconProgress, IconSearch, IconX,
 } from '@tabler/icons-react';
 import React, { useState } from 'react';
 import { useParams } from 'react-router';
 import { ParticipantData, StoredAnswer, StudyConfig } from '../../../parser/types';
-import { ParticipantMetadata } from '../../../store/types';
+import { EventType, ParticipantMetadata } from '../../../store/types';
 import { configSequenceToUniqueTrials, findBlockForStep, getSequenceFlatMap } from '../../../utils/getSequenceFlatMap';
 import { useStorageEngine } from '../../../storage/storageEngineHooks';
 import { DownloadButtons } from '../../../components/downloader/DownloadButtons';
 import { useAuth } from '../../../store/hooks/useAuth';
 import { getCleanedDuration } from '../../../utils/getCleanedDuration';
+import { participantName } from '../../../utils/participantName';
 
 function AnswerCell({ cellData }: { cellData: StoredAnswer }) {
   return Number.isFinite(cellData.endTime) && Number.isFinite(cellData.startTime) ? (
@@ -49,9 +48,9 @@ function AnswerCell({ cellData }: { cellData: StoredAnswer }) {
   );
 }
 
-function DurationCell({ cellData }: { cellData: StoredAnswer }) {
-  const duration = (cellData.endTime - cellData.startTime) / 1000;
-  const cleanedDuration = getCleanedDuration(cellData);
+function DurationCell({ cellData }: { cellData: { startTime?: number; endTime?: number; windowEvents: EventType[] } }) {
+  const duration = cellData.endTime && cellData.startTime ? (cellData.endTime - cellData.startTime) / 1000 : NaN;
+  const cleanedDuration = cellData.endTime && cellData.startTime ? getCleanedDuration(cellData as never) : NaN;
   return Number.isFinite(cellData.endTime) && Number.isFinite(cellData.startTime) ? (
     <Table.Td>
       {duration.toFixed(1)}
@@ -162,7 +161,12 @@ export function TableView({
         <Checkbox mb={-4} checked={checked.length === visibleParticipants.length} onChange={() => handleSelect('all')} />
       </Flex>
     </Table.Th>,
+    <Table.Th key="index">Index</Table.Th>,
+    <Table.Th key="name">Name</Table.Th>,
     <Table.Th key="ID">ID</Table.Th>,
+    <Table.Th key="startTime">Start Time</Table.Th>,
+    <Table.Th key="endTime">End Time</Table.Th>,
+    <Table.Th key="total-duration">Total Duration (clean)</Table.Th>,
     <Table.Th key="status">Status</Table.Th>,
     <Table.Th key="tags">Tags</Table.Th>,
     <Table.Th key="meta">Meta</Table.Th>,
@@ -174,95 +178,99 @@ export function TableView({
         Duration (clean)
       </Table.Th>,
     ]),
-    <Table.Th key="total-duration">Total Duration (clean)</Table.Th>,
   ];
 
-  const rows = visibleParticipants.map((record) => (
-    <Table.Tr key={record.participantId}>
-      <Table.Td>
-        <Flex justify="center">
-          <Checkbox mb={-4} checked={checked.includes(record.participantId)} onChange={() => handleSelect(record.participantId)} />
-        </Flex>
-      </Table.Td>
-      <Table.Td style={{ whiteSpace: 'nowrap' }}>
-        {record.participantId}
-      </Table.Td>
-      <Table.Td>
-        <Flex direction="column" miw={100}>
-          <Flex direction="row" align="center">
-            {
-              // eslint-disable-next-line no-nested-ternary
+  const rows = visibleParticipants.map((record) => {
+    const partName = participantName(record, studyConfig);
+    const times = record.answers && Object.values(record.answers).filter((data) => data.startTime).sort((a, b) => a.startTime - b.startTime);
+    const startTime = times && times.length > 0 ? times[0].startTime : undefined;
+    const endTime = times && times.length > 0 ? times[times.length - 1].endTime : undefined;
+    return (
+      <Table.Tr key={record.participantId}>
+        <Table.Td>
+          <Flex justify="center">
+            <Checkbox mb={-4} checked={checked.includes(record.participantId)} onChange={() => handleSelect(record.participantId)} />
+          </Flex>
+        </Table.Td>
+        <Table.Td>{`P-${record.participantIndex.toString().padStart(3, '0')}`}</Table.Td>
+        <Table.Td>{partName}</Table.Td>
+        <Table.Td style={{ whiteSpace: 'nowrap' }}>
+          {record.participantId}
+        </Table.Td>
+        <Table.Td miw={110}>{startTime ? new Date(startTime).toLocaleString() : 'N/A'}</Table.Td>
+        <Table.Td miw={110}>{record.completed && endTime ? new Date(endTime).toLocaleString() : 'N/A'}</Table.Td>
+        <DurationCell
+          cellData={{
+            startTime,
+            endTime,
+            windowEvents: Object.values(record.answers).flatMap((a) => a.windowEvents),
+          }}
+          key={`cell-${record.participantId}-total-duration`}
+        />
+        <Table.Td>
+          <Flex direction="column" miw={100}>
+            <Flex direction="row" align="center">
+              {
               record.rejected ? <Tooltip label="Rejected"><IconX size={16} color="red" style={{ marginBottom: -3 }} /></Tooltip>
                 : record.completed
                   ? <Tooltip label="Completed"><IconCheck size={16} color="teal" style={{ marginBottom: -3 }} /></Tooltip>
                   : <Tooltip label="In Progress"><IconProgress size={16} color="orange" style={{ marginBottom: -3 }} /></Tooltip>
             }
-            {(!record.completed) && (
+              {(!record.completed) && (
               <Text size="sm" mb={-1} ml={4}>
                 {((Object.entries(record.answers).filter(([_, entry]) => entry.endTime !== -1 && entry.endTime !== undefined).length / (getSequenceFlatMap(record.sequence).length - 1)) * 100).toFixed(2)}
                 %
               </Text>
-            )}
-          </Flex>
-          {record.rejected && (
+              )}
+            </Flex>
+            {record.rejected && (
             <Text mt={5} fz={10}>
               {record.rejected.reason}
             </Text>
-          )}
-        </Flex>
-      </Table.Td>
+            )}
+          </Flex>
+        </Table.Td>
 
-      <Table.Td>
-        <Flex direction="column" miw={100}>
-          {(record.participantTags || []).map((tag) => (
-            <Text key={`tag-${tag}`} fz={10}>
-              -
-              {' '}
-              {tag}
-            </Text>
-          ))}
-        </Flex>
-      </Table.Td>
-      {record.metadata ? <MetaCell metaData={record.metadata} /> : <Table.Td>N/A</Table.Td>}
-      {uniqueTrials.map((trial) => {
-        const sequenceBlock = findBlockForStep(record.sequence, trial.orderPath);
-        const trialData = sequenceBlock && Object.entries(record.answers)
-          .sort((a, b) => {
-            const aIndex = parseInt(a[0].slice(a[0].lastIndexOf('_') + 1), 10);
-            const bIndex = parseInt(b[0].slice(b[0].lastIndexOf('_') + 1), 10);
-            return aIndex - bIndex;
-          })
-          .filter(([trialId]) => {
-            const trialName = trialId.slice(0, trialId.lastIndexOf('_'));
-            const trialIndex = parseInt(trialId.slice(trialId.lastIndexOf('_') + 1), 10);
-            return trialName === trial.componentName && trialIndex <= sequenceBlock[0].lastIndex && trialIndex >= sequenceBlock[0].firstIndex;
-          });
-        return (trialData !== null && trialData.length >= trial.timesSeenInBlock + 1 && trialData[trial.timesSeenInBlock][1].endTime !== -1 ? (
-          <React.Fragment key={`cellgroup-${record.participantId}-${trial.componentName}-${trial.timesSeenInBlock}`}>
-            <AnswerCell cellData={trialData[trial.timesSeenInBlock][1]} />
-            <DurationCell cellData={trialData[trial.timesSeenInBlock][1]} />
-          </React.Fragment>
-        ) : (
-          <React.Fragment key={`cellgroup-${record.participantId}-${trial.componentName}-${trial.timesSeenInBlock}`}>
-            <Table.Td>N/A</Table.Td>
-            <Table.Td>N/A</Table.Td>
-          </React.Fragment>
-        ));
-      })}
-      <DurationCell
-        cellData={{
-          startTime: Math.min(...Object.values(record.answers).filter((a) => a.endTime !== -1 && a.endTime !== undefined).map((a) => a.startTime)),
-          endTime: Math.max(...Object.values(record.answers).filter((a) => a.endTime !== -1 && a.endTime !== undefined).map((a) => a.endTime)),
-          answer: {},
-          helpButtonClickedCount: 0, // not used
-          incorrectAnswers: {}, // not used
-          windowEvents: Object.values(record.answers).flatMap((a) => a.windowEvents),
-          timedOut: false, // not used
-        }}
-        key={`cell-${record.participantId}-total-duration`}
-      />
-    </Table.Tr>
-  ));
+        <Table.Td>
+          <Flex direction="column" miw={100}>
+            {(record.participantTags || []).map((tag) => (
+              <Text key={`tag-${tag}`} fz={10}>
+                -
+                {' '}
+                {tag}
+              </Text>
+            ))}
+          </Flex>
+        </Table.Td>
+        {record.metadata ? <MetaCell metaData={record.metadata} /> : <Table.Td>N/A</Table.Td>}
+        {uniqueTrials.map((trial) => {
+          const sequenceBlock = findBlockForStep(record.sequence, trial.orderPath);
+          const trialData = sequenceBlock && Object.entries(record.answers)
+            .sort((a, b) => {
+              const aIndex = parseInt(a[0].slice(a[0].lastIndexOf('_') + 1), 10);
+              const bIndex = parseInt(b[0].slice(b[0].lastIndexOf('_') + 1), 10);
+              return aIndex - bIndex;
+            })
+            .filter(([trialId]) => {
+              const trialName = trialId.slice(0, trialId.lastIndexOf('_'));
+              const trialIndex = parseInt(trialId.slice(trialId.lastIndexOf('_') + 1), 10);
+              return trialName === trial.componentName && trialIndex <= sequenceBlock[0].lastIndex && trialIndex >= sequenceBlock[0].firstIndex;
+            });
+          return (trialData !== null && trialData.length >= trial.timesSeenInBlock + 1 && trialData[trial.timesSeenInBlock][1].endTime !== -1 ? (
+            <React.Fragment key={`cellgroup-${record.participantId}-${trial.componentName}-${trial.timesSeenInBlock}`}>
+              <AnswerCell cellData={trialData[trial.timesSeenInBlock][1]} />
+              <DurationCell cellData={trialData[trial.timesSeenInBlock][1]} />
+            </React.Fragment>
+          ) : (
+            <React.Fragment key={`cellgroup-${record.participantId}-${trial.componentName}-${trial.timesSeenInBlock}`}>
+              <Table.Td>N/A</Table.Td>
+              <Table.Td>N/A</Table.Td>
+            </React.Fragment>
+          ));
+        })}
+      </Table.Tr>
+    );
+  });
 
   return (
     visibleParticipants.length > 0 ? (

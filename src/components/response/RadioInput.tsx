@@ -1,12 +1,13 @@
 import {
   Box, Flex, Group, Input, Radio, rem, Text,
 } from '@mantine/core';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { RadioResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { HorizontalHandler } from './HorizontalHandler';
-import { useStoreActions, useStoreDispatch } from '../../store/store';
+import classes from './css/Radio.module.css';
+import inputClasses from './css/Input.module.css';
 
 export function RadioInput({
   response,
@@ -15,13 +16,15 @@ export function RadioInput({
   index,
   enumerateQuestions,
   stretch,
+  otherValue,
 }: {
   response: RadioResponse;
   disabled: boolean;
   answer: object;
   index: number;
   enumerateQuestions: boolean;
-  stretch?: boolean
+  stretch?: boolean;
+  otherValue?: object;
 }) {
   const {
     prompt,
@@ -37,13 +40,6 @@ export function RadioInput({
   const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
 
   const [otherSelected, setOtherSelected] = useState(false);
-  const [otherValue, setOtherValue] = useState('');
-
-  const { setOtherText } = useStoreActions();
-  const storeDispatch = useStoreDispatch();
-  useEffect(() => {
-    storeDispatch(setOtherText({ key: response.id, value: otherValue }));
-  }, [otherValue, response.id, setOtherText, storeDispatch]);
 
   return (
     <Radio.Group
@@ -83,11 +79,11 @@ export function RadioInput({
                 value={radio.value}
                 label={radio.label}
                 styles={{
-                  label: { display: 'none' },
+                  label: { display: !horizontal ? 'initial' : 'none' },
                 }}
                 onChange={() => setOtherSelected(false)}
+                classNames={{ radio: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
               />
-              {!horizontal && <Text size="sm">{radio.label}</Text>}
             </div>
           ))}
           {withOther && (
@@ -106,8 +102,17 @@ export function RadioInput({
                 value="other"
                 checked={otherSelected}
                 onClick={(event) => setOtherSelected(event.currentTarget.checked)}
-                label={!horizontal && <Input mt={-8} placeholder="Other" disabled={!otherSelected} value={otherValue} onChange={(event) => setOtherValue(event.currentTarget.value)} />}
+                label={!horizontal && (
+                <Input
+                  mt={-8}
+                  placeholder="Other"
+                  disabled={!otherSelected}
+                  {...otherValue}
+                  classNames={{ input: inputClasses.fixDisabled }}
+                />
+                )}
                 mt={0}
+                classNames={{ radio: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
               />
             </div>
           )}
@@ -115,7 +120,14 @@ export function RadioInput({
         <Text>{rightLabel}</Text>
       </Group>
       {horizontal && withOther && (
-        <Input mt="sm" placeholder="Other" disabled={!otherSelected} value={otherValue} onChange={(event) => setOtherValue(event.currentTarget.value)} w={216} />
+        <Input
+          mt="sm"
+          placeholder="Other"
+          disabled={!otherSelected}
+          {...otherValue}
+          w={216}
+          classNames={{ input: inputClasses.fixDisabled }}
+        />
       )}
     </Radio.Group>
   );

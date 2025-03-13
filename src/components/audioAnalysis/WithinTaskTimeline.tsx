@@ -1,5 +1,5 @@
 import {
-  useCallback, useMemo,
+  useMemo,
 } from 'react';
 import * as d3 from 'd3';
 import { ParticipantData } from '../../storage/types';
@@ -9,21 +9,21 @@ const margin = {
   left: 5, top: 0, right: 5, bottom: 0,
 };
 export function WithinTaskTimeline({
-  xScale, participantData, width, height, currentNode, setCurrentNode, setPlayTime, trialName,
-} : {xScale: d3.ScaleLinear<number, number>, participantData: ParticipantData, width: number, height: number, currentNode: string | null, setCurrentNode: (node: string) => void, setPlayTime: (n: number, p: number) => void, trialName: string}) {
-  const totalLength = useMemo(() => xScale.domain()[1] - xScale.domain()[0], [xScale]);
-
-  const currentNodeCallback = useCallback((node: string, nodeTime: number) => {
-    setPlayTime(nodeTime, (nodeTime - xScale.domain()[0]) / totalLength);
-
-    setCurrentNode(node);
-  }, [setCurrentNode, setPlayTime, totalLength, xScale]);
-
+  xScale, participantData, width, height, currentNode, trialName,
+} : {xScale: d3.ScaleLinear<number, number>, participantData: ParticipantData, width: number, height: number, currentNode: string | null, trialName: string}) {
   const circles = useMemo(() => Object.entries(participantData.answers).filter((entry) => (trialName ? trialName === entry[0] : true)).map((entry) => {
     const [name, answer] = entry;
 
-    return <WithinTaskProvenance key={name} taskName={name} answer={answer} height={height} currentNode={currentNode} setCurrentNode={currentNodeCallback} xScale={xScale} />;
-  }), [currentNode, currentNodeCallback, height, participantData.answers, trialName, xScale]);
+    const allCircles = Object.keys(answer.provenanceGraph).map((provenanceArea) => {
+      const graph = answer.provenanceGraph[provenanceArea as keyof typeof answer.provenanceGraph];
+      if (graph) {
+        return <WithinTaskProvenance answer={participantData.answers[trialName]} key={name + provenanceArea} height={height} currentNode={currentNode} xScale={xScale} provenance={graph} />;
+      }
+      return null;
+    });
+
+    return allCircles;
+  }), [currentNode, height, participantData.answers, trialName, xScale]);
 
   return (
     <svg style={{ width, height }}>

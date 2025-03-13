@@ -128,8 +128,13 @@ export function BrushPlot({
       _filteredTable = fullTable!.filter(escape((d: any) => d[parameters.x] >= xMin && d[parameters.x] <= xMax && d[parameters.y] >= yMin && d[parameters.y] <= yMax));
     }
 
-    const newState: BrushState = {
-      x1: sel[0][0] || brushState?.x1 || 0, x2: sel[1][0] || brushState?.x2 || 0, y1: sel[0][1] || brushState?.y1 || 0, y2: sel[1][1] || brushState?.y2 || 0, hasBrush: selType !== 'clear', ids: selType !== 'clear' ? _filteredTable?.array('id') as string[] : [],
+    const newState = {
+      x1: sel[0][0] || brushState?.x1 || 0,
+      x2: sel[1][0] || brushState?.x2 || 0,
+      y1: sel[0][1] || brushState?.y1 || 0,
+      y2: sel[1][1] || brushState?.y2 || 0,
+      hasBrush: selType !== 'clear',
+      ids: selType !== 'clear' ? _filteredTable?.array('id') as string[] : [],
     };
 
     setBrushState(newState);
@@ -149,6 +154,7 @@ export function BrushPlot({
       provenanceGraph: trrack.graph.backend,
       answers: {},
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [brushState, fullTable, parameters, trrack, setAnswer, debouncedCallback, actions]);
 
   // Which table the bar chart uses, either the base or the filtered table if any selections

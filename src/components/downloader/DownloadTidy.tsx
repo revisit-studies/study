@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import {
   ActionIcon,
   Alert,
@@ -17,18 +16,14 @@ import {
   IconBrandPython, IconLayoutColumns, IconTableExport, IconX,
 } from '@tabler/icons-react';
 import { useCallback, useMemo, useState } from 'react';
-import merge from 'lodash.merge';
 import { ParticipantData } from '../../storage/types';
-import {
-  Answer, IndividualComponent, Prettify, StudyConfig,
-} from '../../parser/types';
-import { isInheritedComponent } from '../../parser/utils';
-import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+import { Prettify, StudyConfig } from '../../parser/types';
 import { StorageEngine } from '../../storage/engines/StorageEngine';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useAsync } from '../../store/hooks/useAsync';
 import { getCleanedDuration } from '../../utils/getCleanedDuration';
 import { showNotification } from '../../utils/notifications';
+import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 
 export const OPTIONAL_COMMON_PROPS = [
   'status',
@@ -64,7 +59,7 @@ type MetaProperty = `meta-${string}`;
 export type Property = OptionalProperty | RequiredProperty | MetaProperty;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export type TidyRow = Prettify<Record<RequiredProperty, any> & Partial<Record<OptionalProperty | MetaProperty, any>>>;
+export type TidyRow = Prettify<Record<RequiredProperty, any> & Partial<Record<OptionalProperty | MetaProperty, any>>> & Record<string, number | string[] | boolean | string | null>;
 
 export function download(graph: string, filename: string) {
   const dataStr = `data:text/json;charset=utf-8,${encodeURIComponent(graph)}`;
@@ -76,9 +71,11 @@ export function download(graph: string, filename: string) {
   downloadAnchorNode.remove();
 }
 
-function participantDataToRows(participant: ParticipantData, properties: Property[], studyConfig: StudyConfig): TidyRow[] {
-  const percentComplete = ((Object.entries(participant.answers).filter(([_, entry]) => entry.endTime !== -1).length / (getSequenceFlatMap(participant.sequence).length - 1)) * 100).toFixed(2);
-  return [
+function participantDataToRows(participant: ParticipantData, properties: Property[], studyConfig: StudyConfig): [TidyRow[], string[]] {
+  const percentComplete = ((Object.entries(participant.answers).filter(([_, entry]) => entry.endTime !== -1).length / (Object.entries(participant.answers).length)) * 100).toFixed(2);
+  const newHeaders = new Set<string>();
+
+  return [[
     {
       participantId: participant.participantId,
       trialId: 'participantTags',
@@ -86,25 +83,29 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
       responseId: 'participantTags',
       answer: JSON.stringify(participant.participantTags),
     },
-    ...Object.entries(participant.answers).map(([trialIdentifier, trialAnswer]) => {
+    ...Object.values(participant.answers).map((trialAnswer) => {
       // Get the whole component, including the base component if there is inheritance
-      const trialId = trialIdentifier.split('_').slice(0, -1).join('_');
-      const trialOrder = parseInt(`${trialIdentifier.split('_').at(-1)}`, 10);
+      const trialId = trialAnswer.componentName;
+      const { trialOrder } = trialAnswer;
       const trialConfig = studyConfig.components[trialId];
-      const completeComponent: IndividualComponent = isInheritedComponent(trialConfig) && trialConfig.baseComponent && studyConfig.baseComponents
-        ? merge({}, studyConfig.baseComponents[trialConfig.baseComponent], trialConfig)
-        : trialConfig;
+      const completeComponent = studyComponentToIndividualComponent(trialConfig, studyConfig);
 
       const duration = trialAnswer.endTime === -1 ? undefined : trialAnswer.endTime - trialAnswer.startTime;
       const cleanedDuration = getCleanedDuration(trialAnswer);
 
-      const rows = Object.entries(trialAnswer.answer).map(([key, value]) => {
+      const answersToLoopOver = Object.keys(trialAnswer.answer).length === 0 ? { '': undefined } : trialAnswer.answer;
+      const rows = Object.entries(answersToLoopOver).map(([key, value]) => {
         const tidyRow: TidyRow = {
           participantId: participant.participantId,
           trialId,
           trialOrder,
           responseId: key,
         };
+
+        Object.entries(trialAnswer.parameters).forEach(([_key, _value]) => {
+          tidyRow[`parameters_${_key}`] = _value;
+          newHeaders.add(`parameters_${_key}`);
+        });
 
         const response = completeComponent.response.find((resp) => resp.id === key);
         if (properties.includes('status')) {
@@ -135,7 +136,9 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
           tidyRow.answer = value;
         }
         if (properties.includes('correctAnswer')) {
-          const correctAnswer = (completeComponent.correctAnswer as Answer[])?.find((ans) => ans.id === key)?.answer;
+          const configCorrectAnswer = completeComponent.correctAnswer?.find((ans) => ans.id === key)?.answer;
+          const answerCorrectAnswer = trialAnswer.correctAnswer.find((ans) => ans.id === key)?.answer;
+          const correctAnswer = answerCorrectAnswer || configCorrectAnswer;
           tidyRow.correctAnswer = typeof correctAnswer === 'object' ? JSON.stringify(correctAnswer) : correctAnswer;
         }
         if (properties.includes('responseMin')) {
@@ -164,7 +167,7 @@ function participantDataToRows(participant: ParticipantData, properties: Propert
       }).flat();
 
       return rows;
-    }).flat()];
+    }).flat()], Array.from(newHeaders)];
 }
 
 async function getTableData(selectedProperties: Property[], data: ParticipantData[], storageEngine: StorageEngine | undefined, studyId: string) {
@@ -178,15 +181,18 @@ async function getTableData(selectedProperties: Property[], data: ParticipantDat
   const allConfigs = await storageEngine.getAllConfigsFromHash(allConfigHashes, studyId);
 
   const header = combinedProperties;
-  const rows = await Promise.all(data.map(async (participant) => {
+  const allData = await Promise.all(data.map(async (participant) => {
     const partDataToRows = await participantDataToRows(participant, combinedProperties, allConfigs[participant.participantConfigHash]);
 
     return partDataToRows;
   }));
 
+  const rows = allData.map((partData) => partData[0]);
+  const newHeaders = new Set(allData.map((partData) => partData[1]).flat());
+
   const flatRows = rows.flat().sort((a, b) => (a !== b ? a.participantId.localeCompare(b.participantId) : a.trialOrder - b.trialOrder));
 
-  return { header, rows: flatRows };
+  return { header: [...header, ...newHeaders], rows: flatRows };
 }
 
 export function DownloadTidy({

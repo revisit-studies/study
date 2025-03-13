@@ -32,6 +32,7 @@ import { ReCaptchaV3Provider, initializeAppCheck } from '@firebase/app-check';
 import { getAuth, signInAnonymously } from '@firebase/auth';
 import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
+import throttle from 'lodash.throttle';
 import {
   StorageEngine,
   UserWrapped,
@@ -39,7 +40,7 @@ import {
   REVISIT_MODE,
 } from './StorageEngine';
 import { ParticipantData } from '../types';
-import { ParticipantMetadata, Sequence, StoredAnswer } from '../../store/types';
+import { ParticipantMetadata, Sequence } from '../../store/types';
 import { RevisitNotification } from '../../utils/notifications';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
@@ -346,7 +347,22 @@ export class FirebaseStorageEngine extends StorageEngine {
     // Don't clean up the listener. The stream will be destroyed.
   }
 
-  async saveAnswers(answers: Record<string, StoredAnswer>) {
+  private throttleSaveAnswers = throttle(async () => { await this._saveAnswers(); }, 3000);
+
+  async saveAnswers(answers: ParticipantData['answers']): Promise<void> {
+    if (!this.currentParticipantId || this.participantData === null) {
+      throw new Error('Participant not initialized');
+    }
+    // Update the local copy of the participant data
+    this.participantData = {
+      ...this.participantData,
+      answers,
+    };
+
+    await this.throttleSaveAnswers(answers);
+  }
+
+  async _saveAnswers() {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
     }
@@ -354,12 +370,6 @@ export class FirebaseStorageEngine extends StorageEngine {
     if (!this.currentParticipantId || this.participantData === null) {
       throw new Error('Participant not initialized');
     }
-
-    // Update the local copy of the participant data
-    this.participantData = {
-      ...this.participantData,
-      answers,
-    };
 
     // Push the updated participant data to Firebase
     await this._pushToFirebaseStorage(
@@ -628,39 +638,45 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
 
     // Get the participantData
-    await this.getParticipantData();
-    if (!this.participantData) {
+    const participantData = await this.getParticipantData();
+    if (!participantData) {
       throw new Error('Participant not initialized');
     }
 
     // Get modes
     const modes = await this.getModes(this.studyId);
 
-    if (this.participantData.completed) {
+    if (participantData.completed) {
       return true;
     }
 
-    this.participantData.completed = true;
-    if (modes.dataCollectionEnabled) {
-      await this._pushToFirebaseStorage(
-        `participants/${this.currentParticipantId}`,
-        'participantData',
-        this.participantData,
+    const serverEndTime = Object.values(participantData.answers).map((answer) => answer.endTime).reduce((a, b) => Math.max(a, b), 0);
+    const localEndTime = Object.values(this.participantData?.answers || {}).map((answer) => answer.endTime).reduce((a, b) => Math.max(a, b), 0);
+    if (this.participantData && serverEndTime === localEndTime) {
+      this.participantData.completed = true;
+      if (modes.dataCollectionEnabled) {
+        await this._pushToFirebaseStorage(
+          `participants/${this.currentParticipantId}`,
+          'participantData',
+          this.participantData,
+        );
+      }
+
+      const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
+      const sequenceAssignmentCollection = collection(
+        sequenceAssignmentDoc,
+        'sequenceAssignment',
       );
+      const participantSequenceAssignmentDoc = doc(
+        sequenceAssignmentCollection,
+        this.currentParticipantId,
+      );
+      await updateDoc(participantSequenceAssignmentDoc, { completed: serverTimestamp() });
+
+      return true;
     }
 
-    const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
-    const sequenceAssignmentCollection = collection(
-      sequenceAssignmentDoc,
-      'sequenceAssignment',
-    );
-    const participantSequenceAssignmentDoc = doc(
-      sequenceAssignmentCollection,
-      this.currentParticipantId,
-    );
-    await updateDoc(participantSequenceAssignmentDoc, { completed: serverTimestamp() });
-
-    return true;
+    return false;
   }
 
   private userManagementData: Record<string, unknown> = {};

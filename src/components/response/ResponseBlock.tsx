@@ -1,24 +1,23 @@
-/* eslint-disable no-nested-ternary */
 import {
   Alert, Anchor, Button, Group,
 } from '@mantine/core';
 
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { Registry, initializeTrrack } from '@trrack/core';
 import {
   IndividualComponent,
   ResponseBlockLocation,
 } from '../../parser/types';
-import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
+import { useCurrentIdentifier, useCurrentStep, useStudyId } from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions,
 } from '../../store/store';
 
-import { deepCopy } from '../../utils/deepCopy';
 import { NextButton } from '../NextButton';
 import { useAnswerField } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
-import { StoredAnswer, TrrackedProvenance } from '../../store/types';
+import { FormElementProvenance, StoredAnswer } from '../../store/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 
 type Props = {
@@ -27,6 +26,16 @@ type Props = {
   location: ResponseBlockLocation;
   style?: React.CSSProperties;
 };
+
+function findMatchingStrings(arr1: string[], arr2: string[]): string[] {
+  const matches: string[] = [];
+  for (const str1 of arr1) {
+    if (arr2.includes(str1)) {
+      matches.push(str1);
+    }
+  }
+  return matches;
+}
 
 export function ResponseBlock({
   config,
@@ -40,8 +49,9 @@ export function ResponseBlock({
     updateResponseBlockValidation, toggleShowHelpText, saveIncorrectAnswer, incrementHelpCounter,
   } = useStoreActions();
   const currentStep = useCurrentStep();
-  const currentComponent = useCurrentComponent();
-  const storedAnswer = status?.answer;
+  const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]) as FormElementProvenance | undefined;
+
+  const storedAnswer = useMemo(() => currentProvenance?.form || status?.answer, [currentProvenance, status]);
 
   const studyId = useStudyId();
 
@@ -50,15 +60,39 @@ export function ResponseBlock({
   const configInUse = config as IndividualComponent;
 
   const responses = useMemo(() => configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [], [configInUse?.response, location]);
+
   const responsesWithDefaults = useMemo(() => responses.map((response) => ({
     ...response,
     required: response.required === undefined ? true : response.required,
   })), [responses]);
 
   const answerValidator = useAnswerField(responsesWithDefaults, currentStep, storedAnswer || {});
-  const [provenanceGraph, setProvenanceGraph] = useState<TrrackedProvenance | undefined>(undefined);
+  // Set up trrack to store provenance graph of the answerValidator status
+  const { actions, trrack } = useMemo(() => {
+    const reg = Registry.create();
+
+    const updateFormAction = reg.register('update', (state, payload: StoredAnswer['answer']) => {
+      state.form = payload;
+      return state;
+    });
+
+    const trrackInst = initializeTrrack({
+      registry: reg,
+      initialState: {
+        form: null,
+      },
+    });
+
+    return {
+      actions: {
+        updateFormAction,
+      },
+      trrack: trrackInst,
+    };
+  }, []);
+
   const reactiveAnswers = useStoreSelector((state) => state.reactiveAnswers);
-  const reactiveProvenance = useStoreSelector((state) => state.reactiveProvenance);
+
   const matrixAnswers = useStoreSelector((state) => state.matrixAnswers);
 
   const hasCorrectAnswerFeedback = configInUse?.provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
@@ -67,22 +101,18 @@ export function ResponseBlock({
   const trainingAttempts = configInUse?.trainingAttempts || 2;
   const [enableNextButton, setEnableNextButton] = useState(false);
 
+  const identifier = useCurrentIdentifier();
+
   const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
 
   useEffect(() => {
     const ReactiveResponse = responsesWithDefaults.find((r) => r.type === 'reactive');
     if (reactiveAnswers && ReactiveResponse) {
       const answerId = ReactiveResponse.id;
-      answerValidator.setValues({ ...answerValidator.values, [answerId]: reactiveAnswers[answerId] });
+      answerValidator.setValues({ ...answerValidator.values, [answerId]: reactiveAnswers[answerId] as string[] });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reactiveAnswers]);
-
-  useEffect(() => {
-    if (reactiveProvenance) {
-      setProvenanceGraph(reactiveProvenance);
-    }
-  }, [reactiveProvenance]);
 
   useEffect(() => {
     // Checks if there are any matrix responses.
@@ -106,17 +136,19 @@ export function ResponseBlock({
   }, [matrixAnswers]);
 
   useEffect(() => {
+    trrack.apply('update', actions.updateFormAction(structuredClone(answerValidator.values)));
+
     storeDispatch(
       updateResponseBlockValidation({
         location,
-        identifier: `${currentComponent}_${currentStep}`,
+        identifier,
         status: answerValidator.isValid(),
-        values: deepCopy(answerValidator.values),
-        provenanceGraph,
+        values: structuredClone(answerValidator.values),
+        provenanceGraph: trrack.graph.backend,
       }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [answerValidator.values, currentComponent, currentStep, location, storeDispatch, updateResponseBlockValidation, provenanceGraph]);
+  }, [answerValidator.values, identifier, location, storeDispatch, updateResponseBlockValidation]);
   const [alertConfig, setAlertConfig] = useState(Object.fromEntries(responsesWithDefaults.map((response) => ([response.id, {
     visible: false,
     title: 'Correct Answer',
@@ -156,7 +188,7 @@ export function ResponseBlock({
         if (correctAnswers[response.id] && !alertConfig[response.id]?.message.includes('You\'ve failed to answer this question correctly')) {
           updateAlertConfig(response.id, true, 'Correct Answer', 'You have answered the question correctly.', 'green');
         } else {
-          storeDispatch(saveIncorrectAnswer({ question: `${currentComponent}_${currentStep}`, identifier: response.id, answer: (answerValidator.values as Record<string, unknown>)[response.id] }));
+          storeDispatch(saveIncorrectAnswer({ question: identifier, identifier: response.id, answer: (answerValidator.values as Record<string, unknown>)[response.id] }));
           let message = '';
           if (trainingAttempts === -1) {
             message = 'Please try again.';
@@ -182,6 +214,16 @@ export function ResponseBlock({
             message = 'Please try again. You have 1 attempt left.';
           } else {
             message = `Please try again. You have ${trainingAttempts - newAttemptsUsed} attempts left.`;
+          }
+          if (response.type === 'checkbox') {
+            const correct = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+
+            const suppliedAnswer = (answerValidator.values as Record<string, unknown>)[response.id] as string[];
+            const matches = findMatchingStrings(suppliedAnswer, correct);
+
+            const tooManySelected = correct.length === matches.length && suppliedAnswer.length > correct.length ? 'However, you have selected too many boxes. ' : '';
+
+            message = `You have successfully checked ${matches.length}/${correct.length} correct boxes. ${tooManySelected}${message}`;
           }
           updateAlertConfig(response.id, true, 'Incorrect Answer', message, 'red');
         }
@@ -216,22 +258,26 @@ export function ResponseBlock({
                       type: response.type === 'checkbox' ? 'checkbox' : 'input',
                     }),
                   }}
+                  dontKnowCheckbox={{
+                    ...answerValidator.getInputProps(`${response.id}-dontKnow`, { type: 'checkbox' }),
+                  }}
+                  otherInput={{
+                    ...answerValidator.getInputProps(`${response.id}-other`),
+                  }}
                   response={response}
                   index={index + 1}
                   configInUse={configInUse}
-                  form={answerValidator}
                 />
-                {alertConfig[response.id].visible && (
+                {alertConfig[response.id]?.visible && (
                   <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>
                     {alertConfig[response.id].message}
-                    {' '}
                     {alertConfig[response.id].message.includes('Please try again') && (
                       <>
                         <br />
                         <br />
                         If you&apos;re unsure
                         {' '}
-                        <Anchor style={{ fontSize: 14 }} onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier: `${currentComponent}_${currentStep}` })); }}>review the help text.</Anchor>
+                        <Anchor style={{ fontSize: 14 }} onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier })); }}>review the help text.</Anchor>
                         {' '}
                       </>
                     )}

@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import {
   ActionIcon,
   AppShell, Box, Button, Center, Group, LoadingOverlay, Select, Text,
@@ -18,7 +17,7 @@ import {
   useStoreActions, useStoreDispatch, useStoreSelector,
 } from '../../store/store';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
-import { AnalysisPopout } from '../audioAnalysis/AudioProvenanceVis';
+import { AudioProvenanceVis } from '../audioAnalysis/AudioProvenanceVis';
 
 function getParticipantData(trrackId: string | undefined, storageEngine: StorageEngine | undefined) {
   if (storageEngine) {
@@ -87,7 +86,7 @@ export function AnalysisFooter() {
       <Box style={{ backgroundColor: 'var(--mantine-color-blue-1)', height: '150px' }}>
         <LoadingOverlay visible={loadingPartStatus !== 'success'} overlayProps={{ backgroundOpacity: 0.4 }} />
 
-        <AnalysisPopout setTimeString={setTimeString} />
+        <AudioProvenanceVis setTimeString={setTimeString} />
         <Center>
           <Group gap="xs" style={{ height: '50px' }}>
             <Text size="sm" ff="monospace">

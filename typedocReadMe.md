@@ -27,6 +27,7 @@ The different component types:
 - [QuestionnaireComponent](interfaces/QuestionnaireComponent.md)
 - [ReactComponent](interfaces/ReactComponent.md)
 - [VegaComponent](type-aliases/VegaComponent.md)
+- [VideoComponent](interfaces/VideoComponent.md)
 - [WebsiteComponent](interfaces/WebsiteComponent.md)
 
 ## Responses
@@ -54,10 +55,11 @@ Numerical responses via fields or sliders:
 - [NumericalResponse](interfaces/NumericalResponse.md)
 - [SliderResponse](interfaces/SliderResponse.md)
 
-Choices of items via checkboxes or drop-downs: 
+Choices of items via checkboxes, drop-downs, or buttons: 
 - [CheckboxResponse](interfaces/CheckboxResponse.md)
 - [RadioResponse](interfaces/RadioResponse.md)
 - [DropdownResponse](interfaces/DropdownResponse.md)
+- [ButtonsResponse](interfaces/ButtonsResponse.md)
 
 Likert-style rating scales: 
 - [LikertResponse](interfaces/LikertResponse.md)
@@ -74,6 +76,7 @@ You can specify numerical and textual responses through those interfaces:
 Sequencing determines the order in which components appear.
 
 - [ComponentBlock](interfaces/ComponentBlock.md) — The ComponentBlock interface is used to define order properties within the sequence.
+- [DynamicBlock](interfaces/DynamicBlock.md) — The DynamicBlock interface is used to dynamically define the sequence of components based on previous responses or other factors.
 
 Interruptions augment the sequence with components that are inserted either randomly or deterministically. These might be for breaks or attention checks.
 

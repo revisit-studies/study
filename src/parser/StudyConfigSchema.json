@@ -51,12 +51,20 @@
             "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
             "type": "string"
           },
+          "forceCompletion": {
+            "description": "Whether to force the video to play until the end. Defaults to true.",
+            "type": "boolean"
+          },
+          "helpTextPathOverride": {
+            "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+            "type": "string"
+          },
           "instruction": {
             "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
             "type": "string"
           },
           "instructionLocation": {
-            "$ref": "#/definitions/ResponseBlockLocation",
+            "$ref": "#/definitions/ConfigResponseBlockLocation",
             "description": "The location of the instructions."
           },
           "meta": {
@@ -73,7 +81,7 @@
             "type": "number"
           },
           "nextButtonLocation": {
-            "$ref": "#/definitions/ResponseBlockLocation",
+            "$ref": "#/definitions/ConfigResponseBlockLocation",
             "description": "The location of the next button."
           },
           "nextButtonText": {
@@ -106,7 +114,7 @@
                 "type": "string"
               },
               {
-                "description": "The path to the image. This should be a relative path from the public folder.",
+                "description": "The path to the image. This could be a relative path from the public folder or a url to an external image.",
                 "type": "string"
               },
               {
@@ -115,6 +123,10 @@
               },
               {
                 "description": "The path to the vega file. This should be a relative path from the public folder.",
+                "type": "string"
+              },
+              {
+                "description": "The path to the video. This could be a relative path from the public folder or might be a url to an external website.",
                 "type": "string"
               }
             ],
@@ -157,14 +169,92 @@
               "image",
               "website",
               "questionnaire",
-              "vega"
+              "vega",
+              "video"
             ],
             "type": "string"
+          },
+          "withTimeline": {
+            "description": "Whether to show the video timeline. Defaults to false.",
+            "type": "boolean"
           }
         },
         "type": "object"
       },
       "description": "The baseComponents is an optional set of components which can help template other components. For example, suppose you have a single HTML file that you want to display to the user several times. Instead of having the same component twice in the `components` list, you can have a single baseComponent with all the information that the two HTML components will share. A great example is showing the same HTML component but with two different questions;\n\n Using baseComponents:\n\n```js \"baseComponents\": { \"my-image-component\": { \"instructionLocation\": \"sidebar\", \"nextButtonLocation\": \"sidebar\", \"path\": \"<study-name>/assets/my-image.jpg\", \"response\": [   {     \"id\": \"my-image-id\",     \"options\": [\"Europe\", \"Japan\", \"USA\"],     \"prompt\": \"Your Selected Answer:\",     \"type\": \"dropdown\"   } ], \"type\": \"image\" } } ``` In the above code snippet, we have a single base component which holds the information about the type of component, the path to the image, and the response (which is a dropdown containing three choices). Any component which contains the `\"baseComponent\":\"my-image-component\"` key-value pair will inherit each of these properties. Thus, if we have three different questions which have the same choices and are concerning the same image, we can define our components like below: ```js \"components\": { \"q1\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with largest GDP\", \"instruction\": \"Which region has the largest GDP?\" }, \"q2\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with lowest GDP\", \"instruction\": \"Which region has the lowest GDP?\" }, \"q3\": { \"baseComponent\": \"my-image-component\", \"description\": \"Choosing section with highest exports of Wheat\", \"instruction\": \"Which region had the most Wheat exported in 2022?\" } } ```",
+      "type": "object"
+    },
+    "ButtonsResponse": {
+      "additionalProperties": false,
+      "description": "The ButtonsResponse interface is used to define the properties of a buttons response. ButtonsResponses render as a list of buttons that the participant can click. When a button is clicked, the value of the button is stored in the data file. Participants can cycle through the options using the arrow keys.\n\nExample: ```js {   \"id\": \"buttonsResponse\",   \"type\": \"buttons\",   \"prompt\": \"Click a button\",   \"location\": \"belowStimulus\",   \"options\": [     \"Option 1\",     \"Option 2\",     \"Option 3\"   ] } ``` In this example, the participant can click one of the buttons labeled \"Option 1\", \"Option 2\", or \"Option 3\".",
+      "properties": {
+        "hidden": {
+          "description": "Controls whether the response is hidden.",
+          "type": "boolean"
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "options": {
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/definitions/StringOption"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        "paramCapture": {
+          "description": "Use to capture querystring parameters in answers such as participant_name. See the examples for how this is used, but prefer uiConfig.urlParticipantIdParam if you are capturing a participant ID.",
+          "type": "string"
+        },
+        "prompt": {
+          "description": "The prompt that is displayed to the participant. You can use markdown here to render images, links, etc.",
+          "type": "string"
+        },
+        "required": {
+          "description": "Controls whether the response is required to be answered. Defaults to true.",
+          "type": "boolean"
+        },
+        "requiredLabel": {
+          "description": "You can provide a required label, which makes it so a participant has to answer with a response that matches label.",
+          "type": "string"
+        },
+        "requiredValue": {
+          "description": "You can provide a required value, which makes it so a participant has to answer with that value."
+        },
+        "secondaryText": {
+          "description": "The secondary text that is displayed to the participant under the prompt. This does not accept markdown.",
+          "type": "string"
+        },
+        "type": {
+          "const": "buttons",
+          "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "description": "Renders the response with an option for \"I don't know\". This counts as a completed answer for the validation.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "options",
+        "prompt",
+        "type"
+      ],
       "type": "object"
     },
     "CheckboxResponse": {
@@ -184,7 +274,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "maxSelections": {
@@ -270,6 +360,9 @@
               },
               {
                 "$ref": "#/definitions/ComponentBlock"
+              },
+              {
+                "$ref": "#/definitions/DynamicBlock"
               }
             ]
           },
@@ -344,6 +437,14 @@
       ],
       "type": "object"
     },
+    "ConfigResponseBlockLocation": {
+      "enum": [
+        "sidebar",
+        "aboveStimulus",
+        "belowStimulus"
+      ],
+      "type": "string"
+    },
     "DeterministicInterruption": {
       "additionalProperties": false,
       "description": "The DeterministicInterruption interface is used to define an interruption that will be shown at a specific location in the block.\n\nFor example, if you want to show an interruption after the second component in the block, you would set firstLocation to 2. If you want to show an interruption after every 3 components, you would set spacing to 3. If you want to show an interruption after the second component and then every 3 components, you would set firstLocation to 2 and spacing to 3.\n\nThe components property is an array of the components that will be inserted at the location specified by firstLocation and spacing. These components should reference components in the StudyConfig.components section of the config.\n\nHere's an example of how to use the DeterministicInterruption:\n\n```js { \"order\": \"fixed\", \"components\": [ \"component1\", \"component2\", \"component3\", \"component4\", \"component5\", \"component6\" ], \"interruptions\": [ {   \"firstLocation\": 2,   \"spacing\": 3,   \"components\": [     \"interruption1\",     \"interruption2\"   ] } ] } ```\n\nThe resulting sequence array could be:\n\n```js [ [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"], [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"], [\"component1\", \"component2\", \"interruption1\", \"component3\", \"component4\", \"component5\", \"interruption2\", \"component6\"], ... ] ```",
@@ -384,7 +485,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "options": {
@@ -449,6 +550,36 @@
       ],
       "type": "object"
     },
+    "DynamicBlock": {
+      "additionalProperties": false,
+      "description": "The DynamicBlock interface is used to define a block where displayed components are controlled by a function. This is useful when you want to generate the sequence based on answers to previous questions or other factors.\n\nThe functionPath property is a path to the function that generates the components. This should be a relative path from the src/public folder.\n\nHere's an example of how to use the DynamicBlock:\n\n```js {   \"id\": \"funcBlock\",   \"order\": \"dynamic\",   \"functionPath\": \"<study-name>/assets/function.js\",   \"parameters\": {     \"param1\": \"value1\",     \"param2\": \"value2\"   } } ```",
+      "properties": {
+        "functionPath": {
+          "description": "The path to the function that generates the components. This should be a relative path from the src/public folder.",
+          "type": "string"
+        },
+        "id": {
+          "description": "The id of the block. This is used to identify the block in the SkipConditions and is only required if you want to refer to the whole block in the condition.to property.",
+          "type": "string"
+        },
+        "order": {
+          "const": "dynamic",
+          "description": "The type of order. This can be random (pure random), latinSquare (random with some guarantees), or fixed.",
+          "type": "string"
+        },
+        "parameters": {
+          "additionalProperties": {},
+          "description": "The parameters that are passed to the function. These can be used within your function to render different things.",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "order",
+        "functionPath"
+      ],
+      "type": "object"
+    },
     "ImageComponent": {
       "additionalProperties": false,
       "description": "The ImageComponent interface is used to define the properties of an image component. This component is used to render an image with optional styling.\n\nFor example, to render an image with a path of `path/to/study/assets/image.jpg` and a max width of 50%, you would use the following snippet: ```js { \"type\": \"image\", \"path\": \"<study-name>/assets/image.jpg\", \"style\": { \"maxWidth\": \"50%\" } } ```",
@@ -468,12 +599,16 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
+        "helpTextPathOverride": {
+          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+          "type": "string"
+        },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the instructions."
         },
         "meta": {
@@ -490,7 +625,7 @@
           "type": "number"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button."
         },
         "nextButtonText": {
@@ -498,7 +633,7 @@
           "type": "string"
         },
         "path": {
-          "description": "The path to the image. This should be a relative path from the public folder.",
+          "description": "The path to the image. This could be a relative path from the public folder or a url to an external image.",
           "type": "string"
         },
         "provideFeedback": {
@@ -562,6 +697,9 @@
         },
         {
           "$ref": "#/definitions/VegaComponent"
+        },
+        {
+          "$ref": "#/definitions/VideoComponent"
         }
       ]
     },
@@ -663,12 +801,20 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
+        "forceCompletion": {
+          "description": "Whether to force the video to play until the end. Defaults to true.",
+          "type": "boolean"
+        },
+        "helpTextPathOverride": {
+          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+          "type": "string"
+        },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the instructions."
         },
         "meta": {
@@ -685,7 +831,7 @@
           "type": "number"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button."
         },
         "nextButtonText": {
@@ -718,7 +864,7 @@
               "type": "string"
             },
             {
-              "description": "The path to the image. This should be a relative path from the public folder.",
+              "description": "The path to the image. This could be a relative path from the public folder or a url to an external image.",
               "type": "string"
             },
             {
@@ -727,6 +873,10 @@
             },
             {
               "description": "The path to the vega file. This should be a relative path from the public folder.",
+              "type": "string"
+            },
+            {
+              "description": "The path to the video. This could be a relative path from the public folder or might be a url to an external website.",
               "type": "string"
             }
           ],
@@ -769,9 +919,14 @@
             "image",
             "website",
             "questionnaire",
-            "vega"
+            "vega",
+            "video"
           ],
           "type": "string"
+        },
+        "withTimeline": {
+          "description": "Whether to show the video timeline. Defaults to false.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -807,7 +962,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "numItems": {
@@ -875,7 +1030,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "paramCapture": {
@@ -944,12 +1099,16 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
+        "helpTextPathOverride": {
+          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+          "type": "string"
+        },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the instructions."
         },
         "meta": {
@@ -966,7 +1125,7 @@
           "type": "number"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button."
         },
         "nextButtonText": {
@@ -1052,7 +1211,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "paramCapture": {
@@ -1142,7 +1301,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "max": {
@@ -1219,12 +1378,16 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
+        "helpTextPathOverride": {
+          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+          "type": "string"
+        },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the instructions."
         },
         "meta": {
@@ -1241,7 +1404,7 @@
           "type": "number"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button."
         },
         "nextButtonText": {
@@ -1303,7 +1466,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "options": {
@@ -1402,7 +1565,7 @@
     },
     "ReactComponent": {
       "additionalProperties": false,
-      "description": "The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.\n\nUnlike other types of components, the path for a React component is relative to the `src/public/` folder. Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study. Your React component which you link to in the path must be default exported from its file.\n\nReact components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.\n\n```ts { parameters: T; setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void } ```\n\nparameters is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component. setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.\n\nSo, for example, if I had the following ReactComponent in my config ```js { type: 'react-component'; path: 'my_study/CoolComponent.tsx'; parameters: {  name: 'Zach';  age: 26; } } ```\n\nMy react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this\n\n```ts export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) { // render something } ```\n\nFor in depth examples, see the following studies, and their associated codebases. https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/2.0.0-rc7/src/public/demo-click-accuracy-test/assets) https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/2.0.0-rc7/src/public/example-brush-interactions/assets)",
+      "description": "The ReactComponent interface is used to define the properties of a react component. This component is used to render react code with certain parameters. These parameters can be used within your react code to render different things.\n\nUnlike other types of components, the path for a React component is relative to the `src/public/` folder. Similar to our standard assets, we suggest creating a folder named `src/public/{studyName}/assets` to house all of the React component assets for a particular study. Your React component which you link to in the path must be default exported from its file.\n\nReact components created this way have a generic prop type passed to the component on render, `<StimulusParams<T>>`, which has the following types.\n\n```ts { parameters: T; setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void } ```\n\nparameters is the same object passed in from the ReactComponent type below, allowing you to pass options in from the config to your component. setAnswer is a callback function allowing the creator of the ReactComponent to programmatically set the answer, as well as the provenance graph. This can be useful if you don't use the default answer interface, and instead have something more unique.\n\nSo, for example, if I had the following ReactComponent in my config ```js { type: 'react-component'; path: 'my_study/CoolComponent.tsx'; parameters: {  name: 'Zach';  age: 26; } } ```\n\nMy react component, CoolComponent.tsx, would exist in src/public/my_study/assets, and look something like this\n\n```ts export default function CoolComponent({ parameters, setAnswer }: StimulusParams<{name: string, age: number}>) { // render something } ```\n\nFor in depth examples, see the following studies, and their associated codebases. https://revisit.dev/study/demo-click-accuracy-test (https://github.com/revisit-studies/study/tree/v2.0.2/src/public/demo-click-accuracy-test/assets) https://revisit.dev/study/example-brush-interactions (https://github.com/revisit-studies/study/tree/v2.0.2/src/public/example-brush-interactions/assets)",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
@@ -1419,12 +1582,16 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
+        "helpTextPathOverride": {
+          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+          "type": "string"
+        },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the instructions."
         },
         "meta": {
@@ -1441,7 +1608,7 @@
           "type": "number"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button."
         },
         "nextButtonText": {
@@ -1505,7 +1672,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "paramCapture": {
@@ -1621,16 +1788,11 @@
         },
         {
           "$ref": "#/definitions/MatrixResponse"
+        },
+        {
+          "$ref": "#/definitions/ButtonsResponse"
         }
       ]
-    },
-    "ResponseBlockLocation": {
-      "enum": [
-        "sidebar",
-        "aboveStimulus",
-        "belowStimulus"
-      ],
-      "type": "string"
     },
     "ShortTextResponse": {
       "additionalProperties": false,
@@ -1645,7 +1807,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "paramCapture": {
@@ -1728,7 +1890,7 @@
           "type": "string"
         },
         "location": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
         "options": {
@@ -1769,9 +1931,21 @@
           "description": "The starting value of the slider. Defaults to the minimum value.",
           "type": "number"
         },
+        "step": {
+          "description": "The step value of the slider. If not provided (and snap not enabled), the step value is calculated as the range of the slider divided by 100.",
+          "type": "number"
+        },
+        "tlxStyle": {
+          "description": "Whether to render the slider with a NASA-tlx style. Defaults to false.",
+          "type": "boolean"
+        },
         "type": {
           "const": "slider",
           "type": "string"
+        },
+        "withBar": {
+          "description": "Whether to render the slider with a bar to the left. Defaults to true.",
+          "type": "boolean"
         },
         "withDivider": {
           "description": "Renders the response with a trailing divider.",
@@ -1792,7 +1966,7 @@
     },
     "StringOption": {
       "additionalProperties": false,
-      "description": "The StringOption interface is used to define the options for a dropdown, radio, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file.",
+      "description": "The StringOption interface is used to define the options for a dropdown, radio, buttons, or checkbox response. The label is the text that is displayed to the user, and the value is the value that is stored in the data file.",
       "properties": {
         "label": {
           "description": "The label displayed to participants.",
@@ -1843,7 +2017,14 @@
           "type": "array"
         },
         "sequence": {
-          "$ref": "#/definitions/ComponentBlock",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ComponentBlock"
+            },
+            {
+              "$ref": "#/definitions/DynamicBlock"
+            }
+          ],
           "description": "The order of the components in the study. This might include some randomness."
         },
         "studyMetadata": {
@@ -1911,7 +2092,7 @@
     },
     "UIConfig": {
       "additionalProperties": false,
-      "description": "The UIConfig is used to configure the UI of the app. This includes the logo, contact email, and whether to show a progress bar. The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the UI Config would look in your study configuration (note, there are optional fields that are not shown here): ```js uiConfig:{ \"contactEmail\": \"contact@revisit.dev\", \"helpTextPath\": \"<study-name>/assets/help.md\", \"logoPath\": \"<study-name>/assets/logo.jpg\", \"withProgressBar\": true, \"autoDownloadStudy\": true \"autoDownloadTime\": 5000, \"studyEndMsg\": \"Thank you for completing this study. You're the best!\", \"sidebar\": true, \"windowEventDebounceTime\": 500, \"urlParticipantIdParam\": \"PROLIFIC_ID\", \"numSequences\": 500 } ``` In the above, the `path/to/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)",
+      "description": "The UIConfig is used to configure the UI of the app. This includes the logo, contact email, and whether to show a progress bar. The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the UI Config would look in your study configuration (note, there are optional fields that are not shown here): ```js uiConfig:{ \"contactEmail\": \"contact@revisit.dev\", \"helpTextPath\": \"<study-name>/assets/help.md\", \"logoPath\": \"<study-name>/assets/logo.jpg\", \"withProgressBar\": true, \"autoDownloadStudy\": true \"autoDownloadTime\": 5000, \"studyEndMsg\": \"Thank you for completing this study. You're the best!\", \"sidebar\": true, \"windowEventDebounceTime\": 500, \"urlParticipantIdParam\": \"PROLIFIC_ID\", \"numSequences\": 500 } ``` In the above, the `<study-name>/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)",
       "properties": {
         "autoDownloadStudy": {
           "description": "Controls whether the study data is automatically downloaded at the end of the study.",
@@ -2023,12 +2204,16 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
+        "helpTextPathOverride": {
+          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+          "type": "string"
+        },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the instructions."
         },
         "meta": {
@@ -2045,7 +2230,7 @@
           "type": "number"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button."
         },
         "nextButtonText": {
@@ -2106,12 +2291,16 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
+        "helpTextPathOverride": {
+          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+          "type": "string"
+        },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the instructions."
         },
         "meta": {
@@ -2128,7 +2317,7 @@
           "type": "number"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button."
         },
         "nextButtonText": {
@@ -2174,9 +2363,9 @@
       ],
       "type": "object"
     },
-    "WebsiteComponent": {
+    "VideoComponent": {
       "additionalProperties": false,
-      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder.\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/assets/website.html\", } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/website.html\", \"parameters\": {  \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3] } \"response\": [  {    \"id\": \"barChart\",    \"prompt\": \"Your selected answer:\",    \"location\": \"belowStimulus\",    \"type\": \"reactive\"  } ], } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {  const barData = data['barData'];  ... });\n\n// Call out that 'barChart' needs to match ID in 'response' object Revisit.postAnswers({ barChart: userAnswer }); </script> ```\n\n If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenanceGraph` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.\n\n```js const trrack = initializeTrrack({ initialState, registry });\n\n... Revisit.postProvenance(trrack.graph.backend); ```",
+      "description": "The VideoComponent interface is used to define the properties of a video component. This component is used to render a video with optional controls.\n\nMost often, video components will be used for trainings, and will have a `forceCompletion` field set to true. This will prevent the participant from moving on until the video has finished playing.\n\nAs such, the `forceCompletion` field is set to true by default, and the `withTimeline` field is set to false by default.\n\nFor example, to render a training video with a path of `<study-name>/assets/video.mp4`, you would use the following snippet: ```js {   \"type\": \"video\",   \"path\": \"<study-name>/assets/video.mp4\", } ```",
       "properties": {
         "allowFailedTraining": {
           "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
@@ -2193,12 +2382,20 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
+        "forceCompletion": {
+          "description": "Whether to force the video to play until the end. Defaults to true.",
+          "type": "boolean"
+        },
+        "helpTextPathOverride": {
+          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+          "type": "string"
+        },
         "instruction": {
           "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
         "instructionLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the instructions."
         },
         "meta": {
@@ -2215,7 +2412,102 @@
           "type": "number"
         },
         "nextButtonLocation": {
-          "$ref": "#/definitions/ResponseBlockLocation",
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "The location of the next button."
+        },
+        "nextButtonText": {
+          "description": "The text that is displayed on the next button.",
+          "type": "string"
+        },
+        "path": {
+          "description": "The path to the video. This could be a relative path from the public folder or might be a url to an external website.",
+          "type": "string"
+        },
+        "provideFeedback": {
+          "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
+          "type": "boolean"
+        },
+        "recordAudio": {
+          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "type": "boolean"
+        },
+        "response": {
+          "description": "The responses to the component",
+          "items": {
+            "$ref": "#/definitions/Response"
+          },
+          "type": "array"
+        },
+        "responseDividers": {
+          "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
+        },
+        "trainingAttempts": {
+          "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
+          "type": "number"
+        },
+        "type": {
+          "const": "video",
+          "type": "string"
+        },
+        "withTimeline": {
+          "description": "Whether to show the video timeline. Defaults to false.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "path",
+        "response",
+        "type"
+      ],
+      "type": "object"
+    },
+    "WebsiteComponent": {
+      "additionalProperties": false,
+      "description": "The WebsiteComponent interface is used to define the properties of a website component. A WebsiteComponent is used to render an iframe with a website inside of it. This can be used to display an external website or an html file that is located in the public folder.\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/assets/website.html\", } ```\n\nTo pass a data from the config to the website, you can use the `parameters` field as below:\n\n```js { \"type\": \"website\", \"path\": \"<study-name>/website.html\", \"parameters\": {  \"barData\": [0.32, 0.01, 1.2, 1.3, 0.82, 0.4, 0.3] }, \"response\": [  {    \"id\": \"barChart\",    \"prompt\": \"Your selected answer:\",    \"location\": \"belowStimulus\",    \"type\": \"reactive\"  } ] } ``` In the `website.html` file, by including `revisit-communicate.js`, you can use the `Revisit.onDataReceive` method to retrieve the data, and `Revisit.postAnswers` to send the user's responses back to the reVISit as shown in the example below:\n\n```html <script src=\"../../revisitUtilities/revisit-communicate.js\"></script> <script> Revisit.onDataReceive((data) => {  const barData = data['barData'];  ... });\n\n// Call out that 'barChart' needs to match ID in 'response' object Revisit.postAnswers({ barChart: userAnswer }); </script> ```\n\n If the html website implements Trrack library for provenance tracking, you can send the provenance graph back to reVISit by calling `Revisit.postProvenanceGraph` as shown in the example below. You need to call this each time the Trrack state is updated so that reVISit is kept aware of the changes in the provenance graph.\n\n```js const trrack = initializeTrrack({ initialState, registry });\n\n... Revisit.postProvenance(trrack.graph.backend); ```",
+      "properties": {
+        "allowFailedTraining": {
+          "description": "Controls whether the component should allow failed training. If not provided, the default is true.",
+          "type": "boolean"
+        },
+        "correctAnswer": {
+          "description": "The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess.",
+          "items": {
+            "$ref": "#/definitions/Answer"
+          },
+          "type": "array"
+        },
+        "description": {
+          "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "helpTextPathOverride": {
+          "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
+          "type": "string"
+        },
+        "instruction": {
+          "description": "The instruction of the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "string"
+        },
+        "instructionLocation": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "The location of the instructions."
+        },
+        "meta": {
+          "additionalProperties": {},
+          "description": "The meta data for the component. This is used to identify and provide additional information for the component in the admin panel.",
+          "type": "object"
+        },
+        "nextButtonDisableTime": {
+          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "type": "number"
+        },
+        "nextButtonEnableTime": {
+          "description": "A timer (in ms) after which the next button will be enabled.",
+          "type": "number"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "The location of the next button."
         },
         "nextButtonText": {
