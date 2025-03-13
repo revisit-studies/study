@@ -17,7 +17,8 @@
     "sidebar": false,
     "urlParticipantIdParam": "PROLIFIC_PID",
     "studyEndMsg": "**Thank you for completing the study. You may click this link and return to Prolific**: [yourProlificLink](yourProlificLink)",
-    "nextOnEnter": true
+    "nextOnEnter": true,
+    "participantNameField": "introduction.prolificId"
   },
   "baseComponents": {
     "experimentRevised": {
@@ -25,7 +26,7 @@
       "path": "jnd-replication/vistaJND/src/components/vis/JNDParallelRevised.tsx",
       "nextButtonLocation": "sidebar",
       "response": [{ 
-        "id": "parallelSelections",
+        "id": "scatterSelections",
         "prompt": "",
         "required": true,
         "location": "aboveStimulus",
@@ -262,7 +263,7 @@
       },
       "begin",
       {
-        "order": "fixed",
+        "order": "latinSquare",
         "components": [
           {
             "components":[{
@@ -273,8 +274,7 @@
                 "r1": 0.3,
                 "r2": 0.1,
                 "above": false,
-                "name": "below3",
-                "index": 13
+                "name": "below3"
               }
             },
             "break"
@@ -290,8 +290,7 @@
                 "r1": 0.3,
                 "r2": 0.5,
                 "above": true,
-                "name": "above3",
-                "index": 15
+                "name": "above3"
               }
             },
             "break"
@@ -307,8 +306,7 @@
                 "r1": 0.6,
                 "r2": 0.5,
                 "above": false,
-                "name": "below6",
-                "index": 17
+                "name": "below6"
               }
             },
             "break"
@@ -324,8 +322,7 @@
                 "r1": 0.6,
                 "r2": 0.7,
                 "above": true,
-                "name": "above6",
-                "index": 19
+                "name": "above6"
               }
             },
             "break"
@@ -341,8 +338,7 @@
                 "r1": 0.9,
                 "r2": 0.8,
                 "above": false,
-                "name": "below9",
-                "index": 21
+                "name": "below9"
               }
             },
             "break"
@@ -358,10 +354,10 @@
                 "r1": 0.9,
                 "r2": 0.99,
                 "above": true,
-                "name": "above9",
-                "index": 23
+                "name": "above9"
               }
-            }
+            },
+            "break"
             ],
           "order": "fixed"
           }

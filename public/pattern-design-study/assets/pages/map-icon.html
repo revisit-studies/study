@@ -49,8 +49,8 @@
     const {trrack, actions: trrack_actions} = createTrrack()
     
     // Make trrack and actions globally available
-    window.trrack = trrack;
-    window.trrack_actions = trrack_actions;
+    window.mytrrack = trrack;
+    window.mytrrack_actions = trrack_actions;
     window.action = trrack_actions;
     Revisit.onProvenanceReceive((state) => {
         // console.log('provenance', state)
