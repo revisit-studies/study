@@ -40,7 +40,7 @@ import {
   REVISIT_MODE,
 } from './StorageEngine';
 import { ParticipantData } from '../types';
-import { ParticipantMetadata, Sequence, StoredAnswer } from '../../store/types';
+import { ParticipantMetadata, Sequence } from '../../store/types';
 import { RevisitNotification } from '../../utils/notifications';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
@@ -349,7 +349,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   private throttleSaveAnswers = throttle(async () => { await this._saveAnswers(); }, 3000);
 
-  async saveAnswers(answers: Record<string, StoredAnswer>): Promise<void> {
+  async saveAnswers(answers: ParticipantData['answers']): Promise<void> {
     if (!this.currentParticipantId || this.participantData === null) {
       throw new Error('Participant not initialized');
     }

@@ -42,7 +42,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
   const [loading, setLoading] = useState(false);
   const { storageEngine } = useStorageEngine();
   const navigate = useNavigate();
-  const { tab } = useParams();
+  const { analysisTab } = useParams();
   const { user } = useAuth();
 
   useEffect(() => {
@@ -138,7 +138,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
 
           <Space h="xs" />
 
-          <Tabs variant="outline" value={tab} onChange={(value) => navigate(`/analysis/stats/${studyId}/${value}`)} style={{ height: '100%' }}>
+          <Tabs variant="outline" value={analysisTab} onChange={(value) => navigate(`/analysis/stats/${studyId}/${value}`)} style={{ height: '100%' }}>
             <Tabs.List>
               <Tabs.Tab value="table" leftSection={<IconTable size={16} />}>Table View</Tabs.Tab>
               <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>

@@ -1,17 +1,21 @@
 import {
-  Badge, Box, NavLink, Popover, Text, Tooltip,
+  Badge, Box, NavLink, HoverCard, Text, Tooltip, Code,
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
-import { IconArrowsShuffle, IconBrain, IconPackageImport } from '@tabler/icons-react';
-import { useDisclosure } from '@mantine/hooks';
-import { useCallback, useMemo, useState } from 'react';
-import { ComponentBlock, DynamicBlock, StudyConfig } from '../../parser/types';
-import { Sequence } from '../../store/types';
+import {
+  IconArrowsShuffle, IconBrain, IconCheck, IconPackageImport, IconX,
+} from '@tabler/icons-react';
+import { useMemo, useState } from 'react';
+import {
+  ComponentBlock, DynamicBlock, ParticipantData, StudyConfig,
+} from '../../parser/types';
+import { Sequence, StoredAnswer } from '../../store/types';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
-import { encryptIndex } from '../../utils/encryptDecryptIndex';
-import { useStoreSelector } from '../../store/store';
-import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
+import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
+import { useFlatSequence, useStoreSelector } from '../../store/store';
+import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { PREFIX } from '../../utils/Prefix';
 
 export type ComponentBlockWithOrderPath =
   Omit<ComponentBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]; interruptions?: { components: string[] }[] }
@@ -29,8 +33,12 @@ function findTaskIndexInSequence(sequence: Sequence, step: string, startIndex: n
       }
       index += 1;
     } else {
-      // See if the task is in the nested sequence
-      index += findTaskIndexInSequence(component, step, startIndex, requestedPath);
+      if (component.order === 'dynamic') {
+        index += 1;
+      } else {
+        // See if the task is in the nested sequence
+        index += findTaskIndexInSequence(component, step, startIndex, requestedPath);
+      }
 
       // If the task is in the nested sequence, break the loop. We need includes, because we need to break the loop if the task is in the nested sequence
       if (requestedPath.includes(component.orderPath)) {
@@ -99,6 +107,9 @@ function StepItem({
   studyConfig,
   subSequence,
   analysisNavigation,
+  parentBlock,
+  parentActive,
+  answers,
 }: {
   step: string;
   disabled: boolean;
@@ -109,83 +120,133 @@ function StepItem({
   studyConfig: StudyConfig;
   subSequence?: Sequence;
   analysisNavigation?: boolean;
+  parentBlock: Sequence;
+  parentActive: boolean;
+  answers: ParticipantData['answers'];
 }) {
   const studyId = useStudyId();
   const navigate = useNavigate();
   const currentStep = useCurrentStep();
-  const [opened, { close, open }] = useDisclosure(false);
 
-  const task = step in studyConfig.components && studyConfig.components[step];
+  const task = studyConfig.components[step] && studyComponentToIndividualComponent(studyConfig.components[step], studyConfig);
 
   const stepIndex = subSequence && subSequence.components.slice(startIndex).includes(step) ? findTaskIndexInSequence(fullSequence, step, startIndex, subSequence.orderPath) : -1;
 
-  const { trialId } = useParams();
+  const { trialId, funcIndex, analysisTab } = useParams();
   const [searchParams] = useSearchParams();
   const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const flatSequence = analysisTab ? [] : useFlatSequence();
 
   const analysisActive = trialId === step;
-  const studyActive = participantView ? currentStep === stepIndex : currentStep === `reviewer-${step}`;
+  const dynamicActive = parentActive && parentBlock && funcIndex ? startIndex === decryptIndex(funcIndex) : false;
+  const studyActive = participantView ? (currentStep === stepIndex || dynamicActive) : currentStep === `reviewer-${step}`;
   const active = analysisNavigation ? analysisActive : studyActive;
 
-  const analysisNavigateTo = useCallback(() => (trialId ? navigate(`./../${step}`) : navigate(`./${step}`)), [navigate, step, trialId]);
-  const studyNavigateTo = () => (participantView ? (participantId ? navigate(`/${studyId}/${encryptIndex(stepIndex)}?participantId=${participantId}`) : navigate(`/${studyId}/${encryptIndex(stepIndex)}`)) : navigate(`/${studyId}/reviewer-${step}`));
-  const navigateTo = analysisNavigation ? analysisNavigateTo : studyNavigateTo;
+  const analysisNavigateTo = trialId ? `./../${step}` : `./${step}`;
+  const dynamicNavigateTo = parentBlock.order === 'dynamic' ? `${PREFIX}${studyId}/${encryptIndex(flatSequence.indexOf(parentBlock.id!))}/${encryptIndex(startIndex)}` : '';
+  const studyNavigateTo = participantView ? (parentBlock.order === 'dynamic' ? dynamicNavigateTo : `${PREFIX}${studyId}/${encryptIndex(stepIndex)}`) : `${PREFIX}${studyId}/reviewer-${step}`;
+  const navigateTo = analysisNavigation ? () => navigate(analysisNavigateTo) : () => navigate(`${studyNavigateTo}${participantId ? `?participantId=${participantId}` : ''}`);
 
   const coOrComponents = step.includes('.co.')
     ? '.co.'
     : (step.includes('.components.') ? '.components.' : false);
   const cleanedStep = step.includes('$') && coOrComponents && step.includes(coOrComponents) ? step.split(coOrComponents).at(-1) : step;
 
+  const matchingAnswer = parentBlock.order === 'dynamic' ? Object.entries(answers).find(([key, _]) => key === `${parentBlock.id}_${flatSequence.indexOf(parentBlock.id!)}_${cleanedStep}_${startIndex}`) : Object.entries(answers).find(([key, _]) => key === `${cleanedStep}_${startIndex}`);
+  const taskAnswer: StoredAnswer | null = matchingAnswer ? matchingAnswer[1] : null;
+
+  const correctAnswer = taskAnswer && taskAnswer.correctAnswer.length > 0 && Object.keys(taskAnswer.answer).length > 0 && taskAnswer.correctAnswer;
+  const correct = correctAnswer && taskAnswer && Object.values(correctAnswer).every((value) => taskAnswer.answer[value.id] === value.answer);
+
   return (
-    <Popover withinPortal position="left" withArrow arrowSize={10} shadow="md" opened={opened} offset={20}>
-      <Popover.Target>
-        <Box
-          onMouseEnter={open}
-          onMouseLeave={close}
-        >
-          <NavLink
-            active={active}
-            style={{
-              lineHeight: '32px',
-              height: '32px',
-            }}
-            label={(
-              <Box>
-                {interruption && <IconBrain size={16} style={{ marginRight: 4, marginBottom: -2 }} color="orange" />}
-                {step !== cleanedStep && (
-                  <IconPackageImport size={16} style={{ marginRight: 4, marginBottom: -2 }} color="var(--mantine-color-blue-outline)" />
-                )}
-                <Text size="sm" span={active} fw={active ? '700' : undefined} display="inline">{cleanedStep}</Text>
-              </Box>
-            )}
-            onClick={navigateTo}
-            disabled={disabled}
-          />
-        </Box>
-      </Popover.Target>
-      {task && (task.description || task.meta) && (
-        <Popover.Dropdown onMouseLeave={close}>
-          <Box>
+    <HoverCard withinPortal position="left" withArrow arrowSize={10} shadow="md" offset={0}>
+      <HoverCard.Target>
+        <NavLink
+          active={active}
+          style={{
+            lineHeight: '32px',
+            height: '32px',
+          }}
+          label={(
+            <Box>
+              {interruption && <IconBrain size={16} style={{ marginRight: 4, marginBottom: -2 }} color="orange" />}
+              {step !== cleanedStep && (
+                <IconPackageImport size={16} style={{ marginRight: 4, marginBottom: -2 }} color="blue" />
+              )}
+              {taskAnswer && correctAnswer ? (
+                correct ? (
+                  <IconCheck size={16} style={{ marginRight: 4, marginBottom: -2 }} color="green" />
+                )
+                  : (
+                    <IconX size={16} style={{ marginRight: 4, marginBottom: -2 }} color="red" />
+                  )
+              ) : null}
+              <Text size="sm" span={active} fw={active ? '700' : undefined} display="inline" style={{ textWrap: 'nowrap' }}>{cleanedStep}</Text>
+            </Box>
+          )}
+          onClick={navigateTo}
+          disabled={disabled && parentBlock.order !== 'dynamic'}
+        />
+      </HoverCard.Target>
+      {task && (
+        <HoverCard.Dropdown>
+          <Box mah={700} style={{ overflow: 'auto' }}>
+            <Box>
+              <Text fw={900} display="inline-block" mr={2}>
+                Name:
+              </Text>
+              {' '}
+              <Text fw={400} component="span">
+                {cleanedStep}
+              </Text>
+            </Box>
             {task.description && (
             <Box>
               <Text fw={900} display="inline-block" mr={2}>
                 Description:
               </Text>
+              {' '}
               <Text fw={400} component="span">
                 {task.description}
               </Text>
             </Box>
             )}
+            {('parameters' in task || taskAnswer) && (
+              <Box>
+                <Text fw={900} display="inline-block" mr={2}>
+                  Parameters:
+                </Text>
+                {' '}
+                <Code block>{taskAnswer && JSON.stringify(Object.keys(taskAnswer).length > 0 ? taskAnswer.parameters : ('parameters' in task ? task.parameters : {}), null, 2)}</Code>
+              </Box>
+            )}
+            <Box>
+              <Text fw={900} display="inline-block" mr={2}>
+                Response:
+              </Text>
+              {' '}
+              <Code block>{JSON.stringify(task.response, null, 2)}</Code>
+            </Box>
+            {task.correctAnswer && (
+              <Box>
+                <Text fw={900} display="inline-block" mr={2}>
+                  Correct Answer:
+                </Text>
+                {' '}
+                <Code block>{JSON.stringify(task.correctAnswer, null, 2)}</Code>
+              </Box>
+            )}
             {task.meta && (
             <Box>
               <Text fw="900" component="span">Task Meta: </Text>
-              <Text component="pre" style={{ margin: 0, padding: 0 }}>{`${JSON.stringify(task.meta, null, 2)}`}</Text>
+              <Code block>{JSON.stringify(task.meta, null, 2)}</Code>
             </Box>
             )}
           </Box>
-        </Popover.Dropdown>
+        </HoverCard.Dropdown>
       )}
-    </Popover>
+    </HoverCard>
   );
 }
 
@@ -212,8 +273,9 @@ export function StepsPanel({
   }
 
   // Hacky. This call is not conditional, it either always happens or never happens. Not ideal.
-  let answers = {};
-  if (useIsAnalysis()) {
+  const { analysisTab } = useParams();
+  let answers: ParticipantData['answers'] = {};
+  if (!analysisTab) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
     answers = useStoreSelector((state) => state.answers);
   }
@@ -232,16 +294,34 @@ export function StepsPanel({
 
   const [isPanelOpened, setIsPanelOpened] = useState<boolean>(sequenceStepsLength > 0);
 
+  const [searchParams] = useSearchParams();
+  const participantId = useMemo(() => searchParams.get('participantId'), [searchParams]);
+  const currentStep = useCurrentStep();
+  // eslint-disable-next-line react-hooks/rules-of-hooks
+  const flatSequence = analysisTab ? [] : useFlatSequence();
+  const dynamicBlockActive = typeof currentStep === 'number' && configSequence.order === 'dynamic' && flatSequence[currentStep] === configSequence.id;
+  const indexofDynamicBlock = (configSequence.id && flatSequence.indexOf(configSequence.id)) || -1;
+
+  const studyId = useStudyId();
+  const navigate = useNavigate();
+  const navigateTo = () => navigate(`${PREFIX}${studyId}/${encryptIndex(indexofDynamicBlock)}/${encryptIndex(0)}${participantId ? `?participantId=${participantId}` : ''}`);
+
+  const toLoopOver = [
+    ...components,
+    ...Object.entries(answers).filter(([key, _]) => key.startsWith(`${configSequence.id}_${indexofDynamicBlock}_`)).map(([_, value]) => value.componentName),
+  ];
+
   return (
     <NavLink
       key={configSequence.id}
+      active={dynamicBlockActive}
       label={(
         <Box
           style={{
             opacity: sequenceStepsLength > 0 ? 1 : 0.5,
           }}
         >
-          <Text size="sm" display="inline" fw={700}>
+          <Text size="sm" display="inline" fw={dynamicBlockActive ? 900 : 700}>
             {configSequence.id ? configSequence.id : configSequence.order}
           </Text>
           {configSequence.order === 'random' || configSequence.order === 'latinSquare' ? (
@@ -251,7 +331,7 @@ export function StepsPanel({
           ) : null}
           {participantView && (
             <Badge ml={5} variant="light">
-              {configSequence.order === 'dynamic' ? `${Object.keys(answers).filter((keys) => keys.startsWith(`${configSequence.id}_`)).length - 1} / ?` : `${sequenceStepsLength}/${orderSteps.length}`}
+              {configSequence.order === 'dynamic' ? `${Object.keys(answers).filter((keys) => keys.startsWith(`${configSequence.id}_`)).length} / ?` : `${sequenceStepsLength}/${orderSteps.length}`}
             </Badge>
           )}
           {participantView && configSequence.interruptions && (
@@ -262,7 +342,7 @@ export function StepsPanel({
         </Box>
             )}
       opened={isPanelOpened}
-      onClick={() => setIsPanelOpened(!isPanelOpened)}
+      onClick={() => (configSequence.order === 'dynamic' && !analysisNavigation && participantView ? navigateTo() : setIsPanelOpened(!isPanelOpened))}
       childrenOffset={32}
       style={{
         lineHeight: '32px',
@@ -271,7 +351,7 @@ export function StepsPanel({
     >
       {isPanelOpened ? (
         <Box style={{ borderLeft: '1px solid #e9ecef' }}>
-          {components.map((step, idx) => {
+          {toLoopOver.map((step, idx) => {
             if (typeof step === 'string') {
               return (
                 <StepItem
@@ -285,6 +365,9 @@ export function StepsPanel({
                   studyConfig={studyConfig}
                   subSequence={participantSequence}
                   analysisNavigation={analysisNavigation}
+                  parentBlock={configSequence}
+                  parentActive={dynamicBlockActive}
+                  answers={answers}
                 />
               );
             }
@@ -292,7 +375,15 @@ export function StepsPanel({
             const newSequence = participantSequence?.components.find((s) => typeof s !== 'string' && s.orderPath === step.orderPath) as Sequence | undefined;
 
             return (
-              <StepsPanel key={idx} configSequence={step} participantSequence={newSequence} fullSequence={fullSequence} participantView={participantView} studyConfig={studyConfig} analysisNavigation={analysisNavigation} />
+              <StepsPanel
+                key={idx}
+                configSequence={step}
+                participantSequence={newSequence}
+                fullSequence={fullSequence}
+                participantView={participantView}
+                studyConfig={studyConfig}
+                analysisNavigation={analysisNavigation}
+              />
             );
           })}
         </Box>

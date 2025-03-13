@@ -1,8 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import type {
-  Answer,
-  ComponentBlock, ConfigResponseBlockLocation, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
+  Answer, ComponentBlock, ConfigResponseBlockLocation, ParticipantData, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
 } from '../parser/types';
 import { type REVISIT_MODE } from '../storage/engines/StorageEngine';
 
@@ -125,7 +124,7 @@ export interface StoredAnswer {
 
 export interface JumpFunctionParameters<T> {
   components: (string | ComponentBlock)[],
-  answers: Record<string, StoredAnswer>,
+  answers: ParticipantData['answers'],
   sequenceSoFar: string[],
   customParameters: T
 }
@@ -139,7 +138,7 @@ export interface JumpFunctionReturnVal {
 export interface StimulusParams<T, S = never> {
   parameters: T;
   provenanceState?: S;
-  answers: Record<string, StoredAnswer>;
+  answers: ParticipantData['answers'];
   setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: StoredAnswer['answer'] }) => void
 }
 
@@ -156,7 +155,7 @@ export interface StoreState {
   studyId: string;
   participantId: string;
   isRecording: boolean;
-  answers: Record<string, StoredAnswer>;
+  answers: ParticipantData['answers'];
   sequence: Sequence;
   config: StudyConfig;
   showStudyBrowser: boolean;

@@ -14,7 +14,7 @@ import {
 } from '@trrack/core';
 import WaveSurferType from 'wavesurfer.js';
 import { StorageEngine } from '../../storage/engines/StorageEngine';
-import { useCurrentComponent, useCurrentStep } from '../../routes/utils';
+import { useCurrentComponent, useCurrentIdentifier, useCurrentStep } from '../../routes/utils';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useAsync } from '../../store/hooks/useAsync';
 import { useStoreActions, useStoreDispatch, useStoreSelector } from '../../store/store';
@@ -80,10 +80,10 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
 
   const trrackForTrial = useRef<Trrack<object, string> | null>(null);
 
-  const componentAndIndex = useMemo(() => `${currentComponent}_${currentStep}`, [currentComponent, currentStep]);
+  const identifier = useCurrentIdentifier();
 
   const _setCurrentResponseNodes = useEvent((node: string | null, location: ResponseBlockLocation) => {
-    const graph = participant?.answers[componentAndIndex].provenanceGraph[location];
+    const graph = participant?.answers?.[identifier]?.provenanceGraph[location];
     if (participant && graph && node) {
       if (!currentGlobalNode || graph.nodes[node].createdOn > currentGlobalNode.time || playTime < currentGlobalNode.time) {
         setCurrentGlobalNode({ name: node || '', time: graph.nodes[node].createdOn });
@@ -93,11 +93,11 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
     setCurrentResponseNodes({ ...currentResponseNodes, [location]: node });
   });
 
-  useUpdateProvenance('aboveStimulus', playTime, participant?.answers[componentAndIndex].provenanceGraph.aboveStimulus, currentResponseNodes.aboveStimulus, _setCurrentResponseNodes);
+  useUpdateProvenance('aboveStimulus', playTime, participant?.answers?.[identifier]?.provenanceGraph.aboveStimulus, currentResponseNodes.aboveStimulus, _setCurrentResponseNodes);
 
-  useUpdateProvenance('belowStimulus', playTime, participant?.answers[componentAndIndex].provenanceGraph.belowStimulus, currentResponseNodes.belowStimulus, _setCurrentResponseNodes);
+  useUpdateProvenance('belowStimulus', playTime, participant?.answers?.[identifier]?.provenanceGraph.belowStimulus, currentResponseNodes.belowStimulus, _setCurrentResponseNodes);
 
-  useUpdateProvenance('sidebar', playTime, participant?.answers[componentAndIndex].provenanceGraph.sidebar, currentResponseNodes.sidebar, _setCurrentResponseNodes);
+  useUpdateProvenance('sidebar', playTime, participant?.answers?.[identifier]?.provenanceGraph.sidebar, currentResponseNodes.sidebar, _setCurrentResponseNodes);
 
   // Make sure we always pause analysis when we change participants or tasks
   useEffect(() => {
@@ -106,40 +106,40 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
 
   // Create an instance of trrack to ensure getState works, incase the saved state is not a full state node.
   useEffect(() => {
-    if (componentAndIndex && participant && participant.answers[componentAndIndex]?.provenanceGraph) {
+    if (identifier && participant && participant.answers?.[identifier]?.provenanceGraph) {
       const reg = Registry.create();
 
       const trrack = initializeTrrack({ registry: reg, initialState: {} });
 
-      if (participant.answers[componentAndIndex].provenanceGraph.stimulus) {
-        trrack.importObject(structuredClone(participant.answers[componentAndIndex].provenanceGraph!.stimulus));
+      if (participant.answers?.[identifier]?.provenanceGraph.stimulus) {
+        trrack.importObject(structuredClone(participant.answers?.[identifier]?.provenanceGraph!.stimulus));
 
         trrackForTrial.current = trrack;
       }
     }
-  }, [participant, componentAndIndex, storeDispatch]);
+  }, [participant, identifier, storeDispatch]);
 
   const _setCurrentNode = useCallback((node: string | undefined) => {
     if (!node) {
       return;
     }
 
-    if (componentAndIndex && participant && trrackForTrial.current) {
-      storeDispatch(saveAnalysisState({ prov: trrackForTrial.current.getState(participant.answers[componentAndIndex].provenanceGraph.stimulus?.nodes[node]), location: 'stimulus' }));
+    if (identifier && participant && trrackForTrial.current) {
+      storeDispatch(saveAnalysisState({ prov: trrackForTrial.current.getState(participant.answers?.[identifier]?.provenanceGraph.stimulus?.nodes[node]), location: 'stimulus' }));
 
       trrackForTrial.current.to(node);
     }
 
     _setCurrentResponseNodes(node, 'stimulus');
     setCurrentNode(node);
-  }, [componentAndIndex, participant, _setCurrentResponseNodes, storeDispatch, saveAnalysisState]);
+  }, [identifier, participant, _setCurrentResponseNodes, storeDispatch, saveAnalysisState]);
 
   // use effect to control the current provenance node based on the changing playtime.
   useEffect(() => {
-    if (!componentAndIndex || !participant || !trrackForTrial.current || !participant.answers[componentAndIndex]?.provenanceGraph) {
+    if (!identifier || !participant || !trrackForTrial.current || !participant.answers?.[identifier]?.provenanceGraph) {
       return;
     }
-    const provGraph = participant.answers[componentAndIndex].provenanceGraph;
+    const provGraph = participant.answers?.[identifier]?.provenanceGraph;
 
     if (!provGraph.stimulus) {
       return;
@@ -171,9 +171,9 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
     if (tempNode.id !== currentNode) {
       _setCurrentNode(tempNode.id);
     }
-  }, [_setCurrentNode, currentNode, participant, participantId, playTime, componentAndIndex]);
+  }, [_setCurrentNode, currentNode, participant, participantId, playTime, identifier]);
 
-  const startTime = useMemo(() => participant?.answers[componentAndIndex].startTime || 0, [participant, componentAndIndex]);
+  const startTime = useMemo(() => participant?.answers?.[identifier]?.startTime || 0, [participant, identifier]);
 
   useEffect(() => {
     if (totalAudioLength === 0) {
@@ -181,14 +181,15 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
     } else if (playTime !== 0) {
       setTimeString(`${humanReadableDuration(playTime - startTime)} / ${humanReadableDuration(totalAudioLength * 1000)}`);
     }
-  }, [componentAndIndex, participant, playTime, setTimeString, startTime, totalAudioLength]);
+  }, [identifier, participant, playTime, setTimeString, startTime, totalAudioLength]);
 
   useEffect(() => {
     if (!analysisHasAudio && participant) {
-      const length = participant.answers[componentAndIndex].endTime - participant.answers[componentAndIndex].startTime;
+      // eslint-disable-next-line no-unsafe-optional-chaining
+      const length = participant.answers?.[identifier]?.endTime - participant.answers?.[identifier]?.startTime;
       setTotalAudioLength(length > -1 ? length / 1000 : 0);
     }
-  }, [analysisHasAudio, componentAndIndex, participant]);
+  }, [analysisHasAudio, identifier, participant]);
 
   const isAnalysis = useIsAnalysis();
   const wavesurfer = useRef<WaveSurferType | null>(null);
@@ -196,9 +197,9 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
   const handleWSMount = useCallback(
     async (waveSurfer: WaveSurferType | null) => {
       wavesurfer.current = waveSurfer;
-      if (waveSurfer && participant && isAnalysis && componentAndIndex && storageEngine) {
+      if (waveSurfer && participant && isAnalysis && identifier && storageEngine) {
         try {
-          const url = await storageEngine.getAudio(componentAndIndex, participantId);
+          const url = await storageEngine.getAudio(identifier, participantId);
           await waveSurfer.load(url!);
           setWaveSurferLoading(false);
           storeDispatch(setAnalysisHasAudio(true));
@@ -216,7 +217,7 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
         setTotalAudioLength(0);
       }
     },
-    [participant, isAnalysis, componentAndIndex, storageEngine, participantId, storeDispatch, setAnalysisHasAudio],
+    [participant, isAnalysis, identifier, storageEngine, participantId, storeDispatch, setAnalysisHasAudio],
   );
 
   const _setPlayTime = useCallback((n: number, percent: number | undefined) => {
@@ -248,16 +249,17 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
   }, [wavesurfer, analysisIsPlaying, totalAudioLength, startTime, setPlayTime]);
 
   const xScale = useMemo(() => {
-    if (!participant || !participant.answers[componentAndIndex]?.startTime || !participant.answers[componentAndIndex]?.endTime) {
+    if (!participant || !participant.answers?.[identifier]?.startTime || !participant.answers?.[identifier]?.endTime) {
       return null;
     }
 
-    const endTime = totalAudioLength > 0 ? participant.answers[componentAndIndex].startTime + totalAudioLength * 1000 : participant.answers[componentAndIndex].endTime;
+    // eslint-disable-next-line no-unsafe-optional-chaining
+    const endTime = totalAudioLength > 0 ? participant.answers?.[identifier]?.startTime + totalAudioLength * 1000 : participant.answers?.[identifier]?.endTime;
 
-    const scale = d3.scaleLinear([margin.left, width + margin.left + margin.right]).domain([participant.answers[componentAndIndex].startTime, endTime]).clamp(true);
+    const scale = d3.scaleLinear([margin.left, width + margin.left + margin.right]).domain([participant.answers?.[identifier]?.startTime, endTime]).clamp(true);
 
     return scale;
-  }, [participant, componentAndIndex, width, totalAudioLength]);
+  }, [participant, identifier, width, totalAudioLength]);
 
   useEffect(() => {
     handleWSMount(wavesurfer.current);
@@ -267,7 +269,7 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
     <Group wrap="nowrap" gap={10} mx={10}>
       <Stack ref={ref} style={{ width: '100%' }} gap={0}>
         <Center />
-        {participant !== null && componentAndIndex
+        {participant !== null && identifier
           ? (
             <Box
               ref={waveSurferDiv}
@@ -284,11 +286,11 @@ export function AudioProvenanceVis({ setTimeString }: { setTimeString: (time: st
             </Box>
           ) : null}
 
-        {status === 'success' && participant && xScale && componentAndIndex && participant.answers[componentAndIndex].provenanceGraph
+        {status === 'success' && participant && xScale && identifier && participant.answers?.[identifier]?.provenanceGraph
           ? (
             <WithinTaskTimeline
               xScale={xScale}
-              trialName={componentAndIndex}
+              trialName={identifier}
               currentNode={currentGlobalNode?.name || ''}
               participantData={participant}
               width={waveSurferWidth || width}

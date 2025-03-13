@@ -79,21 +79,34 @@ export function useCurrentComponent(): string {
     if (typeof currentStep === 'number') {
       const component = getComponent(flatSequence[currentStep], studyConfig);
 
+      const funcName = flatSequence[currentStep];
+      const decryptedFuncIndex = funcIndex ? decryptIndex(funcIndex) : 0;
+
+      // Check if answer exists for this index, if so get the component name and return early
+      const currentAnswer = Object.entries(_answers).find(([key, _]) => key.startsWith(`${funcName}_${currentStep}_`) && key.endsWith(`${decryptedFuncIndex}`));
+      const answerCompName = currentAnswer ? currentAnswer[1].componentName : null;
+      if (answerCompName !== null) {
+        setCompName(answerCompName);
+        setIndexWhenSettingComponentName(decryptedFuncIndex);
+        return;
+      }
+
       // in a func component
       if (!component && nextFunc !== null) {
         const { component: currCompName, parameters: _params, correctAnswer } = nextFunc({
           components: [], answers: _answers, sequenceSoFar: [], customParameters: findFuncBlock(flatSequence[currentStep], studyConfig.sequence)?.parameters,
         });
+
         if (currCompName !== null) {
           if (funcIndex) {
             setCompName(currCompName);
-            setIndexWhenSettingComponentName(decryptIndex(funcIndex));
+            setIndexWhenSettingComponentName(decryptedFuncIndex);
 
             storeDispatch(pushToFuncSequence({
               component: currCompName,
-              funcName: flatSequence[currentStep],
+              funcName,
               index: currentStep,
-              funcIndex: funcIndex ? decryptIndex(funcIndex) : 0,
+              funcIndex: decryptedFuncIndex,
               parameters: _params || undefined,
               correctAnswer: correctAnswer || undefined,
             }));
