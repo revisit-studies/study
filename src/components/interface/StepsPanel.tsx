@@ -15,7 +15,6 @@ import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useFlatSequence, useStoreSelector } from '../../store/store';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
-import { PREFIX } from '../../utils/Prefix';
 
 export type ComponentBlockWithOrderPath =
   Omit<ComponentBlock, 'components'> & { orderPath: string; components: (ComponentBlockWithOrderPath | string)[]; interruptions?: { components: string[] }[] }
@@ -144,8 +143,8 @@ function StepItem({
   const active = analysisNavigation ? analysisActive : studyActive;
 
   const analysisNavigateTo = trialId ? `./../${step}` : `./${step}`;
-  const dynamicNavigateTo = parentBlock.order === 'dynamic' ? `${PREFIX}${studyId}/${encryptIndex(flatSequence.indexOf(parentBlock.id!))}/${encryptIndex(startIndex)}` : '';
-  const studyNavigateTo = participantView ? (parentBlock.order === 'dynamic' ? dynamicNavigateTo : `${PREFIX}${studyId}/${encryptIndex(stepIndex)}`) : `${PREFIX}${studyId}/reviewer-${step}`;
+  const dynamicNavigateTo = parentBlock.order === 'dynamic' ? `${studyId}/${encryptIndex(flatSequence.indexOf(parentBlock.id!))}/${encryptIndex(startIndex)}` : '';
+  const studyNavigateTo = participantView ? (parentBlock.order === 'dynamic' ? dynamicNavigateTo : `}${studyId}/${encryptIndex(stepIndex)}`) : `${studyId}/reviewer-${step}`;
   const navigateTo = analysisNavigation ? () => navigate(analysisNavigateTo) : () => navigate(`${studyNavigateTo}${participantId ? `?participantId=${participantId}` : ''}`);
 
   const coOrComponents = step.includes('.co.')
@@ -304,7 +303,7 @@ export function StepsPanel({
 
   const studyId = useStudyId();
   const navigate = useNavigate();
-  const navigateTo = () => navigate(`${PREFIX}${studyId}/${encryptIndex(indexofDynamicBlock)}/${encryptIndex(0)}${participantId ? `?participantId=${participantId}` : ''}`);
+  const navigateTo = () => navigate(`${studyId}/${encryptIndex(indexofDynamicBlock)}/${encryptIndex(0)}${participantId ? `?participantId=${participantId}` : ''}`);
 
   const toLoopOver = [
     ...components,
