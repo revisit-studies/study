@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react';
 import {
   ComponentBlock, DynamicBlock, ParticipantData, StudyConfig,
 } from '../../parser/types';
-import { Sequence } from '../../store/types';
+import { Sequence, StoredAnswer } from '../../store/types';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
@@ -107,6 +107,7 @@ function StepItem({
   analysisNavigation,
   parentBlock,
   parentActive,
+  answers,
 }: {
   step: string;
   disabled: boolean;
@@ -119,6 +120,7 @@ function StepItem({
   analysisNavigation?: boolean;
   parentBlock: Sequence;
   parentActive: boolean;
+  answers: ParticipantData['answers'];
 }) {
   const studyId = useStudyId();
   const navigate = useNavigate();
@@ -148,6 +150,9 @@ function StepItem({
     ? '.co.'
     : (step.includes('.components.') ? '.components.' : false);
   const cleanedStep = step.includes('$') && coOrComponents && step.includes(coOrComponents) ? step.split(coOrComponents).at(-1) : step;
+
+  const matchingAnswer = parentBlock.order === 'dynamic' ? Object.entries(answers).find(([key, _]) => key.startsWith(`${parentBlock.id}_${flatSequence.indexOf(parentBlock.id!)}_${cleanedStep}_${startIndex}`)) : undefined;
+  const taskAnswer: StoredAnswer | null = matchingAnswer ? matchingAnswer[1] : null;
 
   return (
     <HoverCard withinPortal position="left" withArrow arrowSize={10} shadow="md" offset={0}>
@@ -193,6 +198,15 @@ function StepItem({
                 {task.description}
               </Text>
             </Box>
+            )}
+            {('parameters' in task || taskAnswer) && (
+              <Box>
+                <Text fw={900} display="inline-block" mr={2}>
+                  Parameters:
+                </Text>
+                {' '}
+                <Code block>{taskAnswer && JSON.stringify(Object.keys(taskAnswer).length > 0 ? taskAnswer.parameters : ('parameters' in task ? task.parameters : {}), null, 2)}</Code>
+              </Box>
             )}
             <Box>
               <Text fw={900} display="inline-block" mr={2}>
@@ -340,6 +354,7 @@ export function StepsPanel({
                   analysisNavigation={analysisNavigation}
                   parentBlock={configSequence}
                   parentActive={dynamicBlockActive}
+                  answers={answers}
                 />
               );
             }
@@ -347,7 +362,15 @@ export function StepsPanel({
             const newSequence = participantSequence?.components.find((s) => typeof s !== 'string' && s.orderPath === step.orderPath) as Sequence | undefined;
 
             return (
-              <StepsPanel key={idx} configSequence={step} participantSequence={newSequence} fullSequence={fullSequence} participantView={participantView} studyConfig={studyConfig} analysisNavigation={analysisNavigation} />
+              <StepsPanel
+                key={idx}
+                configSequence={step}
+                participantSequence={newSequence}
+                fullSequence={fullSequence}
+                participantView={participantView}
+                studyConfig={studyConfig}
+                analysisNavigation={analysisNavigation}
+              />
             );
           })}
         </Box>
