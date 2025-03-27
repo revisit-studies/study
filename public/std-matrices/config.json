@@ -1,0 +1,136 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/main/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Basic Std Matrices Study",
+    "version": "pilot",
+    "authors": ["Jorge Acosta"],
+    "date": "2025-03-22",
+    "description": "Test Matrices Study",
+    "organizations": ["University of Utah", "Polythecnic University of Madrid"]
+  },
+  "uiConfig": {
+    "contactEmail": "jorge.acosta@upm.es",
+    "helpTextPath": "matrices-study/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true
+  },
+  "baseComponents": {
+    "matrix": {
+      "description": "Test Std Matrix.",
+      "type": "react-component",
+      "path": "std-matrices/assets/components/StudyMatrix/index.jsx",
+      "nextButtonLocation": "sidebar",
+      "instructionLocation": "sidebar",
+      "response": []
+    }
+  },
+  "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "std-matrices/assets/introduction.md",
+      "response": []
+    },
+    "matrix_cellSize_adjacency": {
+      "baseComponent": "matrix",
+      "instruction": "To which States could you fly from Utah?",
+      "parameters": {
+        "file": "Origin_and_Destination_Survey_DB1BMarket_2018_1_20250324_173152.txt",
+        "encoding": "weather",
+        "colorScale": "weather",
+        "isSnr": true,
+        "nMeans": 5,
+        "nStds": 4,
+        "tooltipHistogram": "frequencies",
+        "showTooltip": true
+      },
+      "response": [
+        {
+          "id": "selectedNodes",
+          "prompt": "Selected State(s) will show here",
+
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "selectedNodes",
+          "answer": ["Oregon"]
+        }
+      ]
+    },
+    "matrix_cellSize_attr_combination": {
+      "baseComponent": "matrix",
+      "instruction": "To which states could you fly from Utah spending $200-300?",
+      "parameters": {
+        "file": "Origin_and_Destination_Survey_DB1BMarket_2018_1_20250324_173152.txt",
+        "encoding": "weather",
+        "colorScale": "weather",
+        "isSnr": true,
+        "nMeans": 5,
+        "nStds": 4,
+        "tooltipHistogram": "frequencies",
+        "showTooltip": true
+      },
+      "response": [
+        {
+          "id": "selectedNodes",
+          "prompt": "Selected State(s) will show here",
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "selectedNodes",
+          "answer": ["Oregon"]
+        }
+      ]
+    },
+    "matrix_cellSize_browsing": {
+      "baseComponent": "matrix",
+      "instruction": "In which route could you spend less money Utah - Florida - NYC or Utah - Texas - NYC?",
+      "parameters": {
+        "file": "Origin_and_Destination_Survey_DB1BMarket_2018_1_20250324_173557.txt",
+        "encoding": "weather",
+        "colorScale": "reds",
+        "isSnr": true,
+        "nMeans": 5,
+        "nStds": 4,
+        "tooltipHistogram": "frequencies",
+        "showTooltip": true
+      },
+      "response": [
+        {
+          "id": "q-mark-type",
+          "type": "dropdown",
+          "required": true,
+          "prompt": "Select here the cheapest route",
+          "location": "sidebar",
+          "placeholder": "Choose route",
+          "options": ["Utah - Florida - NYC", "Utah - Texas - NYC"]
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "q-mark-type",
+          "answer": "Utah - Florida - NYC"
+        }
+      ]
+    }
+  },
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      {
+        "components": [
+          "matrix_cellSize_adjacency",
+          "matrix_cellSize_attr_combination"
+        ],
+        "order": "random"
+      }
+    ]
+  }
+}
