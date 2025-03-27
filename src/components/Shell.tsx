@@ -31,6 +31,7 @@ import { ErrorLoadingConfig } from './ErrorLoadingConfig';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { encryptIndex } from '../utils/encryptDecryptIndex';
 import { parseStudyConfig } from '../parser/parser';
+import { hash } from '../storage/engines/utils';
 
 export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
   // Pull study config
@@ -81,6 +82,7 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
 
       // Make sure that we have a study database and that the study database has a sequence array
       await storageEngine.initializeStudyDb(studyId, activeConfig);
+
       const sequenceArray = await storageEngine.getSequenceArray();
       if (!sequenceArray) {
         await storageEngine.setSequenceArray(
@@ -124,11 +126,18 @@ export function Shell({ globalConfig }: { globalConfig: GlobalConfig }) {
       );
 
       const modes = await storageEngine.getModes(studyId);
+      const activeHash = await hash(JSON.stringify(activeConfig));
+
+      let participantConfig = activeConfig;
+
+      if (participantSession.participantConfigHash !== activeHash) {
+        participantConfig = (await storageEngine.getAllConfigsFromHash([participantSession.participantConfigHash], studyId))[participantSession.participantConfigHash] as ParsedConfig<StudyConfig>;
+      }
 
       // Initialize the redux stores
       const newStore = await studyStoreCreator(
         studyId,
-        activeConfig,
+        participantConfig,
         participantSession.sequence,
         metadata,
         participantSession.answers,
