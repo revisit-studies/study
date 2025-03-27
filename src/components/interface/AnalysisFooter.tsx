@@ -42,8 +42,6 @@ export function AnalysisFooter() {
 
   const { storageEngine } = useStorageEngine();
 
-  // const participantId = useStoreSelector((state) => state.participantId);
-
   const { value: allParticipants } = useAsync(getAllParticipantsNames, [storageEngine]);
 
   const [nextParticipantNameAndIndex, prevParticipantNameAndIndex]: [[string, number], [string, number]] = useMemo(() => {
