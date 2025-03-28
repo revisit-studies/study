@@ -73,6 +73,10 @@ export function renderAxis(vis) {
         vis.trrack.apply('Remove Order by Node', vis.actions.orderByNode(null));
         vis.orderByNode(null);
       }
+
+      const tmp = new Set(vis.highlightedDestinations);
+      const highlightedArray = Array.from(tmp);
+      drawHorizontalHighlightRect(vis, highlightedArray);
     });
 
   vis.yAxisG

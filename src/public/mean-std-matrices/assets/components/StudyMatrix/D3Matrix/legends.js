@@ -105,7 +105,7 @@ export function renderLightnessLegend(vis) {
 
   const leftMargin = (totalMeanWidth - totalStdWidth) / 2;
 
-  const yMargin = 150;
+  const yMargin = vis.cellSize * vis.nStds + 50;
 
   vis.legend
     .append('text')
