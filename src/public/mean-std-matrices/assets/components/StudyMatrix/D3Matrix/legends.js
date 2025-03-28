@@ -3,6 +3,10 @@ import { encodeMarkCells, encodeRotationCells, encodeSizeCells } from './encodin
 
 // this is a mess, dont recommend you to take a look :)
 
+const meanText = (d) => `${d[0].toFixed(0)} - ${d[1].toFixed(0)}`;
+
+/* (d) => ((d[0] + d[1]) / 2).toFixed(0); */
+
 function renderColorStdLegend(vis, cells) {
   vis.deviationAccesor = (d) => d[0];
   cells
@@ -44,9 +48,9 @@ export function renderLightnessLegend(vis) {
     .join('text')
     .attr('class', 'legendMeanText')
     .attr('text-anchor', 'start')
-    .text((d) => `${d[0].toFixed(0)} - ${d[1].toFixed(0)}`);
+    .text((d) => `${meanText(d)}`);
 
-  let maxTextWidth = d3.max(vis.legend.selectAll('.legendMeanText').nodes(), (node) => node.getBBox().width);
+  const maxTextWidth = d3.max(vis.legend.selectAll('.legendMeanText').nodes(), (node) => node.getBBox().width);
 
   text.attr('x', (d, i) => i * (maxTextWidth + margin)).attr('y', -10);
 
@@ -99,8 +103,6 @@ export function renderLightnessLegend(vis) {
       return '      ';
     });
 
-  maxTextWidth = d3.max(vis.legend.selectAll('.legendStdText').nodes(), (node) => node.getBBox().width);
-
   const totalStdWidth = (maxTextWidth + margin) * vis.deviationIntervals.length;
 
   const leftMargin = (totalMeanWidth - totalStdWidth) / 2;
@@ -122,7 +124,7 @@ export function renderLightnessLegend(vis) {
     .attr('class', 'legendStdCell')
     .attr('transform', (d, i) => {
       const textX = i * (maxTextWidth + margin) + leftMargin;
-      const textWidth = i !== vis.deviationIntervals.length - 1 ? maxTextWidth : text.nodes()[i].getBBox().width;
+      const textWidth = maxTextWidth;
       return `translate(${textX + textWidth / 2 - vis.legendCellSize / 2}, ${vis.legendCellSize + yMargin})`;
     });
 
@@ -138,7 +140,7 @@ export function renderColorLegends(vis) {
     .join('text')
     .attr('class', 'legendMeanText')
     .attr('text-anchor', 'start')
-    .text((d) => `${d[0].toFixed(0)} - ${d[1].toFixed(0)}`);
+    .text((d) => meanText(d));
 
   let maxTextWidth = d3.max(vis.legend.selectAll('.legendMeanText').nodes(), (node) => node.getBBox().width);
 

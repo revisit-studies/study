@@ -119,7 +119,7 @@ class D3Matrix {
       .style('left', `${this.margin.left + this.squareSize + 50}px`)
       .style('top', `${this.margin.top}px`);
 
-    this.legend.attr('transform', `translate(${this.margin.left + this.squareSize + 70}, ${this.squareSize / 2})`);
+    this.legend.attr('transform', `translate(${this.margin.left + this.squareSize + 100}, ${this.squareSize / 2})`);
     this.background.attr('width', this.squareSize).attr('height', this.squareSize);
   }
 

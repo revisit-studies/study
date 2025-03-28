@@ -12,16 +12,28 @@ function drawHighlightRect(vis, x, y, width, height) {
 
   const edges = [
     {
-      x1: x - margin, y1: y - margin, x2: x + width + margin, y2: y - margin,
+      x1: x - margin,
+      y1: y - margin,
+      x2: x + width + margin,
+      y2: y - margin,
     }, // Arriba
     {
-      x1: x + width + margin, y1: y - margin, x2: x + width + margin, y2: y + height + margin,
+      x1: x + width + margin,
+      y1: y - margin,
+      x2: x + width + margin,
+      y2: y + height + margin,
     }, // Derecha
     {
-      x1: x - margin, y1: y + height + margin, x2: x + width + margin, y2: y + height + margin,
+      x1: x - margin,
+      y1: y + height + margin,
+      x2: x + width + margin,
+      y2: y + height + margin,
     }, // Abajo
     {
-      x1: x - margin, y1: y - margin, x2: x - margin, y2: y + height + margin,
+      x1: x - margin,
+      y1: y - margin,
+      x2: x - margin,
+      y2: y + height + margin,
     }, // Izquierda
   ];
 
@@ -51,11 +63,12 @@ export function highlight(vis, link) {
   const fullWidth = vis.squareSize + vis.margin.left;
 
   drawHighlightRect(vis, leftEdge, y, fullWidth, vis.cellSize);
-  drawHighlightRect(vis, y, topEdge, vis.cellSize, fullHeight);
 
-  if (x !== y) {
+  drawHighlightRect(vis, x, topEdge, vis.cellSize, fullHeight);
+
+  if (link.origin !== link.destination) {
     drawHighlightRect(vis, leftEdge, x, fullWidth, vis.cellSize);
-    drawHighlightRect(vis, x, topEdge, vis.cellSize, fullHeight);
+    drawHighlightRect(vis, y, topEdge, vis.cellSize, fullHeight);
   }
 }
 
