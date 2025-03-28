@@ -10,7 +10,7 @@
   },
   "uiConfig": {
     "contactEmail": "jorge.acosta@upm.es",
-    "helpTextPath": "matrices-study/assets/help.md",
+    "helpTextPath": "mean-std-matrices/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -20,7 +20,7 @@
     "matrix": {
       "description": "Test Std Matrix.",
       "type": "react-component",
-      "path": "std-matrices/assets/components/StudyMatrix/index.jsx",
+      "path": "mean-std-matrices/assets/components/StudyMatrix/index.jsx",
       "nextButtonLocation": "sidebar",
       "instructionLocation": "sidebar",
       "response": []
@@ -29,7 +29,7 @@
   "components": {
     "introduction": {
       "type": "markdown",
-      "path": "std-matrices/assets/introduction.md",
+      "path": "mean-std-matrices/assets/introduction.md",
       "response": []
     },
     "matrix_cellSize_adjacency": {
@@ -125,10 +125,7 @@
     "order": "fixed",
     "components": [
       {
-        "components": [
-          "matrix_cellSize_adjacency",
-          "matrix_cellSize_attr_combination"
-        ],
+        "components": ["matrix_cellSize_adjacency", "matrix_cellSize_attr_combination"],
         "order": "random"
       }
     ]

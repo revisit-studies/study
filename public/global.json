@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.0/src/parser/GlobalConfigSchema.json",
   "configsList": [
-    "std-matrices",
+    "mean-std-matrices",
     "tutorial",
     "example-brush-interactions",
     "example-cleveland",
@@ -37,8 +37,8 @@
     "test-step-logic"
   ],
   "configs": {
-    "std-matrices": {
-      "path": "std-matrices/config.json"
+    "mean-std-matrices": {
+      "path": "mean-std-matrices/config.json"
     },
     "tutorial": {
       "path": "tutorial/config.json"
