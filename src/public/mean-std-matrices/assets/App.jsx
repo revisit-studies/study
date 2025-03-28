@@ -13,7 +13,7 @@ const testParameters = {
 
 /**
  * prints the test answer
- * @param {JSON} obj a JSON object with the answer
+ * @param {JSON} obj a JSON object with the answer, trigger
  * @returns {void}
  */
 function setAnswer(obj) {
