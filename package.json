@@ -62,7 +62,7 @@
     "typedoc-plugin-markdown": "^4.4.1",
     "use-deep-compare-effect": "^1.8.1",
     "uuid": "^11.0.5",
-    "vega": "^5.30.0",
+    "vega": "^5.32.0",
     "vega-lite": "^5.23.0",
     "wavesurfer-react": "^3.0.4",
     "wavesurfer.js": "^7.8.16"
@@ -88,6 +88,6 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.4.1",
     "typescript": "^5.7.3",
-    "vite": "^6.0.9"
+    "vite": "^6.0.12"
   }
 }

@@ -44,6 +44,12 @@ export class LocalStorageEngine extends StorageEngine {
     });
   }
 
+  async getAllParticipantNames() {
+    const allPartsData = await this.getAllParticipantsData();
+
+    return allPartsData.map((part) => part.participantId);
+  }
+
   getAudio(taskList: string, participantId?: string | undefined) {
     console.warn('not yet implemented', participantId);
     return Promise.resolve(undefined);

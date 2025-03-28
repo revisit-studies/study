@@ -81,6 +81,8 @@ export abstract class StorageEngine {
    */
   abstract addParticipantTags(tags: string[]): Promise<void>;
 
+  abstract getAllParticipantNames(): Promise<string[]>;
+
   abstract removeParticipantTags(tags: string[]): Promise<void>;
 
   abstract nextParticipant(): Promise<void>;

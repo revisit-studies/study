@@ -5,7 +5,6 @@
     "example-brush-interactions",
     "example-cleveland",
     "example-mvnv",
-    "example-fairness-jnd",
     "example-VLAT-full-randomized",
     "example-VLAT-mini-randomized",
     "demo-html",
@@ -48,9 +47,6 @@
     },
     "example-mvnv": {
       "path": "example-mvnv/config.json"
-    },
-    "example-fairness-jnd": {
-      "path": "example-fairness-jnd/config.json"
     },
     "demo-video-slider": {
       "path": "demo-video-slider/config.json"
