@@ -56,9 +56,7 @@ class D3Matrix {
 
     this.chart = this.svg.append('g').attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
 
-    this.horizontalHighlightsGroup = this.chart.append('g').attr('class', 'horizontal-highlights-group').lower();
-    this.highlightsGroup = this.chart.append('g').attr('class', 'highlights-group').lower();
-
+    this.horizontalHighlightsGroup = this.chart.append('g').attr('class', 'horizontal-highlights-group');
     this.background = this.chart.append('rect').attr('class', 'background').attr('fill', 'transparent');
 
     this.legend = this.svg.append('g');

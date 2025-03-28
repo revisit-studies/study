@@ -1,20 +1,52 @@
 function drawHighlightRect(vis, x, y, width, height) {
-  vis.highlightsGroup
+  vis.chart
     .append('rect')
     .attr('class', 'highlight')
     .attr('x', x)
     .attr('y', y)
     .attr('width', width)
-    .attr('height', height);
+    .attr('height', height)
+    .lower();
+
+  const margin = 0;
+
+  const edges = [
+    {
+      x1: x - margin, y1: y - margin, x2: x + width + margin, y2: y - margin,
+    }, // Arriba
+    {
+      x1: x + width + margin, y1: y - margin, x2: x + width + margin, y2: y + height + margin,
+    }, // Derecha
+    {
+      x1: x - margin, y1: y + height + margin, x2: x + width + margin, y2: y + height + margin,
+    }, // Abajo
+    {
+      x1: x - margin, y1: y - margin, x2: x - margin, y2: y + height + margin,
+    }, // Izquierda
+  ];
+
+  // Dibujar las líneas
+  edges.forEach((edge) => {
+    vis.chart
+      .append('line')
+      .attr('class', 'highlight')
+      .attr('x1', edge.x1)
+      .attr('y1', edge.y1)
+      .attr('x2', edge.x2)
+      .attr('y2', edge.y2)
+      .attr('stroke', 'black')
+      .attr('stroke-width', 1)
+      .raise();
+  });
 }
 export function highlight(vis, link) {
-  vis.highlightsGroup.selectAll('*').remove();
+  vis.chart.selectAll('.highligth').remove();
   if (!link) return;
 
   const x = vis.xScale(link.origin);
   const y = vis.yScale(link.destination);
-  const leftEdge = -vis.margin.left;
-  const topEdge = -vis.margin.top;
+  const leftEdge = -vis.margin.left + 2;
+  const topEdge = -vis.margin.top + 2;
   const fullHeight = vis.squareSize + vis.margin.top;
   const fullWidth = vis.squareSize + vis.margin.left;
 
@@ -29,7 +61,7 @@ export function highlight(vis, link) {
 
 export function removeHighlight(vis) {
   vis.highlightedLinks = null;
-  vis.highlightsGroup.selectAll('*').remove();
+  vis.chart.selectAll('.highlight').remove();
 }
 
 export function showHighlight(vis, data) {
@@ -63,6 +95,6 @@ export function drawHorizontalHighlightRect(vis, destinations) {
     .attr('class', 'horizontal-highlight')
     .attr('x', leftEdge)
     .attr('y', (destination) => vis.yScale(destination))
-    .attr('width', fullWidth)
+    .attr('width', fullWidth + 20)
     .attr('height', vis.cellSize);
 }

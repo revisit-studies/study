@@ -44,18 +44,13 @@ export function renderAxis(vis) {
     .on('click', (event, d) => {
       const item = d3.select(event.currentTarget);
       const isSelected = item.classed('selected');
-      const destinations = vis.data
-        .filter((link) => link.origin === d)
-        .map((link) => link.destination);
+      const destinations = vis.data.filter((link) => link.origin === d).map((link) => link.destination);
 
       if (!isSelected) {
         vis.trrack.apply('Select Destinations', vis.actions.addHorizontalHighligthNode(d));
         vis.highlightedDestinations.push(...destinations);
       } else {
-        vis.highlightedDestinations = removeFirstOccurrences(
-          vis.highlightedDestinations,
-          destinations,
-        );
+        vis.highlightedDestinations = removeFirstOccurrences(vis.highlightedDestinations, destinations);
         vis.trrack.apply('Unselect Destinations', vis.actions.removeHorizontalHighligthNode(d));
       }
 
@@ -64,20 +59,21 @@ export function renderAxis(vis) {
       drawHorizontalHighlightRect(vis, highlightedArray);
 
       item.classed('selected', !isSelected);
+    })
+    .on('contextmenu', function (event, d) {
+      event.preventDefault();
+      event.stopPropagation();
+      const item = d3.select(this);
+      const isSelected = item.classed('orderNode');
+
+      if (!isSelected) {
+        vis.trrack.apply('Order by Node', vis.actions.orderByNode(d));
+        vis.orderByNode(d);
+      } else {
+        vis.trrack.apply('Remove Order by Node', vis.actions.orderByNode(null));
+        vis.orderByNode(null);
+      }
     });
-
-  /* .on('click', function (event, d) {
-            const item = d3.select(this);
-            const isSelected = item.classed('orderNode');
-
-            if (!isSelected) {
-                vis.trrack.apply('Order by Node', vis.actions.orderByNode(d));
-                vis.orderByNode(d);
-            } else {
-                vis.trrack.apply('Remove Order by Node', vis.actions.orderByNode(null));
-                vis.orderByNode(null);
-            }
-        }); */
 
   vis.yAxisG
     .selectAll('.tick text')
