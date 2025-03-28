@@ -8,7 +8,7 @@ function drawHighlightRect(vis, x, y, width, height) {
     .attr('height', height)
     .lower();
 
-  const margin = 0;
+  const margin = 1;
 
   const edges = [
     {
@@ -47,7 +47,7 @@ function drawHighlightRect(vis, x, y, width, height) {
       .attr('x2', edge.x2)
       .attr('y2', edge.y2)
       .attr('stroke', 'black')
-      .attr('stroke-width', 1)
+      .attr('stroke-width', 2 * margin)
       .raise();
   });
 }
@@ -55,8 +55,8 @@ export function highlight(vis, link) {
   vis.chart.selectAll('.highligth').remove();
   if (!link) return;
 
-  const x = vis.xScale(link.origin);
-  const y = vis.yScale(link.destination);
+  let x = vis.xScale(link.origin);
+  let y = vis.yScale(link.destination);
   const leftEdge = -vis.margin.left + 2;
   const topEdge = -vis.margin.top + 2;
   const fullHeight = vis.squareSize + vis.margin.top;
@@ -67,6 +67,8 @@ export function highlight(vis, link) {
   drawHighlightRect(vis, x, topEdge, vis.cellSize, fullHeight);
 
   if (link.origin !== link.destination) {
+    x = vis.yScale(link.origin);
+    y = vis.xScale(link.destination);
     drawHighlightRect(vis, leftEdge, x, fullWidth, vis.cellSize);
     drawHighlightRect(vis, y, topEdge, vis.cellSize, fullHeight);
   }
