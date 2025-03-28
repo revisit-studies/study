@@ -15,14 +15,14 @@ function renderColorStdLegend(vis, cells) {
 
   if (vis.encoding === 'squareMark') {
     encodeMarkCells(vis, cells);
-  } else if (vis.encoding === 'rotationMark' || vis.encoding === 'rotationV') {
+  } else if (vis.encoding === 'rotationMark') {
     encodeRotationCells(vis, cells);
   } else if (vis.encoding === 'cellSize') {
     cells.selectAll('rect').remove();
     const newCells = cells.append('rect').attr('fill', 'black');
 
     encodeSizeCells(vis, newCells);
-  } else if (vis.encoding === 'weather') {
+  } else if (vis.encoding === 'lightness') {
     cells
       .append('rect')
       .attr('width', vis.cellSize)
@@ -264,8 +264,6 @@ export function renderBarsLegend(vis) {
         .attr('y', vis.cellSize - vis.meanScale(d[0]));
     });
 
-  if (vis.encoding === 'simple') return;
-
   text = vis.legend
     .selectAll('.legendStdText')
     .data(vis.deviationIntervals)
@@ -300,7 +298,7 @@ export function renderBarsLegend(vis) {
     .text('Stability Scale:');
 
   text.attr('x', (d, i) => i * (maxTextWidth + margin) + leftMargin).attr('y', 2 * vis.legendCellSize + yMargin + 20);
-
+  if (vis.isSnr) vis.deviationIntervals.reverse();
   vis.legend
     .selectAll('.legendStdCell')
     .data(vis.deviationIntervals)
@@ -311,7 +309,7 @@ export function renderBarsLegend(vis) {
       const textWidth = i !== 0 ? maxTextWidth : text.nodes()[i].getBBox().width;
       return `translate(${textX + textWidth / 2 - vis.legendCellSize / 2}, ${vis.legendCellSize + yMargin})`;
     })
-    .attr('class', 'legendMeanCell')
+
     .each(function (d) {
       d3.select(this)
         .append('rect')

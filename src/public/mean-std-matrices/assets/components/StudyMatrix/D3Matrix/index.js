@@ -8,7 +8,7 @@ import { renderColorLegends, renderBarsLegend, renderLightnessLegend } from './l
 import { encodeCells } from './encodings';
 import { renderAxis } from './axis';
 import { getMaxMin, invertScaleBand } from './utils';
-import { clusterByMean } from './clustering';
+import { clusterMatrix } from './clustering';
 
 class D3Matrix {
   constructor(parent, data, parameters, setAnswer) {
@@ -39,9 +39,9 @@ class D3Matrix {
 
     this.originAccesor = (d) => d.origin;
     this.destinationAccesor = (d) => d.destination;
-    this.meanAccesor = (d) => d.avg.toFixed(2);
+    this.meanAccesor = (d) => d.mean.toFixed(2);
     this.stdAccesor = (d) => d.std.toFixed(2);
-    this.snrAccesor = (d) => Math.min(this.snrLimit, d.std === 0 ? this.snrLimit : (d.avg / d.std).toFixed(2));
+    this.snrAccesor = (d) => Math.min(this.snrLimit, d.std === 0 ? this.snrLimit : (d.mean / d.std).toFixed(2));
     this.airlinesAccesor = (d) => d.airlines;
     this.freqsAccesor = (d) => d.freqs;
     this.meansAccesor = (d) => d.allMeans;
@@ -81,32 +81,32 @@ class D3Matrix {
     });
 
     d3.select('#mean-optimal-clustering').on('click', () => {
-      clusterByMean(this, 'optimal', 'avg');
-      // this.trrack.apply('Set Nodes', this.actions.setNodes([]));
-    });
-
-    d3.select('#std-optimal-clustering').on('click', () => {
-      clusterByMean(this, 'optimal', 'std');
-      // this.trrack.apply('Set Nodes', this.actions.setNodes([]));
-    });
-
-    d3.select('#snr-optimal-clustering').on('click', () => {
-      clusterByMean(this, 'optimal', 'snr');
+      clusterMatrix(this, 'optimal', 'mean');
       // this.trrack.apply('Set Nodes', this.actions.setNodes([]));
     });
 
     d3.select('#mean-pca-clustering').on('click', () => {
-      clusterByMean(this, 'pca', 'avg');
+      clusterMatrix(this, 'pca', 'mean');
+      // this.trrack.apply('Set Nodes', this.actions.setNodes([]));
+    });
+
+    d3.select('#std-optimal-clustering').on('click', () => {
+      clusterMatrix(this, 'optimal', 'std');
       // this.trrack.apply('Set Nodes', this.actions.setNodes([]));
     });
 
     d3.select('#std-pca-clustering').on('click', () => {
-      clusterByMean(this, 'pca', 'std');
+      clusterMatrix(this, 'pca', 'std');
+      // this.trrack.apply('Set Nodes', this.actions.setNodes([]));
+    });
+
+    d3.select('#snr-optimal-clustering').on('click', () => {
+      clusterMatrix(this, 'optimal', 'snr');
       // this.trrack.apply('Set Nodes', this.actions.setNodes([]));
     });
 
     d3.select('#snr-pca-clustering').on('click', () => {
-      clusterByMean(this, 'pca', 'snr');
+      clusterMatrix(this, 'pca', 'snr');
       // this.trrack.apply('Set Nodes', this.actions.setNodes([]));
     });
   }
@@ -143,9 +143,9 @@ class D3Matrix {
     [this.meanMin, this.meanMax] = getMaxMin(means);
     [this.stdMin, this.stdMax] = getMaxMin(deviations);
 
-    console.warn(`mean range: [${this.meanMin}, ${this.meanMax}]`);
+    /* console.warn(`mean range: [${this.meanMin}, ${this.meanMax}]`);
     console.warn(`deviation range: [${this.stdMin}, ${this.stdMax}]`);
-    console.warn(`using SNR: ${isSnr}`);
+    console.warn(`using SNR: ${isSnr}`); */
 
     const originNodes = data.map(originAccesor).sort();
 
@@ -161,8 +161,12 @@ class D3Matrix {
 
     const orderedNodes = [...connected, ...disconnected];
 
-    this.xScale = d3.scaleBand().range([0, squareSize]).domain(originNodes);
-    this.yScale = d3.scaleBand().range([0, squareSize]).domain(orderedNodes);
+    const uniqueOriginNodes = Array.from(new Set(originNodes));
+    const uniqueOrderedNodes = Array.from(new Set(orderedNodes));
+
+    // Definir las escalas
+    this.xScale = d3.scaleBand().range([0, squareSize]).domain(uniqueOriginNodes);
+    this.yScale = d3.scaleBand().range([0, squareSize]).domain(uniqueOrderedNodes);
 
     this.cellSize = this.xScale.bandwidth();
 
@@ -230,7 +234,7 @@ class D3Matrix {
   renderLegend() {
     this.legend.selectAll('*').remove();
     if (this.encoding === 'bars') renderBarsLegend(this);
-    if (this.encoding === 'weather') renderLightnessLegend(this);
+    else if (this.encoding === 'lightness') renderLightnessLegend(this);
     else renderColorLegends(this);
   }
 

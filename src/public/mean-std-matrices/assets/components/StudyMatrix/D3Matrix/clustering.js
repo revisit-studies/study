@@ -24,7 +24,7 @@ function linksToMatrix(vis, property) {
   return { matrix, nodes };
 }
 
-export function clusterByMean(vis, ordering, property) {
+export function clusterMatrix(vis, ordering, property) {
   const { matrix, nodes } = linksToMatrix(vis, property);
 
   let orderingFunction;

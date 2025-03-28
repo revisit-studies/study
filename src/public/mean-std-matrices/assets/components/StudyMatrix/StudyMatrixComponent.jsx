@@ -70,9 +70,11 @@ const StudyButtons = () => {
             flexDirection: 'column',
           }}
         >
+          <div>By mean:</div>
           <Button id="mean-optimal-clustering">Optimal Leaf Clustering</Button>
           <Button id="mean-pca-clustering">PCA Clustering</Button>
         </div>
+
         <div
           style={{
             display: 'flex',
@@ -80,8 +82,9 @@ const StudyButtons = () => {
             flexDirection: 'column',
           }}
         >
-          <Button id="snr-optimal-clustering">Optimal Leaf Clustering (snr)</Button>
-          <Button id="snr-pca-clustering">PCA Clustering (snr)</Button>
+          <div>By std:</div>
+          <Button id="std-optimal-clustering">Optimal Leaf Clustering</Button>
+          <Button id="std-pca-clustering">PCA Clustering</Button>
         </div>
         <div
           style={{
@@ -90,10 +93,12 @@ const StudyButtons = () => {
             flexDirection: 'column',
           }}
         >
-          <Button id="std-optimal-clustering">Optimal Leaf Clustering (std)</Button>
-          <Button id="std-pca-clustering">PCA Clustering (std)</Button>
+          <div>By snr:</div>
+          <Button id="snr-optimal-clustering">Optimal Leaf Clustering</Button>
+          <Button id="snr-pca-clustering">PCA Clustering</Button>
         </div>
       </div>
+
       <Button id="clear-selection">Clear Selection</Button>
       <Button id="clear-highlights">Clear Highlights</Button>
     </div>
@@ -110,6 +115,7 @@ const useMatrixUpdate = (matrix, data, parameters) => {
   const menuParameters = useSelector((state) => state.matrix.parameters);
 
   useEffect(() => {
+    console.log('update with data');
     if (!matrix) return;
     matrix.data = data;
     matrix.updateVis();

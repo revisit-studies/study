@@ -108,9 +108,8 @@ const EncodingRadio = () => {
         <Radio value="simple">Mean</Radio>
         <Radio value="squareMark">Square Mark</Radio>
         <Radio value="rotationMark">Rotation Mark</Radio>
-        <Radio value="rotationV">Rotation Mark Variation </Radio>
         <Radio value="cellSize">Cell Size</Radio>
-        <Radio value="weather">Saturation+Lightness</Radio>
+        <Radio value="lightness">Lightness</Radio>
         <Radio value="bars">Bars</Radio>
       </Radio.Group>
     </div>
@@ -131,9 +130,19 @@ const ColorScaleRadio = () => {
       <div>Color Scales:</div>
       <Radio.Group style={{ display: 'flex', flexDirection: 'column' }} onChange={handleChange} value={colorScale}>
         <Radio value="blues">Blues</Radio>
+        <Radio value="oranges">Oranges</Radio>
         <Radio value="reds">Reds</Radio>
+
         <Radio value="viridis">Viridis</Radio>
-        <Radio value="weather">Weather Scale</Radio>
+        <Radio value="cividis">Cividis</Radio>
+
+        <Radio value="cool">Cool</Radio>
+        <Radio value="warm">Warm</Radio>
+
+        <Radio value="plasma">Plasma</Radio>
+        <Radio value="inferno">Inferno</Radio>
+
+        <Radio value="turbo">Turbo</Radio>
       </Radio.Group>
     </div>
   );

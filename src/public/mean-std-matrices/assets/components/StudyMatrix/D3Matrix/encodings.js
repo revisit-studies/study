@@ -17,13 +17,39 @@ function createLinearScale(steps, min = 0, max = 45) {
 }
 
 function setMeanColorScheme(vis) {
-  if (vis.colorScale === 'viridis' || vis.colorScale === 'weather') {
-    const range = createLinearScale(vis.nMeans, 0, 1);
-    vis.meanColorScheme = range.map((t) => d3.interpolateViridis(t)).reverse();
-  } else if (vis.colorScale === 'reds') {
-    vis.meanColorScheme = d3.schemeYlOrRd[vis.nMeans];
-  } else {
-    vis.meanColorScheme = d3.schemeBlues[vis.nMeans];
+  const range = createLinearScale(vis.nMeans, 0, 1);
+
+  switch (vis.colorScale) {
+    case 'viridis':
+      vis.meanColorScheme = range.map((t) => d3.interpolateViridis(t)).reverse();
+      break;
+    case 'cividis':
+      vis.meanColorScheme = range.map((t) => d3.interpolateCividis(t)).reverse();
+      break;
+    case 'warm':
+      vis.meanColorScheme = range.map((t) => d3.interpolateWarm(t)).reverse();
+      break;
+    case 'cool':
+      vis.meanColorScheme = range.map((t) => d3.interpolateCool(t)).reverse();
+      break;
+    case 'plasma':
+      vis.meanColorScheme = range.map((t) => d3.interpolatePlasma(t)).reverse();
+      break;
+    case 'inferno':
+      vis.meanColorScheme = range.map((t) => d3.interpolateInferno(t)).reverse();
+      break;
+    case 'turbo':
+      vis.meanColorScheme = range.map((t) => d3.interpolateTurbo(t)).reverse();
+      break;
+    case 'blues':
+      vis.meanColorScheme = range.map((t) => d3.interpolateBlues(t));
+      break;
+    case 'oranges':
+      vis.meanColorScheme = range.map((t) => d3.interpolateOranges(t));
+      break;
+    default:
+      vis.meanColorScheme = range.map((t) => d3.interpolateYlOrRd(t));
+      break;
   }
 }
 
@@ -56,6 +82,9 @@ function createBaseCell(vis) {
 
 export function barEncode(vis, cells) {
   // Mean bar
+
+  cells.append('rect').attr('fill', 'transparent').attr('width', vis.cellSize).attr('height', vis.cellSize);
+
   cells
     .append('rect')
     .attr('fill', '#1f77b4')
@@ -132,12 +161,13 @@ function barsEncode(vis) {
   barEncode(vis, vis.chart.selectAll('.cell'));
 }
 
-function weatherEncode(vis) {
-  vis.deviationSteps = vis.isSnr
-    ? createLinearScale(vis.nStds, 0.2, 1).reverse()
-    : createLinearScale(vis.nStds, 0.2, 1).reverse();
+function lightnessEncode(vis) {
+  vis.deviationSteps = createLinearScale(vis.nStds, 0.2, 1).reverse();
 
   configureScales(vis);
+
+  vis.chart.selectAll('.cell').append('rect').attr('width', vis.cellSize).attr('height', vis.cellSize)
+    .attr('fill', 'white');
 
   vis.chart
     .selectAll('.cell')
@@ -199,12 +229,12 @@ const ENCODING_FUNCTIONS = {
   squareMark: markEncode,
   rotationMark: rotationMarkEncode,
   cellSize: sizeEncode,
-  weather: weatherEncode,
+  lightness: lightnessEncode,
   bars: barsEncode,
 };
 
 export function encodeCells(vis) {
-  console.warn('encoding:', vis.encoding);
+  /* console.warn('encoding:', vis.encoding); */
 
   vis.chart.selectAll('.cell').selectAll('*').remove();
 
