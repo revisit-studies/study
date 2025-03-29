@@ -73,6 +73,7 @@ class D3Matrix {
     });
 
     d3.select('#clear-highlights').on('click', () => {
+      this.highlightedDestinations = [];
       this.horizontalHighlightsGroup.selectAll('.horizontal-highlight').remove();
       this.xAxisG.selectAll('.tick text').classed('selected', false);
       this.trrack.apply('Clear Highlights', this.actions.setHoriztonalHighlightNodes([]));
@@ -111,11 +112,10 @@ class D3Matrix {
     d3.select('#reset').on('click', () => {
       this.updateVis();
 
-      if (this.highlightDestinations) {
-        const tmp = new Set(this.highlightedDestinations);
-        const highlightedArray = Array.from(tmp);
-        drawHorizontalHighlightRect(this, highlightedArray);
-      }
+      const tmp = new Set(this.highlightedDestinations);
+      const highlightedArray = Array.from(tmp);
+      drawHorizontalHighlightRect(this, highlightedArray);
+
       this.chart.selectAll('.order-highlight').remove();
       // this.trrack.apply('Set Nodes', this.actions.setNodes([]));
     });
