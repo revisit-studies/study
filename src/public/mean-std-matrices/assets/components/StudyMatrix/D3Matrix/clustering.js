@@ -1,5 +1,6 @@
 import * as d3 from 'd3';
 import * as reorder from 'reorder.js';
+import { drawHorizontalHighlightRect } from './highlight';
 
 function linksToMatrix(vis, property) {
   const links = vis.data;
@@ -45,4 +46,8 @@ export function clusterMatrix(vis, ordering, property) {
   vis.xScale = d3.scaleBand().range([0, vis.squareSize]).domain(newOrder);
   vis.yScale = d3.scaleBand().range([0, vis.squareSize]).domain(newOrder);
   vis.renderVis();
+  vis.chart.selectAll('.order-highlight').remove();
+  const tmp = new Set(vis.highlightedDestinations);
+  const highlightedArray = Array.from(tmp);
+  drawHorizontalHighlightRect(vis, highlightedArray);
 }

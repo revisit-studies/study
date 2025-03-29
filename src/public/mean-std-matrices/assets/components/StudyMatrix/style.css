@@ -58,6 +58,12 @@
 
 .selected {
   font-weight: bolder;
+  color: lightsalmon;
+}
+
+.answer-selected {
+  font-weight: bolder;
+  text-decoration: underline;
 }
 
 .highlight {
@@ -65,13 +71,17 @@
   pointer-events: none;
 }
 
+.order-highlight {
+  fill: lightblue;
+  pointer-events: none;
+}
+
 .horizontal-highlight {
-  fill: lightgreen;
+  fill: lightsalmon;
   opacity: 0.5;
   pointer-events: none;
 }
 
 .orderNode {
   font-weight: bolder;
-  text-decoration: underline;
 }

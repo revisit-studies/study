@@ -107,6 +107,18 @@ class D3Matrix {
       clusterMatrix(this, 'pca', 'snr');
       // this.trrack.apply('Set Nodes', this.actions.setNodes([]));
     });
+
+    d3.select('#reset').on('click', () => {
+      this.updateVis();
+
+      if (this.highlightDestinations) {
+        const tmp = new Set(this.highlightedDestinations);
+        const highlightedArray = Array.from(tmp);
+        drawHorizontalHighlightRect(this, highlightedArray);
+      }
+      this.chart.selectAll('.order-highlight').remove();
+      // this.trrack.apply('Set Nodes', this.actions.setNodes([]));
+    });
   }
 
   setSizes(dimensions) {
@@ -130,7 +142,7 @@ class D3Matrix {
 
   updateVis() {
     const {
-      data, isSnr, snrAccesor, stdAccesor, meanAccesor, originAccesor, orderNode, squareSize,
+      data, isSnr, snrAccesor, stdAccesor, meanAccesor, originAccesor, squareSize,
     } = this;
 
     this.deviationAccesor = isSnr ? snrAccesor : stdAccesor;
@@ -147,24 +159,9 @@ class D3Matrix {
 
     const originNodes = data.map(originAccesor).sort();
 
-    const connected = data
-      .filter((link) => link.origin === orderNode)
-      .map((link) => link.destination)
-      .sort();
-
-    const disconnected = data
-      .filter((link) => link.origin !== orderNode)
-      .map((link) => link.destination)
-      .sort();
-
-    const orderedNodes = [...connected, ...disconnected];
-
-    const uniqueOriginNodes = Array.from(new Set(originNodes));
-    const uniqueOrderedNodes = Array.from(new Set(orderedNodes));
-
     // Definir las escalas
-    this.xScale = d3.scaleBand().range([0, squareSize]).domain(uniqueOriginNodes);
-    this.yScale = d3.scaleBand().range([0, squareSize]).domain(uniqueOrderedNodes);
+    this.xScale = d3.scaleBand().range([0, squareSize]).domain(originNodes);
+    this.yScale = d3.scaleBand().range([0, squareSize]).domain(originNodes);
 
     this.cellSize = this.xScale.bandwidth();
 
@@ -225,8 +222,23 @@ class D3Matrix {
   }
 
   orderByNode(node) {
-    this.orderNode = node;
-    this.updateVis();
+    const connected = this.data
+      .filter((link) => link.origin === node)
+      .map((link) => link.destination)
+      .sort();
+
+    const disconnected = this.data
+      .filter((link) => link.origin !== node)
+      .map((link) => link.destination)
+      .sort();
+
+    const orderedNodes = [...connected, ...disconnected];
+
+    const uniqueOrderedNodes = node ? Array.from(new Set(orderedNodes)) : this.xScale.domain();
+
+    this.yScale = d3.scaleBand().range([0, this.squareSize]).domain(uniqueOrderedNodes);
+
+    this.renderVis();
   }
 
   renderLegend() {

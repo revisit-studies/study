@@ -1,5 +1,7 @@
 import * as d3 from 'd3';
-import { drawHorizontalHighlightRect, removeHighlight, showHighlight } from './highlight';
+import {
+  drawHorizontalHighlightRect, drawOrderHighlightRect, removeHighlight, showHighlight,
+} from './highlight';
 
 function removeFirstOccurrences(sourceArray, elementsToRemove) {
   const newArray = [...sourceArray];
@@ -66,17 +68,30 @@ export function renderAxis(vis) {
       const item = d3.select(this);
       const isSelected = item.classed('orderNode');
 
+      vis.chart.selectAll('.order-highlight').remove();
+
       if (!isSelected) {
         vis.trrack.apply('Order by Node', vis.actions.orderByNode(d));
         vis.orderByNode(d);
+        const tmp = new Set(vis.highlightedDestinations);
+        const highlightedArray = Array.from(tmp);
+        drawHorizontalHighlightRect(vis, highlightedArray);
+
+        const x = vis.xScale(d);
+        const y = -vis.margin.top + 2;
+        const fullHeight = vis.squareSize + vis.margin.top;
+        const width = vis.cellSize;
+
+        drawOrderHighlightRect(vis, x, y, width, fullHeight);
       } else {
         vis.trrack.apply('Remove Order by Node', vis.actions.orderByNode(null));
         vis.orderByNode(null);
+        const tmp = new Set(vis.highlightedDestinations);
+        const highlightedArray = Array.from(tmp);
+        drawHorizontalHighlightRect(vis, highlightedArray);
       }
 
-      const tmp = new Set(vis.highlightedDestinations);
-      const highlightedArray = Array.from(tmp);
-      drawHorizontalHighlightRect(vis, highlightedArray);
+      item.classed('orderNode', !isSelected);
     });
 
   vis.yAxisG
@@ -84,7 +99,7 @@ export function renderAxis(vis) {
 
     .on('click', function (e, d) {
       const item = d3.select(this);
-      const isSelected = item.classed('selected');
+      const isSelected = item.classed('answer-selected');
 
       if (!isSelected) {
         vis.trrack.apply('Add Node', vis.actions.addNode(d));
@@ -92,7 +107,7 @@ export function renderAxis(vis) {
         vis.trrack.apply('Remove Node', vis.actions.removeNode(d));
       }
 
-      item.classed('selected', !isSelected);
+      item.classed('answer-selected', !isSelected);
     });
 
   vis.chart.selectAll('.domain').attr('stroke', '#ccc').attr('stroke-width', 1);

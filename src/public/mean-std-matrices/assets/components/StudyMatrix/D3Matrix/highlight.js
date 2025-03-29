@@ -1,3 +1,5 @@
+const lineColor = 'black';
+
 function drawHighlightRect(vis, x, y, width, height) {
   vis.chart
     .append('rect')
@@ -46,17 +48,72 @@ function drawHighlightRect(vis, x, y, width, height) {
       .attr('y1', edge.y1)
       .attr('x2', edge.x2)
       .attr('y2', edge.y2)
-      .attr('stroke', 'black')
+      .attr('stroke', lineColor)
       .attr('stroke-width', 2 * margin)
       .raise();
   });
 }
+
+export function drawOrderHighlightRect(vis, x, y, width, height) {
+  vis.chart
+    .append('rect')
+    .attr('class', 'order-highlight')
+    .attr('x', x)
+    .attr('y', y)
+    .attr('width', width)
+    .attr('height', height)
+    .lower();
+
+  const margin = 1;
+
+  const edges = [
+    {
+      x1: x - margin,
+      y1: y - margin,
+      x2: x + width + margin,
+      y2: y - margin,
+    }, // Arriba
+    {
+      x1: x + width + margin,
+      y1: y - margin,
+      x2: x + width + margin,
+      y2: y + height + margin,
+    }, // Derecha
+    {
+      x1: x - margin,
+      y1: y + height + margin,
+      x2: x + width + margin,
+      y2: y + height + margin,
+    }, // Abajo
+    {
+      x1: x - margin,
+      y1: y - margin,
+      x2: x - margin,
+      y2: y + height + margin,
+    }, // Izquierda
+  ];
+
+  // Dibujar las líneas
+  edges.forEach((edge) => {
+    vis.chart
+      .append('line')
+      .attr('class', 'order-highlight')
+      .attr('x1', edge.x1)
+      .attr('y1', edge.y1)
+      .attr('x2', edge.x2)
+      .attr('y2', edge.y2)
+      .attr('stroke', lineColor)
+      .attr('stroke-width', 2 * margin)
+      .raise();
+  });
+}
+
 export function highlight(vis, link) {
   vis.chart.selectAll('.highligth').remove();
   if (!link) return;
 
-  let x = vis.xScale(link.origin);
-  let y = vis.yScale(link.destination);
+  const x = vis.xScale(link.origin);
+  const y = vis.yScale(link.destination);
   const leftEdge = -vis.margin.left + 2;
   const topEdge = -vis.margin.top + 2;
   const fullHeight = vis.squareSize + vis.margin.top;
@@ -67,10 +124,10 @@ export function highlight(vis, link) {
   drawHighlightRect(vis, x, topEdge, vis.cellSize, fullHeight);
 
   if (link.origin !== link.destination) {
-    x = vis.yScale(link.origin);
+    /* x = vis.yScale(link.origin);
     y = vis.xScale(link.destination);
     drawHighlightRect(vis, leftEdge, x, fullWidth, vis.cellSize);
-    drawHighlightRect(vis, y, topEdge, vis.cellSize, fullHeight);
+    drawHighlightRect(vis, y, topEdge, vis.cellSize, fullHeight); */
   }
 }
 

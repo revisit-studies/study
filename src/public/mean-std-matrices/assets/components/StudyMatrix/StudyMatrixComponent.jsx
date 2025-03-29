@@ -101,6 +101,7 @@ const StudyButtons = () => {
 
       <Button id="clear-selection">Clear Selection</Button>
       <Button id="clear-highlights">Clear Highlights</Button>
+      <Button id="reset">Reset Ordering</Button>
     </div>
   );
 };
