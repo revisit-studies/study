@@ -42,6 +42,7 @@ export function renderAxis(vis) {
     .style('text-anchor', 'start')
     .attr('dy', '0.5em')
     .attr('dx', '0.2em')
+
     .classed('orderNode', (d) => d === vis.orderNode)
     .on('click', (event, d) => {
       const item = d3.select(event.currentTarget);
@@ -78,6 +79,11 @@ export function renderAxis(vis) {
 
       item.classed('orderNode', !isSelected);
     });
+
+  vis.xAxisG
+    .selectAll('.tick text')
+    .append('title')
+    .text((d) => d);
 
   vis.yAxisG
     .selectAll('.tick text')

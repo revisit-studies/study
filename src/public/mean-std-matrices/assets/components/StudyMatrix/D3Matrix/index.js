@@ -10,6 +10,18 @@ import { renderAxis } from './axis';
 import { getMaxMin, invertScaleBand } from './utils';
 import { applyNodeOrder, applyOrders, clusterMatrix } from './ordering';
 
+function getDynamicMargins() {
+  const width = window.innerWidth;
+  const height = window.innerHeight;
+
+  return {
+    top: height * 0.12,
+    right: width * 0.08,
+    bottom: height * 0,
+    left: width * 0.1,
+  };
+}
+
 class D3Matrix {
   constructor(parent, data, parameters, setAnswer) {
     this.parent = parent;
@@ -20,12 +32,6 @@ class D3Matrix {
 
     Object.assign(this, {
       parent,
-      margin: {
-        top: 70,
-        right: 80,
-        bottom: 10,
-        left: 120,
-      },
       legendCellSize: 70,
       barsProportion: 0.6,
       snrLimit: 5,
@@ -33,6 +39,8 @@ class D3Matrix {
       orderNode: null,
       ...parameters,
     });
+
+    this.margin = getDynamicMargins();
 
     this.trrack = trrack;
     this.actions = actions;
@@ -54,8 +62,7 @@ class D3Matrix {
   initVis() {
     this.tooltip = d3.select('#matrix-tooltip');
 
-    this.chart = this.svg.append('g').attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
-
+    this.chart = this.svg.append('g');
     this.horizontalHighlightsGroup = this.chart.append('g').attr('class', 'horizontal-highlights-group');
     this.background = this.chart.append('rect').attr('class', 'background').attr('fill', 'transparent');
 
@@ -81,31 +88,37 @@ class D3Matrix {
 
     d3.select('#mean-optimal-clustering').on('click', () => {
       clusterMatrix(this, 'optimal', 'mean');
+      this.updateVis();
       // this.trrack.apply('Set Nodes', this.actions.setNodes([]));
     });
 
     d3.select('#mean-pca-clustering').on('click', () => {
       clusterMatrix(this, 'pca', 'mean');
+      this.updateVis();
       // this.trrack.apply('Set Nodes', this.actions.setNodes([]));
     });
 
     d3.select('#std-optimal-clustering').on('click', () => {
       clusterMatrix(this, 'optimal', 'std');
+      this.updateVis();
       // this.trrack.apply('Set Nodes', this.actions.setNodes([]));
     });
 
     d3.select('#std-pca-clustering').on('click', () => {
       clusterMatrix(this, 'pca', 'std');
+      this.updateVis();
       // this.trrack.apply('Set Nodes', this.actions.setNodes([]));
     });
 
     d3.select('#snr-optimal-clustering').on('click', () => {
       clusterMatrix(this, 'optimal', 'snr');
+      this.updateVis();
       // this.trrack.apply('Set Nodes', this.actions.setNodes([]));
     });
 
     d3.select('#snr-pca-clustering').on('click', () => {
       clusterMatrix(this, 'pca', 'snr');
+      this.updateVis();
       // this.trrack.apply('Set Nodes', this.actions.setNodes([]));
     });
 
@@ -124,10 +137,13 @@ class D3Matrix {
   }
 
   setSizes(dimensions) {
+    this.margin = getDynamicMargins();
     const { width, height } = dimensions;
     this.width = width - this.margin.left - this.margin.right;
     this.height = height - this.margin.top - this.margin.bottom;
     this.squareSize = Math.min(this.width, this.height);
+
+    this.chart.attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
 
     d3.select('#buttons-div')
       .style('left', `${this.margin.left + this.squareSize + 50}px`)

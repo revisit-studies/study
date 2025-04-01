@@ -59,7 +59,7 @@
     },
     "check": {
       "baseComponent": "matrix",
-      "instruction": "Too which states could you fly from Utah?",
+      "instruction": "To which states can you fly from Utah?",
       "parameters": {
         "dataset": "test.txt",
         "encoding": "cellSize",
@@ -89,7 +89,7 @@
     },
     "attr_comb": {
       "baseComponent": "matrix",
-      "instruction": "Too which states could you fly from Utah spending between $100 and $200? (No more, no less).",
+      "instruction": "To which states can you fly from Utah with a budget strictly between $100 and $200, without spending less or more?",
       "parameters": {
         "dataset": "test.txt",
         "encoding": "squareMark",
@@ -117,9 +117,39 @@
         }
       ]
     },
-    "attr_instability": {
+    "adyacency_max_attr_std": {
       "baseComponent": "matrix",
-      "instruction": "Which state is connected to Utah with the highest price variation?",
+      "instruction": "Which state has the highest price variation on flights from Virginia?",
+      "parameters": {
+        "dataset": "test.txt",
+        "encoding": "lightness",
+        "colorScale": "viridis",
+        "isSnr": false,
+        "nMeans": 5,
+        "nStds": 5,
+        "tooltipHistogram": "frequencies",
+        "showTooltip": false,
+        "isConfig": false
+      },
+      "response": [
+        {
+          "id": "answerNodes",
+          "prompt": "Selected State(s) will show here",
+
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "answerNodes",
+          "answer": ["Oregon"]
+        }
+      ]
+    },
+    "adyacency_attr_std": {
+      "baseComponent": "matrix",
+      "instruction": "Considering only routes with a price variation between $80 and $120, which states are connected to South Carolina?",
       "parameters": {
         "dataset": "test.txt",
         "encoding": "lightness",
@@ -149,7 +179,7 @@
     },
     "attr_routes": {
       "baseComponent": "matrix",
-      "instruction": "In which route could you spend less money SLC - Chicago - NYC or SLC-Dallas-NYC? (Take into account price variations).",
+      "instruction": "On which route would you spend less money: Utah → Michigan → New York or Utah → Texas → New York? (Consider price variations and select the states involved in the itinerary).",
       "parameters": {
         "dataset": "test.txt",
         "encoding": "bars",
@@ -177,9 +207,9 @@
         }
       ]
     },
-    "unstable_range": {
+    "range": {
       "baseComponent": "matrix",
-      "instruction": "What is the price range of flying from Utah?",
+      "instruction": "What is the price range for flights departing from Utah?",
       "parameters": {
         "dataset": "test.txt",
         "encoding": "rotationMark",
@@ -207,9 +237,9 @@
         }
       ]
     },
-    "stable_range": {
+    "attr_range": {
       "baseComponent": "matrix",
-      "instruction": "What is the price range of the stable routes from Utah? (If means are similar, take into account the ones with minimun variation).",
+      "instruction": "Considering only routes with a price variation between $0 and $40, what is the price range for flights departing from Utah?",
       "parameters": {
         "dataset": "test.txt",
         "encoding": "rotationMark",
@@ -239,7 +269,7 @@
     },
     "clusters_unstable": {
       "baseComponent": "matrix",
-      "instruction": "What 3 states have the higher price variation when flying among them?",
+      "instruction": "Which three states have the highest price variation when flying between them?",
       "parameters": {
         "dataset": "test.txt",
         "encoding": "squareMark",
@@ -270,7 +300,7 @@
     },
     "clusters_stable": {
       "baseComponent": "matrix",
-      "instruction": "What 3 states have the lower price variation when flying among them?",
+      "instruction": "Which three states have the lowest price variation when flying between them?",
       "parameters": {
         "dataset": "test.txt",
         "encoding": "squareMark",
@@ -308,10 +338,10 @@
         "components": [
           "check",
           "attr_comb",
-          "attr_instability",
+          "adyacency_attr_std",
+          "adyacency_max_attr_std",
           "attr_routes",
-          "unstable_range",
-          "stable_range",
+          "range",
           "clusters_stable",
           "clusters_unstable"
         ],

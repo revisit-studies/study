@@ -69,7 +69,11 @@ function configureScales(vis) {
 
   vis.testScale = d3.scaleQuantize().domain([vis.stdMin, vis.stdMax]).range(vis.deviationSteps);
 
-  vis.logScale = d3.scalePow().exponent(0.5).domain([vis.stdMin, vis.stdMax]).range([vis.stdMin, vis.stdMax]);
+  vis.logScale = d3
+    .scalePow()
+    .exponent(0.5)
+    .domain([vis.stdMin, vis.stdMax])
+    .range([vis.stdMin, vis.stdMax]);
 
   vis.meanIntervals = vis.meanScale.range().map((value) => vis.meanScale.invertExtent(value));
 
@@ -77,11 +81,16 @@ function configureScales(vis) {
     vis.deviationScale = (value) => vis.testScale(vis.logScale(value));
     vis.deviationIntervals = vis.testScale
       .range()
-      .map((value) => [vis.logScale.invert(vis.testScale.invertExtent(value)[0]), vis.logScale.invert(vis.testScale.invertExtent(value)[1])]);
+      .map((value) => [
+        vis.logScale.invert(vis.testScale.invertExtent(value)[0]),
+        vis.logScale.invert(vis.testScale.invertExtent(value)[1]),
+      ]);
   } else {
     vis.deviationScale = vis.testScale;
 
-    vis.deviationIntervals = vis.testScale.range().map((value) => vis.testScale.invertExtent(value));
+    vis.deviationIntervals = vis.testScale
+      .range()
+      .map((value) => vis.testScale.invertExtent(value));
   }
 }
 
@@ -94,22 +103,29 @@ function createBaseCell(vis) {
     .attr('fill', (d) => vis.meanScale(vis.meanAccesor(d)));
 }
 
-export function barEncode(vis, cells) {
-  cells.append('rect').attr('fill', 'transparent').attr('width', vis.cellSize).attr('height', vis.cellSize);
-
-  cells
+export function barEncode(vis, gCells) {
+  const proportion = 0.6;
+  const size = vis.cellSize * 0.8;
+  gCells
     .append('rect')
-    .attr('class', 'barMean')
-    .attr('width', vis.cellSize * vis.barsProportion)
-    .attr('height', (d) => vis.meanScale(vis.meanAccesor(d)))
-    .attr('y', (d) => vis.cellSize - vis.meanScale(vis.meanAccesor(d)));
+    .attr('fill', 'transparent')
+    .attr('width', vis.cellSize)
+    .attr('height', vis.cellSize);
 
-  cells
+  gCells
+    .append('rect')
+    .attr('fill', '#1f77b4')
+    .attr('width', size * proportion)
+    .attr('height', (d) => vis.meanScale(vis.meanAccesor(d)))
+    .attr('y', (d) => vis.cellSize - vis.meanScale(vis.meanAccesor(d)))
+    .attr('x', (vis.cellSize - size) / 2);
+
+  gCells
     .append('rect')
     .attr('fill', '#ff7f0e')
-    .attr('width', vis.cellSize * (1 - vis.barsProportion))
+    .attr('width', size * (1 - proportion))
     .attr('height', (d) => vis.deviationScale(vis.deviationAccesor(d)))
-    .attr('x', vis.cellSize * vis.barsProportion)
+    .attr('x', size * proportion + (vis.cellSize - size) / 2)
     .attr('y', (d) => vis.cellSize - vis.deviationScale(vis.deviationAccesor(d)));
 }
 
@@ -154,21 +170,20 @@ export function encodeSizeCells(vis, cells) {
 }
 
 function barsEncode(vis) {
-  // Configure scales specifically for bars encoding
-  vis.meanSteps = createLinearScale(vis.nMeans, vis.cellSize * 0.2, vis.cellSize);
-  vis.deviationSteps = createLogScale(vis.nStds, vis.cellSize * 0.2, vis.cellSize);
+  const meanSteps = createLinearScale(5, vis.cellSize * 0.2, vis.cellSize * 0.9);
+  let devSteps = createLinearScale(5, vis.cellSize * 0.2, vis.cellSize * 0.9);
 
-  vis.meanScale = d3.scaleQuantize().domain([vis.meanMin, vis.meanMax]).range(vis.meanSteps);
+  vis.meanScale = d3.scaleQuantize().domain([vis.meanMin, vis.meanMax]).range(meanSteps);
 
-  if (vis.isSnr) vis.deviationSteps = vis.deviationSteps.reverse();
+  if (vis.isSnr) devSteps = devSteps.reverse();
 
-  vis.deviationScale = d3.scaleQuantize().domain([vis.stdMin, vis.stdMax]).range(vis.deviationSteps);
+  vis.deviationScale = d3.scaleQuantize().domain([vis.stdMin, vis.stdMax]).range(devSteps);
 
-  // Store intervals
   vis.meanIntervals = vis.meanScale.range().map((value) => vis.meanScale.invertExtent(value));
-  vis.deviationIntervals = vis.deviationScale.range().map((value) => vis.deviationScale.invertExtent(value));
+  vis.deviationIntervals = vis.deviationScale
+    .range()
+    .map((value) => vis.deviationScale.invertExtent(value));
 
-  // Encode bars
   barEncode(vis, vis.chart.selectAll('.cell'));
 }
 
@@ -177,7 +192,11 @@ function lightnessEncode(vis) {
 
   configureScales(vis);
 
-  vis.chart.selectAll('.cell').append('rect').attr('width', vis.cellSize).attr('height', vis.cellSize)
+  vis.chart
+    .selectAll('.cell')
+    .append('rect')
+    .attr('width', vis.cellSize)
+    .attr('height', vis.cellSize)
     .attr('fill', 'white');
 
   vis.chart
@@ -212,7 +231,11 @@ function sizeEncode(vis) {
   vis.deviationSteps = createSizeScale(vis.nStds, vis.cellSize);
   configureScales(vis);
 
-  vis.chart.selectAll('.cell').append('rect').attr('fill', 'transparent').attr('width', vis.cellSize)
+  vis.chart
+    .selectAll('.cell')
+    .append('rect')
+    .attr('fill', 'transparent')
+    .attr('width', vis.cellSize)
     .attr('height', vis.cellSize);
 
   const cells = vis.chart

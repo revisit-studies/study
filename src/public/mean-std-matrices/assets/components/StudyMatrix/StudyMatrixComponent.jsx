@@ -11,12 +11,7 @@ const StudyMatrixComponent = ({ parameters, setAnswer, provenanceState }) => {
   const { data, loading } = useLoadData(parameters.dataset);
 
   return data ? (
-    <StudyMatrix
-      data={data}
-      parameters={parameters}
-      setAnswer={setAnswer}
-      provenanceState={provenanceState}
-    ></StudyMatrix>
+    <StudyMatrix data={data} parameters={parameters} setAnswer={setAnswer} provenanceState={provenanceState}></StudyMatrix>
   ) : (
     <Loader size={50} style={{ position: 'absolute', top: '50%', left: '50%' }} />
   );

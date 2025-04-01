@@ -9,11 +9,13 @@ const stdMargin = 70;
 const meansTitle = 'Price ranges:';
 const stdsTitle = 'Price variation ranges:';
 
-/* (d) => ((d[0] + d[1]) / 2).toFixed(0); */
-
 function renderColorStdLegend(vis, cells) {
   vis.deviationAccesor = (d) => d[0];
-  cells.append('rect').attr('width', vis.cellSize).attr('height', vis.cellSize).attr('fill', 'white')
+  cells
+    .append('rect')
+    .attr('width', vis.cellSize)
+    .attr('height', vis.cellSize)
+    .attr('fill', 'white')
     .attr('stroke', 'black')
     .attr('stroke-width', 1);
 
@@ -42,7 +44,7 @@ export function renderLightnessLegend(vis) {
   vis.legendCellSize = vis.cellSize;
   const margin = 20;
 
-  const legendG = vis.legend.append('g').attr('transform', `translate(${0},${30})`);
+  const legendG = vis.legend.append('g').attr('transform', `translate(${0},${vis.isConfig ? 80 : 0})`);
 
   let text = legendG
     .selectAll('.legendMeanText')
@@ -136,7 +138,7 @@ export function renderLightnessLegend(vis) {
 }
 
 export function renderColorLegends(vis) {
-  const legendG = vis.legend.append('g').attr('transform', `translate(${0},${30})`);
+  const legendG = vis.legend.append('g').attr('transform', `translate(${0},${vis.isConfig ? 80 : 0})`);
 
   vis.legendCellSize = vis.cellSize;
   const margin = 20;
@@ -226,19 +228,20 @@ export function renderBarsLegend(vis) {
   vis.legendCellSize = vis.cellSize;
   const margin = 20;
 
-  let text = vis.legend
+  const legendG = vis.legend.append('g').attr('transform', `translate(${0},${vis.isConfig ? 80 : 0})`);
+  let text = legendG
     .selectAll('.legendMeanText')
     .data(vis.meanIntervals)
     .join('text')
     .attr('class', 'legendMeanText')
     .attr('text-anchor', 'start')
-    .text((d) => `${d[0].toFixed(0)} - ${d[1].toFixed(0)}`);
+    .text((d) => meanText(d));
 
-  let maxTextWidth = d3.max(vis.legend.selectAll('.legendMeanText').nodes(), (node) => node.getBBox().width);
+  let maxTextWidth = d3.max(legendG.selectAll('.legendMeanText').nodes(), (node) => node.getBBox().width);
 
   text.attr('x', (d, i) => i * (maxTextWidth + margin)).attr('y', vis.legendCellSize + 20);
 
-  vis.legend
+  legendG
     .selectAll('.legendMeanCell')
     .data(vis.meanIntervals)
     .join('g')
@@ -266,26 +269,22 @@ export function renderBarsLegend(vis) {
         .attr('y', vis.cellSize - vis.meanScale(d[0]));
     });
 
-  text = vis.legend
+  text = legendG
     .selectAll('.legendStdText')
     .data(vis.deviationIntervals)
     .join('text')
     .attr('class', 'legendStdText')
     .attr('text-anchor', 'start')
-    .text((d, i) => {
-      if (i === 0) return 'stable';
-      if (i === vis.deviationIntervals.length - 1) return 'unstable';
-      return '      ';
-    });
+    .text((d) => meanText(d));
   const totalMeanWidth = (maxTextWidth + margin) * vis.meanIntervals.length;
 
-  maxTextWidth = d3.max(vis.legend.selectAll('.legendStdText').nodes(), (node) => node.getBBox().width);
+  maxTextWidth = d3.max(legendG.selectAll('.legendStdText').nodes(), (node) => node.getBBox().width);
 
-  vis.legend
+  legendG
     .append('text')
     .attr('text-anchor', 'middle')
     .attr('transform', `translate(${totalMeanWidth / 2},-20)`)
-    .text('Mean Scale:');
+    .text(meansTitle);
 
   const totalStdWidth = (maxTextWidth + margin) * vis.deviationIntervals.length;
 
@@ -293,15 +292,15 @@ export function renderBarsLegend(vis) {
 
   const yMargin = 100;
 
-  vis.legend
+  legendG
     .append('text')
     .attr('text-anchor', 'middle')
     .attr('transform', `translate(${totalMeanWidth / 2},${vis.legendCellSize + yMargin - 20})`)
-    .text('Stability Scale:');
+    .text(stdsTitle);
 
   text.attr('x', (d, i) => i * (maxTextWidth + margin) + leftMargin).attr('y', 2 * vis.legendCellSize + yMargin + 20);
   if (vis.isSnr) vis.deviationIntervals.reverse();
-  vis.legend
+  legendG
     .selectAll('.legendStdCell')
     .data(vis.deviationIntervals)
     .join('g')
