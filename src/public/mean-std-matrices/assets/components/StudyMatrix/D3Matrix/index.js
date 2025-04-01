@@ -2,11 +2,7 @@ import * as d3 from 'd3';
 import { initProvenance } from './trrack';
 import { onCellMouseOut, onCellMouseOver } from './tooltip';
 import {
-  showHighlight,
-  removeHighlight,
-  highlight,
-  updateHorizontal,
-  updateOrder,
+  showHighlight, removeHighlight, highlight, updateHorizontal, updateOrder,
 } from './highlight';
 import { renderColorLegends, renderBarsLegend, renderLightnessLegend } from './legends';
 import { encodeCells } from './encodings';
@@ -28,7 +24,7 @@ class D3Matrix {
         top: 70,
         right: 80,
         bottom: 10,
-        left: 80,
+        left: 120,
       },
       legendCellSize: 70,
       barsProportion: 0.6,
@@ -58,17 +54,10 @@ class D3Matrix {
   initVis() {
     this.tooltip = d3.select('#matrix-tooltip');
 
-    this.chart = this.svg
-      .append('g')
-      .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
+    this.chart = this.svg.append('g').attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
 
-    this.horizontalHighlightsGroup = this.chart
-      .append('g')
-      .attr('class', 'horizontal-highlights-group');
-    this.background = this.chart
-      .append('rect')
-      .attr('class', 'background')
-      .attr('fill', 'transparent');
+    this.horizontalHighlightsGroup = this.chart.append('g').attr('class', 'horizontal-highlights-group');
+    this.background = this.chart.append('rect').attr('class', 'background').attr('fill', 'transparent');
 
     this.legend = this.svg.append('g');
 
@@ -144,10 +133,7 @@ class D3Matrix {
       .style('left', `${this.margin.left + this.squareSize + 50}px`)
       .style('top', `${this.margin.top}px`);
 
-    this.legend.attr(
-      'transform',
-      `translate(${this.margin.left + this.squareSize + 100}, ${this.squareSize / 2})`,
-    );
+    this.legend.attr('transform', `translate(${this.margin.left + this.squareSize + 100}, ${this.squareSize / 2})`);
     this.background.attr('width', this.squareSize).attr('height', this.squareSize);
   }
 
@@ -193,12 +179,7 @@ class D3Matrix {
       .data(this.data)
       .join('g')
       .attr('class', 'cell')
-      .attr(
-        'transform',
-        (d) => `translate(${this.xScale(this.originAccesor(d))}, ${this.yScale(
-          this.destinationAccesor(d),
-        )})`,
-      );
+      .attr('transform', (d) => `translate(${this.xScale(this.originAccesor(d))}, ${this.yScale(this.destinationAccesor(d))})`);
 
     this.addCellListeners();
     this.addBackgroundListeners();
@@ -244,9 +225,7 @@ class D3Matrix {
 
   // trrack simulation methods:
   selectNodes(selectedNodes) {
-    this.yAxisG
-      .selectAll('.tick text')
-      .classed('answer-selected', (d) => selectedNodes.includes(d));
+    this.yAxisG.selectAll('.tick text').classed('answer-selected', (d) => selectedNodes.includes(d));
   }
 
   orderByNode(node) {
@@ -267,9 +246,7 @@ class D3Matrix {
   }
 
   highlightDestinations(data) {
-    const destinations = this.data
-      .filter((link) => data.includes(link.origin))
-      .map((link) => link.destination);
+    const destinations = this.data.filter((link) => data.includes(link.origin)).map((link) => link.destination);
     this.highlightedDestinations = destinations;
     updateHorizontal(this);
   }

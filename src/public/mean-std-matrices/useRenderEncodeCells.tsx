@@ -1,5 +1,5 @@
+import * as d3 from 'd3';
 import { useCallback, useMemo } from 'react';
-import d3 from 'd3';
 import { link } from './Interfaces';
 import { meanAccesor, snrAccesor, stdAccesor } from './Accesors';
 

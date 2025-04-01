@@ -22,6 +22,7 @@ export function renderAxis(vis) {
         .tickSize(-vis.squareSize)
         .tickFormat((d) => (d === vis.orderNode ? `← ${d}` : d)),
     )
+    .attr('font-size', '1.5vh')
     .selectAll('.tick line')
     .attr('stroke', '#ccc')
     .attr('stroke-width', 1)
@@ -29,6 +30,7 @@ export function renderAxis(vis) {
 
   vis.yAxisG
     .call(d3.axisLeft(vis.yScale).tickSize(-vis.squareSize))
+    .attr('font-size', '1.5vh')
     .selectAll('.tick line')
     .attr('stroke', '#ccc')
     .attr('stroke-width', 1)
@@ -44,18 +46,13 @@ export function renderAxis(vis) {
     .on('click', (event, d) => {
       const item = d3.select(event.currentTarget);
       const isSelected = item.classed('selected');
-      const destinations = vis.data
-        .filter((link) => link.origin === d)
-        .map((link) => link.destination);
+      const destinations = vis.data.filter((link) => link.origin === d).map((link) => link.destination);
 
       if (!isSelected) {
         vis.trrack.apply('Select Destinations', vis.actions.addHorizontalHighligthNode(d));
         vis.highlightedDestinations.push(...destinations);
       } else {
-        vis.highlightedDestinations = removeFirstOccurrences(
-          vis.highlightedDestinations,
-          destinations,
-        );
+        vis.highlightedDestinations = removeFirstOccurrences(vis.highlightedDestinations, destinations);
         vis.trrack.apply('Unselect Destinations', vis.actions.removeHorizontalHighligthNode(d));
       }
 
