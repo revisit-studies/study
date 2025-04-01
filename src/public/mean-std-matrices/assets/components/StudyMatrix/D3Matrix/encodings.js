@@ -63,11 +63,11 @@ function setMeanColorScheme(vis) {
 }
 
 function configureScales(vis) {
-  vis.meanScale = d3.scaleQuantize().domain([vis.meanMin, vis.meanMax]).range(vis.meanColorScheme);
+  vis.meanScale = d3.scaleQuantize().domain([0, 250]).range(vis.meanColorScheme);
 
   if (vis.isSnr) vis.deviationSteps = vis.deviationSteps.reverse();
 
-  vis.testScale = d3.scaleQuantize().domain([vis.stdMin, vis.stdMax]).range(vis.deviationSteps);
+  vis.testScale = d3.scaleQuantize().domain([0, 200]).range(vis.deviationSteps);
 
   vis.logScale = d3
     .scalePow()

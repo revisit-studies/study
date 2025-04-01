@@ -68,7 +68,7 @@
         "nMeans": 5,
         "nStds": 5,
         "tooltipHistogram": "frequencies",
-        "showTooltip": false,
+        "showTooltip": true,
         "isConfig": false
       },
       "response": [
@@ -98,7 +98,7 @@
         "nMeans": 5,
         "nStds": 5,
         "tooltipHistogram": "frequencies",
-        "showTooltip": false,
+        "showTooltip": true,
         "isConfig": false
       },
       "response": [
@@ -119,7 +119,7 @@
     },
     "adyacency_max_attr_std": {
       "baseComponent": "matrix",
-      "instruction": "Which state has the highest price variation on flights from Virginia?",
+      "instruction": "Which state has the highest price variation on flights from Virginia? / Which route will you avoid if you flight from Virginia?",
       "parameters": {
         "dataset": "test.txt",
         "encoding": "lightness",
@@ -128,7 +128,7 @@
         "nMeans": 5,
         "nStds": 5,
         "tooltipHistogram": "frequencies",
-        "showTooltip": false,
+        "showTooltip": true,
         "isConfig": false
       },
       "response": [
@@ -158,7 +158,7 @@
         "nMeans": 5,
         "nStds": 5,
         "tooltipHistogram": "frequencies",
-        "showTooltip": false,
+        "showTooltip": true,
         "isConfig": false
       },
       "response": [
@@ -188,7 +188,7 @@
         "nMeans": 5,
         "nStds": 5,
         "tooltipHistogram": "frequencies",
-        "showTooltip": false,
+        "showTooltip": true,
         "isConfig": false
       },
       "response": [
@@ -209,7 +209,7 @@
     },
     "range": {
       "baseComponent": "matrix",
-      "instruction": "What is the price range for flights departing from Utah?",
+      "instruction": "What is the price range for flights departing from Arizona?",
       "parameters": {
         "dataset": "test.txt",
         "encoding": "rotationMark",
@@ -218,7 +218,7 @@
         "nMeans": 5,
         "nStds": 5,
         "tooltipHistogram": "frequencies",
-        "showTooltip": false,
+        "showTooltip": true,
         "isConfig": false
       },
       "response": [
@@ -239,7 +239,7 @@
     },
     "attr_range": {
       "baseComponent": "matrix",
-      "instruction": "Considering only routes with a price variation between $0 and $40, what is the price range for flights departing from Utah?",
+      "instruction": "Considering only routes with a price variation between $0 and $40, what is the price range for flights departing from Virginia?",
       "parameters": {
         "dataset": "test.txt",
         "encoding": "rotationMark",
@@ -248,7 +248,7 @@
         "nMeans": 5,
         "nStds": 5,
         "tooltipHistogram": "frequencies",
-        "showTooltip": false,
+        "showTooltip": true,
         "isConfig": false
       },
       "response": [
@@ -278,7 +278,7 @@
         "nMeans": 5,
         "nStds": 5,
         "tooltipHistogram": "frequencies",
-        "showTooltip": false,
+        "showTooltip": true,
         "isConfig": false,
         "cluster": ["optimal", "snr"]
       },
@@ -309,7 +309,7 @@
         "nMeans": 5,
         "nStds": 5,
         "tooltipHistogram": "frequencies",
-        "showTooltip": false,
+        "showTooltip": true,
         "isConfig": false,
         "cluster": ["pca", "mean"]
       },
@@ -342,6 +342,7 @@
           "adyacency_max_attr_std",
           "attr_routes",
           "range",
+          "attr_range",
           "clusters_stable",
           "clusters_unstable"
         ],
