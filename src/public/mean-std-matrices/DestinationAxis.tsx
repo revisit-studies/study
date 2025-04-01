@@ -41,10 +41,10 @@ export function DestinationAxis({ showLines = true }: { showLines?: boolean }) {
       }
 
       setAnswerNodes(newNodes);
-      trrack?.apply('Set Answer', actions.setAnswerNodes(newNodes));
+      trrack?.apply('Set Answer', actions?.setAnswerNodes(newNodes));
       setAnswer({
         status: true,
-        provenanceGraph: trrack.graph.backend,
+        provenanceGraph: trrack?.graph.backend,
         answers: { answerNodes: newNodes },
       });
     },

@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useMemo } from 'react';
 import * as d3 from 'd3';
-import { Registry, Trrack } from '@trrack/core';
+import { Trrack } from '@trrack/core';
 import { TrrackState } from './Interfaces';
 
 interface MatrixContextType {
@@ -28,7 +28,7 @@ interface MatrixContextType {
   answerNodes: string[];
   setAnswerNodes: (nodes: string[]) => void;
 
-  actions?: Registry<string>;
+  actions?: any;
   trrack?: Trrack<TrrackState, string>;
   setAnswer?: any;
 }

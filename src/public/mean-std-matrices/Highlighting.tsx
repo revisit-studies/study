@@ -7,52 +7,41 @@ export function Highlighting() {
     margin,
     size,
     cellSize,
-    originHighlight,
+
     originScale,
-    destinationHighlight,
     destinationScale,
+
+    originHighlight,
+    destinationHighlight,
 
     actions,
     trrack,
   } = useMatrixContext();
 
-  const { topMargin, leftMargin } = useMemo(
-    () => ({ topMargin: margin.top, leftMargin: margin.left }),
-    [margin],
-  );
+  const { topMargin, leftMargin } = useMemo(() => ({ topMargin: margin.top, leftMargin: margin.left }), [margin]);
 
   const { width, height } = useMemo(() => ({ width: size, height: size }), [size]);
 
   useEffect(() => {
-    trrack?.apply('Highlight', actions.setOriginHighlight(originHighlight));
+    trrack?.apply('Highlight', actions?.setOriginHighlight(originHighlight));
   }, [originHighlight]);
 
   useEffect(() => {
-    d3.selectAll('.highlightLine').raise(); // Asegura que las líneas estén al frente
+    trrack?.apply('Highlight', actions?.setOriginHighlight(destinationHighlight));
+  }, [destinationHighlight]);
+
+  useEffect(() => {
+    d3.selectAll('.highlightLine').raise();
   }, [originHighlight, destinationHighlight]);
 
   return (
     <>
       {originHighlight && (
-        <rect
-          width={cellSize}
-          height={height + topMargin}
-          x={originScale(originHighlight)}
-          y={-topMargin}
-          fill="blue"
-          fillOpacity={0.5}
-        />
+        <rect width={cellSize} height={height + topMargin} x={originScale(originHighlight)} y={-topMargin} fill="blue" fillOpacity={0.5} />
       )}
 
       {destinationHighlight && (
-        <rect
-          width={width + leftMargin}
-          height={cellSize}
-          x={-leftMargin}
-          y={destinationScale(destinationHighlight)}
-          fill="blue"
-          fillOpacity={0.5}
-        />
+        <rect width={width + leftMargin} height={cellSize} x={-leftMargin} y={destinationScale(destinationHighlight)} fill="blue" fillOpacity={0.5} />
       )}
 
       {originHighlight && (
