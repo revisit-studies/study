@@ -1,6 +1,5 @@
-import * as d3 from 'd3';
 import * as reorder from 'reorder.js';
-import { drawHorizontalHighlightRect } from './highlight';
+import { drawOrderHighlightRect } from './highlight';
 
 function linksToMatrix(vis, property) {
   const links = vis.data;
@@ -10,7 +9,9 @@ function linksToMatrix(vis, property) {
   } else if (property === 'std') {
     accesor = vis.stdAccesor;
   }
-  const nodes = Array.from(new Set(links.flatMap(({ origin, destination }) => [origin, destination])));
+  const nodes = Array.from(
+    new Set(links.flatMap(({ origin, destination }) => [origin, destination])),
+  );
 
   const indexMap = new Map(nodes.map((node, index) => [node, index]));
 
@@ -23,6 +24,11 @@ function linksToMatrix(vis, property) {
   });
 
   return { matrix, nodes };
+}
+
+export function applyOrders(vis, xNodes, yNodes) {
+  vis.xNodes = xNodes;
+  vis.yNodes = yNodes;
 }
 
 export function clusterMatrix(vis, ordering, property) {
@@ -42,12 +48,26 @@ export function clusterMatrix(vis, ordering, property) {
   }
 
   const newOrder = reorder.permute(nodes, order);
+  vis.orderNode = null;
+  applyOrders(vis, newOrder, newOrder);
+}
 
-  vis.xScale = d3.scaleBand().range([0, vis.squareSize]).domain(newOrder);
-  vis.yScale = d3.scaleBand().range([0, vis.squareSize]).domain(newOrder);
-  vis.renderVis();
-  vis.chart.selectAll('.order-highlight').remove();
-  const tmp = new Set(vis.highlightedDestinations);
-  const highlightedArray = Array.from(tmp);
-  drawHorizontalHighlightRect(vis, highlightedArray);
+export function applyNodeOrder(vis) {
+  if (vis.orderNode) drawOrderHighlightRect(vis);
+
+  const connected = vis.data
+    .filter((link) => link.origin === vis.orderNode)
+    .map((link) => link.destination)
+    .sort();
+
+  const disconnected = vis.data
+    .filter((link) => link.origin !== vis.orderNode)
+    .map((link) => link.destination)
+    .sort();
+
+  const orderedNodes = [...connected, ...disconnected];
+  const xNodes = vis.xScale.domain();
+  const yNodes = vis.orderNode ? Array.from(new Set(orderedNodes)) : xNodes;
+
+  applyOrders(vis, xNodes, yNodes);
 }

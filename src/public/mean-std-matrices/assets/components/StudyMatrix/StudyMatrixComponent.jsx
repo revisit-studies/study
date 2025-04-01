@@ -8,10 +8,15 @@ import { setParameters } from '../../features/matrix/matrixSlice.js';
 import { Button, Loader } from '@mantine/core';
 
 const StudyMatrixComponent = ({ parameters, setAnswer, provenanceState }) => {
-  const { data, loading } = useLoadData(parameters.file);
+  const { data, loading } = useLoadData(parameters.dataset);
 
   return data ? (
-    <StudyMatrix data={data} parameters={parameters} setAnswer={setAnswer} provenanceState={provenanceState}></StudyMatrix>
+    <StudyMatrix
+      data={data}
+      parameters={parameters}
+      setAnswer={setAnswer}
+      provenanceState={provenanceState}
+    ></StudyMatrix>
   ) : (
     <Loader size={50} style={{ position: 'absolute', top: '50%', left: '50%' }} />
   );
@@ -47,57 +52,59 @@ const StudyMatrix = ({ data, parameters, setAnswer, provenanceState }) => {
   return (
     <div id="matrix-div">
       <div id="matrix-tooltip"></div>
-      {!provenanceState && <StudyButtons></StudyButtons>}
-      {!provenanceState && <Menu></Menu>}
+      {!provenanceState && <StudyButtons parameters={parameters}></StudyButtons>}
+      {!provenanceState && parameters.isConfig && <Menu></Menu>}
       <svg ref={matrixRef} className="fill" />
     </div>
   );
 };
 
-const StudyButtons = () => {
+const StudyButtons = ({ parameters }) => {
   return (
     <div id="buttons-div">
-      <div
-        style={{
-          display: 'flex',
-          gap: '5px',
-        }}
-      >
+      {parameters.isConfig && (
         <div
           style={{
             display: 'flex',
             gap: '5px',
-            flexDirection: 'column',
           }}
         >
-          <div>By mean:</div>
-          <Button id="mean-optimal-clustering">Optimal Leaf Clustering</Button>
-          <Button id="mean-pca-clustering">PCA Clustering</Button>
-        </div>
+          <div
+            style={{
+              display: 'flex',
+              gap: '5px',
+              flexDirection: 'column',
+            }}
+          >
+            <div>By mean:</div>
+            <Button id="mean-optimal-clustering">Optimal Leaf Clustering</Button>
+            <Button id="mean-pca-clustering">PCA Clustering</Button>
+          </div>
 
-        <div
-          style={{
-            display: 'flex',
-            gap: '5px',
-            flexDirection: 'column',
-          }}
-        >
-          <div>By std:</div>
-          <Button id="std-optimal-clustering">Optimal Leaf Clustering</Button>
-          <Button id="std-pca-clustering">PCA Clustering</Button>
+          <div
+            style={{
+              display: 'flex',
+              gap: '5px',
+              flexDirection: 'column',
+            }}
+          >
+            <div>By std:</div>
+            <Button id="std-optimal-clustering">Optimal Leaf Clustering</Button>
+            <Button id="std-pca-clustering">PCA Clustering</Button>
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              gap: '5px',
+              flexDirection: 'column',
+            }}
+          >
+            <div>By snr:</div>
+            <Button id="snr-optimal-clustering">Optimal Leaf Clustering</Button>
+            <Button id="snr-pca-clustering">PCA Clustering</Button>
+          </div>
         </div>
-        <div
-          style={{
-            display: 'flex',
-            gap: '5px',
-            flexDirection: 'column',
-          }}
-        >
-          <div>By snr:</div>
-          <Button id="snr-optimal-clustering">Optimal Leaf Clustering</Button>
-          <Button id="snr-pca-clustering">PCA Clustering</Button>
-        </div>
-      </div>
+      )}
 
       <Button id="clear-selection">Clear Selection</Button>
       <Button id="clear-highlights">Clear Highlights</Button>
@@ -116,7 +123,6 @@ const useMatrixUpdate = (matrix, data, parameters) => {
   const menuParameters = useSelector((state) => state.matrix.parameters);
 
   useEffect(() => {
-    console.log('update with data');
     if (!matrix) return;
     matrix.data = data;
     matrix.updateVis();
@@ -150,7 +156,7 @@ const useProvenanceReplay = (matrix, provenanceState) => {
     if (!provenanceState || !matrix) return;
     const { selectedNodes } = provenanceState;
     matrix.selectNodes(selectedNodes);
-  }, [provenanceState?.selectNodes]);
+  }, [provenanceState?.selectedNodes]);
 
   useEffect(() => {
     if (!provenanceState || !matrix) return;
@@ -184,7 +190,6 @@ async function loadData(file, setData, setLoading) {
       .split('\n')
       .filter((line) => line.trim().length > 0)
       .map((line) => JSON.parse(line));
-    console.log('NEW DATA', parsedData);
     setData(parsedData);
   } catch (error) {
     console.error('Error loading JSON:', error);

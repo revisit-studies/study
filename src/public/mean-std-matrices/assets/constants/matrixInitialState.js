@@ -9,7 +9,7 @@ export const initialState = {
     tooltipHistogram: null,
   },
 
-  selectedNodes: [],
+  answerNodes: [],
   highlightedLinks: null,
   horizontal: [],
   orderNode: null,

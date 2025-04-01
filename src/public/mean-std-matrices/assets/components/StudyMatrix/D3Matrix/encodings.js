@@ -16,6 +16,15 @@ function createLinearScale(steps, min = 0, max = 45) {
   return Array.from({ length: steps }, (_, i) => min + stepSize * i);
 }
 
+function createLogScale(steps, min = 1, max = 45) {
+  const stepSize = (max - min) / (steps - 1);
+  return Array.from({ length: steps }, (_, i) => min + stepSize * i);
+  /* const logMin = Math.log10(min);
+  const logMax = Math.log10(max);
+  const stepSize = (logMax - logMin) / (steps - 1);
+  return Array.from({ length: steps }, (_, i) => Math.pow(10, logMin + stepSize * i)); */
+}
+
 function setMeanColorScheme(vis) {
   const range = createLinearScale(vis.nMeans, 0, 1);
 
@@ -58,17 +67,22 @@ function configureScales(vis) {
 
   if (vis.isSnr) vis.deviationSteps = vis.deviationSteps.reverse();
 
-  vis.deviationScale = d3.scaleQuantize().domain([vis.stdMin, vis.stdMax]).range(vis.deviationSteps);
+  vis.testScale = d3.scaleQuantize().domain([vis.stdMin, vis.stdMax]).range(vis.deviationSteps);
+
+  vis.logScale = d3.scalePow().exponent(0.5).domain([vis.stdMin, vis.stdMax]).range([vis.stdMin, vis.stdMax]);
 
   vis.meanIntervals = vis.meanScale.range().map((value) => vis.meanScale.invertExtent(value));
-  vis.deviationIntervals = vis.deviationScale.range().map((value) => vis.deviationScale.invertExtent(value));
 
-  console.warn('Scales configured:', {
-    meanSteps: vis.meanColorScheme,
-    meanIntervals: vis.meanIntervals,
-    deviationSteps: vis.deviationSteps,
-    deviationIntervals: vis.deviationIntervals,
-  });
+  if (vis.isPow) {
+    vis.deviationScale = (value) => vis.testScale(vis.logScale(value));
+    vis.deviationIntervals = vis.testScale
+      .range()
+      .map((value) => [vis.logScale.invert(vis.testScale.invertExtent(value)[0]), vis.logScale.invert(vis.testScale.invertExtent(value)[1])]);
+  } else {
+    vis.deviationScale = vis.testScale;
+
+    vis.deviationIntervals = vis.testScale.range().map((value) => vis.testScale.invertExtent(value));
+  }
 }
 
 function createBaseCell(vis) {
@@ -81,18 +95,15 @@ function createBaseCell(vis) {
 }
 
 export function barEncode(vis, cells) {
-  // Mean bar
-
   cells.append('rect').attr('fill', 'transparent').attr('width', vis.cellSize).attr('height', vis.cellSize);
 
   cells
     .append('rect')
-    .attr('fill', '#1f77b4')
+    .attr('class', 'barMean')
     .attr('width', vis.cellSize * vis.barsProportion)
     .attr('height', (d) => vis.meanScale(vis.meanAccesor(d)))
     .attr('y', (d) => vis.cellSize - vis.meanScale(vis.meanAccesor(d)));
 
-  // Deviation bar
   cells
     .append('rect')
     .attr('fill', '#ff7f0e')
@@ -145,7 +156,7 @@ export function encodeSizeCells(vis, cells) {
 function barsEncode(vis) {
   // Configure scales specifically for bars encoding
   vis.meanSteps = createLinearScale(vis.nMeans, vis.cellSize * 0.2, vis.cellSize);
-  vis.deviationSteps = createLinearScale(vis.nStds, vis.cellSize * 0.2, vis.cellSize);
+  vis.deviationSteps = createLogScale(vis.nStds, vis.cellSize * 0.2, vis.cellSize);
 
   vis.meanScale = d3.scaleQuantize().domain([vis.meanMin, vis.meanMax]).range(vis.meanSteps);
 
@@ -162,7 +173,7 @@ function barsEncode(vis) {
 }
 
 function lightnessEncode(vis) {
-  vis.deviationSteps = createLinearScale(vis.nStds, 0.2, 1).reverse();
+  vis.deviationSteps = createLogScale(vis.nStds, 0.2, 1).reverse();
 
   configureScales(vis);
 
@@ -179,7 +190,7 @@ function lightnessEncode(vis) {
 }
 
 function rotationMarkEncode(vis) {
-  vis.deviationSteps = createLinearScale(vis.nStds);
+  vis.deviationSteps = createLogScale(vis.nStds);
 
   configureScales(vis);
 
@@ -201,11 +212,7 @@ function sizeEncode(vis) {
   vis.deviationSteps = createSizeScale(vis.nStds, vis.cellSize);
   configureScales(vis);
 
-  vis.chart
-    .selectAll('.cell')
-    .append('rect')
-    .attr('fill', 'transparent')
-    .attr('width', vis.cellSize)
+  vis.chart.selectAll('.cell').append('rect').attr('fill', 'transparent').attr('width', vis.cellSize)
     .attr('height', vis.cellSize);
 
   const cells = vis.chart

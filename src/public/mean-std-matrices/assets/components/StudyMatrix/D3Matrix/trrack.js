@@ -5,11 +5,11 @@ export function initProvenance(setAnswer) {
   const registry = Registry.create();
 
   const addNode = registry.register('add-node', (currentState, payload) => {
-    currentState.selectedNodes = [...currentState.selectedNodes, payload];
+    currentState.answerNodes = [...currentState.answerNodes, payload];
   });
 
   const removeNode = registry.register('remove-node', (currentState, payload) => {
-    currentState.selectedNodes = currentState.selectedNodes.filter((node) => node !== payload);
+    currentState.answerNodes = currentState.answerNodes.filter((node) => node !== payload);
   });
 
   const setNodes = registry.register('set-nodes', (currentState, payload) => {
@@ -60,13 +60,13 @@ export function initProvenance(setAnswer) {
     const newState = trrack.getState();
 
     if (
-      JSON.stringify(prevState.selectedNodes) !== JSON.stringify(newState.selectedNodes)
+      JSON.stringify(prevState.answerNodes) !== JSON.stringify(newState.answerNodes)
       || JSON.stringify(prevState.orderNode) !== JSON.stringify(newState.orderNode)
     ) {
       setAnswer({
         status: true,
         provenanceGraph: trrack.graph.backend,
-        answers: { selectedNodes: newState.selectedNodes },
+        answers: { answerNodes: newState.answerNodes },
       });
 
       prevState = newState;

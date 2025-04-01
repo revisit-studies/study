@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Button, Radio, Select, Slider } from 'antd';
+import { Button, Checkbox, Radio, Select, Slider } from 'antd';
 import { useSelector, useDispatch } from 'react-redux';
 import { SettingOutlined } from '@ant-design/icons';
 import {
@@ -10,6 +10,7 @@ import {
   setNStds,
   setTooltip,
   setShowTooltip,
+  setIsPow,
 } from '../../features/matrix/matrixSlice';
 import { setFile } from '../../features/data/dataSlice';
 
@@ -37,6 +38,8 @@ const MenuButton = () => {
           <FileSelector></FileSelector>
           <NMeansSlider></NMeansSlider>
           <NStdSlider></NStdSlider>
+
+          <PowCheck></PowCheck>
 
           <ShowTooltipRadio></ShowTooltipRadio>
           <TooltipRadio></TooltipRadio>
@@ -104,7 +107,11 @@ const EncodingRadio = () => {
   return (
     <div>
       <div>Encodings:</div>
-      <Radio.Group style={{ display: 'flex', flexDirection: 'column' }} onChange={handleChange} value={encoding}>
+      <Radio.Group
+        style={{ display: 'flex', flexDirection: 'column' }}
+        onChange={handleChange}
+        value={encoding}
+      >
         <Radio value="simple">Mean</Radio>
         <Radio value="squareMark">Square Mark</Radio>
         <Radio value="rotationMark">Rotation Mark</Radio>
@@ -112,6 +119,22 @@ const EncodingRadio = () => {
         <Radio value="lightness">Lightness</Radio>
         <Radio value="bars">Bars</Radio>
       </Radio.Group>
+    </div>
+  );
+};
+
+const PowCheck = () => {
+  const dispatch = useDispatch();
+  const isPow = useSelector((state) => state.matrix.parameters.isPow);
+
+  const onChange = (e) => {
+    dispatch(setIsPow(e.target.checked)); // Usa `checked`, no `value`
+  };
+
+  return (
+    <div>
+      <div>Power Scale:</div>
+      <Checkbox checked={isPow} onChange={onChange} />
     </div>
   );
 };
@@ -128,7 +151,11 @@ const ColorScaleRadio = () => {
   return (
     <div>
       <div>Color Scales:</div>
-      <Radio.Group style={{ display: 'flex', flexDirection: 'column' }} onChange={handleChange} value={colorScale}>
+      <Radio.Group
+        style={{ display: 'flex', flexDirection: 'column' }}
+        onChange={handleChange}
+        value={colorScale}
+      >
         <Radio value="blues">Blues</Radio>
         <Radio value="oranges">Oranges</Radio>
         <Radio value="reds">Reds</Radio>
@@ -181,7 +208,12 @@ const FileSelector = () => {
   return (
     <div style={{ marginTop: '1rem' }}>
       <strong>Select Network:</strong>
-      <Select style={{ width: '100%' }} value={file} placeholder="Select a network file" onChange={onChange}>
+      <Select
+        style={{ width: '100%' }}
+        value={file}
+        placeholder="Select a network file"
+        onChange={onChange}
+      >
         {files.map((filePath, index) => (
           <Select.Option key={index} value={filePath}></Select.Option>
         ))}
@@ -202,7 +234,14 @@ const NMeansSlider = () => {
   return (
     <div>
       <div>N Mean Categories:</div>
-      <Slider min={3} max={7} defaultValue={n} onChangeComplete={onSliderComplete} step={1} style={{ width: '100%' }} />
+      <Slider
+        min={3}
+        max={7}
+        defaultValue={n}
+        onChangeComplete={onSliderComplete}
+        step={1}
+        style={{ width: '100%' }}
+      />
     </div>
   );
 };
@@ -218,7 +257,14 @@ const NStdSlider = () => {
   return (
     <div>
       <div>N Deviation Categories:</div>
-      <Slider min={2} max={7} defaultValue={n} onChangeComplete={onSliderComplete} step={1} style={{ width: '100%' }} />
+      <Slider
+        min={2}
+        max={7}
+        defaultValue={n}
+        onChangeComplete={onSliderComplete}
+        step={1}
+        style={{ width: '100%' }}
+      />
     </div>
   );
 };

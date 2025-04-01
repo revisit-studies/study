@@ -15,6 +15,9 @@ const matrixSlice = createSlice({
     setIsSnr: (state, action) => {
       state.parameters.isSnr = action.payload === 'snr';
     },
+    setIsPow: (state, action) => {
+      state.parameters.isPow = action.payload;
+    },
 
     setColorScale: (state, action) => {
       state.parameters.colorScale = action.payload;
@@ -52,6 +55,8 @@ export const {
 
   setEncoding,
   setIsSnr,
+  setIsPow,
+
   setColorScale,
   setNMeans,
   setNStds,

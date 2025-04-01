@@ -1,7 +1,5 @@
 import * as d3 from 'd3';
-import {
-  drawHorizontalHighlightRect, drawOrderHighlightRect, removeHighlight, showHighlight,
-} from './highlight';
+import { drawHorizontalHighlightRect, removeHighlight, showHighlight } from './highlight';
 
 function removeFirstOccurrences(sourceArray, elementsToRemove) {
   const newArray = [...sourceArray];
@@ -46,13 +44,18 @@ export function renderAxis(vis) {
     .on('click', (event, d) => {
       const item = d3.select(event.currentTarget);
       const isSelected = item.classed('selected');
-      const destinations = vis.data.filter((link) => link.origin === d).map((link) => link.destination);
+      const destinations = vis.data
+        .filter((link) => link.origin === d)
+        .map((link) => link.destination);
 
       if (!isSelected) {
         vis.trrack.apply('Select Destinations', vis.actions.addHorizontalHighligthNode(d));
         vis.highlightedDestinations.push(...destinations);
       } else {
-        vis.highlightedDestinations = removeFirstOccurrences(vis.highlightedDestinations, destinations);
+        vis.highlightedDestinations = removeFirstOccurrences(
+          vis.highlightedDestinations,
+          destinations,
+        );
         vis.trrack.apply('Unselect Destinations', vis.actions.removeHorizontalHighligthNode(d));
       }
 
@@ -68,27 +71,12 @@ export function renderAxis(vis) {
       const item = d3.select(this);
       const isSelected = item.classed('orderNode');
 
-      vis.chart.selectAll('.order-highlight').remove();
-
       if (!isSelected) {
         vis.trrack.apply('Order by Node', vis.actions.orderByNode(d));
         vis.orderByNode(d);
-        const tmp = new Set(vis.highlightedDestinations);
-        const highlightedArray = Array.from(tmp);
-        drawHorizontalHighlightRect(vis, highlightedArray);
-
-        const x = vis.xScale(d);
-        const y = -vis.margin.top + 2;
-        const fullHeight = vis.squareSize + vis.margin.top;
-        const width = vis.cellSize;
-
-        drawOrderHighlightRect(vis, x, y, width, fullHeight);
       } else {
         vis.trrack.apply('Remove Order by Node', vis.actions.orderByNode(null));
         vis.orderByNode(null);
-        const tmp = new Set(vis.highlightedDestinations);
-        const highlightedArray = Array.from(tmp);
-        drawHorizontalHighlightRect(vis, highlightedArray);
       }
 
       item.classed('orderNode', !isSelected);

@@ -1,11 +1,22 @@
 const lineColor = 'black';
 
+export function drawHorizontalHighlightRect(vis, destinations) {
+  const leftEdge = -vis.margin.left;
+  const fullWidth = vis.squareSize + vis.margin.left;
+
+  vis.horizontalHighlightsGroup
+    .selectAll('.horizontal-highlight')
+    .data(destinations, (d) => d)
+    .join('rect')
+    .attr('class', 'horizontal-highlight')
+    .attr('x', leftEdge)
+    .attr('y', (destination) => vis.yScale(destination))
+    .attr('width', fullWidth + 20)
+    .attr('height', vis.cellSize);
+}
+
 function drawHighlightRect(vis, x, y, width, height) {
-  vis.chart
-    .append('rect')
-    .attr('class', 'highlight')
-    .attr('x', x)
-    .attr('y', y)
+  vis.chart.append('rect').attr('class', 'highlight').attr('x', x).attr('y', y)
     .attr('width', width)
     .attr('height', height)
     .lower();
@@ -18,28 +29,27 @@ function drawHighlightRect(vis, x, y, width, height) {
       y1: y - margin,
       x2: x + width + margin,
       y2: y - margin,
-    }, // Arriba
+    },
     {
       x1: x + width + margin,
       y1: y - margin,
       x2: x + width + margin,
       y2: y + height + margin,
-    }, // Derecha
+    },
     {
       x1: x - margin,
       y1: y + height + margin,
       x2: x + width + margin,
       y2: y + height + margin,
-    }, // Abajo
+    },
     {
       x1: x - margin,
       y1: y - margin,
       x2: x - margin,
       y2: y + height + margin,
-    }, // Izquierda
+    },
   ];
 
-  // Dibujar las líneas
   edges.forEach((edge) => {
     vis.chart
       .append('line')
@@ -54,12 +64,13 @@ function drawHighlightRect(vis, x, y, width, height) {
   });
 }
 
-export function drawOrderHighlightRect(vis, x, y, width, height) {
-  vis.chart
-    .append('rect')
-    .attr('class', 'order-highlight')
-    .attr('x', x)
-    .attr('y', y)
+export function drawOrderHighlightRect(vis) {
+  const x = vis.xScale(vis.orderNode);
+  const y = -vis.margin.top + 2;
+  const height = vis.squareSize + vis.margin.top;
+  const width = vis.cellSize;
+
+  vis.chart.append('rect').attr('class', 'order-highlight').attr('x', x).attr('y', y)
     .attr('width', width)
     .attr('height', height)
     .lower();
@@ -72,28 +83,27 @@ export function drawOrderHighlightRect(vis, x, y, width, height) {
       y1: y - margin,
       x2: x + width + margin,
       y2: y - margin,
-    }, // Arriba
+    },
     {
       x1: x + width + margin,
       y1: y - margin,
       x2: x + width + margin,
       y2: y + height + margin,
-    }, // Derecha
+    },
     {
       x1: x - margin,
       y1: y + height + margin,
       x2: x + width + margin,
       y2: y + height + margin,
-    }, // Abajo
+    },
     {
       x1: x - margin,
       y1: y - margin,
       x2: x - margin,
       y2: y + height + margin,
-    }, // Izquierda
+    },
   ];
 
-  // Dibujar las líneas
   edges.forEach((edge) => {
     vis.chart
       .append('line')
@@ -108,8 +118,19 @@ export function drawOrderHighlightRect(vis, x, y, width, height) {
   });
 }
 
+export function updateHorizontal(vis) {
+  const tmp = new Set(vis.highlightedDestinations);
+  const highlightedArray = Array.from(tmp);
+  drawHorizontalHighlightRect(vis, highlightedArray);
+}
+
+export function updateOrder(vis) {
+  vis.chart.selectAll('.order-highlight').remove();
+  if (vis.orderNode) drawOrderHighlightRect(vis);
+}
+
 export function highlight(vis, link) {
-  vis.chart.selectAll('.highligth').remove();
+  vis.chart.selectAll('.highlight').remove();
   if (!link) return;
 
   const x = vis.xScale(link.origin);
@@ -137,11 +158,7 @@ export function removeHighlight(vis) {
 }
 
 export function showHighlight(vis, data) {
-  if (
-    vis.highlightedLinks
-    && vis.highlightedLinks.origin === data.origin
-    && vis.highlightedLinks.destination === data.destination
-  ) return;
+  if (vis.highlightedLinks && vis.highlightedLinks.origin === data.origin && vis.highlightedLinks.destination === data.destination) return;
   const obj = { origin: data.origin, destination: data.destination };
   vis.highlightedLinks = obj;
 
@@ -154,19 +171,4 @@ export function showHighlight(vis, data) {
 
   vis.trrack.apply('Highlighting', vis.actions.highlightLinks(obj));
   highlight(vis, data);
-}
-
-export function drawHorizontalHighlightRect(vis, destinations) {
-  const leftEdge = -vis.margin.left;
-  const fullWidth = vis.squareSize + vis.margin.left;
-
-  vis.horizontalHighlightsGroup
-    .selectAll('.horizontal-highlight')
-    .data(destinations, (d) => d)
-    .join('rect')
-    .attr('class', 'horizontal-highlight')
-    .attr('x', leftEdge)
-    .attr('y', (destination) => vis.yScale(destination))
-    .attr('width', fullWidth + 20)
-    .attr('height', vis.cellSize);
 }

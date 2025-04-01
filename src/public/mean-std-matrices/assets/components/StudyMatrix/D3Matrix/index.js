@@ -2,13 +2,17 @@ import * as d3 from 'd3';
 import { initProvenance } from './trrack';
 import { onCellMouseOut, onCellMouseOver } from './tooltip';
 import {
-  showHighlight, removeHighlight, highlight, drawHorizontalHighlightRect,
+  showHighlight,
+  removeHighlight,
+  highlight,
+  updateHorizontal,
+  updateOrder,
 } from './highlight';
 import { renderColorLegends, renderBarsLegend, renderLightnessLegend } from './legends';
 import { encodeCells } from './encodings';
 import { renderAxis } from './axis';
 import { getMaxMin, invertScaleBand } from './utils';
-import { clusterMatrix } from './clustering';
+import { applyNodeOrder, applyOrders, clusterMatrix } from './ordering';
 
 class D3Matrix {
   constructor(parent, data, parameters, setAnswer) {
@@ -54,10 +58,17 @@ class D3Matrix {
   initVis() {
     this.tooltip = d3.select('#matrix-tooltip');
 
-    this.chart = this.svg.append('g').attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
+    this.chart = this.svg
+      .append('g')
+      .attr('transform', `translate(${this.margin.left}, ${this.margin.top})`);
 
-    this.horizontalHighlightsGroup = this.chart.append('g').attr('class', 'horizontal-highlights-group');
-    this.background = this.chart.append('rect').attr('class', 'background').attr('fill', 'transparent');
+    this.horizontalHighlightsGroup = this.chart
+      .append('g')
+      .attr('class', 'horizontal-highlights-group');
+    this.background = this.chart
+      .append('rect')
+      .attr('class', 'background')
+      .attr('fill', 'transparent');
 
     this.legend = this.svg.append('g');
 
@@ -110,13 +121,15 @@ class D3Matrix {
     });
 
     d3.select('#reset').on('click', () => {
-      this.updateVis();
-
-      const tmp = new Set(this.highlightedDestinations);
-      const highlightedArray = Array.from(tmp);
-      drawHorizontalHighlightRect(this, highlightedArray);
-
-      this.chart.selectAll('.order-highlight').remove();
+      this.orderNode = null;
+      if (this.isCluster) {
+        clusterMatrix(this, this.cluster[0], this.cluster[1]);
+        this.updateVis();
+      } else {
+        const defaultOrder = this.data.map(this.originAccesor).sort();
+        applyOrders(this, defaultOrder, defaultOrder);
+        this.updateVis();
+      }
       // this.trrack.apply('Set Nodes', this.actions.setNodes([]));
     });
   }
@@ -131,7 +144,10 @@ class D3Matrix {
       .style('left', `${this.margin.left + this.squareSize + 50}px`)
       .style('top', `${this.margin.top}px`);
 
-    this.legend.attr('transform', `translate(${this.margin.left + this.squareSize + 100}, ${this.squareSize / 2})`);
+    this.legend.attr(
+      'transform',
+      `translate(${this.margin.left + this.squareSize + 100}, ${this.squareSize / 2})`,
+    );
     this.background.attr('width', this.squareSize).attr('height', this.squareSize);
   }
 
@@ -157,11 +173,14 @@ class D3Matrix {
     console.warn(`deviation range: [${this.stdMin}, ${this.stdMax}]`);
     console.warn(`using SNR: ${isSnr}`); */
 
-    const originNodes = data.map(originAccesor).sort();
+    if (this.cluster && !this.orderNode) clusterMatrix(this, this.cluster[0], this.cluster[1]);
+    const nodes = data.map(originAccesor).sort();
+    const xNodes = this.xNodes ? this.xNodes : nodes;
+    const yNodes = this.xNodes ? this.yNodes : nodes;
 
     // Definir las escalas
-    this.xScale = d3.scaleBand().range([0, squareSize]).domain(originNodes);
-    this.yScale = d3.scaleBand().range([0, squareSize]).domain(originNodes);
+    this.xScale = d3.scaleBand().range([0, squareSize]).domain(xNodes);
+    this.yScale = d3.scaleBand().range([0, squareSize]).domain(yNodes);
 
     this.cellSize = this.xScale.bandwidth();
 
@@ -174,7 +193,12 @@ class D3Matrix {
       .data(this.data)
       .join('g')
       .attr('class', 'cell')
-      .attr('transform', (d) => `translate(${this.xScale(this.originAccesor(d))}, ${this.yScale(this.destinationAccesor(d))})`);
+      .attr(
+        'transform',
+        (d) => `translate(${this.xScale(this.originAccesor(d))}, ${this.yScale(
+          this.destinationAccesor(d),
+        )})`,
+      );
 
     this.addCellListeners();
     this.addBackgroundListeners();
@@ -183,6 +207,8 @@ class D3Matrix {
     this.renderLegend();
 
     renderAxis(this);
+    updateHorizontal(this);
+    updateOrder(this);
   }
 
   addCellListeners() {
@@ -218,27 +244,15 @@ class D3Matrix {
 
   // trrack simulation methods:
   selectNodes(selectedNodes) {
-    this.yAxisG.selectAll('.tick text').classed('selected', (d) => selectedNodes.includes(d));
+    this.yAxisG
+      .selectAll('.tick text')
+      .classed('answer-selected', (d) => selectedNodes.includes(d));
   }
 
   orderByNode(node) {
-    const connected = this.data
-      .filter((link) => link.origin === node)
-      .map((link) => link.destination)
-      .sort();
-
-    const disconnected = this.data
-      .filter((link) => link.origin !== node)
-      .map((link) => link.destination)
-      .sort();
-
-    const orderedNodes = [...connected, ...disconnected];
-
-    const uniqueOrderedNodes = node ? Array.from(new Set(orderedNodes)) : this.xScale.domain();
-
-    this.yScale = d3.scaleBand().range([0, this.squareSize]).domain(uniqueOrderedNodes);
-
-    this.renderVis();
+    this.orderNode = node;
+    applyNodeOrder(this);
+    this.updateVis();
   }
 
   renderLegend() {
@@ -253,12 +267,11 @@ class D3Matrix {
   }
 
   highlightDestinations(data) {
-    const destinations = this.data.filter((link) => data.includes(link.origin)).map((link) => link.destination);
-
-    const tmp = new Set(destinations);
-    const highlightedArray = Array.from(tmp);
-    drawHorizontalHighlightRect(this, highlightedArray);
-    this.xAxisG.selectAll('.tick text').classed('selected', (d) => data.includes(d));
+    const destinations = this.data
+      .filter((link) => data.includes(link.origin))
+      .map((link) => link.destination);
+    this.highlightedDestinations = destinations;
+    updateHorizontal(this);
   }
 }
 
