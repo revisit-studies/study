@@ -3,6 +3,7 @@ import { JumpFunctionParameters, JumpFunctionReturnVal } from '../../../store/ty
 export default function dynamic({ answers }: JumpFunctionParameters<never>): JumpFunctionReturnVal {
   // Check the length of the answers array. If it's 10, return null to exit dynamic block
   const topAnswerLength = Object.entries(answers)
+    .filter(([key, _]) => key.startsWith('dynamicBlock'))
     .filter(([_, value]) => value.endTime > -1)
     .length;
 
