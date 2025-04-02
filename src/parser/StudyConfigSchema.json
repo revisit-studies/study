@@ -2123,6 +2123,10 @@
         "requiredValue": {
           "not": {}
         },
+        "restartEnumeration": {
+          "description": "Whether to restart the enumeration of the questions. Defaults to false.",
+          "type": "boolean"
+        },
         "secondaryText": {
           "not": {}
         },

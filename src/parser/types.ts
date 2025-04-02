@@ -509,6 +509,8 @@ export interface TextOnlyResponse extends Omit<BaseResponse, 'secondaryText' | '
   type: 'textOnly';
   /** The markdown text that is displayed to the user. */
   prompt: string;
+  /** Whether to restart the enumeration of the questions. Defaults to false. */
+  restartEnumeration?: boolean;
 
   secondaryText?: undefined;
   required?: undefined;
