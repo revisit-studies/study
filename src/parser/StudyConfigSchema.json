@@ -2109,7 +2109,7 @@
           "type": "string"
         },
         "type": {
-          "const": "text",
+          "const": "textOnly",
           "type": "string"
         },
         "withDivider": {

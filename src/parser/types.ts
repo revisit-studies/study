@@ -506,7 +506,7 @@ export interface ButtonsResponse extends BaseResponse {
 }
 
 export interface TextField extends Omit<BaseResponse, 'secondaryText' | 'required' | 'requiredValue' | 'requiredLabel' | 'paramCapture' | 'hidden' | 'withDontKnow'> {
-  type: 'text';
+  type: 'textOnly';
   /** The markdown text that is displayed to the user. */
   prompt: string;
 }
