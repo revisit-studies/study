@@ -1859,7 +1859,7 @@
           "$ref": "#/definitions/ButtonsResponse"
         },
         {
-          "$ref": "#/definitions/TextField"
+          "$ref": "#/definitions/TextOnlyResponse"
         }
       ]
     },
@@ -2052,9 +2052,12 @@
       ],
       "type": "object"
     },
-    "TextField": {
+    "TextOnlyResponse": {
       "additionalProperties": false,
       "properties": {
+        "hidden": {
+          "not": {}
+        },
         "id": {
           "description": "The id of the response. This is used to identify the response in the data file.",
           "type": "string"
@@ -2063,9 +2066,24 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "paramCapture": {
+          "not": {}
+        },
         "prompt": {
           "description": "The markdown text that is displayed to the user.",
           "type": "string"
+        },
+        "required": {
+          "not": {}
+        },
+        "requiredLabel": {
+          "not": {}
+        },
+        "requiredValue": {
+          "not": {}
+        },
+        "secondaryText": {
+          "not": {}
         },
         "type": {
           "const": "textOnly",
@@ -2074,6 +2092,9 @@
         "withDivider": {
           "description": "Renders the response with a trailing divider.",
           "type": "boolean"
+        },
+        "withDontKnow": {
+          "not": {}
         }
       },
       "required": [
