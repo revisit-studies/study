@@ -505,13 +505,21 @@ export interface ButtonsResponse extends BaseResponse {
   options: (StringOption | string)[];
 }
 
-export interface TextField extends Omit<BaseResponse, 'secondaryText' | 'required' | 'requiredValue' | 'requiredLabel' | 'paramCapture' | 'hidden' | 'withDontKnow'> {
+export interface TextOnlyResponse extends Omit<BaseResponse, 'secondaryText' | 'required' | 'requiredValue' | 'requiredLabel' | 'paramCapture' | 'hidden' | 'withDontKnow'> {
   type: 'textOnly';
   /** The markdown text that is displayed to the user. */
   prompt: string;
+
+  secondaryText?: undefined;
+  required?: undefined;
+  requiredValue?: undefined;
+  requiredLabel?: undefined;
+  paramCapture?: undefined;
+  hidden?: undefined;
+  withDontKnow?: undefined;
 }
 
-export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | ReactiveResponse | MatrixResponse | ButtonsResponse | TextField;
+export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | ReactiveResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse;
 
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.
