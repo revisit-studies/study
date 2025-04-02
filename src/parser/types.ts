@@ -505,6 +505,24 @@ export interface ButtonsResponse extends BaseResponse {
   options: (StringOption | string)[];
 }
 
+/**
+ * The TextOnlyResponse interface is used to define the properties of a text only response.
+ * TextOnlyResponses render as a block of text that is displayed to the user. This can be used to display instructions or other information.
+ * It does not accept any input from the user.
+ *
+ * Example:
+ * ```js
+ * {
+ *   "id": "textOnlyResponse",
+ *   "type": "textOnly",
+ *   "prompt": "This is a text only response, it accepts markdown so you can **bold** or _italicize_ text.",
+ *   "location": "belowStimulus",
+ *   "restartEnumeration": true
+ * }
+ * ```
+ *
+ * In this example, the text only response is displayed below the stimulus and the enumeration of the questions is restarted.
+ */
 export interface TextOnlyResponse extends Omit<BaseResponse, 'secondaryText' | 'required' | 'requiredValue' | 'requiredLabel' | 'paramCapture' | 'hidden' | 'withDontKnow'> {
   type: 'textOnly';
   /** The markdown text that is displayed to the user. */
