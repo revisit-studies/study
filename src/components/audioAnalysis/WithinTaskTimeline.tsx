@@ -9,21 +9,21 @@ const margin = {
   left: 5, top: 0, right: 5, bottom: 0,
 };
 export function WithinTaskTimeline({
-  xScale, participantData, width, height, currentNode, trialName,
-} : {xScale: d3.ScaleLinear<number, number>, participantData: ParticipantData, width: number, height: number, currentNode: string | null, trialName: string}) {
-  const circles = useMemo(() => Object.entries(participantData.answers).filter((entry) => (trialName ? trialName === entry[0] : true)).map((entry) => {
+  xScale, answers, width, height, currentNode, trialName,
+} : {xScale: d3.ScaleLinear<number, number>, answers: ParticipantData['answers'], width: number, height: number, currentNode: string | null, trialName: string}) {
+  const circles = useMemo(() => Object.entries(answers).filter((entry) => (trialName ? trialName === entry[0] : true)).map((entry) => {
     const [name, answer] = entry;
 
     const allCircles = Object.keys(answer.provenanceGraph).map((provenanceArea) => {
       const graph = answer.provenanceGraph[provenanceArea as keyof typeof answer.provenanceGraph];
       if (graph) {
-        return <WithinTaskProvenance answer={participantData.answers[trialName]} key={name + provenanceArea} height={height} currentNode={currentNode} xScale={xScale} provenance={graph} />;
+        return <WithinTaskProvenance answer={answers[trialName]} key={name + provenanceArea} height={height} currentNode={currentNode} xScale={xScale} provenance={graph} />;
       }
       return null;
     });
 
     return allCircles;
-  }), [currentNode, height, participantData.answers, trialName, xScale]);
+  }), [currentNode, height, answers, trialName, xScale]);
 
   return (
     <svg style={{ width, height }}>

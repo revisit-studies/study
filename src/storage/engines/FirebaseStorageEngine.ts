@@ -494,6 +494,21 @@ export class FirebaseStorageEngine extends StorageEngine {
     return { currentRow, creationIndex };
   }
 
+  async getAllParticipantNames() {
+    if (!this._verifyStudyDatabase(this.studyCollection)) {
+      throw new Error('Study database not initialized');
+    }
+
+    const sequenceAssignmentDoc = doc(this.studyCollection, 'sequenceAssignment');
+    const sequenceAssignmentCollection = collection(
+      sequenceAssignmentDoc,
+      'sequenceAssignment',
+    );
+    const allAssignmentDocs = await getDocs(sequenceAssignmentCollection);
+
+    return allAssignmentDocs.docs.map((d) => d.id);
+  }
+
   async getAllParticipantsData() {
     if (!this._verifyStudyDatabase(this.studyCollection)) {
       throw new Error('Study database not initialized');
