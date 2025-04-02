@@ -1,1 +1,2 @@
-Provide help text here to help participants pass the training. 
+This is a simple demo showcasing the use of dynamic blocks. The difficulty of each question will adjust based on your correctness.
+Choose the square with higher saturation, then click **Next** to continue.
