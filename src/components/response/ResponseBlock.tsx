@@ -61,10 +61,15 @@ export function ResponseBlock({
 
   const responses = useMemo(() => configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [], [configInUse?.response, location]);
 
-  const responsesWithDefaults = useMemo(() => responses.map((response) => ({
-    ...response,
-    required: response.required === undefined ? true : response.required,
-  })), [responses]);
+  const responsesWithDefaults = useMemo(() => responses.map((response) => {
+    if (response.type !== 'textOnly') {
+      return {
+        ...response,
+        required: response.required === undefined ? true : response.required,
+      };
+    }
+    return response;
+  }), [responses]);
 
   const answerValidator = useAnswerField(responsesWithDefaults, currentStep, storedAnswer || {});
   // Set up trrack to store provenance graph of the answerValidator status
@@ -240,10 +245,18 @@ export function ResponseBlock({
     }
   };
 
+  let index = 0;
   return (
     <div style={style}>
-      {responsesWithDefaults.map((response, index) => {
+      {responsesWithDefaults.map((response) => {
         const configCorrectAnswer = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+
+        // Increment index for each response, unless it is a textOnly response
+        if (response.type !== 'textOnly') {
+          index += 1;
+        } else if (response.restartEnumeration) {
+          index = 0;
+        }
 
         return (
           <React.Fragment key={`${response.id}-${currentStep}`}>
@@ -265,7 +278,7 @@ export function ResponseBlock({
                     ...answerValidator.getInputProps(`${response.id}-other`),
                   }}
                   response={response}
-                  index={index + 1}
+                  index={index}
                   configInUse={configInUse}
                 />
                 {alertConfig[response.id]?.visible && (

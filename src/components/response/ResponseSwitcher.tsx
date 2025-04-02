@@ -18,6 +18,7 @@ import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { MatrixInput } from './MatrixInput';
 import { ButtonsInput } from './ButtonsInput';
 import classes from './css/Checkbox.module.css';
+import { TextOnlyInput } from './TextOnlyInput';
 
 export function ResponseSwitcher({
   response,
@@ -177,6 +178,9 @@ export function ResponseSwitcher({
           index={index}
           enumerateQuestions={enumerateQuestions}
         />
+      )}
+      {response.type === 'textOnly' && (
+        <TextOnlyInput response={response} />
       )}
 
       {response.withDontKnow && (
