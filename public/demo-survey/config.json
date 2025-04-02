@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/improve-forms/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Question Types and Form Elements Demo",
     "version": "pilot",
@@ -40,6 +40,13 @@
             "Pie",
             "Stacked Bar"
           ]
+        },
+        {
+          "id": "textField",
+          "type": "textOnly",
+          "location": "aboveStimulus",
+          "prompt": "# This is a header that is text only with some text below\n\n## This is a subheader\n\nThis is some text that is not a question, but just some information to help the user understand what they are doing. You can use markdown to format this text. For example, you can make it **bold** or *italic*. You can also add links like [this](https://revisit.dev)",
+          "restartEnumeration": true          
         },
         {
           "id": "q-numerical",
