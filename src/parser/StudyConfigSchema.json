@@ -1791,6 +1791,9 @@
         },
         {
           "$ref": "#/definitions/ButtonsResponse"
+        },
+        {
+          "$ref": "#/definitions/TextField"
         }
       ]
     },
@@ -2087,6 +2090,37 @@
         "date",
         "description",
         "organizations"
+      ],
+      "type": "object"
+    },
+    "TextField": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "prompt": {
+          "description": "The markdown text that is displayed to the user.",
+          "type": "string"
+        },
+        "type": {
+          "const": "text",
+          "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
+        "type"
       ],
       "type": "object"
     },
