@@ -160,8 +160,8 @@ function StepItem({
 
   const correctIncorrectIcon = taskAnswer && correctAnswer ? (
     correct
-      ? <IconCheck size={16} style={{ marginRight: 4, marginBottom: -2 }} color="green" />
-      : <IconX size={16} style={{ marginRight: 4, marginBottom: -2 }} color="red" />
+      ? <IconCheck size={16} style={{ marginRight: 4, marginBottom: -3 }} color="green" />
+      : <IconX size={16} style={{ marginRight: 4, marginBottom: -3 }} color="red" />
   ) : null;
 
   return (
