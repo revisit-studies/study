@@ -158,6 +158,12 @@ function StepItem({
   const correctAnswer = taskAnswer && taskAnswer.correctAnswer.length > 0 && Object.keys(taskAnswer.answer).length > 0 && taskAnswer.correctAnswer;
   const correct = correctAnswer && taskAnswer && Object.values(correctAnswer).every((value) => taskAnswer.answer[value.id] === value.answer);
 
+  const correctIncorrectIcon = taskAnswer && correctAnswer ? (
+    correct
+      ? <IconCheck size={16} style={{ marginRight: 4, marginBottom: -2 }} color="green" />
+      : <IconX size={16} style={{ marginRight: 4, marginBottom: -2 }} color="red" />
+  ) : null;
+
   return (
     <HoverCard withinPortal position="left" withArrow arrowSize={10} shadow="md" offset={0}>
       <HoverCard.Target>
@@ -173,14 +179,7 @@ function StepItem({
               {step !== cleanedStep && (
                 <IconPackageImport size={16} style={{ marginRight: 4, marginBottom: -2 }} color="blue" />
               )}
-              {taskAnswer && correctAnswer ? (
-                correct ? (
-                  <IconCheck size={16} style={{ marginRight: 4, marginBottom: -2 }} color="green" />
-                )
-                  : (
-                    <IconX size={16} style={{ marginRight: 4, marginBottom: -2 }} color="red" />
-                  )
-              ) : null}
+              {correctIncorrectIcon}
               <Text size="sm" span={active} fw={active ? '700' : undefined} display="inline" style={{ textWrap: 'nowrap' }}>{cleanedStep}</Text>
             </Box>
           )}
@@ -223,6 +222,7 @@ function StepItem({
             {taskAnswer && Object.keys(taskAnswer.answer).length > 0 && (
               <Box>
                 <Text fw={900} display="inline-block" mr={2}>
+                  {correctIncorrectIcon}
                   Participant Answer:
                 </Text>
                 {' '}
