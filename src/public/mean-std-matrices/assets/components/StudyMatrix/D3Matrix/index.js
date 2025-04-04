@@ -45,6 +45,7 @@ class D3Matrix {
     });
 
     this.margin = getDynamicMargins();
+    this.axisColor = parameters.axisColor ? parameters.axisColor : 'black';
 
     this.trrack = trrack;
     this.actions = actions;
@@ -84,7 +85,7 @@ class D3Matrix {
     this.setSizes(dimensions);
 
     d3.select('#clear-selection').on('click', () => {
-      this.yAxisG.selectAll('.tick text').classed('selected', false);
+      this.yAxisG.selectAll('.tick text').classed('answer-selected', false);
       this.trrack.apply('Set Nodes', this.actions.setNodes([]));
     });
 
@@ -174,7 +175,6 @@ class D3Matrix {
     const {
       data, isSnr, snrAccesor, stdAccesor, meanAccesor, originAccesor, squareSize,
     } = this;
-
     this.deviationAccesor = isSnr ? snrAccesor : stdAccesor;
 
     const means = data.map(meanAccesor);
@@ -221,6 +221,7 @@ class D3Matrix {
     this.renderLegend();
 
     renderAxis(this);
+
     updateHorizontal(this);
     updateOrder(this);
   }

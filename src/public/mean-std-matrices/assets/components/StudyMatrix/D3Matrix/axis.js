@@ -24,15 +24,15 @@ export function renderAxis(vis) {
     )
     .attr('font-size', '1.5vh')
     .selectAll('.tick line')
-    .attr('stroke', '#ccc')
+    .attr('stroke', vis.axisColor)
     .attr('stroke-width', 1)
     .attr('transform', `translate(${vis.cellSize / 2}, 0)`);
 
   vis.yAxisG
     .call(d3.axisLeft(vis.yScale).tickSize(-vis.squareSize))
     .attr('font-size', '1.5vh')
-    .selectAll('.tick line')
-    .attr('stroke', '#ccc')
+    .selectAll('line')
+    .attr('stroke', vis.axisColor)
     .attr('stroke-width', 1)
     .attr('transform', `translate(0, ${vis.cellSize / 2})`);
 
@@ -42,18 +42,22 @@ export function renderAxis(vis) {
     .style('text-anchor', 'start')
     .attr('dy', '0.5em')
     .attr('dx', '0.2em')
-
     .classed('orderNode', (d) => d === vis.orderNode)
     .on('click', (event, d) => {
       const item = d3.select(event.currentTarget);
       const isSelected = item.classed('selected');
-      const destinations = vis.data.filter((link) => link.origin === d).map((link) => link.destination);
+      const destinations = vis.data
+        .filter((link) => link.origin === d)
+        .map((link) => link.destination);
 
       if (!isSelected) {
         vis.trrack.apply('Select Destinations', vis.actions.addHorizontalHighligthNode(d));
         vis.highlightedDestinations.push(...destinations);
       } else {
-        vis.highlightedDestinations = removeFirstOccurrences(vis.highlightedDestinations, destinations);
+        vis.highlightedDestinations = removeFirstOccurrences(
+          vis.highlightedDestinations,
+          destinations,
+        );
         vis.trrack.apply('Unselect Destinations', vis.actions.removeHorizontalHighligthNode(d));
       }
 
@@ -113,4 +117,9 @@ export function renderAxis(vis) {
     .on('mouseleave', () => {
       removeHighlight(vis);
     });
+
+  vis.yAxisG.selectAll('.domain').attr('stroke', vis.axisColor);
+  vis.xAxisG.selectAll('.domain').attr('stroke', vis.axisColor);
+  vis.xAxisG.raise();
+  vis.yAxisG.raise();
 }

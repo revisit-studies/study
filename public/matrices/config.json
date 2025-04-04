@@ -32,7 +32,7 @@
       "instruction": "No task. Just for exploratory purpose <br>Origins - X axis <br>Destinations - Y axis <br>To select answers: Left Click on Destination labels <br> To order Destinations by Origin: Right click Origin labels <br> To highlight Destinations by Origin: Left click Origin labels <br>Menu top right corner for exploring datasets, encodings, color scales...",
       "parameters": {
         "dataset": "test.txt",
-        "encoding": "simple",
+        "encoding": "cellSize",
         "colorScale": "viridis",
         "isSnr": false,
         "nMeans": 5,

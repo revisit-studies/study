@@ -6,6 +6,7 @@ import {
   setEncoding,
   setIsSnr,
   setColorScale,
+  setAxisColor,
   setNMeans,
   setNStds,
   setTooltip,
@@ -45,6 +46,7 @@ const MenuButton = () => {
           <TooltipRadio></TooltipRadio>
 
           <SnrRadio></SnrRadio>
+          <AxisRadio></AxisRadio>
           <EncodingRadio></EncodingRadio>
           <ColorScaleRadio></ColorScaleRadio>
         </div>
@@ -103,7 +105,6 @@ const EncodingRadio = () => {
   const handleChange = (e) => {
     dispatch(setEncoding(e.target.value));
   };
-
   return (
     <div>
       <div>Encodings:</div>
@@ -112,12 +113,42 @@ const EncodingRadio = () => {
         onChange={handleChange}
         value={encoding}
       >
-        <Radio value="simple">Mean</Radio>
+        <Radio value="cellSize">Cell Size</Radio>
+
         <Radio value="squareMark">Square Mark</Radio>
         <Radio value="rotationMark">Rotation Mark</Radio>
-        <Radio value="cellSize">Cell Size</Radio>
+        <Radio value="colorRotationMark">Color Rotation Mark</Radio>
+
         <Radio value="lightness">Lightness</Radio>
         <Radio value="bars">Bars</Radio>
+
+        <Radio value="simple">Mean</Radio>
+      </Radio.Group>
+    </div>
+  );
+};
+
+const AxisRadio = () => {
+  const dispatch = useDispatch();
+
+  const axisColor = useSelector((state) => state.matrix.parameters.axisColor);
+
+  const handleChange = (e) => {
+    dispatch(setAxisColor(e.target.value));
+  };
+
+  return (
+    <div>
+      <div>Axis Color:</div>
+      <Radio.Group
+        style={{ display: 'flex', flexDirection: 'column' }}
+        onChange={handleChange}
+        value={axisColor ? axisColor : 'black'}
+      >
+        <Radio value="transparent">Transparent</Radio>
+
+        <Radio value="black">Black</Radio>
+        <Radio value="lightgrey">Rotation Mark</Radio>
       </Radio.Group>
     </div>
   );

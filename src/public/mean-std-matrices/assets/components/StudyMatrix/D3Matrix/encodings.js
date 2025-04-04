@@ -1,5 +1,7 @@
 import * as d3 from 'd3';
 
+const markColor = 'black';
+const sizeProportion = 0.6;
 // Utility functions
 function createSizeScale(nSteps, cellSize) {
   const stepSize = cellSize / nSteps;
@@ -7,7 +9,7 @@ function createSizeScale(nSteps, cellSize) {
 }
 
 function createMarkScale(nSteps, cellSize) {
-  const stepSize = cellSize / (nSteps + 1);
+  const stepSize = (cellSize * sizeProportion) / nSteps;
   return Array.from({ length: nSteps }, (_, i) => stepSize * (i + 1));
 }
 
@@ -139,9 +141,32 @@ export function encodeRotationCells(vis, cells) {
   cells
     .append('rect')
     .attr('class', 'rotationMark')
-    .attr('fill', 'black')
+    .attr('fill', markColor)
     .attr('width', markWidth)
     .attr('height', markHeight)
+    .attr('x', offsetX)
+    .attr('y', offsetY)
+    .attr('transform', (d) => {
+      const angle = -vis.deviationScale(vis.deviationAccesor(d));
+      return `rotate(${angle}, ${center}, ${center})`;
+    });
+}
+
+export function encodeColorRotationCells(vis, cells) {
+  const markWidth = vis.cellSize * 0.8;
+  const markHeight = vis.cellSize * 0.6;
+  const center = vis.cellSize / 2;
+  const offsetX = (vis.cellSize - markWidth) / 2;
+  const offsetY = (vis.cellSize - markHeight) / 2;
+
+  cells
+    .append('rect')
+    .attr('class', 'rotationMark')
+    .attr('fill', (d) => (d.mean ? vis.meanScale(vis.meanAccesor(d)) : 'black'))
+    .attr('width', markWidth)
+    .attr('height', markHeight)
+    .attr('stroke', 'black') // Correct way to set stroke color
+    .attr('stroke-width', 1)
     .attr('x', offsetX)
     .attr('y', offsetY)
     .attr('transform', (d) => {
@@ -154,7 +179,7 @@ export function encodeMarkCells(vis, cells) {
   cells
     .append('rect')
     .attr('class', 'mark')
-    .attr('fill', 'black')
+    .attr('fill', markColor)
     .attr('width', (d) => vis.deviationScale(vis.deviationAccesor(d)))
     .attr('height', (d) => vis.deviationScale(vis.deviationAccesor(d)))
     .attr('x', (d) => (vis.cellSize - vis.deviationScale(vis.deviationAccesor(d))) / 2)
@@ -218,8 +243,16 @@ function rotationMarkEncode(vis) {
   encodeRotationCells(vis, vis.chart.selectAll('.cell'));
 }
 
+function colorRotationMarkEncode(vis) {
+  vis.deviationSteps = createLogScale(vis.nStds);
+
+  configureScales(vis);
+
+  encodeColorRotationCells(vis, vis.chart.selectAll('.cell'));
+}
+
 function markEncode(vis) {
-  vis.deviationSteps = createMarkScale(vis.nStds, vis.cellSize * 0.8);
+  vis.deviationSteps = createMarkScale(vis.nStds, vis.cellSize);
   configureScales(vis);
 
   createBaseCell(vis);
@@ -256,9 +289,12 @@ function simpleEncode(vis) {
 }
 
 const ENCODING_FUNCTIONS = {
+  cellSize: sizeEncode,
+
   squareMark: markEncode,
   rotationMark: rotationMarkEncode,
-  cellSize: sizeEncode,
+  colorRotationMark: colorRotationMarkEncode,
+
   lightness: lightnessEncode,
   bars: barsEncode,
 };

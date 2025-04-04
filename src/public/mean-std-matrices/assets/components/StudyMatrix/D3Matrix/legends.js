@@ -1,5 +1,10 @@
 import * as d3 from 'd3';
-import { encodeMarkCells, encodeRotationCells, encodeSizeCells } from './encodings';
+import {
+  encodeMarkCells,
+  encodeRotationCells,
+  encodeSizeCells,
+  encodeColorRotationCells,
+} from './encodings';
 
 // this is a mess, dont recommend you to take a look :)
 
@@ -23,6 +28,8 @@ function renderColorStdLegend(vis, cells) {
     encodeMarkCells(vis, cells);
   } else if (vis.encoding === 'rotationMark') {
     encodeRotationCells(vis, cells);
+  } else if (vis.encoding === 'colorRotationMark') {
+    encodeColorRotationCells(vis, cells);
   } else if (vis.encoding === 'cellSize') {
     cells.selectAll('rect').remove();
     const newCells = cells.append('rect').attr('fill', 'black');
@@ -44,7 +51,9 @@ export function renderLightnessLegend(vis) {
   vis.legendCellSize = vis.cellSize;
   const margin = 20;
 
-  const legendG = vis.legend.append('g').attr('transform', `translate(${0},${vis.isConfig ? 80 : 0})`);
+  const legendG = vis.legend
+    .append('g')
+    .attr('transform', `translate(${0},${vis.isConfig ? 80 : 0})`);
 
   let text = legendG
     .selectAll('.legendMeanText')
@@ -55,7 +64,10 @@ export function renderLightnessLegend(vis) {
     .text((d) => `${meanText(d)}`)
     .attr('transform', `translate(${0},${meansMargin})`);
 
-  const maxTextWidth = d3.max(legendG.selectAll('.legendMeanText').nodes(), (node) => node.getBBox().width);
+  const maxTextWidth = d3.max(
+    legendG.selectAll('.legendMeanText').nodes(),
+    (node) => node.getBBox().width,
+  );
 
   text.attr('x', (d, i) => i * (maxTextWidth + margin)).attr('y', -10);
 
@@ -138,7 +150,9 @@ export function renderLightnessLegend(vis) {
 }
 
 export function renderColorLegends(vis) {
-  const legendG = vis.legend.append('g').attr('transform', `translate(${0},${vis.isConfig ? 80 : 0})`);
+  const legendG = vis.legend
+    .append('g')
+    .attr('transform', `translate(${0},${vis.isConfig ? 80 : 0})`);
 
   vis.legendCellSize = vis.cellSize;
   const margin = 20;
@@ -150,7 +164,10 @@ export function renderColorLegends(vis) {
     .attr('text-anchor', 'start')
     .text((d) => meanText(d));
 
-  let maxTextWidth = d3.max(vis.legend.selectAll('.legendMeanText').nodes(), (node) => node.getBBox().width);
+  let maxTextWidth = d3.max(
+    vis.legend.selectAll('.legendMeanText').nodes(),
+    (node) => node.getBBox().width,
+  );
 
   text.attr('x', (d, i) => i * (maxTextWidth + margin)).attr('y', vis.legendCellSize + 20);
 
@@ -184,6 +201,7 @@ export function renderColorLegends(vis) {
     vis.deviationIntervals = [];
     stabilityText = [];
   }
+
   text = legendG
     .selectAll('.legendStdText')
     .data(vis.deviationIntervals)
@@ -191,7 +209,10 @@ export function renderColorLegends(vis) {
     .attr('class', 'legendStdText')
     .attr('text-anchor', 'start')
     .text((d) => meanText(d));
-  maxTextWidth = d3.max(legendG.selectAll('.legendStdText').nodes(), (node) => node.getBBox().width);
+  maxTextWidth = d3.max(
+    legendG.selectAll('.legendStdText').nodes(),
+    (node) => node.getBBox().width,
+  );
 
   const totalStdWidth = (maxTextWidth + margin) * vis.deviationIntervals.length;
 
@@ -208,7 +229,9 @@ export function renderColorLegends(vis) {
     .attr('transform', `translate(${totalMeanWidth / 2},${vis.legendCellSize + yMargin - 20})`)
     .text(stdsTitle);
 
-  text.attr('x', (d, i) => i * (maxTextWidth + margin) + leftMargin).attr('y', 2 * vis.legendCellSize + yMargin + 20);
+  text
+    .attr('x', (d, i) => i * (maxTextWidth + margin) + leftMargin)
+    .attr('y', 2 * vis.legendCellSize + yMargin + 20);
 
   const cells = legendG
     .selectAll('.legendStdCell')
@@ -218,7 +241,9 @@ export function renderColorLegends(vis) {
     .attr('transform', (d, i) => {
       const textX = i * (maxTextWidth + margin) + leftMargin;
       const textWidth = text.nodes()[i].getBBox().width;
-      return `translate(${textX + textWidth / 2 - vis.legendCellSize / 2}, ${vis.legendCellSize + yMargin})`;
+      return `translate(${textX + textWidth / 2 - vis.legendCellSize / 2}, ${
+        vis.legendCellSize + yMargin
+      })`;
     });
 
   renderColorStdLegend(vis, cells);
@@ -228,7 +253,9 @@ export function renderBarsLegend(vis) {
   vis.legendCellSize = vis.cellSize;
   const margin = 20;
 
-  const legendG = vis.legend.append('g').attr('transform', `translate(${0},${vis.isConfig ? 80 : 0})`);
+  const legendG = vis.legend
+    .append('g')
+    .attr('transform', `translate(${0},${vis.isConfig ? 80 : 0})`);
   let text = legendG
     .selectAll('.legendMeanText')
     .data(vis.meanIntervals)
@@ -237,7 +264,10 @@ export function renderBarsLegend(vis) {
     .attr('text-anchor', 'start')
     .text((d) => meanText(d));
 
-  let maxTextWidth = d3.max(legendG.selectAll('.legendMeanText').nodes(), (node) => node.getBBox().width);
+  let maxTextWidth = d3.max(
+    legendG.selectAll('.legendMeanText').nodes(),
+    (node) => node.getBBox().width,
+  );
 
   text.attr('x', (d, i) => i * (maxTextWidth + margin)).attr('y', vis.legendCellSize + 20);
 
@@ -278,7 +308,10 @@ export function renderBarsLegend(vis) {
     .text((d) => meanText(d));
   const totalMeanWidth = (maxTextWidth + margin) * vis.meanIntervals.length;
 
-  maxTextWidth = d3.max(legendG.selectAll('.legendStdText').nodes(), (node) => node.getBBox().width);
+  maxTextWidth = d3.max(
+    legendG.selectAll('.legendStdText').nodes(),
+    (node) => node.getBBox().width,
+  );
 
   legendG
     .append('text')
@@ -298,7 +331,9 @@ export function renderBarsLegend(vis) {
     .attr('transform', `translate(${totalMeanWidth / 2},${vis.legendCellSize + yMargin - 20})`)
     .text(stdsTitle);
 
-  text.attr('x', (d, i) => i * (maxTextWidth + margin) + leftMargin).attr('y', 2 * vis.legendCellSize + yMargin + 20);
+  text
+    .attr('x', (d, i) => i * (maxTextWidth + margin) + leftMargin)
+    .attr('y', 2 * vis.legendCellSize + yMargin + 20);
   if (vis.isSnr) vis.deviationIntervals.reverse();
   legendG
     .selectAll('.legendStdCell')
@@ -308,7 +343,9 @@ export function renderBarsLegend(vis) {
     .attr('transform', (d, i) => {
       const textX = i * (maxTextWidth + margin) + leftMargin;
       const textWidth = i !== 0 ? maxTextWidth : text.nodes()[i].getBBox().width;
-      return `translate(${textX + textWidth / 2 - vis.legendCellSize / 2}, ${vis.legendCellSize + yMargin})`;
+      return `translate(${textX + textWidth / 2 - vis.legendCellSize / 2}, ${
+        vis.legendCellSize + yMargin
+      })`;
     })
 
     .each(function (d) {
