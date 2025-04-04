@@ -18,15 +18,37 @@ test('test', async ({ page }) => {
   const dynamicBlocks = await page.getByRole('heading', { name: 'Dynamic Blocks' });
   await expect(dynamicBlocks).toBeVisible({ timeout: 5000 });
 
-  for (let i = 0; i < trialLen; i++) {
-    const questionText = await page.getByText('Choose the square with a high saturation');
-    await expect(questionText).toBeVisible();
+  let expectedLeft = 0;
+  let expectedRight = 100;
 
-    await page.getByRole('radio', { name: 'Right' }).click();
+  for (let i = 0; i < trialLen; i++) {
+    const isCorrect = i < 5;
+
+    // Check current saturation
+    const leftText = await page.locator('text=Left square saturation:').last().textContent() || '';
+    const rightText = await page.locator('text=Right square saturation:').last().textContent() || '';
+
+    const leftValue = parseInt(leftText.match(/\d+/)![0], 10);
+    const rightValue = parseInt(rightText.match(/\d+/)![0], 10);
+
+    await expect(leftValue).toBe(expectedLeft);
+    await expect(rightValue).toBe(expectedRight);
+
+    const choice = isCorrect ? 'Right' : 'Left';
+    await page.getByRole('radio', { name: choice }).click();
     await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
     await page.getByRole('button', { name: 'Next', exact: true }).click();
-  }
 
+    if (isCorrect) {
+      expectedLeft = Math.min(50, expectedLeft + 5);
+      expectedRight = Math.max(50, expectedRight - 5);
+    } else {
+      expectedLeft = Math.max(0, expectedLeft - 5);
+      expectedRight = Math.min(100, expectedRight + 5);
+    }
+
+    await page.waitForTimeout(50);
+  }
   const endText = await page.getByText('Please wait while your answers are uploaded.');
   await expect(endText).toBeVisible();
 });
