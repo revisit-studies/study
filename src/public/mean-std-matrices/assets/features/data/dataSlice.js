@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-const filesObj = import.meta.glob('/public/mean-std-matrices/data/*');
-const files = Object.keys(filesObj).map((path) => path.replace('/public/mean-std-matrices/data/', ''));
+const filesObj = import.meta.glob('/public/matrices/data/*');
+const files = Object.keys(filesObj).map((path) => path.replace('/public/matrices/data/', ''));
 
 const initialState = {
   data: null,
@@ -14,7 +14,7 @@ export const getData = createAsyncThunk('data/getData', async (file, { rejectWit
   if (!file) return rejectWithValue('No file provided');
 
   try {
-    const response = await fetch(`/public/mean-std-matrices/data/${file}`);
+    const response = await fetch(`/public/matrices/data/${file}`);
     if (!response.ok) throw new Error('Failed to fetch file');
 
     const text = await response.text();

@@ -10,7 +10,7 @@
   },
   "uiConfig": {
     "contactEmail": "jorge.acosta@upm.es",
-    "helpTextPath": "mean-std-matrices/assets/help.md",
+    "helpTextPath": "matrices/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
@@ -20,7 +20,7 @@
     "matrix": {
       "description": "Test Std Matrix.",
       "type": "react-component",
-      "path": "mean-std-matrices/assets/components/StudyMatrix/index.jsx",
+      "path": "matrices/assets/components/StudyMatrix/index.jsx",
       "nextButtonLocation": "sidebar",
       "instructionLocation": "sidebar",
       "response": []
