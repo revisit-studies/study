@@ -23,7 +23,12 @@ export default function dynamic({ answers }: JumpFunctionParameters<never>): Jum
     return Math.max(0, leftVal - 5);
   }, 0);
 
-  const rightValue = Math.min(100, leftValue + 50);
+  const rightValue = validAnswers.reduce((rightVal, answer) => {
+    if (answer.answer.buttonResponse === 'Right') {
+      return Math.max(50, rightVal - 5);
+    }
+    return Math.min(100, rightVal + 5);
+  }, 100);
 
   return {
     component: 'HSLColorCodes',

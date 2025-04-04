@@ -41,7 +41,16 @@
                         "Right"
                     ]
                 }
-            ]
+            ],
+            "correctAnswer": [
+                {
+                    "id": "buttonResponse",
+                    "answer": "Right"
+                }
+            ],
+            "provideFeedback": true,
+            "allowFailedTraining": true,
+            "trainingAttempts": 1
         }
     },
     "sequence": {
