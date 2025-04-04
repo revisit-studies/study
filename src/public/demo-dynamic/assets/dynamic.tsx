@@ -16,6 +16,22 @@ export default function dynamic({ answers }: JumpFunctionParameters<never>): Jum
   const validAnswers = Object.values(answers)
     .filter((value) => value.endTime > -1);
 
+  let message = 'The answer difficulty will change based on your last answer';
+  let color = 'blue';
+
+  const lastAnswer = validAnswers[validAnswers.length - 1];
+
+  if (!lastAnswer || !lastAnswer.answer || !lastAnswer.answer.buttonResponse) {
+    message = 'The answer difficulty will change based on your last answer';
+    color = 'blue';
+  } else if (lastAnswer.answer.buttonResponse === 'Right') {
+    message = 'Difficulty increased';
+    color = 'green';
+  } else {
+    message = 'Difficulty decreased';
+    color = 'red';
+  }
+
   const leftValue = validAnswers.reduce((leftVal, answer) => {
     if (answer.answer.buttonResponse === 'Right') {
       return Math.min(50, leftVal + 5);
@@ -32,7 +48,12 @@ export default function dynamic({ answers }: JumpFunctionParameters<never>): Jum
 
   return {
     component: 'HSLColorCodes',
-    parameters: { left: leftValue, right: rightValue },
+    parameters: {
+      left: leftValue,
+      right: rightValue,
+      message,
+      color,
+    },
     correctAnswer: [{ id: 'buttonResponse', answer: 'Right' }],
   };
 }
