@@ -1,4 +1,4 @@
-/* eslint-disable no-plusplus, no-await-in-loop */
+/* eslint-disable no-await-in-loop */
 import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
@@ -21,7 +21,7 @@ test('test', async ({ page }) => {
   let expectedLeft = 0;
   let expectedRight = 100;
 
-  for (let i = 0; i < trialLen; i++) {
+  for (let i = 0; i < trialLen; i += 1) {
     const isCorrect = i < 5;
 
     // Check current saturation
