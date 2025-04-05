@@ -23,6 +23,7 @@
     "library-demographics",
     "library-mic-check",
     "library-mini-vlat",
+    "library-nasa-tlx",
     "library-previs",
     "library-sus",
     "library-vlat",
@@ -110,6 +111,10 @@
     },
     "library-mini-vlat": {
       "path": "library-mini-vlat/config.json",
+      "test": true
+    },
+    "library-nasa-tlx": {
+      "path": "library-nasa-tlx/config.json",
       "test": true
     },
     "library-previs": {
