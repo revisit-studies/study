@@ -121,6 +121,8 @@ export interface UIConfig {
   participantNameField?: string;
   /** Whether enter key should move to the next question. Defaults to false. */
   nextOnEnter?: boolean;
+  /** Whether enter key should move to the previous question. Defaults to false. */
+  previousOnEnter?: boolean;
 }
 
 /**
@@ -564,6 +566,8 @@ export interface BaseIndividualComponent {
   nextButtonText?: string;
   /** The location of the next button. */
   nextButtonLocation?: ConfigResponseBlockLocation;
+  /** Whether to show the previous button. */
+  previousButton?: boolean;
   /** The location of the instructions. */
   instructionLocation?: ConfigResponseBlockLocation;
   /** The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess. */
@@ -586,6 +590,10 @@ export interface BaseIndividualComponent {
   nextButtonDisableTime?: number;
   /** A timer (in ms) after which the next button will be enabled. */
   nextButtonEnableTime?: number;
+  /** A timeout (in ms) after which the previous button will be disabled. */
+  previousButtonDisatbleTime?: number;
+  /** A timer (in ms) after which the previous button will be enabled. */
+  previousButtonEnableTime?: number;
   /** Whether to show the response dividers. Defaults to false. */
   responseDividers?: boolean;
   /** Optional override for the help text. If present, will override the default help text path set in the uiConfig. */
@@ -958,9 +966,9 @@ export interface DeterministicInterruption {
  *
 ```js
 [
-  ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "component5", "interruption1", "interruption2", "component6],
-  ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "interruption1", "interruption2", "component5", "component6],
-  ["component1", "component2" "interruption1", "interruption2", "component3", "interruption1", "interruption2", "component4", "component5", "interruption1", "interruption2", "component6],
+  ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "component5", "interruption1", "interruption2", "component6"],
+  ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "interruption1", "interruption2", "component5", "component6"],
+  ["component1", "component2" "interruption1", "interruption2", "component3", "interruption1", "interruption2", "component4", "component5", "interruption1", "interruption2", "component6"],
   ...
 ]
 ```

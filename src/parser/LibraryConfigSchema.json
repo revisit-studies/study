@@ -132,6 +132,18 @@
             ],
             "description": "The path to the markdown file. This should be a relative path from the public folder."
           },
+          "previousButton": {
+            "description": "Whether to show the previous button.",
+            "type": "boolean"
+          },
+          "previousButtonDisatbleTime": {
+            "description": "A timeout (in ms) after which the previous button will be disabled.",
+            "type": "number"
+          },
+          "previousButtonEnableTime": {
+            "description": "A timer (in ms) after which the previous button will be enabled.",
+            "type": "number"
+          },
           "provideFeedback": {
             "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
             "type": "boolean"
@@ -636,6 +648,18 @@
           "description": "The path to the image. This could be a relative path from the public folder or a url to an external image.",
           "type": "string"
         },
+        "previousButton": {
+          "description": "Whether to show the previous button.",
+          "type": "boolean"
+        },
+        "previousButtonDisatbleTime": {
+          "description": "A timeout (in ms) after which the previous button will be disabled.",
+          "type": "number"
+        },
+        "previousButtonEnableTime": {
+          "description": "A timer (in ms) after which the previous button will be enabled.",
+          "type": "number"
+        },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
@@ -881,6 +905,18 @@
             }
           ],
           "description": "The path to the markdown file. This should be a relative path from the public folder."
+        },
+        "previousButton": {
+          "description": "Whether to show the previous button.",
+          "type": "boolean"
+        },
+        "previousButtonDisatbleTime": {
+          "description": "A timeout (in ms) after which the previous button will be disabled.",
+          "type": "number"
+        },
+        "previousButtonEnableTime": {
+          "description": "A timer (in ms) after which the previous button will be enabled.",
+          "type": "number"
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
@@ -1202,6 +1238,18 @@
           "description": "The path to the markdown file. This should be a relative path from the public folder.",
           "type": "string"
         },
+        "previousButton": {
+          "description": "Whether to show the previous button.",
+          "type": "boolean"
+        },
+        "previousButtonDisatbleTime": {
+          "description": "A timeout (in ms) after which the previous button will be disabled.",
+          "type": "number"
+        },
+        "previousButtonEnableTime": {
+          "description": "A timer (in ms) after which the previous button will be enabled.",
+          "type": "number"
+        },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
@@ -1477,6 +1525,18 @@
           "description": "The text that is displayed on the next button.",
           "type": "string"
         },
+        "previousButton": {
+          "description": "Whether to show the previous button.",
+          "type": "boolean"
+        },
+        "previousButtonDisatbleTime": {
+          "description": "A timeout (in ms) after which the previous button will be disabled.",
+          "type": "number"
+        },
+        "previousButtonEnableTime": {
+          "description": "A timer (in ms) after which the previous button will be enabled.",
+          "type": "number"
+        },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
@@ -1603,7 +1663,7 @@
     },
     "RandomInterruption": {
       "additionalProperties": false,
-      "description": "The RandomInterruption interface is used to define an interruption that will be shown randomly in the block.\n\nFor example, if you want to show a single interruption randomly in the block, you would set `\"spacing\"` to \"random\" and `\"numInterruptions\"` to 1. If you want to show 3 interruptions randomly in the block, you would set `\"spacing\"` to \"random\" and `\"numInterruptions\"` to 3.\n\nThe components property is an array of the components that will be inserted randomly in the block. These components should reference components in the StudyConfig.components section of the config.\n\nHere's an example of how to use the RandomInterruption:\n\n```js { \"order\": \"fixed\", \"components\": [ \"component1\", \"component2\", \"component3\", \"component4\", \"component5\", \"component6\" ], \"interruptions\": [ {   \"spacing\": \"random\",   \"numInterruptions\": 3,   \"components\": [     \"interruption1\",     \"interruption2\"   ] } ] } ```\n\nThe resulting sequence array could be:\n\n```js [ [\"component1\", \"interruption1\", \"interruption2\", \"component2\", \"interruption1\", \"interruption2\", \"component3\", \"component4\", \"component5\", \"interruption1\", \"interruption2\", \"component6], [\"component1\", \"interruption1\", \"interruption2\", \"component2\", \"interruption1\", \"interruption2\", \"component3\", \"component4\", \"interruption1\", \"interruption2\", \"component5\", \"component6], [\"component1\", \"component2\" \"interruption1\", \"interruption2\", \"component3\", \"interruption1\", \"interruption2\", \"component4\", \"component5\", \"interruption1\", \"interruption2\", \"component6], ... ] ```",
+      "description": "The RandomInterruption interface is used to define an interruption that will be shown randomly in the block.\n\nFor example, if you want to show a single interruption randomly in the block, you would set `\"spacing\"` to \"random\" and `\"numInterruptions\"` to 1. If you want to show 3 interruptions randomly in the block, you would set `\"spacing\"` to \"random\" and `\"numInterruptions\"` to 3.\n\nThe components property is an array of the components that will be inserted randomly in the block. These components should reference components in the StudyConfig.components section of the config.\n\nHere's an example of how to use the RandomInterruption:\n\n```js { \"order\": \"fixed\", \"components\": [ \"component1\", \"component2\", \"component3\", \"component4\", \"component5\", \"component6\" ], \"interruptions\": [ {   \"spacing\": \"random\",   \"numInterruptions\": 3,   \"components\": [     \"interruption1\",     \"interruption2\"   ] } ] } ```\n\nThe resulting sequence array could be:\n\n```js [ [\"component1\", \"interruption1\", \"interruption2\", \"component2\", \"interruption1\", \"interruption2\", \"component3\", \"component4\", \"component5\", \"interruption1\", \"interruption2\", \"component6\"], [\"component1\", \"interruption1\", \"interruption2\", \"component2\", \"interruption1\", \"interruption2\", \"component3\", \"component4\", \"interruption1\", \"interruption2\", \"component5\", \"component6\"], [\"component1\", \"component2\" \"interruption1\", \"interruption2\", \"component3\", \"interruption1\", \"interruption2\", \"component4\", \"component5\", \"interruption1\", \"interruption2\", \"component6\"], ... ] ```",
       "properties": {
         "components": {
           "description": "The components that are included in the interruption. These reference components in the StudyConfig.components section of the config.",
@@ -1689,6 +1749,18 @@
         "path": {
           "description": "The path to the react component. This should be a relative path from the src/public folder.",
           "type": "string"
+        },
+        "previousButton": {
+          "description": "Whether to show the previous button.",
+          "type": "boolean"
+        },
+        "previousButtonDisatbleTime": {
+          "description": "A timeout (in ms) after which the previous button will be disabled.",
+          "type": "number"
+        },
+        "previousButtonEnableTime": {
+          "description": "A timer (in ms) after which the previous button will be enabled.",
+          "type": "number"
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
@@ -2115,6 +2187,18 @@
           "description": "The text that is displayed on the next button.",
           "type": "string"
         },
+        "previousButton": {
+          "description": "Whether to show the previous button.",
+          "type": "boolean"
+        },
+        "previousButtonDisatbleTime": {
+          "description": "A timeout (in ms) after which the previous button will be disabled.",
+          "type": "number"
+        },
+        "previousButtonEnableTime": {
+          "description": "A timer (in ms) after which the previous button will be enabled.",
+          "type": "number"
+        },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
@@ -2205,6 +2289,18 @@
         "path": {
           "description": "The path to the vega file. This should be a relative path from the public folder.",
           "type": "string"
+        },
+        "previousButton": {
+          "description": "Whether to show the previous button.",
+          "type": "boolean"
+        },
+        "previousButtonDisatbleTime": {
+          "description": "A timeout (in ms) after which the previous button will be disabled.",
+          "type": "number"
+        },
+        "previousButtonEnableTime": {
+          "description": "A timer (in ms) after which the previous button will be enabled.",
+          "type": "number"
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
@@ -2300,6 +2396,18 @@
         "path": {
           "description": "The path to the video. This could be a relative path from the public folder or might be a url to an external website.",
           "type": "string"
+        },
+        "previousButton": {
+          "description": "Whether to show the previous button.",
+          "type": "boolean"
+        },
+        "previousButtonDisatbleTime": {
+          "description": "A timeout (in ms) after which the previous button will be disabled.",
+          "type": "number"
+        },
+        "previousButtonEnableTime": {
+          "description": "A timer (in ms) after which the previous button will be enabled.",
+          "type": "number"
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
@@ -2400,6 +2508,18 @@
         "path": {
           "description": "The path to the website. This should be a relative path from the public folder or could be an external website.",
           "type": "string"
+        },
+        "previousButton": {
+          "description": "Whether to show the previous button.",
+          "type": "boolean"
+        },
+        "previousButtonDisatbleTime": {
+          "description": "A timeout (in ms) after which the previous button will be disabled.",
+          "type": "number"
+        },
+        "previousButtonEnableTime": {
+          "description": "A timer (in ms) after which the previous button will be enabled.",
+          "type": "number"
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
