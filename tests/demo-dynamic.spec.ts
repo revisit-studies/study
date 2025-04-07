@@ -21,10 +21,12 @@ test('test', async ({ page }) => {
   let expectedLeft = 0;
   let expectedRight = 100;
 
+  // Run 10 trials
+  // The first 5 trials are correct, the next 5 are incorrect
   for (let i = 0; i < trialLen; i += 1) {
     const isCorrect = i < 5;
 
-    // Check current saturation
+    // Extract and parse current saturation values
     const leftText = await page.locator('text=Left square saturation:').last().textContent() || '';
     const rightText = await page.locator('text=Right square saturation:').last().textContent() || '';
 
@@ -39,6 +41,8 @@ test('test', async ({ page }) => {
     await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
     await page.getByRole('button', { name: 'Next', exact: true }).click();
 
+    // If the answer was correct, increase the left saturation by 5 (max 50) and decrease the right saturation by 5 (min 50)
+    // If the answer was incorrect, decrease the left saturation by 5 (min 0) and increase the right saturation by 5 (max 100)
     if (isCorrect) {
       expectedLeft = Math.min(50, expectedLeft + 5);
       expectedRight = Math.max(50, expectedRight - 5);
