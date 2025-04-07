@@ -1,6 +1,6 @@
 import { JumpFunctionParameters, JumpFunctionReturnVal } from '../../store/types';
 
-export default function func({ answers, customParameters } : JumpFunctionParameters<{name: string}>) : JumpFunctionReturnVal {
+export default function func({ answers, customParameters }: JumpFunctionParameters<{name: string}>): JumpFunctionReturnVal {
   const topAnswerLength = Object.entries(answers)
     .filter(([key, _]) => key.startsWith(`${customParameters.name}`))
     .filter(([_, value]) => value.endTime > -1)
