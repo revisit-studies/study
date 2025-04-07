@@ -4,7 +4,6 @@ import {
   useStoreSelector,
   useStoreActions,
   useStoreDispatch,
-  useAreResponsesValid,
   useFlatSequence,
 } from '../store';
 import {
@@ -65,11 +64,9 @@ export function usePreviousStep() {
 
   const dataCollectionEnabled = useMemo(() => modes.dataCollectionEnabled, [modes]);
 
-  const areResponsesValid = useAreResponsesValid(identifier);
-
   // Status of the previous button. If false, the previous button should be disabled
   const isAnalysis = useIsAnalysis();
-  const isPreviousDisabled = typeof currentStep !== 'number' || isAnalysis || !areResponsesValid;
+  const isPreviousDisabled = typeof currentStep !== 'number' || isAnalysis || currentStep <= 0;
 
   const storedAnswer = useStoredAnswer();
 

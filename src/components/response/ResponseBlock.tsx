@@ -14,6 +14,7 @@ import {
   useStoreDispatch, useStoreSelector, useStoreActions,
 } from '../../store/store';
 
+import { PreviousButton } from '../PreviousButton';
 import { NextButton } from '../NextButton';
 import { useAnswerField } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
@@ -100,11 +101,10 @@ export function ResponseBlock({
   const [attemptsUsed, setAttemptsUsed] = useState(0);
   const trainingAttempts = configInUse?.trainingAttempts || 2;
   const [enableNextButton, setEnableNextButton] = useState(false);
-
   const identifier = useCurrentIdentifier();
 
   const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
-
+  const showPreviousBtn = location === (configInUse?.previousButtonLocation || 'belowStimulus');
   useEffect(() => {
     const ReactiveResponse = responsesWithDefaults.find((r) => r.type === 'reactive');
     if (reactiveAnswers && ReactiveResponse) {
@@ -300,6 +300,12 @@ export function ResponseBlock({
           >
             Check Answer
           </Button>
+        )}
+        {showPreviousBtn && (
+          <PreviousButton
+            label={configInUse.previousButtonText || 'Previous'}
+            configInUse={configInUse}
+          />
         )}
         {showNextBtn && (
           <NextButton
