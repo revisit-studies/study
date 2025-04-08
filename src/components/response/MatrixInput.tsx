@@ -142,8 +142,6 @@ export function MatrixInput({
         .sort((a, b) => a.sort - b.sort)
         .map(({ value }) => value);
       setOrderedQuestions(shuffled);
-    } else if (questionOrder === 'latinSquare') {
-      //
     } else {
       // questionOrder === 'fixed'
       setOrderedQuestions(_questions);

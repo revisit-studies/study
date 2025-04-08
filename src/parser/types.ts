@@ -332,7 +332,7 @@ export interface MatrixResponse extends BaseResponse {
   /** The question options (rows) are the prompts for each response you'd like to record. */
   questionOptions: string[];
   /** The order in which the questions are displayed. Defaults to fixed. */
-  questionOrder?: 'fixed' | 'random' | 'latinSquare';
+  questionOrder?: 'fixed' | 'random';
 }
 
 /**

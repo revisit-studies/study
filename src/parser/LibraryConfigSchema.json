@@ -1299,8 +1299,7 @@
           "description": "The order in which the questions are displayed. Defaults to fixed.",
           "enum": [
             "fixed",
-            "random",
-            "latinSquare"
+            "random"
           ],
           "type": "string"
         },
