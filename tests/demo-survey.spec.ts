@@ -11,7 +11,7 @@ test('test', async ({ page }) => {
   await page.getByPlaceholder('Enter your preference').click();
   await page.getByRole('option', { name: 'Bar', exact: true }).click();
   await page.getByPlaceholder('Enter your age here, range from 0 - 100').fill('12');
-  await page.getByLabel('5').check();
+  await page.getByRole('radio', { name: '5' }).nth(0).click();
   await page.getByPlaceholder('Enter your answer here').fill('ads');
   await page.getByPlaceholder('Enter your long comments here').fill('asdf');
   await page.locator('.mantine-Slider-track').click();
