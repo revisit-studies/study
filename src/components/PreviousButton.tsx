@@ -1,4 +1,4 @@
-import { Alert, Button, Group } from '@mantine/core';
+import { Alert, Button } from '@mantine/core';
 import {
   useCallback, useEffect, useMemo, useState,
 } from 'react';
@@ -32,7 +32,7 @@ export function PreviousButton({
     goToPreviousStep();
   }, [goToPreviousStep, onClick]);
 
-  const previousButtonDisableTime = configInUse?.nextButtonDisableTime;
+  const previousButtonDisableTime = configInUse?.previousButtonDisableTime;
   const previousButtonEnableTime = configInUse?.previousButtonEnableTime || 0;
   const [timer, setTimer] = useState<number | undefined>(undefined);
   // Start a timer on first render, update timer every 100ms
@@ -108,9 +108,6 @@ export function PreviousButton({
           ) : !studyConfig.uiConfig.timeoutReject && (
             <Alert mt="md" title="Previous button disabled" color="red" icon={<IconAlertTriangle />}>
               The previous button has timed out and is now disabled.
-              <Group justify="right" mt="sm">
-                <Button onClick={() => goToPreviousStep(false)} variant="link" color="red">Proceed</Button>
-              </Group>
             </Alert>
           ))}
     </>
