@@ -6,7 +6,7 @@
   "components": {
     "nasa-tlx": {
       "type": "markdown",
-      "path": "public/libraries/nasa-tlx/assets/tlx.md",
+      "path": "libraries/nasa-tlx/assets/tlx.md",
       "response": [
         {
           "id": "mental-demand",
