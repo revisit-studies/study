@@ -5,7 +5,8 @@
   "doi": "10.1016/S0166-4115(08)62386-9",
   "components": {
     "nasa-tlx": {
-      "type": "questionnaire",
+      "type": "markdown",
+      "path": "public/libraries/nasa-tlx/assets/tlx.md",
       "response": [
         {
           "id": "mental-demand",
@@ -13,6 +14,7 @@
           "tlxStyle": true,
           "withBar": false,
           "prompt": "Mental Demand",
+          "secondaryText": "How much mental and perceptual effort did you spend?",
           "options": [
             {
               "label": "Low",
@@ -109,6 +111,7 @@
           "tlxStyle": true,
           "withBar": false,
           "prompt": "Physical Demand",
+          "secondaryText": "How much physical effort did you spend?",
           "options": [
             {
               "label": "Low",
@@ -205,6 +208,7 @@
           "tlxStyle": true,
           "withBar": false,
           "prompt": "Temporal Demand",
+          "secondaryText": "How much time pressure did you feel in order to complete this?",
           "options": [
             {
               "label": "Low",
@@ -301,9 +305,10 @@
           "tlxStyle": true,
           "withBar": false,
           "prompt": "Performance",
+          "secondaryText": "How successful do you think you were in accomplishing what you were asked to do? (notice the direction of this scale)",
           "options": [
             {
-              "label": "Poor",
+              "label": "Good",
               "value": 0
             },
             {
@@ -383,7 +388,7 @@
               "value": 95
             },
             {
-              "label": "Good",
+              "label": "Poor",
               "value": 100
             }
           ],
@@ -397,6 +402,7 @@
           "tlxStyle": true,
           "withBar": false,
           "prompt": "Effort",
+          "secondaryText": "How hard did you have to work to accomplish your level of performance?",
           "options": [
             {
               "label": "Low",
@@ -493,6 +499,7 @@
           "tlxStyle": true,
           "withBar": false,
           "prompt": "Frustration",
+          "secondaryText": "How irritated, stressed, discouraged, and annoyed were you?",
           "options": [
             {
               "label": "Low",
