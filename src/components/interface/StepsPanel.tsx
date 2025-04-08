@@ -1,5 +1,5 @@
 import {
-  Badge, Box, NavLink, HoverCard, Text, Tooltip, Code,
+  Badge, Box, NavLink, HoverCard, Text, Tooltip, Code, Flex, Button,
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import {
@@ -164,6 +164,17 @@ function StepItem({
       : <IconX size={16} style={{ marginRight: 4, marginBottom: -3 }} color="red" />
   ) : null;
 
+  const INITIAL_CLAMP = 6;
+  const responseJSONText = task && JSON.stringify(task.response, null, 2);
+  const [responseClamp, setResponseClamp] = useState<number | undefined>(INITIAL_CLAMP);
+
+  const correctAnswerJSONText = taskAnswer && taskAnswer.correctAnswer.length > 0
+    ? JSON.stringify(taskAnswer.correctAnswer, null, 2)
+    : task && task.correctAnswer
+      ? JSON.stringify(task.correctAnswer, null, 2)
+      : undefined;
+  const [correctAnswerClamp, setCorrectAnswerClamp] = useState<number | undefined>(INITIAL_CLAMP);
+
   return (
     <HoverCard withinPortal position="left" withArrow arrowSize={10} shadow="md" offset={0}>
       <HoverCard.Target>
@@ -229,13 +240,24 @@ function StepItem({
                 <Code block>{JSON.stringify(taskAnswer.answer, null, 2)}</Code>
               </Box>
             )}
-            {task.correctAnswer && (
+            {correctAnswerJSONText && (
               <Box>
                 <Text fw={900} display="inline-block" mr={2}>
                   Correct Answer:
                 </Text>
                 {' '}
-                <Code block>{JSON.stringify(task.correctAnswer, null, 2)}</Code>
+                <Code block>
+                  <Text size="xs" lineClamp={correctAnswerClamp}>{correctAnswerJSONText}</Text>
+                  {correctAnswerJSONText.split('\n').length > INITIAL_CLAMP && (
+                    <Flex justify="flex-end">
+                      {(correctAnswerClamp === undefined || correctAnswerJSONText.split('\n').length > correctAnswerClamp) && (
+                      <Button variant="light" size="xs" onClick={() => { setCorrectAnswerClamp((prev) => (prev === INITIAL_CLAMP ? undefined : INITIAL_CLAMP)); }}>
+                        {correctAnswerClamp !== undefined ? 'Show more' : 'Show less'}
+                      </Button>
+                      )}
+                    </Flex>
+                  )}
+                </Code>
               </Box>
             )}
             <Box>
@@ -243,7 +265,18 @@ function StepItem({
                 Response:
               </Text>
               {' '}
-              <Code block>{JSON.stringify(task.response, null, 2)}</Code>
+              <Code block>
+                <Text size="xs" lineClamp={responseClamp}>{responseJSONText}</Text>
+                {responseJSONText.split('\n').length > INITIAL_CLAMP && (
+                  <Flex justify="flex-end">
+                    {(responseClamp === undefined || responseJSONText.split('\n').length > responseClamp) && (
+                    <Button variant="light" size="xs" onClick={() => { setResponseClamp((prev) => (prev === INITIAL_CLAMP ? undefined : INITIAL_CLAMP)); }}>
+                      {responseClamp !== undefined ? 'Show more' : 'Show less'}
+                    </Button>
+                    )}
+                  </Flex>
+                )}
+              </Code>
             </Box>
             {task.meta && (
             <Box>
