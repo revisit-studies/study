@@ -1304,10 +1304,6 @@
           ],
           "type": "string"
         },
-        "randomizeOrder": {
-          "description": "Whether to randomize the order of the questions. Defaults to false.",
-          "type": "boolean"
-        },
         "required": {
           "description": "Controls whether the response is required to be answered. Defaults to true.",
           "type": "boolean"
