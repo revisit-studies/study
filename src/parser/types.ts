@@ -331,6 +331,8 @@ export interface MatrixResponse extends BaseResponse {
   answerOptions: string[] | `likely${5 | 7}` | `satisfaction${5 | 7}`;
   /** The question options (rows) are the prompts for each response you'd like to record. */
   questionOptions: string[];
+  /** The order in which the questions are displayed. Defaults to fixed. */
+  questionOrder?: 'fixed' | 'random';
 }
 
 /**

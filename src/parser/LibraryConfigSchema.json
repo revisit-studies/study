@@ -1295,6 +1295,14 @@
           },
           "type": "array"
         },
+        "questionOrder": {
+          "description": "The order in which the questions are displayed. Defaults to fixed.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
+        },
         "required": {
           "description": "Controls whether the response is required to be answered. Defaults to true.",
           "type": "boolean"
