@@ -47,6 +47,8 @@ export interface GlobalConfig {
 export interface StudyMetadata {
   /** The title of your study, shown on the landing page. */
   title: string;
+  /** Whether the title should be hidden. */
+  showTitle?: boolean;
   /** The version of your study. When you change a configuration file after a study has already been distributed to participants, you can change the version number so that the participants who see this new configuration file can be identified. */
   version: string;
   /** The authors of your study. */
