@@ -52,6 +52,27 @@
         }
       ]
     },
+    "VlatTrial": {
+      "type": "react-component",
+      "path": "example-VLAT-adaptive/assets/VlatTrial.tsx",
+      "response": [
+        {
+          "id": "vlatResp",
+          "prompt": "You select: ",
+          "location": "belowStimulus",
+          "type": "reactive"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "vlatResp",
+          "answer": "A"
+        }
+      ],
+      "provideFeedback": false,
+      "allowFailedTraining": true,
+      "trainingAttempts": 1
+    },
     "survey": {
       "type": "markdown",
       "path": "VLAT-mini-randomized/survey.md",
@@ -85,6 +106,11 @@
     "components": [
       "introduction",
       "consent",
+      {
+        "id": "dynamicBlock",
+        "order": "dynamic",
+        "functionPath": "example-VLAT-adaptive/assets/Dynamic.tsx"
+      },
       "survey"
     ]
   }

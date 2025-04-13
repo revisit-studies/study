@@ -5,6 +5,7 @@
     "example-brush-interactions",
     "example-cleveland",
     "example-mvnv",
+    "example-VLAT-adaptive",
     "example-VLAT-full-randomized",
     "example-VLAT-mini-randomized",
     "demo-html",
@@ -73,6 +74,9 @@
     },
     "demo-dynamic": {
       "path": "demo-dynamic/config.json"
+    },
+    "example-VLAT-adaptive": {
+      "path": "example-VLAT-adaptive/config.json"
     },
     "example-VLAT-full-randomized": {
       "path": "example-VLAT-full-randomized/config.json"

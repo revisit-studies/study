@@ -7,7 +7,7 @@
     <title>ReVISit</title>
 
     <link rel="stylesheet" href="/revisitAssets/cssOverrides.css" />
-
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.27.5/full/pyodide.js"></script>
     <!-- Required for react browser router on GitHub pages -->
     <script type="text/javascript">
       // Single Page Apps for GitHub Pages
@@ -21,7 +21,7 @@
       // the single page app to route accordingly.
       (function(l) {
         if (l.search[1] === '/' ) {
-          var decoded = l.search.slice(1).split('&').map(function(s) { 
+          var decoded = l.search.slice(1).split('&').map(function(s) {
             return s.replace(/~and~/g, '&')
           }).join('?');
           window.history.replaceState(null, null,
