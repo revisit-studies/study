@@ -8,10 +8,15 @@ export interface TrrackState {
 }
 
 export interface ChartParams {
+  showConfig?: boolean;
+  encoding: string;
   dataset: string;
   isSnr: boolean;
   nMeans: number;
+  nDevs: number;
   colorScale: string;
+  clusterMode?: string;
+  clusterVar?: string;
   provenanceState: TrrackState;
 }
 

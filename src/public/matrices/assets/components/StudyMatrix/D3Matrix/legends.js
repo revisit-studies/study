@@ -20,7 +20,7 @@ function renderColorStdLegend(vis, cells) {
     .append('rect')
     .attr('width', vis.cellSize)
     .attr('height', vis.cellSize)
-    .attr('fill', 'white')
+    .attr('fill', 'black')
     .attr('stroke', 'black')
     .attr('stroke-width', 1);
 

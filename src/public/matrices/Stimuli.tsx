@@ -5,9 +5,13 @@ import {
 import { Registry, initializeTrrack } from '@trrack/core';
 import { StimulusParams } from '../../store/types';
 import { Matrix } from './Matrix';
-import { ChartParams, TrrackState, link } from './Interfaces';
+import { ChartParams, TrrackState, link } from './utils/Interfaces';
 
-export function Chart({ parameters, setAnswer, provenanceState }: StimulusParams<ChartParams, TrrackState>) {
+export function Stimuli({
+  parameters,
+  setAnswer,
+  provenanceState,
+}: StimulusParams<ChartParams, TrrackState>) {
   // ---------------------------- Setup & data ----------------------------
   const [data, setData] = useState<link[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -33,9 +37,8 @@ export function Chart({ parameters, setAnswer, provenanceState }: StimulusParams
   }, []);
 
   useEffect(() => {
-    loadData(dataname);
-  }, [loadData, dataname]);
-
+    loadData(parameters.dataset);
+  }, [loadData, parameters.dataset]);
   // ---------------------------- Trrack ----------------------------
   const { actions, trrack } = useMemo(() => {
     const registry = Registry.create();
@@ -56,13 +59,19 @@ export function Chart({ parameters, setAnswer, provenanceState }: StimulusParams
       state.highlightedNodes = [...state.highlightNodes, node];
     });
 
-    const removeHighlightNode = registry.register('remove-highlight-node', (state, node: string) => {
-      state.highlightNodes = state.highlightNodes.filter((n: string) => n !== node);
-    });
+    const removeHighlightNode = registry.register(
+      'remove-highlight-node',
+      (state, node: string) => {
+        state.highlightNodes = state.highlightNodes.filter((n: string) => n !== node);
+      },
+    );
 
-    const setHighlightNodes = registry.register('set-highlight-nodes', (state, highlightNodes: string[]) => {
-      state.highlightNodes = highlightNodes;
-    });
+    const setHighlightNodes = registry.register(
+      'set-highlight-nodes',
+      (state, highlightNodes: string[]) => {
+        state.highlightNodes = highlightNodes;
+      },
+    );
 
     const setSortingNode = registry.register('set-sorting-node', (state, node: string) => {
       state.sortingNode = node;
@@ -72,9 +81,12 @@ export function Chart({ parameters, setAnswer, provenanceState }: StimulusParams
       state.originHighlight = node;
     });
 
-    const setDestinationHighlight = registry.register('highlight-destination-node', (state, node: string) => {
-      state.destinationHighlight = node;
-    });
+    const setDestinationHighlight = registry.register(
+      'highlight-destination-node',
+      (state, node: string) => {
+        state.destinationHighlight = node;
+      },
+    );
 
     const trrackInst = initializeTrrack<TrrackState>({
       initialState: {
@@ -108,10 +120,17 @@ export function Chart({ parameters, setAnswer, provenanceState }: StimulusParams
   // ---------------------------- Render ----------------------------
 
   return data ? (
-    <Matrix parameters={parameters} data={data} provenanceState={provenanceState} actions={actions} trrack={trrack} setAnswer={setAnswer} />
+    <Matrix
+      parameters={parameters}
+      data={data}
+      provenanceState={provenanceState}
+      actions={actions}
+      trrack={trrack}
+      setAnswer={setAnswer}
+    />
   ) : (
     <Loader />
   );
 }
 
-export default Chart;
+export default Stimuli;

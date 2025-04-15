@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import * as d3 from 'd3';
-import { useMatrixContext } from './MatrixContext';
+import { useMatrixContext } from './utils/MatrixContext';
 
 export function invertScaleBand(scale: d3.ScaleBand<string>, value: number) {
   const domain = scale.domain();
@@ -17,7 +17,13 @@ export function invertScaleBand(scale: d3.ScaleBand<string>, value: number) {
 
 export function Background() {
   const {
-    size, originScale, destinationScale, setOriginHighlight, setDestinationHighlight,
+    size,
+    originScale,
+    destinationScale,
+    setOriginHighlight,
+    setDestinationHighlight,
+    originHighlight,
+    destinationHighlight,
   } = useMatrixContext();
 
   const { width, height } = useMemo(() => ({ width: size, height: size }), [size]);
@@ -26,9 +32,12 @@ export function Background() {
     const [x, y] = d3.pointer(e);
     const origin = invertScaleBand(originScale, x);
     const destination = invertScaleBand(destinationScale, y);
-    setOriginHighlight(!origin && destination ? destination : origin);
-    setDestinationHighlight(!destination && origin ? origin : destination);
+
+    if (origin !== originHighlight) setOriginHighlight(origin);
+    if (destination !== destinationHighlight) setDestinationHighlight(destination);
   };
 
-  return <rect width={width} height={height} fill="red" opacity={0.1} onMouseMove={onMouseMove} />;
+  return (
+    <rect width={width} height={height} fill="transparent" opacity={0} onMouseMove={onMouseMove} />
+  );
 }

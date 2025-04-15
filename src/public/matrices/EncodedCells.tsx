@@ -1,45 +1,64 @@
-import { useEffect, useRef, useMemo } from 'react';
+import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
-import { originAccesor, destinationAccesor, meanAccesor } from './Accesors';
-import { useMatrixContext } from './MatrixContext';
-import { link } from './Interfaces';
-import { useRenderEcondedCells } from './useRenderEncodeCells';
+import {
+  originAccesor, destinationAccesor, meanAccesor, stdAccesor,
+} from './utils/Accesors';
+import { useMatrixContext } from './utils/MatrixContext';
+import { link } from './utils/Interfaces';
+import { useRenderEcondedCells } from './hooks/useRenderEncodeCells';
 
 export function EncodedCells({ data }: { data: link[] }) {
   const {
-    cellSize,
-
-    encoding,
-    isSnr,
-
-    originScale,
-    destinationScale,
+    cellSize, encoding, isSnr, meanScale, devScale, originScale, destinationScale,
   } = useMatrixContext();
+
   const ref = useRef<SVGGElement | null>(null);
+  const cellRenderer = useRenderEcondedCells(meanScale, devScale, cellSize, isSnr);
 
-  const renderEncodedCells = useRenderEcondedCells(data, encoding, isSnr, cellSize);
+  useEffect(() => {
+    if (!ref.current) return;
 
-  const gCells = useMemo(
-    () => d3
+    const filteredData = data.filter((d) => d.origin >= d.destination);
+    filteredData.forEach((d) => {
+      if (d.destination !== d.origin) {
+        const item = { ...d };
+        item.origin = d.destination;
+        item.destination = d.origin;
+        filteredData.push(item);
+      }
+    });
+
+    const g = d3
       .select(ref.current)
       .selectAll<SVGGElement, link>('.cell')
-      .data<link>(data, (d) => originAccesor(d) + destinationAccesor(d) + meanAccesor(d) + d.std)
+      .data(
+        filteredData,
+        (d) => originAccesor(d) + destinationAccesor(d) + meanAccesor(d) + stdAccesor(d),
+      )
       .join(
         (enter) => enter
           .append('g')
           .attr('class', 'cell')
-          .attr('transform', (d: link) => `translate(${originScale(originAccesor(d))}, ${destinationScale(destinationAccesor(d))})`),
+          .attr(
+            'transform',
+            (d: link) => `translate(${originScale(originAccesor(d))}, ${destinationScale(
+              destinationAccesor(d),
+            )})`,
+          ),
         (update) => {
           update.selectAll('*').remove();
-          return update.attr('transform', (d: link) => `translate(${originScale(originAccesor(d))}, ${destinationScale(destinationAccesor(d))})`);
+          return update.attr(
+            'transform',
+            (d: link) => `translate(${originScale(originAccesor(d))}, ${destinationScale(
+              destinationAccesor(d),
+            )})`,
+          );
         },
         (exit) => exit.remove(),
-      ),
-    [data, originScale, destinationScale, ref, encoding],
-  );
-  useEffect(() => {
-    renderEncodedCells(gCells);
-  }, [gCells, renderEncodedCells, encoding]);
+      );
+
+    cellRenderer(g, encoding);
+  }, [data, originScale, destinationScale, cellRenderer, ref, encoding]);
 
   return <g ref={ref} />;
 }

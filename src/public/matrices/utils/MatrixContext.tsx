@@ -3,27 +3,49 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import * as d3 from 'd3';
 import { Trrack } from '@trrack/core';
-import { TrrackState } from './Interfaces';
+import { link, TrrackState } from './Interfaces';
 
 interface MatrixContextType {
+  data: link[];
   margin: { top: number; left: number; right: number; bottom: number };
   width: number;
   height: number;
   size: number;
   cellSize: number;
 
+  nMeans: number;
+  nDevs: number;
+
+  colorScale: string;
+
+  meanMin: number;
+  meanMax: number;
+  devMin: number;
+  devMax: number;
+
   originScale: d3.ScaleBand<string>;
   destinationScale: d3.ScaleBand<string>;
 
-  encoding: string | null;
-  setEncoding: (value: string | null) => void;
-  isSnr: boolean | null;
-  setIsSnr: (value: boolean | null) => void;
+  encoding: string;
+  setEncoding: (value: string) => void;
+  isSnr: boolean;
+  setIsSnr: (value: boolean) => void;
 
   originHighlight: string | null;
   setOriginHighlight: (value: string | null) => void;
   destinationHighlight: string | null;
   setDestinationHighlight: (value: string | null) => void;
+
+  orderedOrigins: string[] | null;
+  setOrderedOrigins: (value: string[] | null) => void;
+  orderedDestinations: string[] | null;
+  setOrderedDestinations: (value: string[] | null) => void;
+
+  meanScale: d3.ScaleQuantize<string | number, never>;
+  devScale: d3.ScaleQuantize<string | number, never>;
+
+  orderNode: string | null;
+  setOrderNode: (value: string | null) => void;
 
   answerNodes: string[];
   setAnswerNodes: (nodes: string[]) => void;
@@ -35,7 +57,13 @@ interface MatrixContextType {
 
 const MatrixContext = createContext<MatrixContextType | undefined>(undefined);
 
-export function MatrixProvider({ children, context }: { children: React.ReactNode; context: MatrixContextType }): React.ReactElement {
+export function MatrixProvider({
+  children,
+  context,
+}: {
+  children: React.ReactNode;
+  context: MatrixContextType;
+}): React.ReactElement {
   const contextValue = useMemo(
     () => ({
       ...context,

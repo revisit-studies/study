@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 
-const markColor = 'black';
+const markColor = 'white';
 const sizeProportion = 0.6;
 // Utility functions
 function createSizeScale(nSteps, cellSize) {

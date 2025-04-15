@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
-import * as d3 from 'd3';
-import { useMatrixContext } from './MatrixContext';
+import { useMatrixContext } from './utils/MatrixContext';
+import { HIGHLIGHT_STROKE_WIDTH } from './utils/Constants';
 
 export function Highlighting() {
   const {
@@ -18,33 +18,46 @@ export function Highlighting() {
     trrack,
   } = useMatrixContext();
 
-  const { topMargin, leftMargin } = useMemo(() => ({ topMargin: margin.top, leftMargin: margin.left }), [margin]);
+  const { topMargin, leftMargin } = useMemo(
+    () => ({ topMargin: margin.top, leftMargin: margin.left }),
+    [margin],
+  );
 
   const { width, height } = useMemo(() => ({ width: size, height: size }), [size]);
 
   useEffect(() => {
     trrack?.apply('Highlight', actions?.setOriginHighlight(originHighlight));
-  }, [originHighlight]);
+  }, [originHighlight, trrack, actions]);
 
   useEffect(() => {
     trrack?.apply('Highlight', actions?.setOriginHighlight(destinationHighlight));
-  }, [destinationHighlight]);
-
-  useEffect(() => {
-    d3.selectAll('.highlightLine').raise();
-  }, [originHighlight, destinationHighlight]);
+  }, [destinationHighlight, trrack, actions]);
 
   return (
     <>
-      {originHighlight && (
-        <rect width={cellSize} height={height + topMargin} x={originScale(originHighlight)} y={-topMargin} fill="blue" fillOpacity={0.5} />
-      )}
+      <rect
+        id="originHighlight"
+        className="highlight"
+        width={cellSize}
+        height={height + topMargin}
+        y={-topMargin + HIGHLIGHT_STROKE_WIDTH}
+        x={originHighlight ? originScale(originHighlight) : 0}
+        visibility={originHighlight ? 'visible' : 'hidden'}
+        style={{ strokeWidth: HIGHLIGHT_STROKE_WIDTH }}
+      />
 
-      {destinationHighlight && (
-        <rect width={width + leftMargin} height={cellSize} x={-leftMargin} y={destinationScale(destinationHighlight)} fill="blue" fillOpacity={0.5} />
-      )}
+      <rect
+        id="destinationHighlight"
+        className="highlight"
+        width={width + leftMargin}
+        height={cellSize}
+        x={-leftMargin + +HIGHLIGHT_STROKE_WIDTH}
+        y={destinationHighlight ? destinationScale(destinationHighlight) : 0}
+        visibility={destinationHighlight ? 'visible' : 'hidden'}
+        style={{ strokeWidth: HIGHLIGHT_STROKE_WIDTH }}
+      />
 
-      {originHighlight && (
+      {/*  {originHighlight && (
         <>
           <line
             className="highlightLine"
@@ -83,9 +96,9 @@ export function Highlighting() {
             strokeWidth={2}
           />
         </>
-      )}
+      )} */}
 
-      {destinationHighlight && (
+      {/* {destinationHighlight && (
         <>
           <line
             className="highlightLine"
@@ -124,7 +137,7 @@ export function Highlighting() {
             strokeWidth={2}
           />
         </>
-      )}
+      )} */}
     </>
   );
 }

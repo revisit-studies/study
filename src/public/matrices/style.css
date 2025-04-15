@@ -1,0 +1,36 @@
+.axis-line {
+  stroke: black;
+  stroke-width: 1;
+}
+
+.axis-label {
+  text-align: end;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  margin-right: 5px;
+  margin-left: 5px;
+}
+
+.selected-answer {
+  color: #ff6e4a;
+  font-weight: 700;
+}
+
+.highlight {
+  fill: transparent;
+  stroke: #ff6e4a;
+  pointer-events: none;
+}
+
+.order-highlight {
+  fill: transparent;
+  stroke: #ff6e4a;
+  pointer-events: none;
+}
+
+.label-container {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}

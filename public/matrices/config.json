@@ -24,10 +24,48 @@
       "nextButtonLocation": "sidebar",
       "instructionLocation": "sidebar",
       "response": []
+    },
+    "matrix_good": {
+      "description": "Test Std Matrix.",
+      "type": "react-component",
+      "path": "matrices/Stimuli.tsx",
+      "nextButtonLocation": "sidebar",
+      "instructionLocation": "sidebar",
+      "response": []
     }
   },
   "components": {
     "matrix_explore": {
+      "baseComponent": "matrix_good",
+      "instruction": "No task. Just for exploratory purpose <br>Origins - X axis <br>Destinations - Y axis <br>To select answers: Left Click on Destination labels <br> To order Destinations by Origin: Right click Origin labels <br> To highlight Destinations by Origin: Left click Origin labels <br>Menu top right corner for exploring datasets, encodings, color scales...",
+      "parameters": {
+        "showConfig": true,
+        "dataset": "test.txt",
+        "encoding": "mark",
+        "colorScale": "viridis",
+        "isSnr": false,
+        "nMeans": 5,
+        "nStds": 5,
+        "showTooltip": true,
+        "isConfig": true
+      },
+      "response": [
+        {
+          "id": "answerNodes",
+          "prompt": "Selected State(s) willl show here",
+
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "answerNodes",
+          "answer": ["Oregon"]
+        }
+      ]
+    },
+    "matrix_explore2": {
       "baseComponent": "matrix",
       "instruction": "No task. Just for exploratory purpose <br>Origins - X axis <br>Destinations - Y axis <br>To select answers: Left Click on Destination labels <br> To order Destinations by Origin: Right click Origin labels <br> To highlight Destinations by Origin: Left click Origin labels <br>Menu top right corner for exploring datasets, encodings, color scales...",
       "parameters": {
@@ -39,12 +77,12 @@
         "nStds": 5,
         "tooltipHistogram": "frequencies",
         "showTooltip": true,
-        "isConfig": true
+        "isConfig": false
       },
       "response": [
         {
           "id": "answerNodes",
-          "prompt": "Selected State(s) will show here",
+          "prompt": "Selected State(s) willl show here",
 
           "location": "sidebar",
           "type": "reactive"
@@ -59,7 +97,7 @@
     },
     "check": {
       "baseComponent": "matrix",
-      "instruction": "To which states can you fly from Utah?",
+      "instruction": "ADJACENCY TASK. Select adjacent nodes to one given.<br><br>To which states can you fly from Utah?",
       "parameters": {
         "dataset": "test.txt",
         "encoding": "cellSize",
@@ -89,7 +127,7 @@
     },
     "attr_comb": {
       "baseComponent": "matrix",
-      "instruction": "To which states can you fly from Utah with a budget strictly between $100 and $200, without spending less or more?",
+      "instruction": "ATTRIBUTE COMBINATION TASK. Select adjacent nodes to one given under a combination of both attributes.<br><br>To which states can you fly from Utah with a budget strictly between $100 and $200, without spending less or more?<br><br> Better formulation?",
       "parameters": {
         "dataset": "test.txt",
         "encoding": "squareMark",
@@ -119,7 +157,7 @@
     },
     "adyacency_max_attr_std": {
       "baseComponent": "matrix",
-      "instruction": "Which state has the highest price variation on flights from Virginia? / Which route will you avoid if you flight from Virginia?",
+      "instruction": "EXTREME ATTRIBUTE TASK. Select adjacent nodes to one given with extreme attribute values.<br><br>Which state or states show the highest price variation for flights departing from Virginia?",
       "parameters": {
         "dataset": "test.txt",
         "encoding": "lightness",
@@ -149,10 +187,10 @@
     },
     "adyacency_attr_std": {
       "baseComponent": "matrix",
-      "instruction": "Considering only routes with a price variation between $80 and $120, which states are connected to South Carolina?",
+      "instruction": "ATTRIBUTE TASK. Select adjacent nodes to one given constrained by some attribute values.<br><br>Which states are connected to Missouri with a price variation lower than $80?",
       "parameters": {
         "dataset": "test.txt",
-        "encoding": "lightness",
+        "encoding": "rotationMark",
         "colorScale": "viridis",
         "isSnr": false,
         "nMeans": 5,
@@ -179,7 +217,7 @@
     },
     "attr_routes": {
       "baseComponent": "matrix",
-      "instruction": "On which route would you spend less money: Utah → Michigan → New York or Utah → Texas → New York? (Consider price variations and select the states involved in the itinerary).",
+      "instruction": "PATH ESTIMATION TASK. Select between two paths the one that better fits for a given criteria.<br><br>On which route would you spend less money: Utah → Michigan → New York or Utah → Texas → New York? Select the routes and estimate the final price range.",
       "parameters": {
         "dataset": "test.txt",
         "encoding": "bars",
@@ -209,7 +247,7 @@
     },
     "range": {
       "baseComponent": "matrix",
-      "instruction": "What is the price range for flights departing from Arizona?",
+      "instruction": "RANGE ESTIMATION TASK. Estimate the range of link values for a given node. Participants will provide both the minimum and maximum values.<br><br>What is the price range for flights departing from Arizona?",
       "parameters": {
         "dataset": "test.txt",
         "encoding": "rotationMark",
@@ -239,7 +277,7 @@
     },
     "attr_range": {
       "baseComponent": "matrix",
-      "instruction": "Considering only routes with a price variation between $0 and $40, what is the price range for flights departing from Virginia?",
+      "instruction": "TREND EXTIMATION TASK. Estimate the stability of the links of a given node. Participants will select between stable, unstable or can’t tell.<br><br> Are flight prices stable when flying form Oregon?",
       "parameters": {
         "dataset": "test.txt",
         "encoding": "rotationMark",
@@ -266,85 +304,25 @@
           "answer": ["Oregon"]
         }
       ]
-    },
-    "clusters_unstable": {
-      "baseComponent": "matrix",
-      "instruction": "Which three states have the highest price variation when flying between them?",
-      "parameters": {
-        "dataset": "test.txt",
-        "encoding": "squareMark",
-        "colorScale": "viridis",
-        "isSnr": false,
-        "nMeans": 5,
-        "nStds": 5,
-        "tooltipHistogram": "frequencies",
-        "showTooltip": true,
-        "isConfig": false,
-        "cluster": ["optimal", "snr"]
-      },
-      "response": [
-        {
-          "id": "answerNodes",
-          "prompt": "Selected State(s) will show here",
-
-          "location": "sidebar",
-          "type": "reactive"
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "answerNodes",
-          "answer": ["Oregon"]
-        }
-      ]
-    },
-    "clusters_stable": {
-      "baseComponent": "matrix",
-      "instruction": "Which three states have the lowest price variation when flying between them?",
-      "parameters": {
-        "dataset": "test.txt",
-        "encoding": "squareMark",
-        "colorScale": "viridis",
-        "isSnr": false,
-        "nMeans": 5,
-        "nStds": 5,
-        "tooltipHistogram": "frequencies",
-        "showTooltip": true,
-        "isConfig": false,
-        "cluster": ["pca", "mean"]
-      },
-      "response": [
-        {
-          "id": "answerNodes",
-          "prompt": "Selected State(s) will show here",
-
-          "location": "sidebar",
-          "type": "reactive"
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "answerNodes",
-          "answer": ["Oregon"]
-        }
-      ]
     }
   },
   "sequence": {
     "order": "fixed",
     "components": [
       "matrix_explore",
+      "matrix_explore2",
       {
         "components": [
           "check",
-          "attr_comb",
+
           "adyacency_attr_std",
           "adyacency_max_attr_std",
+          "attr_comb",
+
           "attr_routes",
+
           "range",
-          "attr_range",
-          "clusters_stable",
-          "clusters_unstable"
+          "attr_range"
         ],
         "order": "fixed"
       },
