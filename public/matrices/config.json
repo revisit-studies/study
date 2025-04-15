@@ -5,7 +5,7 @@
     "version": "pilot",
     "authors": ["Jorge Acosta"],
     "date": "2025-03-22",
-    "description": "Test Matrices Study",
+    "description": "This is an experiment aiming to find which is the most efficient encoding technique to visualize mean and standard deviation values of links using adjacency matrices as layout.",
     "organizations": ["University of Utah", "Polythecnic University of Madrid"]
   },
   "uiConfig": {
