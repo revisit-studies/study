@@ -45,7 +45,7 @@ const MenuButton = () => {
           <ShowTooltipRadio></ShowTooltipRadio>
           <TooltipRadio></TooltipRadio>
 
-          <SnrRadio></SnrRadio>
+          {/* <SnrRadio></SnrRadio> */}
           <AxisRadio></AxisRadio>
           <EncodingRadio></EncodingRadio>
           <ColorScaleRadio></ColorScaleRadio>
@@ -148,7 +148,7 @@ const AxisRadio = () => {
         <Radio value="transparent">Transparent</Radio>
 
         <Radio value="black">Black</Radio>
-        <Radio value="lightgrey">Rotation Mark</Radio>
+        <Radio value="lightgrey">Grey</Radio>
       </Radio.Group>
     </div>
   );
