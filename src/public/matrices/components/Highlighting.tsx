@@ -1,6 +1,6 @@
 import { useEffect, useMemo } from 'react';
-import { useMatrixContext } from './utils/MatrixContext';
-import { HIGHLIGHT_STROKE_WIDTH } from './utils/Constants';
+import { useMatrixContext } from '../utils/MatrixContext';
+import { HIGHLIGHT_STROKE_WIDTH } from '../utils/Constants';
 
 export function Highlighting() {
   const {
@@ -30,7 +30,7 @@ export function Highlighting() {
   }, [originHighlight, trrack, actions]);
 
   useEffect(() => {
-    trrack?.apply('Highlight', actions?.setOriginHighlight(destinationHighlight));
+    trrack?.apply('Highlight', actions?.setDestinationHighlight(destinationHighlight));
   }, [destinationHighlight, trrack, actions]);
 
   return (

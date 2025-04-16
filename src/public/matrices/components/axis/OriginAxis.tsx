@@ -1,9 +1,9 @@
 import { Text, Tooltip } from '@mantine/core';
 
-import { useCallback, useMemo } from 'react';
-import { useMatrixContext } from '../utils/MatrixContext';
-import { ChartParams, link } from '../utils/Interfaces';
-import { HIGHLIGHT_STROKE_WIDTH } from '../utils/Constants';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useMatrixContext } from '../../utils/MatrixContext';
+import { link } from '../../utils/Interfaces';
+import { HIGHLIGHT_STROKE_WIDTH } from '../../utils/Constants';
 
 export const getOrder = (node: string, data: link[]) => {
   const connected = [
@@ -18,26 +18,29 @@ export const getOrder = (node: string, data: link[]) => {
   return orderedNodes;
 };
 
-export function OriginAxis({
-  parameters,
-  showLines = true,
-}: {
-  parameters: ChartParams;
-  showLines?: boolean;
-}) {
+export function OriginAxis({ showLines = true }: { showLines?: boolean }) {
   const {
+    config,
     data,
     originScale,
     destinationScale,
+
     margin,
+
     setDestinationHighlight,
     setOriginHighlight,
-    setOrderNode,
-    setOrderedDestinations,
-    orderNode,
+
+    orderingNode,
+    setOrderingNode,
+
     orderedOrigins,
+    setOrderedDestinations,
+
     cellSize,
     size,
+
+    trrack,
+    actions,
   } = useMatrixContext();
 
   const destinationRange = useMemo(() => destinationScale.range(), [destinationScale]);
@@ -60,17 +63,29 @@ export function OriginAxis({
     [setDestinationHighlight, setOriginHighlight],
   );
 
-  const onClick = (node: string) => {
-    if (parameters.clusterMode) return;
-    if (orderNode === node) {
+  const onClick = useCallback(
+    (node: string, oNode: string | null) => {
+      if (config.clusterMode) return;
+      if (oNode === node) {
+        setOrderingNode(null);
+        trrack?.apply('Reset Sort', actions?.setOrderingNode(null));
+      } else {
+        setOrderingNode(node);
+        trrack?.apply('Sort', actions?.setOrderingNode(node));
+      }
+    },
+    [config.clusterMode, trrack, actions, setOrderingNode],
+  );
+
+  useEffect(() => {
+    if (config.clusterMode) return;
+    if (orderingNode === null) {
       setOrderedDestinations(orderedOrigins);
-      setOrderNode(null);
       return;
     }
-    const order = getOrder(node, data);
+    const order = getOrder(orderingNode, data);
     setOrderedDestinations(order);
-    setOrderNode(node);
-  };
+  }, [config.clusterMode, data, orderedOrigins, setOrderedDestinations, orderingNode]);
 
   return (
     <>
@@ -96,7 +111,7 @@ export function OriginAxis({
             height={originScale.bandwidth()}
             style={{ transform: 'rotate(-90deg)', cursor: 'pointer' }}
             onMouseOver={() => onMouseOver(value)}
-            onClick={() => onClick(value)}
+            onClick={() => onClick(value, orderingNode)}
           >
             <div className="label-container">
               <Tooltip
@@ -106,7 +121,7 @@ export function OriginAxis({
                 openDelay={200}
               >
                 <Text className="axis-label" size="s">
-                  {orderNode === value ? `←  ${value}` : value}
+                  {orderingNode === value ? `←  ${value}` : value}
                 </Text>
               </Tooltip>
             </div>
@@ -120,8 +135,8 @@ export function OriginAxis({
         width={cellSize}
         height={size + margin.top}
         y={-margin.top + HIGHLIGHT_STROKE_WIDTH}
-        x={orderNode ? originScale(orderNode) : 0}
-        visibility={orderNode ? 'visible' : 'hidden'}
+        x={orderingNode ? originScale(orderingNode) : 0}
+        visibility={orderingNode ? 'visible' : 'hidden'}
         style={{ strokeWidth: HIGHLIGHT_STROKE_WIDTH }}
       />
     </>

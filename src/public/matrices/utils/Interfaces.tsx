@@ -1,10 +1,8 @@
 export interface TrrackState {
   answerNodes: string[];
-  highlightedNodes?: string[];
-  highlightNodes?: string[];
-  sortingNode?: string;
-  originHighlight?: string | null;
-  destinationHighlight?: string | null;
+  orderingNode: string | null;
+  originHighlight: string | null;
+  destinationHighlight: string | null;
 }
 
 export interface ChartParams {
@@ -17,6 +15,7 @@ export interface ChartParams {
   colorScale: string;
   clusterMode?: string;
   clusterVar?: string;
+  showTooltip?: boolean;
   provenanceState: TrrackState;
 }
 

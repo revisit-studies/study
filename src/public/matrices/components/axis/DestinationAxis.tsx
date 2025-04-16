@@ -1,7 +1,7 @@
 import { Text, Tooltip } from '@mantine/core';
 
 import { useCallback, useMemo } from 'react';
-import { useMatrixContext } from '../utils/MatrixContext';
+import { useMatrixContext } from '../../utils/MatrixContext';
 
 export function DestinationAxis({ showLines = true }: { showLines?: boolean }) {
   const {

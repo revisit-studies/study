@@ -1,15 +1,17 @@
 import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
+
 import {
   originAccesor, destinationAccesor, meanAccesor, stdAccesor,
-} from './utils/Accesors';
-import { useMatrixContext } from './utils/MatrixContext';
-import { link } from './utils/Interfaces';
-import { useRenderEcondedCells } from './hooks/useRenderEncodeCells';
+} from '../utils/Accesors';
+import { useMatrixContext } from '../utils/MatrixContext';
+import { link } from '../utils/Interfaces';
 
-export function EncodedCells({ data }: { data: link[] }) {
+import { useRenderEcondedCells } from '../hooks/useRenderEncodeCells';
+
+export function EncodedCells() {
   const {
-    cellSize, encoding, isSnr, meanScale, devScale, originScale, destinationScale,
+    data, cellSize, encoding, isSnr, meanScale, devScale, originScale, destinationScale,
   } = useMatrixContext();
 
   const ref = useRef<SVGGElement | null>(null);

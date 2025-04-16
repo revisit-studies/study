@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import * as d3 from 'd3';
-import { useMatrixContext } from './utils/MatrixContext';
+
+import { useMatrixContext } from '../utils/MatrixContext';
 
 export function invertScaleBand(scale: d3.ScaleBand<string>, value: number) {
   const domain = scale.domain();

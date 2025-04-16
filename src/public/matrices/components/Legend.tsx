@@ -1,12 +1,14 @@
 import { useEffect, useRef, useCallback } from 'react';
 import * as d3 from 'd3';
 import { Stack, Text } from '@mantine/core';
-import { meanAccesor, stdAccesor } from './utils/Accesors';
-import { useMatrixContext } from './utils/MatrixContext';
-import { link } from './utils/Interfaces';
-import { useRenderEcondedCells } from './hooks/useRenderEncodeCells';
-import { useCellScales } from './hooks/useCellScales';
-import { Encoding } from './utils/EncodingsEnum';
+
+import { meanAccesor, stdAccesor } from '../utils/Accesors';
+import { useMatrixContext } from '../utils/MatrixContext';
+import { link } from '../utils/Interfaces';
+import { Encoding } from '../utils/EncodingsEnum';
+
+import { useRenderEcondedCells } from '../hooks/useRenderEncodeCells';
+import { useCellScales } from '../hooks/useCellScales';
 
 const margin = 50;
 const meanText = 'Price Ranges:';

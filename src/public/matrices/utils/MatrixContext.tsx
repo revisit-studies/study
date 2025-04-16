@@ -3,9 +3,10 @@
 import React, { createContext, useContext, useMemo } from 'react';
 import * as d3 from 'd3';
 import { Trrack } from '@trrack/core';
-import { link, TrrackState } from './Interfaces';
+import { ChartParams, link, TrrackState } from './Interfaces';
 
 interface MatrixContextType {
+  config: ChartParams;
   data: link[];
   margin: { top: number; left: number; right: number; bottom: number };
   width: number;
@@ -44,8 +45,8 @@ interface MatrixContextType {
   meanScale: d3.ScaleQuantize<string | number, never>;
   devScale: d3.ScaleQuantize<string | number, never>;
 
-  orderNode: string | null;
-  setOrderNode: (value: string | null) => void;
+  orderingNode: string | null;
+  setOrderingNode: (value: string | null) => void;
 
   answerNodes: string[];
   setAnswerNodes: (nodes: string[]) => void;

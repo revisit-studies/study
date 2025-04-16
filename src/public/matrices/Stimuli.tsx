@@ -1,11 +1,15 @@
-import { Loader } from '@mantine/core';
 import {
   useEffect, useState, useMemo, useCallback,
 } from 'react';
+import { Loader } from '@mantine/core';
 import { Registry, initializeTrrack } from '@trrack/core';
+
 import { StimulusParams } from '../../store/types';
-import { Matrix } from './Matrix';
+
+import { Matrix } from './components/Matrix';
 import { ChartParams, TrrackState, link } from './utils/Interfaces';
+
+import './style.css';
 
 export function Stimuli({
   parameters,
@@ -73,8 +77,8 @@ export function Stimuli({
       },
     );
 
-    const setSortingNode = registry.register('set-sorting-node', (state, node: string) => {
-      state.sortingNode = node;
+    const setOrderingNode = registry.register('set-sorting-node', (state, node: string) => {
+      state.orderingNode = node;
     });
 
     const setOriginHighlight = registry.register('highlight-origin-node', (state, node: string) => {
@@ -91,9 +95,11 @@ export function Stimuli({
     const trrackInst = initializeTrrack<TrrackState>({
       initialState: {
         answerNodes: [],
-        highlightedNodes: [],
-        highlightNodes: [],
+
+        orderingNode: null,
+
         originHighlight: null,
+        destinationHighlight: null,
       },
       registry,
     });
@@ -111,7 +117,7 @@ export function Stimuli({
         setOriginHighlight,
         setDestinationHighlight,
 
-        setSortingNode,
+        setOrderingNode,
       },
       trrack: trrackInst,
     };
@@ -121,7 +127,7 @@ export function Stimuli({
 
   return data ? (
     <Matrix
-      parameters={parameters}
+      config={parameters}
       data={data}
       provenanceState={provenanceState}
       actions={actions}
