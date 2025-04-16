@@ -1,4 +1,6 @@
 import { JumpFunctionParameters, JumpFunctionReturnVal } from '../../../store/types';
+// @ts-ignore
+import { getVLATnextqid } from './utils';
 
 export default function Dynamic({ answers }: JumpFunctionParameters<never>): JumpFunctionReturnVal {
   const taskid = 'vlatResp';
@@ -7,6 +9,8 @@ export default function Dynamic({ answers }: JumpFunctionParameters<never>): Jum
     .filter(([key, _]) => key.startsWith('dynamicBlock'))
     .filter(([_, value]) => value.endTime > -1)
     .length;
+
+  getVLATnextqid([10], [0]);
 
   if (topAnswerLength === 27) {
     return { component: null };
