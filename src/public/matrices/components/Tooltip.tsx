@@ -75,23 +75,21 @@ export function MatrixTooltip() {
     const anchor = getAnchor(x, y, size, size);
     const { x: posX, y: posY } = getAnchoredPosition(x, y, width, height, cellSize, anchor);
 
-    // Cancelar cualquier timeout anterior
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
 
-    setVisible(false); // Ocultar inmediatamente
+    setVisible(false);
     timeoutRef.current = setTimeout(() => {
       setPosition({ x: posX, y: posY });
       setVisible(true);
-    }, 200); // Espera antes de mostrar
+    }, 200);
   }, [
+    isActive,
     originScale,
+    destinationScale,
     originHighlight,
     destinationHighlight,
-    data,
     size,
     cellSize,
-    destinationScale,
-    isActive,
   ]);
 
   if (!isActive) return null;
