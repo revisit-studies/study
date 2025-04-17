@@ -20,7 +20,7 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": true,
+    "sidebar": false,
     "studyEndMsg": "Thank you for completing the study. You may click this link and return to Prolific: https://app.prolific.com/submissions/complete?cc=CE96X7ST",
     "urlParticipantIdParam": "PROLIFIC_ID"
   },
@@ -73,32 +73,13 @@
       "allowFailedTraining": true,
       "trainingAttempts": 1
     },
-    "survey": {
-      "type": "markdown",
-      "path": "VLAT-mini-randomized/survey.md",
-      "response": [
-        {
-          "id": "q1",
-          "prompt": "Did you experience any problems with our tool?",
-          "location": "belowStimulus",
-          "type": "longText",
-          "placeholder": "Enter your answer here."
-        },
-        {
-          "id": "q2",
-          "prompt": "Did anything not render or display properly?",
-          "location": "belowStimulus",
-          "type": "longText",
-          "placeholder": "Enter your answer here"
-        },
-        {
-          "id": "q3",
-          "prompt": "Any other issues or anything you would like to tell us?",
-          "location": "belowStimulus",
-          "type": "longText",
-          "placeholder": "Enter your answer here"
-        }
-      ]
+    "feedback": {
+      "type": "react-component",
+      "path": "example-VLAT-adaptive/assets/Feedback.tsx",
+      "provideFeedback": false,
+      "allowFailedTraining": true,
+      "trainingAttempts": 1,
+      "response": []
     }
   },
   "sequence": {
@@ -111,7 +92,7 @@
         "order": "dynamic",
         "functionPath": "example-VLAT-adaptive/assets/Dynamic.tsx"
       },
-      "survey"
+      "feedback"
     ]
   }
 }

@@ -1,23 +1,24 @@
 import { useEffect, useState } from 'react';
 import {
-  Grid, Radio, Image,
+  Grid, Radio, Image, Box, Stack,
 } from '@mantine/core';
 import { StimulusParams } from '../../../store/types';
 import { VLATQuestions } from './vlatQ';
 
-export default function VlatTrial({ parameters, setAnswer }: StimulusParams<{ activeQuestionIdx: number }>) {
-  // console.log(parameters.activeQuestionIdx, 'q idx');
-  const [currentanswer, setCurrentAnswer] = useState<number>(-1);
-  const activeQuestion = VLATQuestions[parameters.activeQuestionIdx];
+export default function VlatTrial({ parameters, setAnswer, answers }: StimulusParams<{ activeQuestionIdx: number, qidx: number, score: number }>) {
+  const taskid = 'vlatResp';
+  const userAnswer = answers[`dynamicBlock_2_VlatTrial_${parameters.qidx}`].answer[taskid];
+  const [currentanswer, setCurrentAnswer] = useState<number>(userAnswer ? +userAnswer : -1);
+  const activeQuestion = VLATQuestions.filter((q) => q.originID === parameters.activeQuestionIdx)[0];
   const images = import.meta.glob('../assets/vlatImg/*.png', { eager: true });
   const imgMap: Record<string, string> = {};
-  const taskid = 'vlatResp';
 
   useEffect(() => {
     setAnswer({
       status: true,
       answers: {
-        [taskid]: String.fromCharCode(65 + currentanswer),
+        [taskid]: currentanswer,
+        score: parameters.score,
       },
     });
   }, [currentanswer]);
@@ -31,39 +32,41 @@ export default function VlatTrial({ parameters, setAnswer }: StimulusParams<{ ac
   }
 
   return (
-    <Grid>
-      <Grid.Col md={8} sm={12}>
-        <Image
-          radius="sm"
-          src={imgMap[activeQuestion.img]}
-          alt="VIS"
-          w={600}
-        />
-      </Grid.Col>
-      <Grid.Col md={4} sm={12}>
-        <div style={{ textAlign: 'left', paddingLeft: '20px', display: 'inline-block' }}>
+    <Box>
+      <Grid>
+        <Grid.Col span={8}>
+          <Image
+            radius="sm"
+            src={imgMap[activeQuestion.img]}
+            alt="VIS"
+            w="100%"
+            maw={900}
+          />
+        </Grid.Col>
+        <Grid.Col span={4}>
           <Radio.Group
             name="question"
-            orientation="vertical"
             label={activeQuestion.question}
             value={`${currentanswer}`}
             size="md"
           >
-            {
-                            activeQuestion.options.map((op:string, idx:number) => (
-                              <Radio
-                                value={`${idx}`}
-                                label={`${String.fromCharCode(65 + idx)}.${op}`}
-                                key={`op${idx}`}
-                                onClick={() => setCurrentAnswer(idx)}
-                              />
-                            ))
-                        }
+            <Stack mt={20}>
+              {
+                    activeQuestion.options.map((op:string, idx:number) => (
+                      <Radio
+                        disabled={userAnswer !== undefined}
+                        value={`${idx}`}
+                        label={`${String.fromCharCode(65 + idx)}. ${op}`}
+                        key={`op${idx}`}
+                        onClick={() => setCurrentAnswer(idx)}
+                      />
+                    ))
+                  }
+            </Stack>
+
           </Radio.Group>
-
-        </div>
-
-      </Grid.Col>
-    </Grid>
+        </Grid.Col>
+      </Grid>
+    </Box>
   );
 }

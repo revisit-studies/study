@@ -1,27 +1,42 @@
 import { JumpFunctionParameters, JumpFunctionReturnVal } from '../../../store/types';
 // @ts-ignore
 import { getVLATnextqid } from './utils';
+import { VLATQuestions } from './vlatQ';
 
 export default function Dynamic({ answers }: JumpFunctionParameters<never>): JumpFunctionReturnVal {
   const taskid = 'vlatResp';
 
-  const topAnswerLength = Object.entries(answers)
+  const topAnswer = Object.entries(answers)
     .filter(([key, _]) => key.startsWith('dynamicBlock'))
-    .filter(([_, value]) => value.endTime > -1)
-    .length;
+    .filter(([_, value]) => value.endTime > -1);
 
-  getVLATnextqid([10], [0]);
+  const qid : number[] = [];
+  const correct : number[] = [];
 
-  if (topAnswerLength === 27) {
+  topAnswer.forEach((item) => {
+    const qidx = item[1].parameters.activeQuestionIdx;
+    const cor = item[1].answer[taskid] === item[1].correctAnswer[0].answer;
+    qid.push(+qidx);
+    correct.push(cor ? 1 : 0);
+  });
+  const [nxtidx, score] = getVLATnextqid(qid, correct);
+  const correctOption = +VLATQuestions.filter((q) => q.originID === nxtidx)[0].trueAnswer;
+  // console.log(nxtidx,'nxtidx');
+  // console.log(correctOption,'correctOption');
+
+  if (topAnswer.length === 7) {
     return { component: null };
   }
+  // console.log(correctOption)
 
   return {
     component: 'VlatTrial',
     parameters: {
-      activeQuestionIdx: 10,
+      activeQuestionIdx: nxtidx,
+      qidx: qid.length,
+      score,
     },
-    correctAnswer: [{ id: taskid, answer: 'A' }],
+    correctAnswer: [{ id: taskid, answer: correctOption }],
   };
 }
 
