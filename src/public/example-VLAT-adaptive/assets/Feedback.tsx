@@ -43,10 +43,12 @@ export default function Feedback({ answers }: StimulusParams<any>) {
       <Center>
         <Card w={600}>
           <Title order={4} mb={20}>
-            Your got
+            You got
+            {' '}
             {correctNum}
             {' '}
             correct out of
+            {' '}
             {topAnswer.length}
             {' '}
             questions. Here is your record:
