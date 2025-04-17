@@ -61,7 +61,8 @@
           "id": "vlatResp",
           "prompt": "You select: ",
           "location": "belowStimulus",
-          "type": "reactive"
+          "type": "reactive",
+          "hidden": true
         }
       ],
       "correctAnswer": [
