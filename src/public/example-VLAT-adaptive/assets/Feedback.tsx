@@ -3,7 +3,8 @@ import {
 } from '@mantine/core';
 import { StimulusParams } from '../../../store/types';
 
-export default function Feedback({ answers }: StimulusParams<{any}>) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export default function Feedback({ answers }: StimulusParams<any>) {
   const taskid = 'vlatResp';
   const images = import.meta.glob('../assets/vlatImg/*.png', { eager: true });
   const imgMap: Record<string, string> = {};

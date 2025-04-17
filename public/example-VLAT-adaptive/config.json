@@ -24,6 +24,7 @@
     "studyEndMsg": "Thank you for completing the study. You may click this link and return to Prolific: https://app.prolific.com/submissions/complete?cc=CE96X7ST",
     "urlParticipantIdParam": "PROLIFIC_ID"
   },
+  "importedLibraries": ["demographics"],
   "components": {
     "introduction": {
       "type": "markdown",
@@ -92,7 +93,8 @@
         "order": "dynamic",
         "functionPath": "example-VLAT-adaptive/assets/Dynamic.tsx"
       },
-      "feedback"
+      "feedback",
+      "$demographics.co.demographics"
     ]
   }
 }
