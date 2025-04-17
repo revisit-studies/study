@@ -47,8 +47,6 @@ export interface GlobalConfig {
 export interface StudyMetadata {
   /** The title of your study, shown on the landing page. */
   title: string;
-  /** Whether the title should be hidden. */
-  showTitle?: boolean;
   /** The version of your study. When you change a configuration file after a study has already been distributed to participants, you can change the version number so that the participants who see this new configuration file can be identified. */
   version: string;
   /** The authors of your study. */
@@ -83,6 +81,8 @@ uiConfig:{
 In the above, the `<study-name>/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)
  */
 export interface UIConfig {
+  /** Whether the title should be hidden. */
+  showTitle?: boolean;
   /** The email address that used during the study if a participant clicks contact. */
   contactEmail: string;
   /** The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. */

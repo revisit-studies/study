@@ -2082,10 +2082,6 @@
           },
           "type": "array"
         },
-        "showTitle": {
-          "description": "Whether the title should be hidden.",
-          "type": "boolean"
-        },
         "title": {
           "description": "The title of your study, shown on the landing page.",
           "type": "string"
@@ -2204,6 +2200,10 @@
         },
         "recordStudyAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.",
+          "type": "boolean"
+        },
+        "showTitle": {
+          "description": "Whether the title should be hidden.",
           "type": "boolean"
         },
         "sidebar": {

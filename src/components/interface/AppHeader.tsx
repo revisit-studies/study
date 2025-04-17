@@ -93,7 +93,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
           <Flex align="center">
             <Image w={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" />
             <Space w="md" />
-            {studyConfig?.studyMetadata.showTitle !== false ? (
+            {studyConfig?.uiConfig.showTitle !== false ? (
               <Title
                 ref={titleRef}
                 order={4}
