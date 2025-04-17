@@ -1,23 +1,19 @@
 import {
-  Button, Modal, Text, Alert,
+  Button, Modal, Text, Title, Group, Stack,
 } from '@mantine/core';
-import {
-  useEffect, useState,
-} from 'react';
+import { useEffect, useState } from 'react';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
-import {
-  useStoreSelector,
-} from '../../store/store';
+import { useStoreSelector } from '../../store/store';
 
 export function ResolutionWarning() {
-  const [showWarning, setShowWarning] = useState(false);
-
   const navigate = useNavigate();
   const studyConfig = useStoreSelector((state) => state.config);
 
-  const minWidth = studyConfig?.uiConfig?.minWidthSize || 1024;
-  const minHeight = studyConfig?.uiConfig?.minHeightSize || 768;
+  const minWidth = studyConfig.uiConfig.minWidthSize!;
+  const minHeight = studyConfig.uiConfig.minHeightSize!;
+
+  const [showWarning, setShowWarning] = useState(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -35,35 +31,33 @@ export function ResolutionWarning() {
   if (!showWarning) {
     return null;
   }
+
   return (
     <Modal opened withCloseButton={false} onClose={() => { }} fullScreen>
-      <Alert
-        color="red"
-        radius="lg"
-        icon={<IconAlertTriangle />}
-        onClose={() => { }}
-        styles={{ root: { backgroundColor: 'unset' } }}
-      />
-      <Text>Screen Resolution Warning</Text>
-      <Text>
-        Your screen resolution is below the minimum requirement (
-        {minWidth}
-        x
-        {minHeight}
-        ).
-      </Text>
-      <Text>
-        Please use a device with a larger screen or resize your browser window.
-      </Text>
-
-      <Button
-        onClick={() => navigate('/')}
-        size="xs"
-        variant="outline"
-      >
-        Return to main page
-      </Button>
-
+      <Stack align="center" justify="center" m="xl">
+        <IconAlertTriangle size={64} color="orange" />
+        <Title order={2}>Screen Resolution Warning</Title>
+        <Text size="md" ta="center">
+          Your screen resolution is below the minimum requirement (
+          {minWidth}
+          {' '}
+          x
+          {' '}
+          {minHeight}
+          ).
+        </Text>
+        <Text size="md" ta="center">
+          Some content may not display correctly. Please use a device with a larger screen or resize your browser window.
+        </Text>
+        <Group mt="lg">
+          <Button color="yellow" onClick={() => { setShowWarning(false); }} variant="outline">
+            Continue anyway
+          </Button>
+          <Button onClick={() => navigate('/')} variant="filled">
+            Go to main page
+          </Button>
+        </Group>
+      </Stack>
     </Modal>
   );
 }
