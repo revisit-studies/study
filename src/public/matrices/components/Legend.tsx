@@ -78,7 +78,7 @@ export function Legend() {
         .attr('text-anchor', 'middle')
         .text((_, i) => {
           const [min, max] = scale.invertExtent(scale.range()[i]);
-          return `$${min.toFixed(0)} - $${max.toFixed(0)}`;
+          return `$${min.toFixed(0)} - $${+max.toFixed(0) - 0.01}`;
         });
 
       cellRenderer(group.selectAll('.cell'), encoding, showMean, showDev);
@@ -151,7 +151,7 @@ export function Legend() {
         .attr('text-anchor', 'middle')
         .text((d) => {
           const [min, max] = mScale.invertExtent(d);
-          return `$${min.toFixed(0)} - $${max.toFixed(0)}`;
+          return `$${min.toFixed(0)}-$${+max.toFixed(0) - 0.01}`;
         });
 
       group
@@ -167,7 +167,7 @@ export function Legend() {
         .attr('text-anchor', 'start')
         .text((d) => {
           const [min, max] = dScale.invertExtent(d);
-          return `$${min.toFixed(0)} - $${max.toFixed(0)}`;
+          return `$${min.toFixed(0)}-$${+max.toFixed(0) - 0.01}`;
         });
 
       cellRenderer(group.selectAll('.cell'), encoding, showMean, showDev);

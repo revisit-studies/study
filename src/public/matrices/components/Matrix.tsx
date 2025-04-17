@@ -44,9 +44,14 @@ const margin = {
   bottom: 5,
 };
 
+const filesObj = import.meta.glob('/public/matrices/data/*');
+const files = Object.keys(filesObj).map((path) => path.replace('/public/matrices/data/', ''));
+
 export function Matrix({
   config,
   data,
+  dataname,
+  setDataname,
   provenanceState,
   actions,
   trrack,
@@ -54,7 +59,8 @@ export function Matrix({
 }: {
   config: ChartParams;
   data: link[];
-
+  dataname: string;
+  setDataname: React.Dispatch<React.SetStateAction<string>>;
   provenanceState?: TrrackState;
   actions?: any;
   trrack?: Trrack<TrrackState, string>;
@@ -136,11 +142,13 @@ export function Matrix({
 
   const { meanMin, meanMax } = useMemo(() => {
     const means = data.map(meanAccesor);
+    return { meanMin: 0, meanMax: 250 };
     return { meanMin: Math.min(...means), meanMax: Math.max(...means) };
   }, [data]);
 
   const { devMin, devMax } = useMemo(() => {
     const devs = data.map(devAccesor);
+    return { devMin: 0, devMax: 150 };
     return { devMin: Math.min(...devs), devMax: Math.max(...devs) };
   }, [data, devAccesor]);
 
@@ -220,6 +228,13 @@ export function Matrix({
               onChange={(event) => setShowTooltip(event.currentTarget.checked)}
             />
             <NativeSelect
+              w={175}
+              label="Data file:"
+              value={dataname}
+              onChange={(event) => setDataname(event.currentTarget.value)}
+              data={files}
+            />
+            <NativeSelect
               label="Color scale:"
               value={colorScale}
               onChange={(event) => setColorScale(event.currentTarget.value)}
@@ -251,7 +266,7 @@ export function Matrix({
                 Mean Steps:
                 {nMeans}
               </Text>
-              <Slider min={2} max={7} value={nMeans} onChange={setNMeans} />
+              <Slider min={2} max={5} value={nMeans} onChange={setNMeans} />
             </Stack>
 
             <Stack gap="0.2vh">
@@ -259,7 +274,7 @@ export function Matrix({
                 Deviation Steps:
                 {nDevs}
               </Text>
-              <Slider min={2} max={7} value={nDevs} onChange={setNDevs} />
+              <Slider min={2} max={5} value={nDevs} onChange={setNDevs} />
             </Stack>
           </Stack>
         )}

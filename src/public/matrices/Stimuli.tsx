@@ -18,7 +18,7 @@ export function Stimuli({
 }: StimulusParams<ChartParams, TrrackState>) {
   // ---------------------------- Setup & data ----------------------------
   const [data, setData] = useState<link[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   const [dataname, setDataname] = useState<string>(parameters.dataset);
 
   const loadData = useCallback(async (file: string) => {
@@ -41,8 +41,8 @@ export function Stimuli({
   }, []);
 
   useEffect(() => {
-    loadData(parameters.dataset);
-  }, [loadData, parameters.dataset]);
+    loadData(dataname);
+  }, [loadData, dataname]);
   // ---------------------------- Trrack ----------------------------
   const { actions, trrack } = useMemo(() => {
     const registry = Registry.create();
@@ -129,6 +129,8 @@ export function Stimuli({
     <Matrix
       config={parameters}
       data={data}
+      dataname={dataname}
+      setDataname={setDataname}
       provenanceState={provenanceState}
       actions={actions}
       trrack={trrack}
