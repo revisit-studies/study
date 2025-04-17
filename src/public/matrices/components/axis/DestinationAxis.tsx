@@ -11,7 +11,7 @@ export function DestinationAxis({ showLines = true }: { showLines?: boolean }) {
     answerNodes,
     setAnswerNodes,
 
-    orderNode,
+    orderingNode,
 
     actions,
     trrack,
@@ -84,7 +84,7 @@ export function DestinationAxis({ showLines = true }: { showLines?: boolean }) {
             height={destinationScale.bandwidth()}
             style={{ cursor: 'pointer' }}
             onClick={() => (setAnswer ? onClick(value, answerNodes) : {})}
-            onMouseOver={() => onMouseOver(value, orderNode)}
+            onMouseOver={() => onMouseOver(value, orderingNode)}
           >
             <div className="label-container" style={{ justifyContent: 'flex-end' }}>
               <Tooltip
