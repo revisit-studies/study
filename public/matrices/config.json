@@ -17,7 +17,7 @@
     "sidebar": true
   },
   "baseComponents": {
-    "matrix": {
+    "matrix_old": {
       "description": "Test Std Matrix.",
       "type": "react-component",
       "path": "matrices/assets/components/StudyMatrix/index.jsx",
@@ -25,7 +25,7 @@
       "instructionLocation": "sidebar",
       "response": []
     },
-    "matrix_good": {
+    "matrix": {
       "description": "Test Std Matrix in ts.",
       "type": "react-component",
       "path": "matrices/Stimuli.tsx",
@@ -36,7 +36,7 @@
   },
   "components": {
     "matrix_explore": {
-      "baseComponent": "matrix_good",
+      "baseComponent": "matrix",
       "instruction": "No task. Just for exploratory purpose <br>Origins - X axis <br>Destinations - Y axis <br>To select answers: Left Click on Destination labels <br> To order Destinations by Origin: Left click Origin labels.",
       "parameters": {
         "showConfig": true,
@@ -66,7 +66,7 @@
       ]
     },
     "matrix_explore2": {
-      "baseComponent": "matrix",
+      "baseComponent": "matrix_old",
       "instruction": "No task. Just for exploratory purpose <br>Origins - X axis <br>Destinations - Y axis <br>To select answers: Left Click on Destination labels <br> To order Destinations by Origin: Right click Origin labels <br> To highlight Destinations by Origin: Left click Origin labels <br>Menu top right corner for exploring datasets, encodings, color scales...",
       "parameters": {
         "dataset": "test.txt",
@@ -95,19 +95,13 @@
         }
       ]
     },
+
     "check": {
       "baseComponent": "matrix",
       "instruction": "ADJACENCY TASK. Select adjacent nodes to one given.<br><br>To which states can you fly from Utah?",
       "parameters": {
         "dataset": "test.txt",
-        "encoding": "cellSize",
-        "colorScale": "viridis",
-        "isSnr": false,
-        "nMeans": 5,
-        "nStds": 5,
-        "tooltipHistogram": "frequencies",
-        "showTooltip": true,
-        "isConfig": false
+        "encoding": "size"
       },
       "response": [
         {
@@ -125,79 +119,13 @@
         }
       ]
     },
-    "attr_comb": {
-      "baseComponent": "matrix",
-      "instruction": "ATTRIBUTE COMBINATION TASK. Select adjacent nodes to one given under a combination of both attributes.<br><br>To which states can you fly from Utah with a budget strictly between $100 and $200, without spending less or more?<br><br> Better formulation?",
-      "parameters": {
-        "dataset": "test.txt",
-        "encoding": "squareMark",
-        "colorScale": "viridis",
-        "isSnr": false,
-        "nMeans": 5,
-        "nStds": 5,
-        "tooltipHistogram": "frequencies",
-        "showTooltip": true,
-        "isConfig": false
-      },
-      "response": [
-        {
-          "id": "answerNodes",
-          "prompt": "Selected State(s) will show here",
 
-          "location": "sidebar",
-          "type": "reactive"
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "answerNodes",
-          "answer": ["Oregon"]
-        }
-      ]
-    },
-    "adyacency_max_attr_std": {
-      "baseComponent": "matrix",
-      "instruction": "EXTREME ATTRIBUTE TASK. Select adjacent nodes to one given with extreme attribute values.<br><br>Which state or states show the highest price variation for flights departing from Virginia?",
-      "parameters": {
-        "dataset": "test.txt",
-        "encoding": "lightness",
-        "colorScale": "viridis",
-        "isSnr": false,
-        "nMeans": 5,
-        "nStds": 5,
-        "tooltipHistogram": "frequencies",
-        "showTooltip": true,
-        "isConfig": false
-      },
-      "response": [
-        {
-          "id": "answerNodes",
-          "prompt": "Selected State(s) will show here",
-
-          "location": "sidebar",
-          "type": "reactive"
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "answerNodes",
-          "answer": ["Oregon"]
-        }
-      ]
-    },
     "adyacency_attr_std": {
       "baseComponent": "matrix",
       "instruction": "ATTRIBUTE TASK. Select adjacent nodes to one given constrained by some attribute values.<br><br>Which states are connected to Missouri with a price variation lower than $80?",
       "parameters": {
         "dataset": "test.txt",
-        "encoding": "rotationMark",
-        "colorScale": "viridis",
-        "isSnr": false,
-        "nMeans": 5,
-        "nStds": 5,
-        "tooltipHistogram": "frequencies",
-        "showTooltip": true,
-        "isConfig": false
+        "encoding": "mark-rotation"
       },
       "response": [
         {
@@ -215,19 +143,61 @@
         }
       ]
     },
+
+    "attr_comb": {
+      "baseComponent": "matrix",
+      "instruction": "ATTRIBUTE COMBINATION TASK. Select adjacent nodes to one given under a combination of both attributes.<br><br>To which states can you fly from Utah with a budget strictly between $100 and $200, without spending less or more?<br><br> Better formulation?",
+      "parameters": {
+        "dataset": "test.txt",
+        "encoding": "mark"
+      },
+      "response": [
+        {
+          "id": "answerNodes",
+          "prompt": "Selected State(s) will show here",
+
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "answerNodes",
+          "answer": ["Oregon"]
+        }
+      ]
+    },
+
+    "adyacency_max_attr_std": {
+      "baseComponent": "matrix",
+      "instruction": "EXTREME ATTRIBUTE TASK. Select adjacent nodes to one given with extreme attribute values.<br><br>Which state or states show the highest price variation for flights departing from Virginia?",
+      "parameters": {
+        "dataset": "test.txt",
+        "encoding": "light"
+      },
+      "response": [
+        {
+          "id": "answerNodes",
+          "prompt": "Selected State(s) will show here",
+
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "answerNodes",
+          "answer": ["Oregon"]
+        }
+      ]
+    },
+
     "attr_routes": {
       "baseComponent": "matrix",
       "instruction": "PATH ESTIMATION TASK. Select between two paths the one that better fits for a given criteria.<br><br>On which route would you spend less money: Utah → Michigan → New York or Utah → Texas → New York? Select the routes and estimate the final price range.",
       "parameters": {
         "dataset": "test.txt",
-        "encoding": "bars",
-        "colorScale": "viridis",
-        "isSnr": false,
-        "nMeans": 5,
-        "nStds": 5,
-        "tooltipHistogram": "frequencies",
-        "showTooltip": true,
-        "isConfig": false
+        "encoding": "bars"
       },
       "response": [
         {
@@ -245,19 +215,13 @@
         }
       ]
     },
+
     "range": {
       "baseComponent": "matrix",
       "instruction": "RANGE ESTIMATION TASK. Estimate the range of link values for a given node. Participants will provide both the minimum and maximum values.<br><br>What is the price range for flights departing from Arizona?",
       "parameters": {
         "dataset": "test.txt",
-        "encoding": "rotationMark",
-        "colorScale": "viridis",
-        "isSnr": false,
-        "nMeans": 5,
-        "nStds": 5,
-        "tooltipHistogram": "frequencies",
-        "showTooltip": true,
-        "isConfig": false
+        "encoding": "mark-rotation"
       },
       "response": [
         {
@@ -275,19 +239,13 @@
         }
       ]
     },
+
     "attr_range": {
       "baseComponent": "matrix",
       "instruction": "TREND EXTIMATION TASK. Estimate the stability of the links of a given node. Participants will select between stable, unstable or can’t tell.<br><br> Are flight prices stable when flying form Oregon?",
       "parameters": {
         "dataset": "test.txt",
-        "encoding": "rotationMark",
-        "colorScale": "viridis",
-        "isSnr": false,
-        "nMeans": 5,
-        "nStds": 5,
-        "tooltipHistogram": "frequencies",
-        "showTooltip": true,
-        "isConfig": false
+        "encoding": "mark-rotation-color"
       },
       "response": [
         {
@@ -306,6 +264,7 @@
       ]
     }
   },
+
   "sequence": {
     "order": "fixed",
     "components": [
@@ -325,8 +284,7 @@
           "attr_range"
         ],
         "order": "fixed"
-      },
-      "matrix_explore"
+      }
     ]
   }
 }

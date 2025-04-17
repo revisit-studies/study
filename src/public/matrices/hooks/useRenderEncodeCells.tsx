@@ -1,6 +1,6 @@
 import * as d3 from 'd3';
 import { useCallback } from 'react';
-import { Encoding } from '../utils/EncodingsEnum';
+import { Encoding } from '../utils/Enums';
 import { link } from '../utils/Interfaces';
 import { meanAccesor, snrAccesor, stdAccesor } from '../utils/Accesors';
 

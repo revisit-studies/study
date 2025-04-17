@@ -2,8 +2,8 @@ export enum Encoding {
   light = 'light',
   mark = 'mark',
   bars = 'bars',
-  rotation = 'rotation',
-  colorRotation = 'colorRotation',
+  rotation = 'mark-rotation',
+  colorRotation = 'mark-rotation-color',
   size = 'size',
 }
 

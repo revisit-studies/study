@@ -5,7 +5,7 @@ import { Stack, Text } from '@mantine/core';
 import { meanAccesor, stdAccesor } from '../utils/Accesors';
 import { useMatrixContext } from '../utils/MatrixContext';
 import { link } from '../utils/Interfaces';
-import { Encoding } from '../utils/EncodingsEnum';
+import { Encoding } from '../utils/Enums';
 
 import { useRenderEcondedCells } from '../hooks/useRenderEncodeCells';
 import { useCellScales } from '../hooks/useCellScales';

@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import * as d3 from 'd3';
 import { createLinearScale, createMarkScale } from './useRenderEncodeCells';
-import { ColorScheme, Encoding } from '../utils/EncodingsEnum';
+import { ColorScheme, Encoding } from '../utils/Enums';
 
 function getColorScale(colorScale: string, nMeans: number) {
   const range = createLinearScale(nMeans, 0, 1);

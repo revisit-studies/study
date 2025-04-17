@@ -28,12 +28,8 @@ import {
   stdAccesor,
 } from '../utils/Accesors';
 import {
-  ClusteringMode,
-  ClusteringVar,
-  ColorScheme,
-  Encoding,
-  UserAction,
-} from '../utils/EncodingsEnum';
+  ClusteringMode, ClusteringVar, ColorScheme, Encoding, UserAction,
+} from '../utils/Enums';
 
 import { useCellScales } from '../hooks/useCellScales';
 import { useOrdering } from '../hooks/useOrdering';
