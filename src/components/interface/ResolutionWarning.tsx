@@ -1,13 +1,11 @@
 import {
-  Button, Modal, Text, Title, Group, Stack,
+  Modal, Text, Title, Stack,
 } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { IconAlertTriangle } from '@tabler/icons-react';
-import { useNavigate } from 'react-router';
 import { useStoreSelector } from '../../store/store';
 
 export function ResolutionWarning() {
-  const navigate = useNavigate();
   const studyConfig = useStoreSelector((state) => state.config);
 
   const minWidth = studyConfig.uiConfig.minWidthSize!;
@@ -33,10 +31,10 @@ export function ResolutionWarning() {
   }
 
   return (
-    <Modal opened withCloseButton={false} onClose={() => { }} fullScreen>
-      <Stack align="center" justify="center" m="xl">
+    <Modal opened={showWarning} onClose={() => {}} fullScreen withCloseButton={false}>
+      <Stack align="center" justify="center">
         <IconAlertTriangle size={64} color="orange" />
-        <Title order={2}>Screen Resolution Warning</Title>
+        <Title order={3}> Screen Resolution Warning </Title>
         <Text size="md" ta="center">
           Your screen resolution is below the minimum requirement (
           {minWidth}
@@ -49,14 +47,6 @@ export function ResolutionWarning() {
         <Text size="md" ta="center">
           Some content may not display correctly. Please use a device with a larger screen or resize your browser window.
         </Text>
-        <Group mt="lg">
-          <Button color="yellow" onClick={() => { setShowWarning(false); }} variant="outline">
-            Continue anyway
-          </Button>
-          <Button onClick={() => navigate('/')} variant="filled">
-            Go to main page
-          </Button>
-        </Group>
       </Stack>
     </Modal>
   );
