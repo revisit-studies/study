@@ -142,13 +142,13 @@ export function Matrix({
 
   const { meanMin, meanMax } = useMemo(() => {
     const means = data.map(meanAccesor);
-    return { meanMin: 0, meanMax: 250 };
+    /* return { meanMin: 0, meanMax: 250 }; */
     return { meanMin: Math.min(...means), meanMax: Math.max(...means) };
   }, [data]);
 
   const { devMin, devMax } = useMemo(() => {
     const devs = data.map(devAccesor);
-    return { devMin: 0, devMax: 150 };
+    /* return { devMin: 0, devMax: 150 }; */
     return { devMin: Math.min(...devs), devMax: Math.max(...devs) };
   }, [data, devAccesor]);
 
