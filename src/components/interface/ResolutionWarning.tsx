@@ -10,16 +10,6 @@ import {
   useStoreSelector,
 } from '../../store/store';
 
-// Show a warning if the screen resolution is too small
-
-// Modal
-// Print a message saying your screen resolution is too small
-// Print out the minimum resolution for the study
-// Button with a link to the main page -> useNavigate
-
-// Should keep track of the screen size -> event listener
-// If the screen is resized, check the size again
-
 export function ResolutionWarning() {
   const [showWarning, setShowWarning] = useState(false);
 
@@ -33,8 +23,11 @@ export function ResolutionWarning() {
     const handleResize = () => {
       if (window.innerWidth < minWidth || window.innerHeight < minHeight) {
         setShowWarning(true);
+      } else {
+        setShowWarning(false);
       }
     };
+    handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [minWidth, minHeight]);
