@@ -88,7 +88,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
 
   return (
     <AppShell.Header p="md">
-      {studyConfig?.uiConfig.showTitleBar !== false ? (
+      {studyConfig?.uiConfig.showTitleBar === false ? null : (
         <Grid mt={-7} align="center">
           <Grid.Col span={4}>
             <Flex align="center">
@@ -185,7 +185,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
             </Group>
           </Grid.Col>
         </Grid>
-      ) : null}
+      )}
     </AppShell.Header>
   );
 }
