@@ -121,6 +121,10 @@ export interface UIConfig {
   participantNameField?: string;
   /** Whether enter key should move to the next question. Defaults to false. */
   nextOnEnter?: boolean;
+  /** The minimum screen width size for the study */
+  minWidthSize?: number;
+  /** The minimum screen height size for the study */
+  minHeightSize?: number;
 }
 
 /**
