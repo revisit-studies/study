@@ -2203,7 +2203,11 @@
           "type": "boolean"
         },
         "showTitle": {
-          "description": "Whether the title should be hidden.",
+          "description": "Controls whether the title should be hidden in the study.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study.",
           "type": "boolean"
         },
         "sidebar": {
