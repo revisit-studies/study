@@ -106,6 +106,10 @@ export function ResponseBlock({
   const [attemptsUsed, setAttemptsUsed] = useState(0);
   const trainingAttempts = configInUse?.trainingAttempts || 2;
   const [enableNextButton, setEnableNextButton] = useState(false);
+  const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
+  const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
+  const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
+
   const studyConfig = useStudyConfig();
 
   const identifier = useCurrentIdentifier();
@@ -236,6 +240,7 @@ export function ResponseBlock({
         }
       });
 
+      setHasCorrectAnswer(Object.values(correctAnswers).every((isCorrect) => isCorrect));
       setEnableNextButton(
         (
           allowFailedTraining && newAttemptsUsed >= trainingAttempts
@@ -298,6 +303,7 @@ export function ResponseBlock({
                   response={response}
                   index={index}
                   configInUse={configInUse}
+                  disabled={disabledAttempts}
                 />
                 {alertConfig[response.id]?.visible && (
                   <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>
@@ -327,7 +333,7 @@ export function ResponseBlock({
         {hasCorrectAnswerFeedback && showNextBtn && (
           <Button
             onClick={() => checkAnswerProvideFeedback()}
-            disabled={!answerValidator.isValid() || (attemptsUsed >= trainingAttempts && trainingAttempts >= 0)}
+            disabled={!answerValidator.isValid() || disabledAttempts}
           >
             Check Answer
           </Button>
