@@ -19,6 +19,7 @@ import { useAnswerField } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FormElementProvenance, StoredAnswer } from '../../store/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 
 type Props = {
   status?: StoredAnswer;
@@ -105,6 +106,7 @@ export function ResponseBlock({
   const [attemptsUsed, setAttemptsUsed] = useState(0);
   const trainingAttempts = configInUse?.trainingAttempts || 2;
   const [enableNextButton, setEnableNextButton] = useState(false);
+  const studyConfig = useStudyConfig();
 
   const identifier = useCurrentIdentifier();
 
@@ -244,6 +246,22 @@ export function ResponseBlock({
       );
     }
   };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Enter') {
+        checkAnswerProvideFeedback();
+      }
+    };
+
+    if (studyConfig.uiConfig.checkAnswerOnEnter) {
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+    return () => {};
+  }, [checkAnswerProvideFeedback, studyConfig.uiConfig.checkAnswerOnEnter]);
 
   let index = 0;
   return (
