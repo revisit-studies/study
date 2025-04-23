@@ -2,7 +2,9 @@ import {
   Alert, Anchor, Button, Group,
 } from '@mantine/core';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {
+  useEffect, useMemo, useState, useCallback,
+} from 'react';
 import { useNavigate } from 'react-router';
 import { Registry, initializeTrrack } from '@trrack/core';
 import {
@@ -177,7 +179,7 @@ export function ResponseBlock({
       },
     }));
   };
-  const checkAnswerProvideFeedback = () => {
+  const checkAnswerProvideFeedback = useCallback(() => {
     const newAttemptsUsed = attemptsUsed + 1;
     setAttemptsUsed(newAttemptsUsed);
 
@@ -250,7 +252,7 @@ export function ResponseBlock({
         ),
       );
     }
-  };
+  }, [attemptsUsed, responsesWithDefaults, configInUse, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, storageEngine, studyId, navigate, identifier, storeDispatch, answerValidator, alertConfig, saveIncorrectAnswer]);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -266,7 +268,7 @@ export function ResponseBlock({
       };
     }
     return () => {};
-  }, [checkAnswerProvideFeedback, studyConfig.uiConfig.checkAnswerOnEnter]);
+  }, [checkAnswerProvideFeedback, studyConfig]);
 
   let index = 0;
   return (
