@@ -9,7 +9,7 @@ import {
   AppShell,
   Tooltip,
 } from '@mantine/core';
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { IconInfoCircle, IconUserPlus } from '@tabler/icons-react';
 import { useHref } from 'react-router';
 import { ComponentBlockWithOrderPath, StepsPanel } from './StepsPanel';
@@ -56,6 +56,13 @@ export function AppAside() {
   const [activeTab, setActiveTab] = useState<string | null>('participant');
 
   const nextParticipantDisabled = useMemo(() => activeTab === 'allTrials' || isAnalysis, [activeTab, isAnalysis]);
+  const [studyBrowserOpen, setStudyBrowserOpen] = useState(false);
+
+  useEffect(() => {
+    if (!studyConfig.uiConfig.showTitleBar && !studyBrowserOpen) {
+      dispatch(toggleStudyBrowser());
+    }
+  }, [studyConfig, studyBrowserOpen, dispatch, toggleStudyBrowser]);
 
   return (
     <AppShell.Aside p="0">
@@ -78,7 +85,10 @@ export function AppAside() {
             </Button>
           </Tooltip>
           <CloseButton
-            onClick={() => dispatch(toggleStudyBrowser())}
+            onClick={() => {
+              dispatch(toggleStudyBrowser());
+              setStudyBrowserOpen(false);
+            }}
             mt={1}
           />
         </Flex>
