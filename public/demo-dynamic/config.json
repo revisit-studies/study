@@ -53,11 +53,11 @@
                 {
                   "id": "buttonResponse",
                   "answer": "Same"
-              },
-              {
-                "id": "buttonResponse",
-                "answer": "Right"
-              }
+                },
+                {
+                  "id": "buttonResponse",
+                  "answer": "Right"
+                }
             ],
             "provideFeedback": true,
             "allowFailedTraining": true,
