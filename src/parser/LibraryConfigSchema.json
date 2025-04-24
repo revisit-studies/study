@@ -151,6 +151,10 @@
             "description": "Whether to show the response dividers. Defaults to false.",
             "type": "boolean"
           },
+          "sidebar": {
+            "description": "Controls whether the left sidebar is rendered at all. If present, will override the default sidebar setting in the uiConfig.",
+            "type": "boolean"
+          },
           "style": {
             "additionalProperties": {
               "type": "string"
@@ -173,6 +177,10 @@
               "video"
             ],
             "type": "string"
+          },
+          "withProgressBar": {
+            "description": "Controls whether the progress bar is rendered in the study. If present, will override the default progress bar setting in the uiConfig.",
+            "type": "boolean"
           },
           "withTimeline": {
             "description": "Whether to show the video timeline. Defaults to false.",
@@ -655,6 +663,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
+        },
         "style": {
           "additionalProperties": {
             "type": "string"
@@ -669,6 +681,10 @@
         "type": {
           "const": "image",
           "type": "string"
+        },
+        "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered in the study. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -901,6 +917,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
+        },
         "style": {
           "additionalProperties": {
             "type": "string"
@@ -923,6 +943,10 @@
             "video"
           ],
           "type": "string"
+        },
+        "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered in the study. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
         },
         "withTimeline": {
           "description": "Whether to show the video timeline. Defaults to false.",
@@ -1221,6 +1245,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -1228,6 +1256,10 @@
         "type": {
           "const": "markdown",
           "type": "string"
+        },
+        "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered in the study. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1504,6 +1536,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -1511,6 +1547,10 @@
         "type": {
           "const": "questionnaire",
           "type": "string"
+        },
+        "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered in the study. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1717,6 +1757,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -1724,6 +1768,10 @@
         "type": {
           "const": "react-component",
           "type": "string"
+        },
+        "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered in the study. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2062,6 +2110,7 @@
     },
     "TextOnlyResponse": {
       "additionalProperties": false,
+      "description": "The TextOnlyResponse interface is used to define the properties of a text only response. TextOnlyResponses render as a block of text that is displayed to the user. This can be used to display instructions or other information. It does not accept any input from the user.\n\nExample: ```js {   \"id\": \"textOnlyResponse\",   \"type\": \"textOnly\",   \"prompt\": \"This is a text only response, it accepts markdown so you can **bold** or _italicize_ text.\",   \"location\": \"belowStimulus\",   \"restartEnumeration\": true } ```\n\nIn this example, the text only response is displayed below the stimulus and the enumeration of the questions is restarted.",
       "properties": {
         "hidden": {
           "not": {}
@@ -2201,6 +2250,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -2208,6 +2261,10 @@
         "type": {
           "const": "vega",
           "type": "string"
+        },
+        "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered in the study. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2292,6 +2349,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -2299,6 +2360,10 @@
         "type": {
           "const": "vega",
           "type": "string"
+        },
+        "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered in the study. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2387,6 +2452,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -2394,6 +2463,10 @@
         "type": {
           "const": "video",
           "type": "string"
+        },
+        "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered in the study. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
         },
         "withTimeline": {
           "description": "Whether to show the video timeline. Defaults to false.",
@@ -2487,6 +2560,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -2494,6 +2571,10 @@
         "type": {
           "const": "website",
           "type": "string"
+        },
+        "withProgressBar": {
+          "description": "Controls whether the progress bar is rendered in the study. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
