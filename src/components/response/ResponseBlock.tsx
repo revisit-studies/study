@@ -104,7 +104,7 @@ export function ResponseBlock({
   const identifier = useCurrentIdentifier();
 
   const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
-  const showPreviousBtn = location === (configInUse?.previousButtonLocation || 'belowStimulus');
+  const showPreviousBtn = location === (configInUse?.previousButtonLocation || 'belowStimulus') && configInUse?.previousButton;
   useEffect(() => {
     const ReactiveResponse = responsesWithDefaults.find((r) => r.type === 'reactive');
     if (reactiveAnswers && ReactiveResponse) {
