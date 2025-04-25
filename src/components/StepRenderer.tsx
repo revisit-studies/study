@@ -13,11 +13,17 @@ import { WindowEventsContext } from '../store/hooks/useWindowEvents';
 import { useStoreSelector } from '../store/store';
 import { AnalysisFooter } from './interface/AnalysisFooter';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
+import { useCurrentComponent } from '../routes/utils';
+import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
 
   const studyConfig = useStudyConfig();
+  const currentComponent = useCurrentComponent();
+  const config = useStoreSelector((state) => state.config);
+  const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[currentComponent] || {}, config), [currentComponent, config]);
+
   const windowEventDebounceTime = studyConfig.uiConfig.windowEventDebounceTime ?? 100;
 
   const showStudyBrowser = useStoreSelector((state) => state.showStudyBrowser);
@@ -104,6 +110,7 @@ export function StepRenderer() {
   const { studyNavigatorEnabled, dataCollectionEnabled } = useMemo(() => modes, [modes]);
 
   const asideOpen = useMemo(() => studyNavigatorEnabled && showStudyBrowser, [studyNavigatorEnabled, showStudyBrowser]);
+  const sidebarOpen = componentConfig?.sidebar !== undefined ? componentConfig.sidebar : studyConfig.uiConfig.sidebar;
 
   const isAnalysis = useIsAnalysis();
 
@@ -112,7 +119,7 @@ export function StepRenderer() {
       <AppShell
         padding="md"
         header={{ height: 70 }}
-        navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !studyConfig.uiConfig.sidebar, mobile: !studyConfig.uiConfig.sidebar } }}
+        navbar={{ width: (sidebarOpen ? sidebarWidth : 0), breakpoint: 'xs', collapsed: { desktop: !sidebarOpen, mobile: !sidebarOpen } }}
         aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
         footer={{ height: (isAnalysis ? 75 : 0) + (analysisHasAudio ? 50 : 0) }}
       >
@@ -125,7 +132,7 @@ export function StepRenderer() {
           <Outlet />
         </AppShell.Main>
         {isAnalysis && (
-        <AnalysisFooter />
+          <AnalysisFooter />
         )}
       </AppShell>
     </WindowEventsContext.Provider>
