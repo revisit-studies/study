@@ -45,6 +45,9 @@ interface MatrixContextType {
   meanScale: d3.ScaleQuantize<string | number, never>;
   devScale: d3.ScaleQuantize<string | number, never>;
 
+  linkMarks: string[][] | null;
+  setLinkMarks: (value: string[][] | null) => void;
+
   orderingNode: string | null;
   setOrderingNode: (value: string | null) => void;
 

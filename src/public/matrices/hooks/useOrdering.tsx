@@ -3,7 +3,7 @@ import {
   optimal_leaf_order, distance, pca_order, permute,
 } from 'reorder.js';
 
-import { useEffect, useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { meanAccesor, snrAccesor, stdAccesor } from '../utils/Accesors';
 
 import { link } from '../utils/Interfaces';
@@ -55,7 +55,7 @@ export function useOrdering(data: link[], clusterMode: string, clusterVar: strin
   const [orderedOrigins, setOrderedOrigins] = useState<string[] | null>(null);
   const [orderedDestinations, setOrderedDestinations] = useState<string[] | null>(null);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (data.length > 1) {
       let order;
       if (clusterMode === 'none') {

@@ -3,19 +3,45 @@ export interface TrrackState {
   orderingNode: string | null;
   originHighlight: string | null;
   destinationHighlight: string | null;
+  linkMarks: string[][] | null;
+}
+
+export interface clusterMark {
+  option: string;
+  origin: string;
+  destination: string;
+}
+
+export interface path {
+  option: string;
+  path: string;
 }
 
 export interface ChartParams {
   showConfig?: boolean;
+
   encoding: string;
   dataset: string;
+
   isSnr: boolean;
+
   nMeans: number;
   nDevs: number;
+
   colorScale: string;
+
+  isClusterTask?: boolean;
   clusterMode?: string;
   clusterVar?: string;
+  clusterMarks?: clusterMark[];
+
+  isRangeTask?: boolean;
+
+  isPathTask?: boolean;
+  paths: path[];
+
   showTooltip?: boolean;
+
   provenanceState: TrrackState;
 }
 

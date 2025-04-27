@@ -104,16 +104,23 @@ export function OriginAxis({ showLines = true }: { showLines?: boolean }) {
             />
           ) : null}
           <foreignObject
-            dominantBaseline="hanging"
             className="axis-label"
             y={-tickLineOffset}
             width={margin.top}
             height={originScale.bandwidth()}
-            style={{ transform: 'rotate(-90deg)', cursor: 'pointer' }}
+            style={{
+              transform: 'rotate(-90deg)',
+              cursor: 'pointer',
+            }}
             onMouseOver={() => onMouseOver(value)}
             onClick={() => onClick(value, orderingNode)}
           >
-            <div className="label-container">
+            <div
+              className="label-container"
+              style={{
+                height: originScale.bandwidth(),
+              }}
+            >
               <Tooltip
                 transitionProps={{ transition: 'slide-down', duration: 300 }}
                 label={value}

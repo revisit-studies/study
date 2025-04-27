@@ -25,6 +25,8 @@ export function Background() {
     setDestinationHighlight,
     originHighlight,
     destinationHighlight,
+    linkMarks,
+    setLinkMarks,
   } = useMatrixContext();
 
   const { width, height } = useMemo(() => ({ width: size, height: size }), [size]);
@@ -38,7 +40,29 @@ export function Background() {
     if (destination !== destinationHighlight) setDestinationHighlight(destination);
   };
 
+  const onClick = (e: React.MouseEvent<SVGRectElement>) => {
+    const [x, y] = d3.pointer(e);
+
+    const origin = invertScaleBand(originScale, x);
+    const destination = invertScaleBand(destinationScale, y);
+
+    const item = linkMarks?.find((d) => d[0] === origin && d[1] === destination);
+
+    if (!item) setLinkMarks([[origin!, destination!], ...linkMarks!]);
+    else {
+      const newLinkMarks = linkMarks?.filter((d) => d[0] !== origin || d[1] !== destination);
+      setLinkMarks(newLinkMarks!);
+    }
+  };
+
   return (
-    <rect width={width} height={height} fill="transparent" opacity={0} onMouseMove={onMouseMove} />
+    <rect
+      width={width}
+      height={height}
+      fill="transparent"
+      opacity={0}
+      onClick={onClick}
+      onMouseMove={onMouseMove}
+    />
   );
 }

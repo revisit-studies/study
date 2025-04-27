@@ -100,6 +100,8 @@ export function Stimuli({
 
         originHighlight: null,
         destinationHighlight: null,
+
+        linkMarks: null,
       },
       registry,
     });

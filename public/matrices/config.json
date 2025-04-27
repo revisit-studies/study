@@ -1,290 +1,677 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/main/src/parser/StudyConfigSchema.json",
-  "studyMetadata": {
-    "title": "Basic Std Matrices Study",
-    "version": "pilot",
-    "authors": ["Jorge Acosta"],
-    "date": "2025-03-22",
-    "description": "This is an experiment aiming to find which is the most efficient encoding technique to visualize mean and standard deviation values of links using adjacency matrices as layout.",
-    "organizations": ["University of Utah", "Polythecnic University of Madrid"]
-  },
-  "uiConfig": {
-    "contactEmail": "jorge.acosta@upm.es",
-    "helpTextPath": "matrices/assets/help.md",
-    "logoPath": "revisitAssets/revisitLogoSquare.svg",
-    "withProgressBar": true,
-    "autoDownloadStudy": false,
-    "sidebar": true
-  },
-  "baseComponents": {
-    "matrix_old": {
-      "description": "Test Std Matrix.",
-      "type": "react-component",
-      "path": "matrices/assets/components/StudyMatrix/index.jsx",
-      "nextButtonLocation": "sidebar",
-      "instructionLocation": "sidebar",
-      "response": []
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/main/src/parser/StudyConfigSchema.json",
+    "components": {
+        "introduction": {
+            "correctAnswer": [],
+            "path": "matrices/assets/introduction.md",
+            "response": [
+                {
+                    "id": "signature",
+                    "location": "belowStimulus",
+                    "placeholder": "Prolific ID",
+                    "prompt": "Please enter your Prolific ID",
+                    "type": "shortText"
+                }
+            ],
+            "type": "markdown"
+        },
+        "consent": {
+            "correctAnswer": [],
+            "path": "matrices/assets/consent.md",
+            "response": [
+                {
+                    "id": "accept",
+                    "location": "belowStimulus",
+                    "options": [
+                        {
+                            "label": "Decline",
+                            "value": "no"
+                        },
+                        {
+                            "label": "Accept",
+                            "value": "yes"
+                        }
+                    ],
+                    "prompt": "Do you consent to the study and wish to continue?",
+                    "requiredValue": "yes",
+                    "type": "radio"
+                }
+            ],
+            "type": "markdown"
+        },
+        "matrices_description": {
+            "correctAnswer": [],
+            "path": "matrices/assets/matrices_description.md",
+            "response": [],
+            "type": "markdown"
+        },
+        "dataset_description": {
+            "correctAnswer": [],
+            "path": "matrices/assets/dataset_description.md",
+            "response": [],
+            "type": "markdown"
+        },
+        "encoding_description": {
+            "correctAnswer": [],
+            "path": "matrices/assets/mark_description.md",
+            "response": [],
+            "type": "markdown"
+        },
+        "interaction": {
+            "correctAnswer": [],
+            "instruction": "Let\u2019s play with the matrix!<br><b>Move your mouse over the cells:</b> this will highlight the corresponding row and column.<br><b>Click on the top labels (the names at the top):</b> the states on the left will reorder themselves.<ul><li>The states that have flights connected to it will come first alphabetically.</li><li>The ones without direct flights will move to the bottom, sorted alphabetically.</li>Click again on the top label to undo the ordering.<br> <b>Click on the left-side state names (the ones written horizontally):</b></li></ul>To answer some questions, you\u2019ll need to select states by clicking on the names on the left side.<ul><li>Click once to select a state.</li> <li>Click again to unselect it, or use the Clear Selection button if you want to start fresh.</li></ul>",
+            "nextButtonLocation": "sidebar",
+            "parameters": {
+                "dataset": "training.txt",
+                "encoding": "mark"
+            },
+            "path": "matrices/Stimuli.tsx",
+            "response": [],
+            "type": "react-component"
+        },
+        "training_1": {
+            "correctAnswer": [],
+            "instruction": "Lets try a simple task.<br> Select the following states: Texas, Florida and Nevada",
+            "nextButtonLocation": "sidebar",
+            "parameters": {
+                "dataset": "training.txt",
+                "encoding": "mark"
+            },
+            "path": "matrices/Stimuli.tsx",
+            "response": [
+                {
+                    "id": "answerNodes",
+                    "location": "sidebar",
+                    "prompt": "Selected States:",
+                    "requiredValue": [
+                        "Texas",
+                        "Florida",
+                        "Nevada"
+                    ],
+                    "type": "reactive"
+                }
+            ],
+            "type": "react-component"
+        },
+        "training_2": {
+            "correctAnswer": [],
+            "instruction": "Select all states connected to South Carolina.",
+            "nextButtonLocation": "sidebar",
+            "parameters": {
+                "dataset": "training.txt",
+                "encoding": "mark"
+            },
+            "path": "matrices/Stimuli.tsx",
+            "response": [
+                {
+                    "id": "answerNodes",
+                    "location": "sidebar",
+                    "prompt": "Selected States:",
+                    "requiredValue": [
+                        "Florida",
+                        "New York",
+                        "Texas",
+                        "Pennsylvania"
+                    ],
+                    "secondaryText": "Tip: Clicking on the vertical labels will reorder the nodes, placing the connected ones first, followed by the disconnected ones in alphabetical order.",
+                    "type": "reactive"
+                }
+            ],
+            "type": "react-component"
+        },
+        "training_3": {
+            "correctAnswer": [],
+            "instruction": "Select all states connected to Pennsylvania with a price variation greater than $90.",
+            "nextButtonLocation": "sidebar",
+            "parameters": {
+                "dataset": "training.txt",
+                "encoding": "mark"
+            },
+            "path": "matrices/Stimuli.tsx",
+            "response": [
+                {
+                    "id": "answerNodes",
+                    "location": "sidebar",
+                    "prompt": "Selected States:",
+                    "requiredValue": [
+                        "Texas",
+                        "Missouri",
+                        "Ohio"
+                    ],
+                    "secondaryText": "Tip: Clicking on the vertical labels will reorder the nodes, placing the connected ones first, followed by the disconnected ones in alphabetical order.",
+                    "type": "reactive"
+                }
+            ],
+            "type": "react-component"
+        },
+        "training_4": {
+            "correctAnswer": [],
+            "instruction": "What is the price range for flights departing from Ohio?",
+            "nextButtonLocation": "sidebar",
+            "parameters": {
+                "dataset": "training.txt",
+                "encoding": "mark"
+            },
+            "path": "matrices/Stimuli.tsx",
+            "response": [
+                {
+                    "id": "range",
+                    "location": "sidebar",
+                    "options": [
+                        {
+                            "label": "$0-$300",
+                            "value": "a"
+                        },
+                        {
+                            "label": "$60-$200",
+                            "value": "b"
+                        },
+                        {
+                            "label": "$50-$300",
+                            "value": "c"
+                        }
+                    ],
+                    "prompt": "Select a range:",
+                    "requiredValue": "a",
+                    "secondaryText": "Tip: Clicking on the vertical labels will reorder the nodes, placing the connected ones first, followed by the disconnected ones in alphabetical order.",
+                    "type": "radio"
+                }
+            ],
+            "type": "react-component"
+        },
+        "training_5": {
+            "correctAnswer": [],
+            "instruction": "Finally, clusters are groups of nodes that are highly interconnected. In this context, it means you can travel between the states within a cluster. Which of the highlighted clusters has the highest average mean price?",
+            "nextButtonLocation": "sidebar",
+            "parameters": {
+                "dataset": "training.txt",
+                "encoding": "mark",
+                "isClusterTask": true,
+                "clusterMarks": [
+                    {
+                        "option": "A",
+                        "origin": "Texas",
+                        "destination": "Kentucky"
+                    },
+                    {
+                        "option": "B",
+                        "origin": "Florida",
+                        "destination": "Florida"
+                    },
+                    {
+                        "option": "C",
+                        "origin": "Ohio",
+                        "destination": "Arizona"
+                    }
+                ],
+                "clusterMode": "optimal",
+                "clusterVar": "mean"
+            },
+            "path": "matrices/Stimuli.tsx",
+            "response": [
+                {
+                    "id": "range",
+                    "location": "sidebar",
+                    "options": [
+                        {
+                            "label": "A",
+                            "value": "a"
+                        },
+                        {
+                            "label": "B",
+                            "value": "b"
+                        },
+                        {
+                            "label": "C",
+                            "value": "c"
+                        }
+                    ],
+                    "prompt": "Select a range:",
+                    "requiredValue": "c",
+                    "type": "radio"
+                }
+            ],
+            "type": "react-component"
+        },
+        "training_ends": {
+            "correctAnswer": [],
+            "path": "matrices/assets/training_ends.md",
+            "response": [
+                {
+                    "id": "repeat",
+                    "location": "belowStimulus",
+                    "options": [
+                        "Yes",
+                        "No"
+                    ],
+                    "prompt": "Do you want to repeat the training?",
+                    "type": "buttons"
+                }
+            ],
+            "type": "markdown"
+        },
+        "adjacency": {
+            "correctAnswer": [
+                {
+                    "answer": [],
+                    "id": "answerNodes"
+                }
+            ],
+            "instruction": "ADJACENCY TASK. Select adjacent nodes to one given.<br><br>To which states can you fly from Oregon?",
+            "nextButtonLocation": "sidebar",
+            "parameters": {
+                "dataset": "test.txt",
+                "encoding": "mark"
+            },
+            "path": "matrices/Stimuli.tsx",
+            "response": [
+                {
+                    "id": "answerNodes",
+                    "location": "sidebar",
+                    "prompt": "Selected States:",
+                    "type": "reactive"
+                }
+            ],
+            "type": "react-component"
+        },
+        "attr_std": {
+            "correctAnswer": [
+                {
+                    "answer": [],
+                    "id": "answerNodes"
+                }
+            ],
+            "instruction": "ATTRIBUTE TASK. Select adjacent nodes to one given constrained by attribute values.<br><br>QUESTION. Which states are connected to Missouri with a price variation lower than $80?",
+            "nextButtonLocation": "sidebar",
+            "parameters": {
+                "dataset": "test.txt",
+                "encoding": "mark"
+            },
+            "path": "matrices/Stimuli.tsx",
+            "response": [
+                {
+                    "id": "answerNodes",
+                    "location": "sidebar",
+                    "prompt": "Selected States:",
+                    "type": "reactive"
+                }
+            ],
+            "type": "react-component"
+        },
+        "attr_comb": {
+            "correctAnswer": [
+                {
+                    "answer": [],
+                    "id": "answerNodes"
+                }
+            ],
+            "instruction": "ATTRIBUTE COMBINATION TASK. Select adjacent nodes to one given under a combination of both attributes.<br><br>QUESTION. To which states can you fly from Utah with a budget strictly between $100 and $200, without spending less or more?",
+            "nextButtonLocation": "sidebar",
+            "parameters": {
+                "dataset": "test.txt",
+                "encoding": "mark"
+            },
+            "path": "matrices/Stimuli.tsx",
+            "response": [
+                {
+                    "id": "answerNodes",
+                    "location": "sidebar",
+                    "prompt": "Selected States:",
+                    "type": "reactive"
+                }
+            ],
+            "type": "react-component"
+        },
+        "max_attr_std": {
+            "correctAnswer": [
+                {
+                    "answer": [],
+                    "id": "answerNodes"
+                }
+            ],
+            "instruction": "EXTREME ATTRIBUTE TASK. Select adjacent nodes to one given with extreme attribute values.<br><br>QUESTION. Which state or states show the highest price variation for flights departing from Virginia?",
+            "nextButtonLocation": "sidebar",
+            "parameters": {
+                "dataset": "test.txt",
+                "encoding": "mark"
+            },
+            "path": "matrices/Stimuli.tsx",
+            "response": [
+                {
+                    "id": "answerNodes",
+                    "location": "sidebar",
+                    "prompt": "Selected States:",
+                    "type": "reactive"
+                }
+            ],
+            "type": "react-component"
+        },
+        "path": {
+            "correctAnswer": [
+                {
+                    "answer": "Utah \u2192 Texas \u2192 New York",
+                    "id": "path"
+                },
+                {
+                    "answer": 100,
+                    "id": "min"
+                },
+                {
+                    "answer": 300,
+                    "id": "max"
+                }
+            ],
+            "instruction": "PATH ESTIMATION TASK. Select between two paths the one that better fits for a given criteria.<br><br>QUESTION. On which of the following routes would you spend less money. Select the route and estimate the final price range.",
+            "nextButtonLocation": "sidebar",
+            "parameters": {
+                "dataset": "test.txt",
+                "encoding": "mark",
+                "isPathTask": true,
+                "paths": [
+                    {
+                        "option": "A",
+                        "path": "Utah \u2192 Michigan \u2192 New York"
+                    },
+                    {
+                        "option": "B",
+                        "path": "Utah \u2192 Texas \u2192 New York"
+                    }
+                ]
+            },
+            "path": "matrices/Stimuli.tsx",
+            "response": [
+                {
+                    "id": "path",
+                    "location": "sidebar",
+                    "options": [
+                        "Utah \u2192 Michigan \u2192 New York",
+                        "Utah \u2192 Texas \u2192 New York"
+                    ],
+                    "prompt": "Select a path:",
+                    "type": "radio"
+                },
+                {
+                    "id": "min",
+                    "location": "sidebar",
+                    "options": [
+                        {
+                            "label": "0",
+                            "value": 0.0
+                        },
+                        {
+                            "label": "500",
+                            "value": 500.0
+                        }
+                    ],
+                    "prompt": "Price range minimum value:",
+                    "type": "slider"
+                },
+                {
+                    "id": "max",
+                    "location": "sidebar",
+                    "options": [
+                        {
+                            "label": "0",
+                            "value": 0.0
+                        },
+                        {
+                            "label": "500",
+                            "value": 500.0
+                        }
+                    ],
+                    "prompt": "Price range maximum value:",
+                    "type": "slider"
+                }
+            ],
+            "type": "react-component"
+        },
+        "range": {
+            "correctAnswer": [
+                {
+                    "answer": 100,
+                    "id": "min"
+                },
+                {
+                    "answer": 300,
+                    "id": "max"
+                }
+            ],
+            "instruction": "RANGE ESTIMATION TASK. Estimate the range of link values for a given node. Participants will provide both the minimum and maximum values.<br><br>QUESTION. What is the price range for flights departing from Arizona?",
+            "nextButtonLocation": "sidebar",
+            "parameters": {
+                "dataset": "test.txt",
+                "encoding": "mark",
+                "isRangeTask": true
+            },
+            "path": "matrices/Stimuli.tsx",
+            "response": [
+                {
+                    "id": "min",
+                    "location": "sidebar",
+                    "options": [
+                        {
+                            "label": "0",
+                            "value": 0.0
+                        },
+                        {
+                            "label": "500",
+                            "value": 500.0
+                        }
+                    ],
+                    "prompt": "Price range minimum value:",
+                    "type": "slider"
+                },
+                {
+                    "id": "max",
+                    "location": "sidebar",
+                    "options": [
+                        {
+                            "label": "0",
+                            "value": 0.0
+                        },
+                        {
+                            "label": "500",
+                            "value": 500.0
+                        }
+                    ],
+                    "prompt": "Price range maximum value:",
+                    "type": "slider"
+                }
+            ],
+            "type": "react-component"
+        },
+        "trend": {
+            "correctAnswer": [
+                {
+                    "answer": "Unstable",
+                    "id": "answerNodes"
+                }
+            ],
+            "instruction": "TREND EXTIMATION TASK. Estimate the stability of the links of a given node. Participants will select between stable, unstable or can\u2019t tell.<br><br>QUESTION. Are flight prices stable when flying form Oregon?",
+            "nextButtonLocation": "sidebar",
+            "parameters": {
+                "dataset": "test.txt",
+                "encoding": "mark"
+            },
+            "path": "matrices/Stimuli.tsx",
+            "response": [
+                {
+                    "id": "stability",
+                    "location": "sidebar",
+                    "options": [
+                        "Stable",
+                        "Unstable",
+                        "Cant't"
+                    ],
+                    "prompt": "Select an option:",
+                    "type": "radio"
+                }
+            ],
+            "type": "react-component"
+        },
+        "cluster_avg": {
+            "correctAnswer": [
+                {
+                    "answer": "A",
+                    "id": "cluster"
+                }
+            ],
+            "instruction": "QUESTION. Which cluster has highest average mean price?",
+            "nextButtonLocation": "sidebar",
+            "parameters": {
+                "dataset": "test.txt",
+                "encoding": "mark",
+                "isClusterTask": true,
+                "clusterMarks": [
+                    {
+                        "option": "A",
+                        "origin": "Texas",
+                        "destination": "Pennsylvania"
+                    },
+                    {
+                        "option": "B",
+                        "origin": "Utah",
+                        "destination": "Massachusetts"
+                    },
+                    {
+                        "option": "C",
+                        "origin": "Massachusetts",
+                        "destination": "Washington"
+                    },
+                    {
+                        "option": "D",
+                        "origin": "Missouri",
+                        "destination": "Colorado"
+                    }
+                ],
+                "clusterMode": "optimal",
+                "clusterVar": "mean"
+            },
+            "path": "matrices/Stimuli.tsx",
+            "response": [
+                {
+                    "id": "cluster",
+                    "location": "sidebar",
+                    "options": [
+                        "A",
+                        "B",
+                        "C",
+                        "D"
+                    ],
+                    "prompt": "Select a cluster:",
+                    "type": "radio"
+                }
+            ],
+            "type": "react-component"
+        },
+        "cluster_std": {
+            "correctAnswer": [
+                {
+                    "answer": "A",
+                    "id": "cluster"
+                }
+            ],
+            "instruction": "QUESTION. Which cluster prices vary the most?",
+            "nextButtonLocation": "sidebar",
+            "parameters": {
+                "dataset": "test.txt",
+                "encoding": "mark",
+                "isClusterTask": true,
+                "clusterMarks": [
+                    {
+                        "option": "A",
+                        "origin": "New Jersey",
+                        "destination": "California"
+                    },
+                    {
+                        "option": "B",
+                        "origin": "Missouri",
+                        "destination": "Texas"
+                    },
+                    {
+                        "option": "C",
+                        "origin": "Nevada",
+                        "destination": "New York"
+                    },
+                    {
+                        "option": "D",
+                        "origin": "Georgia",
+                        "destination": "Virginia"
+                    }
+                ],
+                "clusterMode": "pca",
+                "clusterVar": "mean"
+            },
+            "path": "matrices/Stimuli.tsx",
+            "response": [
+                {
+                    "id": "cluster",
+                    "location": "sidebar",
+                    "options": [
+                        "A",
+                        "B",
+                        "C",
+                        "D"
+                    ],
+                    "prompt": "Select a cluster:",
+                    "type": "radio"
+                }
+            ],
+            "type": "react-component"
+        }
     },
-    "matrix": {
-      "description": "Test Std Matrix in ts.",
-      "type": "react-component",
-      "path": "matrices/Stimuli.tsx",
-      "nextButtonLocation": "sidebar",
-      "instructionLocation": "sidebar",
-      "response": []
-    }
-  },
-  "components": {
-    "matrix_explore": {
-      "baseComponent": "matrix",
-      "instruction": "No task. Just for exploratory purpose <br>Origins - X axis <br>Destinations - Y axis <br>To select answers: Left Click on Destination labels <br> To order Destinations by Origin: Left click Origin labels.",
-      "parameters": {
-        "showConfig": true,
-        "dataset": "test.txt",
-        "encoding": "mark",
-        "colorScale": "viridis",
-        "isSnr": false,
-        "nMeans": 5,
-        "nStds": 5,
-        "showTooltip": true,
-        "isConfig": true
-      },
-      "response": [
-        {
-          "id": "answerNodes",
-          "prompt": "Selected State(s) willl show here",
-
-          "location": "sidebar",
-          "type": "reactive"
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "answerNodes",
-          "answer": ["Oregon"]
-        }
-      ]
-    },
-    "matrix_explore2": {
-      "baseComponent": "matrix_old",
-      "instruction": "No task. Just for exploratory purpose <br>Origins - X axis <br>Destinations - Y axis <br>To select answers: Left Click on Destination labels <br> To order Destinations by Origin: Right click Origin labels <br> To highlight Destinations by Origin: Left click Origin labels <br>Menu top right corner for exploring datasets, encodings, color scales...",
-      "parameters": {
-        "dataset": "test.txt",
-        "encoding": "cellSize",
-        "colorScale": "viridis",
-        "isSnr": false,
-        "nMeans": 5,
-        "nStds": 5,
-        "tooltipHistogram": "frequencies",
-        "showTooltip": true,
-        "isConfig": true
-      },
-      "response": [
-        {
-          "id": "answerNodes",
-          "prompt": "Selected State(s) willl show here",
-
-          "location": "sidebar",
-          "type": "reactive"
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "answerNodes",
-          "answer": ["Oregon"]
-        }
-      ]
-    },
-
-    "check": {
-      "baseComponent": "matrix",
-      "instruction": "ADJACENCY TASK. Select adjacent nodes to one given.<br><br>To which states can you fly from Utah?",
-      "parameters": {
-        "dataset": "test.txt",
-        "encoding": "size"
-      },
-      "response": [
-        {
-          "id": "answerNodes",
-          "prompt": "Selected State(s) will show here",
-
-          "location": "sidebar",
-          "type": "reactive"
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "answerNodes",
-          "answer": ["Oregon"]
-        }
-      ]
-    },
-
-    "adyacency_attr_std": {
-      "baseComponent": "matrix",
-      "instruction": "ATTRIBUTE TASK. Select adjacent nodes to one given constrained by some attribute values.<br><br>Which states are connected to Missouri with a price variation lower than $80?",
-      "parameters": {
-        "dataset": "test.txt",
-        "encoding": "mark-rotation"
-      },
-      "response": [
-        {
-          "id": "answerNodes",
-          "prompt": "Selected State(s) will show here",
-
-          "location": "sidebar",
-          "type": "reactive"
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "answerNodes",
-          "answer": ["Oregon"]
-        }
-      ]
-    },
-
-    "attr_comb": {
-      "baseComponent": "matrix",
-      "instruction": "ATTRIBUTE COMBINATION TASK. Select adjacent nodes to one given under a combination of both attributes.<br><br>To which states can you fly from Utah with a budget strictly between $100 and $200, without spending less or more?<br><br> Better formulation?",
-      "parameters": {
-        "dataset": "test.txt",
-        "encoding": "mark"
-      },
-      "response": [
-        {
-          "id": "answerNodes",
-          "prompt": "Selected State(s) will show here",
-
-          "location": "sidebar",
-          "type": "reactive"
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "answerNodes",
-          "answer": ["Oregon"]
-        }
-      ]
-    },
-
-    "adyacency_max_attr_std": {
-      "baseComponent": "matrix",
-      "instruction": "EXTREME ATTRIBUTE TASK. Select adjacent nodes to one given with extreme attribute values.<br><br>Which state or states show the highest price variation for flights departing from Virginia?",
-      "parameters": {
-        "dataset": "test.txt",
-        "encoding": "light"
-      },
-      "response": [
-        {
-          "id": "answerNodes",
-          "prompt": "Selected State(s) will show here",
-
-          "location": "sidebar",
-          "type": "reactive"
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "answerNodes",
-          "answer": ["Oregon"]
-        }
-      ]
-    },
-
-    "attr_routes": {
-      "baseComponent": "matrix",
-      "instruction": "PATH ESTIMATION TASK. Select between two paths the one that better fits for a given criteria.<br><br>On which route would you spend less money: Utah → Michigan → New York or Utah → Texas → New York? Select the routes and estimate the final price range.",
-      "parameters": {
-        "dataset": "test.txt",
-        "encoding": "bars"
-      },
-      "response": [
-        {
-          "id": "answerNodes",
-          "prompt": "Selected State(s) will show here",
-
-          "location": "sidebar",
-          "type": "reactive"
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "answerNodes",
-          "answer": ["Oregon"]
-        }
-      ]
-    },
-
-    "range": {
-      "baseComponent": "matrix",
-      "instruction": "RANGE ESTIMATION TASK. Estimate the range of link values for a given node. Participants will provide both the minimum and maximum values.<br><br>What is the price range for flights departing from Arizona?",
-      "parameters": {
-        "dataset": "test.txt",
-        "encoding": "mark-rotation"
-      },
-      "response": [
-        {
-          "id": "answerNodes",
-          "prompt": "Selected State(s) will show here",
-
-          "location": "sidebar",
-          "type": "reactive"
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "answerNodes",
-          "answer": ["Oregon"]
-        }
-      ]
-    },
-
-    "attr_range": {
-      "baseComponent": "matrix",
-      "instruction": "TREND EXTIMATION TASK. Estimate the stability of the links of a given node. Participants will select between stable, unstable or can’t tell.<br><br> Are flight prices stable when flying form Oregon?",
-      "parameters": {
-        "dataset": "test.txt",
-        "encoding": "mark-rotation-color"
-      },
-      "response": [
-        {
-          "id": "answerNodes",
-          "prompt": "Selected State(s) will show here",
-
-          "location": "sidebar",
-          "type": "reactive"
-        }
-      ],
-      "correctAnswer": [
-        {
-          "id": "answerNodes",
-          "answer": ["Oregon"]
-        }
-      ]
-    }
-  },
-
-  "sequence": {
-    "order": "fixed",
-    "components": [
-      "matrix_explore",
-      "matrix_explore2",
-      {
+    "sequence": {
         "components": [
-          "check",
-
-          "adyacency_attr_std",
-          "adyacency_max_attr_std",
-          "attr_comb",
-
-          "attr_routes",
-
-          "range",
-          "attr_range"
+            "introduction",
+            "consent",
+            "matrices_description",
+            "dataset_description",
+            "encoding_description",
+            {
+                "components": [
+                    "interaction",
+                    "training_1",
+                    "training_2",
+                    "training_3",
+                    "training_4",
+                    "training_5",
+                    "training_ends"
+                ],
+                "order": "fixed"
+            },
+            {
+                "components": [
+                    "adjacency",
+                    "attr_std",
+                    "attr_comb",
+                    "max_attr_std",
+                    "path",
+                    "range",
+                    "trend",
+                    "cluster_avg",
+                    "cluster_std"
+                ],
+                "order": "random"
+            }
         ],
         "order": "fixed"
-      }
-    ]
-  }
+    },
+    "studyMetadata": {
+        "authors": [
+            "Jorge Acosta"
+        ],
+        "date": "2025-01-13",
+        "description": "This is an study to...",
+        "organizations": [
+            "Visualization Design Lab"
+        ],
+        "title": "Mean&Std Encoding on Adjacency Matrices",
+        "version": "1.0"
+    },
+    "uiConfig": {
+        "contactEmail": "jorge.acosta@upm.es",
+        "logoPath": "revisitAssets/revisitLogoSquare.svg",
+        "sidebar": true,
+        "withProgressBar": true
+    }
 }

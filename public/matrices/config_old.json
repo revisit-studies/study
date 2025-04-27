@@ -1,0 +1,289 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/main/src/parser/StudyConfigSchema.json",
+  "studyMetadata": {
+    "title": "Basic Std Matrices Study",
+    "version": "pilot",
+    "authors": ["Jorge Acosta"],
+    "date": "2025-03-22",
+    "description": "This is an experiment aiming to find which is the most efficient encoding technique to visualize mean and standard deviation values of links using adjacency matrices as layout.",
+    "organizations": ["University of Utah", "Polythecnic University of Madrid"]
+  },
+  "uiConfig": {
+    "contactEmail": "jorge.acosta@upm.es",
+    "helpTextPath": "matrices/assets/help.md",
+    "logoPath": "revisitAssets/revisitLogoSquare.svg",
+    "withProgressBar": true,
+    "autoDownloadStudy": false,
+    "sidebar": true
+  },
+  "baseComponents": {
+    "matrix_old": {
+      "description": "Test Std Matrix.",
+      "type": "react-component",
+      "path": "matrices/assets/components/StudyMatrix/index.jsx",
+      "nextButtonLocation": "sidebar",
+      "instructionLocation": "sidebar",
+      "response": []
+    },
+    "matrix": {
+      "description": "Test Std Matrix in ts.",
+      "type": "react-component",
+      "path": "matrices/Stimuli.tsx",
+      "nextButtonLocation": "sidebar",
+      "instructionLocation": "sidebar",
+      "response": []
+    }
+  },
+  "components": {
+    "matrix_explore": {
+      "baseComponent": "matrix",
+      "instruction": "No task. Just for exploratory purpose <br>Origins - X axis <br>Destinations - Y axis <br>To select answers: Left Click on Destination labels <br> To order Destinations by Origin: Left click Origin labels.",
+      "parameters": {
+        "showConfig": true,
+        "dataset": "test.txt",
+        "encoding": "mark",
+        "clusterMarks": [
+          ["Arizona", "Arizona"],
+          ["Nevada", "Arizona"],
+          ["Minesota", "Nevada"]
+        ]
+      },
+      "response": [
+        {
+          "id": "answerNodes",
+          "prompt": "Selected State(s) willl show here",
+
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "answerNodes",
+          "answer": ["Oregon"]
+        }
+      ]
+    },
+    "matrix_explore2": {
+      "baseComponent": "matrix_old",
+      "instruction": "No task. Just for exploratory purpose <br>Origins - X axis <br>Destinations - Y axis <br>To select answers: Left Click on Destination labels <br> To order Destinations by Origin: Right click Origin labels <br> To highlight Destinations by Origin: Left click Origin labels <br>Menu top right corner for exploring datasets, encodings, color scales...",
+      "parameters": {
+        "dataset": "test.txt",
+        "encoding": "cellSize",
+        "colorScale": "viridis",
+        "isSnr": false,
+        "nMeans": 5,
+        "nStds": 5,
+        "tooltipHistogram": "frequencies",
+        "showTooltip": true,
+        "isConfig": true
+      },
+      "response": [
+        {
+          "id": "answerNodes",
+          "prompt": "Selected State(s) willl show here",
+
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "answerNodes",
+          "answer": ["Oregon"]
+        }
+      ]
+    },
+
+    "adjacency": {
+      "baseComponent": "matrix",
+      "instruction": "ADJACENCY TASK. Select adjacent nodes to one given.<br><br>To which states can you fly from Utah?",
+      "parameters": {
+        "dataset": "test.txt",
+        "encoding": "size"
+      },
+      "response": [
+        {
+          "id": "answerNodes",
+          "prompt": "Selected State(s) will show here",
+
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "answerNodes",
+          "answer": ["Oregon"]
+        }
+      ]
+    },
+
+    "attr_std": {
+      "baseComponent": "matrix",
+      "instruction": "ATTRIBUTE TASK. Select adjacent nodes to one given constrained by some attribute values.<br><br>Which states are connected to Missouri with a price variation lower than $80?",
+      "parameters": {
+        "dataset": "test.txt",
+        "encoding": "mark-rotation"
+      },
+      "response": [
+        {
+          "id": "answerNodes",
+          "prompt": "Selected State(s) will show here",
+
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "answerNodes",
+          "answer": ["Oregon"]
+        }
+      ]
+    },
+
+    "attr_comb": {
+      "baseComponent": "matrix",
+      "instruction": "ATTRIBUTE COMBINATION TASK. Select adjacent nodes to one given under a combination of both attributes.<br><br>To which states can you fly from Utah with a budget strictly between $100 and $200, without spending less or more?<br><br> Better formulation?",
+      "parameters": {
+        "dataset": "test.txt",
+        "encoding": "mark"
+      },
+      "response": [
+        {
+          "id": "answerNodes",
+          "prompt": "Selected State(s) will show here",
+
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "answerNodes",
+          "answer": ["Oregon"]
+        }
+      ]
+    },
+
+    "adyacency_max_attr_std": {
+      "baseComponent": "matrix",
+      "instruction": "EXTREME ATTRIBUTE TASK. Select adjacent nodes to one given with extreme attribute values.<br><br>Which state or states show the highest price variation for flights departing from Virginia?",
+      "parameters": {
+        "dataset": "test.txt",
+        "encoding": "light"
+      },
+      "response": [
+        {
+          "id": "answerNodes",
+          "prompt": "Selected State(s) will show here",
+
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "answerNodes",
+          "answer": ["Oregon"]
+        }
+      ]
+    },
+
+    "path": {
+      "baseComponent": "matrix",
+      "instruction": "PATH ESTIMATION TASK. Select between two paths the one that better fits for a given criteria.<br><br>On which route would you spend less money: Utah → Michigan → New York or Utah → Texas → New York? Select the routes and estimate the final price range.",
+      "parameters": {
+        "dataset": "test.txt",
+        "encoding": "bars"
+      },
+      "response": [
+        {
+          "id": "answerNodes",
+          "prompt": "Selected State(s) will show here",
+
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "answerNodes",
+          "answer": ["Oregon"]
+        }
+      ]
+    },
+
+    "range": {
+      "baseComponent": "matrix",
+      "instruction": "RANGE ESTIMATION TASK. Estimate the range of link values for a given node. Participants will provide both the minimum and maximum values.<br><br>What is the price range for flights departing from Arizona?",
+      "parameters": {
+        "dataset": "test.txt",
+        "encoding": "mark-rotation"
+      },
+      "response": [
+        {
+          "id": "answerNodes",
+          "prompt": "Selected State(s) will show here",
+
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "answerNodes",
+          "answer": ["Oregon"]
+        }
+      ]
+    },
+
+    "attr_range": {
+      "baseComponent": "matrix",
+      "instruction": "TREND EXTIMATION TASK. Estimate the stability of the links of a given node. Participants will select between stable, unstable or can’t tell.<br><br> Are flight prices stable when flying form Oregon?",
+      "parameters": {
+        "dataset": "test.txt",
+        "encoding": "mark-rotation-color"
+      },
+      "response": [
+        {
+          "id": "answerNodes",
+          "prompt": "Selected State(s) will show here",
+
+          "location": "sidebar",
+          "type": "reactive"
+        }
+      ],
+      "correctAnswer": [
+        {
+          "id": "answerNodes",
+          "answer": ["Oregon"]
+        }
+      ]
+    }
+  },
+
+  "sequence": {
+    "order": "fixed",
+    "components": [
+      "matrix_explore",
+      "matrix_explore2",
+      {
+        "components": [
+          "adjacency",
+
+          "adyacency_attr_std",
+          "adyacency_max_attr_std",
+          "attr_comb",
+
+          "attr_routes",
+
+          "range",
+          "attr_range"
+        ],
+        "order": "random"
+      }
+    ]
+  }
+}

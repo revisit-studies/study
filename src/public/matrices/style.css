@@ -32,5 +32,16 @@
 .label-container {
   display: flex;
   align-items: center;
-  height: 100%;
+}
+
+.mark {
+  fill: transparent;
+  stroke: #ff3300;
+  pointer-events: none;
+  stroke-width: 3;
+}
+
+.cluster-label {
+  font-weight: bold;
+  font-size: xx-large;
 }

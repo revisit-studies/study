@@ -5,6 +5,7 @@ import { useMatrixContext } from '../../utils/MatrixContext';
 
 export function DestinationAxis({ showLines = true }: { showLines?: boolean }) {
   const {
+    config,
     margin,
     destinationScale,
     originScale,
@@ -35,6 +36,8 @@ export function DestinationAxis({ showLines = true }: { showLines?: boolean }) {
 
   const onClick = useCallback(
     (node: string, nodes: string[]) => {
+      if (config.isClusterTask || config.isPathTask || config.isRangeTask) return;
+
       let newNodes;
       if (nodes.includes(node)) {
         newNodes = nodes.filter((n) => n !== node);
@@ -49,7 +52,7 @@ export function DestinationAxis({ showLines = true }: { showLines?: boolean }) {
         answers: { answerNodes: newNodes },
       });
     },
-    [setAnswerNodes, setAnswer, trrack, actions],
+    [setAnswerNodes, setAnswer, trrack, actions, config],
   );
 
   const onMouseOver = useCallback(
@@ -86,7 +89,15 @@ export function DestinationAxis({ showLines = true }: { showLines?: boolean }) {
             onClick={() => (setAnswer ? onClick(value, answerNodes) : {})}
             onMouseOver={() => onMouseOver(value, orderingNode)}
           >
-            <div className="label-container" style={{ justifyContent: 'flex-end' }}>
+            <div
+              className="label-container"
+              style={{
+                justifyContent: 'flex-end',
+                borderRadius: '5px',
+                background: answerNodes.includes(value) ? ' #ff6e4a' : 'transparent',
+                height: destinationScale.bandwidth(),
+              }}
+            >
               <Tooltip
                 transitionProps={{ transition: 'slide-right', duration: 300 }}
                 label={value}
@@ -94,12 +105,13 @@ export function DestinationAxis({ showLines = true }: { showLines?: boolean }) {
                 openDelay={200}
               >
                 <Text
-                  className={`axis-label${answerNodes.includes(value) ? ' selected-answer' : ''}`}
+                  className="axis-label"
                   style={{
                     textAlign: 'start',
                   }}
                   size="s"
                 >
+                  {' '}
                   {value}
                 </Text>
               </Tooltip>

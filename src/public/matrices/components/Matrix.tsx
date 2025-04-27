@@ -1,11 +1,13 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable implicit-arrow-linebreak */
 
 import { useMemo } from 'react';
 import * as d3 from 'd3';
 
 import { useResizeObserver } from '@mantine/hooks';
 import {
-  Button, Checkbox, NativeSelect, Slider, Stack, Text,
+  Checkbox, NativeSelect, Slider, Stack, Text,
 } from '@mantine/core';
 
 import { Trrack } from '@trrack/core';
@@ -17,6 +19,8 @@ import { Background } from './Background';
 import { Highlighting } from './Highlighting';
 import { Legend } from './Legend';
 import { EncodedCells } from './EncodedCells';
+import { MatrixTooltip } from './Tooltip';
+import { ClusterMarks, LinkMarks } from './Marks';
 
 import { MatrixProvider } from '../utils/MatrixContext';
 import { ChartParams, TrrackState, link } from '../utils/Interfaces';
@@ -28,14 +32,14 @@ import {
   stdAccesor,
 } from '../utils/Accesors';
 import {
-  ClusteringMode, ClusteringVar, ColorScheme, Encoding, UserAction,
+  ClusteringMode, ClusteringVar, ColorScheme, Encoding,
 } from '../utils/Enums';
 
 import { useCellScales } from '../hooks/useCellScales';
 import { useOrdering } from '../hooks/useOrdering';
 import { useReplay } from '../hooks/useReplay';
 import { useConfig } from '../hooks/useConfig';
-import { MatrixTooltip } from './Tooltip';
+import { InteractionButtons } from './InteractionButtons';
 
 const margin = {
   top: 100,
@@ -105,6 +109,8 @@ export function Matrix({
     setAnswerNodes,
     orderingNode,
     setOrderingNode,
+    linkMarks,
+    setLinkMarks,
   } = useReplay(provenanceState);
 
   // --------------------------- Ordering ----------------------------
@@ -140,17 +146,21 @@ export function Matrix({
 
   const devAccesor = isSnr ? snrAccesor : stdAccesor;
 
-  const { meanMin, meanMax } = useMemo(() => {
-    const means = data.map(meanAccesor);
-    /* return { meanMin: 0, meanMax: 250 }; */
-    return { meanMin: Math.min(...means), meanMax: Math.max(...means) };
-  }, [data]);
+  const { meanMin, meanMax } = useMemo(
+    () =>
+      /* const means = data.map(meanAccesor); */
+      ({ meanMin: 0, meanMax: 250 }),
+    /* return { meanMin: Math.min(...means), meanMax: Math.max(...means) }; */
+    [data],
+  );
 
-  const { devMin, devMax } = useMemo(() => {
-    const devs = data.map(devAccesor);
-    /* return { devMin: 0, devMax: 150 }; */
-    return { devMin: Math.min(...devs), devMax: Math.max(...devs) };
-  }, [data, devAccesor]);
+  const { devMin, devMax } = useMemo(
+    () =>
+      /* const devs = data.map(devAccesor); */
+      ({ devMin: 0, devMax: 150 }),
+    /* return { devMin: Math.min(...devs), devMax: Math.max(...devs) }; */
+    [data, devAccesor],
+  );
 
   const { meanScale, devScale } = useCellScales(
     encoding,
@@ -207,6 +217,9 @@ export function Matrix({
 
         meanScale,
         devScale,
+
+        linkMarks,
+        setLinkMarks,
 
         orderingNode,
         setOrderingNode,
@@ -295,37 +308,17 @@ export function Matrix({
                 <DestinationAxis />
               </g>
 
-              <Highlighting />
+              {!config.clusterMarks && <Highlighting />}
               <Background />
               {showTooltip && <MatrixTooltip />}
+              {config.clusterMarks && <ClusterMarks size={3} marks={config.clusterMarks} />}
+              {config.isPathTask && <LinkMarks size={1} marks={linkMarks} />}
             </g>
           )}
         </svg>
 
-        <Stack>
-          <Stack>
-            <Button
-              onClick={() => {
-                setAnswerNodes([]);
-                trrack?.apply('Set Answer', actions?.setAnswerNodes([]));
-                setAnswer({
-                  status: true,
-                  provenanceGraph: trrack?.graph.backend,
-                  answers: { answerNodes: [] },
-                });
-              }}
-            >
-              {UserAction.clearSelection}
-            </Button>
-            <Button
-              onClick={() => {
-                setOrderingNode(null);
-                setOrderedDestinations(orderedOrigins);
-              }}
-            >
-              {UserAction.resetOrdering}
-            </Button>
-          </Stack>
+        <Stack gap="5vh">
+          <InteractionButtons />
           {shouldRender && <Legend />}
         </Stack>
       </div>

@@ -58,7 +58,7 @@ export function useCellScales(
     const barsScheme = createLinearScale(5, cellSize * 0.2, cellSize * 0.9);
     const colorScheme = getColorScale(colorScale, nMeans);
     const scheme = encoding === Encoding.bars ? barsScheme : colorScheme;
-    return d3.scaleQuantize<number | string>().domain([meanMin, meanMax]).range(scheme).nice();
+    return d3.scaleQuantize<number | string>().domain([meanMin, meanMax]).range(scheme);
   }, [meanMin, meanMax, nMeans, colorScale, encoding, cellSize]);
 
   const devScale = useMemo(() => {
@@ -92,7 +92,7 @@ export function useCellScales(
       default:
     }
 
-    return d3.scaleQuantize<number | string>().domain([devMin, devMax]).range(steps).nice();
+    return d3.scaleQuantize<number | string>().domain([devMin, devMax]).range(steps);
   }, [devMin, devMax, nDevs, encoding, cellSize, isSnr]);
 
   return { meanScale, devScale };

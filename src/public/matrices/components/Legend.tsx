@@ -16,9 +16,10 @@ const devText = 'Price Deviation Ranges:';
 
 export function Legend() {
   const {
-    encoding, isSnr, colorScale, meanMin, meanMax, nMeans, devMin, devMax, nDevs,
+    encoding, isSnr, colorScale, meanMin, meanMax, nMeans, devMin, devMax, nDevs, cellSize,
   } = useMatrixContext();
-  const legendCellSize = (window.innerWidth * 0.28 - margin * (Math.max(nDevs, nMeans) - 1)) / Math.max(nDevs, nMeans);
+  /* const legendCellSize = (window.innerWidth * 0.28 - margin * (Math.max(nDevs, nMeans) - 1)) / Math.max(nDevs, nMeans); */
+  const legendCellSize = cellSize;
   const meanRef = useRef<SVGGElement | null>(null);
   const devRef = useRef<SVGGElement | null>(null);
 

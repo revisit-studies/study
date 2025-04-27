@@ -9,6 +9,8 @@ export function useReplay(provenanceState: TrrackState | undefined) {
 
   const [answerNodes, setAnswerNodes] = useState<string[]>([]);
 
+  const [linkMarks, setLinkMarks] = useState<string[][] | null>([]);
+
   useEffect(() => {
     if (provenanceState) {
       setOrderingNode(provenanceState.orderingNode);
@@ -17,6 +19,8 @@ export function useReplay(provenanceState: TrrackState | undefined) {
       setDestinationHighlight(provenanceState.destinationHighlight);
 
       setAnswerNodes(provenanceState.answerNodes);
+
+      setLinkMarks(provenanceState.linkMarks);
     }
   }, [provenanceState]);
 
@@ -29,5 +33,7 @@ export function useReplay(provenanceState: TrrackState | undefined) {
     setAnswerNodes,
     orderingNode,
     setOrderingNode,
+    linkMarks,
+    setLinkMarks,
   };
 }
