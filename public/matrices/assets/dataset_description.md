@@ -46,7 +46,7 @@ For example, if:
 
 It means most flights are between $80 and $120. Like in the image bellow if you flight from A to B (or from B to A).
 
-<img src='/matrices/assets/images/price-matrix.png' width='500'>
+<img src='./images/price-matrix.png' width='500'>
 
 <br>
 
