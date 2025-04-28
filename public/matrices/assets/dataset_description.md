@@ -1,5 +1,6 @@
 ## What data we will use? Flight mean prices and variations across EEUU states.
 
+<img src='./assets/images/price-matrix.png' width='500'>
 In this study, we want to show two important things about flight prices between each pair of U.S. states:
 
 - What is the **average price** of a flight between two states (this is called the **mean**).
@@ -46,7 +47,7 @@ For example, if:
 
 It means most flights are between $80 and $120. Like in the image bellow if you flight from A to B (or from B to A).
 
-<img src='./images/price-matrix.png' width='500'>
+<img src='./assets/images/price-matrix.png' width='500'>
 
 <br>
 
