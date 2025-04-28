@@ -1,20 +1,18 @@
 import { AppShell } from '@mantine/core';
-import { Outlet } from 'react-router-dom';
-import {
-  useEffect, useMemo, useRef, useState,
-} from 'react';
+import { Outlet } from 'react-router';
+import { useEffect, useMemo, useRef } from 'react';
 import debounce from 'lodash.debounce';
-import AppAside from './interface/AppAside';
-import AppHeader from './interface/AppHeader';
-import AppNavBar from './interface/AppNavBar';
-import HelpModal from './interface/HelpModal';
+import { AppAside } from './interface/AppAside';
+import { AppHeader } from './interface/AppHeader';
+import { AppNavBar } from './interface/AppNavBar';
+import { HelpModal } from './interface/HelpModal';
 import { AlertModal } from './interface/AlertModal';
 import { EventType } from '../store/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { WindowEventsContext } from '../store/hooks/useWindowEvents';
 import { useStoreSelector } from '../store/store';
-import { useStorageEngine } from '../storage/storageEngineHooks';
-import { useStudyId } from '../routes/utils';
+import { AnalysisFooter } from './interface/AnalysisFooter';
+import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
@@ -23,6 +21,8 @@ export function StepRenderer() {
   const windowEventDebounceTime = studyConfig.uiConfig.windowEventDebounceTime ?? 100;
 
   const showStudyBrowser = useStoreSelector((state) => state.showStudyBrowser);
+  const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
+  const modes = useStoreSelector((state) => state.modes);
 
   // Attach event listeners
   useEffect(() => {
@@ -37,8 +37,11 @@ export function StepRenderer() {
     }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
 
     // Keyboard
-    const keypressListener = debounce((e: KeyboardEvent) => {
-      windowEvents.current.push([Date.now(), 'keypress', e.key]);
+    const keydownListener = debounce((e: KeyboardEvent) => {
+      windowEvents.current.push([Date.now(), 'keydown', e.key]);
+    }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
+    const keyupListener = debounce((e: KeyboardEvent) => {
+      windowEvents.current.push([Date.now(), 'keyup', e.key]);
     }, windowEventDebounceTime, { maxWait: windowEventDebounceTime });
 
     // Mouse/Pointer/Touch
@@ -72,7 +75,8 @@ export function StepRenderer() {
 
     window.addEventListener('focus', focusListener, true);
     window.addEventListener('input', inputListener as () => void);
-    window.addEventListener('keypress', keypressListener);
+    window.addEventListener('keydown', keydownListener);
+    window.addEventListener('keyup', keyupListener);
     window.addEventListener('mousedown', mouseDownListener);
     window.addEventListener('mouseup', mouseUpListener);
     window.addEventListener('resize', resizeListener);
@@ -83,9 +87,10 @@ export function StepRenderer() {
     return () => {
       window.removeEventListener('focus', focusListener, true);
       window.removeEventListener('input', inputListener as () => void);
-      window.removeEventListener('keypress', keypressListener);
-      window.addEventListener('mousedown', mouseDownListener);
-      window.addEventListener('mouseup', mouseUpListener);
+      window.removeEventListener('keydown', keydownListener);
+      window.removeEventListener('keyup', keyupListener);
+      window.removeEventListener('mousedown', mouseDownListener);
+      window.removeEventListener('mouseup', mouseUpListener);
       window.removeEventListener('resize', resizeListener);
       window.removeEventListener('mousemove', mouseMoveListener);
       window.removeEventListener('scroll', scrollListener);
@@ -96,22 +101,11 @@ export function StepRenderer() {
 
   const sidebarWidth = studyConfig.uiConfig.sidebarWidth ?? 300;
 
-  const { storageEngine } = useStorageEngine();
-  const studyId = useStudyId();
-  const [studyNavigatorEnabled, setStudyNavigatorEnabled] = useState(false);
-  const [dataCollectionEnabled, setDataCollectionEnabled] = useState(false);
-  useEffect(() => {
-    const checkStudyNavigatorEnabled = async () => {
-      if (storageEngine) {
-        const modes = await storageEngine.getModes(studyId);
-        setStudyNavigatorEnabled(modes.studyNavigatorEnabled);
-        setDataCollectionEnabled(modes.dataCollectionEnabled);
-      }
-    };
-    checkStudyNavigatorEnabled();
-  }, [storageEngine, studyId]);
+  const { studyNavigatorEnabled, dataCollectionEnabled } = useMemo(() => modes, [modes]);
 
   const asideOpen = useMemo(() => studyNavigatorEnabled && showStudyBrowser, [studyNavigatorEnabled, showStudyBrowser]);
+
+  const isAnalysis = useIsAnalysis();
 
   return (
     <WindowEventsContext.Provider value={windowEvents}>
@@ -120,6 +114,7 @@ export function StepRenderer() {
         header={{ height: 70 }}
         navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !studyConfig.uiConfig.sidebar, mobile: !studyConfig.uiConfig.sidebar } }}
         aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
+        footer={{ height: (isAnalysis ? 75 : 0) + (analysisHasAudio ? 50 : 0) }}
       >
         <AppNavBar />
         <AppAside />
@@ -129,6 +124,9 @@ export function StepRenderer() {
         <AppShell.Main>
           <Outlet />
         </AppShell.Main>
+        {isAnalysis && (
+        <AnalysisFooter />
+        )}
       </AppShell>
     </WindowEventsContext.Provider>
   );

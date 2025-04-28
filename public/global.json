@@ -1,66 +1,82 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/GlobalConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/GlobalConfigSchema.json",
   "configsList": [
-    "tutorial-simple-study",
-    "tutorial-react-and-randomization",
-    "tutorial-advanced-react",
+    "tutorial",
+    "example-brush-interactions",
+    "example-cleveland",
+    "example-mvnv",
+    "example-VLAT-full-randomized",
+    "example-VLAT-mini-randomized",
     "demo-html",
-    "demo-cleveland",
-    "demo-brush-interactions",
     "demo-html-input",
-    "demo-mvnv",
     "demo-survey",
-    "demo-VLAT-full-randomized",
-    "demo-VLAT-mini-randomized",
+    "demo-training",
     "demo-html-trrack",
-    "demo-fairness-jnd",
     "demo-click-accuracy-test",
     "demo-image",
+    "demo-upset",
+    "demo-vega",
+    "demo-video-slider",
+    "demo-video",
+    "library-beauvis",
+    "library-color-blindness",
+    "library-demographics",
+    "library-mic-check",
+    "library-mini-vlat",
+    "library-previs",
+    "library-sus",
+    "library-vlat",
     "test-audio",
     "test-library",
+    "test-likert-matrix",
     "test-parser-errors",
     "test-randomization",
-    "test-skip-logic"
+    "test-skip-logic",
+    "test-step-logic"
+
   ],
   "configs": {
-    "tutorial-simple-study": {
-      "path": "tutorial/simple-study/config.json"
+    "tutorial": {
+      "path": "tutorial/config.json"
     },
-    "tutorial-react-and-randomization": {
-      "path": "tutorial/react-and-randomization/config.json"
+    "example-brush-interactions": {
+      "path": "example-brush-interactions/config.json"
     },
-    "tutorial-advanced-react": {
-      "path": "tutorial/advanced-react-component/config.json"
+    "example-cleveland": {
+      "path": "example-cleveland/config.json"
+    },
+    "example-mvnv": {
+      "path": "example-mvnv/config.json"
+    },
+    "demo-video-slider": {
+      "path": "demo-video-slider/config.json"
     },
     "demo-html": {
       "path": "demo-html/config.json"
     },
-    "demo-cleveland": {
-      "path": "demo-cleveland/config.json"
-    },
-    "demo-brush-interactions": {
-      "path": "demo-brush-interactions/config.json"
-    },
     "demo-html-input": {
       "path": "demo-html-input/config.json"
-    },
-    "demo-mvnv": {
-      "path": "demo-mvnv/config.json"
     },
     "demo-survey": {
       "path": "demo-survey/config.json"
     },
-    "demo-VLAT-full-randomized": {
-      "path": "demo-VLAT-full-randomized/config.json"
+    "demo-training": {
+      "path": "demo-training/config.json"
     },
-    "demo-VLAT-mini-randomized": {
-      "path": "demo-VLAT-mini-randomized/config.json"
+    "demo-upset": {
+      "path": "demo-upset/config.json"
+    },
+    "demo-video": {
+      "path": "demo-video/config.json"
+    },
+    "example-VLAT-full-randomized": {
+      "path": "example-VLAT-full-randomized/config.json"
+    },
+    "example-VLAT-mini-randomized": {
+      "path": "example-VLAT-mini-randomized/config.json"
     },
     "demo-html-trrack": {
       "path": "demo-html-trrack/config.json"
-    },
-    "demo-fairness-jnd": {
-      "path": "demo-fairness-jnd/config.json"
     },
     "demo-click-accuracy-test": {
       "path": "demo-click-accuracy-test/config.json"
@@ -76,9 +92,47 @@
       "path": "test-library/config.json",
       "test": true
     },
+    "library-beauvis": {
+      "path": "library-beauvis/config.json",
+      "test": true
+    },
+    "library-color-blindness": {
+      "path": "library-color-blindness/config.json",
+      "test": true
+    },
+    "library-demographics": {
+      "path": "library-demographics/config.json",
+      "test": true
+    },
+    "library-mic-check": {
+      "path": "library-mic-check/config.json",
+      "test": true
+    },
+    "library-mini-vlat": {
+      "path": "library-mini-vlat/config.json",
+      "test": true
+    },
+    "library-previs": {
+      "path": "library-previs/config.json",
+      "test": true
+    },
+    "library-sus": {
+      "path": "library-sus/config.json",
+      "test": true
+    },
+    "library-vlat": {
+      "path": "library-vlat/config.json",
+      "test": true
+    },
+    "test-likert-matrix": {
+      "path": "test-likert-matrix/config.json"
+    },
     "test-parser-errors": {
       "path": "test-parser-errors/config.json",
       "test": true
+    },
+    "demo-vega": {
+      "path": "demo-vega/config.json"
     },
     "test-randomization": {
       "path": "test-randomization/config.json",
@@ -86,6 +140,10 @@
     },
     "test-skip-logic": {
       "path": "test-skip-logic/config.json",
+      "test": true
+    },
+    "test-step-logic": {
+      "path": "test-step-logic/config.json",
       "test": true
     }
   }

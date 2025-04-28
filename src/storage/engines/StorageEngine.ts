@@ -1,6 +1,7 @@
 import { User } from '@firebase/auth';
+import { Timestamp } from 'firebase/firestore';
 import { StudyConfig } from '../../parser/types';
-import { ParticipantMetadata, Sequence, StoredAnswer } from '../../store/types';
+import { ParticipantMetadata, Sequence } from '../../store/types';
 import { ParticipantData } from '../types';
 
 export interface StoredUser {
@@ -58,13 +59,13 @@ export abstract class StorageEngine {
 
   abstract clearCurrentParticipantId(): Promise<void>;
 
-  abstract saveAnswers(answers: Record<string, StoredAnswer>): Promise<void>;
+  abstract saveAnswers(answers: ParticipantData['answers']): Promise<void>;
 
   abstract setSequenceArray(latinSquare: Sequence[]): Promise<void>;
 
   abstract getSequenceArray(): Promise<Sequence[] | null>;
 
-  abstract getSequence(): Promise<Sequence>;
+  abstract getSequence(): Promise<{creationIndex: number, currentRow: Sequence}>;
 
   abstract getAllParticipantsData(): Promise<ParticipantData[]>;
 
@@ -80,13 +81,15 @@ export abstract class StorageEngine {
    */
   abstract addParticipantTags(tags: string[]): Promise<void>;
 
+  abstract getAllParticipantNames(): Promise<string[]>;
+
   abstract removeParticipantTags(tags: string[]): Promise<void>;
 
   abstract nextParticipant(): Promise<void>;
 
-  abstract verifyCompletion(answers: Record<string, StoredAnswer>): Promise<boolean>;
+  abstract verifyCompletion(answers: ParticipantData['answers']): Promise<boolean>;
 
-  abstract validateUser(user: UserWrapped | null): Promise<boolean>;
+  abstract validateUser(user: UserWrapped | null, refresh?: boolean): Promise<boolean>;
 
   abstract saveAudio(audioStream: MediaRecorder, taskName: string): Promise<void>;
 
@@ -96,7 +99,9 @@ export abstract class StorageEngine {
 
   abstract setMode(studyId: string, mode: REVISIT_MODE, value: boolean): Promise<void>;
 
-  abstract getAudio(taskList: string[], participantId?: string): Promise<string[]>;
+  abstract getAudio(task: string, participantId?: string): Promise<string | undefined>;
 
   abstract getModes(studyId: string): Promise<Record<REVISIT_MODE, boolean>>;
+
+  abstract getParticipantsStatusCounts(studyId: string): Promise<{completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null}>;
 }

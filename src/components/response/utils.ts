@@ -1,7 +1,7 @@
 import { useForm } from '@mantine/form';
 import { useEffect, useState } from 'react';
 import {
-  CheckboxResponse, NumberOption, Response, StringOption,
+  CheckboxResponse, NumberOption, RadioResponse, Response, StringOption,
 } from '../../parser/types';
 import { StoredAnswer } from '../../store/types';
 
@@ -31,11 +31,40 @@ export const generateInitFields = (responses: Response[], storedAnswer: StoredAn
 
   responses.forEach((response) => {
     const answer = storedAnswer ? storedAnswer[response.id] : {};
+
+    const dontKnowAnswer = storedAnswer && storedAnswer[`${response.id}-dontKnow`] !== undefined ? storedAnswer[`${response.id}-dontKnow`] : false;
+    const dontKnowObj = response.withDontKnow ? { [`${response.id}-dontKnow`]: dontKnowAnswer } : {};
+
+    const otherAnswer = storedAnswer && storedAnswer[`${response.id}-other`] !== undefined ? storedAnswer[`${response.id}-other`] : '';
+    const otherObj = (response as RadioResponse | CheckboxResponse).withOther ? { [`${response.id}-other`]: otherAnswer } : {};
+
     if (answer) {
-      initObj = { ...initObj, [response.id]: answer };
+      initObj = {
+        ...initObj,
+        [response.id]: answer,
+        ...dontKnowObj,
+        ...otherObj,
+      };
     } else {
-      const initField = response.paramCapture ? queryParameters.get(response.paramCapture) : '';
-      initObj = { ...initObj, [response.id]: response.type === 'iframe' ? [] : initField };
+      let initField: string | string[] | object | null = '';
+      if (response.paramCapture) {
+        initField = queryParameters.get(response.paramCapture);
+      } else if (response.type === 'reactive') {
+        initField = [];
+      } else if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
+        initField = Object.fromEntries(
+          response.questionOptions.map((entry) => [entry, '']),
+        );
+      } else if (response.type === 'slider' && response.startingValue) {
+        initField = response.startingValue.toString();
+      }
+
+      initObj = {
+        ...initObj,
+        [response.id]: initField,
+        ...dontKnowObj,
+        ...otherObj,
+      };
     }
   });
 
@@ -48,7 +77,10 @@ const generateValidation = (responses: Response[]) => {
     if (response.required) {
       validateObj = {
         ...validateObj,
-        [response.id]: (value: string | string[]) => {
+        [response.id]: (value: StoredAnswer['answer'][string], values: StoredAnswer['answer']) => {
+          if (typeof value === 'object' && !Array.isArray(value) && value !== null) {
+            return Object.values(value).every((val) => val !== '') ? null : 'Empty Input';
+          }
           if (Array.isArray(value)) {
             if (response.requiredValue != null && !Array.isArray(response.requiredValue)) {
               return 'Incorrect required value. Contact study administrator.';
@@ -71,7 +103,7 @@ const generateValidation = (responses: Response[]) => {
             return value.toString() !== response.requiredValue.toString() ? 'Incorrect input' : null;
           }
           if (response.required) {
-            return value === null || value === undefined || value === '' ? 'Empty input' : null;
+            return (value === null || value === undefined || value === '') && !values[`${response.id}-dontKnow`] ? 'Empty input' : null;
           }
           return value === null ? 'Empty input' : null;
         },
@@ -84,7 +116,7 @@ const generateValidation = (responses: Response[]) => {
 export function useAnswerField(responses: Response[], currentStep: string | number, storedAnswer: StoredAnswer['answer']) {
   const [_id, setId] = useState<string | number | null>(null);
 
-  const answerField = useForm({
+  const answerField = useForm<StoredAnswer['answer']>({
     initialValues: generateInitFields(responses, storedAnswer),
     validate: generateValidation(responses),
   });
@@ -112,7 +144,7 @@ export function areAnswersEqual(
 
 export function generateErrorMessage(
   response: Response,
-  answer: { value?: string | string[]; checked?: string[] },
+  answer: { value?: string | string[] | Record<string, string>; checked?: string[] },
   options?: (StringOption | NumberOption)[],
 ) {
   const { requiredValue, requiredLabel } = response;

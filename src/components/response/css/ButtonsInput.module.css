@@ -1,0 +1,22 @@
+.root {
+  position: relative;
+  padding: var(--mantine-spacing-md);
+  transition: border-color 150ms ease;
+  background-color: var(--mantine-color-blue-3);
+  color: var(--mantine-color-white);
+
+  &[data-checked] {
+    background-color: var(--mantine-color-blue-filled);
+  }
+
+  &[disabled] {
+    background-color: var(--mantine-color-gray-2);
+    color: var(--mantine-color-gray);
+    cursor: default;
+
+    &[data-checked] {
+      background-color: var(--mantine-color-blue-6);
+      color: var(--mantine-color-white);
+    }
+  }
+}

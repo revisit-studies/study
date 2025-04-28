@@ -1,33 +1,38 @@
 import { Image } from '@mantine/core';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ImageComponent } from '../parser/types';
 import { PREFIX } from '../utils/Prefix';
 import { getStaticAssetByPath } from '../utils/getStaticAsset';
-import ResourceNotFound from '../ResourceNotFound';
+import { ResourceNotFound } from '../ResourceNotFound';
 
 const defaultStyle = {
   maxWidth: '100%',
 };
 
-function ImageController({ currentConfig }: { currentConfig: ImageComponent; }) {
+export function ImageController({ currentConfig }: { currentConfig: ImageComponent; }) {
   const imageStyle = { ...defaultStyle, ...currentConfig.style };
+
+  const url = useMemo(() => {
+    if (currentConfig.path.startsWith('http')) {
+      return currentConfig.path;
+    }
+    return `${PREFIX}${currentConfig.path}`;
+  }, [currentConfig.path]);
 
   const [loading, setLoading] = useState(true);
   const [assetFound, setAssetFound] = useState(false);
   useEffect(() => {
     async function fetchImage() {
-      const asset = await getStaticAssetByPath(currentConfig.path);
+      let asset = await getStaticAssetByPath(url);
+      asset = asset?.includes('File not found') ? undefined : asset;
       setAssetFound(!!asset);
       setLoading(false);
     }
 
     fetchImage();
-  }, [currentConfig]);
+  }, [url]);
 
-  return loading || assetFound ? (
-    <Image mx="auto" src={`${PREFIX}${currentConfig.path}`} style={imageStyle} />
-  )
+  return loading || assetFound
+    ? <Image mx="auto" src={url} style={imageStyle} />
     : <ResourceNotFound path={currentConfig.path} />;
 }
-
-export default ImageController;

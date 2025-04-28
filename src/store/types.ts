@@ -1,7 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
-// eslint-disable-next-line import/no-cycle
-import { SkipConditions, StudyConfig } from '../parser/types';
+import type {
+  Answer, ComponentBlock, ConfigResponseBlockLocation, ParticipantData, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
+} from '../parser/types';
+import { type REVISIT_MODE } from '../storage/engines/StorageEngine';
 
 /**
  * The ParticipantMetadata object contains metadata about the participant. This includes the user agent, resolution, language, and IP address. This object is used to store information about the participant that is not directly related to the study itself.
@@ -22,14 +24,15 @@ export type TrrackedProvenance = ProvenanceGraph<any, any>;
 // timestamp, event type, event data
 type FocusEvent = [number, 'focus', string];
 type InputEvent = [number, 'input', string];
-type KeypressEvent = [number, 'keypress', string];
+type KeydownEvent = [number, 'keydown', string];
+type KeyupEvent = [number, 'keyup', string];
 type MouseDownEvent = [number, 'mousedown', number[]];
 type MouseUpEvent = [number, 'mouseup', number[]];
 type MouseMoveEvent = [number, 'mousemove', number[]];
 type ResizeEvent = [number, 'resize', number[]];
 type ScrollEvent = [number, 'scroll', number[]];
 type VisibilityEvent = [number, 'visibility', string];
-export type EventType = MouseMoveEvent | MouseDownEvent | MouseUpEvent | KeypressEvent | ScrollEvent | FocusEvent | InputEvent | ResizeEvent | VisibilityEvent;
+export type EventType = MouseMoveEvent | MouseDownEvent | MouseUpEvent | KeydownEvent | KeyupEvent | ScrollEvent | FocusEvent | InputEvent | ResizeEvent | VisibilityEvent;
 
 export type ValidationStatus = { valid: boolean, values: object }
 export type TrialValidation = Record<
@@ -38,7 +41,8 @@ export type TrialValidation = Record<
     aboveStimulus: ValidationStatus;
     belowStimulus: ValidationStatus;
     sidebar: ValidationStatus;
-    provenanceGraph?: TrrackedProvenance;
+    stimulus: ValidationStatus;
+    provenanceGraph: Record<ResponseBlockLocation, TrrackedProvenance | undefined>;
   }
 >;
 
@@ -64,14 +68,20 @@ The `answer` object here uses the "id" in the [Response](../BaseResponse) list o
 Each item in the window event is given a time, a position an event name, and some extra information for the event (for mouse events, this is the location).
 */
 export interface StoredAnswer {
-  /** Object whose keys are the "id"s in the Response list of the component in the StudyConfiguration and whose value is the inputted value from the participant. */
-  answer: Record<string, { id: string, value: unknown }>;
+  /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is the inputted value from the participant. */
+  answer: Record<string, string | number | boolean | string[]>;
+
+  componentName: string;
+  /** The order of the trial in the sequence. */
+  trialOrder: string;
+  /** Object whose keys are the "id"s in the Response list of the component in the StudyConfig and whose value is a list of incorrect inputted values from the participant. Only relevant for trials with `provideFeedback` and correct answers enabled. */
+  incorrectAnswers: Record<string, { id: string, value: unknown[] }>;
   /** Time that the user began interacting with the component in epoch milliseconds. */
   startTime: number;
   /** Time that the user ended interaction with the component in epoch milliseconds. */
   endTime: number;
   /** The entire provenance graph exported from a Trrack instance from a React component. This will only be present if you are using React components and you're utilizing [Trrack](https://apps.vdl.sci.utah.edu/trrack) */
-  provenanceGraph?: TrrackedProvenance,
+  provenanceGraph: Record<ResponseBlockLocation, TrrackedProvenance | undefined>;
   /** A list containing the time (in epoch milliseconds), the action (focus, input, kepress, mousedown, mouseup, mousemove, resize, scroll or visibility), and then either a coordinate pertaining to where the event took place on the screen or string related to such event. Below is an example of the windowEvents list.
 ```js
 "windowEvents": [
@@ -104,38 +114,61 @@ export interface StoredAnswer {
   windowEvents: EventType[];
   /** A boolean value that indicates whether the participant timed out on this question. */
   timedOut: boolean;
+  /** A counter indicating how many times participants opened the help tab during a task. Clicking help, or accessing the tab via answer feedback on an incorrect answer both are included in the counter. */
+  helpButtonClickedCount: number;
+  /** The parameters that were passed to the component. */
+  parameters: Record<string, any>;
+  /** The correct answer for the component. */
+  correctAnswer: Answer[];
+}
+
+export interface JumpFunctionParameters<T> {
+  components: (string | ComponentBlock)[],
+  answers: ParticipantData['answers'],
+  sequenceSoFar: string[],
+  customParameters: T
+}
+
+export interface JumpFunctionReturnVal {
+  component: string | null,
+  parameters?: Record<string, any>,
+  correctAnswer?: Answer[],
 }
 
 export interface StimulusParams<T, S = never> {
   parameters: T;
   provenanceState?: S;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: Record<string, any> }) => void
+  answers: ParticipantData['answers'];
+  setAnswer: ({ status, provenanceGraph, answers }: { status: boolean, provenanceGraph?: TrrackedProvenance, answers: StoredAnswer['answer'] }) => void
 }
 
 export interface Sequence {
   id?: string;
   orderPath: string;
+  order: string;
   components: (string | Sequence)[];
   skip?: SkipConditions;
 }
 
+export type FormElementProvenance = { form: StoredAnswer['answer'] };
 export interface StoreState {
   studyId: string;
+  participantId: string;
   isRecording: boolean;
-  answers: Record<string, StoredAnswer>;
+  answers: ParticipantData['answers'];
   sequence: Sequence;
   config: StudyConfig;
   showStudyBrowser: boolean;
   showHelpText: boolean;
   alertModal: { show: boolean, message: string };
   trialValidation: TrialValidation;
-  iframeAnswers: Record<string, unknown>;
-  iframeProvenance: TrrackedProvenance | null;
+  reactiveAnswers: Record<string, ValueOf<StoredAnswer['answer']>>;
   metadata: ParticipantMetadata;
-  analysisTrialName: string | null;
-  analysisParticipantName: string | null;
-  analysisProvState: unknown | null;
-  analysisWaveformTime: number;
+  analysisProvState: Record<ConfigResponseBlockLocation, FormElementProvenance | undefined> & { stimulus: unknown | undefined };
+  analysisIsPlaying: boolean;
+  analysisHasAudio: boolean;
+  analysisHasProvenance: boolean;
+  modes: Record<REVISIT_MODE, boolean>;
+  matrixAnswers: Record<string, Record<string, string>>;
+  funcSequence: Record<string, string[]>;
 }

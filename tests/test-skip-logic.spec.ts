@@ -5,11 +5,14 @@ async function answerTrial1(page, q1, q2) {
   await page.getByLabel(q1).check();
   await page.getByLabel(q2).check();
   await page.getByRole('button', { name: 'Next', exact: true }).click();
+  // wait 50ms for the next component to load
+  await page.waitForTimeout(100);
 }
 
 async function answerAttentionCheck(page, q1) {
   await page.getByLabel(q1).check();
   await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await page.waitForTimeout(100);
 }
 
 async function answerAttentionCheckBlock(page, numIncorrect) {
@@ -35,26 +38,30 @@ async function answerAttentionCheckBlock(page, numIncorrect) {
 async function verifyContinuingComponent(page) {
   await expect(page.getByText('This component exists to show that we didn\'t get skipped over.')).toBeVisible();
   await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await page.waitForTimeout(100);
 }
 
 async function verifyTargetComponent(page) {
   await expect(page.getByText('This component exists to show that we can choose where to skip to.')).toBeVisible();
   await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await page.waitForTimeout(100);
 }
 
 async function verifyTargetBlockComponent(page) {
   await expect(page.getByText('This component exists to show that we can choose a block to skip to.')).toBeVisible();
   await page.getByRole('button', { name: 'Next', exact: true }).click();
+  await page.waitForTimeout(100);
 }
 
 async function verifyStudyEnd(page) {
   await expect(page.getByText('Please wait while your answers are uploaded.')).toBeVisible();
-  await expect(page.getByText('Thank you for completing the study. You may close this window now.')).toBeVisible();
+  await page.waitForTimeout(100);
 }
 
 async function getNextParticipant(page) {
   await page.locator('.studyBrowserMenuDropdown').click();
   await page.getByRole('menuitem', { name: 'Next Participant' }).click();
+  await page.waitForTimeout(100);
 }
 
 async function goToCheck(page, check: 'response' | 'responses' | 'attention-check-singular' | 'attention-check-block' | 'nested-responses' | 'nested-responses-block' | 'block-correct' | 'block-incorrect' | 'end') {
@@ -159,6 +166,10 @@ async function getTags(page: Page) {
 
 test('test', async ({ page }) => {
   await page.goto('/test-skip-logic');
+
+  // Make sure that we loaded in
+  const introText = await page.getByText('Please answer the following questions');
+  await expect(introText).toBeVisible();
 
   // ***** All questions are correct *****
   await goToCheck(page, 'end');

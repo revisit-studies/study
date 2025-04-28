@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import * as React from 'react';
+import { useRef, useLayoutEffect, useCallback } from 'react';
 
 /**
  * Creates a callback that always has the latest version of the given handler.
@@ -19,14 +19,14 @@ import * as React from 'react';
  */
 export function useEvent<T extends(...args: any[]) => any, P extends Parameters<T>>(handler: T) {
   // @ts-ignore
-  const handlerRef = React.useRef<T>(() => {
+  const handlerRef = useRef<T>(() => {
     throw new Error('Cannot call an event handler while rendering.');
   });
 
-  React.useLayoutEffect(() => {
+  useLayoutEffect(() => {
     handlerRef.current = handler;
   });
 
   // @ts-ignore
-  return React.useCallback<T>((...args: P) => handlerRef.current?.(...args), []);
+  return useCallback<T>((...args: P) => handlerRef.current?.(...args), []);
 }

@@ -267,7 +267,7 @@ export function DataManagementAccordionItem({ studyId, refresh }: { studyId: str
                                 <IconTrashX />
                               </Button>
                             </Tooltip>
-                            <DownloadButtons allParticipants={() => fetchParticipants(snapshotItem.originalName)} studyId={studyId} gap="10px" fileName={snapshotItem.alternateName} />
+                            <DownloadButtons visibleParticipants={() => fetchParticipants(snapshotItem.originalName)} studyId={studyId} gap="10px" fileName={snapshotItem.alternateName} />
                           </Flex>
                         </Table.Td>
                       </Table.Tr>

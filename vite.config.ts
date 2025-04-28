@@ -10,5 +10,11 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       react({ devTarget: 'es2022' }),
     ],
+    resolve: {
+      alias: {
+        // /esm/icons/index.mjs only exports the icons statically, so no separate chunks are created
+        '@tabler/icons-react': '@tabler/icons-react/dist/esm/icons/index.mjs',
+      },
+    },
   };
 });

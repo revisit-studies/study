@@ -4,8 +4,7 @@ import {
 } from '@mantine/core';
 import { VegaLite, VisualizationSpec } from 'react-vega';
 import { useResizeObserver } from '@mantine/hooks';
-import { StoredAnswer } from '../../../store/types';
-import { IndividualComponent, InheritedComponent } from '../../../parser/types';
+import { IndividualComponent, InheritedComponent, ParticipantData } from '../../../parser/types';
 
 function toDisplayData(milliseconds:number) {
   const minutes = Math.floor(milliseconds / (1000 * 60));
@@ -21,7 +20,7 @@ export interface BasicStats {
   maxUser: string;
   minUser: string;
 }
-export default function InfoPanel(props: { data: Record<string, StoredAnswer>, trialName: string, config: IndividualComponent | InheritedComponent | undefined }) {
+export function InfoPanel(props: { data: ParticipantData['answers'], trialName: string, config: IndividualComponent | InheritedComponent | undefined }) {
   const { data, trialName, config } = props;
   const [timeStats, setTimeStats] = useState<BasicStats>({
     max: 0,

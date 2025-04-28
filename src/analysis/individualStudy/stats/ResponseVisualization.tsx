@@ -183,7 +183,7 @@ export function ResponseVisualization({
           {response.type === 'slider' && <IconAdjustmentsHorizontal size={20} />}
           {response.type === 'radio' && <IconRadio size={20} />}
           {response.type === 'checkbox' && <IconSquares size={20} />}
-          {response.type === 'iframe' && <IconHtml size={20} />}
+          {response.type === 'reactive' && <IconHtml size={20} />}
           <Title order={5} ml={4}>
             {response.id}
           </Title>
@@ -204,7 +204,7 @@ export function ResponseVisualization({
 
         <SimpleGrid cols={2} h={360}>
           <ScrollArea mih={200}>
-            {(response.type !== 'metadata' && response.type !== 'shortText' && response.type !== 'longText' && response.type !== 'iframe') ? (
+            {(response.type !== 'metadata' && response.type !== 'shortText' && response.type !== 'longText' && response.type !== 'reactive') ? (
               <VegaLite
                 spec={vegaLiteSpec as VisualizationSpec}
                 actions={false}

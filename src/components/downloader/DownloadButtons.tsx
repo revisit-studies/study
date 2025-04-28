@@ -10,13 +10,13 @@ import { ParticipantData } from '../../storage/types';
 type ParticipantDataFetcher = ParticipantData[] | (() => Promise<ParticipantData[]>);
 
 export function DownloadButtons({
-  allParticipants, studyId, gap, fileName,
-}: { allParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string }) {
+  visibleParticipants, studyId, gap, fileName,
+}: { visibleParticipants: ParticipantDataFetcher; studyId: string, gap?: string, fileName?: string }) {
   const [openDownload, { open, close }] = useDisclosure(false);
   const [participants, setParticipants] = useState<ParticipantData[]>([]);
 
   const fetchParticipants = async () => {
-    const currParticipants = typeof allParticipants === 'function' ? await allParticipants() : allParticipants;
+    const currParticipants = typeof visibleParticipants === 'function' ? await visibleParticipants() : visibleParticipants;
     return currParticipants;
   };
 
@@ -38,7 +38,7 @@ export function DownloadButtons({
         <Tooltip label="Download all participants data as JSON">
           <Button
             variant="light"
-            disabled={allParticipants.length === 0 && typeof allParticipants !== 'function'}
+            disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
             onClick={handleDownloadJSON}
             px={4}
           >
@@ -48,7 +48,7 @@ export function DownloadButtons({
         <Tooltip label="Download all participants data as a tidy CSV">
           <Button
             variant="light"
-            disabled={allParticipants.length === 0 && typeof allParticipants !== 'function'}
+            disabled={visibleParticipants.length === 0 && typeof visibleParticipants !== 'function'}
             onClick={handleOpenTidy}
             px={4}
           >

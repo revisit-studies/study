@@ -2,7 +2,7 @@ import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import { REVISIT_MODE, StorageEngine, UserWrapped } from './StorageEngine';
 import { ParticipantData } from '../types';
-import { ParticipantMetadata, Sequence, StoredAnswer } from '../../store/types';
+import { ParticipantMetadata, Sequence } from '../../store/types';
 import { hash } from './utils';
 import { StudyConfig } from '../../parser/types';
 
@@ -44,9 +44,15 @@ export class LocalStorageEngine extends StorageEngine {
     });
   }
 
-  getAudio(taskList: string[], participantId?: string | undefined): Promise<string[]> {
+  async getAllParticipantNames() {
+    const allPartsData = await this.getAllParticipantsData();
+
+    return allPartsData.map((part) => part.participantId);
+  }
+
+  getAudio(taskList: string, participantId?: string | undefined) {
     console.warn('not yet implemented', participantId);
-    return Promise.resolve(['not implemented']);
+    return Promise.resolve(undefined);
   }
 
   async saveAudio(audioStream: MediaRecorder): Promise<void> {
@@ -77,10 +83,12 @@ export class LocalStorageEngine extends StorageEngine {
 
     // Initialize participant
     const participantConfigHash = await hash(JSON.stringify(config));
+    const { currentRow, creationIndex } = await this.getSequence();
     const participantData: ParticipantData = {
       participantId: this.currentParticipantId,
       participantConfigHash,
-      sequence: await this.getSequence(),
+      sequence: currentRow,
+      participantIndex: creationIndex,
       answers: {},
       searchParams,
       metadata,
@@ -145,7 +153,7 @@ export class LocalStorageEngine extends StorageEngine {
     await this.studyDatabase.removeItem('currentParticipant');
   }
 
-  async saveAnswers(answers: Record<string, StoredAnswer>) {
+  async saveAnswers(answers: ParticipantData['answers']) {
     if (!this._verifyStudyDatabase(this.studyDatabase)) {
       throw new Error('Study database not initialized');
     }
@@ -203,7 +211,7 @@ export class LocalStorageEngine extends StorageEngine {
       await this.studyDatabase.setItem('sequenceArray', sequenceArray);
     }
 
-    return currentRow;
+    return { currentRow, creationIndex: 1000 - sequenceArray.length };
   }
 
   async getSequenceArray() {
@@ -309,7 +317,7 @@ export class LocalStorageEngine extends StorageEngine {
     const newParticipantId = uuidv4();
 
     // Set current participant id
-    this.studyDatabase.setItem('currentParticipant', newParticipantId);
+    await this.studyDatabase.setItem('currentParticipant', newParticipantId);
   }
 
   async verifyCompletion() {
@@ -321,6 +329,10 @@ export class LocalStorageEngine extends StorageEngine {
     const participantData = await this.getParticipantData();
     if (!participantData) {
       throw new Error('Participant not initialized');
+    }
+
+    if (participantData.completed) {
+      return true;
     }
 
     // Set the participant as completed
@@ -419,6 +431,25 @@ export class LocalStorageEngine extends StorageEngine {
     };
     this.studyDatabase.setItem('modes', defaults);
     return defaults;
+  }
+
+  async getParticipantsStatusCounts(studyId: string) {
+    const participants = await this.getAllParticipantsDataByStudy(studyId);
+
+    const completed = participants.filter((p) => p.completed && !p.rejected).length;
+    const rejected = participants.filter((p) => p.rejected).length;
+    const inProgress = participants.filter((p) => !p.completed && !p.rejected).length;
+
+    const minTime = Math.min(...participants.map((p) => Math.min(...Object.values(p.answers).map((s) => s.startTime))));
+    const maxTime = Math.max(...participants.map((p) => Math.max(...Object.values(p.answers).map((s) => s.endTime))));
+
+    return {
+      completed,
+      rejected,
+      inProgress,
+      minTime: minTime === Infinity ? null : minTime,
+      maxTime: maxTime === -Infinity ? null : maxTime,
+    };
   }
 
   private _verifyStudyDatabase(db: LocalForage | undefined): db is LocalForage {

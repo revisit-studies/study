@@ -15,35 +15,56 @@ import {
   Text,
 } from '@mantine/core';
 import {
+  IconChartHistogram,
   IconDotsVertical,
   IconMail,
   IconSchema,
   IconUserPlus,
 } from '@tabler/icons-react';
-import { useEffect, useRef, useState } from 'react';
-import { useHref } from 'react-router-dom';
-import { useCurrentStep, useStudyId } from '../../routes/utils';
+import {
+  useEffect, useMemo, useRef, useState,
+} from 'react';
+import { useHref } from 'react-router';
+import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
 import {
   useStoreDispatch, useStoreSelector, useStoreActions, useFlatSequence,
 } from '../../store/store';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
-import RecordingAudioWaveform from './RecordingAudioWaveform';
+import { RecordingAudioWaveform } from './RecordingAudioWaveform';
 
-export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
+export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
   const metadata = useStoreSelector((state) => state.metadata);
 
+  const answers = useStoreSelector((state) => state.answers);
   const flatSequence = useFlatSequence();
   const storeDispatch = useStoreDispatch();
-  const { toggleShowHelpText, toggleStudyBrowser } = useStoreActions();
+  const { toggleShowHelpText, toggleStudyBrowser, incrementHelpCounter } = useStoreActions();
   const { storageEngine } = useStorageEngine();
+
+  const currentComponent = useCurrentComponent();
 
   const currentStep = useCurrentStep();
 
-  const progressBarMax = flatSequence.length - 1;
-  const progressPercent = typeof currentStep === 'number' ? (currentStep / progressBarMax) * 100 : 0;
+  const progressPercent = useMemo(() => {
+    const answered = Object.values(answers).filter((answer) => answer.endTime > -1).length;
+    const total = flatSequence.map((step, idx) => {
+      // If the step is a component, it adds 1 to the total
+      if (studyConfig.components[step]) {
+        return 1;
+      }
+      // If we're in a dynamic block, guess a maximum of 30 steps
+      if (typeof currentStep === 'number' && currentStep <= idx && step !== 'end') {
+        return 55;
+      }
+      // Otherwise, count the number of answers for this dynamic block
+      return Object.entries(answers).filter(([key, _]) => key.includes(`${step}_`)).length;
+    }).reduce((a, b) => a + b, 0);
+
+    return (answered / total) * 100;
+  }, [answers, currentStep, flatSequence, studyConfig.components]);
 
   const [menuOpened, setMenuOpened] = useState(false);
 
@@ -101,7 +122,7 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
             {studyConfig?.uiConfig.helpTextPath !== undefined && (
               <Button
                 variant="outline"
-                onClick={() => storeDispatch(toggleShowHelpText())}
+                onClick={() => { storeDispatch(toggleShowHelpText()); storeDispatch(incrementHelpCounter({ identifier: `${currentComponent}_${currentStep}` })); }}
               >
                 Help
               </Button>
@@ -128,7 +149,6 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
                     Study Browser
                   </Menu.Item>
                 )}
-
                 <Menu.Item
                   component="a"
                   href={
@@ -140,13 +160,21 @@ export default function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled
                 >
                   Contact
                 </Menu.Item>
-
                 {studyNavigatorEnabled && (
                   <Menu.Item
                     leftSection={<IconUserPlus size={14} />}
                     onClick={() => getNewParticipant(storageEngine, studyConfig, metadata, studyHref)}
                   >
                     Next Participant
+                  </Menu.Item>
+                )}
+                {studyNavigatorEnabled && (
+                  <Menu.Item
+                    leftSection={<IconChartHistogram size={14} />}
+                    component="a"
+                    href={`${PREFIX}analysis/stats/${studyId}`}
+                  >
+                    Analyze & Manage
                   </Menu.Item>
                 )}
               </Menu.Dropdown>

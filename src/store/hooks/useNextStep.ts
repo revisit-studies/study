@@ -1,7 +1,5 @@
-import {
-  useCallback, useEffect, useMemo, useState,
-} from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useCallback, useMemo } from 'react';
+import { useNavigate, useParams } from 'react-router';
 import {
   useStoreSelector,
   useStoreActions,
@@ -9,9 +7,10 @@ import {
   useAreResponsesValid,
   useFlatSequence,
 } from '../store';
-import { useCurrentComponent, useCurrentStep, useStudyId } from '../../routes/utils';
+import {
+  useCurrentIdentifier, useCurrentStep, useStudyId,
+} from '../../routes/utils';
 
-import { deepCopy } from '../../utils/deepCopy';
 import { StoredAnswer, ValidationStatus } from '../types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useStoredAnswer } from './useStoredAnswer';
@@ -21,6 +20,8 @@ import { useStudyConfig } from './useStudyConfig';
 import {
   Answer, IndividualComponent, InheritedComponent, StudyConfig,
 } from '../../parser/types';
+import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
+import { useIsAnalysis } from './useIsAnalysis';
 
 function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: string, componentConfig: IndividualComponent | InheritedComponent, studyConfig: StudyConfig) {
   const componentName = componentId.slice(0, componentId.lastIndexOf('_'));
@@ -44,42 +45,38 @@ function checkAllAnswersCorrect(answers: Record<string, Answer>, componentId: st
 export function useNextStep() {
   const currentStep = useCurrentStep();
   const participantSequence = useFlatSequence();
-  const currentComponent = useCurrentComponent();
-  const identifier = `${currentComponent}_${currentStep}`;
 
   const trialValidation = useStoreSelector((state) => state.trialValidation);
   const sequence = useStoreSelector((state) => state.sequence);
   const answers = useStoreSelector((state) => state.answers);
+  const modes = useStoreSelector((state) => state.modes);
+  const studyConfig = useStudyConfig();
+
+  const { funcIndex } = useParams();
+  const identifier = useCurrentIdentifier();
 
   const storeDispatch = useStoreDispatch();
-  const { saveTrialAnswer, setIframeAnswers } = useStoreActions();
+  const {
+    saveTrialAnswer, setReactiveAnswers, setMatrixAnswersRadio, setMatrixAnswersCheckbox,
+  } = useStoreActions();
   const { storageEngine } = useStorageEngine();
 
   const studyId = useStudyId();
 
-  const [dataCollectionEnabled, setDataCollectionEnabled] = useState(true);
-  useEffect(() => {
-    const checkStudyNavigatorEnabled = async () => {
-      if (storageEngine) {
-        const modes = await storageEngine.getModes(studyId);
-        setDataCollectionEnabled(modes.dataCollectionEnabled);
-      }
-    };
-    checkStudyNavigatorEnabled();
-  }, [storageEngine, studyId]);
+  const dataCollectionEnabled = useMemo(() => modes.dataCollectionEnabled, [modes]);
 
   const areResponsesValid = useAreResponsesValid(identifier);
 
   // Status of the next button. If false, the next button should be disabled
-  const isNextDisabled = typeof currentStep !== 'number' || !areResponsesValid;
+  const isAnalysis = useIsAnalysis();
+  const isNextDisabled = typeof currentStep !== 'number' || isAnalysis || !areResponsesValid;
 
   const storedAnswer = useStoredAnswer();
 
   const navigate = useNavigate();
 
-  const studyConfig = useStudyConfig();
-
-  const startTime = useMemo(() => Date.now(), []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const startTime = useMemo(() => Date.now(), [funcIndex, currentStep]);
 
   const windowEvents = useWindowEvents();
   const goToNextStep = useCallback((collectData = true) => {
@@ -87,21 +84,24 @@ export function useNextStep() {
       return;
     }
     // Get answer from across the 3 response blocks and the provenance graph
-    const trialValidationCopy = deepCopy(trialValidation[identifier]);
+    const trialValidationCopy = structuredClone(trialValidation[identifier]);
     const answer = Object.values(trialValidationCopy).reduce((acc, curr) => {
       if (Object.hasOwn(curr, 'values')) {
         return { ...acc, ...(curr as ValidationStatus).values };
       }
       return acc;
-    }, {});
+    }, {}) as StoredAnswer['answer'];
     const { provenanceGraph } = trialValidationCopy;
     const endTime = Date.now();
+
+    const { componentName } = storedAnswer;
 
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
 
     if (dataCollectionEnabled && storedAnswer.endTime === -1) { // === -1 means the answer has not been saved yet
       const toSave = {
+        ...storedAnswer,
         answer: collectData ? answer : {},
         startTime,
         endTime,
@@ -124,7 +124,9 @@ export function useNextStep() {
           },
         );
       }
-      storeDispatch(setIframeAnswers({}));
+      storeDispatch(setReactiveAnswers({}));
+      storeDispatch(setMatrixAnswersCheckbox(null));
+      storeDispatch(setMatrixAnswersRadio(null));
     }
 
     let nextStep = currentStep + 1;
@@ -139,7 +141,11 @@ export function useNextStep() {
     const answersWithNewAnswer = {
       ...answers,
       [identifier]: {
-        answer, startTime, endTime, provenanceGraph, windowEvents: currentWindowEvents,
+        answer,
+        startTime,
+        endTime,
+        provenanceGraph,
+        windowEvents: currentWindowEvents,
       },
     };
 
@@ -159,7 +165,6 @@ export function useNextStep() {
         })) as unknown as StoredAnswer;
 
         // Slim down the validationCandidates to only include the skip condition's component
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const componentsToCheck = condition.check !== 'block' ? Object.entries(validationCandidates).filter(([key]) => key.slice(0, key.lastIndexOf('_')) === condition.name) : Object.entries(validationCandidates);
 
         // Make sure componentsToCheck array is well-formed
@@ -187,7 +192,7 @@ export function useNextStep() {
           }
 
           // Check the candidates and count the number of correct and incorrect answers
-          const correctAnswers = componentsToCheck.map(([componentName, responseObj]) => checkAllAnswersCorrect(responseObj.answer, componentName, studyConfig.components[componentName.slice(0, componentName.lastIndexOf('_'))], studyConfig));
+          const correctAnswers = componentsToCheck.map(([_componentName, responseObj]) => checkAllAnswersCorrect(responseObj.answer, _componentName, studyConfig.components[componentName.slice(0, componentName.lastIndexOf('_'))], studyConfig));
           const numCorrect = correctAnswers.filter((correct) => correct).length;
           const numIncorrect = correctAnswers.length - numCorrect;
 
@@ -205,8 +210,12 @@ export function useNextStep() {
       });
     }
 
-    navigate(`/${studyId}/${nextStep}${window.location.search}`);
-  }, [currentStep, trialValidation, identifier, windowEvents, dataCollectionEnabled, storedAnswer?.endTime, sequence, answers, startTime, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setIframeAnswers, studyConfig, participantSequence]);
+    if (funcIndex) {
+      navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(decryptIndex(funcIndex) + 1)}${window.location.search}`);
+    } else {
+      navigate(`/${studyId}/${encryptIndex(nextStep)}${window.location.search}`);
+    }
+  }, [currentStep, trialValidation, identifier, storedAnswer, windowEvents, dataCollectionEnabled, sequence, answers, startTime, funcIndex, navigate, studyId, storeDispatch, saveTrialAnswer, storageEngine, setReactiveAnswers, setMatrixAnswersCheckbox, setMatrixAnswersRadio, studyConfig, participantSequence]);
 
   return {
     isNextDisabled,

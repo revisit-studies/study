@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v1.0.5/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Question Types and Form Elements Demo",
     "version": "pilot",
@@ -20,21 +20,17 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": true
+    "sidebar": true,
+    "enumerateQuestions": true
   },
   "components": {
-    "introduction": {
-      "type": "markdown",
-      "path": "demo-survey/assets/introduction.md",
-      "response": []
-    },
     "survey": {
       "type": "questionnaire",
       "response": [
         {
-          "id": "q1",
-          "prompt": "Dropdown example",
-          "required": true,
+          "id": "q-dropdown",
+          "prompt": "Dropdown example – which chart do you like best?",
+          "secondaryText": "You can specify secondary text to clarify your question.",
           "location": "aboveStimulus",
           "type": "dropdown",
           "placeholder": "Enter your preference",
@@ -46,45 +42,79 @@
           ]
         },
         {
-          "id": "q2",
-          "prompt": "Numerical example",
-          "required": true,
+          "id": "q-numerical",
+          "prompt": "Numerical example, required",
+          "secondaryText": "A numeric example",
           "location": "aboveStimulus",
           "type": "numerical",
           "placeholder": "Enter your age here, range from 0 - 100",
           "max": 100,
-          "min": 0
+          "min": 0,
+          "withDontKnow": true
         },
         {
-          "id": "q3",
+          "id": "q-likert",
           "prompt": "Likert scale example",
-          "required": true,
+          "secondaryText": "A likert example with 9 items, also showing how to add a divider after the element.",
           "location": "aboveStimulus",
           "type": "likert",
           "numItems": 9,
           "rightLabel": "Like",
-          "leftLabel": "Dislike"
+          "leftLabel": "Dislike",
+          "withDivider": true
         },
         {
-          "id": "q4",
+          "id": "q-multi-satisfaction",
+          "prompt": "Rate your satisfaction from 1 (Highly Unsatisfied) to 5 (Highly Satisfied) for the following items.",
+          "secondaryText": "A simple matrix of Likert responses with predefined options for satisfaction.",
+          "location": "aboveStimulus",
+          "type": "matrix-radio",
+          "answerOptions": "satisfaction5",
+          "questionOptions": [
+            "The tool we created",
+            "The technique we developed",
+            "The authors of the tools"
+          ]
+        },
+        {
+          "id": "multi-custom",
+          "prompt": "Which categories do the following items belong to?",
+          "secondaryText": "A matrix of checkboxes with custom options for categorization.",
+          "location": "aboveStimulus",
+          "type": "matrix-checkbox",
+          "answerOptions": [
+            "Has Legs",
+            "Has Wings",
+            "Can Swim"
+          ],
+          "questionOptions": [
+            "Dog",
+            "Snake",
+            "Eagle",
+            "Salmon",
+            "Platypus"
+          ]
+        },
+        {
+          "id": "q-short-text",
           "prompt": "Short text example",
-          "required": true,
+          "secondaryText": "A short text example",
           "location": "aboveStimulus",
           "type": "shortText",
           "placeholder": "Enter your answer here"
         },
         {
-          "id": "q5",
+          "id": "q-long-text",
           "prompt": "Long text example",
-          "required": true,
+          "secondaryText": "A text box for long text",
           "location": "aboveStimulus",
           "type": "longText",
           "placeholder": "Enter your long comments here"
         },
         {
-          "id": "q7",
-          "prompt": "Checkbox example",
-          "required": true,
+          "id": "q-checkbox",
+          "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
+          "secondaryText": "Checkboxes for multi-selection",
           "minSelections": 2,
           "maxSelections": 2,
           "location": "aboveStimulus",
@@ -93,25 +123,57 @@
             "Option 1",
             "Option 2",
             "Option 3"
-          ]
+          ],
+          "withOther": true
+        },
+        {
+          "id": "q-checkbox-horizontal",
+          "prompt": "Checkbox example, but this time with a long title that makes a ton of sense and is really cool",
+          "secondaryText": "Checkboxes for multi-selection",
+          "minSelections": 2,
+          "maxSelections": 2,
+          "location": "aboveStimulus",
+          "type": "checkbox",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3"
+          ],
+          "horizontal": true,
+          "withOther": true
         },
         {
           "id": "q-radio",
           "prompt": "Radio button example",
-          "required": true,
+          "secondaryText": "Radio buttons for single selection",
           "location": "aboveStimulus",
           "type": "radio",
           "options": [
             "Option 1",
             "Option 2"
-          ]
+          ],
+          "withOther": true
         },
         {
-          "id": "q6",
-          "prompt": "Slider example",
+          "id": "q-radio-horizontal",
+          "prompt": "Horizontal Radio button example",
+          "secondaryText": "Radio buttons for single selection",
           "location": "aboveStimulus",
-          "required": true,
+          "type": "radio",
+          "options": [
+            "Option 1",
+            "Option 2 this is long a long option that will wrap"
+          ],
+          "horizontal": true,
+          "withOther": true
+        },
+        {
+          "id": "q-slider",
+          "prompt": "Slider example",
+          "secondaryText": "A slider for 0-100 with 3 breakpoints for bad, mid, and good",
+          "location": "aboveStimulus",
           "type": "slider",
+          "startingValue": 50,
           "options": [
             {
               "label": "Bad",
@@ -126,6 +188,19 @@
               "value": 100
             }
           ]
+        },
+        {
+          "id": "q-buttons",
+          "type": "buttons",
+          "prompt": "Buttons example",
+          "secondaryText": "Buttons that function as radio buttons, but look like buttons. Control with the arrow keys.",
+          "location": "aboveStimulus",
+          "options": [
+            "Option 1",
+            "Option 2",
+            "Option 3",
+            "Option 4"
+          ]
         }
       ]
     }
@@ -133,7 +208,6 @@
   "sequence": {
     "order": "fixed",
     "components": [
-      "introduction",
       "survey"
     ]
   }

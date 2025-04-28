@@ -1,9 +1,10 @@
 import { Box, Flex, Textarea } from '@mantine/core';
 import { LongTextResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
-import ReactMarkdownWrapper from '../ReactMarkdownWrapper';
+import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
+import classes from './css/Input.module.css';
 
-export default function TextAreaInput({
+export function TextAreaInput({
   response,
   disabled,
   answer,
@@ -29,7 +30,7 @@ export default function TextAreaInput({
       placeholder={placeholder}
       label={(
         <Flex direction="row" wrap="nowrap" gap={4}>
-          {enumerateQuestions && <Box style={{ minWidth: 'fit-content' }}>{`${index}. `}</Box>}
+          {enumerateQuestions && <Box style={{ minWidth: 'fit-content', fontSize: 16, fontWeight: 500 }}>{`${index}. `}</Box>}
           <Box style={{ display: 'block' }} className="no-last-child-bottom-padding">
             <ReactMarkdownWrapper text={prompt} required={required} />
           </Box>
@@ -42,6 +43,7 @@ export default function TextAreaInput({
         // This is necessary so the component doesnt switch from uncontrolled to controlled, which can cause issues.
       value={answer.value || ''}
       error={generateErrorMessage(response, answer)}
+      classNames={{ input: classes.fixDisabled }}
     />
   );
 }

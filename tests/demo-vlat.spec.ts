@@ -2,7 +2,7 @@
 import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
-  await page.goto('/demo-VLAT-full-randomized?PROLIFIC_ID=test');
+  await page.goto('/example-VLAT-full-randomized?PROLIFIC_ID=test');
 
   await page.getByRole('heading', { name: 'What is VLAT?' }).click();
   await page.getByRole('button', { name: 'Next', exact: true }).click();

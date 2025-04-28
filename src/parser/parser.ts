@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-import { parse as hjsonParse } from 'hjson';
 import Ajv from 'ajv';
 import configSchema from './StudyConfigSchema.json';
 import globalSchema from './GlobalConfigSchema.json';
@@ -8,7 +6,7 @@ import {
 } from './types';
 import { getSequenceFlatMapWithInterruptions } from '../utils/getSequenceFlatMap';
 import { expandLibrarySequences, loadLibrariesParseNamespace, verifyLibraryUsage } from './libraryParser';
-import { isInheritedComponent } from './utils';
+import { isDynamicBlock, isInheritedComponent } from './utils';
 
 const ajv1 = new Ajv();
 ajv1.addSchema(globalSchema);
@@ -33,7 +31,7 @@ function verifyGlobalConfig(data: GlobalConfig) {
 }
 
 export function parseGlobalConfig(fileData: string) {
-  const data = hjsonParse(fileData);
+  const data = JSON.parse(fileData);
 
   const validatedData = globalValidate(data) as boolean;
   const extraValidation = verifyGlobalConfig(data);
@@ -54,6 +52,10 @@ function verifyStudySkip(
   skipTargets: string[],
   errors: { message: string, instancePath: string, params: { 'action': string } }[] = [],
 ) {
+  if (isDynamicBlock(sequence)) {
+    return;
+  }
+
   // Base case: empty sequence
   if (sequence.components.length === 0) {
     // Push an error for an empty components array
@@ -160,7 +162,7 @@ function verifyStudyConfig(studyConfig: StudyConfig, importedLibrariesData: Reco
     ))
     .forEach((componentName) => {
       warnings.push({
-        message: `Component \`${componentName}\` is defined in components object but not used in the sequence`,
+        message: `Component \`${componentName}\` is defined in components object but not used deterministically in the sequence`,
         instancePath: '/components/',
         params: { action: 'remove the component from the components object or add it to the sequence' },
       });
@@ -185,7 +187,7 @@ export async function parseStudyConfig(fileData: string): Promise<ParsedConfig<S
   let data: StudyConfig | undefined;
 
   try {
-    data = hjsonParse(fileData);
+    data = JSON.parse(fileData);
     validatedData = studyValidate(data) as boolean;
   } catch {
     validatedData = false;

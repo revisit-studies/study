@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-cycle
 import { ParticipantMetadata, Sequence, StoredAnswer } from '../store/types';
 
 /**
@@ -56,6 +55,8 @@ export interface ParticipantData {
   participantConfigHash: string;
   /** Sequence of components that the participant received. This is an internal data type and is compiled from the ComponentBlocks in the StudyConfig sequence. */
   sequence: Sequence;
+  /** Index of the participant in the study. */
+  participantIndex: number;
   /** Object whose keys are the component names and values are StoredAnswer objects. */
   answers: Record<string, StoredAnswer>;
   /** Query parameters of the URL used to enter the study. */

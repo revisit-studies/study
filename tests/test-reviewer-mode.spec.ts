@@ -2,11 +2,15 @@ import { test, expect } from '@playwright/test';
 
 test('test', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'HTML as a Stimulus' }).click();
+
+  await page.getByLabel('Demo Studies').locator('div').filter({ hasText: 'HTML as a Stimulus' })
+    .getByText('Go to Study')
+    .click();
   await page.getByRole('tab', { name: 'All Trials View' }).click();
 
   await page.getByLabel('All Trials View').locator('a').filter({ hasText: 'barChart' }).click();
-  await page.frameLocator('iframe').getByRole('img').click();
+  const iframe = await page.frameLocator('iframe').getByRole('img');
+  await expect(iframe).toBeVisible();
 
   await page.getByLabel('All Trials View').locator('a').filter({ hasText: 'introduction' }).click();
   const introText = await page.getByText('Welcome to our study. This is');

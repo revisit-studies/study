@@ -26,11 +26,9 @@ const AuthContext = createContext<AuthContextValue>({
     isAdmin: false,
     adminVerification: false,
   },
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   logout: async () => {},
   triggerAuth: () => {},
   verifyAdminStatus: () => Promise.resolve(false),
-
 });
 
 // Firebase auth context
@@ -89,7 +87,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
 
   const verifyAdminStatus = async (inputUser: UserWrapped) => {
     if (storageEngine) {
-      return await storageEngine.validateUser(inputUser);
+      return await storageEngine.validateUser(inputUser, true);
     }
     return false;
   };
@@ -103,7 +101,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
     if (storageEngine instanceof FirebaseStorageEngine) {
       try {
         auth = getAuth();
-      } catch (error) {
+      } catch {
         console.warn('No firebase store.');
       }
     }
@@ -154,6 +152,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
     return () => {
       cleanupPromise.then((cleanup) => cleanup());
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [storageEngine, enableAuthTrigger]);
 
   const value = useMemo(() => ({
@@ -161,6 +160,7 @@ export function AuthProvider({ children } : { children: ReactNode }) {
     triggerAuth,
     logout,
     verifyAdminStatus,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [user]);
 
   return (

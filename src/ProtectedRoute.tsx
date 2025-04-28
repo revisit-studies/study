@@ -1,6 +1,6 @@
 import { LoadingOverlay } from '@mantine/core';
 import { ReactNode, useEffect, useState } from 'react';
-import { Navigate, useParams } from 'react-router-dom';
+import { Navigate, useParams } from 'react-router';
 import { useAuth } from './store/hooks/useAuth';
 import { useStorageEngine } from './storage/storageEngineHooks';
 
@@ -52,6 +52,7 @@ export function ProtectedRoute({ children, paramToCheck, paramCallback }: Protec
     };
 
     verifyUser();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.isAdmin, isEnabled]);
 
   if (user.determiningStatus || !storageEngine) {

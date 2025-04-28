@@ -6,7 +6,7 @@ import {
   getAuth, signInWithPopup, GoogleAuthProvider, browserPopupRedirectResolver,
 } from '@firebase/auth';
 import { IconBrandGoogleFilled } from '@tabler/icons-react';
-import { Navigate } from 'react-router-dom';
+import { Navigate } from 'react-router';
 import { PREFIX } from './utils/Prefix';
 import { useAuth } from './store/hooks/useAuth';
 import { useStorageEngine } from './storage/storageEngineHooks';
@@ -41,6 +41,7 @@ export function Login() {
     if (!user.determiningStatus && !user.isAdmin && user.adminVerification) {
       showNotification({ title: 'Unauthorized', message: 'You are not authorized to use this application.', color: 'red' });
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.adminVerification]);
 
   if (!user.determiningStatus && user.isAdmin) {

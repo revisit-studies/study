@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/time-to-next/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Simple Images as Stimuli: Decision-Making with Uncertainty Visualizations",
     "version": "pilot",
@@ -20,7 +20,8 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": true
+    "sidebar": true,
+    "nextOnEnter": true
   },
   "components": {
     "introduction": {
@@ -46,7 +47,6 @@
         {
           "id": "demo-image/assets-response",
           "prompt": "Answer:",
-          "required": true,
           "location": "sidebar",
           "type": "radio",
           "options": [
@@ -76,7 +76,6 @@
         {
           "id": "demo-image/assets-response",
           "prompt": "Answer:",
-          "required": true,
           "location": "sidebar",
           "type": "radio",
           "options": [
@@ -104,13 +103,29 @@
         {
           "id": "demo-image/assets-response",
           "prompt": "Answer:",
-          "required": true,
           "location": "sidebar",
           "type": "radio",
           "options": [
             "Yes",
             "No"
           ]
+        }
+      ]
+    },
+    "externalImage": {
+      "type": "image",
+      "path": "https://upload.wikimedia.org/wikipedia/commons/3/3c/Shaki_waterfall.jpg",
+      "style": {
+        "width": "800px"
+      },
+      "nextButtonLocation": "sidebar",
+      "response": [
+        {
+          "id": "externalImage-response",
+          "prompt": "What is this a picture of?",
+          "location": "sidebar",
+          "type": "shortText",
+          "required": false
         }
       ]
     }
@@ -121,7 +136,8 @@
       "introduction",
       "dotplot-low",
       "dotplot-medium",
-      "dotplot-high"
+      "dotplot-high",
+      "externalImage"
     ]
   }
 }

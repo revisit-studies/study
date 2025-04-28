@@ -7,7 +7,7 @@ test('test', async ({ page }) => {
 
   // Check for introduction page
   const introText = await page.getByText('This is a test file for the introduction of the project.');
-  await expect(introText).toBeVisible();
+  await expect(introText).toBeVisible({ timeout: 5000 });
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const sequenceArray: any[] = await page.evaluate(async () => {
@@ -57,7 +57,6 @@ test('test', async ({ page }) => {
   const sequenceOccurences = flattenedSequenceArray.map((sequence) => {
     expect(sequence.length).toBe(24);
 
-    // eslint-disable-next-line no-return-assign
     const occurrences: Record<string, number | undefined> = sequence.reduce((acc, curr) => { acc[curr] = (acc[curr] || 0) + 1; return acc; }, {});
 
     expect(occurrences.introduction).toBe(2);

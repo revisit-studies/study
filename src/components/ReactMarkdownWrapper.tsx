@@ -1,14 +1,13 @@
 /* eslint-disable react/no-unstable-nested-components */
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { Components } from 'react-markdown';
 import {
   Image, Text, Title, Anchor, List,
 } from '@mantine/core';
 import rehypeRaw from 'rehype-raw';
-import { JsxRuntimeComponents } from 'react-markdown/lib';
 
-export default function ReactMarkdownWrapper({ text, required }: { text: string; required?: boolean }) {
-  const components: Partial<JsxRuntimeComponents> = {
+export function ReactMarkdownWrapper({ text, required }: { text: string; required?: boolean }) {
+  const components: Partial<Components> = {
     img({
       node, width, height, ...props
     }) { return <Image {...props} h={height} w={width} ref={undefined} />; },
