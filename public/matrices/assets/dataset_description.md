@@ -1,6 +1,5 @@
 ## What data we will use? Flight mean prices and variations across EEUU states.
 
-<img src='./assets/images/price-matrix.png' width='500'>
 In this study, we want to show two important things about flight prices between each pair of U.S. states:
 
 - What is the **average price** of a flight between two states (this is called the **mean**).

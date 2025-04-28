@@ -10,7 +10,7 @@ import { Encoding } from '../utils/Enums';
 import { useRenderEcondedCells } from '../hooks/useRenderEncodeCells';
 import { useCellScales } from '../hooks/useCellScales';
 
-const margin = 75;
+const margin = 135;
 const meanText = 'Price Ranges:';
 const devText = 'Price Deviation Ranges:';
 
@@ -71,7 +71,7 @@ export function Legend() {
         .enter()
         .append('g')
         .attr('class', 'cell')
-        .attr('transform', (_, i) => `translate(${(legendCellSize + margin) * i}, 0)`);
+        .attr('transform', (_, i) => `translate(${margin * i}, 0)`);
 
       cells
         .append('text')

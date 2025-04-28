@@ -11,7 +11,7 @@ Each box (or "cell") in the matrix will have a color:
 
 So, lighter = cheaper and darker = more expensive.
 
-<img src='/matrices/assets/images/color-mean.png' width='500'>
+<img src='./assets/images/color-mean.png' width='500'>
 
 As you might notice we have divided prices into color categories.
 
@@ -24,7 +24,7 @@ Inside each box, there will be a small square mark:
 
 So, small mark = consistent prices, big mark = unpredictable prices.
 
-<img src='/matrices/assets/images/size-std.png' width='500'>
+<img src='./assets/images/size-std.png' width='500'>
 
 As you might notice we have divided price variations into mark sizes categories.
 
