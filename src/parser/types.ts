@@ -333,6 +333,8 @@ export interface MatrixResponse extends BaseResponse {
   questionOptions: string[];
   /** The order in which the questions are displayed. Defaults to fixed. */
   questionOrder?: 'fixed' | 'random';
+  /** The order in which the answers are displayed. Defaults to fixed. */
+  answerOrder?: 'fixed' | 'random';
 }
 
 /**
@@ -434,6 +436,8 @@ export interface RadioResponse extends BaseResponse {
   horizontal?: boolean;
   /** Whether to render the radios with an "other" option. */
   withOther?: boolean;
+  /** The order in which the radio buttons are displayed. Defaults to fixed. */
+  answerOrder?: 'fixed' | 'random';
 }
 
 /**
@@ -462,6 +466,8 @@ export interface CheckboxResponse extends BaseResponse {
   horizontal?: boolean;
   /** Whether to render the checkboxes with an "other" option. */
   withOther?: boolean;
+  /** The order in which the checkboxes are displayed. Defaults to fixed. */
+  answerOrder?: 'fixed' | 'random';
 }
 
 /**
@@ -505,6 +511,8 @@ export interface ReactiveResponse extends BaseResponse {
 export interface ButtonsResponse extends BaseResponse {
   type: 'buttons';
   options: (StringOption | string)[];
+  /** The order in which the buttons are displayed. Defaults to fixed. */
+  answerOrder?: 'fixed' | 'random';
 }
 
 /**
