@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
-import { animated } from 'react-spring';
-import { IconArrowsShuffle, IconDice } from '@tabler/icons-react';
+// import { animated } from 'react-spring';
+import { IconDice } from '@tabler/icons-react';
 import { Tooltip } from '@mantine/core';
 import { Arrows, TraversedSequence } from './types';
 import { AnimatedArrow } from './AnimatedArrow';
@@ -19,7 +19,7 @@ export function SequenceComponent({
   components, arrows,
 } : {components : TraversedSequence[], arrows: Arrows[]}) {
   const shapes = useMemo(() => (
-    components.map((comp, i) => {
+    components.map((comp) => {
       if (typeof comp.component === 'string') {
         return <AnimatedCircle id={comp.id} key={comp.id} cx={comp.start} cy={DISTANCE_BETWEEN_VERT * comp.depth} r={CIRCLE_SIZE} fill={comp.active ? 'cornflowerblue' : 'lightgray'} />;
       }
@@ -41,10 +41,12 @@ export function SequenceComponent({
 
   const arrowLines = useMemo(() => arrows?.map((arrow, i) => <AnimatedArrow key={i} x1={arrow.x1} x2={arrow.x2} y1={DISTANCE_BETWEEN_VERT * arrow.topDepth} y2={DISTANCE_BETWEEN_VERT * (arrow.topDepth + 1)} />), [arrows]);
 
+  console.log(arrowLines);
+
   return (
     <g>
       <g>{shapes}</g>
-      {/* <g>{arrowLines}</g> */}
+      <g>{arrowLines}</g>
     </g>
   );
 }
