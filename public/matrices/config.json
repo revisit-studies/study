@@ -59,7 +59,7 @@
         },
         "interaction": {
             "correctAnswer": [],
-            "instruction": "Let\u2019s play with the matrix!<br><b>Move your mouse over the cells:</b> this will highlight the corresponding row and column.<br><b>Click on the top labels (the names at the top):</b> the states on the left will reorder themselves.<ul><li>The states that have flights connected to it will come first alphabetically.</li><li>The ones without direct flights will move to the bottom, sorted alphabetically.</li>Click again on the top label to undo the ordering.<br> <b>Click on the left-side state names (the ones written horizontally):</b></li></ul>To answer some questions, you\u2019ll need to select states by clicking on the names on the left side.<ul><li>Click once to select a state.</li> <li>Click again to unselect it, or use the Clear Selection button if you want to start fresh.</li></ul>",
+            "instruction": "Let\u2019s play with the matrix!<br><b>Move your mouse over the cells:</b> this will highlight the corresponding row and column.<br><b>Click on the top labels (the names at the top): </b>the states on the left will reorder themselves.<ul><li>The states that have flights connected to it will come first alphabetically.</li><li>The ones without direct flights will move to the bottom, sorted alphabetically.</li></ul>Click again on the top label to undo the ordering.<br><b>Click on the left-side state names (the ones written horizontally): </b>to answer some questions, you\u2019ll need to select states by clicking on the names on the left side.<ul><li>Click once to select a state.</li><li>Click again to unselect it, or use the Clear Selection button if you want to start fresh.</li></ul><b>Click on the cells to mark a connection: </b>this is not an answer but it can help you in certain tasks. Click again to undo cell selection",
             "nextButtonLocation": "sidebar",
             "parameters": {
                 "dataset": "training.txt",
@@ -281,7 +281,7 @@
                     "id": "answerNodes"
                 }
             ],
-            "instruction": "ATTRIBUTE TASK. Select adjacent nodes to one given constrained by attribute values.<br><br>QUESTION. Which states are connected to Missouri with a price variation lower than $80?",
+            "instruction": "ATTRIBUTE TASK. Select adjacent nodes to one given constrained by attribute values.<br><br>QUESTION. Which states are connected to Missouri with a price variation higher than $90?",
             "nextButtonLocation": "sidebar",
             "parameters": {
                 "dataset": "test.txt",

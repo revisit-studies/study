@@ -10,7 +10,7 @@ import { Encoding } from '../utils/Enums';
 import { useRenderEcondedCells } from '../hooks/useRenderEncodeCells';
 import { useCellScales } from '../hooks/useCellScales';
 
-const margin = 50;
+const margin = 100;
 const meanText = 'Price Ranges:';
 const devText = 'Price Deviation Ranges:';
 

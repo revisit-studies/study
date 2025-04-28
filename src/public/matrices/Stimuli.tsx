@@ -17,7 +17,7 @@ export function Stimuli({
   provenanceState,
 }: StimulusParams<ChartParams, TrrackState>) {
   // ---------------------------- Setup & data ----------------------------
-  const [data, setData] = useState<link[]>([]);
+  const [data, setData] = useState<link[] | null>(null);
 
   const [dataname, setDataname] = useState<string>(parameters.dataset);
 

@@ -123,7 +123,6 @@ export function Matrix({
 
   const [ref, { width, height }] = useResizeObserver();
   const size = Math.min(width - margin.left - margin.right, height - margin.top - margin.bottom);
-  const shouldRender = !Number.isNaN(size) && size > 0;
 
   const origins = useMemo(
     () => orderedOrigins || [...new Set(data.map(originAccesor))].sort(),
@@ -174,6 +173,8 @@ export function Matrix({
     nMeans,
     nDevs,
   );
+
+  const shouldRender = !Number.isNaN(size) && size > 0;
 
   // ---------------------------- Render ----------------------------
   return (
@@ -232,95 +233,97 @@ export function Matrix({
         setAnswer,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1vw' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4vw' }}>
         {config.showConfig && (
-          <Stack gap="2vh">
-            <Checkbox
-              label="Tooltip"
-              checked={showTooltip}
-              onChange={(event) => setShowTooltip(event.currentTarget.checked)}
-            />
-            <NativeSelect
-              w={175}
-              label="Data file:"
-              value={dataname}
-              onChange={(event) => setDataname(event.currentTarget.value)}
-              data={files}
-            />
-            <NativeSelect
-              label="Color scale:"
-              value={colorScale}
-              onChange={(event) => setColorScale(event.currentTarget.value)}
-              data={Object.values(ColorScheme)}
-            />
-            <NativeSelect
-              label="Encoding:"
-              value={encoding}
-              onChange={(event) => setEncoding(event.currentTarget.value)}
-              data={Object.values(Encoding)}
-            />
+        <Stack gap="2vh">
+          <Checkbox
+            label="Tooltip"
+            checked={showTooltip}
+            onChange={(event) => setShowTooltip(event.currentTarget.checked)}
+          />
+          <NativeSelect
+            w={175}
+            label="Data file:"
+            value={dataname}
+            onChange={(event) => setDataname(event.currentTarget.value)}
+            data={files}
+          />
+          <NativeSelect
+            label="Color scale:"
+            value={colorScale}
+            onChange={(event) => setColorScale(event.currentTarget.value)}
+            data={Object.values(ColorScheme)}
+          />
+          <NativeSelect
+            label="Encoding:"
+            value={encoding}
+            onChange={(event) => setEncoding(event.currentTarget.value)}
+            data={Object.values(Encoding)}
+          />
 
-            <NativeSelect
-              label="Cluster mode:"
-              value={clusterMode}
-              onChange={(event) => setClusterMode(event.currentTarget.value)}
-              data={Object.values(ClusteringMode)}
-            />
+          <NativeSelect
+            label="Cluster mode:"
+            value={clusterMode}
+            onChange={(event) => setClusterMode(event.currentTarget.value)}
+            data={Object.values(ClusteringMode)}
+          />
 
-            <NativeSelect
-              label="ClusterVar:"
-              value={clusterVar}
-              onChange={(event) => setClusterVar(event.currentTarget.value)}
-              data={Object.values(ClusteringVar)}
-            />
+          <NativeSelect
+            label="ClusterVar:"
+            value={clusterVar}
+            onChange={(event) => setClusterVar(event.currentTarget.value)}
+            data={Object.values(ClusteringVar)}
+          />
 
-            <Stack gap="0.2vh">
-              <Text size="sm">
-                Mean Steps:
-                {nMeans}
-              </Text>
-              <Slider min={2} max={5} value={nMeans} onChange={setNMeans} />
-            </Stack>
-
-            <Stack gap="0.2vh">
-              <Text size="sm">
-                Deviation Steps:
-                {nDevs}
-              </Text>
-              <Slider min={2} max={5} value={nDevs} onChange={setNDevs} />
-            </Stack>
+          <Stack gap="0.2vh">
+            <Text size="sm">
+              Mean Steps:
+              {nMeans}
+            </Text>
+            <Slider min={2} max={5} value={nMeans} onChange={setNMeans} />
           </Stack>
+
+          <Stack gap="0.2vh">
+            <Text size="sm">
+              Deviation Steps:
+              {nDevs}
+            </Text>
+            <Slider min={2} max={5} value={nDevs} onChange={setNDevs} />
+          </Stack>
+        </Stack>
         )}
 
         <svg ref={ref} height="89vh" style={{ display: 'block', aspectRatio: '1' }}>
           {shouldRender && (
-            <g
-              id="square"
-              transform={`translate(${margin.left}, ${margin.top} )`}
-              onMouseLeave={() => {
-                setOriginHighlight(null);
-                setDestinationHighlight(null);
-              }}
-            >
-              <EncodedCells />
-              <g id="axes">
-                <OriginAxis />
-                <DestinationAxis />
-              </g>
-
-              {!config.clusterMarks && <Highlighting />}
-              <Background />
-              {showTooltip && <MatrixTooltip />}
-              {config.clusterMarks && <ClusterMarks size={3} marks={config.clusterMarks} />}
-              {config.isPathTask && <LinkMarks size={1} marks={linkMarks} />}
+          <g
+            id="square"
+            transform={`translate(${margin.left}, ${margin.top} )`}
+            onMouseLeave={() => {
+              setOriginHighlight(null);
+              setDestinationHighlight(null);
+            }}
+          >
+            <EncodedCells />
+            <g id="axes">
+              <OriginAxis />
+              <DestinationAxis />
             </g>
+
+            {!config.clusterMarks && <Highlighting />}
+            <Background />
+            {showTooltip && <MatrixTooltip />}
+            {config.clusterMarks && <ClusterMarks size={3} marks={config.clusterMarks} />}
+            <LinkMarks size={1} marks={linkMarks} />
+          </g>
           )}
         </svg>
 
+        {shouldRender && (
         <Stack gap="5vh">
           <InteractionButtons />
-          {shouldRender && <Legend />}
+          <Legend />
         </Stack>
+        )}
       </div>
     </MatrixProvider>
   );

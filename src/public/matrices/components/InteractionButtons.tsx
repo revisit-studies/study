@@ -14,21 +14,19 @@ function ClearAndResetButtons() {
 
   return (
     <>
-      {!(config.isClusterTask || config.isPathTask || config.isRangeTask) && (
-        <Button
-          onClick={() => {
-            setAnswerNodes([]);
-            trrack?.apply('Set Answer', actions?.setAnswerNodes([]));
-            setAnswer({
-              status: true,
-              provenanceGraph: trrack?.graph.backend,
-              answers: { answerNodes: [] },
-            });
-          }}
-        >
-          {UserAction.clearSelection}
-        </Button>
-      )}
+      <Button
+        onClick={() => {
+          setAnswerNodes([]);
+          trrack?.apply('Set Answer', actions?.setAnswerNodes([]));
+          setAnswer({
+            status: true,
+            provenanceGraph: trrack?.graph.backend,
+            answers: { answerNodes: [] },
+          });
+        }}
+      >
+        {UserAction.clearNodeSelection}
+      </Button>
 
       {/* {!config.isClusterTask && (
         <Button
@@ -115,7 +113,7 @@ function PathSelection() {
           setLinkMarks([]);
         }}
       >
-        {UserAction.clearSelection}
+        {UserAction.clearLinkSelection}
       </Button>
     </Stack>
   );
@@ -148,9 +146,9 @@ export function InteractionButtons() {
   return (
     <Stack>
       {/* {config.isClusterTask && <ClusterSelection />} */}
-      {config.isPathTask && <PathSelection />}
+      <PathSelection />
       {/* {config.isRangeTask && <RangeSelection />} */}
-      {!config.isClusterTask && <ClearAndResetButtons />}
+      <ClearAndResetButtons />
     </Stack>
   );
 }
