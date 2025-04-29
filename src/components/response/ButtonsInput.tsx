@@ -1,7 +1,7 @@
 import {
   Box, Flex, FocusTrap, Radio, Text,
 } from '@mantine/core';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { ButtonsResponse, StringOption } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
@@ -28,7 +28,7 @@ export function ButtonsInput({
     optionOrder,
   } = response;
 
-  const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+  const optionsAsStringOptions = useMemo(() => options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option)), [options]);
   const [orderedOptions, setOrderedOptions] = useState<StringOption[]>([]);
 
   useEffect(() => {
@@ -42,7 +42,7 @@ export function ButtonsInput({
       // optionOrder === 'fixed'
       setOrderedOptions(optionsAsStringOptions);
     }
-  }, [optionOrder]);
+  }, [optionOrder, optionsAsStringOptions]);
 
   return (
     <FocusTrap>

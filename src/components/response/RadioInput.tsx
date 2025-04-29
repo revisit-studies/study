@@ -1,7 +1,7 @@
 import {
   Box, Flex, Group, Input, Radio, rem, Text,
 } from '@mantine/core';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { RadioResponse, StringOption } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
@@ -38,7 +38,7 @@ export function RadioInput({
     optionOrder,
   } = response;
 
-  const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+  const optionsAsStringOptions = useMemo(() => options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option)), [options]);
 
   const [otherSelected, setOtherSelected] = useState(false);
   const [orderedOptions, setOrderedOptions] = useState<StringOption[]>([]);
@@ -54,7 +54,7 @@ export function RadioInput({
       // optionOrder === 'fixed'
       setOrderedOptions(optionsAsStringOptions);
     }
-  }, [optionOrder]);
+  }, [optionOrder, optionsAsStringOptions]);
 
   return (
     <Radio.Group

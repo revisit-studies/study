@@ -1,7 +1,9 @@
 import {
   Box, Flex, Radio, Text, Checkbox,
 } from '@mantine/core';
-import { ChangeEvent, useEffect, useState } from 'react';
+import {
+  ChangeEvent, useEffect, useState, useMemo,
+} from 'react';
 import { MatrixResponse, StringOption } from '../../parser/types';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { useStoreDispatch, useStoreActions } from '../../store/store';
@@ -132,7 +134,7 @@ export function MatrixInput({
   };
 
   const _choices = typeof answerOptions === 'string' ? _choiceStringToColumns[answerOptions].map((entry) => ({ value: entry, label: entry })) : answerOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
-  const _questions = questionOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+  const _questions = useMemo(() => questionOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : option)), [questionOptions]);
   const [orderedQuestions, setOrderedQuestions] = useState<StringOption[]>([]);
 
   useEffect(() => {
@@ -146,7 +148,7 @@ export function MatrixInput({
       // questionOrder === 'fixed'
       setOrderedQuestions(_questions);
     }
-  }, [questionOrder]);
+  }, [questionOrder, _questions]);
   // Re-define on change functions. Dispatch answers to store.
   const onChangeRadio = (val: string, questionKey: string) => {
     const payload = {

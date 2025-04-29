@@ -34,7 +34,7 @@ export function CheckBoxInput({
     optionOrder,
   } = response;
 
-  const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+  const optionsAsStringOptions = useMemo(() => options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option)), [options]);
 
   const [otherSelected, setOtherSelected] = useState(false);
   const [orderedOptions, setOrderedOptions] = useState<StringOption[]>([]);
@@ -50,7 +50,7 @@ export function CheckBoxInput({
       // optionOrder === 'fixed'
       setOrderedOptions(optionsAsStringOptions);
     }
-  }, [optionOrder]);
+  }, [optionOrder, optionsAsStringOptions]);
 
   const error = useMemo(() => generateErrorMessage(response, answer, optionsAsStringOptions), [response, answer, optionsAsStringOptions]);
 
