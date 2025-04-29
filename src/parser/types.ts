@@ -333,8 +333,6 @@ export interface MatrixResponse extends BaseResponse {
   questionOptions: string[];
   /** The order in which the questions are displayed. Defaults to fixed. */
   questionOrder?: 'fixed' | 'random';
-  /** The order in which the answers are displayed. Defaults to fixed. */
-  answerOrder?: 'fixed' | 'random';
 }
 
 /**
@@ -428,6 +426,8 @@ export interface RadioResponse extends BaseResponse {
   type: 'radio';
   /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields. */
   options: (StringOption | string)[];
+  /** The order in which the radio buttons are displayed. Defaults to fixed. */
+  optionOrder?: 'fixed' | 'random';
   /** The left label of the radio group. Used in Likert scales for example */
   leftLabel?: string;
   /** The right label of the radio group. Used in Likert scales for example */
@@ -436,8 +436,6 @@ export interface RadioResponse extends BaseResponse {
   horizontal?: boolean;
   /** Whether to render the radios with an "other" option. */
   withOther?: boolean;
-  /** The order in which the radio buttons are displayed. Defaults to fixed. */
-  answerOrder?: 'fixed' | 'random';
 }
 
 /**
@@ -458,6 +456,8 @@ export interface CheckboxResponse extends BaseResponse {
   type: 'checkbox';
   /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields. */
   options: (StringOption | string)[];
+  /** The order in which the checkboxes are displayed. Defaults to fixed. */
+  optionOrder?: 'fixed' | 'random';
   /** The minimum number of selections that are required. */
   minSelections?: number;
   /** The maximum number of selections that are required. */
@@ -466,8 +466,6 @@ export interface CheckboxResponse extends BaseResponse {
   horizontal?: boolean;
   /** Whether to render the checkboxes with an "other" option. */
   withOther?: boolean;
-  /** The order in which the checkboxes are displayed. Defaults to fixed. */
-  answerOrder?: 'fixed' | 'random';
 }
 
 /**
@@ -512,7 +510,7 @@ export interface ButtonsResponse extends BaseResponse {
   type: 'buttons';
   options: (StringOption | string)[];
   /** The order in which the buttons are displayed. Defaults to fixed. */
-  answerOrder?: 'fixed' | 'random';
+  optionOrder?: 'fixed' | 'random';
 }
 
 /**
