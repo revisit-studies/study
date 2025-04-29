@@ -1,8 +1,8 @@
 import {
   Box, Checkbox, Flex, Input,
 } from '@mantine/core';
-import { useMemo, useState } from 'react';
-import { CheckboxResponse } from '../../parser/types';
+import { useMemo, useState, useEffect } from 'react';
+import { CheckboxResponse, StringOption } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { HorizontalHandler } from './HorizontalHandler';
@@ -31,11 +31,26 @@ export function CheckBoxInput({
     secondaryText,
     horizontal,
     withOther,
+    optionOrder,
   } = response;
 
   const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
 
   const [otherSelected, setOtherSelected] = useState(false);
+  const [orderedOptions, setOrderedOptions] = useState<StringOption[]>([]);
+
+  useEffect(() => {
+    if (optionOrder === 'random') {
+      const shuffled = [...optionsAsStringOptions]
+        .map((value) => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value);
+      setOrderedOptions(shuffled);
+    } else {
+      // answerOrder === 'fixed'
+      setOrderedOptions(optionsAsStringOptions);
+    }
+  }, [optionOrder]);
 
   const error = useMemo(() => generateErrorMessage(response, answer, optionsAsStringOptions), [response, answer, optionsAsStringOptions]);
 
@@ -56,7 +71,7 @@ export function CheckBoxInput({
     >
       <Box mt="xs">
         <HorizontalHandler horizontal={!!horizontal} style={{ flexGrow: 1 }}>
-          {optionsAsStringOptions.map((option) => (
+          {orderedOptions.map((option) => (
             <Checkbox
               key={option.value}
               disabled={disabled}
