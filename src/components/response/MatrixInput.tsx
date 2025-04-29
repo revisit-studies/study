@@ -146,7 +146,7 @@ export function MatrixInput({
       // questionOrder === 'fixed'
       setOrderedQuestions(_questions);
     }
-  }, [_questions, questionOrder, response.id]);
+  }, [questionOrder]);
   // Re-define on change functions. Dispatch answers to store.
   const onChangeRadio = (val: string, questionKey: string) => {
     const payload = {
