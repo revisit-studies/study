@@ -1,7 +1,8 @@
 import {
   Box, Flex, FocusTrap, Radio, Text,
 } from '@mantine/core';
-import { ButtonsResponse } from '../../parser/types';
+import { useState, useEffect } from 'react';
+import { ButtonsResponse, StringOption } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import classes from './css/ButtonsInput.module.css';
@@ -24,9 +25,24 @@ export function ButtonsInput({
     required,
     options,
     secondaryText,
+    optionOrder,
   } = response;
 
   const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+  const [orderedOptions, setOrderedOptions] = useState<StringOption[]>([]);
+
+  useEffect(() => {
+    if (optionOrder === 'random') {
+      const shuffled = [...optionsAsStringOptions]
+        .map((value) => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value);
+      setOrderedOptions(shuffled);
+    } else {
+      // optionOrder === 'fixed'
+      setOrderedOptions(optionsAsStringOptions);
+    }
+  }, [optionOrder]);
 
   return (
     <FocusTrap>
@@ -48,7 +64,7 @@ export function ButtonsInput({
         style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
       >
         <Flex justify="space-between" align="center" gap="xl" mt="xs">
-          {optionsAsStringOptions.map((radio) => (
+          {orderedOptions.map((radio) => (
             <Radio.Card
               key={radio.value}
               value={radio.value}
