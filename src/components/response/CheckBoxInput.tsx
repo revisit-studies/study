@@ -47,7 +47,7 @@ export function CheckBoxInput({
         .map(({ value }) => value);
       setOrderedOptions(shuffled);
     } else {
-      // answerOrder === 'fixed'
+      // optionOrder === 'fixed'
       setOrderedOptions(optionsAsStringOptions);
     }
   }, [optionOrder]);

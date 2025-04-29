@@ -1,8 +1,8 @@
 import {
   Box, Flex, Group, Input, Radio, rem, Text,
 } from '@mantine/core';
-import { useState } from 'react';
-import { RadioResponse } from '../../parser/types';
+import { useState, useEffect } from 'react';
+import { RadioResponse, StringOption } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { HorizontalHandler } from './HorizontalHandler';
@@ -35,11 +35,26 @@ export function RadioInput({
     secondaryText,
     horizontal,
     withOther,
+    optionOrder,
   } = response;
 
   const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
 
   const [otherSelected, setOtherSelected] = useState(false);
+  const [orderedOptions, setOrderedOptions] = useState<StringOption[]>([]);
+
+  useEffect(() => {
+    if (optionOrder === 'random') {
+      const shuffled = [...optionsAsStringOptions]
+        .map((value) => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value);
+      setOrderedOptions(shuffled);
+    } else {
+      // optionOrder === 'fixed'
+      setOrderedOptions(optionsAsStringOptions);
+    }
+  }, [optionOrder]);
 
   return (
     <Radio.Group
@@ -62,7 +77,7 @@ export function RadioInput({
       <Group gap="lg" align="flex-end" mt={horizontal ? 0 : 'sm'}>
         {leftLabel ? <Text>{leftLabel}</Text> : null}
         <HorizontalHandler horizontal={!!horizontal} style={{ flexGrow: 1 }}>
-          {optionsAsStringOptions.map((radio) => (
+          {orderedOptions.map((radio) => (
             <div
               key={`${radio.value}-${response.id}`}
               style={{
