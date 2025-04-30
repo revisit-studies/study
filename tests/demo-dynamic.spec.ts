@@ -11,20 +11,24 @@ test('test', async ({ page }) => {
 
   // Check for introduction page
   const introText = await page.getByRole('heading', { name: 'Introduction' });
-  await expect(introText).toBeVisible({ timeout: 5000 });
+  await expect(introText).toBeVisible({ });
   await page.getByRole('button', { name: 'Next', exact: true }).click();
 
   // Check for dynamic blocks
   const dynamicBlocks = await page.getByRole('heading', { name: 'Dynamic Blocks' });
-  await expect(dynamicBlocks).toBeVisible({ timeout: 5000 });
+  await expect(dynamicBlocks).toBeVisible({ timeout: 500 });
 
-  let expectedLeft = 0;
-  let expectedRight = 100;
+  let expectedLeft = 30;
+  let expectedRight = 70;
 
-  // Run 10 trials
-  // The first 5 trials are correct, the next 5 are incorrect
+  const previousAnswers: {
+    answer: { buttonResponse: string };
+    parameters: { left: number; right: number };
+  }[] = [];
+
   for (let i = 0; i < trialLen; i += 1) {
-    const isCorrect = i < 5;
+    await page.waitForSelector('text=Left square saturation:', { timeout: 3000 });
+    await page.waitForSelector('text=Right square saturation:', { timeout: 3000 });
 
     // Extract and parse current saturation values
     const leftText = await page.locator('text=Left square saturation:').last().textContent() || '';
@@ -36,22 +40,38 @@ test('test', async ({ page }) => {
     await expect(leftValue).toBe(expectedLeft);
     await expect(rightValue).toBe(expectedRight);
 
-    const choice = isCorrect ? 'Right' : 'Left';
+    const choice = (leftValue === rightValue) ? 'Same' : (leftValue > rightValue ? 'Left' : 'Right');
+
     await page.getByRole('radio', { name: choice }).click();
     await page.getByRole('button', { name: 'Check Answer', exact: true }).click();
     await page.getByRole('button', { name: 'Next', exact: true }).click();
 
-    // If the answer was correct, increase the left saturation by 5 (max 50) and decrease the right saturation by 5 (min 50)
-    // If the answer was incorrect, decrease the left saturation by 5 (min 0) and increase the right saturation by 5 (max 100)
-    if (isCorrect) {
-      expectedLeft = Math.min(50, expectedLeft + 5);
-      expectedRight = Math.max(50, expectedRight - 5);
-    } else {
-      expectedLeft = Math.max(0, expectedLeft - 5);
-      expectedRight = Math.min(100, expectedRight + 5);
+    // Store the current answer
+    previousAnswers.push({
+      answer: { buttonResponse: choice },
+      parameters: { left: leftValue, right: rightValue },
+    });
+
+    expectedLeft = previousAnswers.reduce((leftVal, answer) => {
+      const isCorrect = (answer.answer.buttonResponse === 'Left' && answer.parameters.left > answer.parameters.right)
+                        || (answer.answer.buttonResponse === 'Right' && answer.parameters.right > answer.parameters.left)
+                        || (answer.answer.buttonResponse === 'Same' && answer.parameters.left === answer.parameters.right);
+      return isCorrect ? Math.min(100, leftVal + 10) : Math.max(0, leftVal - 10);
+    }, 30);
+
+    expectedRight = previousAnswers.reduce((rightVal, answer) => {
+      const isCorrect = (answer.answer.buttonResponse === 'Right' && answer.parameters.right > answer.parameters.left)
+                        || (answer.answer.buttonResponse === 'Left' && answer.parameters.left > answer.parameters.right)
+                        || (answer.answer.buttonResponse === 'Same' && answer.parameters.left === answer.parameters.right);
+      return isCorrect ? Math.max(0, rightVal - 10) : Math.min(100, rightVal + 10);
+    }, 70);
+
+    // If Same was correct, exit dynamic block
+    if (choice === 'Same' && leftValue === rightValue) {
+      break;
     }
 
-    await page.waitForTimeout(50);
+    await page.waitForTimeout(1000);
   }
   const endText = await page.getByText('Please wait while your answers are uploaded.');
   await expect(endText).toBeVisible();
