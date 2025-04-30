@@ -261,7 +261,7 @@ export function ResponseBlock({
       }
     };
 
-    if (studyConfig.uiConfig.checkAnswerOnEnter) {
+    if (studyConfig.uiConfig.nextOnEnter) {
       window.addEventListener('keydown', handleKeyDown);
       return () => {
         window.removeEventListener('keydown', handleKeyDown);

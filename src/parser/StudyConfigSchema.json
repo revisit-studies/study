@@ -2170,10 +2170,6 @@
           "description": "The time in milliseconds to wait before automatically downloading the study data.",
           "type": "number"
         },
-        "checkAnswerOnEnter": {
-          "description": "Whether to check the answer on enter. Defaults to false.",
-          "type": "boolean"
-        },
         "contactEmail": {
           "description": "The email address that used during the study if a participant clicks contact.",
           "type": "string"
