@@ -19,6 +19,7 @@ import { useAnswerField } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FormElementProvenance, StoredAnswer } from '../../store/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 
 type Props = {
   status?: StoredAnswer;
@@ -50,6 +51,7 @@ export function ResponseBlock({
   } = useStoreActions();
   const currentStep = useCurrentStep();
   const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]) as FormElementProvenance | undefined;
+  const studyConfig = useStudyConfig();
 
   const storedAnswer = useMemo(() => currentProvenance?.form || status?.answer, [currentProvenance, status]);
 
@@ -59,7 +61,18 @@ export function ResponseBlock({
 
   const configInUse = config as IndividualComponent;
 
-  const responses = useMemo(() => configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [], [configInUse?.response, location]);
+  const responses = useMemo(() => {
+    const filteredResponses = configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [];
+
+    if (studyConfig.uiConfig.randomizeForm) {
+      return [...filteredResponses]
+        .map((value) => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value);
+    }
+
+    return filteredResponses;
+  }, [configInUse?.response, location, studyConfig.uiConfig.randomizeForm]);
 
   const responsesWithDefaults = useMemo(() => responses.map((response) => {
     if (response.type !== 'textOnly') {
