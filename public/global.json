@@ -28,6 +28,7 @@
     "library-previs",
     "library-sus",
     "library-vlat",
+    "library-calvi",
     "test-audio",
     "test-library",
     "test-likert-matrix",
@@ -131,6 +132,10 @@
     },
     "library-vlat": {
       "path": "library-vlat/config.json",
+      "test": true
+    },
+    "library-calvi": {
+      "path": "library-calvi/config.json",
       "test": true
     },
     "test-likert-matrix": {

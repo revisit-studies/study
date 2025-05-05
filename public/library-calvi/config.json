@@ -1,0 +1,33 @@
+{
+    "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/StudyConfigSchema.json",
+    "studyMetadata": {
+      "title": "CALVI",
+      "version": "1.0.0",
+      "authors": [
+        "The reVISit Team"
+      ],
+      "date": "2025-01-20",
+      "description": "Example study using the Calvi library.",
+      "organizations": [
+        "University of Utah",
+        "WPI",
+        "University of Toronto"
+      ]
+    },
+    "uiConfig": {
+      "contactEmail": "",
+      "logoPath": "revisitAssets/revisitLogoSquare.svg",
+      "withProgressBar": true,
+      "sidebar": true
+    },
+    "importedLibraries": [
+      "calvi"
+    ],
+    "components": {},
+    "sequence": {
+      "order": "fixed",
+      "components": [
+        "$calvi.se.full"
+      ]
+    }
+}
