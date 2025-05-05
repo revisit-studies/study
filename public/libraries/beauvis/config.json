@@ -7,9 +7,9 @@
   "components": {
     "5items": {
       "type": "image",
-      "path": "libraries/beauvis/assets/vis-example.png",
+      "path": "libraries/previs/assets/mark.svg",
       "style": {
-        "width": "800px"
+        "width": "30vw"
       },
       "response": [
         {
@@ -27,21 +27,15 @@
             "Agree",
             "Strongly agree"
           ],
-          "questionOptions": [
-            "enjoyable",
-            "likable",
-            "pleasing",
-            "nice",
-            "appealing"
-          ]
+          "questionOptions": ["enjoyable", "likable", "pleasing", "nice", "appealing"]
         }
       ]
     },
     "4items": {
       "type": "image",
-      "path": "libraries/previs/assets/vis-example.png",
+      "path": "libraries/previs/assets/mark.svg",
       "style": {
-        "width": "800px"
+        "width": "30vw"
       },
       "response": [
         {
@@ -59,20 +53,15 @@
             "Agree",
             "Strongly agree"
           ],
-          "questionOptions": [
-            "enjoyable",
-            "likable",
-            "pleasing",
-            "nice"
-          ]
+          "questionOptions": ["enjoyable", "likable", "pleasing", "nice"]
         }
       ]
     },
     "3items": {
       "type": "image",
-      "path": "libraries/previs/assets/vis-example.png",
+      "path": "libraries/previs/assets/mark.svg",
       "style": {
-        "width": "800px"
+        "width": "30vw"
       },
       "response": [
         {
@@ -90,15 +79,10 @@
             "Agree",
             "Strongly agree"
           ],
-          "questionOptions": [
-            "enjoyable",
-            "likable",
-            "pleasing"
-          ]
+          "questionOptions": ["enjoyable", "likable", "pleasing"]
         }
       ]
     }
   },
-  "sequences": {
-  }
+  "sequences": {}
 }
