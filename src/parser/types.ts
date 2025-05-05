@@ -626,9 +626,11 @@ export interface BaseIndividualComponent {
   responseDividers?: boolean;
   /** Optional override for the help text. If present, will override the default help text path set in the uiConfig. */
   helpTextPathOverride?: string;
-  /** Controls whether the left sidebar is rendered at all. If present, will override the default sidebar setting in the uiConfig. */
+  /** Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig. */
   sidebar?: boolean;
-  /** Controls whether the progress bar is rendered in the study. If present, will override the default progress bar setting in the uiConfig. */
+  /** Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig. */
+  sidebarWidth?: number;
+  /** Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig. */
   withProgressBar?: boolean;
 }
 
