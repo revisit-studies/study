@@ -7,7 +7,7 @@
       "type": "image",
 
       "path": "libraries/calvi/assets/questions/normal/N1.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -50,7 +50,7 @@
       "description": "Traffic Accidents Trend",
       "type": "image",
       "path": "libraries/calvi/assets/questions/normal/N2.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -93,7 +93,7 @@
       "description": "Customers at Three Bike Shops",
       "type": "image",
       "path": "libraries/calvi/assets/questions/normal/N3.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -137,7 +137,7 @@
       "description": "Advertising Expense Breakdown",
       "type": "image",
       "path": "libraries/calvi/assets/questions/normal/N4.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -180,7 +180,7 @@
       "description": "Perfume Brand Market Share",
       "type": "image",
       "path": "libraries/calvi/assets/questions/normal/N5.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -223,7 +223,7 @@
       "description": "Monthly Number of New Clients",
       "type": "image",
       "path": "libraries/calvi/assets/questions/normal/N6.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -266,7 +266,7 @@
       "description": "Restaurant Openings in 2000",
       "type": "image",
       "path": "libraries/calvi/assets/questions/normal/N7.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -305,7 +305,7 @@
       "description": "Beers Consumed in 2005",
       "type": "image",
       "path": "libraries/calvi/assets/questions/normal/N8.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -344,7 +344,7 @@
       "description": "Store C\u2019s Sales vs Store B",
       "type": "image",
       "path": "libraries/calvi/assets/questions/normal/N9.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -387,7 +387,7 @@
       "description": "SAT Score vs. Income",
       "type": "image",
       "path": "libraries/calvi/assets/questions/normal/N10.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -426,7 +426,7 @@
       "description": "Sleep vs. Time Outdoors",
       "type": "image",
       "path": "libraries/calvi/assets/questions/normal/N11.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -469,7 +469,7 @@
       "description": "Grocery Store Market Share",
       "type": "image",
       "path": "libraries/calvi/assets/questions/normal/N12.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -512,7 +512,7 @@
       "description": "Education Level of Residents",
       "type": "image",
       "path": "libraries/calvi/assets/questions/normal/N13.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -555,7 +555,7 @@
       "description": "Lego ownership by state",
       "type": "image",
       "path": "libraries/calvi/assets/questions/normal/N14.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -584,7 +584,7 @@
       "description": "Restaurant R popularity worldwide",
       "type": "image",
       "path": "libraries/calvi/assets/questions/normal/N15.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -622,7 +622,7 @@
       "description": "Sunny Days in Summer vs Winter",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T1.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -661,7 +661,7 @@
       "description": "Windy Days in Summer vs Winter",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T2.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -700,7 +700,7 @@
       "description": "Concert Ticket Sales",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T3.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -743,7 +743,7 @@
       "description": "Water Bottle Price Comparison",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T4.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -786,7 +786,7 @@
       "description": "Visitors at Train Stations",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T5.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -829,7 +829,7 @@
       "description": "Bacteria Trend 1970\u20132020",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T6.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -872,7 +872,7 @@
       "description": "Visitors at Amusement Parks",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T8.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -915,7 +915,7 @@
       "description": "Brand C Sales vs B",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T9.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -958,7 +958,7 @@
       "description": "Species Prevalence by State",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T10.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -997,7 +997,7 @@
       "description": "Risk of Bacteria Z in WY vs ND",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T11.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1036,7 +1036,7 @@
       "description": "Tree Planting Trend 1960\u20131980",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T12.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1075,7 +1075,7 @@
       "description": "Bookstore Trend 2000\u20132020",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T13.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1114,7 +1114,7 @@
       "description": "Movie Release Trend",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T14.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1157,7 +1157,7 @@
       "description": "Sales Trend for Item X (Apr to Jul)",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T15.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1196,7 +1196,7 @@
       "description": "Apple Harvest Trend",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T16.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1235,7 +1235,7 @@
       "description": "Sunlight vs Growth for Plant P",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T17.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1278,7 +1278,7 @@
       "description": "Vacation Days vs Satisfaction",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T18.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1321,7 +1321,7 @@
       "description": "Weight vs Survival Rate for Z",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T19.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1364,7 +1364,7 @@
       "description": "Prevalence of Plant Y Globally",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T20.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1408,7 +1408,7 @@
       "description": "Bar chart of rainfall over 14 days",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T21.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1451,7 +1451,7 @@
       "description": "Line chart of airport visitors from 2000 to 2005",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T22.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1490,7 +1490,7 @@
       "description": "Area chart of monthly shirt sales in 2021",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T23.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1529,7 +1529,7 @@
       "description": "Market share of shampoo brands",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T25.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1572,7 +1572,7 @@
       "description": "Votes for candidates",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T26.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1615,7 +1615,7 @@
       "description": "GDP growth trend",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T27.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1654,7 +1654,7 @@
       "description": "Cell phone brand market share",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T28.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1693,7 +1693,7 @@
       "description": "Household car ownership",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T29.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1732,7 +1732,7 @@
       "description": "Precipitation comparison",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T30.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1771,7 +1771,7 @@
       "description": "Board game sales trend analysis",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T34.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1803,7 +1803,7 @@
       "description": "Vegetable planting trends by three farms",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T35.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1838,7 +1838,7 @@
       "description": "Car counts in parking lots",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T36.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1866,7 +1866,7 @@
       "description": "Hiring trend in company Z",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T37.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1901,7 +1901,7 @@
       "description": "Work hours and happiness correlation",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T38.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1929,7 +1929,7 @@
       "description": "Work hours and salary correlation",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T39.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1957,7 +1957,7 @@
       "description": "Weight analysis of species C",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T40.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -1985,7 +1985,7 @@
       "description": "Infection rates per 1,000",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T42.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -2014,7 +2014,7 @@
       "description": "Sales trend for gift shop A",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T43.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -2043,7 +2043,7 @@
       "description": "Book price trend in City Z",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T44.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -2072,7 +2072,7 @@
       "description": "Ice cream brand voting across states",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T45.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -2107,7 +2107,7 @@
       "description": "Water sales vs temperature",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T46.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -2135,7 +2135,7 @@
       "description": "Reading preferences by time of day",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T47.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -2163,7 +2163,7 @@
       "description": "Voting on hiking trails",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T48.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -2198,7 +2198,7 @@
       "description": "Average mall customers in Town X",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T49.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -2224,7 +2224,7 @@
       "description": "Average new buildings in City Z",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T50.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -2250,7 +2250,7 @@
       "description": "Monthly sales trend for store B",
       "type": "image",
       "path": "libraries/calvi/assets/questions/trick/T52.jpg",
-      "nextButtonLocation": "belowStimulus",
+      "nextButtonLocation": "sidebar",
       "nextButtonText": "Continue",
       "style": {
         "maxHeight": "80%"
@@ -2294,6 +2294,8 @@
         "N11",
         "N12",
         "N13",
+        "N14",
+        "N15",
         "T1",
         "T2",
         "T3",
