@@ -105,7 +105,7 @@ export function StepRenderer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const sidebarWidth = studyConfig.uiConfig.sidebarWidth ?? 300;
+  const sidebarWidth = componentConfig?.sidebarWidth !== undefined ? componentConfig.sidebarWidth : studyConfig.uiConfig.sidebarWidth ?? 300;
 
   const { studyNavigatorEnabled, dataCollectionEnabled } = useMemo(() => modes, [modes]);
 
