@@ -17,12 +17,12 @@ In the image above, you can see that nodes **A** and **B** are **connected**, so
 
 Here, notice two important things:
 
-- The **green and yellow areas are symmetrical**. This happens because in this example, **links don't have a direction**: a link from A to B is the same as from B to A.
+- The **green and blue areas are symmetrical**. This happens because in this example, **links don't have a direction**: a link from A to B is the same as from B to A.
 - The **yellow diagonal** represents links from a node to itself. In this case, the diagonal is all 0s, meaning there are no **self-connections** (nodes are not linked to themselves).
 
 <img src='./assets/images/simple-matrix-loop.png' width='1000'>
 
-On the above image you can see a graph where the C node has an autoconnection and its correspongding adjacency matrix. The autoconnection is on the diagonal highlighted with orange.
+On the above image you can see a graph where the C node has an **autoconnection** and its correspongding adjacency matrix. The autoconnection is on the diagonal highlighted with orange. **In our study, nodes can have autonnections**.
 
 ## Weighted adjacency matrices
 
@@ -34,7 +34,7 @@ In the image above, you can see that the connection value between **B and C (5) 
 
 As we'll explain in the next section, in our case, the weight represents the cost of a flight ticket between 2 states.
 
-## Why are adjacency matrices useful?
+## Why are adjacency matrices useful? (TO DISCUSS INCLUSION)
 
 - Simple structure: Easy to store and analyze with computers.
 - Visual clarity: When networks are very large, matrices can be cleaner than traditional node-link diagrams.

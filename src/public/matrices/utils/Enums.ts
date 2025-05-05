@@ -40,6 +40,6 @@ export enum MarkColor {
 
 export enum UserAction {
   clearNodeSelection = 'Clear States Selection',
-  clearLinkSelection = 'Clear Flight Selection',
+  clearLinkSelection = 'Clear Flights Selection',
   resetOrdering = 'Reset Ordering',
 }

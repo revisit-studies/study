@@ -57,102 +57,185 @@
             "response": [],
             "type": "markdown"
         },
-        "interaction": {
+        "training_intro": {
+            "allowFailedTraining": false,
             "correctAnswer": [],
-            "instruction": "Let\u2019s play with the matrix!<br><b>Move your mouse over the cells:</b> this will highlight the corresponding row and column.<br><b>Click on the top labels (the names at the top): </b>the states on the left will reorder themselves.<ul><li>The states that have flights connected to it will come first alphabetically.</li><li>The ones without direct flights will move to the bottom, sorted alphabetically.</li></ul>Click again on the top label to undo the ordering.<br><b>Click on the left-side state names (the ones written horizontally): </b>to answer some questions, you\u2019ll need to select states by clicking on the names on the left side.<ul><li>Click once to select a state.</li><li>Click again to unselect it, or use the Clear Selection button if you want to start fresh.</li></ul><b>Click on the cells to mark a connection: </b>this is not an answer but it can help you in certain tasks. Click again to undo cell selection",
+            "instruction": "Before exploring the matrix functionality, let's start with a quick recap.<br><br>You are looking at an adjacency matrix of flight connections. Each cell shows the **mean** flight price between two states, along with the **standard deviation**, since the data is aggregated.<br><br>Note that the states are ordered alphabetically along both axes.<br><br>On the right side, you'll find a legend explaining how the mean and standard deviation are encoded.",
             "nextButtonLocation": "sidebar",
             "parameters": {
-                "dataset": "training.txt",
+                "dataset": "training_test.txt",
                 "encoding": "mark"
             },
             "path": "matrices/Stimuli.tsx",
+            "provideFeedback": true,
             "response": [],
+            "trainingAttempts": 4.0,
             "type": "react-component"
         },
-        "training_1": {
+        "training_interaction": {
+            "allowFailedTraining": false,
             "correctAnswer": [],
-            "instruction": "Lets try a simple task.<br> Select the following states: Texas, Florida and Nevada",
+            "instruction": "<b>Move your mouse over the cells:</b> this will highlight the corresponding row and column.<br><br><b>Click on the top labels (states at the top): </b>the left axis will reorder itself. States that have flights connected to it will come first. The ones without direct flights will move to the bottom.</li> Click again on the top label to undo the ordering.<br><br><b>Click on the left-side labels (states written horizontally): </b>to answer some questions you\u2019ll need to select states by clicking on the names on the left side. Click once to select a state. Click again to unselect it, or use the Clear States Selection button if you want to start fresh.<br><br><b>Click on the cells to mark a connection: </b>this is not an answer but it can help you in certain tasks. Click again to undo cell selection or use the Clear Flights Selection button if you want to start fresh.",
             "nextButtonLocation": "sidebar",
             "parameters": {
-                "dataset": "training.txt",
+                "dataset": "training_test.txt",
                 "encoding": "mark"
             },
             "path": "matrices/Stimuli.tsx",
-            "response": [
+            "provideFeedback": true,
+            "response": [],
+            "trainingAttempts": 4.0,
+            "type": "react-component"
+        },
+        "training_selection": {
+            "allowFailedTraining": false,
+            "correctAnswer": [
                 {
-                    "id": "answerNodes",
-                    "location": "sidebar",
-                    "prompt": "Selected States:",
-                    "requiredValue": [
+                    "answer": [
                         "Texas",
                         "Florida",
                         "Nevada"
                     ],
-                    "type": "reactive"
+                    "id": "answerNodes"
                 }
             ],
-            "type": "react-component"
-        },
-        "training_2": {
-            "correctAnswer": [],
-            "instruction": "Select all states connected to South Carolina.",
+            "instruction": "Lets try a simple task.<br> Select the following states: Texas, Florida and Nevada",
             "nextButtonLocation": "sidebar",
             "parameters": {
-                "dataset": "training.txt",
+                "dataset": "training_test.txt",
                 "encoding": "mark"
             },
             "path": "matrices/Stimuli.tsx",
+            "provideFeedback": true,
             "response": [
                 {
                     "id": "answerNodes",
                     "location": "sidebar",
                     "prompt": "Selected States:",
-                    "requiredValue": [
+                    "type": "reactive"
+                }
+            ],
+            "trainingAttempts": 4.0,
+            "type": "react-component"
+        },
+        "training_adjacency": {
+            "allowFailedTraining": false,
+            "correctAnswer": [
+                {
+                    "answer": [
                         "Florida",
                         "New York",
                         "Texas",
                         "Pennsylvania"
                     ],
-                    "secondaryText": "Tip: Clicking on the vertical labels will reorder the nodes, placing the connected ones first, followed by the disconnected ones in alphabetical order.",
-                    "type": "reactive"
+                    "id": "answerNodes"
                 }
             ],
-            "type": "react-component"
-        },
-        "training_3": {
-            "correctAnswer": [],
-            "instruction": "Select all states connected to Pennsylvania with a price variation greater than $90.",
+            "instruction": "Select all states connected to South Carolina.",
             "nextButtonLocation": "sidebar",
             "parameters": {
-                "dataset": "training.txt",
+                "dataset": "training_test.txt",
                 "encoding": "mark"
             },
             "path": "matrices/Stimuli.tsx",
+            "provideFeedback": true,
             "response": [
                 {
                     "id": "answerNodes",
                     "location": "sidebar",
                     "prompt": "Selected States:",
-                    "requiredValue": [
-                        "Texas",
-                        "Missouri",
-                        "Ohio"
-                    ],
                     "secondaryText": "Tip: Clicking on the vertical labels will reorder the nodes, placing the connected ones first, followed by the disconnected ones in alphabetical order.",
                     "type": "reactive"
                 }
             ],
+            "trainingAttempts": 4.0,
             "type": "react-component"
         },
-        "training_4": {
-            "correctAnswer": [],
-            "instruction": "What is the price range for flights connected Ohio?",
+        "training_mean_adjacency": {
+            "allowFailedTraining": false,
+            "correctAnswer": [
+                {
+                    "answer": [
+                        "Florida",
+                        "Texas",
+                        "California",
+                        "Nevada"
+                    ],
+                    "id": "answerNodes"
+                }
+            ],
+            "instruction": "Select all states connected to Kentucky with a mean price below $100.",
             "nextButtonLocation": "sidebar",
             "parameters": {
-                "dataset": "training.txt",
+                "dataset": "training_test.txt",
                 "encoding": "mark"
             },
             "path": "matrices/Stimuli.tsx",
+            "provideFeedback": true,
+            "response": [
+                {
+                    "id": "answerNodes",
+                    "location": "sidebar",
+                    "prompt": "Selected States:",
+                    "secondaryText": "Tip: Clicking on the vertical labels will reorder the nodes, placing the connected ones first, followed by the disconnected ones in alphabetical order.",
+                    "type": "reactive"
+                }
+            ],
+            "trainingAttempts": 4.0,
+            "type": "react-component"
+        },
+        "training_std_adjacency": {
+            "allowFailedTraining": false,
+            "correctAnswer": [
+                {
+                    "answer": [
+                        "Texas",
+                        "Missouri",
+                        "Ohio"
+                    ],
+                    "id": "answerNodes"
+                }
+            ],
+            "instruction": "Select all states connected to Pennsylvania with a price variation greater than $90.",
+            "nextButtonLocation": "sidebar",
+            "parameters": {
+                "dataset": "training_test.txt",
+                "encoding": "mark"
+            },
+            "path": "matrices/Stimuli.tsx",
+            "provideFeedback": true,
+            "response": [
+                {
+                    "id": "answerNodes",
+                    "location": "sidebar",
+                    "prompt": "Selected States:",
+                    "secondaryText": "Tip: Clicking on the vertical labels will reorder the nodes, placing the connected ones first, followed by the disconnected ones in alphabetical order.",
+                    "type": "reactive"
+                }
+            ],
+            "trainingAttempts": 4.0,
+            "type": "react-component"
+        },
+        "training_range": {
+            "allowFailedTraining": false,
+            "correctAnswer": [
+                {
+                    "answer": 40,
+                    "id": "min"
+                },
+                {
+                    "answer": 400,
+                    "id": "max"
+                }
+            ],
+            "instruction": "What is the price range for flights connected to Ohio? Range as Mean \u00b1 Standard Deviation",
+            "nextButtonLocation": "sidebar",
+            "parameters": {
+                "dataset": "training_test.txt",
+                "encoding": "mark"
+            },
+            "path": "matrices/Stimuli.tsx",
+            "provideFeedback": true,
             "response": [
                 {
                     "id": "min",
@@ -168,6 +251,7 @@
                         }
                     ],
                     "prompt": "Price range minimum value:",
+                    "step": 10.0,
                     "type": "slider"
                 },
                 {
@@ -184,17 +268,25 @@
                         }
                     ],
                     "prompt": "Price range maximum value:",
+                    "step": 10.0,
                     "type": "slider"
                 }
             ],
+            "trainingAttempts": 4.0,
             "type": "react-component"
         },
-        "training_5": {
-            "correctAnswer": [],
-            "instruction": "Finally, clusters are groups of nodes that are highly interconnected. In this context, it means you can travel between the states within a cluster. Which of the highlighted clusters has the highest average mean price?",
+        "training_cluster": {
+            "allowFailedTraining": false,
+            "correctAnswer": [
+                {
+                    "answer": "c",
+                    "id": "training_cluster"
+                }
+            ],
+            "instruction": "Finally, clusters are groups of nodes that are highly interconnected. In this context, it means you can travel between any of the states within a cluster. Which of the highlighted clusters has the highest average mean price?",
             "nextButtonLocation": "sidebar",
             "parameters": {
-                "dataset": "training.txt",
+                "dataset": "training_test.txt",
                 "encoding": "mark",
                 "isClusterTask": true,
                 "clusterMarks": [
@@ -218,9 +310,10 @@
                 "clusterVar": "mean"
             },
             "path": "matrices/Stimuli.tsx",
+            "provideFeedback": true,
             "response": [
                 {
-                    "id": "range",
+                    "id": "training_cluster",
                     "location": "sidebar",
                     "options": [
                         {
@@ -236,28 +329,17 @@
                             "value": "c"
                         }
                     ],
-                    "prompt": "Select a range:",
-                    "requiredValue": "c",
+                    "prompt": "Select a cluster:",
                     "type": "radio"
                 }
             ],
+            "trainingAttempts": 4.0,
             "type": "react-component"
         },
         "training_ends": {
             "correctAnswer": [],
             "path": "matrices/assets/training_ends.md",
-            "response": [
-                {
-                    "id": "repeat",
-                    "location": "belowStimulus",
-                    "options": [
-                        "Yes",
-                        "No"
-                    ],
-                    "prompt": "Do you want to repeat the training?",
-                    "type": "buttons"
-                }
-            ],
+            "response": [],
             "type": "markdown"
         },
         "adjacency": {
@@ -267,10 +349,10 @@
                     "id": "answerNodes"
                 }
             ],
-            "instruction": "ADJACENCY TASK. Select adjacent nodes to one given.<br><br>QUESTIONS. Which states are connected to South Carolina?",
+            "instruction": "Which states are connected to South Carolina?",
             "nextButtonLocation": "sidebar",
             "parameters": {
-                "dataset": "test.txt",
+                "dataset": "task_test.txt",
                 "encoding": "mark"
             },
             "path": "matrices/Stimuli.tsx",
@@ -291,10 +373,10 @@
                     "id": "answerNodes"
                 }
             ],
-            "instruction": "ATTRIBUTE TASK. Select adjacent nodes to one given constrained by attribute values.<br><br>QUESTION. Which states are connected to Missouri with a price variation higher than $90?",
+            "instruction": "Which states are connected to Missouri with a price variation higher than $90?",
             "nextButtonLocation": "sidebar",
             "parameters": {
-                "dataset": "test.txt",
+                "dataset": "task_test.txt",
                 "encoding": "mark"
             },
             "path": "matrices/Stimuli.tsx",
@@ -315,10 +397,10 @@
                     "id": "answerNodes"
                 }
             ],
-            "instruction": "ATTRIBUTE COMBINATION TASK. Select adjacent nodes to one given under a combination of both attributes.<br><br>QUESTION. Which states are connected to Utah with a flight prices between $100 and $200, without spending less or more?",
+            "instruction": "Which states are connected to Utah with flight prices approximately between $100 and $200?",
             "nextButtonLocation": "sidebar",
             "parameters": {
-                "dataset": "test.txt",
+                "dataset": "task_test.txt",
                 "encoding": "mark"
             },
             "path": "matrices/Stimuli.tsx",
@@ -339,10 +421,10 @@
                     "id": "answerNodes"
                 }
             ],
-            "instruction": "EXTREME ATTRIBUTE TASK. Select adjacent nodes to one given with extreme attribute values.<br><br>QUESTION. Which state or states connected to Virginia show the highest price variation?",
+            "instruction": "Which state or states connected to Virginia show the highest price variation?",
             "nextButtonLocation": "sidebar",
             "parameters": {
-                "dataset": "test.txt",
+                "dataset": "task_test.txt",
                 "encoding": "mark"
             },
             "path": "matrices/Stimuli.tsx",
@@ -374,7 +456,7 @@
             "instruction": "PATH ESTIMATION TASK. Select between two paths the one that better fits for a given criteria.<br><br>QUESTION. On which of the following routes would you spend less money. Select the route and estimate the final price range.",
             "nextButtonLocation": "sidebar",
             "parameters": {
-                "dataset": "test.txt",
+                "dataset": "task_test.txt",
                 "encoding": "mark",
                 "isPathTask": true,
                 "paths": [
@@ -446,10 +528,10 @@
                     "id": "max"
                 }
             ],
-            "instruction": "RANGE ESTIMATION TASK. Estimate the range of link values for a given node. Participants will provide both the minimum and maximum values.<br><br>QUESTION. What is the price range of flying from Arizona?",
+            "instruction": "What is the price range of flying from Arizona?",
             "nextButtonLocation": "sidebar",
             "parameters": {
-                "dataset": "test.txt",
+                "dataset": "task_test.txt",
                 "encoding": "mark",
                 "isRangeTask": true
             },
@@ -469,6 +551,7 @@
                         }
                     ],
                     "prompt": "Price range minimum value:",
+                    "step": 10.0,
                     "type": "slider"
                 },
                 {
@@ -485,6 +568,7 @@
                         }
                     ],
                     "prompt": "Price range maximum value:",
+                    "step": 10.0,
                     "type": "slider"
                 }
             ],
@@ -497,10 +581,10 @@
                     "id": "answerNodes"
                 }
             ],
-            "instruction": "TREND EXTIMATION TASK. Estimate the stability of the links of a given node. Participants will select between stable, unstable or can\u2019t tell.<br><br>QUESTION. Are flight prices stable when flying from/to Oregon?",
+            "instruction": "Are flight prices stable when flying from/to Oregon?",
             "nextButtonLocation": "sidebar",
             "parameters": {
-                "dataset": "test.txt",
+                "dataset": "task_test.txt",
                 "encoding": "mark"
             },
             "path": "matrices/Stimuli.tsx",
@@ -526,10 +610,10 @@
                     "id": "cluster"
                 }
             ],
-            "instruction": "QUESTION. Which cluster has highest average mean price?",
+            "instruction": "Which cluster has the highest average mean price?",
             "nextButtonLocation": "sidebar",
             "parameters": {
-                "dataset": "test.txt",
+                "dataset": "task_test.txt",
                 "encoding": "mark",
                 "isClusterTask": true,
                 "clusterMarks": [
@@ -581,10 +665,10 @@
                     "id": "cluster"
                 }
             ],
-            "instruction": "QUESTION. Which cluster prices vary the most?",
+            "instruction": "Which cluster prices vary the most?",
             "nextButtonLocation": "sidebar",
             "parameters": {
-                "dataset": "test.txt",
+                "dataset": "task_test.txt",
                 "encoding": "mark",
                 "isClusterTask": true,
                 "clusterMarks": [
@@ -639,12 +723,14 @@
             "encoding_description",
             {
                 "components": [
-                    "interaction",
-                    "training_1",
-                    "training_2",
-                    "training_3",
-                    "training_4",
-                    "training_5",
+                    "training_intro",
+                    "training_interaction",
+                    "training_selection",
+                    "training_adjacency",
+                    "training_mean_adjacency",
+                    "training_std_adjacency",
+                    "training_range",
+                    "training_cluster",
                     "training_ends"
                 ],
                 "order": "fixed"
@@ -680,6 +766,7 @@
     },
     "uiConfig": {
         "contactEmail": "jorge.acosta@upm.es",
+        "helpTextPath": "matrices/assets/mark_description.md",
         "logoPath": "revisitAssets/revisitLogoSquare.svg",
         "sidebar": true,
         "withProgressBar": true
