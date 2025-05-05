@@ -27,7 +27,9 @@
     "sequence": {
       "order": "fixed",
       "components": [
-        "$calvi.se.full"
+        "$calvi.se.full",
+        "$calvi.se.specificBank",
+        "$calvi.se.fullBank"
       ]
     }
 }
