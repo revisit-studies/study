@@ -595,7 +595,7 @@
                     "options": [
                         "Stable",
                         "Unstable",
-                        "Cant't"
+                        "I don't know"
                     ],
                     "prompt": "Select an option:",
                     "type": "radio"
