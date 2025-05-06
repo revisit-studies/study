@@ -20,23 +20,10 @@ export function EncodedCells() {
   useEffect(() => {
     if (!ref.current) return;
 
-    const filteredData = data.filter((d) => d.origin >= d.destination);
-    filteredData.forEach((d) => {
-      if (d.destination !== d.origin) {
-        const item = { ...d };
-        item.origin = d.destination;
-        item.destination = d.origin;
-        filteredData.push(item);
-      }
-    });
-
     const g = d3
       .select(ref.current)
       .selectAll<SVGGElement, link>('.cell')
-      .data(
-        filteredData,
-        (d) => originAccesor(d) + destinationAccesor(d) + meanAccesor(d) + stdAccesor(d),
-      )
+      .data(data, (d) => originAccesor(d) + destinationAccesor(d) + meanAccesor(d) + stdAccesor(d))
       .join(
         (enter) => enter
           .append('g')

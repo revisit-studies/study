@@ -34,7 +34,18 @@ export function Stimuli({
         .filter((line) => line.trim().length > 0)
         .map((line) => JSON.parse(line));
 
-      setData(parsedData);
+      // We keep upper diagonal
+      const filteredData = parsedData.filter((d) => d.origin >= d.destination);
+      filteredData.forEach((d) => {
+        if (d.destination !== d.origin) {
+          const item = { ...d };
+          item.origin = d.destination;
+          item.destination = d.origin;
+          filteredData.push(item);
+        }
+      });
+
+      setData(filteredData);
     } catch (error) {
       console.error('Error loading JSON:', error);
     }

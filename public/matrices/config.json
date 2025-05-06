@@ -202,7 +202,7 @@
       "allowFailedTraining": false,
       "correctAnswer": [
         {
-          "answer": 40,
+          "answer": 0,
           "id": "min"
         },
         {
@@ -261,7 +261,7 @@
       "allowFailedTraining": false,
       "correctAnswer": [
         {
-          "answer": "c",
+          "answer": "a",
           "id": "training_cluster"
         }
       ],
@@ -275,17 +275,17 @@
           {
             "option": "A",
             "origin": "Texas",
-            "destination": "Kentucky"
+            "destination": "Pennsylvania"
           },
           {
             "option": "B",
-            "origin": "Florida",
-            "destination": "Florida"
+            "origin": "Nevada",
+            "destination": "Nevada"
           },
           {
             "option": "C",
-            "origin": "Ohio",
-            "destination": "Arizona"
+            "origin": "California",
+            "destination": "Ohio"
           }
         ],
         "clusterMode": "optimal",
@@ -327,11 +327,25 @@
     "adjacency": {
       "correctAnswer": [
         {
-          "answer": [],
+          "answer": [
+            "Florida",
+            "Georgia",
+            "Illinois",
+            "Maryland",
+            "Massachusetts",
+            "New Jersey",
+            "Michigan",
+            "New York",
+            "Ohio",
+            "Pennsylvania",
+            "Tennessee",
+            "Texas",
+            "Washington"
+          ],
           "id": "answerNodes"
         }
       ],
-      "instruction": "Which states are connected to South Carolina?",
+      "instruction": "Which state(s) are connected to South Carolina?",
       "nextButtonLocation": "sidebar",
       "parameters": {
         "dataset": "task_test.txt",
@@ -351,11 +365,11 @@
     "attr_std": {
       "correctAnswer": [
         {
-          "answer": [],
+          "answer": ["Georgia", "Oregon", "South Carolina", "Utah"],
           "id": "answerNodes"
         }
       ],
-      "instruction": "Which states are connected to Missouri with a price variation higher than $90?",
+      "instruction": "Which state(s) are connected to Georgia with a price variation higher than $90?",
       "nextButtonLocation": "sidebar",
       "parameters": {
         "dataset": "task_test.txt",
@@ -375,11 +389,11 @@
     "attr_comb": {
       "correctAnswer": [
         {
-          "answer": [],
+          "answer": ["New York", "Texas", "Washington"],
           "id": "answerNodes"
         }
       ],
-      "instruction": "Which states are connected to Utah with flight prices approximately between $100 and $200?",
+      "instruction": "Which state(s) are connected to Utah with flight prices approximately between $100 and $200?",
       "nextButtonLocation": "sidebar",
       "parameters": {
         "dataset": "task_test.txt",
@@ -399,11 +413,11 @@
     "max_attr_std": {
       "correctAnswer": [
         {
-          "answer": [],
+          "answer": ["Oregon"],
           "id": "answerNodes"
         }
       ],
-      "instruction": "Which state or states connected to Virginia show the highest price variation?",
+      "instruction": "Which state(s) connected to Virginia show the highest price variation?",
       "nextButtonLocation": "sidebar",
       "parameters": {
         "dataset": "task_test.txt",
@@ -427,15 +441,15 @@
           "id": "path"
         },
         {
-          "answer": 100,
+          "answer": 120,
           "id": "min"
         },
         {
-          "answer": 300,
+          "answer": 380,
           "id": "max"
         }
       ],
-      "instruction": "PATH ESTIMATION TASK. Select between two paths the one that better fits for a given criteria.<br><br>QUESTION. On which of the following routes would you spend less money. Select the route and estimate the final price range.",
+      "instruction": "On which of the following routes would you spend less money. Select the route and estimate the final price range.",
       "nextButtonLocation": "sidebar",
       "parameters": {
         "dataset": "task_test.txt",
@@ -475,6 +489,7 @@
             }
           ],
           "prompt": "Price range minimum value:",
+          "step": 10.0,
           "type": "slider"
         },
         {
@@ -491,6 +506,7 @@
             }
           ],
           "prompt": "Price range maximum value:",
+          "step": 10.0,
           "type": "slider"
         }
       ],
@@ -499,11 +515,11 @@
     "range": {
       "correctAnswer": [
         {
-          "answer": 100,
+          "answer": 0,
           "id": "min"
         },
         {
-          "answer": 300,
+          "answer": 350,
           "id": "max"
         }
       ],
@@ -581,7 +597,7 @@
     "cluster_avg": {
       "correctAnswer": [
         {
-          "answer": "A",
+          "answer": "C",
           "id": "cluster"
         }
       ],
@@ -594,23 +610,23 @@
         "clusterMarks": [
           {
             "option": "A",
-            "origin": "Texas",
-            "destination": "Pennsylvania"
+            "origin": "Virginia",
+            "destination": "Arizona"
           },
           {
             "option": "B",
-            "origin": "Utah",
-            "destination": "Massachusetts"
+            "origin": "Massachusetts",
+            "destination": "Utah"
           },
           {
             "option": "C",
-            "origin": "Massachusetts",
-            "destination": "Washington"
+            "origin": "Washington",
+            "destination": "Massachusetts"
           },
           {
             "option": "D",
-            "origin": "Missouri",
-            "destination": "Colorado"
+            "origin": "Utah",
+            "destination": "Tennessee"
           }
         ],
         "clusterMode": "optimal",
@@ -631,7 +647,7 @@
     "cluster_std": {
       "correctAnswer": [
         {
-          "answer": "A",
+          "answer": "C",
           "id": "cluster"
         }
       ],
@@ -644,27 +660,27 @@
         "clusterMarks": [
           {
             "option": "A",
-            "origin": "New Jersey",
-            "destination": "California"
-          },
-          {
-            "option": "B",
             "origin": "Missouri",
             "destination": "Texas"
           },
           {
-            "option": "C",
-            "origin": "Nevada",
+            "option": "B",
+            "origin": "Maryland",
             "destination": "New York"
           },
           {
-            "option": "D",
+            "option": "C",
             "origin": "Georgia",
-            "destination": "Virginia"
+            "destination": "Minnesota"
+          },
+          {
+            "option": "D",
+            "origin": "Pennsylvania",
+            "destination": "North Carolina"
           }
         ],
-        "clusterMode": "pca",
-        "clusterVar": "mean"
+        "clusterMode": "optimal",
+        "clusterVar": "std"
       },
       "path": "matrices/Stimuli.tsx",
       "response": [
