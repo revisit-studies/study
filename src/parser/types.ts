@@ -630,6 +630,10 @@ export interface BaseIndividualComponent {
   responseDividers?: boolean;
   /** Optional override for the help text. If present, will override the default help text path set in the uiConfig. */
   helpTextPathOverride?: string;
+  /** Optional override for the title. If present, will override the default title set in the uiConfig. */
+  showTitle?: boolean;
+  /** Optional override for the title bar. If present, will override the default title bar set in the uiConfig. */
+  showTitleBar?: boolean;
 }
 
 /**

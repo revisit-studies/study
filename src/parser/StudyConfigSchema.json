@@ -151,6 +151,14 @@
             "description": "Whether to show the response dividers. Defaults to false.",
             "type": "boolean"
           },
+          "showTitle": {
+            "description": "Optional override for the title. If present, will override the default title set in the uiConfig.",
+            "type": "boolean"
+          },
+          "showTitleBar": {
+            "description": "Optional override for the title bar. If present, will override the default title bar set in the uiConfig.",
+            "type": "boolean"
+          },
           "style": {
             "additionalProperties": {
               "type": "string"
@@ -655,6 +663,14 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "showTitle": {
+          "description": "Optional override for the title. If present, will override the default title set in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Optional override for the title bar. If present, will override the default title bar set in the uiConfig.",
+          "type": "boolean"
+        },
         "style": {
           "additionalProperties": {
             "type": "string"
@@ -899,6 +915,14 @@
         },
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
+        },
+        "showTitle": {
+          "description": "Optional override for the title. If present, will override the default title set in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Optional override for the title bar. If present, will override the default title bar set in the uiConfig.",
           "type": "boolean"
         },
         "style": {
@@ -1153,6 +1177,14 @@
         },
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
+        },
+        "showTitle": {
+          "description": "Optional override for the title. If present, will override the default title set in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Optional override for the title bar. If present, will override the default title bar set in the uiConfig.",
           "type": "boolean"
         },
         "trainingAttempts": {
@@ -1438,6 +1470,14 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "showTitle": {
+          "description": "Optional override for the title. If present, will override the default title set in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Optional override for the title bar. If present, will override the default title bar set in the uiConfig.",
+          "type": "boolean"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -1649,6 +1689,14 @@
         },
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
+        },
+        "showTitle": {
+          "description": "Optional override for the title. If present, will override the default title set in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Optional override for the title bar. If present, will override the default title bar set in the uiConfig.",
           "type": "boolean"
         },
         "trainingAttempts": {
@@ -2332,6 +2380,14 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "showTitle": {
+          "description": "Optional override for the title. If present, will override the default title set in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Optional override for the title bar. If present, will override the default title bar set in the uiConfig.",
+          "type": "boolean"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -2421,6 +2477,14 @@
         },
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
+        },
+        "showTitle": {
+          "description": "Optional override for the title. If present, will override the default title set in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Optional override for the title bar. If present, will override the default title bar set in the uiConfig.",
           "type": "boolean"
         },
         "trainingAttempts": {
@@ -2516,6 +2580,14 @@
         },
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
+        },
+        "showTitle": {
+          "description": "Optional override for the title. If present, will override the default title set in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Optional override for the title bar. If present, will override the default title bar set in the uiConfig.",
           "type": "boolean"
         },
         "trainingAttempts": {
@@ -2616,6 +2688,14 @@
         },
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
+        },
+        "showTitle": {
+          "description": "Optional override for the title. If present, will override the default title set in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Optional override for the title bar. If present, will override the default title bar set in the uiConfig.",
           "type": "boolean"
         },
         "trainingAttempts": {
