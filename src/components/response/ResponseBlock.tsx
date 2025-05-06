@@ -253,7 +253,7 @@ export function ResponseBlock({
               <>
                 <ResponseSwitcher
                   storedAnswer={storedAnswer}
-                  answer={{
+                  form={{
                     ...answerValidator.getInputProps(response.id, {
                       type: response.type === 'checkbox' ? 'checkbox' : 'input',
                     }),

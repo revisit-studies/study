@@ -18,10 +18,11 @@ import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { MatrixInput } from './MatrixInput';
 import { ButtonsInput } from './ButtonsInput';
 import classes from './css/Checkbox.module.css';
+import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 
 export function ResponseSwitcher({
   response,
-  answer,
+  form,
   storedAnswer,
   index,
   configInUse,
@@ -29,14 +30,16 @@ export function ResponseSwitcher({
   otherInput,
 }: {
   response: Response;
-  answer: GetInputPropsReturnType;
+  form: GetInputPropsReturnType;
   storedAnswer?: StoredAnswer['answer'];
   index: number;
   configInUse: IndividualComponent;
   dontKnowCheckbox?: GetInputPropsReturnType;
   otherInput?: GetInputPropsReturnType;
 }) {
-  const ans = (Object.keys(storedAnswer || {}).length > 0 ? { value: storedAnswer![response.id] } : answer) || { value: undefined };
+  const isAnalysis = useIsAnalysis();
+  // Don't update if we're in analysis mode
+  const ans = (isAnalysis ? { value: storedAnswer![response.id] } : form) || { value: undefined };
   const dontKnowValue = (Object.keys(storedAnswer || {}).length > 0 ? { checked: storedAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined };
   const otherValue = (Object.keys(storedAnswer || {}).length > 0 ? { value: storedAnswer![`${response.id}-other`] } : otherInput) || { value: undefined };
   const disabled = Object.keys(storedAnswer || {}).length > 0;
@@ -51,8 +54,7 @@ export function ResponseSwitcher({
       const responseParam = searchParams.get(response.paramCapture);
       return disabled || !!responseParam;
     }
-
-    return disabled;
+    return false;
   }, [disabled, response.paramCapture, searchParams]);
 
   const fieldInitialValue = useMemo(() => {
@@ -187,7 +189,7 @@ export function ResponseSwitcher({
           classNames={{ input: classes.fixDisabled, label: classes.fixDisabledLabel, icon: classes.fixDisabledIcon }}
           {...dontKnowCheckbox}
           checked={dontKnowValue.checked}
-          onChange={(event) => { dontKnowCheckbox?.onChange(event.currentTarget.checked); answer.onChange(fieldInitialValue); }}
+          onChange={(event) => { dontKnowCheckbox?.onChange(event.currentTarget.checked); form.onChange(fieldInitialValue); }}
         />
       )}
 
