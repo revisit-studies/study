@@ -55,7 +55,7 @@
             "description": "Whether to force the video to play until the end. Defaults to true.",
             "type": "boolean"
           },
-          "helpTextPathOverride": {
+          "helpTextPath": {
             "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
             "type": "string"
           },
@@ -151,10 +151,6 @@
             "description": "Whether to show the response dividers. Defaults to false.",
             "type": "boolean"
           },
-          "sidebar": {
-            "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
-            "type": "boolean"
-          },
           "sidebarWidth": {
             "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
             "type": "number"
@@ -184,6 +180,10 @@
           },
           "withProgressBar": {
             "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+            "type": "boolean"
+          },
+          "withSidebar": {
+            "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
             "type": "boolean"
           },
           "withTimeline": {
@@ -611,7 +611,7 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -667,10 +667,6 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
-        "sidebar": {
-          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
-          "type": "boolean"
-        },
         "sidebarWidth": {
           "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
           "type": "number"
@@ -692,6 +688,10 @@
         },
         "withProgressBar": {
           "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
           "type": "boolean"
         }
       },
@@ -829,7 +829,7 @@
           "description": "Whether to force the video to play until the end. Defaults to true.",
           "type": "boolean"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -925,10 +925,6 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
-        "sidebar": {
-          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
-          "type": "boolean"
-        },
         "sidebarWidth": {
           "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
           "type": "number"
@@ -958,6 +954,10 @@
         },
         "withProgressBar": {
           "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
           "type": "boolean"
         },
         "withTimeline": {
@@ -1135,7 +1135,7 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -1191,10 +1191,6 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
-        "sidebar": {
-          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
-          "type": "boolean"
-        },
         "sidebarWidth": {
           "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
           "type": "number"
@@ -1209,6 +1205,10 @@
         },
         "withProgressBar": {
           "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
           "type": "boolean"
         }
       },
@@ -1434,7 +1434,7 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -1486,10 +1486,6 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
-        "sidebar": {
-          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
-          "type": "boolean"
-        },
         "sidebarWidth": {
           "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
           "type": "number"
@@ -1504,6 +1500,10 @@
         },
         "withProgressBar": {
           "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
           "type": "boolean"
         }
       },
@@ -1650,7 +1650,7 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -1711,10 +1711,6 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
-        "sidebar": {
-          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
-          "type": "boolean"
-        },
         "sidebarWidth": {
           "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
           "type": "number"
@@ -1729,6 +1725,10 @@
         },
         "withProgressBar": {
           "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
           "type": "boolean"
         }
       },
@@ -2270,12 +2270,8 @@
           "description": "The default name field for a participant. Directs revisit to use the task and response id as a name in UI elements. For example, if you wanted the response 'prolificId' from the task 'introduction' to be the name, this field would be 'introduction.prolificId'",
           "type": "string"
         },
-        "recordStudyAudio": {
+        "recordAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.",
-          "type": "boolean"
-        },
-        "sidebar": {
-          "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question.",
           "type": "boolean"
         },
         "sidebarWidth": {
@@ -2301,13 +2297,17 @@
         "withProgressBar": {
           "description": "Controls whether the progress bar is rendered in the study.",
           "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question.",
+          "type": "boolean"
         }
       },
       "required": [
         "contactEmail",
         "logoPath",
-        "withProgressBar",
-        "sidebar"
+        "withSidebar",
+        "withProgressBar"
       ],
       "type": "object"
     },
@@ -2344,7 +2344,7 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -2396,10 +2396,6 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
-        "sidebar": {
-          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
-          "type": "boolean"
-        },
         "sidebarWidth": {
           "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
           "type": "number"
@@ -2414,6 +2410,10 @@
         },
         "withProgressBar": {
           "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
           "type": "boolean"
         }
       },
@@ -2443,7 +2443,7 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -2499,10 +2499,6 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
-        "sidebar": {
-          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
-          "type": "boolean"
-        },
         "sidebarWidth": {
           "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
           "type": "number"
@@ -2517,6 +2513,10 @@
         },
         "withProgressBar": {
           "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
           "type": "boolean"
         }
       },
@@ -2550,7 +2550,7 @@
           "description": "Whether to force the video to play until the end. Defaults to true.",
           "type": "boolean"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -2606,10 +2606,6 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
-        "sidebar": {
-          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
-          "type": "boolean"
-        },
         "sidebarWidth": {
           "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
           "type": "number"
@@ -2624,6 +2620,10 @@
         },
         "withProgressBar": {
           "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
           "type": "boolean"
         },
         "withTimeline": {
@@ -2657,7 +2657,7 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -2718,10 +2718,6 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
-        "sidebar": {
-          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
-          "type": "boolean"
-        },
         "sidebarWidth": {
           "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
           "type": "number"
@@ -2736,6 +2732,10 @@
         },
         "withProgressBar": {
           "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
           "type": "boolean"
         }
       },

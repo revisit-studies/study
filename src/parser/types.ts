@@ -83,12 +83,15 @@ In the above, the `<study-name>/assets/` path is referring to the path to your i
 export interface UIConfig {
   /** The email address that used during the study if a participant clicks contact. */
   contactEmail: string;
-  /** The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. */
-  helpTextPath?: string;
   /** The path to the logo image. This is displayed on the landing page and the header. */
   logoPath: string;
+  /** Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. */
+  withSidebar: boolean;
   /** Controls whether the progress bar is rendered in the study. */
   withProgressBar: boolean;
+
+  /** The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. */
+  helpTextPath?: string;
   /** Controls whether the study data is automatically downloaded at the end of the study. */
   autoDownloadStudy?: boolean;
   /** The time in milliseconds to wait before automatically downloading the study data. */
@@ -96,24 +99,16 @@ export interface UIConfig {
   /** The message to display when the study ends. */
   studyEndMsg?: string;
   /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.  */
-  recordStudyAudio?: boolean;
-  /** Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. */
-  sidebar: boolean;
+  recordAudio?: boolean;
   /** The width of the left sidebar. Defaults to 300. */
   sidebarWidth?: number;
   /** Debounce time in milliseconds for automatically tracked window events. Defaults to 100. E.g 100 here means 1000ms / 100ms = 10 times a second, 200 here means 1000ms / 200ms = 5 times per second  */
   windowEventDebounceTime?: number;
-  /**
-   * If the participant ID is passed in the URL, this is the name of the querystring parameter that is used to capture the participant ID (e.g. PROLIFIC_ID). This will allow a user to continue a study on different devices and browsers.
-   */
+  /** If the participant ID is passed in the URL, this is the name of the querystring parameter that is used to capture the participant ID (e.g. PROLIFIC_ID). This will allow a user to continue a study on different devices and browsers. */
   urlParticipantIdParam?: string;
-  /**
-   * The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000.
-   */
+  /** The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000. */
   numSequences?: number;
-  /**
-   * Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar.
-   */
+  /** Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. */
   enumerateQuestions?: boolean;
   /** Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set. */
   timeoutReject?: boolean;
@@ -625,9 +620,9 @@ export interface BaseIndividualComponent {
   /** Whether to show the response dividers. Defaults to false. */
   responseDividers?: boolean;
   /** Optional override for the help text. If present, will override the default help text path set in the uiConfig. */
-  helpTextPathOverride?: string;
+  helpTextPath?: string;
   /** Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig. */
-  sidebar?: boolean;
+  withSidebar?: boolean;
   /** Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig. */
   sidebarWidth?: number;
   /** Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig. */
