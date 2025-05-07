@@ -60,6 +60,12 @@ export interface StudyMetadata {
 }
 
 /**
+ * @ignore
+ */
+export type ResponseBlockLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus' | 'stimulus';
+export type ConfigResponseBlockLocation = Exclude<ResponseBlockLocation, 'stimulus'>;
+
+/**
  * The UIConfig is used to configure the UI of the app.
  * This includes the logo, contact email, and whether to show a progress bar.
  * The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the UI Config would look in your study configuration (note, there are optional fields that are not shown here):
@@ -116,6 +122,14 @@ export interface UIConfig {
   participantNameField?: string;
   /** Whether enter key should move to the next question. Defaults to false. */
   nextOnEnter?: boolean;
+  /** The text that is displayed on the next button. */
+  nextButtonText?: string;
+  /** The location of the next button. */
+  nextButtonLocation?: ConfigResponseBlockLocation;
+  /** The time in milliseconds to wait before the next button is disabled. */
+  nextButtonDisableTime?: number;
+  /** The time in milliseconds to wait before the next button is enabled. */
+  nextButtonEnableTime?: number;
 }
 
 /**
@@ -139,12 +153,6 @@ export interface StringOption {
   /** The value stored in the participant's data. */
   value: string;
 }
-
-/**
- * @ignore
- */
-export type ResponseBlockLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus' | 'stimulus';
-export type ConfigResponseBlockLocation = Exclude<ResponseBlockLocation, 'stimulus'>;
 
 /**
  * The BaseResponse interface is used to define the required fields for all responses.
@@ -591,10 +599,6 @@ export interface BaseIndividualComponent {
   response: Response[];
 
   // Optional fields
-  /** The text that is displayed on the next button. */
-  nextButtonText?: string;
-  /** The location of the next button. */
-  nextButtonLocation?: ConfigResponseBlockLocation;
   /** The location of the instructions. */
   instructionLocation?: ConfigResponseBlockLocation;
   /** The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess. */
@@ -613,10 +617,6 @@ export interface BaseIndividualComponent {
   instruction?: string;
   /** Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.  */
   recordAudio?: boolean;
-  /** A timeout (in ms) after which the next button will be disabled. */
-  nextButtonDisableTime?: number;
-  /** A timer (in ms) after which the next button will be enabled. */
-  nextButtonEnableTime?: number;
   /** Whether to show the response dividers. Defaults to false. */
   responseDividers?: boolean;
   /** Optional override for the help text. If present, will override the default help text path set in the uiConfig. */
@@ -627,6 +627,16 @@ export interface BaseIndividualComponent {
   sidebarWidth?: number;
   /** Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig. */
   withProgressBar?: boolean;
+  /** Whether enter key should move to the next question. If present, will override the default nextOnEnter setting in the uiConfig. */
+  nextOnEnter?: boolean;
+  /** The text that is displayed on the next button. If present, will override the default nextButtonText setting in the uiConfig. */
+  nextButtonText?: string;
+  /** The location of the next button. If present, will override the default nextButtonLocation setting in the uiConfig. */
+  nextButtonLocation?: ConfigResponseBlockLocation;
+  /** The time in milliseconds to wait before the next button is disabled. If present, will override the default nextButtonDisableTime setting in the uiConfig. */
+  nextButtonDisableTime?: number;
+  /** The time in milliseconds to wait before the next button is enabled. If present, will override the default nextButtonEnableTime setting in the uiConfig. */
+  nextButtonEnableTime?: number;
 }
 
 /**
