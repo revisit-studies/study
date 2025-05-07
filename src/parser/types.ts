@@ -72,7 +72,7 @@ uiConfig:{
   "autoDownloadStudy": true
   "autoDownloadTime": 5000,
   "studyEndMsg": "Thank you for completing this study. You're the best!",
-  "sidebar": true,
+  "withSidebar": true,
   "windowEventDebounceTime": 500,
   "urlParticipantIdParam": "PROLIFIC_ID",
   "numSequences": 500
