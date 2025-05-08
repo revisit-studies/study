@@ -3,7 +3,10 @@ import {
 } from '@mantine/core';
 import { useEffect, useState } from 'react';
 import { IconAlertTriangle } from '@tabler/icons-react';
+import { useNavigate } from 'react-router';
 import { useStoreSelector } from '../../store/store';
+import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { useStudyId } from '../../routes/utils';
 
 export function ResolutionWarning() {
   const studyConfig = useStoreSelector((state) => state.config);
@@ -12,18 +15,42 @@ export function ResolutionWarning() {
   const minHeight = studyConfig.uiConfig.minHeightSize;
 
   const [showWarning, setShowWarning] = useState(false);
+  const [isRejected, setIsRejected] = useState(false);
+
+  const { storageEngine } = useStorageEngine();
+  const studyId = useStudyId();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleResize = () => {
       const widthTooSmall = minWidth != null && window.innerWidth < minWidth;
       const heightTooSmall = minHeight != null && window.innerHeight < minHeight;
-      setShowWarning(widthTooSmall || heightTooSmall);
+
+      if (!isRejected && (widthTooSmall || heightTooSmall)) {
+        setShowWarning(true);
+
+        if (storageEngine) {
+          setIsRejected(true);
+          storageEngine.rejectCurrentParticipant(studyId, 'Screen resolution too small')
+            .then(() => {
+              setTimeout(() => {
+                setShowWarning(false);
+              }, 5000);
+            })
+            .catch(() => {
+              console.error('Failed to reject participant who failed training');
+              setTimeout(() => {
+                setShowWarning(false);
+              }, 5000);
+            });
+        }
+      }
     };
 
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, [minWidth, minHeight]);
+  }, [minWidth, minHeight, storageEngine, studyId, navigate, isRejected]);
 
   if (!showWarning) {
     return null;
