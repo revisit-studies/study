@@ -19,6 +19,9 @@ import { MatrixInput } from './MatrixInput';
 import { ButtonsInput } from './ButtonsInput';
 import classes from './css/Checkbox.module.css';
 import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
+import { useStoreSelector } from '../../store/store';
+import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
+import { useCurrentStep } from '../../routes/utils';
 
 export function ResponseSwitcher({
   response,
@@ -48,17 +51,25 @@ export function ResponseSwitcher({
 
   const studyConfig = useStudyConfig();
   const enumerateQuestions = studyConfig.uiConfig.enumerateQuestions ?? false;
+  const sequence = useStoreSelector((state) => state.sequence);
+  const flatSequence = getSequenceFlatMap(sequence);
+  const currentStep = useCurrentStep();
 
   const isDisabled = useMemo(() => {
-    if (configInUse.previousButton) {
-      return false;
+    // Do not disable if the next page has previousButton enabled
+    if (typeof currentStep === 'number' && currentStep + 1 < flatSequence.length) {
+      const nextComponent = flatSequence[currentStep + 1];
+      const nextConfig = studyConfig.components[nextComponent];
+      if (nextConfig?.previousButton) {
+        return false;
+      }
     }
     if (response.paramCapture) {
       const responseParam = searchParams.get(response.paramCapture);
       return disabled || !!responseParam;
     }
     return disabled;
-  }, [disabled, response.paramCapture, searchParams, configInUse.previousButton]);
+  }, [disabled, response.paramCapture, searchParams, currentStep, flatSequence, studyConfig.components]);
 
   const fieldInitialValue = useMemo(() => {
     if (response.paramCapture) {
