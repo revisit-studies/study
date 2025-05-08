@@ -2250,10 +2250,6 @@
           "description": "The default name field for a participant. Directs revisit to use the task and response id as a name in UI elements. For example, if you wanted the response 'prolificId' from the task 'introduction' to be the name, this field would be 'introduction.prolificId'",
           "type": "string"
         },
-        "previousOnEnter": {
-          "description": "Whether enter key should move to the previous question. Defaults to false.",
-          "type": "boolean"
-        },
         "recordStudyAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.",
           "type": "boolean"

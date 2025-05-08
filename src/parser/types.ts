@@ -121,8 +121,6 @@ export interface UIConfig {
   participantNameField?: string;
   /** Whether enter key should move to the next question. Defaults to false. */
   nextOnEnter?: boolean;
-  /** Whether enter key should move to the previous question. Defaults to false. */
-  previousOnEnter?: boolean;
 }
 
 /**
