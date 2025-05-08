@@ -50,12 +50,15 @@ export function ResponseSwitcher({
   const enumerateQuestions = studyConfig.uiConfig.enumerateQuestions ?? false;
 
   const isDisabled = useMemo(() => {
+    if (configInUse.previousButton) {
+      return false;
+    }
     if (response.paramCapture) {
       const responseParam = searchParams.get(response.paramCapture);
       return disabled || !!responseParam;
     }
-    return false;
-  }, [disabled, response.paramCapture, searchParams]);
+    return disabled;
+  }, [disabled, response.paramCapture, searchParams, configInUse.previousButton]);
 
   const fieldInitialValue = useMemo(() => {
     if (response.paramCapture) {
