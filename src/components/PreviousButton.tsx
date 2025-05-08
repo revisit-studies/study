@@ -61,22 +61,6 @@ export function PreviousButton({
     [previousButtonDisableTime, previousButtonEnableTime, timer],
   );
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Enter' && !disabled && !isPreviousDisabled && buttonTimerSatisfied) {
-        goToPreviousStep();
-      }
-    };
-
-    if (studyConfig.uiConfig.previousOnEnter) {
-      window.addEventListener('keydown', handleKeyDown);
-      return () => {
-        window.removeEventListener('keydown', handleKeyDown);
-      };
-    }
-    return () => {};
-  }, [disabled, isPreviousDisabled, buttonTimerSatisfied, goToPreviousStep, studyConfig.uiConfig.previousOnEnter]);
-
   return (
     <>
       <Button
