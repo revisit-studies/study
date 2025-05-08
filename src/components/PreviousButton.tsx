@@ -32,8 +32,10 @@ export function PreviousButton({
     goToPreviousStep();
   }, [goToPreviousStep, onClick]);
 
-  const previousButtonDisableTime = configInUse?.previousButtonDisableTime;
-  const previousButtonEnableTime = configInUse?.previousButtonEnableTime || 0;
+  // If previousButtonDisableTime is set, use that, otherwise use nextButtonDisableTime
+  const previousButtonDisableTime = configInUse?.previousButtonDisableTime ? configInUse?.previousButtonDisableTime : configInUse?.nextButtonDisableTime;
+  // If previousButtonEnableTime is set, use that, otherwise use nextButtonEnableTime or 0 if not set
+  const previousButtonEnableTime = configInUse?.previousButtonEnableTime ? configInUse?.previousButtonEnableTime : configInUse?.nextButtonEnableTime || 0;
   const [timer, setTimer] = useState<number | undefined>(undefined);
   // Start a timer on first render, update timer every 100ms
   useEffect(() => {
