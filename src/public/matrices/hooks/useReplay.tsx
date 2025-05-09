@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { TrrackState } from '../utils/Interfaces';
+import { ChartParams, TrrackState } from '../utils/Interfaces';
 
-export function useReplay(provenanceState: TrrackState | undefined) {
+export function useReplay(provenanceState: TrrackState | undefined, config: ChartParams) {
   const [destinationHighlight, setDestinationHighlight] = useState<string | null>(null);
   const [originHighlight, setOriginHighlight] = useState<string | null>(null);
 
@@ -9,7 +9,7 @@ export function useReplay(provenanceState: TrrackState | undefined) {
 
   const [answerNodes, setAnswerNodes] = useState<string[]>([]);
 
-  const [linkMarks, setLinkMarks] = useState<string[][] | null>([]);
+  const [linkMarks, setLinkMarks] = useState<string[][] | null>(config.linkMarks || []);
 
   useEffect(() => {
     if (provenanceState) {

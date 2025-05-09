@@ -36,7 +36,7 @@ export function DestinationAxis({ showLines = true }: { showLines?: boolean }) {
 
   const onClick = useCallback(
     (node: string, nodes: string[]) => {
-      if (config.isClusterTask || config.isPathTask || config.isRangeTask) return;
+      if (config.destinationSelectionDisabled) return;
 
       let newNodes;
       if (nodes.includes(node)) {

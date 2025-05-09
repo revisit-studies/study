@@ -1,21 +1,19 @@
-## Mean as color, Standard deviation as mark size
+## THIRD KEY CONCEPT: Encoding
 
-In the matrix you will use, we made it easier to understand flight prices by using both color and shape at the same time.
+As you might notice, if the network grows it will be very difficult to read the values on a graph or on the presented adjacency matrices. We have developed a way of encoding mean and variation to visualize this kind of networks.
 
-##### Color encodes the mean (average price):
+##### Color encodes the mean:
 
 Each cell in the matrix will have a color:
 
-- If the color is light, it means the average flight price is low (cheaper flights).
-- If the color is dark, it means the average flight price is high (more expensive flights).
+- If the color is light, the mean flight price is low.
+- If the color is dark, the mean flight price is high.
 
 So, lighter = cheaper and darker = more expensive.
 
 <img src='./assets/images/color-mean.svg' width='500'>
 
-As you might notice we have divided prices into color categories.
-
-##### Size encodes the standard deviation.
+##### Mark size encodes the variation.
 
 Inside each cell, there will be a white square mark:
 
@@ -26,4 +24,4 @@ So, small mark = consistent prices, big mark = unpredictable prices.
 
 <img src='./assets/images/size-std.svg' width='500'>
 
-As you might notice we have divided price variations into mark sizes categories.
+Let's do some training exercises!

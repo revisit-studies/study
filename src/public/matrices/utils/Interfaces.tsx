@@ -30,6 +30,10 @@ export interface ChartParams {
 
   colorScale: string;
 
+  nodeOrderingDisabled: boolean;
+  highlightingDisabled: boolean;
+  destinationSelectionDisabled: boolean;
+
   isClusterTask?: boolean;
   clusterMode?: string;
   clusterVar?: string;
@@ -37,8 +41,8 @@ export interface ChartParams {
 
   isRangeTask?: boolean;
 
-  isPathTask?: boolean;
   paths: path[];
+  linkMarks: string[][];
 
   showTooltip?: boolean;
 

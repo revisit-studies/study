@@ -39,17 +39,193 @@
       ],
       "type": "markdown"
     },
-    "matrices_description": {
+    "data_description": {
       "correctAnswer": [],
-      "path": "matrices/assets/matrices_description.md",
+      "path": "matrices/assets/data_description.md",
       "response": [],
       "type": "markdown"
     },
-    "dataset_description": {
+    "list2num": {
+      "allowFailedTraining": false,
+      "correctAnswer": [
+        {
+          "answer": "b",
+          "id": "option"
+        }
+      ],
+      "instruction": "Which mean\u00b1variation fits better the given list of numbers?",
+      "nextButtonLocation": "sidebar",
+      "path": "matrices/assets/images/list2num.svg",
+      "provideFeedback": true,
+      "response": [
+        {
+          "id": "option",
+          "location": "sidebar",
+          "options": [
+            {
+              "label": "A",
+              "value": "a"
+            },
+            {
+              "label": "B",
+              "value": "b"
+            },
+            {
+              "label": "C",
+              "value": "c"
+            },
+            {
+              "label": "D",
+              "value": "d"
+            }
+          ],
+          "prompt": "Select an option:",
+          "type": "radio"
+        }
+      ],
+      "style": {
+        "maxWidth": "80%"
+      },
+      "trainingAttempts": 2.0,
+      "type": "image"
+    },
+    "num2list": {
+      "allowFailedTraining": false,
+      "correctAnswer": [
+        {
+          "answer": "c",
+          "id": "option"
+        }
+      ],
+      "instruction": "Which list of numbers  fits better the given mean\u00b1variation?",
+      "nextButtonLocation": "sidebar",
+      "path": "matrices/assets/images/num2list.svg",
+      "provideFeedback": true,
+      "response": [
+        {
+          "id": "option",
+          "location": "sidebar",
+          "options": [
+            {
+              "label": "A",
+              "value": "a"
+            },
+            {
+              "label": "B",
+              "value": "b"
+            },
+            {
+              "label": "C",
+              "value": "c"
+            },
+            {
+              "label": "D",
+              "value": "d"
+            }
+          ],
+          "prompt": "Select an option:",
+          "type": "radio"
+        }
+      ],
+      "style": {
+        "maxWidth": "80%"
+      },
+      "trainingAttempts": 2.0,
+      "type": "image"
+    },
+    "connectivity_description": {
       "correctAnswer": [],
-      "path": "matrices/assets/dataset_description.md",
+      "path": "matrices/assets/connectivity_description.md",
       "response": [],
       "type": "markdown"
+    },
+    "matrix2graph": {
+      "allowFailedTraining": false,
+      "correctAnswer": [
+        {
+          "answer": "2",
+          "id": "option"
+        }
+      ],
+      "instruction": "Which graph corresponds to the matrix?",
+      "nextButtonLocation": "sidebar",
+      "path": "matrices/assets/images/matrix2graph_.svg",
+      "provideFeedback": true,
+      "response": [
+        {
+          "id": "option",
+          "location": "sidebar",
+          "options": [
+            {
+              "label": "1",
+              "value": "1"
+            },
+            {
+              "label": "2",
+              "value": "2"
+            },
+            {
+              "label": "3",
+              "value": "3"
+            },
+            {
+              "label": "None",
+              "value": "4"
+            }
+          ],
+          "prompt": "Select an option:",
+          "type": "radio"
+        }
+      ],
+      "style": {
+        "maxWidth": "100%"
+      },
+      "trainingAttempts": 2.0,
+      "type": "image"
+    },
+    "graph2matrix": {
+      "allowFailedTraining": false,
+      "correctAnswer": [
+        {
+          "answer": "3",
+          "id": "option"
+        }
+      ],
+      "instruction": "Which matrix corresponds to the graph?",
+      "nextButtonLocation": "sidebar",
+      "path": "matrices/assets/images/graph2matrix.svg",
+      "provideFeedback": true,
+      "response": [
+        {
+          "id": "option",
+          "location": "sidebar",
+          "options": [
+            {
+              "label": "1",
+              "value": "1"
+            },
+            {
+              "label": "2",
+              "value": "2"
+            },
+            {
+              "label": "3",
+              "value": "3"
+            },
+            {
+              "label": "None",
+              "value": "4"
+            }
+          ],
+          "prompt": "Select an option:",
+          "type": "radio"
+        }
+      ],
+      "style": {
+        "maxWidth": "80%"
+      },
+      "trainingAttempts": 2.0,
+      "type": "image"
     },
     "encoding_description": {
       "correctAnswer": [],
@@ -60,7 +236,7 @@
     "training_intro": {
       "allowFailedTraining": false,
       "correctAnswer": [],
-      "instruction": "Before exploring the matrix functionality, let's start with a quick recap.<br><br>You are looking at an adjacency matrix of flight connections. Each cell shows the **mean** flight price between two states, along with the **standard deviation**, since the data is aggregated.<br><br>Note that the states are ordered alphabetically along both axes.<br><br>On the right side, you'll find a legend explaining how the mean and standard deviation are encoded.",
+      "instruction": "Before exploring the matrix functionality, let's start with a quick recap.<br><br>You are looking at an adjacency matrix of flight connections. Each cell shows the **mean** flight price between two states, along with the **variation**. Note that the states are ordered alphabetically along both axes.<br><br>On the right side, you'll find a legend explaining how the mean and variation are encoded.",
       "nextButtonLocation": "sidebar",
       "parameters": {
         "dataset": "training_test.txt",
@@ -108,34 +284,6 @@
           "id": "answerNodes",
           "location": "sidebar",
           "prompt": "Selected States:",
-          "type": "reactive"
-        }
-      ],
-      "trainingAttempts": 4.0,
-      "type": "react-component"
-    },
-    "training_adjacency": {
-      "allowFailedTraining": false,
-      "correctAnswer": [
-        {
-          "answer": ["Florida", "New York", "Texas", "Pennsylvania"],
-          "id": "answerNodes"
-        }
-      ],
-      "instruction": "Select all states connected to South Carolina.",
-      "nextButtonLocation": "sidebar",
-      "parameters": {
-        "dataset": "training_test.txt",
-        "encoding": "mark"
-      },
-      "path": "matrices/Stimuli.tsx",
-      "provideFeedback": true,
-      "response": [
-        {
-          "id": "answerNodes",
-          "location": "sidebar",
-          "prompt": "Selected States:",
-          "secondaryText": "Tip: Clicking on the vertical labels will reorder the nodes, placing the connected ones first, followed by the disconnected ones in alphabetical order.",
           "type": "reactive"
         }
       ],
@@ -193,65 +341,6 @@
           "prompt": "Selected States:",
           "secondaryText": "Tip: Clicking on the vertical labels will reorder the nodes, placing the connected ones first, followed by the disconnected ones in alphabetical order.",
           "type": "reactive"
-        }
-      ],
-      "trainingAttempts": 4.0,
-      "type": "react-component"
-    },
-    "training_range": {
-      "allowFailedTraining": false,
-      "correctAnswer": [
-        {
-          "answer": 0,
-          "id": "min"
-        },
-        {
-          "answer": 400,
-          "id": "max"
-        }
-      ],
-      "instruction": "What is the price range for flights connected to Ohio? Range as Mean \u00b1 Standard Deviation",
-      "nextButtonLocation": "sidebar",
-      "parameters": {
-        "dataset": "training_test.txt",
-        "encoding": "mark"
-      },
-      "path": "matrices/Stimuli.tsx",
-      "provideFeedback": true,
-      "response": [
-        {
-          "id": "min",
-          "location": "sidebar",
-          "options": [
-            {
-              "label": "0",
-              "value": 0.0
-            },
-            {
-              "label": "600",
-              "value": 600.0
-            }
-          ],
-          "prompt": "Price range minimum value:",
-          "step": 10.0,
-          "type": "slider"
-        },
-        {
-          "id": "max",
-          "location": "sidebar",
-          "options": [
-            {
-              "label": "0",
-              "value": 0.0
-            },
-            {
-              "label": "600",
-              "value": 600.0
-            }
-          ],
-          "prompt": "Price range maximum value:",
-          "step": 10.0,
-          "type": "slider"
         }
       ],
       "trainingAttempts": 4.0,
@@ -345,11 +434,12 @@
           "id": "answerNodes"
         }
       ],
-      "instruction": "Which state(s) are connected to South Carolina?",
+      "instruction": "Which state(s) are connected to South Carolina? (Ordering by state is deactivated on this task)",
       "nextButtonLocation": "sidebar",
       "parameters": {
         "dataset": "task_test.txt",
-        "encoding": "mark"
+        "encoding": "mark",
+        "nodeOrderingDisabled": true
       },
       "path": "matrices/Stimuli.tsx",
       "response": [
@@ -434,80 +524,66 @@
       ],
       "type": "react-component"
     },
-    "path": {
+    "path_mean": {
       "correctAnswer": [
         {
-          "answer": "Utah \u2192 Texas \u2192 New York",
+          "answer": "Utah \u2192 Colorado \u2192 New York",
           "id": "path"
-        },
-        {
-          "answer": 120,
-          "id": "min"
-        },
-        {
-          "answer": 380,
-          "id": "max"
         }
       ],
-      "instruction": "On which of the following routes would you spend less money. Select the route and estimate the final price range.",
+      "instruction": "Taking only into account the mean price. On which of the following routes would you spend less money.",
       "nextButtonLocation": "sidebar",
       "parameters": {
         "dataset": "task_test.txt",
         "encoding": "mark",
-        "isPathTask": true,
-        "paths": [
-          {
-            "option": "A",
-            "path": "Utah \u2192 Michigan \u2192 New York"
-          },
-          {
-            "option": "B",
-            "path": "Utah \u2192 Texas \u2192 New York"
-          }
-        ]
+        "destinationSelectionDisabled": true
       },
       "path": "matrices/Stimuli.tsx",
       "response": [
         {
           "id": "path",
           "location": "sidebar",
-          "options": ["Utah \u2192 Michigan \u2192 New York", "Utah \u2192 Texas \u2192 New York"],
-          "prompt": "Select a path:",
+          "options": [
+            "Utah \u2192 Michigan \u2192 New York",
+            "Utah \u2192 Washington \u2192 New York",
+            "Utah \u2192 Colorado \u2192 New York",
+            "Utah \u2192 Nevada \u2192 New York"
+          ],
+          "prompt": "Select a route:",
+          "secondaryText": "Remember that you can highlight cells by clicking on them.",
           "type": "radio"
-        },
+        }
+      ],
+      "type": "react-component"
+    },
+    "path_std": {
+      "correctAnswer": [
         {
-          "id": "min",
+          "answer": "Utah \u2192 Colorado \u2192 New York",
+          "id": "path"
+        }
+      ],
+      "instruction": "In which of the following connections flight prices vary most.",
+      "nextButtonLocation": "sidebar",
+      "parameters": {
+        "dataset": "task_test.txt",
+        "encoding": "mark",
+        "destinationSelectionDisabled": true
+      },
+      "path": "matrices/Stimuli.tsx",
+      "response": [
+        {
+          "id": "path",
           "location": "sidebar",
           "options": [
-            {
-              "label": "0",
-              "value": 0.0
-            },
-            {
-              "label": "600",
-              "value": 600.0
-            }
+            "Utah \u2192 Michigan \u2192 New York",
+            "Utah \u2192 Washington \u2192 New York",
+            "Utah \u2192 Colorado \u2192 New York",
+            "Utah \u2192 Nevada \u2192 New York"
           ],
-          "prompt": "Price range minimum value:",
-          "step": 10.0,
-          "type": "slider"
-        },
-        {
-          "id": "max",
-          "location": "sidebar",
-          "options": [
-            {
-              "label": "0",
-              "value": 0.0
-            },
-            {
-              "label": "600",
-              "value": 600.0
-            }
-          ],
-          "prompt": "Price range maximum value:",
-          "step": 10.0,
-          "type": "slider"
+          "prompt": "Select a route:",
+          "secondaryText": "Remember that you can highlight cells by clicking on them.",
+          "type": "radio"
         }
       ],
       "type": "react-component"
@@ -523,12 +599,15 @@
           "id": "max"
         }
       ],
-      "instruction": "What is the price range of flying from Arizona?",
+      "instruction": "There is an already selected path: <br>Georgia \u2192 California \u2192 New York<br> What is the approximate price range of this connection?",
       "nextButtonLocation": "sidebar",
       "parameters": {
         "dataset": "task_test.txt",
         "encoding": "mark",
-        "isRangeTask": true
+        "linkMarks": [
+          ["Georgia", "California"],
+          ["New York", "California"]
+        ]
       },
       "path": "matrices/Stimuli.tsx",
       "response": [
@@ -576,7 +655,7 @@
           "id": "answerNodes"
         }
       ],
-      "instruction": "Are flight prices stable when flying from/to Oregon?",
+      "instruction": "Flight prices on Oregon are ______ in comparison to Florida?",
       "nextButtonLocation": "sidebar",
       "parameters": {
         "dataset": "task_test.txt",
@@ -587,8 +666,8 @@
         {
           "id": "stability",
           "location": "sidebar",
-          "options": ["Stable", "Unstable", "I don't know"],
-          "prompt": "Select an option:",
+          "options": ["very stable", "stable", "similar", "unstable", "very unstable"],
+          "prompt": "Select the option you consider more accurate.",
           "type": "radio"
         }
       ],
@@ -606,7 +685,8 @@
       "parameters": {
         "dataset": "task_test.txt",
         "encoding": "mark",
-        "isClusterTask": true,
+        "destinationSelectionDisabled": true,
+        "nodeOrderingDisabled": true,
         "clusterMarks": [
           {
             "option": "A",
@@ -656,7 +736,8 @@
       "parameters": {
         "dataset": "task_test.txt",
         "encoding": "mark",
-        "isClusterTask": true,
+        "destinationSelectionDisabled": true,
+        "nodeOrderingDisabled": true,
         "clusterMarks": [
           {
             "option": "A",
@@ -701,18 +782,20 @@
       "introduction",
       "consent",
       "$beauvis.co.5items",
-      "matrices_description",
-      "dataset_description",
+      "data_description",
+      "list2num",
+      "num2list",
+      "connectivity_description",
+      "matrix2graph",
+      "graph2matrix",
       "encoding_description",
       {
         "components": [
           "training_intro",
           "training_interaction",
           "training_selection",
-          "training_adjacency",
           "training_mean_adjacency",
           "training_std_adjacency",
-          "training_range",
           "training_cluster",
           "training_ends"
         ],
@@ -724,7 +807,8 @@
           "attr_std",
           "attr_comb",
           "max_attr_std",
-          "path",
+          "path_mean",
+          "path_std",
           "range",
           "trend",
           "cluster_avg",
@@ -734,6 +818,7 @@
       },
       "$previs.se.4dimensions"
     ],
+
     "order": "fixed"
   },
   "studyMetadata": {

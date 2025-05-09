@@ -65,7 +65,7 @@ export function OriginAxis({ showLines = true }: { showLines?: boolean }) {
 
   const onClick = useCallback(
     (node: string, oNode: string | null) => {
-      if (config.clusterMode) return;
+      if (config.nodeOrderingDisabled) return;
       if (oNode === node) {
         setOrderingNode(null);
         trrack?.apply('Reset Sort', actions?.setOrderingNode(null));
@@ -74,18 +74,18 @@ export function OriginAxis({ showLines = true }: { showLines?: boolean }) {
         trrack?.apply('Sort', actions?.setOrderingNode(node));
       }
     },
-    [config.clusterMode, trrack, actions, setOrderingNode],
+    [config.nodeOrderingDisabled, trrack, actions, setOrderingNode],
   );
 
   useEffect(() => {
-    if (config.clusterMode) return;
+    if (config.nodeOrderingDisabled) return;
     if (orderingNode === null) {
       setOrderedDestinations(orderedOrigins);
       return;
     }
     const order = getOrder(orderingNode, data);
     setOrderedDestinations(order);
-  }, [config.clusterMode, data, orderedOrigins, setOrderedDestinations, orderingNode]);
+  }, [config.nodeOrderingDisabled, data, orderedOrigins, setOrderedDestinations, orderingNode]);
 
   return (
     <>

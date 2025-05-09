@@ -4,7 +4,7 @@
 
 Thank you for taking the time to participate.
 
-This study aims to evaluate an encoding technique for visualizing the **mean** and **standard deviation** of edges in **adjacency matrices**.
+This study aims to evaluate an encoding technique for visualizing the **mean** and **variation** of flight prices in the U.S.
 
 Please ensure that you are opening this experiment with the Chrome browser. You cannot navigate back to previous pages.
 
