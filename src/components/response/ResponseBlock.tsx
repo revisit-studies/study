@@ -59,9 +59,20 @@ export function ResponseBlock({
 
   const configInUse = config as IndividualComponent;
 
-  const responses = useMemo(() => configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [], [configInUse?.response, location]);
+  const responses = useMemo(() => configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [], [location, configInUse.response]);
 
-  const responsesWithDefaults = useMemo(() => responses.map((response) => {
+  const [shuffledResponses] = useState(() => {
+    if (configInUse?.randomizeForm) {
+      const shuffleResponses = [...responses]
+        .map((value) => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value);
+      return shuffleResponses;
+    }
+    return responses;
+  });
+
+  const responsesWithDefaults = useMemo(() => shuffledResponses.map((response) => {
     if (response.type !== 'textOnly') {
       return {
         ...response,
@@ -69,7 +80,7 @@ export function ResponseBlock({
       };
     }
     return response;
-  }), [responses]);
+  }), [shuffledResponses]);
 
   const answerValidator = useAnswerField(responsesWithDefaults, currentStep, storedAnswer || {});
   // Set up trrack to store provenance graph of the answerValidator status

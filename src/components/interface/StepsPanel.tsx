@@ -192,6 +192,11 @@ function StepItem({
               )}
               {correctIncorrectIcon}
               <Text size="sm" span={active} fw={active ? '700' : undefined} display="inline" style={{ textWrap: 'nowrap' }}>{cleanedStep}</Text>
+              {task?.randomizeForm && (
+                <Tooltip label="random" position="right" withArrow>
+                  <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
+                </Tooltip>
+              )}
             </Box>
           )}
           onClick={navigateTo}
