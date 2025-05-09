@@ -68,7 +68,7 @@ export function ResolutionWarning() {
           {minHeight !== undefined && ` Height: ${minHeight}px`}
         </Text>
         <Text size="md" ta="center">
-          Some content may not display correctly. Please use a device with a larger screen or resize your browser window.
+          Please resize your browser window to the minimum required size.
         </Text>
       </Stack>
     </Modal>
