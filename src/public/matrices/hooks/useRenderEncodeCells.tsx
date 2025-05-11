@@ -12,6 +12,8 @@ import { meanAccesor, snrAccesor, stdAccesor } from '../utils/Accesors';
 
 /* const markColor = '#ff6e4a'; */
 const markColor = 'white';
+const barMeanColor = '#7b3294';
+const barStdColor = '#008837';
 
 export function createMarkScale(nSteps: number, cellSize: number) {
   const stepSize = cellSize / (nSteps + 1);
@@ -46,7 +48,7 @@ export function useRenderEcondedCells(
 
       switch (encoding) {
         case Encoding.bars: {
-          const proportion = 0.6;
+          const proportion = 0.5;
           const cellProportion = 0.8;
           const size = cellSize * cellProportion;
 
@@ -63,7 +65,7 @@ export function useRenderEcondedCells(
 
             gCells
               .append('rect')
-              .attr('fill', '#1f77b4')
+              .attr('fill', barMeanColor)
               .attr('width', size * proportion)
               .attr('height', (d: link) => +meanScale(meanAccesor(d)))
               .attr('y', (d: link) => cellSize - +meanScale(meanAccesor(d)))
@@ -82,7 +84,7 @@ export function useRenderEcondedCells(
             }
             gCells
               .append('rect')
-              .attr('fill', '#ff7f0e')
+              .attr('fill', barStdColor)
               .attr('width', size * (1 - proportion))
               .attr('height', (d: link) => +devScale(devAccesor(d)))
               .attr('x', (cellSize - size) / 2 + size * proportion)
@@ -115,7 +117,8 @@ export function useRenderEcondedCells(
 
           break;
         }
-        case Encoding.rotation: {
+        case Encoding.rotation45:
+        case Encoding.rotation90: {
           const markWidth = cellSize * 0.8;
           const markHeight = cellSize * 0.2;
           const center = cellSize / 2;
@@ -148,7 +151,9 @@ export function useRenderEcondedCells(
 
           break;
         }
-        case Encoding.colorRotation: {
+
+        case Encoding.colorRotation45:
+        case Encoding.colorRotation90: {
           const markWidth = cellSize * 0.8;
           const markHeight = cellSize * 0.6;
           const center = cellSize / 2;

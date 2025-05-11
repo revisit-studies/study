@@ -1,0 +1,69 @@
+    "adj_mean": {
+        "instruction": "Which state(s) are connected to Nevada with a mean price higher than $150?",
+        "response": [
+            rvt.response(
+                id="answerNodes",
+                prompt="Selected States:",
+                location="sidebar",
+                type="reactive",
+            ),
+        ],
+        "correctAnswer": [
+            rvt.answer(
+                id="answerNodes", answer=["Georgia", "Oregon", "South Carolina", "Utah"]
+            )
+        ],
+    },
+    "max_attr_std": {
+        "instruction": "Which state(s) connected to Massachusetts show the highest price variation?",
+        "response": [
+            rvt.response(
+                id="answerNodes",
+                prompt="Selected States:",
+                location="sidebar",
+                type="reactive",
+            ),
+        ],
+        "correctAnswer": [rvt.answer(id="answerNodes", answer=[])],
+    },
+    "min_attr_mean": {
+        "instruction": "Which state or states connected to Pennsylvania show the lowest mean price?",
+        "response": [
+            rvt.response(
+                id="answerNodes",
+                prompt="Selected States:",
+                location="sidebar",
+                type="reactive",
+            ),
+        ],
+        "correctAnswer": [rvt.answer(id="answerNodes", answer=[])],
+    },
+
+        "comparison": {
+        "instruction": "Flight prices in Oregon are ______ in comparison to Florida?",
+        "response": [
+            rvt.response(
+                id="stability",
+                prompt="Select the option you consider more accurate.",
+                location="sidebar",
+                type="radio",
+                options=[
+                    "very stable",
+                    "stable",
+                    "similar",
+                    "unstable",
+                    "very unstable",
+                ],
+            )
+        ],
+        "correctAnswer": [rvt.answer(id="answerNodes", answer="Unstable")],
+    },
+
+
+    "interruptions": [
+          {
+            "spacing": "random",
+            "numInterruptions": 1,
+            "components": ["path_mean"]
+          }
+        ],

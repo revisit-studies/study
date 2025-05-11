@@ -23,12 +23,6 @@
   pointer-events: none;
 }
 
-.order-highlight {
-  fill: transparent;
-  stroke: #ff6e4a;
-  pointer-events: none;
-}
-
 .label-container {
   display: flex;
   align-items: center;

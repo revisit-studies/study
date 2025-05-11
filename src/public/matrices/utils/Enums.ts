@@ -2,9 +2,12 @@ export enum Encoding {
   light = 'light',
   mark = 'mark',
   bars = 'bars',
-  rotation = 'mark-rotation',
-  colorRotation = 'mark-rotation-color',
+  rotation45 = 'mark-rotation-45',
+  rotation90 = 'mark-rotation-90',
+  colorRotation45 = 'mark-rotation-45-colored',
+  colorRotation90 = 'mark-rotation-90-colored',
   size = 'size',
+  mean = 'mean',
 }
 
 export enum ClusteringMode {

@@ -10,7 +10,7 @@ import { Encoding } from '../utils/Enums';
 import { useRenderEcondedCells } from '../hooks/useRenderEncodeCells';
 import { useCellScales } from '../hooks/useCellScales';
 
-const margin = 135;
+const margin = 110;
 const meanText = 'Price Ranges:';
 const devText = 'Price Deviation Ranges:';
 
@@ -79,7 +79,8 @@ export function Legend() {
         .attr('text-anchor', 'middle')
         .text((_, i) => {
           const [min, max] = scale.invertExtent(scale.range()[i]);
-          return `$${min.toFixed(0)} - $${+max.toFixed(0) - 0.01}`;
+          if (i + 1 === scale.range().length) return `$${min.toFixed(0)} - ${+max.toFixed(0)}`;
+          return `$${min.toFixed(0)} - ${+max.toFixed(0) - 0.01}`;
         });
 
       cellRenderer(group.selectAll('.cell'), encoding, showMean, showDev);

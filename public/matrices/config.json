@@ -39,6 +39,12 @@
       ],
       "type": "markdown"
     },
+    "$beauvis.co.5items": {
+      "correctAnswer": [],
+      "path": "",
+      "response": [],
+      "type": "react-component"
+    },
     "data_description": {
       "correctAnswer": [],
       "path": "matrices/assets/data_description.md",
@@ -413,28 +419,31 @@
       "response": [],
       "type": "markdown"
     },
-    "adjacency": {
+    "adj": {
       "correctAnswer": [
         {
           "answer": [
+            "Arizona",
+            "California",
+            "Colorado",
             "Florida",
             "Georgia",
             "Illinois",
-            "Maryland",
             "Massachusetts",
             "New Jersey",
-            "Michigan",
             "New York",
-            "Ohio",
-            "Pennsylvania",
-            "Tennessee",
-            "Texas",
-            "Washington"
+            "Washington",
+            "Virginia",
+            "Utah",
+            "Oregon",
+            "Minnesota",
+            "Nevada",
+            "Texas"
           ],
           "id": "answerNodes"
         }
       ],
-      "instruction": "Which state(s) are connected to South Carolina? (Ordering by state is deactivated on this task)",
+      "instruction": "Which state(s) are connected to Oregon? (Ordering by state is deactivated on this task)",
       "nextButtonLocation": "sidebar",
       "parameters": {
         "dataset": "task_test.txt",
@@ -452,14 +461,47 @@
       ],
       "type": "react-component"
     },
-    "attr_std": {
+    "adj_variation": {
       "correctAnswer": [
         {
-          "answer": ["Georgia", "Oregon", "South Carolina", "Utah"],
+          "answer": [
+            "Georgia",
+            "Illinois",
+            "Michigan",
+            "Massachusetts",
+            "Minnesota",
+            "New Jersey",
+            "North Carolina",
+            "Tennessee"
+          ],
           "id": "answerNodes"
         }
       ],
-      "instruction": "Which state(s) are connected to Georgia with a price variation higher than $90?",
+      "instruction": "Which state(s) are connected to Utah with a price variation higher than $90? (including $90)",
+      "nextButtonLocation": "sidebar",
+      "parameters": {
+        "dataset": "task_test.txt",
+        "encoding": "mark"
+      },
+      "path": "matrices/Stimuli.tsx",
+      "response": [
+        {
+          "id": "answerNodes",
+          "location": "sidebar",
+          "prompt": "Selected States:",
+          "type": "reactive"
+        }
+      ],
+      "type": "react-component"
+    },
+    "adj_mean": {
+      "correctAnswer": [
+        {
+          "answer": ["Maryland", "Massachusetts", "New Jersey", "New York", "Virginia"],
+          "id": "answerNodes"
+        }
+      ],
+      "instruction": "Which state(s) are connected to Nevada with a mean price higher than $150?",
       "nextButtonLocation": "sidebar",
       "parameters": {
         "dataset": "task_test.txt",
@@ -479,11 +521,16 @@
     "attr_comb": {
       "correctAnswer": [
         {
-          "answer": ["New York", "Texas", "Washington"],
+          "answer": {
+            "root": {
+              "answer": ["Georgia", "New Jersey", "Pennsylvania", "Texas", "Virginia", "Arizona"],
+              "id": "answerNodes"
+            }
+          },
           "id": "answerNodes"
         }
       ],
-      "instruction": "Which state(s) are connected to Utah with flight prices approximately between $100 and $200?",
+      "instruction": "Which states are connected to Washington with flight prices of $150\u00b1$50? Take into account price variation",
       "nextButtonLocation": "sidebar",
       "parameters": {
         "dataset": "task_test.txt",
@@ -500,14 +547,14 @@
       ],
       "type": "react-component"
     },
-    "max_attr_std": {
+    "range": {
       "correctAnswer": [
         {
-          "answer": ["Oregon"],
+          "answer": ["Minnesota", "Pennsylvania"],
           "id": "answerNodes"
         }
       ],
-      "instruction": "Which state(s) connected to Virginia show the highest price variation?",
+      "instruction": "Which states determine the price range of flying from Missouri? This are the states with lowest and highest mean price and the highest variation. Answer should be 2 states.",
       "nextButtonLocation": "sidebar",
       "parameters": {
         "dataset": "task_test.txt",
@@ -531,12 +578,11 @@
           "id": "path"
         }
       ],
-      "instruction": "Taking only into account the mean price. On which of the following routes would you spend less money.",
+      "instruction": "Taking only into account the mean price. On which layover do you spend the least money?<br><br>For this question to be taken into account you must also select Michigan",
       "nextButtonLocation": "sidebar",
       "parameters": {
         "dataset": "task_test.txt",
-        "encoding": "mark",
-        "destinationSelectionDisabled": true
+        "encoding": "mark"
       },
       "path": "matrices/Stimuli.tsx",
       "response": [
@@ -559,11 +605,11 @@
     "path_std": {
       "correctAnswer": [
         {
-          "answer": "Utah \u2192 Colorado \u2192 New York",
+          "answer": "California \u2192 Massachusetts \u2192 Michigan",
           "id": "path"
         }
       ],
-      "instruction": "In which of the following connections flight prices vary most.",
+      "instruction": "On which layover do prices vary the least?",
       "nextButtonLocation": "sidebar",
       "parameters": {
         "dataset": "task_test.txt",
@@ -576,10 +622,10 @@
           "id": "path",
           "location": "sidebar",
           "options": [
-            "Utah \u2192 Michigan \u2192 New York",
-            "Utah \u2192 Washington \u2192 New York",
-            "Utah \u2192 Colorado \u2192 New York",
-            "Utah \u2192 Nevada \u2192 New York"
+            "California \u2192 Colorado \u2192 Michigan",
+            "California \u2192 Minesota \u2192 Michigan",
+            "California \u2192 Utah \u2192 Michigan",
+            "California \u2192 Massachusetts \u2192 Michigan"
           ],
           "prompt": "Select a route:",
           "secondaryText": "Remember that you can highlight cells by clicking on them.",
@@ -588,74 +634,18 @@
       ],
       "type": "react-component"
     },
-    "range": {
+    "path_estimation": {
       "correctAnswer": [
         {
-          "answer": 0,
-          "id": "min"
+          "answer": 300,
+          "id": "mean"
         },
         {
-          "answer": 350,
-          "id": "max"
+          "answer": 140,
+          "id": "std"
         }
       ],
-      "instruction": "There is an already selected path: <br>Georgia \u2192 California \u2192 New York<br> What is the approximate price range of this connection?",
-      "nextButtonLocation": "sidebar",
-      "parameters": {
-        "dataset": "task_test.txt",
-        "encoding": "mark",
-        "linkMarks": [
-          ["Georgia", "California"],
-          ["New York", "California"]
-        ]
-      },
-      "path": "matrices/Stimuli.tsx",
-      "response": [
-        {
-          "id": "min",
-          "location": "sidebar",
-          "options": [
-            {
-              "label": "0",
-              "value": 0.0
-            },
-            {
-              "label": "600",
-              "value": 600.0
-            }
-          ],
-          "prompt": "Price range minimum value:",
-          "step": 10.0,
-          "type": "slider"
-        },
-        {
-          "id": "max",
-          "location": "sidebar",
-          "options": [
-            {
-              "label": "0",
-              "value": 0.0
-            },
-            {
-              "label": "600",
-              "value": 600.0
-            }
-          ],
-          "prompt": "Price range maximum value:",
-          "step": 10.0,
-          "type": "slider"
-        }
-      ],
-      "type": "react-component"
-    },
-    "trend": {
-      "correctAnswer": [
-        {
-          "answer": "Unstable",
-          "id": "answerNodes"
-        }
-      ],
-      "instruction": "Flight prices on Oregon are ______ in comparison to Florida?",
+      "instruction": "For the itinerary <br> Georgia \u2192 California \u2192 New York <br>What is the estimated total cost in terms of its mean price and variability?",
       "nextButtonLocation": "sidebar",
       "parameters": {
         "dataset": "task_test.txt",
@@ -664,11 +654,41 @@
       "path": "matrices/Stimuli.tsx",
       "response": [
         {
+          "id": "mean",
+          "location": "sidebar",
+          "max": 250.0,
+          "min": 0.0,
+          "prompt": "Mean:",
+          "type": "numerical"
+        },
+        {
+          "id": "std",
+          "location": "sidebar",
+          "max": 150.0,
+          "min": 0.0,
+          "prompt": "Variation:",
+          "type": "numerical"
+        }
+      ],
+      "type": "react-component"
+    },
+    "ranking": {
+      "correctAnswer": [],
+      "instruction": "Rank these four states from lowest to highest in price variation",
+      "nextButtonLocation": "sidebar",
+      "parameters": {
+        "dataset": "task_test.txt",
+        "encoding": "mark"
+      },
+      "path": "matrices/Stimuli.tsx",
+      "response": [
+        {
+          "answerOptions": ["Highest Variation", "Medium Variation", "Lowest Variation"],
           "id": "stability",
           "location": "sidebar",
-          "options": ["very stable", "stable", "similar", "unstable", "very unstable"],
           "prompt": "Select the option you consider more accurate.",
-          "type": "radio"
+          "questionOptions": ["Oregon", "Minnesota", "Illinois"],
+          "type": "matrix-radio"
         }
       ],
       "type": "react-component"
@@ -774,6 +794,12 @@
         }
       ],
       "type": "react-component"
+    },
+    "$previs.se.4dimensions": {
+      "correctAnswer": [],
+      "path": "",
+      "response": [],
+      "type": "react-component"
     }
   },
   "importedLibraries": ["previs", "beauvis"],
@@ -803,22 +829,31 @@
       },
       {
         "components": [
-          "adjacency",
-          "attr_std",
+          "adj",
+          "adj_variation",
+          "adj_mean",
           "attr_comb",
-          "max_attr_std",
-          "path_mean",
-          "path_std",
           "range",
-          "trend",
+          "path_std",
+          "path_estimation",
+          "ranking",
           "cluster_avg",
           "cluster_std"
         ],
+        "interruptions": [
+          {
+            "spacing": 5,
+            "firstLocation": 5,
+            "components": ["path_mean"]
+          }
+        ],
         "order": "random"
       },
-      "$previs.se.4dimensions"
+      {
+        "components": ["$previs.se.4dimensions"],
+        "order": "random"
+      }
     ],
-
     "order": "fixed"
   },
   "studyMetadata": {
@@ -834,6 +869,7 @@
     "helpTextPath": "matrices/assets/mark_description.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "sidebar": true,
+    "sidebarWidth": 500.0,
     "withProgressBar": true
   }
 }

@@ -7,8 +7,6 @@ Think of an adjacency matrix like a table:
 - The **rows and columns** represent the **states**.
 - Each **cell** at the intersection of a row and a column tells you if there are **flights between those two states**.
 
-##### Example:
-
 In our case a graph an its associated adjacency matrix will be something like:
 
 <img src='./assets/images/graph&matrix.svg' width='1000'>

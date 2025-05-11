@@ -3,7 +3,6 @@ import { Text, Tooltip } from '@mantine/core';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useMatrixContext } from '../../utils/MatrixContext';
 import { link } from '../../utils/Interfaces';
-import { HIGHLIGHT_STROKE_WIDTH } from '../../utils/Constants';
 
 export const getOrder = (node: string, data: link[]) => {
   const connected = [
@@ -35,9 +34,6 @@ export function OriginAxis({ showLines = true }: { showLines?: boolean }) {
 
     orderedOrigins,
     setOrderedDestinations,
-
-    cellSize,
-    size,
 
     trrack,
     actions,
@@ -135,17 +131,6 @@ export function OriginAxis({ showLines = true }: { showLines?: boolean }) {
           </foreignObject>
         </g>
       ))}
-
-      <rect
-        id="orderHighlight"
-        className="order-highlight"
-        width={cellSize}
-        height={size + margin.top}
-        y={-margin.top + HIGHLIGHT_STROKE_WIDTH}
-        x={orderingNode ? originScale(orderingNode) : 0}
-        visibility={orderingNode ? 'visible' : 'hidden'}
-        style={{ strokeWidth: HIGHLIGHT_STROKE_WIDTH }}
-      />
     </>
   );
 }

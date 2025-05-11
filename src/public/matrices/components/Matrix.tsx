@@ -233,7 +233,7 @@ export function Matrix({
         setAnswer,
       }}
     >
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4vw' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '2vw' }}>
         {config.showConfig && (
           <Stack gap="2vh">
             <Checkbox
@@ -311,9 +311,11 @@ export function Matrix({
 
               <Highlighting />
               <Background />
-              {showTooltip && <MatrixTooltip />}
+
               {config.clusterMarks && <ClusterMarks size={3} marks={config.clusterMarks} />}
               <LinkMarks size={1} marks={linkMarks} />
+
+              {showTooltip && <MatrixTooltip />}
             </g>
           )}
         </svg>

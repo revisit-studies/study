@@ -73,12 +73,20 @@ export function useCellScales(
         steps = createLinearScale(nDevs, 0.2, 1).reverse();
         break;
       }
-      case Encoding.rotation: {
+      case Encoding.rotation45: {
         steps = createLinearScale(nDevs);
         break;
       }
-      case Encoding.colorRotation: {
+      case Encoding.rotation90: {
+        steps = createLinearScale(nDevs, 0, 90);
+        break;
+      }
+      case Encoding.colorRotation45: {
         steps = createLinearScale(nDevs);
+        break;
+      }
+      case Encoding.colorRotation90: {
+        steps = createLinearScale(nDevs, 0, 90);
         break;
       }
       case Encoding.mark: {
