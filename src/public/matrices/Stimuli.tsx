@@ -7,7 +7,7 @@ import { Registry, initializeTrrack } from '@trrack/core';
 import { StimulusParams } from '../../store/types';
 
 import { Matrix } from './components/Matrix';
-import { ChartParams, TrrackState, link } from './utils/Interfaces';
+import { TrrackState, Link, ExternalParameters } from './utils/Interfaces';
 
 import './style.css';
 
@@ -15,11 +15,11 @@ export function Stimuli({
   parameters,
   setAnswer,
   provenanceState,
-}: StimulusParams<ChartParams, TrrackState>) {
+}: StimulusParams<ExternalParameters, TrrackState>) {
   // ---------------------------- Setup & data ----------------------------
-  const [data, setData] = useState<link[] | null>(null);
+  const [data, setData] = useState<Link[] | null>(null);
 
-  const [dataname, setDataname] = useState<string>(parameters.dataset);
+  const [dataname, setDataname] = useState<string>(parameters.dataset ?? '');
 
   const loadData = useCallback(async (file: string) => {
     if (!file) return;

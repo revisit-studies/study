@@ -1,48 +1,48 @@
-export enum Encoding {
-  light = 'light',
-  mark = 'mark',
-  bars = 'bars',
-  rotation45 = 'mark-rotation-45',
-  rotation90 = 'mark-rotation-90',
-  colorRotation45 = 'mark-rotation-45-colored',
-  colorRotation90 = 'mark-rotation-90-colored',
-  size = 'size',
-  mean = 'mean',
+export enum EncodingType {
+  Bivariate = 'bivariate',
+  Mark = 'mark',
+  Bars = 'bars',
+  MarkRotation45 = 'mark-rotation-45',
+  MarkRotation90 = 'mark-rotation-90',
+  ColoredRotation45 = 'colored-rotation-45',
+  ColoredRotation90 = 'colored-rotation-90',
+  Size = 'size',
+  Mean = 'mean',
 }
 
 export enum ClusteringMode {
-  none = 'none',
-  optimal = 'optimal',
-  pca = 'pca',
+  None = 'none',
+  Optimal = 'optimal',
+  PCA = 'pca',
 }
 
-export enum ClusteringVar {
-  mean = 'mean',
-  std = 'std',
-  snr = 'snr',
+export enum ClusteringVariable {
+  Mean = 'mean',
+  StandardDeviation = 'std',
+  SignalToNoiseRatio = 'snr',
 }
 
 export enum ColorScheme {
-  viridis = 'viridis',
-  cividis = 'cividis',
-  warm = 'warm',
-  cool = 'cool',
-  plasma = 'plasma',
-  inferno = 'inferno',
-  turbo = 'turbo',
-  blues = 'blues',
-  oranges = 'oranges',
-  reds = 'reds',
+  Viridis = 'viridis',
+  Cividis = 'cividis',
+  Warm = 'warm',
+  Cool = 'cool',
+  Plasma = 'plasma',
+  Inferno = 'inferno',
+  Turbo = 'turbo',
+  Blues = 'blues',
+  Oranges = 'oranges',
+  Reds = 'reds',
 }
 
 export enum MarkColor {
-  white = 'white',
-  black = 'black',
-  orange = '#ff6e4a',
+  White = '#ffffff',
+  Black = '#000000',
+  Orange = '#ff6e4a',
 }
 
-export enum UserAction {
-  clearNodeSelection = 'Clear States Selection',
-  clearLinkSelection = 'Clear Flights Selection',
-  resetOrdering = 'Reset Ordering',
+export enum UserActionType {
+  ClearNodeSelection = 'Clear State Selection',
+  ClearLinkSelection = 'Clear Flight Selection',
+  ResetOrdering = 'reset_ordering',
 }

@@ -1,35 +1,68 @@
 import { useState } from 'react';
-import { ChartParams } from '../utils/Interfaces';
+import {
+  ColorScheme,
+  EncodingType,
+  ClusteringMode,
+  ClusteringVariable,
+  MarkColor,
+} from '../utils/Enums';
+import type { ChartConfiguration, ConfigProps, ExternalParameters } from '../utils/Interfaces';
 
-export function useConfig(parameters: ChartParams) {
-  const [colorScale, setColorScale] = useState<string>(parameters.colorScale ?? 'viridis');
-  const [markColor, setMarkColor] = useState<string>(parameters.markColor ?? 'white');
-  const [encoding, setEncoding] = useState<string>(parameters.encoding ?? 'simple');
-  const [showTooltip, setShowTooltip] = useState<boolean>(parameters.showTooltip ?? false);
-  const [isSnr, setIsSnr] = useState<boolean>(parameters.isSnr ?? false);
-  const [clusterMode, setClusterMode] = useState<string>(parameters.clusterMode ?? 'none');
-  const [clusterVar, setClusterVar] = useState<string>(parameters.clusterVar ?? 'mean');
-  const [nMeans, setNMeans] = useState<number>(parameters.nMeans ?? 5);
-  const [nDevs, setNDevs] = useState<number>(parameters.nDevs ?? 5);
+const DEFAULTS: ChartConfiguration = {
+  showConfigurationPanel: false,
+  colorScheme: ColorScheme.Viridis,
+  markColor: MarkColor.White,
+  encoding: EncodingType.Mean,
+  showTooltip: false,
+  isSnr: false,
+  clusterMode: ClusteringMode.None,
+  clusterVar: ClusteringVariable.Mean,
+  nMeans: 5,
+  nDevs: 5,
+};
+
+const mergeConfig = (
+  params: ExternalParameters,
+  defaults: ChartConfiguration,
+): ChartConfiguration => ({
+  ...defaults,
+  ...Object.fromEntries(Object.entries(params).filter(([_, v]) => v !== undefined)),
+});
+
+export function useConfigProps(parameters: ExternalParameters): ConfigProps {
+  const mergedConfig = mergeConfig(parameters, DEFAULTS);
+
+  const [colorScheme, setColorScheme] = useState<ColorScheme>(mergedConfig.colorScheme);
+  const [markColor, setMarkColor] = useState<MarkColor>(mergedConfig.markColor);
+  const [encoding, setEncoding] = useState<EncodingType>(mergedConfig.encoding);
+  const [showTooltip, setShowTooltip] = useState<boolean>(mergedConfig.showTooltip);
+  const [isSnr, setIsSnr] = useState<boolean>(mergedConfig.isSnr);
+  const [clusterMode, setClusterMode] = useState<ClusteringMode>(mergedConfig.clusterMode);
+  const [clusterVar, setClusterVar] = useState<ClusteringVariable>(mergedConfig.clusterVar);
+  const [nMeans, setNMeans] = useState<number>(mergedConfig.nMeans);
+  const [nDevs, setNDevs] = useState<number>(mergedConfig.nDevs);
 
   return {
-    colorScale,
-    setColorScale,
+    ...mergedConfig,
+    colorScheme,
     markColor,
-    setMarkColor,
     encoding,
-    setEncoding,
     showTooltip,
-    setShowTooltip,
     isSnr,
-    setIsSnr,
     clusterMode,
-    setClusterMode,
     clusterVar,
-    setClusterVar,
     nMeans,
-    setNMeans,
     nDevs,
+
+    // Setters
+    setColorScheme,
+    setMarkColor,
+    setEncoding,
+    setShowTooltip,
+    setIsSnr,
+    setClusterMode,
+    setClusterVar,
+    setNMeans,
     setNDevs,
   };
 }

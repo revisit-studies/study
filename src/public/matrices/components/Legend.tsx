@@ -2,10 +2,10 @@ import { useEffect, useRef, useCallback } from 'react';
 import * as d3 from 'd3';
 import { Stack, Text } from '@mantine/core';
 
-import { meanAccesor, stdAccesor } from '../utils/Accesors';
+import { meanAccessor, stdAccessor } from '../utils/Accessors';
 import { useMatrixContext } from '../utils/MatrixContext';
-import { link } from '../utils/Interfaces';
-import { Encoding } from '../utils/Enums';
+import { Link } from '../utils/Interfaces';
+import { EncodingType } from '../utils/Enums';
 
 const margin = 110;
 const meanText = 'Price Ranges:';
@@ -13,13 +13,14 @@ const devText = 'Price Deviation Ranges:';
 
 export function Legend() {
   const {
-    cellRenderer, cellSize, meanScale, devScale, encoding,
+    cellRenderer, cellSize, meanScale, devScale, configProps,
   } = useMatrixContext();
+  const { encoding } = configProps;
 
   const meanRef = useRef<SVGGElement | null>(null);
   const devRef = useRef<SVGGElement | null>(null);
   const makeLegendData = useCallback(
-    (scale: d3.ScaleQuantize<number | string, never>, isMean: boolean): link[] => scale.range().map((color) => {
+    (scale: d3.ScaleQuantize<number | string, never>, isMean: boolean): Link[] => scale.range().map((color) => {
       const [min, max] = scale.invertExtent(color);
       return {
         mean: isMean ? (min + max) / 2 : 0,
@@ -34,7 +35,7 @@ export function Legend() {
   const drawLegend = useCallback(
     (
       ref: React.RefObject<SVGGElement | null>,
-      legendData: link[],
+      legendData: Link[],
       scale: d3.ScaleQuantize<number | string, never>,
       showMean: boolean,
       showDev: boolean,
@@ -46,8 +47,8 @@ export function Legend() {
       group.selectAll('*').remove();
 
       const cells = group
-        .selectAll<SVGGElement, link>('.cell')
-        .data(legendData, (d) => meanAccesor(d) + stdAccesor(d))
+        .selectAll<SVGGElement, Link>('.cell')
+        .data(legendData, (d) => meanAccessor(d) + stdAccessor(d))
         .enter()
         .append('g')
         .attr('class', 'cell')
@@ -72,8 +73,8 @@ export function Legend() {
     (
       mScale: d3.ScaleQuantize<number | string, never>,
       dScale: d3.ScaleQuantize<number | string, never>,
-    ): link[] => {
-      const data: link[] = [];
+    ): Link[] => {
+      const data: Link[] = [];
       mScale.range().forEach((mExtent, i) => {
         const [mMin, mMax] = meanScale.invertExtent(mExtent);
         dScale.range().forEach((dExtent, j) => {
@@ -98,7 +99,7 @@ export function Legend() {
   const drawLightnessLegend = useCallback(
     (
       ref: React.RefObject<SVGGElement | null>,
-      legendData: link[],
+      legendData: Link[],
       mScale: d3.ScaleQuantize<number | string, never>,
       dScale: d3.ScaleQuantize<number | string, never>,
       showMean: boolean,
@@ -111,8 +112,8 @@ export function Legend() {
       group.selectAll('*').remove();
 
       group
-        .selectAll<SVGGElement, link>('.cell')
-        .data(legendData, (d) => meanAccesor(d) + stdAccesor(d))
+        .selectAll<SVGGElement, Link>('.cell')
+        .data(legendData, (d) => meanAccessor(d) + stdAccessor(d))
         .join('g')
         .attr('class', 'cell')
         .attr(
@@ -123,7 +124,7 @@ export function Legend() {
         );
 
       group
-        .selectAll<SVGGElement, link>('.meanLabel')
+        .selectAll<SVGGElement, Link>('.meanLabel')
         .data(mScale.range())
         .join('text')
         .attr(
@@ -137,7 +138,7 @@ export function Legend() {
         });
 
       group
-        .selectAll<SVGGElement, link>('.devLabel')
+        .selectAll<SVGGElement, Link>('.devLabel')
         .data(dScale.range())
         .join('text')
         .attr(
@@ -158,21 +159,21 @@ export function Legend() {
   );
 
   useEffect(() => {
-    if (meanRef.current && encoding !== Encoding.light) {
+    if (meanRef.current && encoding !== EncodingType.Bivariate) {
       const meanLegend = makeLegendData(meanScale, true);
       drawLegend(meanRef, meanLegend, meanScale, true, false);
     }
   }, [meanScale, encoding, drawLegend, makeLegendData]);
 
   useEffect(() => {
-    if (devRef.current && encoding !== Encoding.light) {
+    if (devRef.current && encoding !== EncodingType.Bivariate) {
       const devLegend = makeLegendData(devScale, false);
       drawLegend(devRef, devLegend, devScale, false, true);
     }
   }, [devScale, encoding, drawLegend, makeLegendData]);
 
   useEffect(() => {
-    if (meanRef.current && encoding === Encoding.light) {
+    if (meanRef.current && encoding === EncodingType.Bivariate) {
       const data = makeLightnessLegendData(meanScale, devScale);
       drawLightnessLegend(meanRef, data, meanScale, devScale, true, true);
     }
@@ -185,7 +186,7 @@ export function Legend() {
           {meanText}
         </Text>
         <svg
-          height={encoding !== Encoding.light ? cellSize : '40vh'}
+          height={encoding !== EncodingType.Bivariate ? cellSize : '40vh'}
           width="0vw"
           style={{ overflow: 'visible', background: 'green' }}
         >
@@ -193,7 +194,7 @@ export function Legend() {
         </svg>
       </div>
 
-      {devScale.range().length > 1 && encoding !== Encoding.light && (
+      {devScale.range().length > 1 && encoding !== EncodingType.Bivariate && (
         <div>
           <Text size="xl" fw={700}>
             {devText}

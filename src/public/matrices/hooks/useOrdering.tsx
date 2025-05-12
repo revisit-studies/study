@@ -4,16 +4,16 @@ import {
 } from 'reorder.js';
 
 import { useLayoutEffect, useState } from 'react';
-import { meanAccesor, snrAccesor, stdAccesor } from '../utils/Accesors';
+import { meanAccessor, snrAccessor, stdAccessor } from '../utils/Accessors';
 
-import { link } from '../utils/Interfaces';
+import { Link } from '../utils/Interfaces';
 
-function linksToMatrix(property: string, links: link[]) {
-  let accesor = meanAccesor;
+function linksToMatrix(property: string, links: Link[]) {
+  let accesor = meanAccessor;
   if (property === 'snr') {
-    accesor = snrAccesor;
+    accesor = snrAccessor;
   } else if (property === 'std') {
-    accesor = stdAccesor;
+    accesor = stdAccessor;
   }
   const nodes = Array.from(
     new Set(links.flatMap(({ origin, destination }) => [origin, destination])),
@@ -23,7 +23,7 @@ function linksToMatrix(property: string, links: link[]) {
 
   const matrix = Array.from({ length: nodes.length }, () => Array(nodes.length).fill(0));
 
-  links.forEach((d: link) => {
+  links.forEach((d: Link) => {
     const { origin, destination } = d;
     const value = accesor(d) || 0;
     matrix[indexMap.get(origin)!][indexMap.get(destination)!] = value;
@@ -32,7 +32,7 @@ function linksToMatrix(property: string, links: link[]) {
   return { matrix, nodes };
 }
 
-export function getClusterOrder(ordering: string, property: string, links: link[]) {
+export function getClusterOrder(ordering: string, property: string, links: Link[]) {
   const { matrix, nodes } = linksToMatrix(property, links);
 
   let orderingFunction;
@@ -51,7 +51,7 @@ export function getClusterOrder(ordering: string, property: string, links: link[
   const newOrder = permute(nodes, order);
   return newOrder;
 }
-export function useOrdering(data: link[], clusterMode: string, clusterVar: string) {
+export function useOrderingState(data: Link[], clusterMode: string, clusterVar: string) {
   const [orderedOrigins, setOrderedOrigins] = useState<string[] | null>(null);
   const [orderedDestinations, setOrderedDestinations] = useState<string[] | null>(null);
 

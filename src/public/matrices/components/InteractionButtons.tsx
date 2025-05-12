@@ -3,48 +3,35 @@ import {
   Button, Group, Radio, RangeSlider, Stack, Text,
 } from '@mantine/core';
 import { useEffect, useState } from 'react';
-import { UserAction } from '../utils/Enums';
+import { UserActionType } from '../utils/Enums';
 import { useMatrixContext } from '../utils/MatrixContext';
-import { clusterMark } from '../utils/Interfaces';
+import { ClusterMark } from '../utils/Interfaces';
 
 function ClearAndResetButtons() {
   const {
-    config, setAnswerNodes, trrack, actions, setAnswer,
+    setAnswerNodes, trrack, actions, setAnswer,
   } = useMatrixContext();
 
   return (
-    <>
-      <Button
-        onClick={() => {
-          setAnswerNodes([]);
-          trrack?.apply('Set Answer', actions?.setAnswerNodes([]));
-          setAnswer({
-            status: true,
-            provenanceGraph: trrack?.graph.backend,
-            answers: { answerNodes: [] },
-          });
-        }}
-      >
-        {UserAction.clearNodeSelection}
-      </Button>
-
-      {/* {!config.isClusterTask && (
-        <Button
-          onClick={() => {
-            setOrderingNode(null);
-            setOrderedDestinations(orderedOrigins);
-          }}
-        >
-          {UserAction.resetOrdering}
-        </Button>
-      )} */}
-    </>
+    <Button
+      onClick={() => {
+        setAnswerNodes([]);
+        trrack?.apply('Set Answer', actions?.setAnswerNodes([]));
+        setAnswer({
+          status: true,
+          provenanceGraph: trrack?.graph.backend,
+          answers: { answerNodes: [] },
+        });
+      }}
+    >
+      {UserActionType.ClearNodeSelection}
+    </Button>
   );
 }
 
 function ClusterSelection() {
   const [cluster, setCluster] = useState('');
-  const { config, setAnswer, trrack } = useMatrixContext();
+  const { configProps, setAnswer, trrack } = useMatrixContext();
 
   useEffect(() => {
     setAnswer({
@@ -64,7 +51,7 @@ function ClusterSelection() {
       withAsterisk
     >
       <Group mt="s">
-        {config.clusterMarks?.map((cm: clusterMark) => (
+        {configProps.clusterMarks?.map((cm: ClusterMark) => (
           <Radio key={cm.option} value={cm.option} label={cm.option} />
         ))}
       </Group>
@@ -76,9 +63,7 @@ function PathSelection() {
   const [path, setPath] = useState('');
   const [range, setRange] = useState<[number, number]>();
 
-  const {
-    setLinkMarks, setAnswer, trrack, config,
-  } = useMatrixContext();
+  const { setLinkMarks, setAnswer, trrack } = useMatrixContext();
 
   useEffect(() => {
     setAnswer({
@@ -113,7 +98,7 @@ function PathSelection() {
           setLinkMarks([]);
         }}
       >
-        {UserAction.clearLinkSelection}
+        {UserActionType.ClearLinkSelection}
       </Button>
     </Stack>
   );
@@ -141,13 +126,9 @@ function RangeSelection() {
 }
 
 export function InteractionButtons() {
-  const { config } = useMatrixContext();
-
   return (
     <Stack>
-      {/* {config.isClusterTask && <ClusterSelection />} */}
       <PathSelection />
-      {/* {config.isRangeTask && <RangeSelection />} */}
       <ClearAndResetButtons />
     </Stack>
   );

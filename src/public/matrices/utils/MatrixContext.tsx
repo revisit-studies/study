@@ -1,85 +1,68 @@
-/*  eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { createContext, useContext, useMemo } from 'react';
+import React, { createContext, useContext } from 'react';
 import * as d3 from 'd3';
 import { Trrack } from '@trrack/core';
-import { ChartParams, link, TrrackState } from './Interfaces';
+import { ConfigProps, Link, TrrackState } from './Interfaces';
 
 interface MatrixContextType {
-  config: ChartParams;
-
-  encoding: string;
-  colorScale: string;
-  markColor: string;
-  isSnr: boolean;
-  nMeans: number;
-  nDevs: number;
-
-  data: link[];
-  margin: { top: number; left: number; right: number; bottom: number };
+  // Data and dimensions
+  data: Link[];
   width: number;
   height: number;
   size: number;
   cellSize: number;
+  margin: { top: number; left: number; right: number; bottom: number };
 
-  meanMin: number;
-  meanMax: number;
-  devMin: number;
-  devMax: number;
+  // Scales and axes
+  originScale: d3.ScaleBand<string>;
+  destinationScale: d3.ScaleBand<string>;
+  meanScale: d3.ScaleQuantize<string | number, never>;
+  devScale: d3.ScaleQuantize<string | number, never>;
 
+  configProps: ConfigProps;
+
+  // State management
+  originHighlight: string | null;
+  destinationHighlight: string | null;
+  orderedOrigins: string[] | null;
+  orderedDestinations: string[] | null;
+  linkMarks: string[][] | null;
+  orderingNode: string | null;
+  answerNodes: string[];
+
+  // Setters
+  setOriginHighlight: (value: string | null) => void;
+  setDestinationHighlight: (value: string | null) => void;
+  setOrderedOrigins: (value: string[] | null) => void;
+  setOrderedDestinations: (value: string[] | null) => void;
+  setLinkMarks: (value: string[][] | null) => void;
+  setOrderingNode: (value: string | null) => void;
+  setAnswerNodes: (nodes: string[]) => void;
+
+  // Utility functions
   cellRenderer: (
-    gCells: d3.Selection<SVGGElement, link, SVGGElement | null, unknown>,
+    gCells: d3.Selection<SVGGElement, Link, SVGGElement | null, unknown>,
     showMean?: boolean,
     showDev?: boolean
   ) => void;
 
-  originScale: d3.ScaleBand<string>;
-  destinationScale: d3.ScaleBand<string>;
-
-  originHighlight: string | null;
-  setOriginHighlight: (value: string | null) => void;
-  destinationHighlight: string | null;
-  setDestinationHighlight: (value: string | null) => void;
-
-  orderedOrigins: string[] | null;
-  setOrderedOrigins: (value: string[] | null) => void;
-  orderedDestinations: string[] | null;
-  setOrderedDestinations: (value: string[] | null) => void;
-
-  meanScale: d3.ScaleQuantize<string | number, never>;
-  devScale: d3.ScaleQuantize<string | number, never>;
-
-  linkMarks: string[][] | null;
-  setLinkMarks: (value: string[][] | null) => void;
-
-  orderingNode: string | null;
-  setOrderingNode: (value: string | null) => void;
-
-  answerNodes: string[];
-  setAnswerNodes: (nodes: string[]) => void;
-
+  // Provenance
   actions?: any;
   trrack?: Trrack<TrrackState, string>;
   setAnswer?: any;
 }
 
-const MatrixContext = createContext<MatrixContextType | undefined>(undefined);
+const MatrixContext = createContext<MatrixContextType | null>(null);
 
 export function MatrixProvider({
   children,
-  context,
+  value,
 }: {
   children: React.ReactNode;
-  context: MatrixContextType;
-}): React.ReactElement {
-  const contextValue = useMemo(
-    () => ({
-      ...context,
-    }),
-    [context],
-  );
-
-  return <MatrixContext.Provider value={contextValue}>{children}</MatrixContext.Provider>;
+  value: MatrixContextType;
+}) {
+  return <MatrixContext.Provider value={value}>{children}</MatrixContext.Provider>;
 }
 
 export const useMatrixContext = () => {

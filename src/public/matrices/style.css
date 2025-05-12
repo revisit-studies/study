@@ -39,3 +39,15 @@
   font-weight: bold;
   font-size: xx-large;
 }
+
+.container {
+  display: flex;
+  align-items: center;
+  gap: 2vw;
+}
+
+.matrix-svg {
+  display: block;
+  aspect-ratio: 1;
+  height: 89vh;
+}

@@ -1,3 +1,7 @@
+import {
+  ClusteringMode, ClusteringVariable, ColorScheme, EncodingType, MarkColor,
+} from './Enums';
+
 export interface TrrackState {
   answerNodes: string[];
   orderingNode: string | null;
@@ -6,51 +10,62 @@ export interface TrrackState {
   linkMarks: string[][] | null;
 }
 
-export interface clusterMark {
+export interface ClusterMark {
   option: string;
   origin: string;
   destination: string;
 }
 
-export interface path {
+export interface Path {
   option: string;
   path: string;
 }
 
-export interface ChartParams {
-  showConfig?: boolean;
+export type ChartConfiguration = {
+  showConfigurationPanel: boolean;
 
-  encoding?: string;
-  dataset?: string;
+  encoding: EncodingType;
+  colorScheme: ColorScheme;
+  markColor: MarkColor;
+  isSnr: boolean;
+  nMeans: number;
+  nDevs: number;
 
-  isSnr?: boolean;
+  showTooltip: boolean;
 
-  nMeans?: number;
-  nDevs?: number;
+  clusterMode: ClusteringMode;
+  clusterVar: ClusteringVariable;
 
-  markColor?: string;
-  colorScale?: string;
+  paths?: Path[];
+  linkMarks?: string[][];
+  clusterMarks?: ClusterMark[];
 
   nodeOrderingDisabled?: boolean;
   highlightingDisabled?: boolean;
   destinationSelectionDisabled?: boolean;
 
-  isClusterTask?: boolean;
-  clusterMode?: string;
-  clusterVar?: string;
-  clusterMarks?: clusterMark[];
-
-  isRangeTask?: boolean;
-
-  paths?: path[];
-  linkMarks?: string[][];
-
-  showTooltip?: boolean;
-
   provenanceState?: TrrackState;
+};
+
+export type ExternalParameters = {
+  dataset: string;
+} & Partial<ChartConfiguration>;
+
+export interface ChartSetters {
+  setColorScheme: (value: ColorScheme) => void;
+  setMarkColor: (value: MarkColor) => void;
+  setEncoding: (value: EncodingType) => void;
+  setShowTooltip: (value: boolean) => void;
+  setIsSnr: (value: boolean) => void;
+  setClusterMode: (value: ClusteringMode) => void;
+  setClusterVar: (value: ClusteringVariable) => void;
+  setNMeans: (value: number) => void;
+  setNDevs: (value: number) => void;
 }
 
-export interface link {
+export type ConfigProps = ChartConfiguration & ChartSetters;
+
+export interface Link {
   origin: string;
   destination: string;
   mean: number;

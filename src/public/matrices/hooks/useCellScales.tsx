@@ -1,37 +1,37 @@
 import { useMemo } from 'react';
 import * as d3 from 'd3';
 import { createLinearScale, createMarkScale } from './useRenderEncodeCells';
-import { ColorScheme, Encoding } from '../utils/Enums';
+import { ColorScheme, EncodingType } from '../utils/Enums';
 
 function getColorScale(colorScale: string, nMeans: number) {
   const range = createLinearScale(nMeans, 0, 1);
   let meanColorScheme;
   switch (colorScale) {
-    case ColorScheme.viridis:
+    case ColorScheme.Viridis:
       meanColorScheme = range.map((t) => d3.interpolateViridis(t)).reverse();
       break;
-    case ColorScheme.cividis:
+    case ColorScheme.Cividis:
       meanColorScheme = range.map((t) => d3.interpolateCividis(t)).reverse();
       break;
-    case ColorScheme.warm:
+    case ColorScheme.Warm:
       meanColorScheme = range.map((t) => d3.interpolateWarm(t)).reverse();
       break;
-    case ColorScheme.cool:
+    case ColorScheme.Cool:
       meanColorScheme = range.map((t) => d3.interpolateCool(t)).reverse();
       break;
-    case ColorScheme.plasma:
+    case ColorScheme.Plasma:
       meanColorScheme = range.map((t) => d3.interpolatePlasma(t)).reverse();
       break;
-    case ColorScheme.inferno:
+    case ColorScheme.Inferno:
       meanColorScheme = range.map((t) => d3.interpolateInferno(t)).reverse();
       break;
-    case ColorScheme.turbo:
+    case ColorScheme.Turbo:
       meanColorScheme = range.map((t) => d3.interpolateTurbo(t)).reverse();
       break;
-    case ColorScheme.blues:
+    case ColorScheme.Blues:
       meanColorScheme = range.map((t) => d3.interpolateBlues(t));
       break;
-    case ColorScheme.oranges:
+    case ColorScheme.Oranges:
       meanColorScheme = range.map((t) => d3.interpolateOranges(t));
       break;
     default:
@@ -57,43 +57,38 @@ export function useCellScales(
   const meanScale = useMemo(() => {
     const barsScheme = createLinearScale(5, cellSize * 0.2, cellSize * 0.9);
     const colorScheme = getColorScale(colorScale, nMeans);
-    const scheme = encoding === Encoding.bars ? barsScheme : colorScheme;
+    const scheme = encoding === EncodingType.Bars ? barsScheme : colorScheme;
     return d3.scaleQuantize<number | string>().domain([meanMin, meanMax]).range(scheme);
   }, [meanMin, meanMax, nMeans, colorScale, encoding, cellSize]);
 
   const devScale = useMemo(() => {
     let steps = [1];
     switch (encoding) {
-      case Encoding.bars: {
+      case EncodingType.Bars: {
         steps = createLinearScale(nDevs, cellSize * 0.2, cellSize * 0.9);
         if (isSnr) steps = steps.reverse();
         break;
       }
-      case Encoding.light: {
+      case EncodingType.Bivariate: {
         steps = createLinearScale(nDevs, 0.2, 1).reverse();
         break;
       }
-      case Encoding.rotation45: {
+      case EncodingType.ColoredRotation45:
+      case EncodingType.MarkRotation45: {
         steps = createLinearScale(nDevs);
         break;
       }
-      case Encoding.rotation90: {
+      case EncodingType.ColoredRotation90:
+      case EncodingType.MarkRotation90: {
         steps = createLinearScale(nDevs, 0, 90);
         break;
       }
-      case Encoding.colorRotation45: {
-        steps = createLinearScale(nDevs);
-        break;
-      }
-      case Encoding.colorRotation90: {
-        steps = createLinearScale(nDevs, 0, 90);
-        break;
-      }
-      case Encoding.mark: {
+
+      case EncodingType.Mark: {
         steps = createMarkScale(nDevs, cellSize * 0.8);
         break;
       }
-      case Encoding.size: {
+      case EncodingType.Size: {
         steps = createLinearScale(nDevs, cellSize * 0.3, cellSize).reverse();
         break;
       }

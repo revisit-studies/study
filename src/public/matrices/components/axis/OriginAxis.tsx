@@ -2,9 +2,9 @@ import { Text, Tooltip } from '@mantine/core';
 
 import { useCallback, useEffect, useMemo } from 'react';
 import { useMatrixContext } from '../../utils/MatrixContext';
-import { link } from '../../utils/Interfaces';
+import { Link } from '../../utils/Interfaces';
 
-export const getOrder = (node: string, data: link[]) => {
+export const getOrder = (node: string, data: Link[]) => {
   const connected = [
     ...new Set(data.filter((d) => d.origin === node).map((d) => d.destination)),
   ].sort();
@@ -19,7 +19,7 @@ export const getOrder = (node: string, data: link[]) => {
 
 export function OriginAxis({ showLines = true }: { showLines?: boolean }) {
   const {
-    config,
+    configProps,
     data,
     originScale,
     destinationScale,
@@ -61,7 +61,7 @@ export function OriginAxis({ showLines = true }: { showLines?: boolean }) {
 
   const onClick = useCallback(
     (node: string, oNode: string | null) => {
-      if (config.nodeOrderingDisabled) return;
+      if (configProps.nodeOrderingDisabled) return;
       if (oNode === node) {
         setOrderingNode(null);
         trrack?.apply('Reset Sort', actions?.setOrderingNode(null));
@@ -70,18 +70,24 @@ export function OriginAxis({ showLines = true }: { showLines?: boolean }) {
         trrack?.apply('Sort', actions?.setOrderingNode(node));
       }
     },
-    [config.nodeOrderingDisabled, trrack, actions, setOrderingNode],
+    [configProps.nodeOrderingDisabled, trrack, actions, setOrderingNode],
   );
 
   useEffect(() => {
-    if (config.nodeOrderingDisabled) return;
+    if (configProps.nodeOrderingDisabled) return;
     if (orderingNode === null) {
       setOrderedDestinations(orderedOrigins);
       return;
     }
     const order = getOrder(orderingNode, data);
     setOrderedDestinations(order);
-  }, [config.nodeOrderingDisabled, data, orderedOrigins, setOrderedDestinations, orderingNode]);
+  }, [
+    configProps.nodeOrderingDisabled,
+    data,
+    orderedOrigins,
+    setOrderedDestinations,
+    orderingNode,
+  ]);
 
   return (
     <>

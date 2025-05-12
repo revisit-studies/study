@@ -2,8 +2,8 @@ import { Card, Text } from '@mantine/core';
 import { useEffect, useState, useRef } from 'react';
 import { useMatrixContext } from '../utils/MatrixContext';
 import {
-  destinationAccesor, meanAccesor, originAccesor, stdAccesor,
-} from '../utils/Accesors';
+  destinationAccessor, meanAccessor, originAccessor, stdAccessor,
+} from '../utils/Accessors';
 
 type Anchor = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
 const [width, height] = [300, 105];
@@ -56,7 +56,7 @@ export function MatrixTooltip() {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const item = data.find(
-    (d) => originAccesor(d) === originHighlight && destinationAccesor(d) === destinationHighlight,
+    (d) => originAccessor(d) === originHighlight && destinationAccessor(d) === destinationHighlight,
   );
 
   const isActive = !!item && originHighlight != null && destinationHighlight != null;
@@ -130,11 +130,11 @@ export function MatrixTooltip() {
         <Text size="sm" c="blue">
           Mean:
           {' '}
-          {meanAccesor(item).toFixed(2)}
+          {meanAccessor(item).toFixed(2)}
         </Text>
         <Text size="sm" c="orange">
           Deviation: ±
-          {stdAccesor(item).toFixed(2)}
+          {stdAccessor(item).toFixed(2)}
         </Text>
         {/*         <svg width="100%" height="100%" style={{ background: 'red' }} />
          */}

@@ -5,7 +5,7 @@ import { useMatrixContext } from '../../utils/MatrixContext';
 
 export function DestinationAxis({ showLines = true }: { showLines?: boolean }) {
   const {
-    config,
+    configProps,
     margin,
     destinationScale,
     originScale,
@@ -36,7 +36,7 @@ export function DestinationAxis({ showLines = true }: { showLines?: boolean }) {
 
   const onClick = useCallback(
     (node: string, nodes: string[]) => {
-      if (config.destinationSelectionDisabled) return;
+      if (configProps.destinationSelectionDisabled) return;
 
       let newNodes;
       if (nodes.includes(node)) {
@@ -52,7 +52,7 @@ export function DestinationAxis({ showLines = true }: { showLines?: boolean }) {
         answers: { answerNodes: newNodes },
       });
     },
-    [setAnswerNodes, setAnswer, trrack, actions, config],
+    [setAnswerNodes, setAnswer, trrack, actions, configProps],
   );
 
   const onMouseOver = useCallback(

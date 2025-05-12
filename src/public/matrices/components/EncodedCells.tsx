@@ -2,10 +2,10 @@ import { useEffect, useRef } from 'react';
 import * as d3 from 'd3';
 
 import {
-  originAccesor, destinationAccesor, meanAccesor, stdAccesor,
-} from '../utils/Accesors';
+  originAccessor, destinationAccessor, meanAccessor, stdAccessor,
+} from '../utils/Accessors';
 import { useMatrixContext } from '../utils/MatrixContext';
-import { link } from '../utils/Interfaces';
+import { Link } from '../utils/Interfaces';
 
 export function EncodedCells() {
   const {
@@ -24,24 +24,27 @@ export function EncodedCells() {
 
     const g = d3
       .select(ref.current)
-      .selectAll<SVGGElement, link>('.cell')
-      .data(data, (d) => originAccesor(d) + destinationAccesor(d) + meanAccesor(d) + stdAccesor(d))
+      .selectAll<SVGGElement, Link>('.cell')
+      .data(
+        data,
+        (d) => originAccessor(d) + destinationAccessor(d) + meanAccessor(d) + stdAccessor(d),
+      )
       .join(
         (enter) => enter
           .append('g')
           .attr('class', 'cell')
           .attr(
             'transform',
-            (d: link) => `translate(${originScale(originAccesor(d))}, ${destinationScale(
-              destinationAccesor(d),
+            (d: Link) => `translate(${originScale(originAccessor(d))}, ${destinationScale(
+              destinationAccessor(d),
             )})`,
           ),
         (update) => {
           update.selectAll('*').remove();
           return update.attr(
             'transform',
-            (d: link) => `translate(${originScale(originAccesor(d))}, ${destinationScale(
-              destinationAccesor(d),
+            (d: Link) => `translate(${originScale(originAccessor(d))}, ${destinationScale(
+              destinationAccessor(d),
             )})`,
           );
         },

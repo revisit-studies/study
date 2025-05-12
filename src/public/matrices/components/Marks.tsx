@@ -1,9 +1,9 @@
-import { clusterMark } from '../utils/Interfaces';
+import { ClusterMark } from '../utils/Interfaces';
 import { useMatrixContext } from '../utils/MatrixContext';
 
 const margin = 2;
 
-export function ClusterMarks({ marks, size }: { marks: clusterMark[] | null; size: number }) {
+export function ClusterMarks({ marks, size }: { marks: ClusterMark[] | null; size: number }) {
   const { originScale, destinationScale, cellSize } = useMatrixContext();
 
   return marks?.map((d, i) => (

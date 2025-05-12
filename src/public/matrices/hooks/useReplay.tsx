@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { TrrackState } from '../utils/Interfaces';
 
-export function useReplay(provenanceState: TrrackState | undefined) {
+export function useReplayState(provenanceState: TrrackState | undefined) {
   const [destinationHighlight, setDestinationHighlight] = useState<string | null>(null);
   const [originHighlight, setOriginHighlight] = useState<string | null>(null);
 
