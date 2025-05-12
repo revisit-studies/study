@@ -7,6 +7,14 @@ import { ChartParams, link, TrrackState } from './Interfaces';
 
 interface MatrixContextType {
   config: ChartParams;
+
+  encoding: string;
+  colorScale: string;
+  markColor: string;
+  isSnr: boolean;
+  nMeans: number;
+  nDevs: number;
+
   data: link[];
   margin: { top: number; left: number; right: number; bottom: number };
   width: number;
@@ -14,23 +22,19 @@ interface MatrixContextType {
   size: number;
   cellSize: number;
 
-  nMeans: number;
-  nDevs: number;
-
-  colorScale: string;
-
   meanMin: number;
   meanMax: number;
   devMin: number;
   devMax: number;
 
+  cellRenderer: (
+    gCells: d3.Selection<SVGGElement, link, SVGGElement | null, unknown>,
+    showMean?: boolean,
+    showDev?: boolean
+  ) => void;
+
   originScale: d3.ScaleBand<string>;
   destinationScale: d3.ScaleBand<string>;
-
-  encoding: string;
-  setEncoding: (value: string) => void;
-  isSnr: boolean;
-  setIsSnr: (value: boolean) => void;
 
   originHighlight: string | null;
   setOriginHighlight: (value: string | null) => void;

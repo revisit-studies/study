@@ -11,7 +11,6 @@ import { meanAccesor, snrAccesor, stdAccesor } from '../utils/Accesors';
 } */
 
 /* const markColor = '#ff6e4a'; */
-const markColor = 'white';
 const barMeanColor = '#7b3294';
 const barStdColor = '#008837';
 
@@ -25,16 +24,19 @@ export function createLinearScale(steps: number, min = 0, max = 45): number[] {
   return Array.from({ length: steps }, (_, i) => min + stepSize * i);
 }
 
-export function useRenderEcondedCells(
+export function useCellRenderer(
+  encoding: string,
+  markColor: string,
+  isSnr: boolean,
+
   meanScale: d3.ScaleQuantize<string | number, never>,
   devScale: d3.ScaleQuantize<string | number, never> | (() => number),
   cellSize: number,
-  isSnr: boolean,
 ) {
   const renderEncodedCells = useCallback(
     (
       gCells: d3.Selection<SVGGElement, link, SVGGElement | null, unknown>,
-      encoding: string,
+
       showMean: boolean = true,
       showDev: boolean = true,
     ) => {
@@ -257,7 +259,7 @@ export function useRenderEcondedCells(
         }
       }
     },
-    [meanScale, devScale, cellSize, isSnr],
+    [meanScale, devScale, cellSize, isSnr, encoding, markColor],
   );
 
   return renderEncodedCells;

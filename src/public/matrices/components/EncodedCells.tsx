@@ -7,15 +7,17 @@ import {
 import { useMatrixContext } from '../utils/MatrixContext';
 import { link } from '../utils/Interfaces';
 
-import { useRenderEcondedCells } from '../hooks/useRenderEncodeCells';
-
 export function EncodedCells() {
   const {
-    data, cellSize, encoding, isSnr, meanScale, devScale, originScale, destinationScale,
+    data,
+
+    cellRenderer,
+
+    originScale,
+    destinationScale,
   } = useMatrixContext();
 
   const ref = useRef<SVGGElement | null>(null);
-  const cellRenderer = useRenderEcondedCells(meanScale, devScale, cellSize, isSnr);
 
   useEffect(() => {
     if (!ref.current) return;
@@ -46,8 +48,8 @@ export function EncodedCells() {
         (exit) => exit.remove(),
       );
 
-    cellRenderer(g, encoding);
-  }, [data, originScale, destinationScale, cellRenderer, ref, encoding]);
+    cellRenderer(g);
+  }, [data, originScale, destinationScale, cellRenderer, ref]);
 
   return <g ref={ref} />;
 }

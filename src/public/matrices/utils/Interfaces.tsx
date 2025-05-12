@@ -20,19 +20,20 @@ export interface path {
 export interface ChartParams {
   showConfig?: boolean;
 
-  encoding: string;
-  dataset: string;
+  encoding?: string;
+  dataset?: string;
 
-  isSnr: boolean;
+  isSnr?: boolean;
 
-  nMeans: number;
-  nDevs: number;
+  nMeans?: number;
+  nDevs?: number;
 
-  colorScale: string;
+  markColor?: string;
+  colorScale?: string;
 
-  nodeOrderingDisabled: boolean;
-  highlightingDisabled: boolean;
-  destinationSelectionDisabled: boolean;
+  nodeOrderingDisabled?: boolean;
+  highlightingDisabled?: boolean;
+  destinationSelectionDisabled?: boolean;
 
   isClusterTask?: boolean;
   clusterMode?: string;
@@ -41,12 +42,12 @@ export interface ChartParams {
 
   isRangeTask?: boolean;
 
-  paths: path[];
-  linkMarks: string[][];
+  paths?: path[];
+  linkMarks?: string[][];
 
   showTooltip?: boolean;
 
-  provenanceState: TrrackState;
+  provenanceState?: TrrackState;
 }
 
 export interface link {

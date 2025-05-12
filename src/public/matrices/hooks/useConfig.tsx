@@ -3,6 +3,7 @@ import { ChartParams } from '../utils/Interfaces';
 
 export function useConfig(parameters: ChartParams) {
   const [colorScale, setColorScale] = useState<string>(parameters.colorScale ?? 'viridis');
+  const [markColor, setMarkColor] = useState<string>(parameters.markColor ?? 'white');
   const [encoding, setEncoding] = useState<string>(parameters.encoding ?? 'simple');
   const [showTooltip, setShowTooltip] = useState<boolean>(parameters.showTooltip ?? false);
   const [isSnr, setIsSnr] = useState<boolean>(parameters.isSnr ?? false);
@@ -14,6 +15,8 @@ export function useConfig(parameters: ChartParams) {
   return {
     colorScale,
     setColorScale,
+    markColor,
+    setMarkColor,
     encoding,
     setEncoding,
     showTooltip,

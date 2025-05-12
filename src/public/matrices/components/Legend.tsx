@@ -7,37 +7,17 @@ import { useMatrixContext } from '../utils/MatrixContext';
 import { link } from '../utils/Interfaces';
 import { Encoding } from '../utils/Enums';
 
-import { useRenderEcondedCells } from '../hooks/useRenderEncodeCells';
-import { useCellScales } from '../hooks/useCellScales';
-
 const margin = 110;
 const meanText = 'Price Ranges:';
 const devText = 'Price Deviation Ranges:';
 
 export function Legend() {
   const {
-    encoding, isSnr, colorScale, meanMin, meanMax, nMeans, devMin, devMax, nDevs, cellSize,
+    cellRenderer, cellSize, meanScale, devScale, encoding,
   } = useMatrixContext();
-  /* const legendCellSize = (window.innerWidth * 0.28 - margin * (Math.max(nDevs, nMeans) - 1)) / Math.max(nDevs, nMeans); */
-  const legendCellSize = cellSize;
+
   const meanRef = useRef<SVGGElement | null>(null);
   const devRef = useRef<SVGGElement | null>(null);
-
-  const { meanScale, devScale } = useCellScales(
-    encoding,
-    colorScale,
-    legendCellSize,
-    meanMin,
-    meanMax,
-    devMin,
-    devMax,
-    isSnr,
-    nMeans,
-    nDevs,
-  );
-
-  const cellRenderer = useRenderEcondedCells(meanScale, devScale, legendCellSize, isSnr);
-
   const makeLegendData = useCallback(
     (scale: d3.ScaleQuantize<number | string, never>, isMean: boolean): link[] => scale.range().map((color) => {
       const [min, max] = scale.invertExtent(color);
@@ -75,7 +55,7 @@ export function Legend() {
 
       cells
         .append('text')
-        .attr('transform', `translate(${legendCellSize / 2}, ${legendCellSize + 20})`)
+        .attr('transform', `translate(${cellSize / 2}, ${cellSize + 20})`)
         .attr('text-anchor', 'middle')
         .text((_, i) => {
           const [min, max] = scale.invertExtent(scale.range()[i]);
@@ -83,9 +63,9 @@ export function Legend() {
           return `$${min.toFixed(0)} - ${+max.toFixed(0) - 0.01}`;
         });
 
-      cellRenderer(group.selectAll('.cell'), encoding, showMean, showDev);
+      cellRenderer(group.selectAll('.cell'), showMean, showDev);
     },
-    [legendCellSize, encoding, cellRenderer],
+    [cellRenderer, cellSize],
   );
 
   const makeLightnessLegendData = useCallback(
@@ -132,13 +112,13 @@ export function Legend() {
 
       group
         .selectAll<SVGGElement, link>('.cell')
-        .data(legendData, (d) => meanAccesor(d) + stdAccesor(d) + encoding)
+        .data(legendData, (d) => meanAccesor(d) + stdAccesor(d))
         .join('g')
         .attr('class', 'cell')
         .attr(
           'transform',
-          (d) => `translate(${(legendCellSize + margin / 2) * +d.origin}, ${
-            legendCellSize * +d.destination + margin
+          (d) => `translate(${(cellSize + margin / 2) * +d.origin}, ${
+            cellSize * +d.destination + margin
           })`,
         );
 
@@ -148,7 +128,7 @@ export function Legend() {
         .join('text')
         .attr(
           'transform',
-          (d, i) => `translate(${(legendCellSize + margin / 2) * i + legendCellSize * 0.5}, ${margin / 2})`,
+          (d, i) => `translate(${(cellSize + margin / 2) * i + cellSize * 0.5}, ${margin / 2})`,
         )
         .attr('text-anchor', 'middle')
         .text((d) => {
@@ -162,8 +142,8 @@ export function Legend() {
         .join('text')
         .attr(
           'transform',
-          (d, i) => `translate(${mScale.range().length * (legendCellSize + margin / 2)},${
-            legendCellSize * i + margin + legendCellSize / 2
+          (d, i) => `translate(${mScale.range().length * (cellSize + margin / 2)},${
+            cellSize * i + margin + cellSize / 2
           })`,
         )
         .attr('text-anchor', 'start')
@@ -172,9 +152,9 @@ export function Legend() {
           return `$${min.toFixed(0)} - $${max.toFixed(0)}`;
         });
 
-      cellRenderer(group.selectAll('.cell'), encoding, showMean, showDev);
+      cellRenderer(group.selectAll('.cell'), showMean, showDev);
     },
-    [legendCellSize, cellRenderer, encoding],
+    [cellSize, cellRenderer, encoding],
   );
 
   useEffect(() => {
@@ -205,7 +185,7 @@ export function Legend() {
           {meanText}
         </Text>
         <svg
-          height={encoding !== Encoding.light ? legendCellSize : '40vh'}
+          height={encoding !== Encoding.light ? cellSize : '40vh'}
           width="0vw"
           style={{ overflow: 'visible', background: 'green' }}
         >
@@ -218,7 +198,7 @@ export function Legend() {
           <Text size="xl" fw={700}>
             {devText}
           </Text>
-          <svg height={legendCellSize} width="0vw" style={{ overflow: 'visible' }}>
+          <svg height={cellSize} width="0vw" style={{ overflow: 'visible' }}>
             <g ref={devRef} />
           </svg>
         </div>

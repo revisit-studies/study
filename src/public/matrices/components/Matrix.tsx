@@ -32,7 +32,7 @@ import {
   stdAccesor,
 } from '../utils/Accesors';
 import {
-  ClusteringMode, ClusteringVar, ColorScheme, Encoding,
+  ClusteringMode, ClusteringVar, ColorScheme, Encoding, MarkColor,
 } from '../utils/Enums';
 
 import { useCellScales } from '../hooks/useCellScales';
@@ -40,6 +40,7 @@ import { useOrdering } from '../hooks/useOrdering';
 import { useReplay } from '../hooks/useReplay';
 import { useConfig } from '../hooks/useConfig';
 import { InteractionButtons } from './InteractionButtons';
+import { useCellRenderer } from '../hooks/useRenderEncodeCells';
 
 const margin = {
   top: 100,
@@ -96,6 +97,9 @@ export function Matrix({
 
     nDevs,
     setNDevs,
+
+    markColor,
+    setMarkColor,
   } = useConfig(config);
 
   // --------------------------- Replay Items ----------------------------
@@ -111,7 +115,7 @@ export function Matrix({
     setOrderingNode,
     linkMarks,
     setLinkMarks,
-  } = useReplay(provenanceState, config);
+  } = useReplay(provenanceState);
 
   // --------------------------- Ordering ----------------------------
 
@@ -122,26 +126,17 @@ export function Matrix({
   // ---------------------------- Scales ----------------------------
 
   const [ref, { width, height }] = useResizeObserver();
-  const size = Math.min(width - margin.left - margin.right, height - margin.top - margin.bottom);
+  const innerWidth = width - margin.left - margin.right;
+  const innerHeight = height - margin.top - margin.bottom;
+  const size = Math.max(0, Math.min(innerWidth, innerHeight));
 
-  const origins = useMemo(
-    () => orderedOrigins || [...new Set(data.map(originAccesor))].sort(),
-    [data, orderedOrigins],
-  );
+  const origins = orderedOrigins ?? [...new Set(data.map(originAccesor))].sort();
+  const destinations = orderedDestinations ?? [...new Set(data.map(destinationAccesor))].sort();
 
-  const destinations = useMemo(
-    () => orderedDestinations || [...new Set(data.map(destinationAccesor))].sort(),
-    [data, orderedDestinations],
-  );
+  const originScale = d3.scaleBand<string>().range([0, size]).domain(origins);
+  const destinationScale = d3.scaleBand<string>().range([0, size]).domain(destinations);
 
-  const originScale = useMemo(() => d3.scaleBand([0, size]).domain(origins), [size, origins]);
-
-  const destinationScale = useMemo(
-    () => d3.scaleBand().range([0, size]).domain(destinations),
-    [size, destinations],
-  );
-
-  const cellSize = useMemo(() => originScale.bandwidth(), [originScale]);
+  const cellSize = originScale.bandwidth();
 
   const devAccesor = isSnr ? snrAccesor : stdAccesor;
 
@@ -174,50 +169,63 @@ export function Matrix({
     nDevs,
   );
 
+  // ---------------------------- Cell Renderer ----------------------------
+
+  const cellRenderer = useCellRenderer(
+    encoding,
+    markColor,
+    isSnr,
+
+    meanScale,
+    devScale,
+    cellSize,
+  );
+
   const shouldRender = !Number.isNaN(size) && size > 0;
 
   // ---------------------------- Render ----------------------------
   return (
     <MatrixProvider
       context={{
-        config,
         data,
+
+        config,
+
         margin,
         width,
         height,
         size,
         cellSize,
-
-        colorScale,
-
-        nMeans,
-        nDevs,
-
         meanMin,
         meanMax,
         devMin,
         devMax,
+        meanScale,
+        devScale,
+
+        encoding,
+        isSnr,
+        colorScale,
+        markColor,
+        nMeans,
+        nDevs,
+
+        cellRenderer,
 
         originScale,
         destinationScale,
 
-        encoding,
-        setEncoding,
-        isSnr,
-        setIsSnr,
-
         originHighlight,
         setOriginHighlight,
+
         destinationHighlight,
         setDestinationHighlight,
 
         orderedOrigins,
         setOrderedOrigins,
+
         orderedDestinations,
         setOrderedDestinations,
-
-        meanScale,
-        devScale,
 
         linkMarks,
         setLinkMarks,
@@ -255,26 +263,29 @@ export function Matrix({
               data={Object.values(ColorScheme)}
             />
             <NativeSelect
+              label="Mark Color:"
+              value={markColor}
+              onChange={(event) => setMarkColor(event.currentTarget.value)}
+              data={Object.values(MarkColor)}
+            />
+            <NativeSelect
               label="Encoding:"
               value={encoding}
               onChange={(event) => setEncoding(event.currentTarget.value)}
               data={Object.values(Encoding)}
             />
-
             <NativeSelect
               label="Cluster mode:"
               value={clusterMode}
               onChange={(event) => setClusterMode(event.currentTarget.value)}
               data={Object.values(ClusteringMode)}
             />
-
             <NativeSelect
               label="ClusterVar:"
               value={clusterVar}
               onChange={(event) => setClusterVar(event.currentTarget.value)}
               data={Object.values(ClusteringVar)}
             />
-
             <Stack gap="0.2vh">
               <Text size="sm">
                 Mean Steps:
@@ -282,7 +293,6 @@ export function Matrix({
               </Text>
               <Slider min={2} max={5} value={nMeans} onChange={setNMeans} />
             </Stack>
-
             <Stack gap="0.2vh">
               <Text size="sm">
                 Deviation Steps:
