@@ -31,18 +31,29 @@ export function ButtonsInput({
   const optionsAsStringOptions = useMemo(() => options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option)), [options]);
   const [orderedOptions, setOrderedOptions] = useState<StringOption[]>([]);
 
+  // Store randomized orders for each response to avoid shuffling on every render
+  const randomizedOrders: Record<string, StringOption[]> = {};
+  // Memoize the stored order for this response
+  const storedOrder = useMemo(() => randomizedOrders[response.id], [response.id]);
+
   useEffect(() => {
     if (optionOrder === 'random') {
-      const shuffled = [...optionsAsStringOptions]
-        .map((value) => ({ value, sort: Math.random() }))
-        .sort((a, b) => a.sort - b.sort)
-        .map(({ value }) => value);
-      setOrderedOptions(shuffled);
+      if (storedOrder) {
+        setOrderedOptions(storedOrder);
+      } else {
+        // If no stored order, create new random order and store it
+        const shuffled = [...optionsAsStringOptions]
+          .map((value) => ({ value, sort: Math.random() }))
+          .sort((a, b) => a.sort - b.sort)
+          .map(({ value }) => value);
+        setOrderedOptions(shuffled);
+        randomizedOrders[response.id] = shuffled;
+      }
     } else {
       // optionOrder === 'fixed'
       setOrderedOptions(optionsAsStringOptions);
     }
-  }, [optionOrder, optionsAsStringOptions]);
+  }, [optionOrder, optionsAsStringOptions, response.id, storedOrder]);
 
   return (
     <FocusTrap>
