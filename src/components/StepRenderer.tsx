@@ -127,7 +127,7 @@ export function StepRenderer() {
         <HelpModal />
         <AlertModal />
         <AppShell.Main>
-          { studyConfig.uiConfig.showTitleBar === false && !showStudyBrowser && (
+          {studyConfig.uiConfig.showTitleBar === false && !showStudyBrowser && studyNavigatorEnabled && (
             <Button
               variant="transparent"
               leftSection={<IconArrowLeft size={14} />}
