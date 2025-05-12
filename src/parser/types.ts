@@ -331,6 +331,8 @@ export interface MatrixResponse extends BaseResponse {
   answerOptions: string[] | `likely${5 | 7}` | `satisfaction${5 | 7}`;
   /** The question options (rows) are the prompts for each response you'd like to record. */
   questionOptions: string[];
+  /** The order in which the questions are displayed. Defaults to fixed. */
+  questionOrder?: 'fixed' | 'random';
 }
 
 /**
@@ -505,7 +507,41 @@ export interface ButtonsResponse extends BaseResponse {
   options: (StringOption | string)[];
 }
 
-export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | ReactiveResponse | MatrixResponse | ButtonsResponse;
+/**
+ * The TextOnlyResponse interface is used to define the properties of a text only response.
+ * TextOnlyResponses render as a block of text that is displayed to the user. This can be used to display instructions or other information.
+ * It does not accept any input from the user.
+ *
+ * Example:
+ * ```js
+ * {
+ *   "id": "textOnlyResponse",
+ *   "type": "textOnly",
+ *   "prompt": "This is a text only response, it accepts markdown so you can **bold** or _italicize_ text.",
+ *   "location": "belowStimulus",
+ *   "restartEnumeration": true
+ * }
+ * ```
+ *
+ * In this example, the text only response is displayed below the stimulus and the enumeration of the questions is restarted.
+ */
+export interface TextOnlyResponse extends Omit<BaseResponse, 'secondaryText' | 'required' | 'requiredValue' | 'requiredLabel' | 'paramCapture' | 'hidden' | 'withDontKnow'> {
+  type: 'textOnly';
+  /** The markdown text that is displayed to the user. */
+  prompt: string;
+  /** Whether to restart the enumeration of the questions. Defaults to false. */
+  restartEnumeration?: boolean;
+
+  secondaryText?: undefined;
+  required?: undefined;
+  requiredValue?: undefined;
+  requiredLabel?: undefined;
+  paramCapture?: undefined;
+  hidden?: undefined;
+  withDontKnow?: undefined;
+}
+
+export type Response = NumericalResponse | ShortTextResponse | LongTextResponse | LikertResponse | DropdownResponse | SliderResponse | RadioResponse | CheckboxResponse | ReactiveResponse | MatrixResponse | ButtonsResponse | TextOnlyResponse;
 
 /**
  * The Answer interface is used to define the properties of an answer. Answers are used to define the correct answer for a task. These are generally used in training tasks or if skip logic is required based on the answer.

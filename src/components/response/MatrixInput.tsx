@@ -1,7 +1,9 @@
 import {
   Box, Flex, Radio, Text, Checkbox,
 } from '@mantine/core';
-import { ChangeEvent } from 'react';
+import {
+  ChangeEvent, useEffect, useMemo, useState,
+} from 'react';
 import { MatrixResponse, StringOption } from '../../parser/types';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { useStoreDispatch, useStoreActions } from '../../store/store';
@@ -121,6 +123,7 @@ export function MatrixInput({
     prompt,
     secondaryText,
     required,
+    questionOrder,
   } = response;
 
   const _choiceStringToColumns: Record<string, string[]> = {
@@ -131,8 +134,21 @@ export function MatrixInput({
   };
 
   const _choices = typeof answerOptions === 'string' ? _choiceStringToColumns[answerOptions].map((entry) => ({ value: entry, label: entry })) : answerOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
-  const _questions = questionOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+  const _questions = useMemo(() => questionOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : option)), [questionOptions]);
+  const [orderedQuestions, setOrderedQuestions] = useState<StringOption[]>(_questions);
 
+  useEffect(() => {
+    if (questionOrder === 'random') {
+      const shuffled = [..._questions]
+        .map((value) => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value);
+      setOrderedQuestions(shuffled);
+    } else {
+      // questionOrder === 'fixed'
+      setOrderedQuestions(_questions);
+    }
+  }, [_questions, questionOrder, response.id]);
   // Re-define on change functions. Dispatch answers to store.
   const onChangeRadio = (val: string, questionKey: string) => {
     const payload = {
@@ -158,7 +174,7 @@ export function MatrixInput({
   };
 
   const _n = _choices.length;
-  const _m = _questions.length;
+  const _m = orderedQuestions.length;
   return (
     <>
       <Flex direction="row" wrap="nowrap" gap={4}>
@@ -220,7 +236,7 @@ export function MatrixInput({
             gridTemplateRows: `repeat(${_m}, 1fr)`,
           }}
         >
-          {_questions.map((entry, idx) => (
+          {orderedQuestions.map((entry, idx) => (
             <Text
               key={`question-${idx}-label`}
               style={{
@@ -250,7 +266,7 @@ export function MatrixInput({
             gridTemplateRows: `repeat(${_m},1fr)`,
           }}
         >
-          {_questions.map((question, idx) => (
+          {orderedQuestions.map((question, idx) => (
             <div
               key={`question-${idx}`}
               style={{

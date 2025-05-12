@@ -18,11 +18,13 @@
     "demo-vega",
     "demo-video-slider",
     "demo-video",
+    "demo-dynamic",
     "library-beauvis",
     "library-color-blindness",
     "library-demographics",
     "library-mic-check",
     "library-mini-vlat",
+    "library-nasa-tlx",
     "library-previs",
     "library-sus",
     "library-vlat",
@@ -69,6 +71,9 @@
     "demo-video": {
       "path": "demo-video/config.json"
     },
+    "demo-dynamic": {
+      "path": "demo-dynamic/config.json"
+    },
     "example-VLAT-full-randomized": {
       "path": "example-VLAT-full-randomized/config.json"
     },
@@ -110,6 +115,10 @@
     },
     "library-mini-vlat": {
       "path": "library-mini-vlat/config.json",
+      "test": true
+    },
+    "library-nasa-tlx": {
+      "path": "library-nasa-tlx/config.json",
       "test": true
     },
     "library-previs": {

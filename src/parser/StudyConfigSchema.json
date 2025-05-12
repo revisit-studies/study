@@ -1229,6 +1229,14 @@
           },
           "type": "array"
         },
+        "questionOrder": {
+          "description": "The order in which the questions are displayed. Defaults to fixed.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
+        },
         "required": {
           "description": "Controls whether the response is required to be answered. Defaults to true.",
           "type": "boolean"
@@ -1791,6 +1799,9 @@
         },
         {
           "$ref": "#/definitions/ButtonsResponse"
+        },
+        {
+          "$ref": "#/definitions/TextOnlyResponse"
         }
       ]
     },
@@ -2087,6 +2098,62 @@
         "date",
         "description",
         "organizations"
+      ],
+      "type": "object"
+    },
+    "TextOnlyResponse": {
+      "additionalProperties": false,
+      "properties": {
+        "hidden": {
+          "not": {}
+        },
+        "id": {
+          "description": "The id of the response. This is used to identify the response in the data file.",
+          "type": "string"
+        },
+        "location": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
+        },
+        "paramCapture": {
+          "not": {}
+        },
+        "prompt": {
+          "description": "The markdown text that is displayed to the user.",
+          "type": "string"
+        },
+        "required": {
+          "not": {}
+        },
+        "requiredLabel": {
+          "not": {}
+        },
+        "requiredValue": {
+          "not": {}
+        },
+        "restartEnumeration": {
+          "description": "Whether to restart the enumeration of the questions. Defaults to false.",
+          "type": "boolean"
+        },
+        "secondaryText": {
+          "not": {}
+        },
+        "type": {
+          "const": "textOnly",
+          "type": "string"
+        },
+        "withDivider": {
+          "description": "Renders the response with a trailing divider.",
+          "type": "boolean"
+        },
+        "withDontKnow": {
+          "not": {}
+        }
+      },
+      "required": [
+        "id",
+        "prompt",
+        "type"
       ],
       "type": "object"
     },
