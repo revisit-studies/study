@@ -52,7 +52,7 @@
     "react-dom": "^18.3.1",
     "react-markdown": "^9.0.3",
     "react-redux": "^9.2.0",
-    "react-router": "^7.1.2",
+    "react-router": "^7.5.2",
     "react-timer-hook": "^3.0.8",
     "react-vega": "^7.6.0",
     "rehype-raw": "^7.0.0",
@@ -88,6 +88,6 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.4.1",
     "typescript": "^5.7.3",
-    "vite": "^6.2.5"
+    "vite": "^6.2.7"
   }
 }

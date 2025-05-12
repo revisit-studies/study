@@ -1,7 +1,9 @@
 import {
   Box, Flex, Radio, Text, Checkbox,
 } from '@mantine/core';
-import { ChangeEvent, useEffect, useState } from 'react';
+import {
+  ChangeEvent, useEffect, useMemo, useState,
+} from 'react';
 import { MatrixResponse, StringOption } from '../../parser/types';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { useStoreDispatch, useStoreActions } from '../../store/store';
@@ -132,8 +134,8 @@ export function MatrixInput({
   };
 
   const _choices = typeof answerOptions === 'string' ? _choiceStringToColumns[answerOptions].map((entry) => ({ value: entry, label: entry })) : answerOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
-  const _questions = questionOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
-  const [orderedQuestions, setOrderedQuestions] = useState<StringOption[]>([]);
+  const _questions = useMemo(() => questionOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : option)), [questionOptions]);
+  const [orderedQuestions, setOrderedQuestions] = useState<StringOption[]>(_questions);
 
   useEffect(() => {
     if (questionOrder === 'random') {
