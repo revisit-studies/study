@@ -30,7 +30,6 @@ export function RadioInput({
   const {
     prompt,
     required,
-    options,
     leftLabel,
     rightLabel,
     secondaryText,
@@ -40,15 +39,10 @@ export function RadioInput({
 
   const { optionOrders } = useStoredAnswer();
 
-  const optionsAsStringOptions = useMemo(() => options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option)), [options]);
-
   const [otherSelected, setOtherSelected] = useState(false);
-  const orderedOptions = useMemo(() => {
-    if (optionOrders && optionOrders[response.id]) {
-      return optionOrders[response.id];
-    }
-    return optionsAsStringOptions;
-  }, [optionOrders, response.id, optionsAsStringOptions]);
+  const orderedOptions = useMemo(() => optionOrders[response.id], [optionOrders, response.id]);
+
+  const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
 
   return (
     <Radio.Group
@@ -65,7 +59,7 @@ export function RadioInput({
       key={response.id}
       {...answer}
       // This overrides the answers error. Which..is bad?
-      error={generateErrorMessage(response, answer, optionsAsStringOptions)}
+      error={error}
       style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
     >
       <Group gap="lg" align="flex-end" mt={horizontal ? 0 : 'sm'}>

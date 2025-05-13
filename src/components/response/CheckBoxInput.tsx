@@ -28,7 +28,6 @@ export function CheckBoxInput({
   const {
     prompt,
     required,
-    options,
     secondaryText,
     horizontal,
     withOther,
@@ -36,17 +35,10 @@ export function CheckBoxInput({
 
   const { optionOrders } = useStoredAnswer();
 
-  const optionsAsStringOptions = useMemo(() => options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option)), [options]);
-
   const [otherSelected, setOtherSelected] = useState(false);
-  const orderedOptions = useMemo(() => {
-    if (optionOrders && optionOrders[response.id]) {
-      return optionOrders[response.id];
-    }
-    return optionsAsStringOptions;
-  }, [optionOrders, response.id, optionsAsStringOptions]);
+  const orderedOptions = useMemo(() => optionOrders[response.id], [optionOrders, response.id]);
 
-  const error = useMemo(() => generateErrorMessage(response, answer, optionsAsStringOptions), [response, answer, optionsAsStringOptions]);
+  const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
 
   return (
     <Checkbox.Group

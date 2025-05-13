@@ -24,20 +24,14 @@ export function ButtonsInput({
   const {
     prompt,
     required,
-    options,
     secondaryText,
   } = response;
 
   const { optionOrders } = useStoredAnswer();
 
-  const optionsAsStringOptions = useMemo(() => options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option)), [options]);
+  const orderedOptions = useMemo(() => optionOrders[response.id], [optionOrders, response.id]);
 
-  const orderedOptions = useMemo(() => {
-    if (optionOrders && optionOrders[response.id]) {
-      return optionOrders[response.id];
-    }
-    return optionsAsStringOptions;
-  }, [optionOrders, response.id, optionsAsStringOptions]);
+  const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
 
   return (
     <FocusTrap>
@@ -55,7 +49,7 @@ export function ButtonsInput({
         key={response.id}
         {...answer}
           // This overrides the answers error. Which..is bad?
-        error={generateErrorMessage(response, answer, optionsAsStringOptions)}
+        error={error}
         style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
       >
         <Flex justify="space-between" align="center" gap="xl" mt="xs">

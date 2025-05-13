@@ -135,7 +135,7 @@ export function MatrixInput({
   const _choices = typeof answerOptions === 'string' ? _choiceStringToColumns[answerOptions].map((entry) => ({ value: entry, label: entry })) : answerOptions.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
 
   const { questionOrders } = useStoredAnswer();
-  const orderedQuestions = useMemo(() => questionOrders[response.id] || response.questionOptions, [questionOrders, response.id, response.questionOptions]);
+  const orderedQuestions = useMemo(() => questionOrders[response.id], [questionOrders, response.id]);
 
   // Re-define on change functions. Dispatch answers to store.
   const onChangeRadio = (val: string, questionKey: string) => {
