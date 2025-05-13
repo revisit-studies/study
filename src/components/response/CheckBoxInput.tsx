@@ -1,13 +1,14 @@
 import {
   Box, Checkbox, Flex, Input,
 } from '@mantine/core';
-import { useMemo, useState, useEffect } from 'react';
-import { CheckboxResponse, StringOption } from '../../parser/types';
+import { useMemo, useState } from 'react';
+import { CheckboxResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { HorizontalHandler } from './HorizontalHandler';
 import classes from './css/Checkbox.module.css';
 import inputClasses from './css/Input.module.css';
+import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 
 export function CheckBoxInput({
   response,
@@ -31,37 +32,19 @@ export function CheckBoxInput({
     secondaryText,
     horizontal,
     withOther,
-    optionOrder,
   } = response;
+
+  const { optionOrders } = useStoredAnswer();
 
   const optionsAsStringOptions = useMemo(() => options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option)), [options]);
 
   const [otherSelected, setOtherSelected] = useState(false);
-  const [orderedOptions, setOrderedOptions] = useState<StringOption[]>([]);
-
-  // Store randomized orders for each response to avoid shuffling on every render
-  const randomizedOrders: Record<string, StringOption[]> = {};
-  // Memoize the stored order for this response
-  const storedOrder = useMemo(() => randomizedOrders[response.id], [response.id]);
-
-  useEffect(() => {
-    if (optionOrder === 'random') {
-      if (storedOrder) {
-        setOrderedOptions(storedOrder);
-      } else {
-        // If no stored order, create new random order and store it
-        const shuffled = [...optionsAsStringOptions]
-          .map((value) => ({ value, sort: Math.random() }))
-          .sort((a, b) => a.sort - b.sort)
-          .map(({ value }) => value);
-        setOrderedOptions(shuffled);
-        randomizedOrders[response.id] = shuffled;
-      }
-    } else {
-      // optionOrder === 'fixed'
-      setOrderedOptions(optionsAsStringOptions);
+  const orderedOptions = useMemo(() => {
+    if (optionOrders && optionOrders[response.id]) {
+      return optionOrders[response.id];
     }
-  }, [optionOrder, optionsAsStringOptions, response.id, storedOrder]);
+    return optionsAsStringOptions;
+  }, [optionOrders, response.id, optionsAsStringOptions]);
 
   const error = useMemo(() => generateErrorMessage(response, answer, optionsAsStringOptions), [response, answer, optionsAsStringOptions]);
 

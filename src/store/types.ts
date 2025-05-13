@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { ProvenanceGraph } from '@trrack/core/graph/graph-slice';
 import type {
-  Answer, ComponentBlock, ConfigResponseBlockLocation, ParticipantData, ResponseBlockLocation, SkipConditions, StudyConfig, ValueOf,
+  Answer, ConfigResponseBlockLocation, ParticipantData, ResponseBlockLocation, SkipConditions, StringOption, StudyConfig, ValueOf,
 } from '../parser/types';
 import { type REVISIT_MODE } from '../storage/engines/StorageEngine';
 
@@ -120,12 +120,12 @@ export interface StoredAnswer {
   parameters: Record<string, any>;
   /** The correct answer for the component. */
   correctAnswer: Answer[];
+  /** The order of question options in the component. */
+  optionOrders: Record<string, StringOption[]>;
 }
 
 export interface JumpFunctionParameters<T> {
-  components: (string | ComponentBlock)[],
   answers: ParticipantData['answers'],
-  sequenceSoFar: string[],
   customParameters: T
 }
 
