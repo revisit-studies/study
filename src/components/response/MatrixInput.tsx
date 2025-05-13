@@ -2,7 +2,7 @@ import {
   Box, Flex, Radio, Text, Checkbox,
 } from '@mantine/core';
 import {
-  ChangeEvent, useEffect, useState, useMemo,
+  ChangeEvent, useEffect, useMemo, useState,
 } from 'react';
 import { MatrixResponse, StringOption } from '../../parser/types';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
