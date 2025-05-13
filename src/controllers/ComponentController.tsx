@@ -22,6 +22,7 @@ import { StudyEnd } from '../components/StudyEnd';
 import { TrainingFailed } from '../components/TrainingFailed';
 import { ResourceNotFound } from '../ResourceNotFound';
 import { TimedOut } from '../components/TimedOut';
+import { ScreenResolutionFailed } from '../components/ScreenResolutionFailed';
 import { findBlockForStep } from '../utils/getSequenceFlatMap';
 import { VegaController, VegaProvState } from './VegaController';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
@@ -164,6 +165,11 @@ export function ComponentController() {
   // Handle timed out participants
   if (currentComponent === '__timedOut') {
     return <TimedOut />;
+  }
+
+  // Handle screen resolution failed
+  if (currentComponent === '__screenResolutionFailed') {
+    return <ScreenResolutionFailed />;
   }
 
   if (currentComponent === 'Notfound') {

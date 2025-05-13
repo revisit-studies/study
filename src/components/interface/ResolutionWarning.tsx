@@ -1,7 +1,7 @@
 import {
   Modal, Text, Title, Stack,
 } from '@mantine/core';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { useStoreSelector } from '../../store/store';
@@ -16,6 +16,8 @@ export function ResolutionWarning() {
 
   const [showWarning, setShowWarning] = useState(false);
   const [isRejected, setIsRejected] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(10);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const { storageEngine } = useStorageEngine();
   const studyId = useStudyId();
@@ -26,30 +28,66 @@ export function ResolutionWarning() {
       const widthTooSmall = minWidth != null && window.innerWidth < minWidth;
       const heightTooSmall = minHeight != null && window.innerHeight < minHeight;
 
+      const startCountdown = () => {
+        setTimeLeft(10);
+
+        // Clear any existing interval
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+        }
+
+        // Start new countdown
+        countdownIntervalRef.current = setInterval(() => {
+          setTimeLeft((currentTime) => {
+            if (currentTime <= 1) {
+              if (countdownIntervalRef.current) {
+                clearInterval(countdownIntervalRef.current);
+              }
+              // Reject participant and navigate to screen resolution failed page
+              if (storageEngine && !isRejected) {
+                setIsRejected(true);
+                storageEngine.rejectCurrentParticipant(studyId, 'Screen resolution too small')
+                  .then(() => {
+                    setTimeout(() => {
+                      setShowWarning(false);
+                      navigate('./../__screenResolutionFailed');
+                    }, 0);
+                  })
+                  .catch(() => {
+                    console.error('Failed to reject participant who failed training');
+                    setTimeout(() => {
+                      setShowWarning(false);
+                      navigate('./../__screenResolutionFailed');
+                    }, 0);
+                  });
+              }
+              return 0;
+            }
+            return currentTime - 1;
+          });
+        }, 1000);
+      };
+
       if (!isRejected && (widthTooSmall || heightTooSmall)) {
         setShowWarning(true);
-
-        if (storageEngine) {
-          setIsRejected(true);
-          storageEngine.rejectCurrentParticipant(studyId, 'Screen resolution too small')
-            .then(() => {
-              setTimeout(() => {
-                setShowWarning(false);
-              }, 5000);
-            })
-            .catch(() => {
-              console.error('Failed to reject participant who failed training');
-              setTimeout(() => {
-                setShowWarning(false);
-              }, 5000);
-            });
+        startCountdown();
+      } else {
+        setShowWarning(false);
+        if (countdownIntervalRef.current) {
+          clearInterval(countdownIntervalRef.current);
+          countdownIntervalRef.current = null;
         }
       }
     };
 
     handleResize();
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+      }
+    };
   }, [minWidth, minHeight, storageEngine, studyId, navigate, isRejected]);
 
   if (!showWarning) {
@@ -68,7 +106,11 @@ export function ResolutionWarning() {
           {minHeight !== undefined && ` Height: ${minHeight}px`}
         </Text>
         <Text size="md" ta="center">
-          Please resize your browser window to the minimum required size.
+          Please resize your browser window to the minimum required size within
+          {' '}
+          {timeLeft}
+          {' '}
+          seconds.
         </Text>
       </Stack>
     </Modal>
