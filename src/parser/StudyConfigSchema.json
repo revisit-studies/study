@@ -2202,6 +2202,14 @@
           "description": "Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.",
           "type": "boolean"
         },
+        "showTitle": {
+          "description": "Controls whether the title should be hidden in the study.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study.",
+          "type": "boolean"
+        },
         "sidebar": {
           "description": "Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question.",
           "type": "boolean"
