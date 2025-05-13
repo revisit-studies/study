@@ -122,6 +122,8 @@ export interface StoredAnswer {
   correctAnswer: Answer[];
   /** The order of question options in the component. */
   optionOrders: Record<string, StringOption[]>;
+  /** The order of the questions in a matrix component. */
+  questionOrders: Record<string, string[]>;
 }
 
 export interface JumpFunctionParameters<T> {
