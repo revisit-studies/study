@@ -45,18 +45,6 @@
                 }
             ],
             "correctAnswer": [
-                {
-                    "id": "buttonResponse",
-                    "answer": "Left"
-                },
-                {
-                  "id": "buttonResponse",
-                  "answer": "Same"
-                },
-                {
-                  "id": "buttonResponse",
-                  "answer": "Right"
-                }
             ],
             "provideFeedback": true,
             "allowFailedTraining": true,
