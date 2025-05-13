@@ -49,14 +49,12 @@ export function ResolutionWarning() {
                   .then(() => {
                     setTimeout(() => {
                       setShowWarning(false);
-                      navigate('./../__screenResolutionFailed');
                     }, 0);
                   })
                   .catch(() => {
                     console.error('Failed to reject participant who failed training');
                     setTimeout(() => {
                       setShowWarning(false);
-                      navigate('./../__screenResolutionFailed');
                     }, 0);
                   });
               }
