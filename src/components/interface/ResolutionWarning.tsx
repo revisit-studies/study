@@ -10,7 +10,6 @@ import { useStudyId } from '../../routes/utils';
 
 export function ResolutionWarning() {
   const studyConfig = useStoreSelector((state) => state.config);
-
   const minWidth = studyConfig.uiConfig.minWidthSize;
   const minHeight = studyConfig.uiConfig.minHeightSize;
 
@@ -25,18 +24,18 @@ export function ResolutionWarning() {
 
   useEffect(() => {
     const handleResize = () => {
-      const widthTooSmall = minWidth != null && window.innerWidth < minWidth;
-      const heightTooSmall = minHeight != null && window.innerHeight < minHeight;
+      if (minWidth === undefined || minHeight === undefined) {
+        return;
+      }
+
+      const widthTooSmall = window.innerWidth < minWidth;
+      const heightTooSmall = window.innerHeight < minHeight;
 
       const startCountdown = () => {
         setTimeLeft(10);
-
-        // Clear any existing interval
         if (countdownIntervalRef.current) {
           clearInterval(countdownIntervalRef.current);
         }
-
-        // Start new countdown
         countdownIntervalRef.current = setInterval(() => {
           setTimeLeft((currentTime) => {
             if (currentTime <= 1) {
