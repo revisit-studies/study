@@ -2,10 +2,7 @@ import { IndividualComponent, StringOption } from '../parser/types';
 
 export function randomizeOptions(componentConfig: IndividualComponent) {
   return componentConfig.response.reduce((acc, response) => {
-    if (
-      (response.type === 'radio' || response.type === 'checkbox' || response.type === 'buttons')
-      && response.optionOrder === 'random'
-    ) {
+    if (response.type === 'radio' || response.type === 'checkbox' || response.type === 'buttons') {
       if (response.optionOrder === 'random') {
         const options = response.options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
         const shuffled = [...options]
@@ -23,9 +20,7 @@ export function randomizeOptions(componentConfig: IndividualComponent) {
 
 export function randomizeQuestionOrder(componentConfig: IndividualComponent) {
   return componentConfig.response.reduce((acc, response) => {
-    if (
-      (response.type === 'matrix-radio' || response.type === 'matrix-checkbox')
-    ) {
+    if (response.type === 'matrix-radio' || response.type === 'matrix-checkbox') {
       if (response.questionOrder === 'random') {
         const questions = response.questionOptions;
         const shuffled = [...questions]
