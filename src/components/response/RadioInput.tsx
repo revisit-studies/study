@@ -2,7 +2,7 @@ import {
   Box, Flex, Group, Input, Radio, rem, Text,
 } from '@mantine/core';
 import { useState, useMemo } from 'react';
-import { RadioResponse } from '../../parser/types';
+import { RadioResponse, StringOption } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { HorizontalHandler } from './HorizontalHandler';
@@ -38,11 +38,12 @@ export function RadioInput({
     options,
   } = response;
 
-  const { optionOrders } = useStoredAnswer();
+  const storedAnswer = useStoredAnswer();
+  const optionOrders: Record<string, StringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
+
+  const orderedOptions = useMemo(() => optionOrders[response.id] || options, [optionOrders, options, response.id]);
 
   const [otherSelected, setOtherSelected] = useState(false);
-  // Need to pull from response options for likert scale
-  const orderedOptions = useMemo(() => optionOrders[response.id] || options, [optionOrders, options, response.id]);
 
   const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
 

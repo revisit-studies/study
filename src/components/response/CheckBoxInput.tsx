@@ -2,7 +2,7 @@ import {
   Box, Checkbox, Flex, Input,
 } from '@mantine/core';
 import { useMemo, useState } from 'react';
-import { CheckboxResponse } from '../../parser/types';
+import { CheckboxResponse, StringOption } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { HorizontalHandler } from './HorizontalHandler';
@@ -31,12 +31,15 @@ export function CheckBoxInput({
     secondaryText,
     horizontal,
     withOther,
+    options,
   } = response;
 
-  const { optionOrders } = useStoredAnswer();
+  const storedAnswer = useStoredAnswer();
+  const optionOrders: Record<string, StringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
+
+  const orderedOptions = useMemo(() => optionOrders[response.id] || options, [optionOrders, options, response.id]);
 
   const [otherSelected, setOtherSelected] = useState(false);
-  const orderedOptions = useMemo(() => optionOrders[response.id], [optionOrders, response.id]);
 
   const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
 

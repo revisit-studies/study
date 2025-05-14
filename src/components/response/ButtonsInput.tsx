@@ -2,7 +2,7 @@ import {
   Box, Flex, FocusTrap, Radio, Text,
 } from '@mantine/core';
 import { useMemo } from 'react';
-import { ButtonsResponse } from '../../parser/types';
+import { ButtonsResponse, StringOption } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import classes from './css/ButtonsInput.module.css';
@@ -25,11 +25,13 @@ export function ButtonsInput({
     prompt,
     required,
     secondaryText,
+    options,
   } = response;
 
-  const { optionOrders } = useStoredAnswer();
+  const storedAnswer = useStoredAnswer();
+  const optionOrders: Record<string, StringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
 
-  const orderedOptions = useMemo(() => optionOrders[response.id], [optionOrders, response.id]);
+  const orderedOptions = useMemo(() => optionOrders[response.id] || options, [optionOrders, options, response.id]);
 
   const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
 
@@ -53,9 +55,9 @@ export function ButtonsInput({
         style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
       >
         <Flex justify="space-between" align="center" gap="xl" mt="xs">
-          {orderedOptions.map((radio) => (
+          {orderedOptions.map((radio, idx) => (
             <Radio.Card
-              key={radio.value}
+              key={`radio-${idx}`}
               value={radio.value}
               disabled={disabled}
               ta="center"
