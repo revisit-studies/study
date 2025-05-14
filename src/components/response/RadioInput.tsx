@@ -35,12 +35,14 @@ export function RadioInput({
     secondaryText,
     horizontal,
     withOther,
+    options,
   } = response;
 
   const { optionOrders } = useStoredAnswer();
 
   const [otherSelected, setOtherSelected] = useState(false);
-  const orderedOptions = useMemo(() => optionOrders[response.id], [optionOrders, response.id]);
+  // Need to pull from response options for likert scale
+  const orderedOptions = useMemo(() => optionOrders[response.id] || options, [optionOrders, options, response.id]);
 
   const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
 
