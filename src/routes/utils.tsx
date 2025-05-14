@@ -53,7 +53,7 @@ export function useCurrentComponent(): string {
 
   const [compName, setCompName] = useState('__dynamicLoading');
 
-  const nextFunc:(({ components, answers, sequenceSoFar }: JumpFunctionParameters<unknown>) => JumpFunctionReturnVal) | null = useMemo(() => {
+  const nextFunc:((params: JumpFunctionParameters<unknown>) => JumpFunctionReturnVal) | null = useMemo(() => {
     if (typeof currentStep === 'number' && !currentComponent) {
       const block = findFuncBlock(flatSequence[currentStep], studyConfig.sequence);
 
@@ -94,7 +94,8 @@ export function useCurrentComponent(): string {
       // in a func component
       if (!component && nextFunc !== null) {
         const { component: currCompName, parameters: _params, correctAnswer } = nextFunc({
-          components: [], answers: _answers, sequenceSoFar: [], customParameters: findFuncBlock(flatSequence[currentStep], studyConfig.sequence)?.parameters,
+          answers: _answers,
+          customParameters: findFuncBlock(flatSequence[currentStep], studyConfig.sequence)?.parameters,
         });
 
         if (currCompName !== null) {
