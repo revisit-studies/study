@@ -71,7 +71,7 @@ export function ComponentController() {
   }, [setAlertModal, storageEngine, storeDispatch]);
 
   useEffect(() => {
-    if (!studyConfig || !studyConfig.uiConfig.recordStudyAudio || !storageEngine || storageEngine.getEngine() !== 'firebase' || (status && status.endTime > 0) || isAnalysis) {
+    if (!studyConfig || !studyConfig.uiConfig.recordAudio || !storageEngine || storageEngine.getEngine() !== 'firebase' || (status && status.endTime > 0) || isAnalysis) {
       return;
     }
 
@@ -180,7 +180,7 @@ export function ComponentController() {
 
   const instruction = (currentConfig.instruction || '');
   const { instructionLocation } = currentConfig;
-  const instructionInSideBar = studyConfig.uiConfig.sidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
+  const instructionInSideBar = studyConfig.uiConfig.withSidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
 
   return (
     <>

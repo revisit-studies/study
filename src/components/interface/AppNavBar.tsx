@@ -9,7 +9,7 @@ import { studyComponentToIndividualComponent } from '../../utils/handleComponent
 import { useStoreSelector } from '../../store/store';
 
 export function AppNavBar() {
-  const trialHasSideBar = useStudyConfig()?.uiConfig.sidebar;
+  const trialHasSideBar = useStudyConfig()?.uiConfig.withSidebar;
   const trialHasSideBarResponses = true;
 
   // Get the config for the current step
@@ -26,7 +26,7 @@ export function AppNavBar() {
   }, [stepConfig, studyConfig]);
   const config = useStoreSelector((state) => state.config);
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[currentComponent] || {}, config), [currentComponent, config]);
-  const overrideTrialHasSideBar = componentConfig.sidebar;
+  const overrideTrialHasSideBar = componentConfig.withSidebar;
 
   const status = useStoredAnswer();
   const instruction = currentConfig?.instruction || '';
