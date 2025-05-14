@@ -200,6 +200,14 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "optionOrder": {
+          "description": "The order in which the buttons are displayed. Defaults to fixed.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
+        },
         "options": {
           "items": {
             "anyOf": [
@@ -284,6 +292,14 @@
         "minSelections": {
           "description": "The minimum number of selections that are required.",
           "type": "number"
+        },
+        "optionOrder": {
+          "description": "The order in which the checkboxes are displayed. Defaults to fixed.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
         },
         "options": {
           "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
@@ -1543,6 +1559,14 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "optionOrder": {
+          "description": "The order in which the radio buttons are displayed. Defaults to fixed.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
+        },
         "options": {
           "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
           "items": {
@@ -2062,6 +2086,7 @@
     },
     "TextOnlyResponse": {
       "additionalProperties": false,
+      "description": "The TextOnlyResponse interface is used to define the properties of a text only response. TextOnlyResponses render as a block of text that is displayed to the user. This can be used to display instructions or other information. It does not accept any input from the user.\n\nExample: ```js {   \"id\": \"textOnlyResponse\",   \"type\": \"textOnly\",   \"prompt\": \"This is a text only response, it accepts markdown so you can **bold** or _italicize_ text.\",   \"location\": \"belowStimulus\",   \"restartEnumeration\": true } ```\n\nIn this example, the text only response is displayed below the stimulus and the enumeration of the questions is restarted.",
       "properties": {
         "hidden": {
           "not": {}

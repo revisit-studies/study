@@ -1,7 +1,8 @@
-import { AppShell } from '@mantine/core';
+import { AppShell, Button } from '@mantine/core';
 import { Outlet } from 'react-router';
 import { useEffect, useMemo, useRef } from 'react';
 import debounce from 'lodash.debounce';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { AppAside } from './interface/AppAside';
 import { AppHeader } from './interface/AppHeader';
 import { AppNavBar } from './interface/AppNavBar';
@@ -10,12 +11,14 @@ import { AlertModal } from './interface/AlertModal';
 import { EventType } from '../store/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
 import { WindowEventsContext } from '../store/hooks/useWindowEvents';
-import { useStoreSelector } from '../store/store';
+import { useStoreSelector, useStoreDispatch, useStoreActions } from '../store/store';
 import { AnalysisFooter } from './interface/AnalysisFooter';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
+  const dispatch = useStoreDispatch();
+  const { toggleStudyBrowser } = useStoreActions();
 
   const studyConfig = useStudyConfig();
   const windowEventDebounceTime = studyConfig.uiConfig.windowEventDebounceTime ?? 100;
@@ -111,21 +114,34 @@ export function StepRenderer() {
     <WindowEventsContext.Provider value={windowEvents}>
       <AppShell
         padding="md"
-        header={{ height: 70 }}
+        header={{ height: studyConfig.uiConfig.showTitleBar === false ? 0 : 70 }}
         navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !studyConfig.uiConfig.sidebar, mobile: !studyConfig.uiConfig.sidebar } }}
         aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
         footer={{ height: (isAnalysis ? 75 : 0) + (analysisHasAudio ? 50 : 0) }}
       >
         <AppNavBar />
         <AppAside />
-        <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} />
+        {studyConfig.uiConfig.showTitleBar !== false && (
+          <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} />
+        )}
         <HelpModal />
         <AlertModal />
         <AppShell.Main>
+          {studyConfig.uiConfig.showTitleBar === false && !showStudyBrowser && studyNavigatorEnabled && (
+            <Button
+              variant="transparent"
+              leftSection={<IconArrowLeft size={14} />}
+              onClick={() => dispatch(toggleStudyBrowser())}
+              size="xs"
+              style={{ position: 'fixed', top: '10px', right: '10px' }}
+            >
+              Study Browser
+            </Button>
+          )}
           <Outlet />
         </AppShell.Main>
         {isAnalysis && (
-        <AnalysisFooter />
+          <AnalysisFooter />
         )}
       </AppShell>
     </WindowEventsContext.Provider>
