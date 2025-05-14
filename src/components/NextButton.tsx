@@ -7,6 +7,9 @@ import { useNavigate } from 'react-router';
 import { useNextStep } from '../store/hooks/useNextStep';
 import { IndividualComponent } from '../parser/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
+import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
+import { useStoreSelector } from '../store/store';
+import { useCurrentComponent } from '../routes/utils';
 
 type Props = {
   label?: string;
@@ -61,6 +64,10 @@ export function NextButton({
     [nextButtonDisableTime, nextButtonEnableTime, timer],
   );
 
+  const currentComponent = useCurrentComponent();
+  const config = useStoreSelector((state) => state.config);
+  const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[currentComponent] || {}, config), [currentComponent, config]);
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Enter' && !disabled && !isNextDisabled && buttonTimerSatisfied) {
@@ -68,14 +75,15 @@ export function NextButton({
       }
     };
 
-    if (studyConfig.uiConfig.nextOnEnter) {
+    const isNextOnEnterEnabled = componentConfig?.nextOnEnter !== undefined ? componentConfig.nextOnEnter : studyConfig.uiConfig.nextOnEnter;
+    if (isNextOnEnterEnabled) {
       window.addEventListener('keydown', handleKeyDown);
       return () => {
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
     return () => {};
-  }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, studyConfig.uiConfig.nextOnEnter]);
+  }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, studyConfig.uiConfig.nextOnEnter, componentConfig?.nextOnEnter]);
 
   return (
     <>
