@@ -19,6 +19,7 @@ import { useAnswerField } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FormElementProvenance, StoredAnswer } from '../../store/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 
 type Props = {
   status?: StoredAnswer;
@@ -107,8 +108,10 @@ export function ResponseBlock({
   const [enableNextButton, setEnableNextButton] = useState(false);
 
   const identifier = useCurrentIdentifier();
+  const studyConfig = useStudyConfig();
 
-  const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
+  const showNextBtn = location === (configInUse?.nextButtonLocation !== undefined ? configInUse.nextButtonLocation : studyConfig.uiConfig.nextButtonLocation || 'belowStimulus');
+  const nextBtnText = configInUse?.nextButtonText !== undefined ? configInUse.nextButtonText : studyConfig.uiConfig.nextButtonText || 'Next';
 
   useEffect(() => {
     const ReactiveResponse = responsesWithDefaults.find((r) => r.type === 'reactive');
@@ -317,7 +320,7 @@ export function ResponseBlock({
         {showNextBtn && (
           <NextButton
             disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
-            label={configInUse.nextButtonText || 'Next'}
+            label={nextBtnText}
             configInUse={configInUse}
           />
         )}
