@@ -619,6 +619,8 @@ export interface BaseIndividualComponent {
   recordAudio?: boolean;
   /** Whether to show the response dividers. Defaults to false. */
   responseDividers?: boolean;
+  /** Optional override for the window event debounce time in milliseconds for automatically tracked window events. If present, will override the default window event debounce time set in the uiConfig. */
+  windowEventDebounceTime?: number;
   /** Optional override for the help text. If present, will override the default help text path set in the uiConfig. */
   helpTextPath?: string;
   /** Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig. */

@@ -182,6 +182,10 @@
             ],
             "type": "string"
           },
+          "windowEventDebounceTime": {
+            "description": "Optional override for the window event debounce time. If present, will override the default window event debounce time set in the uiConfig.",
+            "type": "number"
+          },
           "withProgressBar": {
             "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
             "type": "boolean"
@@ -694,6 +698,10 @@
           "const": "image",
           "type": "string"
         },
+        "windowEventDebounceTime": {
+          "description": "Optional override for the window event debounce time. If present, will override the default window event debounce time set in the uiConfig.",
+          "type": "number"
+        },
         "withProgressBar": {
           "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
           "type": "boolean"
@@ -964,6 +972,10 @@
           ],
           "type": "string"
         },
+        "windowEventDebounceTime": {
+          "description": "Optional override for the window event debounce time. If present, will override the default window event debounce time set in the uiConfig.",
+          "type": "number"
+        },
         "withProgressBar": {
           "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
           "type": "boolean"
@@ -1218,6 +1230,10 @@
         "type": {
           "const": "markdown",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Optional override for the window event debounce time. If present, will override the default window event debounce time set in the uiConfig.",
+          "type": "number"
         },
         "withProgressBar": {
           "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
@@ -1518,6 +1534,10 @@
           "const": "questionnaire",
           "type": "string"
         },
+        "windowEventDebounceTime": {
+          "description": "Optional override for the window event debounce time. If present, will override the default window event debounce time set in the uiConfig.",
+          "type": "number"
+        },
         "withProgressBar": {
           "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
           "type": "boolean"
@@ -1746,6 +1766,10 @@
         "type": {
           "const": "react-component",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Optional override for the window event debounce time. If present, will override the default window event debounce time set in the uiConfig.",
+          "type": "number"
         },
         "withProgressBar": {
           "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
@@ -2452,6 +2476,10 @@
           "const": "vega",
           "type": "string"
         },
+        "windowEventDebounceTime": {
+          "description": "Optional override for the window event debounce time. If present, will override the default window event debounce time set in the uiConfig.",
+          "type": "number"
+        },
         "withProgressBar": {
           "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
           "type": "boolean"
@@ -2558,6 +2586,10 @@
         "type": {
           "const": "vega",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Optional override for the window event debounce time. If present, will override the default window event debounce time set in the uiConfig.",
+          "type": "number"
         },
         "withProgressBar": {
           "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
@@ -2669,6 +2701,10 @@
         "type": {
           "const": "video",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Optional override for the window event debounce time. If present, will override the default window event debounce time set in the uiConfig.",
+          "type": "number"
         },
         "withProgressBar": {
           "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
@@ -2785,6 +2821,10 @@
         "type": {
           "const": "website",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Optional override for the window event debounce time. If present, will override the default window event debounce time set in the uiConfig.",
+          "type": "number"
         },
         "withProgressBar": {
           "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
