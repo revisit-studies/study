@@ -22,6 +22,7 @@ import { useIsAnalysis } from '../../store/hooks/useIsAnalysis';
 import { useStoreSelector } from '../../store/store';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { useCurrentStep } from '../../routes/utils';
+import { TextOnlyInput } from './TextOnlyInput';
 
 export function ResponseSwitcher({
   response,
@@ -193,6 +194,9 @@ export function ResponseSwitcher({
           index={index}
           enumerateQuestions={enumerateQuestions}
         />
+      )}
+      {response.type === 'textOnly' && (
+        <TextOnlyInput response={response} />
       )}
 
       {response.withDontKnow && (

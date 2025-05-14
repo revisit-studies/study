@@ -93,14 +93,16 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
           <Flex align="center">
             <Image w={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" />
             <Space w="md" />
-            <Title
-              ref={titleRef}
-              order={4}
-              style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
-              title={isTruncated ? studyConfig?.studyMetadata.title : undefined}
-            >
-              {studyConfig?.studyMetadata.title}
-            </Title>
+            {studyConfig?.uiConfig.showTitle !== false ? (
+              <Title
+                ref={titleRef}
+                order={4}
+                style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+                title={isTruncated ? studyConfig?.studyMetadata.title : undefined}
+              >
+                {studyConfig?.studyMetadata.title}
+              </Title>
+            ) : null }
           </Flex>
         </Grid.Col>
 
@@ -152,10 +154,10 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
                 <Menu.Item
                   component="a"
                   href={
-                      studyConfig !== null
-                        ? `mailto:${studyConfig.uiConfig.contactEmail}`
-                        : undefined
-                    }
+                        studyConfig !== null
+                          ? `mailto:${studyConfig.uiConfig.contactEmail}`
+                          : undefined
+                      }
                   leftSection={<IconMail size={14} />}
                 >
                   Contact

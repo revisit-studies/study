@@ -71,6 +71,9 @@ You can specify numerical and textual responses through those interfaces:
 - [NumberOption](interfaces/NumberOption.md)
 - [StringOption](interfaces/StringOption.md)
 
+There is also a response that doesn't actually take a response, which is useful when you want to show some text in the middle of a form:
+- [TextOnlyResponse](interfaces/TextOnlyResponse.md)
+
 ## Sequencing
 
 Sequencing determines the order in which components appear.
