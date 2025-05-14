@@ -1,10 +1,12 @@
 import {
   Box, Flex, FocusTrap, Radio, Text,
 } from '@mantine/core';
-import { ButtonsResponse } from '../../parser/types';
+import { useMemo } from 'react';
+import { ButtonsResponse, StringOption } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import classes from './css/ButtonsInput.module.css';
+import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 
 export function ButtonsInput({
   response,
@@ -22,11 +24,16 @@ export function ButtonsInput({
   const {
     prompt,
     required,
-    options,
     secondaryText,
+    options,
   } = response;
 
-  const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
+  const storedAnswer = useStoredAnswer();
+  const optionOrders: Record<string, StringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
+
+  const orderedOptions = useMemo(() => optionOrders[response.id] || options, [optionOrders, options, response.id]);
+
+  const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
 
   return (
     <FocusTrap>
@@ -44,13 +51,13 @@ export function ButtonsInput({
         key={response.id}
         {...answer}
           // This overrides the answers error. Which..is bad?
-        error={generateErrorMessage(response, answer, optionsAsStringOptions)}
+        error={error}
         style={{ '--input-description-size': 'calc(var(--mantine-font-size-md) - calc(0.125rem * var(--mantine-scale)))' }}
       >
         <Flex justify="space-between" align="center" gap="xl" mt="xs">
-          {optionsAsStringOptions.map((radio) => (
+          {orderedOptions.map((radio, idx) => (
             <Radio.Card
-              key={radio.value}
+              key={`radio-${idx}`}
               value={radio.value}
               disabled={disabled}
               ta="center"
