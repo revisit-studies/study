@@ -1,4 +1,4 @@
-import { JumpFunctionParameters, JumpFunctionReturnVal } from '../../../store/types';
+import { JumpFunctionParameters, JumpFunctionReturnVal, StoredAnswer } from '../../../store/types';
 
 export default function dynamic({ answers }: JumpFunctionParameters<never>): JumpFunctionReturnVal {
   // Check the length of the answers array
@@ -16,15 +16,16 @@ export default function dynamic({ answers }: JumpFunctionParameters<never>): Jum
   const validAnswers = Object.values(answers)
     .filter((value) => value.endTime > -1 && value.componentName === 'HSLColorCodes');
 
-  const lastAnswer = validAnswers[validAnswers.length - 1];
+  const checkCorrectness = (answer: StoredAnswer) => (answer.answer.buttonResponse === 'Left' && answer.parameters.left > answer.parameters.right)
+    || (answer.answer.buttonResponse === 'Right' && answer.parameters.right > answer.parameters.left)
+    || (answer.answer.buttonResponse === 'Same' && answer.parameters.left === answer.parameters.right);
 
+  const lastAnswer = validAnswers[validAnswers.length - 1];
   let message = 'The answer difficulty will change based on your last answer';
   let color = 'blue';
 
   if (lastAnswer) {
-    const isCorrect = (lastAnswer.answer.buttonResponse === 'Left' && lastAnswer.parameters.left > lastAnswer.parameters.right)
-                      || (lastAnswer.answer.buttonResponse === 'Right' && lastAnswer.parameters.right > lastAnswer.parameters.left)
-                      || (lastAnswer.answer.buttonResponse === 'Same' && lastAnswer.parameters.left === lastAnswer.parameters.right);
+    const isCorrect = checkCorrectness(lastAnswer);
 
     // If the last answer was correct, show difficulty increased
     if (isCorrect) {
@@ -43,21 +44,11 @@ export default function dynamic({ answers }: JumpFunctionParameters<never>): Jum
 
   // Adjust left square's saturation value based on the last answer
   // Correct answers increase saturation by 10 (max 100), wrong answers decrease it by 10 (min 0)
-  const leftValue = validAnswers.reduce((leftVal, answer) => {
-    const isCorrect = ((answer.answer.buttonResponse === 'Left' && answer.parameters.left > answer.parameters.right)
-                      || (answer.answer.buttonResponse === 'Right' && answer.parameters.right > answer.parameters.left)
-                      || (answer.answer.buttonResponse === 'Same' && answer.parameters.left === answer.parameters.right));
-    return isCorrect ? Math.min(100, leftVal + 10) : Math.max(0, leftVal - 10);
-  }, 30);
+  const leftValue = validAnswers.reduce((leftVal, answer) => (checkCorrectness(answer) ? Math.min(100, leftVal + 10) : Math.max(0, leftVal - 10)), 30);
 
   // Adjust right square's saturation value based on the last answer
   // Correct answers decrease saturation by 10 (min 0), wrong answers increase it by 10 (max 100)
-  const rightValue = validAnswers.reduce((rightVal, answer) => {
-    const isCorrect = ((answer.answer.buttonResponse === 'Right' && answer.parameters.right > answer.parameters.left)
-                      || (answer.answer.buttonResponse === 'Left' && answer.parameters.left > answer.parameters.right)
-                      || (answer.answer.buttonResponse === 'Same' && answer.parameters.left === answer.parameters.right));
-    return isCorrect ? Math.max(0, rightVal - 10) : Math.min(100, rightVal + 10);
-  }, 70);
+  const rightValue = validAnswers.reduce((rightVal, answer) => (checkCorrectness(answer) ? Math.max(0, rightVal - 10) : Math.min(100, rightVal + 10)), 70);
 
   return {
     component: 'HSLColorCodes',
