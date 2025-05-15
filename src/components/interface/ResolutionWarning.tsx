@@ -31,26 +31,28 @@ export function ResolutionWarning() {
 
       const widthTooSmall = window.innerWidth < minWidth;
       const heightTooSmall = window.innerHeight < minHeight;
+      const needsResize = widthTooSmall || heightTooSmall;
 
       const startCountdown = () => {
         setTimeLeft(10);
+
+        // Clear existing countdown
         if (countdownIntervalRef.current) {
           clearInterval(countdownIntervalRef.current);
+          countdownIntervalRef.current = null;
         }
         countdownIntervalRef.current = setInterval(() => {
           setTimeLeft((currentTime) => {
             if (currentTime <= 1) {
               if (countdownIntervalRef.current) {
                 clearInterval(countdownIntervalRef.current);
+                countdownIntervalRef.current = null;
               }
-              // Reject participant and navigate to screen resolution failed page
+              // Reject participant if they haven't resized in time
               if (storageEngine && !isRejected) {
                 setIsRejected(true);
                 setIsTimedOut(true);
                 storageEngine.rejectCurrentParticipant(studyId, 'Screen resolution too small')
-                  .then(() => {
-
-                  })
                   .catch(() => {
                     console.error('Failed to reject participant who failed training');
                   });
@@ -62,12 +64,18 @@ export function ResolutionWarning() {
         }, 1000);
       };
 
-      if (!isRejected && (widthTooSmall || heightTooSmall)) {
+      // Handle resize if resized in time
+      if (needsResize && !isRejected) {
         setShowWarning(true);
+        // Start countdown if one isn't already running
+        // This is to prevent multiple countdowns from running
+        if (countdownIntervalRef.current === null) {
+          startCountdown();
+        }
+      } else if (!isRejected) {
+        // Window meets size requirements or user is rejected
+        setShowWarning(false);
         startCountdown();
-      } else if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-        countdownIntervalRef.current = null;
       }
     };
 
