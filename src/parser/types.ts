@@ -636,6 +636,8 @@ export interface BaseIndividualComponent {
   responseDividers?: boolean;
   /** Optional override for the help text. If present, will override the default help text path set in the uiConfig. */
   helpTextPathOverride?: string;
+  /** Whether to randomize the form. Defaults to false. */
+  randomizeForm?: boolean;
 }
 
 /**
