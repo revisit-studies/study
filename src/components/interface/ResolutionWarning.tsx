@@ -16,6 +16,7 @@ export function ResolutionWarning() {
   const [showWarning, setShowWarning] = useState(false);
   const [isRejected, setIsRejected] = useState(false);
   const [timeLeft, setTimeLeft] = useState(10);
+  const [isTimedOut, setIsTimedOut] = useState(false);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   const { storageEngine } = useStorageEngine();
@@ -45,17 +46,13 @@ export function ResolutionWarning() {
               // Reject participant and navigate to screen resolution failed page
               if (storageEngine && !isRejected) {
                 setIsRejected(true);
+                setIsTimedOut(true);
                 storageEngine.rejectCurrentParticipant(studyId, 'Screen resolution too small')
                   .then(() => {
-                    setTimeout(() => {
-                      setShowWarning(false);
-                    }, 0);
+
                   })
                   .catch(() => {
                     console.error('Failed to reject participant who failed training');
-                    setTimeout(() => {
-                      setShowWarning(false);
-                    }, 0);
                   });
               }
               return 0;
@@ -68,12 +65,9 @@ export function ResolutionWarning() {
       if (!isRejected && (widthTooSmall || heightTooSmall)) {
         setShowWarning(true);
         startCountdown();
-      } else {
-        setShowWarning(false);
-        if (countdownIntervalRef.current) {
-          clearInterval(countdownIntervalRef.current);
-          countdownIntervalRef.current = null;
-        }
+      } else if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
       }
     };
 
@@ -97,17 +91,26 @@ export function ResolutionWarning() {
         <IconAlertTriangle size={64} color="orange" />
         <Title order={3}> Screen Resolution Warning </Title>
         <Text size="md" ta="center">
-          Your screen resolution is below the minimum requirement:
-          <br />
-          {minWidth !== undefined && ` Width: ${minWidth}px`}
-          {minHeight !== undefined && ` Height: ${minHeight}px`}
-        </Text>
-        <Text size="md" ta="center">
-          Please resize your browser window to the minimum required size within
-          {' '}
-          {timeLeft}
-          {' '}
-          seconds.
+          {isTimedOut ? (
+            <>
+              Thank you for participating in this study. You have been timed out and will not be able to continue.
+              <br />
+              You may now close this page.
+            </>
+          ) : (
+            <>
+              Your screen resolution is below the minimum requirement:
+              <br />
+              {minWidth !== undefined && ` Width: ${minWidth}px`}
+              {minHeight !== undefined && ` Height: ${minHeight}px`}
+              <br />
+              Please resize your browser window to the minimum required size within
+              {' '}
+              {timeLeft}
+              {' '}
+              seconds.
+            </>
+          )}
         </Text>
       </Stack>
     </Modal>
