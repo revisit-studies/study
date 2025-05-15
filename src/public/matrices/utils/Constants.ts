@@ -1,1 +1,1 @@
-export const HIGHLIGHT_STROKE_WIDTH = 4;
+export const HIGHLIGHT_STROKE_WIDTH = 3;

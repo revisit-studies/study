@@ -1,18 +1,19 @@
 import * as d3 from 'd3';
 import { useCallback } from 'react';
+import { lab } from 'd3-color';
 import { EncodingType } from '../utils/Enums';
 import { Link } from '../utils/Interfaces';
 import { meanAccessor, snrAccessor, stdAccessor } from '../utils/Accessors';
 
-// Utility functions
-/* function createSizeScale(nSteps: number, cellSize: number) {
-  const stepSize = cellSize / nSteps;
-  return Array.from({ length: nSteps }, (_, i) => stepSize * (i + 1)).reverse();
-} */
-
-/* const markColor = '#ff6e4a'; */
 const barMeanColor = '#7b3294';
 const barStdColor = '#008837';
+
+function contrastGray(color: string, contrast: number): string {
+  const { l } = lab(color);
+  const invL = 100 - l;
+  const scaledL = 100 - contrast + (invL * contrast) / 100;
+  return lab(scaledL, 0, 0).formatHex();
+}
 
 export function createMarkScale(nSteps: number, cellSize: number) {
   const stepSize = cellSize / (nSteps + 1);
@@ -26,9 +27,8 @@ export function createLinearScale(steps: number, min = 0, max = 45): number[] {
 
 export function useCellRenderer(
   encoding: string,
-  markColor: string,
+  markContrast: number,
   isSnr: boolean,
-
   meanScale: d3.ScaleQuantize<string | number, never>,
   devScale: d3.ScaleQuantize<string | number, never> | (() => number),
   cellSize: number,
@@ -36,7 +36,6 @@ export function useCellRenderer(
   const renderEncodedCells = useCallback(
     (
       gCells: d3.Selection<SVGGElement, Link, SVGGElement | null, unknown>,
-
       showMean: boolean = true,
       showDev: boolean = true,
     ) => {
@@ -48,8 +47,13 @@ export function useCellRenderer(
         gCells.append('rect').attr('fill', fill).attr('width', cellSize).attr('height', cellSize);
       }
 
+      function markColor(d: Link) {
+        const meanColor = meanScale(meanAccessor(d));
+        return contrastGray(meanColor as string, markContrast);
+      }
+
       switch (encoding) {
-        case EncodingType.Bars: {
+        case EncodingType.BarChart: {
           const proportion = 0.5;
           const cellProportion = 0.8;
           const size = cellSize * cellProportion;
@@ -119,18 +123,19 @@ export function useCellRenderer(
 
           break;
         }
-        case EncodingType.MarkRotation45:
-        case EncodingType.MarkRotation90: {
+        case EncodingType.MarkAngle45:
+        case EncodingType.MarkAngle45_90:
+        case EncodingType.MarkAngle90: {
           const markWidth = cellSize * 0.8;
           const markHeight = cellSize * 0.2;
           const center = cellSize / 2;
           const offsetX = (cellSize - markWidth) / 2;
           const offsetY = (cellSize - markHeight) / 2;
 
-          function addRotationMark() {
+          function addRotationMark(fill: string | ((d: Link) => string) = '#CCCCCC') {
             gCells
               .append('rect')
-              .attr('fill', markColor)
+              .attr('fill', fill)
               .attr('width', markWidth)
               .attr('height', markHeight)
               .attr('x', offsetX)
@@ -143,7 +148,7 @@ export function useCellRenderer(
 
           if (showMean && showDev) {
             addBaseRect((d: Link) => meanScale(meanAccessor(d)));
-            addRotationMark();
+            addRotationMark(markColor);
           } else if (showMean) {
             addBaseRect((d: Link) => meanScale(meanAccessor(d)));
           } else if (showDev) {
@@ -154,8 +159,8 @@ export function useCellRenderer(
           break;
         }
 
-        case EncodingType.ColoredRotation45:
-        case EncodingType.ColoredRotation90: {
+        case EncodingType.ColorAngle45:
+        case EncodingType.ColorAngle90: {
           const markWidth = cellSize * 0.8;
           const markHeight = cellSize * 0.6;
           const center = cellSize / 2;
@@ -199,11 +204,11 @@ export function useCellRenderer(
 
           break;
         }
-        case EncodingType.Mark: {
-          function addMark() {
+        case EncodingType.MarkSize: {
+          function addMark(fill: string | ((d: Link) => string) = '#CCCCCC') {
             gCells
               .append('rect')
-              .attr('fill', markColor)
+              .attr('fill', fill)
               .attr('width', (d: Link) => +devScale(devAccesor(d)))
               .attr('height', (d: Link) => +devScale(devAccesor(d)))
               .attr('x', (d: Link) => (cellSize - +devScale(devAccesor(d))) / 2)
@@ -212,7 +217,7 @@ export function useCellRenderer(
 
           if (showMean && showDev) {
             addBaseRect((d: Link) => meanScale(meanAccessor(d)));
-            addMark();
+            addMark(markColor);
           } else if (showMean) {
             addBaseRect((d: Link) => meanScale(meanAccessor(d)));
           } else if (showDev) {
@@ -222,7 +227,7 @@ export function useCellRenderer(
 
           break;
         }
-        case EncodingType.Size: {
+        case EncodingType.CellSize: {
           if (showMean && showDev) {
             gCells
               .append('rect')
@@ -259,7 +264,7 @@ export function useCellRenderer(
         }
       }
     },
-    [meanScale, devScale, cellSize, isSnr, encoding, markColor],
+    [meanScale, devScale, cellSize, isSnr, encoding, markContrast],
   );
 
   return renderEncodedCells;

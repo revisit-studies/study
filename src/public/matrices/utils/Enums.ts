@@ -1,13 +1,14 @@
 export enum EncodingType {
-  Bivariate = 'bivariate',
-  Mark = 'mark',
-  Bars = 'bars',
-  MarkRotation45 = 'mark-rotation-45',
-  MarkRotation90 = 'mark-rotation-90',
-  ColoredRotation45 = 'colored-rotation-45',
-  ColoredRotation90 = 'colored-rotation-90',
-  Size = 'size',
-  Mean = 'mean',
+  Bivariate = 'Bivariate',
+  MarkSize = 'Mark Size',
+  BarChart = 'Bar Chart',
+  MarkAngle45 = 'Angle(0-45)',
+  MarkAngle90 = 'Angle(0-90)',
+  ColorAngle45 = 'Color+Angle(0-45)',
+  ColorAngle90 = 'Color+Angle(0-90)',
+  MarkAngle45_90 = 'Angle(45-90)',
+  CellSize = 'Cell Size',
+  Mean = 'Just the mean',
 }
 
 export enum ClusteringMode {
@@ -33,12 +34,6 @@ export enum ColorScheme {
   Blues = 'blues',
   Oranges = 'oranges',
   Reds = 'reds',
-}
-
-export enum MarkColor {
-  White = '#ffffff',
-  Black = '#000000',
-  Orange = '#ff6e4a',
 }
 
 export enum UserActionType {

@@ -1,12 +1,9 @@
 import {
-  Checkbox, NativeSelect, Slider, Stack, Text,
+  Burger, Drawer, Checkbox, NativeSelect, Slider, Stack, Text, Box,
 } from '@mantine/core';
+import { useState } from 'react';
 import {
-  ClusteringMode,
-  ClusteringVariable,
-  ColorScheme,
-  EncodingType,
-  MarkColor,
+  ClusteringMode, ClusteringVariable, ColorScheme, EncodingType,
 } from '../utils/Enums';
 import { ConfigProps } from '../utils/Interfaces';
 
@@ -26,7 +23,7 @@ export default function ControlPanel({
     showTooltip,
     encoding,
     colorScheme,
-    markColor,
+    markContrast,
     nMeans,
     nDevs,
     clusterMode,
@@ -34,78 +31,107 @@ export default function ControlPanel({
     setShowTooltip,
     setEncoding,
     setColorScheme,
-    setMarkColor,
+    setMarkContrast,
     setClusterMode,
     setClusterVar,
     setNMeans,
     setNDevs,
+    showConfigurationPanel,
   } = configProps;
 
+  const [opened, setOpened] = useState(false);
+
   return (
-    <Stack gap="2vh">
-      <Checkbox
-        label="Tooltip"
-        checked={showTooltip}
-        onChange={(e) => setShowTooltip(e.currentTarget.checked)}
-      />
+    <Box>
+      {!showConfigurationPanel && !opened && (
+        <Burger
+          opened={opened}
+          onClick={() => setOpened((o) => !o)}
+          size="lg"
+          style={{
+            position: 'fixed',
+            top: 80,
+            left: 500,
+          }}
+        />
+      )}
 
-      <NativeSelect
-        label="Data file:"
-        value={dataname}
-        onChange={(e) => setDataname(e.currentTarget.value)}
-        data={files}
-      />
+      <Drawer
+        opened={opened}
+        onClose={() => setOpened(false)}
+        position="left"
+        size={300}
+        padding="md"
+        withOverlay={false}
+        title="Configuration"
+      >
+        <Stack gap="md">
+          <Checkbox
+            label="Tooltip"
+            checked={showTooltip}
+            onChange={(e) => setShowTooltip(e.currentTarget.checked)}
+          />
 
-      <NativeSelect
-        label="Encoding:"
-        value={encoding}
-        onChange={(event) => setEncoding(event.currentTarget.value as EncodingType)}
-        data={Object.values(EncodingType)}
-      />
+          <NativeSelect
+            label="Data file:"
+            value={dataname}
+            onChange={(e) => setDataname(e.currentTarget.value)}
+            data={files}
+          />
 
-      <NativeSelect
-        label="Color scale:"
-        value={colorScheme}
-        onChange={(event) => setColorScheme(event.currentTarget.value as ColorScheme)}
-        data={Object.values(ColorScheme)}
-      />
+          <NativeSelect
+            label="Encoding:"
+            value={encoding}
+            onChange={(e) => setEncoding(e.currentTarget.value as EncodingType)}
+            data={Object.values(EncodingType)}
+          />
 
-      <NativeSelect
-        label="Mark Color:"
-        value={markColor}
-        onChange={(event) => setMarkColor(event.currentTarget.value as MarkColor)}
-        data={Object.values(MarkColor)}
-      />
+          <NativeSelect
+            label="Color scheme:"
+            value={colorScheme}
+            onChange={(e) => setColorScheme(e.currentTarget.value as ColorScheme)}
+            data={Object.values(ColorScheme)}
+          />
 
-      <NativeSelect
-        label="Cluster mode:"
-        value={clusterMode}
-        onChange={(event) => setClusterMode(event.currentTarget.value as ClusteringMode)}
-        data={Object.values(ClusteringMode)}
-      />
+          <Stack gap="xs">
+            <Text size="sm">
+              Grey Mark contrast:
+              {markContrast}
+            </Text>
+            <Slider min={0} max={100} value={markContrast} onChange={setMarkContrast} />
+          </Stack>
 
-      <NativeSelect
-        label="ClusterVar:"
-        value={clusterVar}
-        onChange={(event) => setClusterVar(event.currentTarget.value as ClusteringVariable)}
-        data={Object.values(ClusteringVariable)}
-      />
+          <NativeSelect
+            label="Cluster mode:"
+            value={clusterMode}
+            onChange={(e) => setClusterMode(e.currentTarget.value as ClusteringMode)}
+            data={Object.values(ClusteringMode)}
+          />
 
-      <Stack gap="0.2vh">
-        <Text size="sm">
-          Mean Steps:
-          {nMeans}
-        </Text>
-        <Slider min={2} max={5} value={nMeans} onChange={setNMeans} />
-      </Stack>
+          <NativeSelect
+            label="Cluster variable:"
+            value={clusterVar}
+            onChange={(e) => setClusterVar(e.currentTarget.value as ClusteringVariable)}
+            data={Object.values(ClusteringVariable)}
+          />
 
-      <Stack gap="0.2vh">
-        <Text size="sm">
-          Deviation Steps:
-          {nDevs}
-        </Text>
-        <Slider min={2} max={5} value={nDevs} onChange={setNDevs} />
-      </Stack>
-    </Stack>
+          <Stack gap="xs">
+            <Text size="sm">
+              Mean Steps:
+              {nMeans}
+            </Text>
+            <Slider min={2} max={5} value={nMeans} onChange={setNMeans} />
+          </Stack>
+
+          <Stack gap="xs">
+            <Text size="sm">
+              Deviation Steps:
+              {nDevs}
+            </Text>
+            <Slider min={2} max={5} value={nDevs} onChange={setNDevs} />
+          </Stack>
+        </Stack>
+      </Drawer>
+    </Box>
   );
 }

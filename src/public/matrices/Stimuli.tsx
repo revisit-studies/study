@@ -16,9 +16,7 @@ export function Stimuli({
   setAnswer,
   provenanceState,
 }: StimulusParams<ExternalParameters, TrrackState>) {
-  // ---------------------------- Setup & data ----------------------------
   const [data, setData] = useState<Link[] | null>(null);
-
   const [dataname, setDataname] = useState<string>(parameters.dataset ?? '');
 
   const loadData = useCallback(async (file: string) => {
@@ -34,7 +32,7 @@ export function Stimuli({
         .filter((line) => line.trim().length > 0)
         .map((line) => JSON.parse(line));
 
-      // We keep upper diagonal
+      // We keep only upper diagonal!
       const filteredData = parsedData.filter((d) => d.origin >= d.destination);
       filteredData.forEach((d) => {
         if (d.destination !== d.origin) {
@@ -58,38 +56,16 @@ export function Stimuli({
   const { actions, trrack } = useMemo(() => {
     const registry = Registry.create();
 
-    const addAnswerNode = registry.register('add-answer-node', (state, node: string) => {
-      state.answerNodes = [...state.answerNodes, node];
-    });
-
-    const removeAnswerNode = registry.register('remove-answer-node', (state, node: string) => {
-      state.answerNodes = state.answerNodes.filter((n: string) => n !== node);
-    });
-
     const setAnswerNodes = registry.register('set-answer-nodes', (state, answerNodes: string[]) => {
       state.answerNodes = answerNodes;
     });
 
-    const addHighlightNode = registry.register('add-highlight-node', (state, node: string) => {
-      state.highlightedNodes = [...state.highlightNodes, node];
+    const setOrderingNode = registry.register('set-ordering-node', (state, node: string) => {
+      state.orderingNode = node;
     });
 
-    const removeHighlightNode = registry.register(
-      'remove-highlight-node',
-      (state, node: string) => {
-        state.highlightNodes = state.highlightNodes.filter((n: string) => n !== node);
-      },
-    );
-
-    const setHighlightNodes = registry.register(
-      'set-highlight-nodes',
-      (state, highlightNodes: string[]) => {
-        state.highlightNodes = highlightNodes;
-      },
-    );
-
-    const setOrderingNode = registry.register('set-sorting-node', (state, node: string) => {
-      state.orderingNode = node;
+    const setLinkMarks = registry.register('set-link-marks', (state, links: string[][]) => {
+      state.linkMarks = links;
     });
 
     const setOriginHighlight = registry.register('highlight-origin-node', (state, node: string) => {
@@ -108,29 +84,23 @@ export function Stimuli({
         answerNodes: [],
 
         orderingNode: null,
+        linkMarks: [],
 
         originHighlight: null,
         destinationHighlight: null,
-
-        linkMarks: null,
       },
       registry,
     });
 
     return {
       actions: {
-        addAnswerNode,
-        removeAnswerNode,
         setAnswerNodes,
 
-        addHighlightNode,
-        removeHighlightNode,
-        setHighlightNodes,
+        setOrderingNode,
+        setLinkMarks,
 
         setOriginHighlight,
         setDestinationHighlight,
-
-        setOrderingNode,
       },
       trrack: trrackInst,
     };

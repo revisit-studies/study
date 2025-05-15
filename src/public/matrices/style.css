@@ -32,7 +32,6 @@
   fill: transparent;
   stroke: #ff3300;
   pointer-events: none;
-  stroke-width: 3;
 }
 
 .cluster-label {

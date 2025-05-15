@@ -1,7 +1,8 @@
+import { HIGHLIGHT_STROKE_WIDTH } from '../utils/Constants';
 import { ClusterMark } from '../utils/Interfaces';
 import { useMatrixContext } from '../utils/MatrixContext';
 
-const margin = 2;
+const markStrokeWidth = HIGHLIGHT_STROKE_WIDTH + 1;
 
 export function ClusterMarks({ marks, size }: { marks: ClusterMark[] | null; size: number }) {
   const { originScale, destinationScale, cellSize } = useMatrixContext();
@@ -27,26 +28,28 @@ export function ClusterMarks({ marks, size }: { marks: ClusterMark[] | null; siz
       <rect
         className="mark"
         key={i}
-        x={originScale(d.origin)! - margin}
-        y={destinationScale(d.destination)! - margin}
-        width={size * cellSize + margin * 2}
-        height={size * cellSize + margin * 2}
+        x={originScale(d.origin)! - markStrokeWidth / 2}
+        y={destinationScale(d.destination)! - markStrokeWidth / 2}
+        width={size * cellSize + markStrokeWidth}
+        height={size * cellSize + markStrokeWidth}
+        strokeWidth={markStrokeWidth}
       />
     </>
   ));
 }
 
-export function LinkMarks({ marks, size }: { marks: string[][] | null; size: number }) {
+export function LinkMarks({ marks }: { marks: string[][] | null }) {
   const { originScale, destinationScale, cellSize } = useMatrixContext();
 
   return marks?.map((d, i) => (
     <rect
       className="mark"
       key={i}
-      x={originScale(d[0])! - margin}
-      y={destinationScale(d[1])! - margin}
-      width={size * cellSize + margin * 2}
-      height={size * cellSize + margin * 2}
+      x={originScale(d[0])! - markStrokeWidth / 2}
+      y={destinationScale(d[1])! - markStrokeWidth / 2}
+      width={cellSize + markStrokeWidth}
+      height={cellSize + markStrokeWidth}
+      strokeWidth={markStrokeWidth}
     />
   ));
 }

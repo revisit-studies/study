@@ -127,7 +127,7 @@ export function Matrix({
   // ---------------------------- Cell Renderer ----------------------------
   const cellRenderer = useCellRenderer(
     configProps.encoding,
-    configProps.markColor,
+    configProps.markContrast,
     configProps.isSnr,
     meanScale,
     devScale,
@@ -206,7 +206,7 @@ export function Matrix({
               <Highlighting />
               <Background />
               {config.clusterMarks && <ClusterMarks size={3} marks={config.clusterMarks} />}
-              <LinkMarks size={1} marks={replayState.linkMarks} />
+              <LinkMarks marks={replayState.linkMarks} />
               {configProps.showTooltip && <MatrixTooltip />}
             </g>
           )}

@@ -155,7 +155,7 @@ export function Legend() {
 
       cellRenderer(group.selectAll('.cell'), showMean, showDev);
     },
-    [cellSize, cellRenderer, encoding],
+    [cellSize, cellRenderer],
   );
 
   useEffect(() => {

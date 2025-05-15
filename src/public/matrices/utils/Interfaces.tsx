@@ -1,5 +1,5 @@
 import {
-  ClusteringMode, ClusteringVariable, ColorScheme, EncodingType, MarkColor,
+  ClusteringMode, ClusteringVariable, ColorScheme, EncodingType,
 } from './Enums';
 
 export interface TrrackState {
@@ -7,7 +7,7 @@ export interface TrrackState {
   orderingNode: string | null;
   originHighlight: string | null;
   destinationHighlight: string | null;
-  linkMarks: string[][] | null;
+  linkMarks: string[][];
 }
 
 export interface ClusterMark {
@@ -26,7 +26,7 @@ export type ChartConfiguration = {
 
   encoding: EncodingType;
   colorScheme: ColorScheme;
-  markColor: MarkColor;
+  markContrast: number;
   isSnr: boolean;
   nMeans: number;
   nDevs: number;
@@ -53,7 +53,7 @@ export type ExternalParameters = {
 
 export interface ChartSetters {
   setColorScheme: (value: ColorScheme) => void;
-  setMarkColor: (value: MarkColor) => void;
+  setMarkContrast: (value: number) => void;
   setEncoding: (value: EncodingType) => void;
   setShowTooltip: (value: boolean) => void;
   setIsSnr: (value: boolean) => void;

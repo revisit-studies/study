@@ -2,25 +2,23 @@ import { useEffect, useState } from 'react';
 import { TrrackState } from '../utils/Interfaces';
 
 export function useReplayState(provenanceState: TrrackState | undefined) {
+  const [answerNodes, setAnswerNodes] = useState<string[]>([]);
+
+  const [orderingNode, setOrderingNode] = useState<string | null>(null);
+  const [linkMarks, setLinkMarks] = useState<string[][]>([]);
+
   const [destinationHighlight, setDestinationHighlight] = useState<string | null>(null);
   const [originHighlight, setOriginHighlight] = useState<string | null>(null);
 
-  const [orderingNode, setOrderingNode] = useState<string | null>(null);
-
-  const [answerNodes, setAnswerNodes] = useState<string[]>([]);
-
-  const [linkMarks, setLinkMarks] = useState<string[][] | null>([]);
-
   useEffect(() => {
     if (provenanceState) {
+      setAnswerNodes(provenanceState.answerNodes);
+
       setOrderingNode(provenanceState.orderingNode);
+      setLinkMarks(provenanceState.linkMarks);
 
       setOriginHighlight(provenanceState.originHighlight);
       setDestinationHighlight(provenanceState.destinationHighlight);
-
-      setAnswerNodes(provenanceState.answerNodes);
-
-      setLinkMarks(provenanceState.linkMarks);
     }
   }, [provenanceState]);
 

@@ -1,20 +1,17 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import React, { createContext, useContext } from 'react';
 import * as d3 from 'd3';
 import { Trrack } from '@trrack/core';
 import { ConfigProps, Link, TrrackState } from './Interfaces';
 
 interface MatrixContextType {
-  // Data and dimensions
   data: Link[];
+
   width: number;
   height: number;
   size: number;
   cellSize: number;
   margin: { top: number; left: number; right: number; bottom: number };
 
-  // Scales and axes
   originScale: d3.ScaleBand<string>;
   destinationScale: d3.ScaleBand<string>;
   meanScale: d3.ScaleQuantize<string | number, never>;
@@ -22,34 +19,34 @@ interface MatrixContextType {
 
   configProps: ConfigProps;
 
-  // State management
   originHighlight: string | null;
   destinationHighlight: string | null;
+
   orderedOrigins: string[] | null;
   orderedDestinations: string[] | null;
-  linkMarks: string[][] | null;
+
   orderingNode: string | null;
   answerNodes: string[];
 
-  // Setters
+  linkMarks: string[][];
+
   setOriginHighlight: (value: string | null) => void;
   setDestinationHighlight: (value: string | null) => void;
   setOrderedOrigins: (value: string[] | null) => void;
   setOrderedDestinations: (value: string[] | null) => void;
-  setLinkMarks: (value: string[][] | null) => void;
+  setLinkMarks: (value: string[][]) => void;
   setOrderingNode: (value: string | null) => void;
   setAnswerNodes: (nodes: string[]) => void;
 
-  // Utility functions
   cellRenderer: (
     gCells: d3.Selection<SVGGElement, Link, SVGGElement | null, unknown>,
     showMean?: boolean,
     showDev?: boolean
   ) => void;
-
-  // Provenance
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   actions?: any;
   trrack?: Trrack<TrrackState, string>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   setAnswer?: any;
 }
 

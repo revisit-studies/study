@@ -1,17 +1,13 @@
 import { useState } from 'react';
 import {
-  ColorScheme,
-  EncodingType,
-  ClusteringMode,
-  ClusteringVariable,
-  MarkColor,
+  ColorScheme, EncodingType, ClusteringMode, ClusteringVariable,
 } from '../utils/Enums';
 import type { ChartConfiguration, ConfigProps, ExternalParameters } from '../utils/Interfaces';
 
 const DEFAULTS: ChartConfiguration = {
   showConfigurationPanel: false,
   colorScheme: ColorScheme.Viridis,
-  markColor: MarkColor.White,
+  markContrast: 25,
   encoding: EncodingType.Mean,
   showTooltip: false,
   isSnr: false,
@@ -33,7 +29,7 @@ export function useConfigProps(parameters: ExternalParameters): ConfigProps {
   const mergedConfig = mergeConfig(parameters, DEFAULTS);
 
   const [colorScheme, setColorScheme] = useState<ColorScheme>(mergedConfig.colorScheme);
-  const [markColor, setMarkColor] = useState<MarkColor>(mergedConfig.markColor);
+  const [markContrast, setMarkContrast] = useState(mergedConfig.markContrast);
   const [encoding, setEncoding] = useState<EncodingType>(mergedConfig.encoding);
   const [showTooltip, setShowTooltip] = useState<boolean>(mergedConfig.showTooltip);
   const [isSnr, setIsSnr] = useState<boolean>(mergedConfig.isSnr);
@@ -45,7 +41,7 @@ export function useConfigProps(parameters: ExternalParameters): ConfigProps {
   return {
     ...mergedConfig,
     colorScheme,
-    markColor,
+    markContrast,
     encoding,
     showTooltip,
     isSnr,
@@ -56,7 +52,7 @@ export function useConfigProps(parameters: ExternalParameters): ConfigProps {
 
     // Setters
     setColorScheme,
-    setMarkColor,
+    setMarkContrast,
     setEncoding,
     setShowTooltip,
     setIsSnr,

@@ -57,14 +57,14 @@ export function useCellScales(
   const meanScale = useMemo(() => {
     const barsScheme = createLinearScale(5, cellSize * 0.2, cellSize * 0.9);
     const colorScheme = getColorScale(colorScale, nMeans);
-    const scheme = encoding === EncodingType.Bars ? barsScheme : colorScheme;
+    const scheme = encoding === EncodingType.BarChart ? barsScheme : colorScheme;
     return d3.scaleQuantize<number | string>().domain([meanMin, meanMax]).range(scheme);
   }, [meanMin, meanMax, nMeans, colorScale, encoding, cellSize]);
 
   const devScale = useMemo(() => {
     let steps = [1];
     switch (encoding) {
-      case EncodingType.Bars: {
+      case EncodingType.BarChart: {
         steps = createLinearScale(nDevs, cellSize * 0.2, cellSize * 0.9);
         if (isSnr) steps = steps.reverse();
         break;
@@ -73,22 +73,27 @@ export function useCellScales(
         steps = createLinearScale(nDevs, 0.2, 1).reverse();
         break;
       }
-      case EncodingType.ColoredRotation45:
-      case EncodingType.MarkRotation45: {
+      case EncodingType.ColorAngle45:
+      case EncodingType.MarkAngle45: {
         steps = createLinearScale(nDevs);
         break;
       }
-      case EncodingType.ColoredRotation90:
-      case EncodingType.MarkRotation90: {
+      case EncodingType.ColorAngle90:
+      case EncodingType.MarkAngle90: {
         steps = createLinearScale(nDevs, 0, 90);
         break;
       }
 
-      case EncodingType.Mark: {
+      case EncodingType.MarkAngle45_90: {
+        steps = createLinearScale(nDevs, 90, 45);
+        break;
+      }
+
+      case EncodingType.MarkSize: {
         steps = createMarkScale(nDevs, cellSize * 0.8);
         break;
       }
-      case EncodingType.Size: {
+      case EncodingType.CellSize: {
         steps = createLinearScale(nDevs, cellSize * 0.3, cellSize).reverse();
         break;
       }

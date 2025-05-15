@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import * as d3 from 'd3';
 
 import { useMatrixContext } from '../utils/MatrixContext';
@@ -7,13 +7,8 @@ export function invertScaleBand(scale: d3.ScaleBand<string>, value: number) {
   const domain = scale.domain();
   const range = scale.range();
 
-  // Si el valor está fuera del rango, devolver null
-  if (value < range[0] || value > range[1]) {
-    return null;
-  }
-
   const index = Math.floor((value - range[0]) / scale.step());
-  return domain[index] ?? null;
+  return domain[index];
 }
 
 export function Background() {
@@ -27,33 +22,50 @@ export function Background() {
     destinationHighlight,
     linkMarks,
     setLinkMarks,
+    trrack,
+    actions,
   } = useMatrixContext();
 
   const { width, height } = useMemo(() => ({ width: size, height: size }), [size]);
 
-  const onMouseMove = (e: React.MouseEvent<SVGRectElement>) => {
-    const [x, y] = d3.pointer(e);
-    const origin = invertScaleBand(originScale, x);
-    const destination = invertScaleBand(destinationScale, y);
+  const getIndices = useCallback(
+    (e: React.MouseEvent<SVGRectElement>) => {
+      const [x, y] = d3.pointer(e);
+      return {
+        origin: invertScaleBand(originScale, x),
+        destination: invertScaleBand(destinationScale, y),
+      };
+    },
+    [originScale, destinationScale],
+  );
 
-    if (origin !== originHighlight) setOriginHighlight(origin);
-    if (destination !== destinationHighlight) setDestinationHighlight(destination);
-  };
+  const onMouseMove = useCallback(
+    (e: React.MouseEvent<SVGRectElement>) => {
+      const { origin, destination } = getIndices(e);
 
-  const onClick = (e: React.MouseEvent<SVGRectElement>) => {
-    const [x, y] = d3.pointer(e);
+      if (origin !== originHighlight) setOriginHighlight(origin);
+      if (destination !== destinationHighlight) setDestinationHighlight(destination);
+    },
+    [getIndices, originHighlight, setOriginHighlight, destinationHighlight, setDestinationHighlight],
+  );
 
-    const origin = invertScaleBand(originScale, x);
-    const destination = invertScaleBand(destinationScale, y);
+  const onClick = useCallback(
+    (e: React.MouseEvent<SVGRectElement>) => {
+      const { origin, destination } = getIndices(e);
 
-    const item = linkMarks?.find((d) => d[0] === origin && d[1] === destination);
+      const item = linkMarks.find((d) => d[0] === origin && d[1] === destination);
 
-    if (!item) setLinkMarks([[origin!, destination!], ...linkMarks!]);
-    else {
-      const newLinkMarks = linkMarks?.filter((d) => d[0] !== origin || d[1] !== destination);
-      setLinkMarks(newLinkMarks!);
-    }
-  };
+      let newLinkMarks;
+      if (!item) {
+        newLinkMarks = [[origin, destination], ...linkMarks];
+      } else {
+        newLinkMarks = linkMarks.filter((d) => d[0] !== origin || d[1] !== destination);
+      }
+      setLinkMarks(newLinkMarks);
+      trrack?.apply('Set Link Marks', actions?.setLinkMarks(newLinkMarks));
+    },
+    [getIndices, linkMarks, setLinkMarks, trrack, actions],
+  );
 
   return (
     <rect
