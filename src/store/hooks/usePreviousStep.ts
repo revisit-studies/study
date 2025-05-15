@@ -21,7 +21,7 @@ export function usePreviousStep() {
 
     const previousStep = currentStep - 1;
 
-    if (funcIndex) {
+    if (funcIndex && decryptIndex(funcIndex) >= 0) {
       navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(decryptIndex(funcIndex) - 1)}${window.location.search}`);
     } else {
       navigate(`/${studyId}/${encryptIndex(previousStep)}${window.location.search}`);
