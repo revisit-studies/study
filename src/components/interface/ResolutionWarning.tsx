@@ -15,7 +15,7 @@ export function ResolutionWarning() {
 
   const [showWarning, setShowWarning] = useState(false);
   const [isRejected, setIsRejected] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(10);
+  const [timeLeft, setTimeLeft] = useState(60);
   const [isTimedOut, setIsTimedOut] = useState(false);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -34,8 +34,7 @@ export function ResolutionWarning() {
       const needsResize = widthTooSmall || heightTooSmall;
 
       const startCountdown = () => {
-        setTimeLeft(10);
-
+        setTimeLeft(60);
         // Clear existing countdown
         if (countdownIntervalRef.current) {
           clearInterval(countdownIntervalRef.current);
