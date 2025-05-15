@@ -64,16 +64,15 @@ export function ResolutionWarning() {
         }, 1000);
       };
 
-      // Handle resize if resized in time
-      if (needsResize && !isRejected) {
+      if (isRejected) return;
+
+      if (needsResize) {
         setShowWarning(true);
         // Start countdown if one isn't already running
-        // This is to prevent multiple countdowns from running
         if (countdownIntervalRef.current === null) {
           startCountdown();
         }
-      } else if (!isRejected) {
-        // Window meets size requirements or user is rejected
+      } else {
         setShowWarning(false);
         startCountdown();
       }
