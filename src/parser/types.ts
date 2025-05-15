@@ -614,8 +614,6 @@ export interface BaseIndividualComponent {
   previousButton?: boolean;
   /** The text that is displayed on the previous button. */
   previousButtonText?:string;
-  /** The location of the previous button. */
-  previousButtonLocation?: ConfigResponseBlockLocation;
   /** The location of the instructions. */
   instructionLocation?: ConfigResponseBlockLocation;
   /** The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess. */
@@ -638,10 +636,6 @@ export interface BaseIndividualComponent {
   nextButtonDisableTime?: number;
   /** A timer (in ms) after which the next button will be enabled. */
   nextButtonEnableTime?: number;
-  /** A timeout (in ms) after which the previous button will be disabled. */
-  previousButtonDisableTime?: number;
-  /** A timer (in ms) after which the previous button will be enabled. */
-  previousButtonEnableTime?: number;
   /** Whether to show the response dividers. Defaults to false. */
   responseDividers?: boolean;
   /** Optional override for the help text. If present, will override the default help text path set in the uiConfig. */

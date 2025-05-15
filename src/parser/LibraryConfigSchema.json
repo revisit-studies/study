@@ -136,18 +136,6 @@
             "description": "Whether to show the previous button.",
             "type": "boolean"
           },
-          "previousButtonDisableTime": {
-            "description": "A timeout (in ms) after which the previous button will be disabled.",
-            "type": "number"
-          },
-          "previousButtonEnableTime": {
-            "description": "A timer (in ms) after which the previous button will be enabled.",
-            "type": "number"
-          },
-          "previousButtonLocation": {
-            "$ref": "#/definitions/ConfigResponseBlockLocation",
-            "description": "The location of the previous button."
-          },
           "previousButtonText": {
             "description": "The text that is displayed on the previous button.",
             "type": "string"
@@ -676,18 +664,6 @@
           "description": "Whether to show the previous button.",
           "type": "boolean"
         },
-        "previousButtonDisableTime": {
-          "description": "A timeout (in ms) after which the previous button will be disabled.",
-          "type": "number"
-        },
-        "previousButtonEnableTime": {
-          "description": "A timer (in ms) after which the previous button will be enabled.",
-          "type": "number"
-        },
-        "previousButtonLocation": {
-          "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the previous button."
-        },
         "previousButtonText": {
           "description": "The text that is displayed on the previous button.",
           "type": "string"
@@ -941,18 +917,6 @@
         "previousButton": {
           "description": "Whether to show the previous button.",
           "type": "boolean"
-        },
-        "previousButtonDisableTime": {
-          "description": "A timeout (in ms) after which the previous button will be disabled.",
-          "type": "number"
-        },
-        "previousButtonEnableTime": {
-          "description": "A timer (in ms) after which the previous button will be enabled.",
-          "type": "number"
-        },
-        "previousButtonLocation": {
-          "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the previous button."
         },
         "previousButtonText": {
           "description": "The text that is displayed on the previous button.",
@@ -1282,18 +1246,6 @@
           "description": "Whether to show the previous button.",
           "type": "boolean"
         },
-        "previousButtonDisableTime": {
-          "description": "A timeout (in ms) after which the previous button will be disabled.",
-          "type": "number"
-        },
-        "previousButtonEnableTime": {
-          "description": "A timer (in ms) after which the previous button will be enabled.",
-          "type": "number"
-        },
-        "previousButtonLocation": {
-          "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the previous button."
-        },
         "previousButtonText": {
           "description": "The text that is displayed on the previous button.",
           "type": "string"
@@ -1585,18 +1537,6 @@
           "description": "Whether to show the previous button.",
           "type": "boolean"
         },
-        "previousButtonDisableTime": {
-          "description": "A timeout (in ms) after which the previous button will be disabled.",
-          "type": "number"
-        },
-        "previousButtonEnableTime": {
-          "description": "A timer (in ms) after which the previous button will be enabled.",
-          "type": "number"
-        },
-        "previousButtonLocation": {
-          "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the previous button."
-        },
         "previousButtonText": {
           "description": "The text that is displayed on the previous button.",
           "type": "string"
@@ -1825,18 +1765,6 @@
         "previousButton": {
           "description": "Whether to show the previous button.",
           "type": "boolean"
-        },
-        "previousButtonDisableTime": {
-          "description": "A timeout (in ms) after which the previous button will be disabled.",
-          "type": "number"
-        },
-        "previousButtonEnableTime": {
-          "description": "A timer (in ms) after which the previous button will be enabled.",
-          "type": "number"
-        },
-        "previousButtonLocation": {
-          "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the previous button."
         },
         "previousButtonText": {
           "description": "The text that is displayed on the previous button.",
@@ -2331,18 +2259,6 @@
           "description": "Whether to show the previous button.",
           "type": "boolean"
         },
-        "previousButtonDisableTime": {
-          "description": "A timeout (in ms) after which the previous button will be disabled.",
-          "type": "number"
-        },
-        "previousButtonEnableTime": {
-          "description": "A timer (in ms) after which the previous button will be enabled.",
-          "type": "number"
-        },
-        "previousButtonLocation": {
-          "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the previous button."
-        },
         "previousButtonText": {
           "description": "The text that is displayed on the previous button.",
           "type": "string"
@@ -2441,18 +2357,6 @@
         "previousButton": {
           "description": "Whether to show the previous button.",
           "type": "boolean"
-        },
-        "previousButtonDisableTime": {
-          "description": "A timeout (in ms) after which the previous button will be disabled.",
-          "type": "number"
-        },
-        "previousButtonEnableTime": {
-          "description": "A timer (in ms) after which the previous button will be enabled.",
-          "type": "number"
-        },
-        "previousButtonLocation": {
-          "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the previous button."
         },
         "previousButtonText": {
           "description": "The text that is displayed on the previous button.",
@@ -2556,18 +2460,6 @@
         "previousButton": {
           "description": "Whether to show the previous button.",
           "type": "boolean"
-        },
-        "previousButtonDisableTime": {
-          "description": "A timeout (in ms) after which the previous button will be disabled.",
-          "type": "number"
-        },
-        "previousButtonEnableTime": {
-          "description": "A timer (in ms) after which the previous button will be enabled.",
-          "type": "number"
-        },
-        "previousButtonLocation": {
-          "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the previous button."
         },
         "previousButtonText": {
           "description": "The text that is displayed on the previous button.",
@@ -2676,18 +2568,6 @@
         "previousButton": {
           "description": "Whether to show the previous button.",
           "type": "boolean"
-        },
-        "previousButtonDisableTime": {
-          "description": "A timeout (in ms) after which the previous button will be disabled.",
-          "type": "number"
-        },
-        "previousButtonEnableTime": {
-          "description": "A timer (in ms) after which the previous button will be enabled.",
-          "type": "number"
-        },
-        "previousButtonLocation": {
-          "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the previous button."
         },
         "previousButtonText": {
           "description": "The text that is displayed on the previous button.",
