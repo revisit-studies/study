@@ -255,13 +255,13 @@ export function ResponseBlock({
   }, [attemptsUsed, responsesWithDefaults, configInUse, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, storageEngine, studyId, navigate, identifier, storeDispatch, answerValidator, alertConfig, saveIncorrectAnswer]);
 
   useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Enter') {
-        checkAnswerProvideFeedback();
-      }
-    };
-
     if (studyConfig.uiConfig.nextOnEnter) {
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Enter') {
+          checkAnswerProvideFeedback();
+        }
+      };
+
       window.addEventListener('keydown', handleKeyDown);
       return () => {
         window.removeEventListener('keydown', handleKeyDown);
