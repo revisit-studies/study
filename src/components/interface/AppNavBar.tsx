@@ -6,9 +6,10 @@ import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 import { ResponseBlock } from '../response/ResponseBlock';
 import { useCurrentComponent } from '../../routes/utils';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { useStoreSelector } from '../../store/store';
 
 export function AppNavBar() {
-  const trialHasSideBar = useStudyConfig()?.uiConfig.sidebar;
+  const trialHasSideBar = useStudyConfig()?.uiConfig.withSidebar;
   const trialHasSideBarResponses = true;
 
   // Get the config for the current step
@@ -23,6 +24,9 @@ export function AppNavBar() {
 
     return null;
   }, [stepConfig, studyConfig]);
+  const config = useStoreSelector((state) => state.config);
+  const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[currentComponent] || {}, config), [currentComponent, config]);
+  const overrideTrialHasSideBar = componentConfig.withSidebar;
 
   const status = useStoredAnswer();
   const instruction = currentConfig?.instruction || '';
@@ -30,7 +34,7 @@ export function AppNavBar() {
   const instructionInSideBar = currentConfig?.instructionLocation === 'sidebar'
     || currentConfig?.instructionLocation === undefined;
 
-  return trialHasSideBar && currentConfig ? (
+  return (overrideTrialHasSideBar !== undefined ? overrideTrialHasSideBar : trialHasSideBar) && currentConfig ? (
     <AppShell.Navbar bg="gray.1" display="block" style={{ zIndex: 0, overflowY: 'scroll' }}>
       {instructionInSideBar && instruction !== '' && (
         <AppShell.Section

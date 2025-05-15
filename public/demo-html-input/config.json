@@ -21,7 +21,7 @@
     "withProgressBar": true,
     "autoDownloadStudy": false,
     "autoDownloadTime": 5000,
-    "sidebar": false
+    "withSidebar": false
   },
   "baseComponents": {
     "bar-chart": {

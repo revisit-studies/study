@@ -20,7 +20,7 @@
     "logoPath": "revisitAssets/revisitLogoSquare.svg",
     "withProgressBar": true,
     "autoDownloadStudy": false,
-    "sidebar": false,
+    "withSidebar": false,
     "windowEventDebounceTime": 200
   },
   "components": {

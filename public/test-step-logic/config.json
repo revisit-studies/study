@@ -17,7 +17,7 @@
     "uiConfig": {
       "contactEmail": "jwilburn@sci.utah.edu",
       "logoPath": "revisitAssets/revisitLogoSquare.svg",
-      "sidebar": true,
+      "withSidebar": true,
       "withProgressBar": true
     },
     "baseComponents": {

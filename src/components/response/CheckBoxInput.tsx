@@ -2,13 +2,12 @@ import {
   Box, Checkbox, Flex, Input,
 } from '@mantine/core';
 import { useMemo, useState } from 'react';
-import { CheckboxResponse, StringOption } from '../../parser/types';
+import { CheckboxResponse } from '../../parser/types';
 import { generateErrorMessage } from './utils';
 import { ReactMarkdownWrapper } from '../ReactMarkdownWrapper';
 import { HorizontalHandler } from './HorizontalHandler';
 import classes from './css/Checkbox.module.css';
 import inputClasses from './css/Input.module.css';
-import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 
 export function CheckBoxInput({
   response,
@@ -28,20 +27,17 @@ export function CheckBoxInput({
   const {
     prompt,
     required,
+    options,
     secondaryText,
     horizontal,
     withOther,
-    options,
   } = response;
 
-  const storedAnswer = useStoredAnswer();
-  const optionOrders: Record<string, StringOption[]> = useMemo(() => (storedAnswer ? storedAnswer.optionOrders : {}), [storedAnswer]);
-
-  const orderedOptions = useMemo(() => optionOrders[response.id] || options, [optionOrders, options, response.id]);
+  const optionsAsStringOptions = options.map((option) => (typeof option === 'string' ? { value: option, label: option } : option));
 
   const [otherSelected, setOtherSelected] = useState(false);
 
-  const error = useMemo(() => generateErrorMessage(response, answer, orderedOptions), [response, answer, orderedOptions]);
+  const error = useMemo(() => generateErrorMessage(response, answer, optionsAsStringOptions), [response, answer, optionsAsStringOptions]);
 
   return (
     <Checkbox.Group
@@ -60,7 +56,7 @@ export function CheckBoxInput({
     >
       <Box mt="xs">
         <HorizontalHandler horizontal={!!horizontal} style={{ flexGrow: 1 }}>
-          {orderedOptions.map((option) => (
+          {optionsAsStringOptions.map((option) => (
             <Checkbox
               key={option.value}
               disabled={disabled}

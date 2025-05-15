@@ -51,11 +51,15 @@
             "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
             "type": "string"
           },
+          "enumerateQuestions": {
+            "description": "Optional override for whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the default enumerateQuestions setting in the uiConfig.",
+            "type": "boolean"
+          },
           "forceCompletion": {
             "description": "Whether to force the video to play until the end. Defaults to true.",
             "type": "boolean"
           },
-          "helpTextPathOverride": {
+          "helpTextPath": {
             "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
             "type": "string"
           },
@@ -73,20 +77,24 @@
             "type": "object"
           },
           "nextButtonDisableTime": {
-            "description": "A timeout (in ms) after which the next button will be disabled.",
+            "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the default nextButtonDisableTime setting in the uiConfig.",
             "type": "number"
           },
           "nextButtonEnableTime": {
-            "description": "A timer (in ms) after which the next button will be enabled.",
+            "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the default nextButtonEnableTime setting in the uiConfig.",
             "type": "number"
           },
           "nextButtonLocation": {
             "$ref": "#/definitions/ConfigResponseBlockLocation",
-            "description": "The location of the next button."
+            "description": "The location of the next button. If present, will override the default nextButtonLocation setting in the uiConfig."
           },
           "nextButtonText": {
-            "description": "The text that is displayed on the next button.",
+            "description": "The text that is displayed on the next button. If present, will override the default nextButtonText setting in the uiConfig.",
             "type": "string"
+          },
+          "nextOnEnter": {
+            "description": "Whether enter key should move to the next question. If present, will override the default nextOnEnter setting in the uiConfig.",
+            "type": "boolean"
           },
           "parameters": {
             "anyOf": [
@@ -151,6 +159,10 @@
             "description": "Whether to show the response dividers. Defaults to false.",
             "type": "boolean"
           },
+          "sidebarWidth": {
+            "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
+            "type": "number"
+          },
           "style": {
             "additionalProperties": {
               "type": "string"
@@ -173,6 +185,18 @@
               "video"
             ],
             "type": "string"
+          },
+          "windowEventDebounceTime": {
+            "description": "Optional override for the window event debounce time in milliseconds for automatically tracked window events. If present, will override the default window event debounce time set in the uiConfig.",
+            "type": "number"
+          },
+          "withProgressBar": {
+            "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+            "type": "boolean"
+          },
+          "withSidebar": {
+            "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
+            "type": "boolean"
           },
           "withTimeline": {
             "description": "Whether to show the video timeline. Defaults to false.",
@@ -199,14 +223,6 @@
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
-        },
-        "optionOrder": {
-          "description": "The order in which the buttons are displayed. Defaults to fixed.",
-          "enum": [
-            "fixed",
-            "random"
-          ],
-          "type": "string"
         },
         "options": {
           "items": {
@@ -292,14 +308,6 @@
         "minSelections": {
           "description": "The minimum number of selections that are required.",
           "type": "number"
-        },
-        "optionOrder": {
-          "description": "The order in which the checkboxes are displayed. Defaults to fixed.",
-          "enum": [
-            "fixed",
-            "random"
-          ],
-          "type": "string"
         },
         "options": {
           "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
@@ -615,7 +623,11 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "enumerateQuestions": {
+          "description": "Optional override for whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the default enumerateQuestions setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -633,20 +645,24 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the default nextButtonDisableTime setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer (in ms) after which the next button will be enabled.",
+          "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the default nextButtonEnableTime setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the next button."
+          "description": "The location of the next button. If present, will override the default nextButtonLocation setting in the uiConfig."
         },
         "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
+          "description": "The text that is displayed on the next button. If present, will override the default nextButtonText setting in the uiConfig.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. If present, will override the default nextOnEnter setting in the uiConfig.",
+          "type": "boolean"
         },
         "path": {
           "description": "The path to the image. This could be a relative path from the public folder or a url to an external image.",
@@ -671,6 +687,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
+          "type": "number"
+        },
         "style": {
           "additionalProperties": {
             "type": "string"
@@ -685,6 +705,18 @@
         "type": {
           "const": "image",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Optional override for the window event debounce time in milliseconds for automatically tracked window events. If present, will override the default window event debounce time set in the uiConfig.",
+          "type": "number"
+        },
+        "withProgressBar": {
+          "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -817,11 +849,15 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
+        "enumerateQuestions": {
+          "description": "Optional override for whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the default enumerateQuestions setting in the uiConfig.",
+          "type": "boolean"
+        },
         "forceCompletion": {
           "description": "Whether to force the video to play until the end. Defaults to true.",
           "type": "boolean"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -839,20 +875,24 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the default nextButtonDisableTime setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer (in ms) after which the next button will be enabled.",
+          "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the default nextButtonEnableTime setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the next button."
+          "description": "The location of the next button. If present, will override the default nextButtonLocation setting in the uiConfig."
         },
         "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
+          "description": "The text that is displayed on the next button. If present, will override the default nextButtonText setting in the uiConfig.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. If present, will override the default nextOnEnter setting in the uiConfig.",
+          "type": "boolean"
         },
         "parameters": {
           "anyOf": [
@@ -917,6 +957,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
+          "type": "number"
+        },
         "style": {
           "additionalProperties": {
             "type": "string"
@@ -939,6 +983,18 @@
             "video"
           ],
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Optional override for the window event debounce time in milliseconds for automatically tracked window events. If present, will override the default window event debounce time set in the uiConfig.",
+          "type": "number"
+        },
+        "withProgressBar": {
+          "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
         },
         "withTimeline": {
           "description": "Whether to show the video timeline. Defaults to false.",
@@ -1181,7 +1237,11 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "enumerateQuestions": {
+          "description": "Optional override for whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the default enumerateQuestions setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -1199,20 +1259,24 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the default nextButtonDisableTime setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer (in ms) after which the next button will be enabled.",
+          "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the default nextButtonEnableTime setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the next button."
+          "description": "The location of the next button. If present, will override the default nextButtonLocation setting in the uiConfig."
         },
         "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
+          "description": "The text that is displayed on the next button. If present, will override the default nextButtonText setting in the uiConfig.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. If present, will override the default nextOnEnter setting in the uiConfig.",
+          "type": "boolean"
         },
         "path": {
           "description": "The path to the markdown file. This should be a relative path from the public folder.",
@@ -1237,6 +1301,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -1244,6 +1312,18 @@
         "type": {
           "const": "markdown",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Optional override for the window event debounce time in milliseconds for automatically tracked window events. If present, will override the default window event debounce time set in the uiConfig.",
+          "type": "number"
+        },
+        "withProgressBar": {
+          "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1468,7 +1548,11 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "enumerateQuestions": {
+          "description": "Optional override for whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the default enumerateQuestions setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -1486,20 +1570,24 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the default nextButtonDisableTime setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer (in ms) after which the next button will be enabled.",
+          "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the default nextButtonEnableTime setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the next button."
+          "description": "The location of the next button. If present, will override the default nextButtonLocation setting in the uiConfig."
         },
         "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
+          "description": "The text that is displayed on the next button. If present, will override the default nextButtonText setting in the uiConfig.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. If present, will override the default nextOnEnter setting in the uiConfig.",
+          "type": "boolean"
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
@@ -1520,6 +1608,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -1527,6 +1619,18 @@
         "type": {
           "const": "questionnaire",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Optional override for the window event debounce time in milliseconds for automatically tracked window events. If present, will override the default window event debounce time set in the uiConfig.",
+          "type": "number"
+        },
+        "withProgressBar": {
+          "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1558,14 +1662,6 @@
         "location": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
-        },
-        "optionOrder": {
-          "description": "The order in which the radio buttons are displayed. Defaults to fixed.",
-          "enum": [
-            "fixed",
-            "random"
-          ],
-          "type": "string"
         },
         "options": {
           "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
@@ -1680,7 +1776,11 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "enumerateQuestions": {
+          "description": "Optional override for whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the default enumerateQuestions setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -1698,20 +1798,24 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the default nextButtonDisableTime setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer (in ms) after which the next button will be enabled.",
+          "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the default nextButtonEnableTime setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the next button."
+          "description": "The location of the next button. If present, will override the default nextButtonLocation setting in the uiConfig."
         },
         "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
+          "description": "The text that is displayed on the next button. If present, will override the default nextButtonText setting in the uiConfig.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. If present, will override the default nextOnEnter setting in the uiConfig.",
+          "type": "boolean"
         },
         "parameters": {
           "additionalProperties": {},
@@ -1741,6 +1845,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -1748,6 +1856,18 @@
         "type": {
           "const": "react-component",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Optional override for the window event debounce time in milliseconds for automatically tracked window events. If present, will override the default window event debounce time set in the uiConfig.",
+          "type": "number"
+        },
+        "withProgressBar": {
+          "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2174,7 +2294,11 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "enumerateQuestions": {
+          "description": "Optional override for whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the default enumerateQuestions setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -2192,20 +2316,24 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the default nextButtonDisableTime setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer (in ms) after which the next button will be enabled.",
+          "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the default nextButtonEnableTime setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the next button."
+          "description": "The location of the next button. If present, will override the default nextButtonLocation setting in the uiConfig."
         },
         "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
+          "description": "The text that is displayed on the next button. If present, will override the default nextButtonText setting in the uiConfig.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. If present, will override the default nextOnEnter setting in the uiConfig.",
+          "type": "boolean"
         },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
@@ -2226,6 +2354,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -2233,6 +2365,18 @@
         "type": {
           "const": "vega",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Optional override for the window event debounce time in milliseconds for automatically tracked window events. If present, will override the default window event debounce time set in the uiConfig.",
+          "type": "number"
+        },
+        "withProgressBar": {
+          "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2261,7 +2405,11 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "enumerateQuestions": {
+          "description": "Optional override for whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the default enumerateQuestions setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -2279,20 +2427,24 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the default nextButtonDisableTime setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer (in ms) after which the next button will be enabled.",
+          "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the default nextButtonEnableTime setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the next button."
+          "description": "The location of the next button. If present, will override the default nextButtonLocation setting in the uiConfig."
         },
         "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
+          "description": "The text that is displayed on the next button. If present, will override the default nextButtonText setting in the uiConfig.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. If present, will override the default nextOnEnter setting in the uiConfig.",
+          "type": "boolean"
         },
         "path": {
           "description": "The path to the vega file. This should be a relative path from the public folder.",
@@ -2317,6 +2469,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -2324,6 +2480,18 @@
         "type": {
           "const": "vega",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Optional override for the window event debounce time in milliseconds for automatically tracked window events. If present, will override the default window event debounce time set in the uiConfig.",
+          "type": "number"
+        },
+        "withProgressBar": {
+          "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2352,11 +2520,15 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
+        "enumerateQuestions": {
+          "description": "Optional override for whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the default enumerateQuestions setting in the uiConfig.",
+          "type": "boolean"
+        },
         "forceCompletion": {
           "description": "Whether to force the video to play until the end. Defaults to true.",
           "type": "boolean"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -2374,20 +2546,24 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the default nextButtonDisableTime setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer (in ms) after which the next button will be enabled.",
+          "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the default nextButtonEnableTime setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the next button."
+          "description": "The location of the next button. If present, will override the default nextButtonLocation setting in the uiConfig."
         },
         "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
+          "description": "The text that is displayed on the next button. If present, will override the default nextButtonText setting in the uiConfig.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. If present, will override the default nextOnEnter setting in the uiConfig.",
+          "type": "boolean"
         },
         "path": {
           "description": "The path to the video. This could be a relative path from the public folder or might be a url to an external website.",
@@ -2412,6 +2588,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -2419,6 +2599,18 @@
         "type": {
           "const": "video",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Optional override for the window event debounce time in milliseconds for automatically tracked window events. If present, will override the default window event debounce time set in the uiConfig.",
+          "type": "number"
+        },
+        "withProgressBar": {
+          "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
         },
         "withTimeline": {
           "description": "Whether to show the video timeline. Defaults to false.",
@@ -2451,7 +2643,11 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "enumerateQuestions": {
+          "description": "Optional override for whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. If present, will override the default enumerateQuestions setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -2469,20 +2665,24 @@
           "type": "object"
         },
         "nextButtonDisableTime": {
-          "description": "A timeout (in ms) after which the next button will be disabled.",
+          "description": "The time in milliseconds to wait before the next button is disabled. If present, will override the default nextButtonDisableTime setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonEnableTime": {
-          "description": "A timer (in ms) after which the next button will be enabled.",
+          "description": "The time in milliseconds to wait before the next button is enabled. If present, will override the default nextButtonEnableTime setting in the uiConfig.",
           "type": "number"
         },
         "nextButtonLocation": {
           "$ref": "#/definitions/ConfigResponseBlockLocation",
-          "description": "The location of the next button."
+          "description": "The location of the next button. If present, will override the default nextButtonLocation setting in the uiConfig."
         },
         "nextButtonText": {
-          "description": "The text that is displayed on the next button.",
+          "description": "The text that is displayed on the next button. If present, will override the default nextButtonText setting in the uiConfig.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Whether enter key should move to the next question. If present, will override the default nextOnEnter setting in the uiConfig.",
+          "type": "boolean"
         },
         "parameters": {
           "additionalProperties": {},
@@ -2512,6 +2712,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "Optional override for the width of the left sidebar. If present, will override the default sidebar width set in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -2519,6 +2723,18 @@
         "type": {
           "const": "website",
           "type": "string"
+        },
+        "windowEventDebounceTime": {
+          "description": "Optional override for the window event debounce time in milliseconds for automatically tracked window events. If present, will override the default window event debounce time set in the uiConfig.",
+          "type": "number"
+        },
+        "withProgressBar": {
+          "description": "Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "withSidebar": {
+          "description": "Optional override for the left sidebar. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [

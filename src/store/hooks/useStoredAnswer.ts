@@ -10,6 +10,6 @@ export function useStoredAnswer() {
   const currentStep = useCurrentStep();
   const currentComponent = useCurrentComponent();
   const identifier = funcIndex && typeof currentStep === 'number' ? `${participantSequence[currentStep]}_${currentStep}_${currentComponent}_${decryptIndex(funcIndex)}` : `${currentComponent}_${currentStep}`;
-  const answer = useStoreSelector((state) => state.answers[identifier]);
-  return answer;
+  const answers = useStoreSelector((state) => state.answers[identifier]);
+  return answers;
 }
