@@ -59,10 +59,10 @@ jobs:
       # If on PR, build with github environment variables
       - name: Build with github environment variables
         if: ${{ vars.VITE_STORAGE_ENGINE != '' && github.ref != 'refs/heads/main' }}
-        run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE VITE_BASE_URL=$VITE_BASE_URL yarn build
+        run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE VITE_BASE_PATH=$VITE_BASE_PATH yarn build
         env:
           VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
-          VITE_BASE_URL: "/study/${{ github.event.number }}/"
+          VITE_BASE_PATH: "/study/${{ github.event.number }}/"
 
       - name: Push PR deploy preview
         uses: peaceiris/actions-gh-pages@v3
