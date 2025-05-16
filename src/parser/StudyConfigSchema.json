@@ -200,6 +200,14 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "optionOrder": {
+          "description": "The order in which the buttons are displayed. Defaults to fixed.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
+        },
         "options": {
           "items": {
             "anyOf": [
@@ -284,6 +292,14 @@
         "minSelections": {
           "description": "The minimum number of selections that are required.",
           "type": "number"
+        },
+        "optionOrder": {
+          "description": "The order in which the checkboxes are displayed. Defaults to fixed.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
         },
         "options": {
           "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
@@ -1477,6 +1493,14 @@
           "$ref": "#/definitions/ConfigResponseBlockLocation",
           "description": "Controls the response location. These might be the same for all responses, or differ across responses. Defaults to `belowStimulus`"
         },
+        "optionOrder": {
+          "description": "The order in which the radio buttons are displayed. Defaults to fixed.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
+        },
         "options": {
           "description": "The options that are displayed as checkboxes, provided as an array of objects, with label and value fields.",
           "items": {
@@ -2208,6 +2232,14 @@
         },
         "recordStudyAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.",
+          "type": "boolean"
+        },
+        "showTitle": {
+          "description": "Controls whether the title should be hidden in the study.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Controls whether the title bar should be hidden in the study.",
           "type": "boolean"
         },
         "sidebar": {

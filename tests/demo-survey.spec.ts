@@ -7,6 +7,8 @@ test('test', async ({ page }) => {
     .getByText('Go to Study')
     .click();
 
+  await page.getByRole('button', { name: 'Next', exact: true }).click();
+
   // Fill the survey
   await page.getByPlaceholder('Enter your preference').click();
   await page.getByRole('option', { name: 'Bar', exact: true }).click();
