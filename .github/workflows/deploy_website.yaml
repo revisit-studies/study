@@ -5,6 +5,7 @@ on:
     branches:
       - main
   workflow_dispatch:
+  pull_request:
 
 jobs:
   deploy:
@@ -13,7 +14,19 @@ jobs:
       contents: write
     concurrency:
       group: ${{ github.workflow }}-${{ github.ref }}
+      cancel-in-progress: true
+
     steps:
+      - name: Comment on PR
+        uses: hasura/comment-progress@v2.2.0
+        if: github.ref != 'refs/heads/main'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          number: ${{ github.event.number }}
+          id: deploy-preview
+          message: "Starting deployment of preview ⏳..."
+
       - uses: actions/checkout@v3
 
       - uses: actions/setup-node@v3
@@ -23,12 +36,14 @@ jobs:
 
       - run: yarn install --immutable
 
+      # If on main without env vars, build with .env file
       - name: Build with .env file
-        if: ${{ vars.VITE_STORAGE_ENGINE == '' }}
+        if: ${{ vars.VITE_STORAGE_ENGINE == '' }} && github.ref == 'refs/heads/main'
         run: yarn build
 
+      # If on main with env vars, build with github environment variables
       - name: Build with github environment variables
-        if: ${{ vars.VITE_STORAGE_ENGINE != '' }}
+        if: ${{ vars.VITE_STORAGE_ENGINE != '' }} && github.ref == 'refs/heads/main'
         run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE yarn build
         env:
           VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
@@ -39,3 +54,29 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./dist
+
+      # If on PR, build with github environment variables
+      - name: Build with github environment variables
+        if: ${{ vars.VITE_STORAGE_ENGINE != '' }} && github.ref != 'refs/heads/main'
+        run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE VITE_BASE_URL=$VITE_BASE_URL yarn build
+        env:
+          VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
+          VITE_BASE_URL: "/study/${{ github.event.number }}/"
+
+      - name: Push PR deploy preview
+        uses: peaceiris/actions-gh-pages@v3
+        if: ${{ github.ref != 'refs/heads/main' }}
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          destination_dir: ${{ github.event.number }}
+
+      - name: Update comment
+        uses: hasura/comment-progress@v2.2.0
+        if: github.ref != 'refs/heads/main'
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          number: ${{ github.event.number }}
+          id: deploy-preview
+          message: "A preview of ${{ github.event.after }} is uploaded and can be seen here:\n\n ✨ https://revisit.dev/study/${{ github.event.number }} ✨\n\nChanges may take a few minutes to propagate. Since this is a preview of production, content with `draft: true` will not be rendered."
