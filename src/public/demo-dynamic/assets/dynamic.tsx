@@ -24,9 +24,9 @@ export default function dynamic({ answers }: JumpFunctionParameters<never>): Jum
   let message = 'The answer difficulty will change based on your last answer';
   let color = 'blue';
 
-  if (lastAnswer) {
-    const isCorrect = checkCorrectness(lastAnswer);
+  const isCorrect = lastAnswer && checkCorrectness(lastAnswer);
 
+  if (lastAnswer) {
     // If the last answer was correct, show difficulty increased
     if (isCorrect) {
       message = 'Difficulty increased';
@@ -42,13 +42,17 @@ export default function dynamic({ answers }: JumpFunctionParameters<never>): Jum
     }
   }
 
+  // Get the last answer's values if they exist
+  const lastLeftValue = lastAnswer?.parameters.left ?? 30;
+  const lastRightValue = lastAnswer?.parameters.right ?? 70;
+
   // Adjust left square's saturation value based on the last answer
   // Correct answers increase saturation by 10 (max 100), wrong answers decrease it by 10 (min 0)
-  const leftValue = validAnswers.reduce((leftVal, answer) => (checkCorrectness(answer) ? Math.min(100, leftVal + 10) : Math.max(0, leftVal - 10)), 30);
+  const leftValue = lastAnswer ? (isCorrect ? Math.min(100, lastLeftValue + 10) : Math.max(0, lastLeftValue - 10)) : lastLeftValue;
 
   // Adjust right square's saturation value based on the last answer
   // Correct answers decrease saturation by 10 (min 0), wrong answers increase it by 10 (max 100)
-  const rightValue = validAnswers.reduce((rightVal, answer) => (checkCorrectness(answer) ? Math.max(0, rightVal - 10) : Math.min(100, rightVal + 10)), 70);
+  const rightValue = lastAnswer ? (isCorrect ? Math.max(0, lastRightValue - 10) : Math.min(100, lastRightValue + 10)) : lastRightValue;
 
   return {
     component: 'HSLColorCodes',
