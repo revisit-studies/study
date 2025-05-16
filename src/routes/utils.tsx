@@ -49,7 +49,7 @@ export function useCurrentComponent(): string {
 
   const [indexWhenSettingComponentName, setIndexWhenSettingComponentName] = useState<number | null>(null);
 
-  const currentComponent = useMemo(() => (typeof currentStep === 'number' ? getComponent(flatSequence[currentStep], studyConfig) : currentStep.includes('reviewer-') ? currentStep : null), [currentStep, flatSequence, studyConfig]);
+  const currentComponent = useMemo(() => (typeof currentStep === 'number' ? getComponent(flatSequence[currentStep], studyConfig) : currentStep.includes('reviewer-') || currentStep.startsWith('__') ? currentStep : null), [currentStep, flatSequence, studyConfig]);
 
   const [compName, setCompName] = useState('__dynamicLoading');
 
