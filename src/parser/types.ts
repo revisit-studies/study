@@ -81,6 +81,10 @@ uiConfig:{
 In the above, the `<study-name>/assets/` path is referring to the path to your individual study assets. It is common practice to have your study directory contain an `assets` directory where all components and images relevant to your study reside. Note that this path is relative to the `public` folder of the repository - as is all other paths you define in reVISit (aside from React components whose paths are relative to `src/public`.)
  */
 export interface UIConfig {
+  /** Controls whether the title should be hidden in the study. */
+  showTitle?: boolean;
+  /** Controls whether the title bar should be hidden in the study. */
+  showTitleBar?: boolean;
   /** The email address that used during the study if a participant clicks contact. */
   contactEmail: string;
   /** The path to the help text file. This is displayed when a participant clicks help. Markdown is supported. */
@@ -430,6 +434,8 @@ export interface RadioResponse extends BaseResponse {
   type: 'radio';
   /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields. */
   options: (StringOption | string)[];
+  /** The order in which the radio buttons are displayed. Defaults to fixed. */
+  optionOrder?: 'fixed' | 'random';
   /** The left label of the radio group. Used in Likert scales for example */
   leftLabel?: string;
   /** The right label of the radio group. Used in Likert scales for example */
@@ -458,6 +464,8 @@ export interface CheckboxResponse extends BaseResponse {
   type: 'checkbox';
   /** The options that are displayed as checkboxes, provided as an array of objects, with label and value fields. */
   options: (StringOption | string)[];
+  /** The order in which the checkboxes are displayed. Defaults to fixed. */
+  optionOrder?: 'fixed' | 'random';
   /** The minimum number of selections that are required. */
   minSelections?: number;
   /** The maximum number of selections that are required. */
@@ -509,6 +517,8 @@ export interface ReactiveResponse extends BaseResponse {
 export interface ButtonsResponse extends BaseResponse {
   type: 'buttons';
   options: (StringOption | string)[];
+  /** The order in which the buttons are displayed. Defaults to fixed. */
+  optionOrder?: 'fixed' | 'random';
 }
 
 /**

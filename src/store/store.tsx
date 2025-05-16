@@ -12,6 +12,7 @@ import {
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 import { REVISIT_MODE } from '../storage/engines/StorageEngine';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
+import { randomizeOptions, randomizeQuestionOrder } from '../utils/handleResponseRandomization';
 
 export async function studyStoreCreator(
   studyId: string,
@@ -54,7 +55,9 @@ export async function studyStoreCreator(
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           parameters: Object.hasOwn(componentConfig, 'parameters') ? (componentConfig as any).parameters : {},
           correctAnswer: Object.hasOwn(componentConfig, 'correctAnswer') ? componentConfig.correctAnswer! : [],
-        },
+          optionOrders: randomizeOptions(componentConfig),
+          questionOrders: randomizeQuestionOrder(componentConfig),
+        } as StoredAnswer,
       ];
     }).filter((ans) => ans !== null));
   const emptyValidation: TrialValidation = Object.assign(
@@ -168,7 +171,9 @@ export async function studyStoreCreator(
 
           parameters: payload.parameters || ('parameters' in componentConfig ? componentConfig.parameters : {}) || {},
           correctAnswer: payload.correctAnswer || componentConfig.correctAnswer || [],
-        };
+          optionOrders: randomizeOptions(componentConfig),
+          questionOrders: randomizeQuestionOrder(componentConfig),
+        } as StoredAnswer;
         state.trialValidation[identifier] = {
           aboveStimulus: { valid: false, values: {} },
           belowStimulus: { valid: false, values: {} },
