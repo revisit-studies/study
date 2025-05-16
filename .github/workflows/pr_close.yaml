@@ -6,6 +6,9 @@ on:
 jobs:
   delete_preview:
     runs-on: ubuntu-20.04
+    permissions:
+      contents: write
+      pull-requests: write
     steps:
       - name: make empty dir
         run: mkdir public
