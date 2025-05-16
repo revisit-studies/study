@@ -4,12 +4,12 @@ import {
 import { useEffect, useState, useRef } from 'react';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
-import { useStoreSelector } from '../../store/store';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useStudyId } from '../../routes/utils';
+import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 
 export function ResolutionWarning() {
-  const studyConfig = useStoreSelector((state) => state.config);
+  const studyConfig = useStudyConfig();
   const minWidth = studyConfig.uiConfig.minWidthSize;
   const minHeight = studyConfig.uiConfig.minHeightSize;
 
