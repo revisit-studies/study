@@ -39,12 +39,12 @@ jobs:
 
       # If on main without env vars, build with .env file
       - name: Build with .env file
-        if: ${{ vars.VITE_STORAGE_ENGINE == '' }} && ${{ github.ref == 'refs/heads/main' }}
+        if: ${{ vars.VITE_STORAGE_ENGINE == '' && github.ref == 'refs/heads/main' }}
         run: yarn build
 
       # If on main with env vars, build with github environment variables
       - name: Build with github environment variables
-        if: ${{ vars.VITE_STORAGE_ENGINE != '' }} && ${{ github.ref == 'refs/heads/main' }}
+        if: ${{ vars.VITE_STORAGE_ENGINE != '' && github.ref == 'refs/heads/main' }}
         run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE yarn build
         env:
           VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
@@ -58,7 +58,7 @@ jobs:
 
       # If on PR, build with github environment variables
       - name: Build with github environment variables
-        if: ${{ vars.VITE_STORAGE_ENGINE != '' }} && ${{ github.ref == 'refs/heads/main' }}
+        if: ${{ vars.VITE_STORAGE_ENGINE != '' && github.ref == 'refs/heads/main' }}
         run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE VITE_BASE_URL=$VITE_BASE_URL yarn build
         env:
           VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
