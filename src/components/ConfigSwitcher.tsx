@@ -261,7 +261,7 @@ export function ConfigSwitcher({
           )}
 
           <Tabs.Panel value="Demos">
-            <Text c="dimmed" mt="sm">These studies show off individual features of the reVISit platform.</Text>
+            <Text c="dimmed" mt="sm">These studies show off individual features of the reVISit platform. Test that this is previewed.</Text>
             <StudyCards configNames={demos} studyConfigs={studyConfigs} />
           </Tabs.Panel>
 
