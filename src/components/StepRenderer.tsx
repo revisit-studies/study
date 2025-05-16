@@ -14,6 +14,7 @@ import { WindowEventsContext } from '../store/hooks/useWindowEvents';
 import { useStoreSelector, useStoreDispatch, useStoreActions } from '../store/store';
 import { AnalysisFooter } from './interface/AnalysisFooter';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
+import { ResolutionWarning } from './interface/ResolutionWarning';
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
@@ -124,6 +125,7 @@ export function StepRenderer() {
         {studyConfig.uiConfig.showTitleBar !== false && (
           <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} />
         )}
+        <ResolutionWarning />
         <HelpModal />
         <AlertModal />
         <AppShell.Main>
