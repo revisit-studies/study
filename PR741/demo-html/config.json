@@ -36,7 +36,7 @@
         "difficulty": "hard"
       },
       "description": "Question that asks users to count the number of bars that have a value greater than 1.",
-      "instruction": "How many bars have a value greater than 1? This is in preview",
+      "instruction": "How many bars have a value greater than 1?",
       "path": "demo-html/assets/bar-chart.html",
       "response": [
         {
