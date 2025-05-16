@@ -10,7 +10,7 @@ import {
   StoredAnswer, TrialValidation, TrrackedProvenance, StoreState, Sequence, ParticipantMetadata,
 } from './types';
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
-import { REVISIT_MODE } from '../storage/engines/StorageEngine';
+import { REVISIT_MODE } from '../storage/engines/types';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 import { randomizeOptions, randomizeQuestionOrder } from '../utils/handleResponseRandomization';
 

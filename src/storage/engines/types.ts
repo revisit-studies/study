@@ -26,6 +26,16 @@ export interface UserWrapped {
 
 export type REVISIT_MODE = 'dataCollectionEnabled' | 'studyNavigatorEnabled' | 'analyticsInterfacePubliclyAccessible';
 
+export type StorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
+export type StorageObject<T extends StorageObjectType> =
+  T extends 'sequenceArray'
+    ? Sequence[]
+    : T extends 'participantData'
+    ? ParticipantData
+    : T extends 'config'
+    ? StudyConfig
+    : object; // Fallback for any random string
+
 export abstract class StorageEngine {
   protected engine: string;
 
@@ -104,4 +114,12 @@ export abstract class StorageEngine {
   abstract getModes(studyId: string): Promise<Record<REVISIT_MODE, boolean>>;
 
   abstract getParticipantsStatusCounts(studyId: string): Promise<{completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null}>;
+}
+
+export abstract class ServerStorageEngine extends StorageEngine {
+  protected abstract _getFromStorage<T extends StorageObjectType>(prefix: string, type: T, objectToUpload: StorageObject<T>, cache?: boolean): Promise<StorageObject<T> | null>;
+
+  protected abstract _pushToStorage<T extends StorageObjectType>(prefix: string, type: T, objectToUpload: StorageObject<T>, cache?: boolean): Promise<void>;
+
+  protected abstract _deleteFromStorage<T extends StorageObjectType>(prefix: string, type: T): Promise<void>;
 }

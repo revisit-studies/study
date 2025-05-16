@@ -8,7 +8,7 @@ import {
 import { LoadingOverlay } from '@mantine/core';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { FirebaseStorageEngine } from '../../storage/engines/FirebaseStorageEngine';
-import { UserWrapped } from '../../storage/engines/StorageEngine';
+import { UserWrapped } from '../../storage/engines/types';
 
 // Defines default AuthContextValue
 interface AuthContextValue {

@@ -1,6 +1,7 @@
 import { LocalStorageEngine } from './engines/LocalStorageEngine';
 import { FirebaseStorageEngine } from './engines/FirebaseStorageEngine';
-import { StorageEngine } from './engines/StorageEngine';
+import { StorageEngine } from './engines/types';
+import { SupabaseStorageEngine } from './engines/SupabaseStorageEngine';
 
 export async function initializeStorageEngine() {
   let storageEngine: StorageEngine | undefined;
@@ -14,6 +15,17 @@ export async function initializeStorageEngine() {
 
     if (firebaseStorageEngine.isConnected()) {
       storageEngine = firebaseStorageEngine;
+    } else {
+      fallback = true;
+    }
+  }
+
+  if (storageEngineName === 'supabase') {
+    const supabaseStorageEngine = new SupabaseStorageEngine();
+    await supabaseStorageEngine.connect();
+
+    if (supabaseStorageEngine.isConnected()) {
+      storageEngine = supabaseStorageEngine;
     } else {
       fallback = true;
     }
