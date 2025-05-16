@@ -58,7 +58,7 @@ jobs:
 
       # If on PR, build with github environment variables
       - name: Build with github environment variables
-        if: ${{ vars.VITE_STORAGE_ENGINE != '' && github.ref == 'refs/heads/main' }}
+        if: ${{ vars.VITE_STORAGE_ENGINE != '' && github.ref != 'refs/heads/main' }}
         run: VITE_STORAGE_ENGINE=$VITE_STORAGE_ENGINE VITE_BASE_URL=$VITE_BASE_URL yarn build
         env:
           VITE_STORAGE_ENGINE: ${{ vars.VITE_STORAGE_ENGINE }}
@@ -80,4 +80,4 @@ jobs:
           repository: ${{ github.repository }}
           number: ${{ github.event.number }}
           id: deploy-preview
-          message: "A preview of ${{ github.event.after }} is uploaded and can be seen here:\n\n ✨ https://revisit.dev/study/${{ github.event.number }} ✨\n\nChanges may take a few minutes to propagate. Since this is a preview of production, content with `draft: true` will not be rendered."
+          message: "A preview of ${{ github.event.after }} is uploaded and can be seen here:\n\n ✨ https://revisit.dev/study/${{ github.event.number }} ✨\n\nChanges may take a few minutes to propagate."
