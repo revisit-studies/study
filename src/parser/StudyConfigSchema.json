@@ -92,6 +92,10 @@
             "description": "The text that is displayed on the next button.",
             "type": "string"
           },
+          "nextOnEnter": {
+            "description": "Optional override for Whether enter key should move to the next question. If present, will override the default enter key setting in the uiConfig.",
+            "type": "boolean"
+          },
           "parameters": {
             "anyOf": [
               {
@@ -680,6 +684,10 @@
           "description": "The text that is displayed on the next button.",
           "type": "string"
         },
+        "nextOnEnter": {
+          "description": "Optional override for Whether enter key should move to the next question. If present, will override the default enter key setting in the uiConfig.",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to the image. This could be a relative path from the public folder or a url to an external image.",
           "type": "string"
@@ -913,6 +921,10 @@
         "nextButtonText": {
           "description": "The text that is displayed on the next button.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Optional override for Whether enter key should move to the next question. If present, will override the default enter key setting in the uiConfig.",
+          "type": "boolean"
         },
         "parameters": {
           "anyOf": [
@@ -1236,6 +1248,10 @@
           "description": "The text that is displayed on the next button.",
           "type": "string"
         },
+        "nextOnEnter": {
+          "description": "Optional override for Whether enter key should move to the next question. If present, will override the default enter key setting in the uiConfig.",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to the markdown file. This should be a relative path from the public folder.",
           "type": "string"
@@ -1551,6 +1567,10 @@
           "description": "The text that is displayed on the next button.",
           "type": "string"
         },
+        "nextOnEnter": {
+          "description": "Optional override for Whether enter key should move to the next question. If present, will override the default enter key setting in the uiConfig.",
+          "type": "boolean"
+        },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
@@ -1790,6 +1810,10 @@
         "nextButtonText": {
           "description": "The text that is displayed on the next button.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Optional override for Whether enter key should move to the next question. If present, will override the default enter key setting in the uiConfig.",
+          "type": "boolean"
         },
         "parameters": {
           "additionalProperties": {},
@@ -2509,6 +2533,10 @@
           "description": "The text that is displayed on the next button.",
           "type": "string"
         },
+        "nextOnEnter": {
+          "description": "Optional override for Whether enter key should move to the next question. If present, will override the default enter key setting in the uiConfig.",
+          "type": "boolean"
+        },
         "provideFeedback": {
           "description": "Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false.",
           "type": "boolean"
@@ -2623,6 +2651,10 @@
         "nextButtonText": {
           "description": "The text that is displayed on the next button.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Optional override for Whether enter key should move to the next question. If present, will override the default enter key setting in the uiConfig.",
+          "type": "boolean"
         },
         "path": {
           "description": "The path to the vega file. This should be a relative path from the public folder.",
@@ -2747,6 +2779,10 @@
           "description": "The text that is displayed on the next button.",
           "type": "string"
         },
+        "nextOnEnter": {
+          "description": "Optional override for Whether enter key should move to the next question. If present, will override the default enter key setting in the uiConfig.",
+          "type": "boolean"
+        },
         "path": {
           "description": "The path to the video. This could be a relative path from the public folder or might be a url to an external website.",
           "type": "string"
@@ -2869,6 +2905,10 @@
         "nextButtonText": {
           "description": "The text that is displayed on the next button.",
           "type": "string"
+        },
+        "nextOnEnter": {
+          "description": "Optional override for Whether enter key should move to the next question. If present, will override the default enter key setting in the uiConfig.",
+          "type": "boolean"
         },
         "parameters": {
           "additionalProperties": {},

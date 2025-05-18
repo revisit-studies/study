@@ -61,6 +61,8 @@ export function NextButton({
     [nextButtonDisableTime, nextButtonEnableTime, timer],
   );
 
+  const nextOnEnter = configInUse?.nextOnEnter !== undefined ? configInUse.nextOnEnter : studyConfig.uiConfig.nextOnEnter;
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Enter' && !disabled && !isNextDisabled && buttonTimerSatisfied) {
@@ -68,14 +70,14 @@ export function NextButton({
       }
     };
 
-    if (studyConfig.uiConfig.nextOnEnter) {
+    if (nextOnEnter) {
       window.addEventListener('keydown', handleKeyDown);
       return () => {
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
     return () => {};
-  }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, studyConfig.uiConfig.nextOnEnter]);
+  }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, nextOnEnter]);
 
   return (
     <>

@@ -644,6 +644,8 @@ export interface BaseIndividualComponent {
   windowEventDebounceTime?: number;
   /** Optional override for the enumeration of questions. If present, will override the default enumeration of questions setting in the uiConfig. */
   enumerateQuestions?: boolean;
+  /** Optional override for Whether enter key should move to the next question. If present, will override the default enter key setting in the uiConfig. */
+  nextOnEnter?: boolean;
 }
 
 /**

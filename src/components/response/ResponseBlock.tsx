@@ -254,8 +254,10 @@ export function ResponseBlock({
     }
   }, [attemptsUsed, responsesWithDefaults, configInUse, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, storageEngine, studyId, navigate, identifier, storeDispatch, answerValidator, alertConfig, saveIncorrectAnswer]);
 
+  const nextOnEnter = configInUse?.nextOnEnter !== undefined ? configInUse.nextOnEnter : studyConfig.uiConfig.nextOnEnter;
+
   useEffect(() => {
-    if (studyConfig.uiConfig.nextOnEnter) {
+    if (nextOnEnter) {
       const handleKeyDown = (event: KeyboardEvent) => {
         if (event.key === 'Enter') {
           checkAnswerProvideFeedback();
@@ -268,7 +270,7 @@ export function ResponseBlock({
       };
     }
     return () => {};
-  }, [checkAnswerProvideFeedback, studyConfig]);
+  }, [checkAnswerProvideFeedback, nextOnEnter]);
 
   let index = 0;
   return (
