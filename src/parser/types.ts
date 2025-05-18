@@ -72,7 +72,7 @@ uiConfig:{
   "autoDownloadStudy": true
   "autoDownloadTime": 5000,
   "studyEndMsg": "Thank you for completing this study. You're the best!",
-  "sidebar": true,
+  "withSidebar": true,
   "windowEventDebounceTime": 500,
   "urlParticipantIdParam": "PROLIFIC_ID",
   "numSequences": 500
@@ -102,7 +102,7 @@ export interface UIConfig {
   /** Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.  */
   recordAudio?: boolean;
   /** Controls whether the left sidebar is rendered at all. Required to be true if your response's location is set to sidebar for any question. */
-  sidebar: boolean;
+  withSidebar: boolean;
   /** The width of the left sidebar. Defaults to 300. */
   sidebarWidth?: number;
   /** Debounce time in milliseconds for automatically tracked window events. Defaults to 100. E.g 100 here means 1000ms / 100ms = 10 times a second, 200 here means 1000ms / 200ms = 5 times per second  */

@@ -8,7 +8,7 @@ import { useCurrentComponent } from '../../routes/utils';
 import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 
 export function AppNavBar() {
-  const trialHasSideBar = useStudyConfig()?.uiConfig.sidebar;
+  const trialHasSideBar = useStudyConfig()?.uiConfig.withSidebar;
   const trialHasSideBarResponses = true;
 
   // Get the config for the current step

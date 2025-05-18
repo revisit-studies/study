@@ -180,7 +180,7 @@ export function ComponentController() {
 
   const instruction = (currentConfig.instruction || '');
   const { instructionLocation } = currentConfig;
-  const instructionInSideBar = studyConfig.uiConfig.sidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
+  const instructionInSideBar = studyConfig.uiConfig.withSidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
 
   return (
     <>

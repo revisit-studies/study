@@ -115,7 +115,7 @@ export function StepRenderer() {
       <AppShell
         padding="md"
         header={{ height: studyConfig.uiConfig.showTitleBar === false ? 0 : 70 }}
-        navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !studyConfig.uiConfig.sidebar, mobile: !studyConfig.uiConfig.sidebar } }}
+        navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !studyConfig.uiConfig.withSidebar, mobile: !studyConfig.uiConfig.withSidebar } }}
         aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
         footer={{ height: (isAnalysis ? 75 : 0) + (analysisHasAudio ? 50 : 0) }}
       >
