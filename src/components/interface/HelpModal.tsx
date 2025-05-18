@@ -23,11 +23,11 @@ export function HelpModal() {
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[component] || {}, config), [component, config]);
 
   const helpPath = useMemo(() => {
-    if (componentConfig.helpTextPathOverride) {
-      return componentConfig.helpTextPathOverride;
+    if (componentConfig.helpTextPath) {
+      return componentConfig.helpTextPath;
     }
     return config.uiConfig.helpTextPath;
-  }, [componentConfig.helpTextPathOverride, config.uiConfig.helpTextPath]);
+  }, [componentConfig.helpTextPath, config.uiConfig.helpTextPath]);
 
   useEffect(() => {
     async function fetchText() {

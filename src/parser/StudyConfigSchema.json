@@ -55,7 +55,7 @@
             "description": "Whether to force the video to play until the end. Defaults to true.",
             "type": "boolean"
           },
-          "helpTextPathOverride": {
+          "helpTextPath": {
             "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
             "type": "string"
           },
@@ -615,7 +615,7 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -821,7 +821,7 @@
           "description": "Whether to force the video to play until the end. Defaults to true.",
           "type": "boolean"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -1115,7 +1115,7 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -1402,7 +1402,7 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -1614,7 +1614,7 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -2304,7 +2304,7 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -2391,7 +2391,7 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -2486,7 +2486,7 @@
           "description": "Whether to force the video to play until the end. Defaults to true.",
           "type": "boolean"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
@@ -2581,7 +2581,7 @@
           "description": "The description of the component. This is used to identify and provide additional information for the component in the admin panel.",
           "type": "string"
         },
-        "helpTextPathOverride": {
+        "helpTextPath": {
           "description": "Optional override for the help text. If present, will override the default help text path set in the uiConfig.",
           "type": "string"
         },
