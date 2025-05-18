@@ -27,7 +27,7 @@ export function StepRenderer() {
   const config = useStoreSelector((state) => state.config);
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[currentComponent] || {}, config), [currentComponent, config]);
 
-  const windowEventDebounceTime = studyConfig.uiConfig.windowEventDebounceTime ?? 100;
+  const windowEventDebounceTime = componentConfig?.windowEventDebounceTime !== undefined ? componentConfig.windowEventDebounceTime : studyConfig.uiConfig.windowEventDebounceTime ?? 100;
 
   const showStudyBrowser = useStoreSelector((state) => state.showStudyBrowser);
   const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);

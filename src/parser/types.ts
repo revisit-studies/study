@@ -640,6 +640,8 @@ export interface BaseIndividualComponent {
   showTitle?: boolean;
   /** Optional override for the title bar. If present, will override the default title bar setting in the uiConfig. */
   showTitleBar?: boolean;
+  /** Optional override for the window event debounce time. If present, will override the default window event debounce time setting in the uiConfig. */
+  windowEventDebounceTime?: number;
 }
 
 /**
