@@ -151,6 +151,14 @@
             "description": "Whether to show the response dividers. Defaults to false.",
             "type": "boolean"
           },
+          "showTitle": {
+            "description": "Optional override for the title. If present, will override the default title setting in the uiConfig.",
+            "type": "boolean"
+          },
+          "showTitleBar": {
+            "description": "Optional override for the title bar. If present, will override the default title bar setting in the uiConfig.",
+            "type": "boolean"
+          },
           "sidebarWidth": {
             "description": "Optional override for the sidebar width. If present, will override the default sidebar width setting in the uiConfig.",
             "type": "number"
@@ -683,6 +691,14 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "showTitle": {
+          "description": "Optional override for the title. If present, will override the default title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Optional override for the title bar. If present, will override the default title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
         "sidebarWidth": {
           "description": "Optional override for the sidebar width. If present, will override the default sidebar width setting in the uiConfig.",
           "type": "number"
@@ -939,6 +955,14 @@
         },
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
+        },
+        "showTitle": {
+          "description": "Optional override for the title. If present, will override the default title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Optional override for the title bar. If present, will override the default title bar setting in the uiConfig.",
           "type": "boolean"
         },
         "sidebarWidth": {
@@ -1205,6 +1229,14 @@
         },
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
+        },
+        "showTitle": {
+          "description": "Optional override for the title. If present, will override the default title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Optional override for the title bar. If present, will override the default title bar setting in the uiConfig.",
           "type": "boolean"
         },
         "sidebarWidth": {
@@ -1502,6 +1534,14 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "showTitle": {
+          "description": "Optional override for the title. If present, will override the default title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Optional override for the title bar. If present, will override the default title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
         "sidebarWidth": {
           "description": "Optional override for the sidebar width. If present, will override the default sidebar width setting in the uiConfig.",
           "type": "number"
@@ -1733,6 +1773,14 @@
         },
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
+        },
+        "showTitle": {
+          "description": "Optional override for the title. If present, will override the default title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Optional override for the title bar. If present, will override the default title bar setting in the uiConfig.",
           "type": "boolean"
         },
         "sidebarWidth": {
@@ -2428,6 +2476,14 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "showTitle": {
+          "description": "Optional override for the title. If present, will override the default title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Optional override for the title bar. If present, will override the default title bar setting in the uiConfig.",
+          "type": "boolean"
+        },
         "sidebarWidth": {
           "description": "Optional override for the sidebar width. If present, will override the default sidebar width setting in the uiConfig.",
           "type": "number"
@@ -2529,6 +2585,14 @@
         },
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
+        },
+        "showTitle": {
+          "description": "Optional override for the title. If present, will override the default title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Optional override for the title bar. If present, will override the default title bar setting in the uiConfig.",
           "type": "boolean"
         },
         "sidebarWidth": {
@@ -2636,6 +2700,14 @@
         },
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
+        },
+        "showTitle": {
+          "description": "Optional override for the title. If present, will override the default title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Optional override for the title bar. If present, will override the default title bar setting in the uiConfig.",
           "type": "boolean"
         },
         "sidebarWidth": {
@@ -2748,6 +2820,14 @@
         },
         "responseDividers": {
           "description": "Whether to show the response dividers. Defaults to false.",
+          "type": "boolean"
+        },
+        "showTitle": {
+          "description": "Optional override for the title. If present, will override the default title setting in the uiConfig.",
+          "type": "boolean"
+        },
+        "showTitleBar": {
+          "description": "Optional override for the title bar. If present, will override the default title bar setting in the uiConfig.",
           "type": "boolean"
         },
         "sidebarWidth": {

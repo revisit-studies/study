@@ -636,6 +636,10 @@ export interface BaseIndividualComponent {
   sidebarWidth?: number;
   /** Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig. */
   withProgressBar?: boolean;
+  /** Optional override for the title. If present, will override the default title setting in the uiConfig. */
+  showTitle?: boolean;
+  /** Optional override for the title bar. If present, will override the default title bar setting in the uiConfig. */
+  showTitleBar?: boolean;
 }
 
 /**

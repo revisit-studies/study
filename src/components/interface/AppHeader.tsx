@@ -73,6 +73,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
 
   const logoPath = studyConfig?.uiConfig.logoPath;
   const withProgressBar = componentConfig?.withProgressBar !== undefined ? componentConfig.withProgressBar : studyConfig.uiConfig.withProgressBar;
+  const showTitle = componentConfig?.showTitle !== undefined ? componentConfig.showTitle : studyConfig.uiConfig.showTitle;
 
   const studyId = useStudyId();
   const studyHref = useHref(`/${studyId}`);
@@ -96,7 +97,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
           <Flex align="center">
             <Image w={40} src={`${PREFIX}${logoPath}`} alt="Study Logo" />
             <Space w="md" />
-            {studyConfig?.uiConfig.showTitle !== false ? (
+            {showTitle ? (
               <Title
                 ref={titleRef}
                 order={4}

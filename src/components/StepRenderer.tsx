@@ -113,6 +113,7 @@ export function StepRenderer() {
   const asideOpen = useMemo(() => studyNavigatorEnabled && showStudyBrowser, [studyNavigatorEnabled, showStudyBrowser]);
   const sidebarOpen = componentConfig.withSidebar !== undefined ? componentConfig.withSidebar : studyConfig.uiConfig.withSidebar;
   const sidebarWidth = componentConfig.sidebarWidth !== undefined ? componentConfig.sidebarWidth : studyConfig.uiConfig.sidebarWidth ?? 300;
+  const showTitleBar = componentConfig?.showTitleBar !== undefined ? componentConfig.showTitleBar : studyConfig.uiConfig.showTitleBar;
 
   const isAnalysis = useIsAnalysis();
 
@@ -120,20 +121,20 @@ export function StepRenderer() {
     <WindowEventsContext.Provider value={windowEvents}>
       <AppShell
         padding="md"
-        header={{ height: studyConfig.uiConfig.showTitleBar === false ? 0 : 70 }}
+        header={{ height: showTitleBar ? 70 : 0 }}
         navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !sidebarOpen, mobile: !sidebarOpen } }}
         aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
         footer={{ height: (isAnalysis ? 75 : 0) + (analysisHasAudio ? 50 : 0) }}
       >
         <AppNavBar />
         <AppAside />
-        {studyConfig.uiConfig.showTitleBar !== false && (
+        {showTitleBar && (
           <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} />
         )}
         <HelpModal />
         <AlertModal />
         <AppShell.Main>
-          {studyConfig.uiConfig.showTitleBar === false && !showStudyBrowser && studyNavigatorEnabled && (
+          {!showTitleBar && !showStudyBrowser && studyNavigatorEnabled && (
             <Button
               variant="transparent"
               leftSection={<IconArrowLeft size={14} />}
