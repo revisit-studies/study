@@ -107,17 +107,11 @@ export interface UIConfig {
   sidebarWidth?: number;
   /** Debounce time in milliseconds for automatically tracked window events. Defaults to 100. E.g 100 here means 1000ms / 100ms = 10 times a second, 200 here means 1000ms / 200ms = 5 times per second  */
   windowEventDebounceTime?: number;
-  /**
-   * If the participant ID is passed in the URL, this is the name of the querystring parameter that is used to capture the participant ID (e.g. PROLIFIC_ID). This will allow a user to continue a study on different devices and browsers.
-   */
+  /** If the participant ID is passed in the URL, this is the name of the querystring parameter that is used to capture the participant ID (e.g. PROLIFIC_ID). This will allow a user to continue a study on different devices and browsers. */
   urlParticipantIdParam?: string;
-  /**
-   * The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000.
-   */
+  /** The number of sequences to generate for the study. This is used to generate the random sequences for the study. The default is 1000. */
   numSequences?: number;
-  /**
-   * Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar.
-   */
+  /** Whether to prepend questions with their index (+ 1). This should only be used when all questions are in the same location, e.g. all are in the side bar. */
   enumerateQuestions?: boolean;
   /** Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set. */
   timeoutReject?: boolean;
@@ -636,6 +630,10 @@ export interface BaseIndividualComponent {
   responseDividers?: boolean;
   /** Optional override for the help text. If present, will override the default help text path set in the uiConfig. */
   helpTextPath?: string;
+  /** Optional override for the sidebar. If present, will override the default sidebar setting in the uiConfig. */
+  withSidebar?: boolean;
+  /** Optional override for the sidebar width. If present, will override the default sidebar width setting in the uiConfig. */
+  sidebarWidth?: number;
 }
 
 /**

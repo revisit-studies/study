@@ -151,6 +151,10 @@
             "description": "Whether to show the response dividers. Defaults to false.",
             "type": "boolean"
           },
+          "sidebarWidth": {
+            "description": "Optional override for the sidebar width. If present, will override the default sidebar width setting in the uiConfig.",
+            "type": "number"
+          },
           "style": {
             "additionalProperties": {
               "type": "string"
@@ -173,6 +177,10 @@
               "video"
             ],
             "type": "string"
+          },
+          "withSidebar": {
+            "description": "Optional override for the sidebar. If present, will override the default sidebar setting in the uiConfig.",
+            "type": "boolean"
           },
           "withTimeline": {
             "description": "Whether to show the video timeline. Defaults to false.",
@@ -671,6 +679,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "Optional override for the sidebar width. If present, will override the default sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "style": {
           "additionalProperties": {
             "type": "string"
@@ -685,6 +697,10 @@
         "type": {
           "const": "image",
           "type": "string"
+        },
+        "withSidebar": {
+          "description": "Optional override for the sidebar. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -917,6 +933,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "Optional override for the sidebar width. If present, will override the default sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "style": {
           "additionalProperties": {
             "type": "string"
@@ -939,6 +959,10 @@
             "video"
           ],
           "type": "string"
+        },
+        "withSidebar": {
+          "description": "Optional override for the sidebar. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
         },
         "withTimeline": {
           "description": "Whether to show the video timeline. Defaults to false.",
@@ -1171,6 +1195,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "Optional override for the sidebar width. If present, will override the default sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -1178,6 +1206,10 @@
         "type": {
           "const": "markdown",
           "type": "string"
+        },
+        "withSidebar": {
+          "description": "Optional override for the sidebar. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1454,6 +1486,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "Optional override for the sidebar width. If present, will override the default sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -1461,6 +1497,10 @@
         "type": {
           "const": "questionnaire",
           "type": "string"
+        },
+        "withSidebar": {
+          "description": "Optional override for the sidebar. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1675,6 +1715,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "Optional override for the sidebar width. If present, will override the default sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -1682,6 +1726,10 @@
         "type": {
           "const": "react-component",
           "type": "string"
+        },
+        "withSidebar": {
+          "description": "Optional override for the sidebar. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2356,6 +2404,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "Optional override for the sidebar width. If present, will override the default sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -2363,6 +2415,10 @@
         "type": {
           "const": "vega",
           "type": "string"
+        },
+        "withSidebar": {
+          "description": "Optional override for the sidebar. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2447,6 +2503,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "Optional override for the sidebar width. If present, will override the default sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -2454,6 +2514,10 @@
         "type": {
           "const": "vega",
           "type": "string"
+        },
+        "withSidebar": {
+          "description": "Optional override for the sidebar. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2542,6 +2606,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "Optional override for the sidebar width. If present, will override the default sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -2549,6 +2617,10 @@
         "type": {
           "const": "video",
           "type": "string"
+        },
+        "withSidebar": {
+          "description": "Optional override for the sidebar. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
         },
         "withTimeline": {
           "description": "Whether to show the video timeline. Defaults to false.",
@@ -2642,6 +2714,10 @@
           "description": "Whether to show the response dividers. Defaults to false.",
           "type": "boolean"
         },
+        "sidebarWidth": {
+          "description": "Optional override for the sidebar width. If present, will override the default sidebar width setting in the uiConfig.",
+          "type": "number"
+        },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.",
           "type": "number"
@@ -2649,6 +2725,10 @@
         "type": {
           "const": "website",
           "type": "string"
+        },
+        "withSidebar": {
+          "description": "Optional override for the sidebar. If present, will override the default sidebar setting in the uiConfig.",
+          "type": "boolean"
         }
       },
       "required": [
