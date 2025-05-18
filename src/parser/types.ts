@@ -634,6 +634,8 @@ export interface BaseIndividualComponent {
   withSidebar?: boolean;
   /** Optional override for the sidebar width. If present, will override the default sidebar width setting in the uiConfig. */
   sidebarWidth?: number;
+  /** Optional override for the progress bar. If present, will override the default progress bar setting in the uiConfig. */
+  withProgressBar?: boolean;
 }
 
 /**

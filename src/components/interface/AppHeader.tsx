@@ -33,6 +33,7 @@ import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { PREFIX } from '../../utils/Prefix';
 import { getNewParticipant } from '../../utils/nextParticipant';
 import { RecordingAudioWaveform } from './RecordingAudioWaveform';
+import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
 
 export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { studyNavigatorEnabled: boolean; dataCollectionEnabled: boolean }) {
   const studyConfig = useStoreSelector((state) => state.config);
@@ -45,6 +46,8 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
   const { storageEngine } = useStorageEngine();
 
   const currentComponent = useCurrentComponent();
+  const config = useStoreSelector((state) => state.config);
+  const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[currentComponent] || {}, config), [currentComponent, config]);
 
   const currentStep = useCurrentStep();
 
@@ -69,7 +72,7 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
   const [menuOpened, setMenuOpened] = useState(false);
 
   const logoPath = studyConfig?.uiConfig.logoPath;
-  const withProgressBar = studyConfig?.uiConfig.withProgressBar;
+  const withProgressBar = componentConfig?.withProgressBar !== undefined ? componentConfig.withProgressBar : studyConfig.uiConfig.withProgressBar;
 
   const studyId = useStudyId();
   const studyHref = useHref(`/${studyId}`);
