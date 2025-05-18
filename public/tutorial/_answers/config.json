@@ -21,7 +21,7 @@
     "mic-check"
   ],
   "uiConfig": {
-    "recordStudyAudio": true,
+    "recordAudio": true,
     "contactEmail": "contact@revisit.dev",
     "helpTextPath": "tutorial/assets/help.md",
     "logoPath": "revisitAssets/revisitLogoSquare.svg",

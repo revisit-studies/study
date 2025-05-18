@@ -137,7 +137,7 @@
             "type": "boolean"
           },
           "recordAudio": {
-            "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+            "description": "Whether or not to record audio for a component. Only relevant if recordAudio in the uiConfig is true. Defaults to false.",
             "type": "boolean"
           },
           "response": {
@@ -657,7 +657,7 @@
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "description": "Whether or not to record audio for a component. Only relevant if recordAudio in the uiConfig is true. Defaults to false.",
           "type": "boolean"
         },
         "response": {
@@ -903,7 +903,7 @@
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "description": "Whether or not to record audio for a component. Only relevant if recordAudio in the uiConfig is true. Defaults to false.",
           "type": "boolean"
         },
         "response": {
@@ -1157,7 +1157,7 @@
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "description": "Whether or not to record audio for a component. Only relevant if recordAudio in the uiConfig is true. Defaults to false.",
           "type": "boolean"
         },
         "response": {
@@ -1440,7 +1440,7 @@
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "description": "Whether or not to record audio for a component. Only relevant if recordAudio in the uiConfig is true. Defaults to false.",
           "type": "boolean"
         },
         "response": {
@@ -1661,7 +1661,7 @@
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "description": "Whether or not to record audio for a component. Only relevant if recordAudio in the uiConfig is true. Defaults to false.",
           "type": "boolean"
         },
         "response": {
@@ -2222,7 +2222,7 @@
           "description": "The default name field for a participant. Directs revisit to use the task and response id as a name in UI elements. For example, if you wanted the response 'prolificId' from the task 'introduction' to be the name, this field would be 'introduction.prolificId'",
           "type": "string"
         },
-        "recordStudyAudio": {
+        "recordAudio": {
           "description": "Whether or not we want to utilize think-aloud features. If true, will record audio on all components unless deactivated on individual components. Defaults to false.",
           "type": "boolean"
         },
@@ -2342,7 +2342,7 @@
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "description": "Whether or not to record audio for a component. Only relevant if recordAudio in the uiConfig is true. Defaults to false.",
           "type": "boolean"
         },
         "response": {
@@ -2433,7 +2433,7 @@
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "description": "Whether or not to record audio for a component. Only relevant if recordAudio in the uiConfig is true. Defaults to false.",
           "type": "boolean"
         },
         "response": {
@@ -2528,7 +2528,7 @@
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "description": "Whether or not to record audio for a component. Only relevant if recordAudio in the uiConfig is true. Defaults to false.",
           "type": "boolean"
         },
         "response": {
@@ -2628,7 +2628,7 @@
           "type": "boolean"
         },
         "recordAudio": {
-          "description": "Whether or not to record audio for a component. Only relevant if recordStudyAudio in the uiConfig is true. Defaults to false.",
+          "description": "Whether or not to record audio for a component. Only relevant if recordAudio in the uiConfig is true. Defaults to false.",
           "type": "boolean"
         },
         "response": {
