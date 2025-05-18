@@ -116,7 +116,8 @@ export function ResponseBlock({
 
   const identifier = useCurrentIdentifier();
 
-  const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
+  const nextButtonLocation = configInUse.nextButtonLocation !== undefined ? configInUse.nextButtonLocation : studyConfig.uiConfig.nextButtonLocation || 'belowStimulus';
+  const showNextBtn = location === (nextButtonLocation || 'belowStimulus');
 
   useEffect(() => {
     const ReactiveResponse = responsesWithDefaults.find((r) => r.type === 'reactive');
@@ -272,6 +273,8 @@ export function ResponseBlock({
     return () => {};
   }, [checkAnswerProvideFeedback, nextOnEnter]);
 
+  const nextButtonText = configInUse?.nextButtonText !== undefined ? configInUse.nextButtonText : studyConfig.uiConfig.nextButtonText || 'Next';
+
   let index = 0;
   return (
     <div style={style}>
@@ -345,7 +348,7 @@ export function ResponseBlock({
         {showNextBtn && (
           <NextButton
             disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
-            label={configInUse.nextButtonText || 'Next'}
+            label={nextButtonText}
             configInUse={configInUse}
           />
         )}

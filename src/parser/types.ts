@@ -60,6 +60,12 @@ export interface StudyMetadata {
 }
 
 /**
+ * @ignore
+ */
+export type ResponseBlockLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus' | 'stimulus';
+export type ConfigResponseBlockLocation = Exclude<ResponseBlockLocation, 'stimulus'>;
+
+/**
  * The UIConfig is used to configure the UI of the app.
  * This includes the logo, contact email, and whether to show a progress bar.
  * The UIConfig is also used to configure the sidebar, which can be used to display the task instructions and capture responses. Below is an example of how the UI Config would look in your study configuration (note, there are optional fields that are not shown here):
@@ -119,6 +125,14 @@ export interface UIConfig {
   participantNameField?: string;
   /** Whether enter key should move to the next question. Defaults to false. */
   nextOnEnter?: boolean;
+  /** The text to display on the next button. */
+  nextButtonText?: string;
+  /** The location of the next button. */
+  nextButtonLocation?: ConfigResponseBlockLocation;
+  /** The time in milliseconds to wait before the next button is enabled. */
+  nextButtonDisableTime?: number;
+  /** The time in milliseconds to wait before the next button is enabled. */
+  nextButtonEnableTime?: number;
 }
 
 /**
@@ -142,12 +156,6 @@ export interface StringOption {
   /** The value stored in the participant's data. */
   value: string;
 }
-
-/**
- * @ignore
- */
-export type ResponseBlockLocation = 'sidebar' | 'aboveStimulus' | 'belowStimulus' | 'stimulus';
-export type ConfigResponseBlockLocation = Exclude<ResponseBlockLocation, 'stimulus'>;
 
 /**
  * The BaseResponse interface is used to define the required fields for all responses.

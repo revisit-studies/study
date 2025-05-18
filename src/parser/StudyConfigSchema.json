@@ -2402,6 +2402,22 @@
           "description": "The path to the logo image. This is displayed on the landing page and the header.",
           "type": "string"
         },
+        "nextButtonDisableTime": {
+          "description": "The time in milliseconds to wait before the next button is enabled.",
+          "type": "number"
+        },
+        "nextButtonEnableTime": {
+          "description": "The time in milliseconds to wait before the next button is enabled.",
+          "type": "number"
+        },
+        "nextButtonLocation": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "The location of the next button."
+        },
+        "nextButtonText": {
+          "description": "The text to display on the next button.",
+          "type": "string"
+        },
         "nextOnEnter": {
           "description": "Whether enter key should move to the next question. Defaults to false.",
           "type": "boolean"

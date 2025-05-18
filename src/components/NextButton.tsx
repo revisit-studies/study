@@ -32,8 +32,8 @@ export function NextButton({
     goToNextStep();
   }, [goToNextStep, onClick]);
 
-  const nextButtonDisableTime = configInUse?.nextButtonDisableTime;
-  const nextButtonEnableTime = configInUse?.nextButtonEnableTime || 0;
+  const nextButtonDisableTime = configInUse?.nextButtonDisableTime !== undefined ? configInUse.nextButtonDisableTime : studyConfig.uiConfig.nextButtonDisableTime;
+  const nextButtonEnableTime = configInUse?.nextButtonEnableTime !== undefined ? configInUse.nextButtonEnableTime : studyConfig.uiConfig.nextButtonEnableTime || 0;
   const [timer, setTimer] = useState<number | undefined>(undefined);
   // Start a timer on first render, update timer every 100ms
   useEffect(() => {
