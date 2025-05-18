@@ -19,6 +19,9 @@ import { MatrixInput } from './MatrixInput';
 import { ButtonsInput } from './ButtonsInput';
 import classes from './css/Checkbox.module.css';
 import { TextOnlyInput } from './TextOnlyInput';
+import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
+import { useCurrentComponent } from '../../routes/utils';
+import { useStoreSelector } from '../../store/store';
 
 export function ResponseSwitcher({
   response,
@@ -47,7 +50,11 @@ export function ResponseSwitcher({
   const [searchParams] = useSearchParams();
 
   const studyConfig = useStudyConfig();
-  const enumerateQuestions = studyConfig.uiConfig.enumerateQuestions ?? false;
+  const currentComponent = useCurrentComponent();
+  const config = useStoreSelector((state) => state.config);
+  const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[currentComponent] || {}, config), [currentComponent, config]);
+
+  const enumerateQuestions = componentConfig?.enumerateQuestions !== undefined ? componentConfig.enumerateQuestions : studyConfig.uiConfig.enumerateQuestions ?? false;
 
   const isDisabled = useMemo(() => {
     if (response.paramCapture) {

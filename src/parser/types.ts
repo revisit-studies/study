@@ -642,6 +642,8 @@ export interface BaseIndividualComponent {
   showTitleBar?: boolean;
   /** Optional override for the window event debounce time. If present, will override the default window event debounce time setting in the uiConfig. */
   windowEventDebounceTime?: number;
+  /** Optional override for the enumeration of questions. If present, will override the default enumeration of questions setting in the uiConfig. */
+  enumerateQuestions?: boolean;
 }
 
 /**
