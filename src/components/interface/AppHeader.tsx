@@ -72,8 +72,8 @@ export function AppHeader({ studyNavigatorEnabled, dataCollectionEnabled }: { st
   const [menuOpened, setMenuOpened] = useState(false);
 
   const logoPath = studyConfig?.uiConfig.logoPath;
-  const withProgressBar = componentConfig?.withProgressBar !== undefined ? componentConfig.withProgressBar : studyConfig.uiConfig.withProgressBar;
-  const showTitle = componentConfig?.showTitle !== undefined ? componentConfig.showTitle : studyConfig.uiConfig.showTitle;
+  const withProgressBar = componentConfig?.withProgressBar !== undefined ? componentConfig.withProgressBar : studyConfig?.uiConfig.withProgressBar;
+  const showTitle = componentConfig?.showTitle !== undefined ? componentConfig.showTitle : studyConfig?.uiConfig.showTitle ?? true;
 
   const studyId = useStudyId();
   const studyHref = useHref(`/${studyId}`);

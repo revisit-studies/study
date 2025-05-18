@@ -113,7 +113,7 @@ export function StepRenderer() {
   const asideOpen = useMemo(() => studyNavigatorEnabled && showStudyBrowser, [studyNavigatorEnabled, showStudyBrowser]);
   const sidebarOpen = componentConfig.withSidebar !== undefined ? componentConfig.withSidebar : studyConfig.uiConfig.withSidebar;
   const sidebarWidth = componentConfig.sidebarWidth !== undefined ? componentConfig.sidebarWidth : studyConfig.uiConfig.sidebarWidth ?? 300;
-  const showTitleBar = componentConfig?.showTitleBar !== undefined ? componentConfig.showTitleBar : studyConfig.uiConfig.showTitleBar;
+  const showTitleBar = componentConfig?.showTitleBar !== undefined ? componentConfig.showTitleBar : studyConfig.uiConfig.showTitleBar ?? true;
 
   const isAnalysis = useIsAnalysis();
 
