@@ -35,15 +35,17 @@ import localforage from 'localforage';
 import { v4 as uuidv4 } from 'uuid';
 import throttle from 'lodash.throttle';
 import {
-  StorageEngine,
+  ServerStorageEngine,
   UserWrapped,
   StoredUser,
   REVISIT_MODE,
-} from './StorageEngine';
+  StorageObjectType,
+  StorageObject,
+} from './types';
 import { ParticipantData } from '../types';
 import { ParticipantMetadata, Sequence } from '../../store/types';
 import { RevisitNotification } from '../../utils/notifications';
-import { hash } from './utils';
+import { hash, isParticipantData } from './utils';
 import { StudyConfig } from '../../parser/types';
 
 export interface FirebaseError {
@@ -75,22 +77,7 @@ export interface SnapshotNameItem {
   alternateName: string;
 }
 
-type FirebaseStorageObjectType = 'sequenceArray' | 'participantData' | 'config' | string;
-type FirebaseStorageObject<T extends FirebaseStorageObjectType> =
-  T extends 'sequenceArray'
-    ? Sequence[]
-    : T extends 'participantData'
-    ? ParticipantData
-    : T extends 'config'
-    ? StudyConfig
-    : object; // Fallback for any random string
-
-function isParticipantData(obj: unknown): obj is ParticipantData {
-  const potentialParticipantData = obj as ParticipantData;
-  return potentialParticipantData.participantId !== undefined;
-}
-
-export class FirebaseStorageEngine extends StorageEngine {
+export class FirebaseStorageEngine extends ServerStorageEngine {
   private RECAPTCHAV3TOKEN = import.meta.env.VITE_RECAPTCHAV3TOKEN;
 
   private firestore: Firestore;
@@ -165,7 +152,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       const configHash = await hash(JSON.stringify(config));
 
       // Push the config ref in storage
-      await this._pushToFirebaseStorage(
+      await this._pushToStorage(
         `configs/${configHash}`,
         'config',
         config,
@@ -175,7 +162,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       // Clear sequence array and current participant data if the config has changed
       if (currentConfigHash && currentConfigHash !== configHash) {
         try {
-          await this._deleteFromFirebaseStorage('', 'sequenceArray');
+          await this._deleteFromStorage('', 'sequenceArray');
         } catch {
           // pass, if this happens, we didn't have a sequence array yet
         }
@@ -183,11 +170,8 @@ export class FirebaseStorageEngine extends StorageEngine {
       }
 
       await this._setCurrentConfigHash(configHash);
-
-      return Promise.resolve();
-    } catch (error) {
+    } catch {
       console.warn('Failed to connect to Firebase.');
-      return Promise.reject(error);
     }
   }
 
@@ -209,7 +193,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
 
     // Check if the participant has already been initialized
-    const participant = await this._getFromFirebaseStorage(
+    const participant = await this._getFromStorage(
       `participants/${this.currentParticipantId}`,
       'participantData',
     );
@@ -239,7 +223,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     };
 
     if (modes.dataCollectionEnabled) {
-      await this._pushToFirebaseStorage(
+      await this._pushToStorage(
         `participants/${this.currentParticipantId}`,
         'participantData',
         this.participantData,
@@ -339,7 +323,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       }
 
       debounceTimeout = setTimeout(async () => {
-        this._pushToFirebaseStorage(`/audio/${this.currentParticipantId}`, taskName, data.data, true);
+        this._pushToStorage(`/audio/${this.currentParticipantId}`, taskName, data.data, true);
       }, 500);
     };
 
@@ -351,7 +335,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
   private throttleSaveAnswers = throttle(async () => { await this._saveAnswers(); }, 3000);
 
-  async saveAnswers(answers: ParticipantData['answers']): Promise<void> {
+  async saveAnswers(answers: ParticipantData['answers']) {
     if (!this.currentParticipantId || this.participantData === null) {
       throw new Error('Participant not initialized');
     }
@@ -374,7 +358,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
 
     // Push the updated participant data to Firebase
-    await this._pushToFirebaseStorage(
+    await this._pushToStorage(
       `participants/${this.currentParticipantId}`,
       'participantData',
       this.participantData,
@@ -386,7 +370,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Study database not initialized');
     }
 
-    await this._pushToFirebaseStorage('', 'sequenceArray', latinSquare);
+    await this._pushToStorage('', 'sequenceArray', latinSquare);
   }
 
   async getSequenceArray() {
@@ -394,7 +378,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Study database not initialized');
     }
 
-    const sequenceArrayDocData = await this._getFromFirebaseStorage(
+    const sequenceArrayDocData = await this._getFromStorage(
       '',
       'sequenceArray',
     );
@@ -574,7 +558,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       throw new Error('Participant not initialized');
     }
 
-    const participantData = await this._getFromFirebaseStorage(
+    const participantData = await this._getFromStorage(
       `participants/${participantId || this.currentParticipantId}`,
       'participantData',
     );
@@ -607,7 +591,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
     participantData.participantTags = [...new Set([...participantData.participantTags, ...tags])];
 
-    await this._pushToFirebaseStorage(
+    await this._pushToStorage(
       `participants/${this.currentParticipantId}`,
       'participantData',
       participantData,
@@ -626,7 +610,7 @@ export class FirebaseStorageEngine extends StorageEngine {
 
     participantData.participantTags = participantData.participantTags.filter((tag) => !tags.includes(tag));
 
-    await this._pushToFirebaseStorage(
+    await this._pushToStorage(
       `participants/${this.currentParticipantId}`,
       'participantData',
       participantData,
@@ -672,7 +656,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     if (this.participantData && serverEndTime === localEndTime) {
       this.participantData.completed = true;
       if (modes.dataCollectionEnabled) {
-        await this._pushToFirebaseStorage(
+        await this._pushToStorage(
           `participants/${this.currentParticipantId}`,
           'participantData',
           this.participantData,
@@ -867,7 +851,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         reason,
         timestamp: new Date().getTime(),
       };
-      await this._pushToFirebaseStorageByRef(
+      await this._pushToStorageByRef(
         participantRef,
         'participantData',
         participant,
@@ -1382,7 +1366,7 @@ export class FirebaseStorageEngine extends StorageEngine {
   }
 
   // Firebase storage helpers
-  private async _getFromFirebaseStorage<T extends FirebaseStorageObjectType>(
+  protected async _getFromStorage<T extends StorageObjectType>(
     prefix: string,
     type: T,
   ) {
@@ -1391,7 +1375,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       `${this.collectionPrefix}${this.studyId}/${prefix}_${type}`,
     );
 
-    let storageObj: FirebaseStorageObject<T> = {} as FirebaseStorageObject<T>;
+    let storageObj: StorageObject<T> = {} as StorageObject<T>;
     try {
       const url = await getDownloadURL(storageRef);
       const response = await fetch(url);
@@ -1406,8 +1390,8 @@ export class FirebaseStorageEngine extends StorageEngine {
     return storageObj;
   }
 
-  private async _getFromFirebaseStorageByRef<T extends FirebaseStorageObjectType>(storageRef: StorageReference, type: T) {
-    let storageObj: FirebaseStorageObject<T> = {} as FirebaseStorageObject<T>;
+  private async _getFromFirebaseStorageByRef<T extends StorageObjectType>(storageRef: StorageReference, type: T) {
+    let storageObj: StorageObject<T> = {} as StorageObject<T>;
 
     try {
       const url = await getDownloadURL(storageRef);
@@ -1427,10 +1411,10 @@ export class FirebaseStorageEngine extends StorageEngine {
     });
   }
 
-  private async _pushToFirebaseStorage<T extends FirebaseStorageObjectType>(
+  protected async _pushToStorage<T extends StorageObjectType>(
     prefix: string,
     type: T,
-    objectToUpload: FirebaseStorageObject<T>,
+    objectToUpload: StorageObject<T>,
     cache?: boolean,
   ) {
     const storageRef = ref(
@@ -1452,10 +1436,10 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  private async _pushToFirebaseStorageByRef<T extends FirebaseStorageObjectType>(
+  private async _pushToStorageByRef<T extends StorageObjectType>(
     storageRef: StorageReference,
     type: T,
-    objectToUpload: FirebaseStorageObject<T>,
+    objectToUpload: StorageObject<T>,
     cache?: boolean,
   ) {
     if (Object.keys(objectToUpload).length > 0) {
@@ -1470,7 +1454,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     }
   }
 
-  private async _deleteFromFirebaseStorage<T extends 'sequenceArray'>(
+  protected async _deleteFromStorage<T extends StorageObjectType>(
     prefix: string,
     type: T,
   ) {
