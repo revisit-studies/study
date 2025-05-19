@@ -141,7 +141,8 @@ export interface UIConfig {
   trainingAttempts?: number;
   /** Controls whether the component should allow failed training. If not provided, the default is true. */
   allowFailedTraining?: boolean;
-
+  /** Whether to show the response dividers. Defaults to false. */
+  responseDividers?: boolean;
 }
 
 /**
