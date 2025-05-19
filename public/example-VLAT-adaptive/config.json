@@ -6,8 +6,8 @@
     "authors": [
       "The reVISit Team"
     ],
-    "date": "2023-06-14",
-    "description": "A replication of the VLAT questionnaire by Lee et al., TVCG 2016 (doi:10.1109/TVCG.2016.2598920) randomized between visualizations, using image stimuli.",
+    "date": "2025-04-21",
+    "description": "A replication of the adaptive VLAT questionnaire by Cui et al.,",
     "organizations": [
       "University of Utah",
       "WPI",
@@ -21,37 +21,14 @@
     "withProgressBar": true,
     "autoDownloadStudy": false,
     "sidebar": false,
-    "studyEndMsg": "Thank you for completing the study. You may click this link and return to Prolific: https://app.prolific.com/submissions/complete?cc=CE96X7ST",
+    "studyEndMsg": "Thank you for completing the study. You may close this window",
     "urlParticipantIdParam": "PROLIFIC_ID"
   },
-  "importedLibraries": ["demographics"],
   "components": {
     "introduction": {
       "type": "markdown",
-      "path": "example-VLAT-full-randomized/assets/introduction.md",
-      "response": [
-        {
-          "id": "prolificId",
-          "prompt": "Please enter your prolificId",
-          "location": "belowStimulus",
-          "type": "shortText",
-          "placeholder": "id",
-          "paramCapture": "PROLIFIC_ID"
-        }
-      ]
-    },
-    "consent": {
-      "type": "markdown",
-      "path": "example-VLAT-full-randomized/assets/consent.md",
-      "response": [
-        {
-          "id": "userInitials",
-          "prompt": "Please type your initials below. These are not used in our analyses, but required for the consent process.",
-          "location": "belowStimulus",
-          "type": "shortText",
-          "placeholder": "Your Initials"
-        }
-      ]
+      "path": "example-VLAT-adaptive/assets/introduction.md",
+      "response": []
     },
     "VlatTrial": {
       "type": "react-component",
@@ -59,10 +36,10 @@
       "response": [
         {
           "id": "vlatResp",
-          "prompt": "You select: ",
+          "prompt": "Your selection is:  ",
           "location": "belowStimulus",
           "type": "reactive",
-          "hidden": true
+          "hidden": false
         }
       ],
       "correctAnswer": [
@@ -71,7 +48,7 @@
           "answer": "A"
         }
       ],
-      "provideFeedback": false,
+      "provideFeedback": true,
       "allowFailedTraining": true,
       "trainingAttempts": 1
     },
@@ -88,14 +65,12 @@
     "order": "fixed",
     "components": [
       "introduction",
-      "consent",
       {
         "id": "dynamicBlock",
         "order": "dynamic",
         "functionPath": "example-VLAT-adaptive/assets/Dynamic.tsx"
       },
-      "feedback",
-      "$demographics.co.demographics"
+      "feedback"
     ]
   }
 }

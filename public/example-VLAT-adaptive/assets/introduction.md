@@ -1,18 +1,10 @@
-# Introduction
+# Adaptive Visualization Literacy Assessment Test (A-VLAT)
 
-This is a reVISit adaptation of the original VLAT questionnaire from Kwon et al.
+The Visualization Literacy Assessment Test (VLAT) is an assessment that measures peoples' ability to read, understand, and use data visualizations to solve problems.
+Originally developed by Lee et al [Link](https://www.bckwon.com/pdf/vlat.pdf), it contains 52 multiple-choice questions and 12 data visualizations.
 
-From their study: 
+This is an adaptive version of VLAT, developed by [Cui et al.-- A-VLAT](https://mucollective.northwestern.edu/files/2023-adaptive.pdf).
 
-## What is VLAT?
+In the test you will take, each subsequent question is selected based on the test-taker's performance. In this case, only 27 questions are needed to achieve similar measurement precision as the full-length original VLAT.
 
-VLAT is developed to measure users' ability to read, understand, and
-use data visualizations to solve problems. This test is a web
-adaptation of the original test.
-
-The test contains 52 multiple-choice questions about 12 data
-visualizations. It will take approximately 30 minutes to finish this
-test. For each question, you will be given a static data
-visualization (right) and a problem to solve (left). Choose the BEST
-answer to the questions. If you don't know the answer, select
-'skip'. We suggest maximizing your browser window."
+The questions will begin on the next screen. At the end, you will see a summary page where you can review what you got right / wrong.

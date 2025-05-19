@@ -24,7 +24,7 @@ export default function Dynamic({ answers }: JumpFunctionParameters<never>): Jum
   // console.log(nxtidx,'nxtidx');
   // console.log(correctOption,'correctOption');
 
-  if (topAnswer.length === 7) {
+  if (topAnswer.length === 27) {
     return { component: null };
   }
   // console.log(correctOption)
@@ -36,7 +36,7 @@ export default function Dynamic({ answers }: JumpFunctionParameters<never>): Jum
       qidx: qid.length,
       score,
     },
-    correctAnswer: [{ id: taskid, answer: correctOption }],
+    correctAnswer: [{ id: taskid, answer: String.fromCharCode(65 + correctOption) }],
   };
 }
 
