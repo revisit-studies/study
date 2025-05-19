@@ -177,10 +177,9 @@ export function ComponentController() {
       </Center>
     );
   }
-
-  const instruction = (currentConfig.instruction || '');
-  const { instructionLocation } = currentConfig;
-  const instructionInSideBar = studyConfig.uiConfig.withSidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
+  const instruction = currentConfig?.instruction || '';
+  const instructionLocation = currentConfig?.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
+  const instructionInSideBar = instructionLocation === 'sidebar';
 
   return (
     <>

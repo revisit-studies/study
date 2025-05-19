@@ -26,9 +26,8 @@ export function AppNavBar() {
 
   const status = useStoredAnswer();
   const instruction = currentConfig?.instruction || '';
-
-  const instructionInSideBar = currentConfig?.instructionLocation === 'sidebar'
-    || currentConfig?.instructionLocation === undefined;
+  const instructionLocation = currentConfig?.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
+  const instructionInSideBar = instructionLocation === 'sidebar';
 
   return trialHasSideBar && currentConfig ? (
     <AppShell.Navbar bg="gray.1" display="block" style={{ zIndex: 0, overflowY: 'scroll' }}>
