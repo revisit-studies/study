@@ -115,8 +115,7 @@ export function ResponseBlock({
   const studyConfig = useStudyConfig();
 
   const identifier = useCurrentIdentifier();
-
-  const nextButtonLocation = configInUse.nextButtonLocation !== undefined ? configInUse.nextButtonLocation : studyConfig.uiConfig.nextButtonLocation || 'belowStimulus';
+  const nextButtonLocation = configInUse?.nextButtonLocation !== undefined ? configInUse.nextButtonLocation : studyConfig.uiConfig.nextButtonLocation;
   const showNextBtn = location === (nextButtonLocation || 'belowStimulus');
 
   useEffect(() => {
