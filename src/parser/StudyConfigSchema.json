@@ -2210,6 +2210,14 @@
           "description": "The path to the logo image. This is displayed on the landing page and the header.",
           "type": "string"
         },
+        "minHeightSize": {
+          "description": "The minimum screen height size for the study",
+          "type": "number"
+        },
+        "minWidthSize": {
+          "description": "The minimum screen width size for the study",
+          "type": "number"
+        },
         "nextOnEnter": {
           "description": "Whether enter key should move to the next question. Defaults to false.",
           "type": "boolean"
