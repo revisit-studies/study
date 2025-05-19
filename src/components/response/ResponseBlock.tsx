@@ -105,7 +105,7 @@ export function ResponseBlock({
 
   const studyConfig = useStudyConfig();
 
-  const hasCorrectAnswerFeedback = configInUse?.provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
+  const hasCorrectAnswerFeedback = (configInUse?.provideFeedback ?? studyConfig.uiConfig.provideFeedback) && ((configInUse?.correctAnswer?.length || 0) > 0);
   const allowFailedTraining = configInUse?.allowFailedTraining ?? studyConfig?.uiConfig?.allowFailedTraining ?? true;
   const [attemptsUsed, setAttemptsUsed] = useState(0);
   const trainingAttempts = configInUse?.trainingAttempts ?? studyConfig?.uiConfig?.trainingAttempts ?? 2;
