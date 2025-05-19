@@ -135,6 +135,13 @@ export interface UIConfig {
   nextButtonEnableTime?: number;
   /** The location of the instructions. */
   instructionLocation?: ConfigResponseBlockLocation;
+  /** Controls whether the component should provide feedback to the participant, such as in a training trial. If not provided, the default is false. */
+  provideFeedback?: boolean;
+  /** The number of training attempts allowed for the component. The next button will be disabled until either the correct answer is given or the number of attempts is reached. When the number of attempts is reached, if the answer is incorrect still, the correct value will be shown to the participant. The default value is 2. Providing a value of -1 will allow infinite attempts and the participant must enter the correct answer to continue, and reVISit will not show the correct answer to the user.  */
+  trainingAttempts?: number;
+  /** Controls whether the component should allow failed training. If not provided, the default is true. */
+  allowFailedTraining?: boolean;
+
 }
 
 /**
