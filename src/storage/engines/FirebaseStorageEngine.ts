@@ -9,6 +9,7 @@ import {
   listAll,
   FirebaseStorage,
   StorageReference,
+  updateMetadata,
 } from 'firebase/storage';
 import {
   CollectionReference,
@@ -168,6 +169,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         `configs/${configHash}`,
         'config',
         config,
+        true,
       );
 
       // Clear sequence array and current participant data if the config has changed
@@ -337,7 +339,7 @@ export class FirebaseStorageEngine extends StorageEngine {
       }
 
       debounceTimeout = setTimeout(async () => {
-        this._pushToFirebaseStorage(`/audio/${this.currentParticipantId}`, taskName, data.data);
+        this._pushToFirebaseStorage(`/audio/${this.currentParticipantId}`, taskName, data.data, true);
       }, 500);
     };
 
@@ -674,6 +676,7 @@ export class FirebaseStorageEngine extends StorageEngine {
           `participants/${this.currentParticipantId}`,
           'participantData',
           this.participantData,
+          true,
         );
       }
 
@@ -868,6 +871,7 @@ export class FirebaseStorageEngine extends StorageEngine {
         participantRef,
         'participantData',
         participant,
+        true,
       );
 
       // set sequence assignment to empty string, keep the timestamp
@@ -1402,9 +1406,7 @@ export class FirebaseStorageEngine extends StorageEngine {
     return storageObj;
   }
 
-  private async _getFromFirebaseStorageByRef<
-    T extends FirebaseStorageObjectType
-  >(storageRef: StorageReference, type: T) {
+  private async _getFromFirebaseStorageByRef<T extends FirebaseStorageObjectType>(storageRef: StorageReference, type: T) {
     let storageObj: FirebaseStorageObject<T> = {} as FirebaseStorageObject<T>;
 
     try {
@@ -1419,10 +1421,17 @@ export class FirebaseStorageEngine extends StorageEngine {
     return storageObj;
   }
 
+  private async _cacheFirebaseStorage1Year(storageRef: StorageReference) {
+    await updateMetadata(storageRef, {
+      cacheControl: 'public,max-age=31536000',
+    });
+  }
+
   private async _pushToFirebaseStorage<T extends FirebaseStorageObjectType>(
     prefix: string,
     type: T,
     objectToUpload: FirebaseStorageObject<T>,
+    cache?: boolean,
   ) {
     const storageRef = ref(
       this.storage,
@@ -1437,20 +1446,27 @@ export class FirebaseStorageEngine extends StorageEngine {
       });
       await uploadBytes(storageRef, blob);
     }
+
+    if (cache) {
+      await this._cacheFirebaseStorage1Year(storageRef);
+    }
   }
 
-  private async _pushToFirebaseStorageByRef<
-    T extends FirebaseStorageObjectType
-  >(
+  private async _pushToFirebaseStorageByRef<T extends FirebaseStorageObjectType>(
     storageRef: StorageReference,
     type: T,
     objectToUpload: FirebaseStorageObject<T>,
+    cache?: boolean,
   ) {
     if (Object.keys(objectToUpload).length > 0) {
       const blob = new Blob([JSON.stringify(objectToUpload)], {
         type: 'application/json',
       });
       await uploadBytes(storageRef, blob);
+    }
+
+    if (cache) {
+      await this._cacheFirebaseStorage1Year(storageRef);
     }
   }
 

@@ -1,0 +1,598 @@
+{
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/LibraryConfigSchema.json",
+  "description": "The NASA-TLX is a widely used subjective workload assessment tool. It consists of six subscales: Mental Demand, Physical Demand, Temporal Demand, Performance, Effort, and Frustration. The NASA-TLX is designed to assess the perceived workload of a task and is commonly used in human factors and ergonomics research.",
+  "reference": "Hart, Sandra G., and Lowell E. Staveland. \"Development of NASA-TLX (Task Load Index): Results of empirical and theoretical research.\" Advances in psychology. Vol. 52. North-Holland, 1988. 139-183.",
+  "doi": "10.1016/S0166-4115(08)62386-9",
+  "components": {
+    "nasa-tlx": {
+      "type": "markdown",
+      "path": "libraries/nasa-tlx/assets/tlx.md",
+      "response": [
+        {
+          "id": "mental-demand",
+          "type": "slider",
+          "tlxStyle": true,
+          "withBar": false,
+          "prompt": "Mental Demand",
+          "secondaryText": "How much mental and perceptual effort did you spend?",
+          "options": [
+            {
+              "label": "Low",
+              "value": 0
+            },
+            {
+              "label": "",
+              "value": 5
+            },
+            {
+              "label": "",
+              "value": 10
+            },
+            {
+              "label": "",
+              "value": 15
+            },
+            {
+              "label": "",
+              "value": 20
+            },
+            {
+              "label": "",
+              "value": 25
+            },
+            {
+              "label": "",
+              "value": 30
+            },
+            {
+              "label": "",
+              "value": 35
+            },
+            {
+              "label": "",
+              "value": 40
+            },
+            {
+              "label": "",
+              "value": 45
+            },
+            {
+              "label": "",
+              "value": 50
+            },
+            {
+              "label": "",
+              "value": 55
+            },
+            {
+              "label": "",
+              "value": 60
+            },
+            {
+              "label": "",
+              "value": 65
+            },
+            {
+              "label": "",
+              "value": 70
+            },
+            {
+              "label": "",
+              "value": 75
+            },
+            {
+              "label": "",
+              "value": 80
+            },
+            {
+              "label": "",
+              "value": 85
+            },
+            {
+              "label": "",
+              "value": 90
+            },
+            {
+              "label": "",
+              "value": 95
+            },
+            {
+              "label": "High",
+              "value": 100
+            }
+          ],
+          "step": 1,
+          "startingValue": 50,
+          "required": true
+        },
+        {
+          "id": "physical-demand",
+          "type": "slider",
+          "tlxStyle": true,
+          "withBar": false,
+          "prompt": "Physical Demand",
+          "secondaryText": "How much physical effort did you spend?",
+          "options": [
+            {
+              "label": "Low",
+              "value": 0
+            },
+            {
+              "label": "",
+              "value": 5
+            },
+            {
+              "label": "",
+              "value": 10
+            },
+            {
+              "label": "",
+              "value": 15
+            },
+            {
+              "label": "",
+              "value": 20
+            },
+            {
+              "label": "",
+              "value": 25
+            },
+            {
+              "label": "",
+              "value": 30
+            },
+            {
+              "label": "",
+              "value": 35
+            },
+            {
+              "label": "",
+              "value": 40
+            },
+            {
+              "label": "",
+              "value": 45
+            },
+            {
+              "label": "",
+              "value": 50
+            },
+            {
+              "label": "",
+              "value": 55
+            },
+            {
+              "label": "",
+              "value": 60
+            },
+            {
+              "label": "",
+              "value": 65
+            },
+            {
+              "label": "",
+              "value": 70
+            },
+            {
+              "label": "",
+              "value": 75
+            },
+            {
+              "label": "",
+              "value": 80
+            },
+            {
+              "label": "",
+              "value": 85
+            },
+            {
+              "label": "",
+              "value": 90
+            },
+            {
+              "label": "",
+              "value": 95
+            },
+            {
+              "label": "High",
+              "value": 100
+            }
+          ],
+          "step": 1,
+          "startingValue": 50,
+          "required": true
+        },
+        {
+          "id": "temporal-demand",
+          "type": "slider",
+          "tlxStyle": true,
+          "withBar": false,
+          "prompt": "Temporal Demand",
+          "secondaryText": "How much time pressure did you feel in order to complete this?",
+          "options": [
+            {
+              "label": "Low",
+              "value": 0
+            },
+            {
+              "label": "",
+              "value": 5
+            },
+            {
+              "label": "",
+              "value": 10
+            },
+            {
+              "label": "",
+              "value": 15
+            },
+            {
+              "label": "",
+              "value": 20
+            },
+            {
+              "label": "",
+              "value": 25
+            },
+            {
+              "label": "",
+              "value": 30
+            },
+            {
+              "label": "",
+              "value": 35
+            },
+            {
+              "label": "",
+              "value": 40
+            },
+            {
+              "label": "",
+              "value": 45
+            },
+            {
+              "label": "",
+              "value": 50
+            },
+            {
+              "label": "",
+              "value": 55
+            },
+            {
+              "label": "",
+              "value": 60
+            },
+            {
+              "label": "",
+              "value": 65
+            },
+            {
+              "label": "",
+              "value": 70
+            },
+            {
+              "label": "",
+              "value": 75
+            },
+            {
+              "label": "",
+              "value": 80
+            },
+            {
+              "label": "",
+              "value": 85
+            },
+            {
+              "label": "",
+              "value": 90
+            },
+            {
+              "label": "",
+              "value": 95
+            },
+            {
+              "label": "High",
+              "value": 100
+            }
+          ],
+          "step": 1,
+          "startingValue": 50,
+          "required": true
+        },
+        {
+          "id": "performance",
+          "type": "slider",
+          "tlxStyle": true,
+          "withBar": false,
+          "prompt": "Performance",
+          "secondaryText": "How successful do you think you were in accomplishing what you were asked to do? (notice the direction of this scale)",
+          "options": [
+            {
+              "label": "Good",
+              "value": 0
+            },
+            {
+              "label": "",
+              "value": 5
+            },
+            {
+              "label": "",
+              "value": 10
+            },
+            {
+              "label": "",
+              "value": 15
+            },
+            {
+              "label": "",
+              "value": 20
+            },
+            {
+              "label": "",
+              "value": 25
+            },
+            {
+              "label": "",
+              "value": 30
+            },
+            {
+              "label": "",
+              "value": 35
+            },
+            {
+              "label": "",
+              "value": 40
+            },
+            {
+              "label": "",
+              "value": 45
+            },
+            {
+              "label": "",
+              "value": 50
+            },
+            {
+              "label": "",
+              "value": 55
+            },
+            {
+              "label": "",
+              "value": 60
+            },
+            {
+              "label": "",
+              "value": 65
+            },
+            {
+              "label": "",
+              "value": 70
+            },
+            {
+              "label": "",
+              "value": 75
+            },
+            {
+              "label": "",
+              "value": 80
+            },
+            {
+              "label": "",
+              "value": 85
+            },
+            {
+              "label": "",
+              "value": 90
+            },
+            {
+              "label": "",
+              "value": 95
+            },
+            {
+              "label": "Poor",
+              "value": 100
+            }
+          ],
+          "step": 1,
+          "startingValue": 50,
+          "required": true
+        },
+        {
+          "id": "effort",
+          "type": "slider",
+          "tlxStyle": true,
+          "withBar": false,
+          "prompt": "Effort",
+          "secondaryText": "How hard did you have to work to accomplish your level of performance?",
+          "options": [
+            {
+              "label": "Low",
+              "value": 0
+            },
+            {
+              "label": "",
+              "value": 5
+            },
+            {
+              "label": "",
+              "value": 10
+            },
+            {
+              "label": "",
+              "value": 15
+            },
+            {
+              "label": "",
+              "value": 20
+            },
+            {
+              "label": "",
+              "value": 25
+            },
+            {
+              "label": "",
+              "value": 30
+            },
+            {
+              "label": "",
+              "value": 35
+            },
+            {
+              "label": "",
+              "value": 40
+            },
+            {
+              "label": "",
+              "value": 45
+            },
+            {
+              "label": "",
+              "value": 50
+            },
+            {
+              "label": "",
+              "value": 55
+            },
+            {
+              "label": "",
+              "value": 60
+            },
+            {
+              "label": "",
+              "value": 65
+            },
+            {
+              "label": "",
+              "value": 70
+            },
+            {
+              "label": "",
+              "value": 75
+            },
+            {
+              "label": "",
+              "value": 80
+            },
+            {
+              "label": "",
+              "value": 85
+            },
+            {
+              "label": "",
+              "value": 90
+            },
+            {
+              "label": "",
+              "value": 95
+            },
+            {
+              "label": "High",
+              "value": 100
+            }
+          ],
+          "step": 1,
+          "startingValue": 50,
+          "required": true
+        },
+        {
+          "id": "frustration",
+          "type": "slider",
+          "tlxStyle": true,
+          "withBar": false,
+          "prompt": "Frustration",
+          "secondaryText": "How irritated, stressed, discouraged, and annoyed were you?",
+          "options": [
+            {
+              "label": "Low",
+              "value": 0
+            },
+            {
+              "label": "",
+              "value": 5
+            },
+            {
+              "label": "",
+              "value": 10
+            },
+            {
+              "label": "",
+              "value": 15
+            },
+            {
+              "label": "",
+              "value": 20
+            },
+            {
+              "label": "",
+              "value": 25
+            },
+            {
+              "label": "",
+              "value": 30
+            },
+            {
+              "label": "",
+              "value": 35
+            },
+            {
+              "label": "",
+              "value": 40
+            },
+            {
+              "label": "",
+              "value": 45
+            },
+            {
+              "label": "",
+              "value": 50
+            },
+            {
+              "label": "",
+              "value": 55
+            },
+            {
+              "label": "",
+              "value": 60
+            },
+            {
+              "label": "",
+              "value": 65
+            },
+            {
+              "label": "",
+              "value": 70
+            },
+            {
+              "label": "",
+              "value": 75
+            },
+            {
+              "label": "",
+              "value": 80
+            },
+            {
+              "label": "",
+              "value": 85
+            },
+            {
+              "label": "",
+              "value": 90
+            },
+            {
+              "label": "",
+              "value": 95
+            },
+            {
+              "label": "High",
+              "value": 100
+            }
+          ],
+          "step": 1,
+          "startingValue": 50,
+          "required": true
+        }
+      ]
+    }
+  },
+  "sequences": {
+  }
+}

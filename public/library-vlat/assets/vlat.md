@@ -9,7 +9,7 @@ Visualization Literacy Assessment Test (VLAT) is developed to measure users' abi
 
 S. Lee, S.-H. Kim, and B. C. Kwon, "VLAT: Development of a Visualization Literacy Assessment Test," IEEE Transactions on Visualization and Computer Graphics, vol. 23, no. 1, pp. 551-560, Jan. 2017
 
-DOI: [10.1109/TVCG.2016.2598920](https://doi.org/10.1109/TVCG.2016.2598920)
+DOI: [10.1109/TVCG.2016.2598920](https://dx.doi.org/10.1109/TVCG.2016.2598920)
 
 
 

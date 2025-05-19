@@ -55,9 +55,8 @@ test('test', async ({ page }) => {
   const nextButton = await page.getByRole('button', { name: 'Next', exact: true });
   await expect(nextButton).toBeDisabled();
 
-  // Answer the training question correctly and expect the next button to be disabled still
-  await page.getByPlaceholder('0-100').fill('66');
-  await expect(nextButton).toBeDisabled();
+  // Expect the input to be disabled
+  await expect(await page.getByPlaceholder('0-100')).toBeDisabled();
 
   // Click next participant
   await page.getByRole('button', { name: 'Next Participant' }).click();

@@ -18,6 +18,7 @@ import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { MatrixInput } from './MatrixInput';
 import { ButtonsInput } from './ButtonsInput';
 import classes from './css/Checkbox.module.css';
+import { TextOnlyInput } from './TextOnlyInput';
 
 export function ResponseSwitcher({
   response,
@@ -27,6 +28,7 @@ export function ResponseSwitcher({
   configInUse,
   dontKnowCheckbox,
   otherInput,
+  disabled,
 }: {
   response: Response;
   answer: GetInputPropsReturnType;
@@ -35,11 +37,12 @@ export function ResponseSwitcher({
   configInUse: IndividualComponent;
   dontKnowCheckbox?: GetInputPropsReturnType;
   otherInput?: GetInputPropsReturnType;
+  disabled?: boolean;
 }) {
   const ans = (Object.keys(storedAnswer || {}).length > 0 ? { value: storedAnswer![response.id] } : answer) || { value: undefined };
   const dontKnowValue = (Object.keys(storedAnswer || {}).length > 0 ? { checked: storedAnswer![`${response.id}-dontKnow`] } : dontKnowCheckbox) || { checked: undefined };
   const otherValue = (Object.keys(storedAnswer || {}).length > 0 ? { value: storedAnswer![`${response.id}-other`] } : otherInput) || { value: undefined };
-  const disabled = Object.keys(storedAnswer || {}).length > 0;
+  const inputDisabled = Object.keys(storedAnswer || {}).length > 0 || disabled;
 
   const [searchParams] = useSearchParams();
 
@@ -49,11 +52,11 @@ export function ResponseSwitcher({
   const isDisabled = useMemo(() => {
     if (response.paramCapture) {
       const responseParam = searchParams.get(response.paramCapture);
-      return disabled || !!responseParam;
+      return inputDisabled || !!responseParam;
     }
 
-    return disabled;
-  }, [disabled, response.paramCapture, searchParams]);
+    return inputDisabled;
+  }, [inputDisabled, response.paramCapture, searchParams]);
 
   const fieldInitialValue = useMemo(() => {
     if (response.paramCapture) {
@@ -177,6 +180,9 @@ export function ResponseSwitcher({
           index={index}
           enumerateQuestions={enumerateQuestions}
         />
+      )}
+      {response.type === 'textOnly' && (
+        <TextOnlyInput response={response} />
       )}
 
       {response.withDontKnow && (
