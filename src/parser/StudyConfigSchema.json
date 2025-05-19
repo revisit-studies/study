@@ -2398,6 +2398,10 @@
           "description": "The path to the help text file. This is displayed when a participant clicks help. Markdown is supported.",
           "type": "string"
         },
+        "instructionLocation": {
+          "$ref": "#/definitions/ConfigResponseBlockLocation",
+          "description": "The location of the instructions."
+        },
         "logoPath": {
           "description": "The path to the logo image. This is displayed on the landing page and the header.",
           "type": "string"

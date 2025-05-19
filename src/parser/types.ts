@@ -133,6 +133,8 @@ export interface UIConfig {
   nextButtonDisableTime?: number;
   /** The time in milliseconds to wait before the next button is enabled. */
   nextButtonEnableTime?: number;
+  /** The location of the instructions. */
+  instructionLocation?: ConfigResponseBlockLocation;
 }
 
 /**
