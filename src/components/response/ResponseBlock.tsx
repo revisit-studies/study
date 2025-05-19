@@ -103,16 +103,16 @@ export function ResponseBlock({
 
   const matrixAnswers = useStoreSelector((state) => state.matrixAnswers);
 
+  const studyConfig = useStudyConfig();
+
   const hasCorrectAnswerFeedback = configInUse?.provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
   const allowFailedTraining = configInUse?.allowFailedTraining === undefined ? true : configInUse.allowFailedTraining;
   const [attemptsUsed, setAttemptsUsed] = useState(0);
-  const trainingAttempts = configInUse?.trainingAttempts || 2;
+  const trainingAttempts = configInUse?.trainingAttempts ?? studyConfig?.uiConfig?.trainingAttempts ?? 2;
   const [enableNextButton, setEnableNextButton] = useState(false);
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
-
-  const studyConfig = useStudyConfig();
 
   const identifier = useCurrentIdentifier();
   const nextButtonLocation = configInUse?.nextButtonLocation !== undefined ? configInUse.nextButtonLocation : studyConfig.uiConfig.nextButtonLocation;
