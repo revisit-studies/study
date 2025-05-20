@@ -61,6 +61,19 @@ export function ResponseSwitcher({
     if (typeof currentStep === 'number' && currentStep + 1 < flatSequence.length) {
       const nextComponent = flatSequence[currentStep + 1];
       const nextConfig = studyConfig.components[nextComponent];
+
+      for (let i = 0; i < sequence.components.length; i += 1) {
+        const component = sequence.components[i];
+        if (typeof component === 'string') {
+          if (component === nextComponent) {
+            break;
+          }
+        } else if (component.order === 'dynamic') {
+          if (i + 1 < sequence.components.length && sequence.components[i + 1] === nextComponent) {
+            return false;
+          }
+        }
+      }
       if (nextConfig?.previousButton) {
         return false;
       }
@@ -70,7 +83,7 @@ export function ResponseSwitcher({
       return disabled || !!responseParam;
     }
     return disabled;
-  }, [disabled, response.paramCapture, searchParams, currentStep, flatSequence, studyConfig.components]);
+  }, [disabled, response.paramCapture, searchParams, currentStep, flatSequence, studyConfig.components, sequence]);
 
   const fieldInitialValue = useMemo(() => {
     if (response.paramCapture) {
