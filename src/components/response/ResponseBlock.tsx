@@ -1,5 +1,5 @@
 import {
-  Alert, Anchor, Button, Group,
+  Alert, Anchor, Button,
 } from '@mantine/core';
 
 import React, { useEffect, useMemo, useState } from 'react';
@@ -107,8 +107,7 @@ export function ResponseBlock({
   const [enableNextButton, setEnableNextButton] = useState(false);
   const identifier = useCurrentIdentifier();
 
-  const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
-  const showPreviousBtn = configInUse?.previousButton && showNextBtn;
+  const showBtnsInLocation = location === (configInUse?.nextButtonLocation || 'belowStimulus');
   useEffect(() => {
     const ReactiveResponse = responsesWithDefaults.find((r) => r.type === 'reactive');
     if (reactiveAnswers && ReactiveResponse) {
@@ -304,24 +303,23 @@ export function ResponseBlock({
         );
       })}
 
-      <Group justify="right" gap="xs">
-        {hasCorrectAnswerFeedback && showNextBtn && (
+      {showBtnsInLocation && (
+      <NextButton
+        disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
+        label={configInUse.nextButtonText || 'Next'}
+        configInUse={configInUse}
+        location={location}
+        checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (
           <Button
             onClick={() => checkAnswerProvideFeedback()}
-            disabled={!answerValidator.isValid() || (attemptsUsed >= trainingAttempts && trainingAttempts >= 0)}
+                // disabled={!answerValidator.isValid() || (attemptsUsed >= trainingAttempts && trainingAttempts >= 0)}
+            px={location === 'sidebar' ? 8 : undefined}
           >
             Check Answer
           </Button>
-        )}
-        {showNextBtn && (
-          <NextButton
-            disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
-            label={configInUse.nextButtonText || 'Next'}
-            configInUse={configInUse}
-            showPreviousBtn={showPreviousBtn}
-          />
-        )}
-      </Group>
+        ) : null}
+      />
+      )}
     </div>
   );
 }
