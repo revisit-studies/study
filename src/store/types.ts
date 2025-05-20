@@ -124,6 +124,8 @@ export interface StoredAnswer {
   optionOrders: Record<string, StringOption[]>;
   /** The order of the questions in a matrix component. */
   questionOrders: Record<string, string[]>;
+  /** The order of form responses in the component. Maps response IDs to their positions in the form. */
+  formOrder?: Record<string, number>;
 }
 
 export interface JumpFunctionParameters<T> {

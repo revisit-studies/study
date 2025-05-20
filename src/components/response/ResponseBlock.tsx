@@ -22,9 +22,9 @@ import { ResponseSwitcher } from './ResponseSwitcher';
 import { FormElementProvenance, StoredAnswer } from '../../store/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
+import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 
 type Props = {
-  status?: StoredAnswer;
   config: IndividualComponent | null;
   location: ResponseBlockLocation;
   style?: React.CSSProperties;
@@ -43,7 +43,6 @@ function findMatchingStrings(arr1: string[], arr2: string[]): string[] {
 export function ResponseBlock({
   config,
   location,
-  status,
   style,
 }: Props) {
   const { storageEngine } = useStorageEngine();
@@ -53,19 +52,29 @@ export function ResponseBlock({
   } = useStoreActions();
   const currentStep = useCurrentStep();
   const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]) as FormElementProvenance | undefined;
-
-  const storedAnswer = useMemo(() => currentProvenance?.form || status?.answer, [currentProvenance, status]);
+  const storedAnswer = useStoredAnswer();
+  const currentAnswer = useMemo(() => currentProvenance?.form || storedAnswer?.answer || {}, [currentProvenance, storedAnswer]) as StoredAnswer['answer'];
 
   const studyId = useStudyId();
-
   const navigate = useNavigate();
-
   const configInUse = config as IndividualComponent;
 
   const responses = useMemo(() => configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [], [location, configInUse.response]);
 
+  // Use stored form order if available, otherwise create new randomized order
   const [shuffledResponses] = useState(() => {
     if (configInUse?.randomizeForm) {
+      const formOrder = storedAnswer?.formOrder;
+      if (formOrder && !Array.isArray(formOrder) && typeof formOrder === 'object') {
+        // Use stored order
+        const orderMap = formOrder as Record<string, number>;
+        return responses.sort((a, b) => {
+          const aIndex = orderMap[a.id] ?? Infinity;
+          const bIndex = orderMap[b.id] ?? Infinity;
+          return aIndex - bIndex;
+        });
+      }
+      // Create new randomized order
       const shuffleResponses = [...responses]
         .map((value) => ({ value, sort: Math.random() }))
         .sort((a, b) => a.sort - b.sort)
@@ -85,7 +94,7 @@ export function ResponseBlock({
     return response;
   }), [shuffledResponses]);
 
-  const answerValidator = useAnswerField(responsesWithDefaults, currentStep, storedAnswer || {});
+  const answerValidator = useAnswerField(responsesWithDefaults, currentStep, currentAnswer);
   // Set up trrack to store provenance graph of the answerValidator status
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
@@ -285,7 +294,7 @@ export function ResponseBlock({
   return (
     <div style={style}>
       {responsesWithDefaults.map((response) => {
-        const configCorrectAnswer = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+        const configCorrectAnswer = configInUse.correctAnswer?.find((correctAnswer) => correctAnswer.id === response.id)?.answer;
 
         // Increment index for each response, unless it is a textOnly response
         if (response.type !== 'textOnly') {
@@ -301,7 +310,7 @@ export function ResponseBlock({
             ) : (
               <>
                 <ResponseSwitcher
-                  storedAnswer={storedAnswer}
+                  storedAnswer={storedAnswer?.answer || {}}
                   answer={{
                     ...answerValidator.getInputProps(response.id, {
                       type: response.type === 'checkbox' ? 'checkbox' : 'input',

@@ -34,6 +34,21 @@ export async function studyStoreCreator(
         return null;
       }
 
+      // Handle form randomization
+      let formOrder: Record<string, number> | undefined;
+      if (componentConfig.randomizeForm) {
+        const responses = componentConfig.response || [];
+        const shuffled = [...responses]
+          .map((value) => ({ value, sort: Math.random() }))
+          .sort((a, b) => a.sort - b.sort)
+          .map(({ value }) => value);
+
+        formOrder = shuffled.reduce((acc, response, index) => {
+          acc[response.id] = index;
+          return acc;
+        }, {} as Record<string, number>);
+      }
+
       return [
         `${id}_${idx}`,
         {
@@ -57,6 +72,7 @@ export async function studyStoreCreator(
           correctAnswer: Object.hasOwn(componentConfig, 'correctAnswer') ? componentConfig.correctAnswer! : [],
           optionOrders: randomizeOptions(componentConfig),
           questionOrders: randomizeQuestionOrder(componentConfig),
+          formOrder,
         } as StoredAnswer,
       ];
     }).filter((ans) => ans !== null));
