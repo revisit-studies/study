@@ -3,7 +3,7 @@ import {
 } from '@mantine/core';
 import { useNavigate, useParams, useSearchParams } from 'react-router';
 import {
-  IconArrowsShuffle, IconBrain, IconCheck, IconPackageImport, IconX,
+  IconArrowsShuffle, IconBrain, IconCheck, IconPackageImport, IconX, IconDice3,
 } from '@tabler/icons-react';
 import { useMemo, useState } from 'react';
 import {
@@ -194,7 +194,7 @@ function StepItem({
               <Text size="sm" span={active} fw={active ? '700' : undefined} display="inline" style={{ textWrap: 'nowrap' }}>{cleanedStep}</Text>
               {task?.randomizeForm && (
                 <Tooltip label="random" position="right" withArrow>
-                  <IconArrowsShuffle size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
+                  <IconDice3 size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
                 </Tooltip>
               )}
             </Box>
