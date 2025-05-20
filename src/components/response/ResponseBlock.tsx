@@ -312,7 +312,6 @@ export function ResponseBlock({
         checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (
           <Button
             onClick={() => checkAnswerProvideFeedback()}
-                // disabled={!answerValidator.isValid() || (attemptsUsed >= trainingAttempts && trainingAttempts >= 0)}
             px={location === 'sidebar' ? 8 : undefined}
           >
             Check Answer
