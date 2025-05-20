@@ -2,7 +2,9 @@ import {
   Alert, Anchor, Button, Group,
 } from '@mantine/core';
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, {
+  useEffect, useMemo, useState, useCallback,
+} from 'react';
 import { useNavigate } from 'react-router';
 import { Registry, initializeTrrack } from '@trrack/core';
 import {
@@ -19,6 +21,7 @@ import { useAnswerField } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
 import { FormElementProvenance, StoredAnswer } from '../../store/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
+import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 
 type Props = {
   status?: StoredAnswer;
@@ -116,6 +119,11 @@ export function ResponseBlock({
   const [attemptsUsed, setAttemptsUsed] = useState(0);
   const trainingAttempts = configInUse?.trainingAttempts || 2;
   const [enableNextButton, setEnableNextButton] = useState(false);
+  const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
+  const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
+  const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
+
+  const studyConfig = useStudyConfig();
 
   const identifier = useCurrentIdentifier();
 
@@ -182,7 +190,7 @@ export function ResponseBlock({
       },
     }));
   };
-  const checkAnswerProvideFeedback = () => {
+  const checkAnswerProvideFeedback = useCallback(() => {
     const newAttemptsUsed = attemptsUsed + 1;
     setAttemptsUsed(newAttemptsUsed);
 
@@ -245,6 +253,7 @@ export function ResponseBlock({
         }
       });
 
+      setHasCorrectAnswer(Object.values(correctAnswers).every((isCorrect) => isCorrect));
       setEnableNextButton(
         (
           allowFailedTraining && newAttemptsUsed >= trainingAttempts
@@ -254,7 +263,23 @@ export function ResponseBlock({
         ),
       );
     }
-  };
+  }, [attemptsUsed, responsesWithDefaults, configInUse, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, storageEngine, studyId, navigate, identifier, storeDispatch, answerValidator, alertConfig, saveIncorrectAnswer]);
+
+  useEffect(() => {
+    if (studyConfig.uiConfig.nextOnEnter) {
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.key === 'Enter') {
+          checkAnswerProvideFeedback();
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+    return () => {};
+  }, [checkAnswerProvideFeedback, studyConfig]);
 
   let index = 0;
   return (
@@ -291,6 +316,7 @@ export function ResponseBlock({
                   response={response}
                   index={index}
                   configInUse={configInUse}
+                  disabled={disabledAttempts}
                 />
                 {alertConfig[response.id]?.visible && (
                   <Alert mb="md" title={alertConfig[response.id].title} color={alertConfig[response.id].color}>
@@ -320,7 +346,7 @@ export function ResponseBlock({
         {hasCorrectAnswerFeedback && showNextBtn && (
           <Button
             onClick={() => checkAnswerProvideFeedback()}
-            disabled={!answerValidator.isValid() || (attemptsUsed >= trainingAttempts && trainingAttempts >= 0)}
+            disabled={!answerValidator.isValid() || disabledAttempts}
           >
             Check Answer
           </Button>

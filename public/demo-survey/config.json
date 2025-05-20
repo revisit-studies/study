@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/improve-forms/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "Question Types and Form Elements Demo",
     "version": "pilot",
@@ -24,6 +24,11 @@
     "enumerateQuestions": true
   },
   "components": {
+    "introduction": {
+      "type": "markdown",
+      "path": "demo-survey/assets/introduction.md",
+      "response": []
+    },
     "survey": {
       "type": "questionnaire",
       "response": [
@@ -215,6 +220,7 @@
   "sequence": {
     "order": "fixed",
     "components": [
+      "introduction",
       "survey"
     ]
   }
