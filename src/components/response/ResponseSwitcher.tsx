@@ -57,27 +57,32 @@ export function ResponseSwitcher({
   const currentStep = useCurrentStep();
 
   const isDisabled = useMemo(() => {
+    // Do not disable if we're at the last element before a dynamic block
+    if (typeof currentStep === 'number') {
+      const currentComponent = flatSequence[currentStep];
+      for (let i = 0; i < sequence.components.length; i += 1) {
+        const component = sequence.components[i];
+        if (typeof component === 'string') {
+          if (component === currentComponent) {
+            // Check if the next component is a dynamic block
+            if (i + 1 < sequence.components.length && typeof sequence.components[i + 1] !== 'string') {
+              return false;
+            }
+            break;
+          }
+        }
+      }
+    }
+
     // Do not disable if the next page has previousButton enabled
     if (typeof currentStep === 'number' && currentStep + 1 < flatSequence.length) {
       const nextComponent = flatSequence[currentStep + 1];
       const nextConfig = studyConfig.components[nextComponent];
-
-      for (let i = 0; i < sequence.components.length; i += 1) {
-        const component = sequence.components[i];
-        if (typeof component === 'string') {
-          if (component === nextComponent) {
-            break;
-          }
-        } else if (component.order === 'dynamic') {
-          if (i + 1 < sequence.components.length && sequence.components[i + 1] === nextComponent) {
-            return false;
-          }
-        }
-      }
       if (nextConfig?.previousButton) {
         return false;
       }
     }
+
     if (response.paramCapture) {
       const responseParam = searchParams.get(response.paramCapture);
       return disabled || !!responseParam;
