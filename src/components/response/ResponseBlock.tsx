@@ -14,7 +14,6 @@ import {
   useStoreDispatch, useStoreSelector, useStoreActions,
 } from '../../store/store';
 
-import { PreviousButton } from '../PreviousButton';
 import { NextButton } from '../NextButton';
 import { useAnswerField } from './utils';
 import { ResponseSwitcher } from './ResponseSwitcher';
@@ -314,17 +313,12 @@ export function ResponseBlock({
             Check Answer
           </Button>
         )}
-        {(showPreviousBtn) && (
-          <PreviousButton
-            label={configInUse.previousButtonText || 'Previous'}
-            configInUse={configInUse}
-          />
-        )}
         {showNextBtn && (
           <NextButton
             disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
             label={configInUse.nextButtonText || 'Next'}
             configInUse={configInUse}
+            showPreviousBtn={showPreviousBtn}
           />
         )}
       </Group>

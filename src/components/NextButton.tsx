@@ -7,12 +7,14 @@ import { useNavigate } from 'react-router';
 import { useNextStep } from '../store/hooks/useNextStep';
 import { IndividualComponent } from '../parser/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
+import { PreviousButton } from './PreviousButton';
 
 type Props = {
   label?: string;
   disabled?: boolean;
   onClick?: null | (() => void | Promise<void>);
   configInUse?: IndividualComponent;
+  showPreviousBtn?: boolean;
 };
 
 export function NextButton({
@@ -20,6 +22,7 @@ export function NextButton({
   disabled = false,
   onClick,
   configInUse,
+  showPreviousBtn = false,
 }: Props) {
   const { isNextDisabled, goToNextStep } = useNextStep();
   const studyConfig = useStudyConfig();
@@ -79,6 +82,14 @@ export function NextButton({
 
   return (
     <>
+      {showPreviousBtn && (
+      <PreviousButton
+        label={configInUse?.previousButtonText || 'Previous'}
+        configInUse={configInUse}
+        timer={timer}
+        disabled={!buttonTimerSatisfied}
+      />
+      )}
       <Button
         type="submit"
         disabled={disabled || isNextDisabled || !buttonTimerSatisfied}
@@ -87,13 +98,13 @@ export function NextButton({
         {label}
       </Button>
       {nextButtonEnableTime > 0 && timer && timer < nextButtonEnableTime && (
-      <Alert mt="md" title="Please wait" color="blue" icon={<IconInfoCircle />}>
-        The next button will be enabled in
-        {' '}
-        {Math.ceil((nextButtonEnableTime - timer) / 1000)}
-        {' '}
-        seconds.
-      </Alert>
+        <Alert mt="md" title="Please wait" color="blue" icon={<IconInfoCircle />}>
+          The next button will be enabled in
+          {' '}
+          {Math.ceil((nextButtonEnableTime - timer) / 1000)}
+          {' '}
+          seconds.
+        </Alert>
       )}
       {nextButtonDisableTime && timer && (nextButtonDisableTime - timer) < 10000 && (
         (nextButtonDisableTime - timer) > 0

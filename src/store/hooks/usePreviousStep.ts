@@ -3,9 +3,6 @@ import { useNavigate, useParams } from 'react-router';
 import { useCurrentStep, useStudyId } from '../../routes/utils';
 import { useIsAnalysis } from './useIsAnalysis';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
-import { useStoreSelector } from '../store';
-import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
-import { useStudyConfig } from './useStudyConfig';
 
 export function usePreviousStep() {
   const currentStep = useCurrentStep();
@@ -13,9 +10,6 @@ export function usePreviousStep() {
   const studyId = useStudyId();
   const navigate = useNavigate();
   const isAnalysis = useIsAnalysis();
-  const sequence = useStoreSelector((state) => state.sequence);
-  const flatSequence = getSequenceFlatMap(sequence);
-  const studyConfig = useStudyConfig();
 
   // Status of the previous button. If false, the previous button should be disabled
   const isPreviousDisabled = typeof currentStep !== 'number' || isAnalysis || currentStep <= 0;
@@ -37,7 +31,7 @@ export function usePreviousStep() {
     } else {
       navigate(`/${studyId}/${encryptIndex(previousStep)}${window.location.search}`);
     }
-  }, [currentStep, funcIndex, navigate, studyId, sequence, flatSequence, studyConfig.components]);
+  }, [currentStep, funcIndex, navigate, studyId]);
 
   return {
     isPreviousDisabled,

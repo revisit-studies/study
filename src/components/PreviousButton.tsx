@@ -1,9 +1,8 @@
 import { Alert, Button } from '@mantine/core';
 import {
-  useCallback, useEffect, useMemo, useState,
+  useCallback,
 } from 'react';
 import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
-import { useNavigate } from 'react-router';
 import { usePreviousStep } from '../store/hooks/usePreviousStep';
 import { IndividualComponent } from '../parser/types';
 import { useStudyConfig } from '../store/hooks/useStudyConfig';
@@ -13,6 +12,7 @@ type Props = {
   disabled?: boolean;
   onClick?: null | (() => void | Promise<void>);
   configInUse?: IndividualComponent;
+  timer?: number;
 };
 
 export function PreviousButton({
@@ -20,10 +20,10 @@ export function PreviousButton({
   disabled = false,
   onClick,
   configInUse,
+  timer,
 }: Props) {
   const { isPreviousDisabled, goToPreviousStep } = usePreviousStep();
   const studyConfig = useStudyConfig();
-  const navigate = useNavigate();
 
   const handleClick = useCallback(() => {
     if (onClick) {
@@ -34,50 +34,24 @@ export function PreviousButton({
 
   const previousButtonDisableTime = configInUse?.nextButtonDisableTime;
   const previousButtonEnableTime = configInUse?.nextButtonEnableTime || 0;
-  const [timer, setTimer] = useState<number | undefined>(undefined);
-  // Start a timer on first render, update timer every 100ms
-  useEffect(() => {
-    let time = 0;
-    const interval = setInterval(() => {
-      time += 100;
-      setTimer(time);
-    }, 100);
-    return () => {
-      clearInterval(interval);
-    };
-  }, []);
-  useEffect(() => {
-    if (timer && previousButtonDisableTime && timer >= previousButtonDisableTime && studyConfig.uiConfig.timeoutReject) {
-      navigate('./../__timedOut');
-    }
-  }, [previousButtonDisableTime, timer, navigate, studyConfig.uiConfig.timeoutReject]);
-
-  const buttonTimerSatisfied = useMemo(
-    () => {
-      const previousButtonDisableSatisfied = previousButtonDisableTime && timer ? timer <= previousButtonDisableTime : true;
-      const previousButtonEnableSatisfied = timer ? timer >= previousButtonEnableTime : true;
-      return previousButtonDisableSatisfied && previousButtonEnableSatisfied;
-    },
-    [previousButtonDisableTime, previousButtonEnableTime, timer],
-  );
 
   return (
     <>
       <Button
         type="submit"
-        disabled={disabled || isPreviousDisabled || !buttonTimerSatisfied}
+        disabled={disabled || isPreviousDisabled}
         onClick={handleClick}
       >
         {label}
       </Button>
       {previousButtonEnableTime > 0 && timer && timer < previousButtonEnableTime && (
-      <Alert mt="md" title="Please wait" color="blue" icon={<IconInfoCircle />}>
-        The previous button will be enabled in
-        {' '}
-        {Math.ceil((previousButtonEnableTime - timer) / 1000)}
-        {' '}
-        seconds.
-      </Alert>
+        <Alert mt="md" title="Please wait" color="blue" icon={<IconInfoCircle />}>
+          The previous button will be enabled in
+          {' '}
+          {Math.ceil((previousButtonEnableTime - timer) / 1000)}
+          {' '}
+          seconds.
+        </Alert>
       )}
       {previousButtonDisableTime && timer && (previousButtonDisableTime - timer) < 10000 && (
         (previousButtonDisableTime - timer) > 0
