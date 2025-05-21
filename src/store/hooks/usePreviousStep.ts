@@ -5,7 +5,7 @@ import { useIsAnalysis } from './useIsAnalysis';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useStudyConfig } from './useStudyConfig';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
-import { useStoreActions, useStoreDispatch } from '../store';
+import { useStoreDispatch } from '../store';
 
 export function usePreviousStep() {
   const currentStep = useCurrentStep();
@@ -15,7 +15,6 @@ export function usePreviousStep() {
   const isAnalysis = useIsAnalysis();
   const studyConfig = useStudyConfig();
   const storeDispatch = useStoreDispatch();
-  const { deleteDynamicBlockAnswers } = useStoreActions();
 
   // Status of the previous button. If false, the previous button should be disabled
   const isPreviousDisabled = typeof currentStep !== 'number' || isAnalysis || currentStep <= 0;
@@ -44,17 +43,13 @@ export function usePreviousStep() {
         const nextComponent = flatSequence[currentStep + 1];
         const nextConfig = studyConfig.components[nextComponent];
         if (nextConfig?.previousButton) {
-          // Delete all answers for this dynamic block
-          storeDispatch(deleteDynamicBlockAnswers({ blockId: currentComponentId, index: currentStep }));
-
-          // Navigate to the dynamic block, which will trigger its function to recompute the sequence
           navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(0)}${window.location.search}`);
         }
       }
     } else {
       navigate(`/${studyId}/${encryptIndex(previousStep)}${window.location.search}`);
     }
-  }, [currentStep, funcIndex, navigate, studyId, studyConfig, storeDispatch, deleteDynamicBlockAnswers]);
+  }, [currentStep, funcIndex, navigate, studyId, studyConfig, storeDispatch]);
 
   return {
     isPreviousDisabled,
