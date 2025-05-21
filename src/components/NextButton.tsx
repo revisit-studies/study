@@ -74,7 +74,7 @@ export function NextButton({
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
-    return () => {};
+    return () => { };
   }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, studyConfig.uiConfig.nextOnEnter]);
 
   const buttonsDisabled = useMemo(() => disabled || isNextDisabled || !buttonTimerSatisfied, [disabled, isNextDisabled, buttonTimerSatisfied]);
@@ -103,41 +103,33 @@ export function NextButton({
         <>
           {nextButtonEnableTime > 0 && timer < nextButtonEnableTime && (
             <Alert mt="md" title="Please wait" color="blue" icon={<IconInfoCircle />}>
-              {configInUse?.previousButton ? 'The buttons' : 'The next button'}
-              {' '}
-              will be enabled in
+              The next button will be enabled in
               {' '}
               {Math.ceil((nextButtonEnableTime - timer) / 1000)}
               {' '}
               seconds.
             </Alert>
           )}
-          {nextButtonDisableTime && (nextButtonDisableTime - timer) < 10000 && (
+          {nextButtonDisableTime && timer && (nextButtonDisableTime - timer) < 10000 && (
             (nextButtonDisableTime - timer) > 0
               ? (
-                <Alert mt="md" title={configInUse?.previousButton ? 'The buttons will be disabled soon' : 'The next button disables soon'} color="yellow" icon={<IconAlertTriangle />}>
-                  {configInUse?.previousButton ? 'The buttons' : 'The next button'}
-                  {' '}
-                  will be disabled in
+                <Alert mt="md" title="Next button disables soon" color="yellow" icon={<IconAlertTriangle />}>
+                  The next button disables in
                   {' '}
                   {Math.ceil((nextButtonDisableTime - timer) / 1000)}
                   {' '}
                   seconds.
                 </Alert>
               ) : !studyConfig.uiConfig.timeoutReject && (
-                <Alert mt="md" title={configInUse?.previousButton ? 'The buttons are disabled' : 'The next button is disabled'} color="red" icon={<IconAlertTriangle />}>
-                  {configInUse?.previousButton ? 'The buttons have' : 'The next button has'}
-                  {' '}
-                  timed out and
-                  {configInUse?.previousButton ? 'are' : 'is'}
-                  {' '}
-                  now disabled.
+                <Alert mt="md" title="Next button disabled" color="red" icon={<IconAlertTriangle />}>
+                  The next button has timed out and is now disabled.
                   <Group justify="right" mt="sm">
                     <Button onClick={() => goToNextStep(false)} variant="link" color="red">Proceed</Button>
                   </Group>
                 </Alert>
               ))}
         </>
+
       )}
     </>
   );

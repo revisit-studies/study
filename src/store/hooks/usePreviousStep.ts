@@ -5,7 +5,6 @@ import { useIsAnalysis } from './useIsAnalysis';
 import { decryptIndex, encryptIndex } from '../../utils/encryptDecryptIndex';
 import { useStudyConfig } from './useStudyConfig';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
-import { useStoreDispatch } from '../store';
 
 export function usePreviousStep() {
   const currentStep = useCurrentStep();
@@ -14,7 +13,6 @@ export function usePreviousStep() {
   const navigate = useNavigate();
   const isAnalysis = useIsAnalysis();
   const studyConfig = useStudyConfig();
-  const storeDispatch = useStoreDispatch();
 
   // Status of the previous button. If false, the previous button should be disabled
   const isPreviousDisabled = typeof currentStep !== 'number' || isAnalysis || currentStep <= 0;
@@ -49,7 +47,7 @@ export function usePreviousStep() {
     } else {
       navigate(`/${studyId}/${encryptIndex(previousStep)}${window.location.search}`);
     }
-  }, [currentStep, funcIndex, navigate, studyId, studyConfig, storeDispatch]);
+  }, [currentStep, funcIndex, navigate, studyId, studyConfig]);
 
   return {
     isPreviousDisabled,
