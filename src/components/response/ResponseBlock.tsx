@@ -71,12 +71,11 @@ export function ResponseBlock({
   const responses = useMemo(() => {
     // Randomized order
     if (formOrders) {
-      // Sort responses based on their order in formOrders if available
-      return [...filteredResponses].sort((a, b) => {
-        const orderA = formOrders[a.id]?.[0];
-        const orderB = formOrders[b.id]?.[0];
-        return orderA - orderB;
-      });
+      // Sort responses based on their order in formOrders
+      return [...filteredResponses]
+        .map((value) => ({ value, sort: formOrders[value.id]?.[0] }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value);
     }
     // Fixed order
     return filteredResponses;
