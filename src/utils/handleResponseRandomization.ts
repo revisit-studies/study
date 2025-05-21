@@ -1,5 +1,21 @@
 import { IndividualComponent, StringOption } from '../parser/types';
 
+export function randomizeForm(componentConfig: IndividualComponent): Record<string, number[]> {
+  if (!componentConfig.randomizeForm) {
+    return {} as Record<string, number[]>;
+  }
+  const responses = componentConfig.response;
+  const shuffled = [...responses]
+    .map((value) => ({ value, sort: Math.random() }))
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value);
+
+  return responses.reduce((acc, response) => {
+    acc[response.id] = [shuffled.findIndex((value) => value.id === response.id)];
+    return acc;
+  }, {} as Record<string, number[]>);
+}
+
 export function randomizeOptions(componentConfig: IndividualComponent) {
   return componentConfig.response.reduce((acc, response) => {
     if (response.type === 'radio' || response.type === 'checkbox' || response.type === 'buttons') {

@@ -25,6 +25,7 @@ import { useStudyConfig } from '../../store/hooks/useStudyConfig';
 import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 
 type Props = {
+  status?: StoredAnswer;
   config: IndividualComponent | null;
   location: ResponseBlockLocation;
   style?: React.CSSProperties;
@@ -43,6 +44,7 @@ function findMatchingStrings(arr1: string[], arr2: string[]): string[] {
 export function ResponseBlock({
   config,
   location,
+  status,
   style,
 }: Props) {
   const { storageEngine } = useStorageEngine();
@@ -52,39 +54,32 @@ export function ResponseBlock({
   } = useStoreActions();
   const currentStep = useCurrentStep();
   const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]) as FormElementProvenance | undefined;
-  const storedAnswer = useStoredAnswer();
-  const currentAnswer = useMemo(() => currentProvenance?.form || storedAnswer?.answer || {}, [currentProvenance, storedAnswer]) as StoredAnswer['answer'];
+
+  const storedAnswer = useMemo(() => currentProvenance?.form || status?.answer, [currentProvenance, status]);
+  const storedAnswerData = useStoredAnswer();
+  const formOrders = useMemo(() => storedAnswerData?.formOrder || {}, [storedAnswerData]);
 
   const studyId = useStudyId();
+
   const navigate = useNavigate();
+
   const configInUse = config as IndividualComponent;
 
-  const responses = useMemo(() => configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [], [location, configInUse.response]);
+  const filteredResponses = useMemo(() => configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [], [configInUse?.response, location]);
 
-  // Use stored form order if available, otherwise create new randomized order
-  const [shuffledResponses] = useState(() => {
-    if (configInUse?.randomizeForm) {
-      const formOrder = storedAnswer?.formOrder;
-      if (formOrder && !Array.isArray(formOrder) && typeof formOrder === 'object') {
-        // Use stored order
-        const orderMap = formOrder as Record<string, number>;
-        return responses.sort((a, b) => {
-          const aIndex = orderMap[a.id] ?? Infinity;
-          const bIndex = orderMap[b.id] ?? Infinity;
-          return aIndex - bIndex;
-        });
-      }
-      // Create new randomized order
-      const shuffleResponses = [...responses]
-        .map((value) => ({ value, sort: Math.random() }))
-        .sort((a, b) => a.sort - b.sort)
-        .map(({ value }) => value);
-      return shuffleResponses;
+  const responses = useMemo(() => {
+    if (!formOrders || Object.keys(formOrders).length === 0) {
+      return filteredResponses;
     }
-    return responses;
-  });
 
-  const responsesWithDefaults = useMemo(() => shuffledResponses.map((response) => {
+    return [...filteredResponses].sort((a, b) => {
+      const orderA = formOrders[a.id]?.[0];
+      const orderB = formOrders[b.id]?.[0];
+      return orderA - orderB;
+    });
+  }, [filteredResponses, formOrders]);
+
+  const responsesWithDefaults = useMemo(() => responses.map((response) => {
     if (response.type !== 'textOnly') {
       return {
         ...response,
@@ -92,9 +87,9 @@ export function ResponseBlock({
       };
     }
     return response;
-  }), [shuffledResponses]);
+  }), [responses]);
 
-  const answerValidator = useAnswerField(responsesWithDefaults, currentStep, currentAnswer);
+  const answerValidator = useAnswerField(responsesWithDefaults, currentStep, storedAnswer || {});
   // Set up trrack to store provenance graph of the answerValidator status
   const { actions, trrack } = useMemo(() => {
     const reg = Registry.create();
@@ -310,7 +305,7 @@ export function ResponseBlock({
             ) : (
               <>
                 <ResponseSwitcher
-                  storedAnswer={storedAnswer?.answer || {}}
+                  storedAnswer={storedAnswer || {}}
                   answer={{
                     ...answerValidator.getInputProps(response.id, {
                       type: response.type === 'checkbox' ? 'checkbox' : 'input',
