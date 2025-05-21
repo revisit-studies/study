@@ -52,12 +52,13 @@ export function ResponseBlock({
   const {
     updateResponseBlockValidation, toggleShowHelpText, saveIncorrectAnswer, incrementHelpCounter,
   } = useStoreActions();
+
   const currentStep = useCurrentStep();
   const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]) as FormElementProvenance | undefined;
 
   const storedAnswer = useMemo(() => currentProvenance?.form || status?.answer, [currentProvenance, status]);
   const storedAnswerData = useStoredAnswer();
-  const formOrders = useMemo(() => storedAnswerData?.formOrder || {}, [storedAnswerData]);
+  const formOrders : Record<string, number[]> = useMemo(() => storedAnswerData?.formOrder || {}, [storedAnswerData]);
 
   const studyId = useStudyId();
 
@@ -68,15 +69,17 @@ export function ResponseBlock({
   const filteredResponses = useMemo(() => configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [], [configInUse?.response, location]);
 
   const responses = useMemo(() => {
-    if (!formOrders || Object.keys(formOrders).length === 0) {
-      return filteredResponses;
+    // Randomized order
+    if (formOrders) {
+      // Sort responses based on their order in formOrders if available
+      return [...filteredResponses].sort((a, b) => {
+        const orderA = formOrders[a.id]?.[0];
+        const orderB = formOrders[b.id]?.[0];
+        return orderA - orderB;
+      });
     }
-
-    return [...filteredResponses].sort((a, b) => {
-      const orderA = formOrders[a.id]?.[0];
-      const orderB = formOrders[b.id]?.[0];
-      return orderA - orderB;
-    });
+    // Fixed order
+    return filteredResponses;
   }, [filteredResponses, formOrders]);
 
   const responsesWithDefaults = useMemo(() => responses.map((response) => {
@@ -289,7 +292,7 @@ export function ResponseBlock({
   return (
     <div style={style}>
       {responsesWithDefaults.map((response) => {
-        const configCorrectAnswer = configInUse.correctAnswer?.find((correctAnswer) => correctAnswer.id === response.id)?.answer;
+        const configCorrectAnswer = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
 
         // Increment index for each response, unless it is a textOnly response
         if (response.type !== 'textOnly') {
@@ -305,7 +308,7 @@ export function ResponseBlock({
             ) : (
               <>
                 <ResponseSwitcher
-                  storedAnswer={storedAnswer || {}}
+                  storedAnswer={storedAnswer}
                   answer={{
                     ...answerValidator.getInputProps(response.id, {
                       type: response.type === 'checkbox' ? 'checkbox' : 'input',
