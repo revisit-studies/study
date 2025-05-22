@@ -14,6 +14,7 @@
           "location": "aboveStimulus",
           "type": "likert",
           "numItems": 10,
+          "withDontKnow": true,
           "rightLabel": "Wonderful",
           "leftLabel": "Terrible"
         },
@@ -25,7 +26,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Easy",
-          "leftLabel": "Difficult"
+          "leftLabel": "Difficult",
+          "withDontKnow": true
         },
         {
           "id": "frustrating-satisfying",
@@ -35,7 +37,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Satisfying",
-          "leftLabel": "Frustrating"
+          "leftLabel": "Frustrating",
+          "withDontKnow": true
         },
         {
           "id": "",
@@ -45,7 +48,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Adequate power",
-          "leftLabel": "Inadequate power"
+          "leftLabel": "Inadequate power",
+          "withDontKnow": true
         },
         {
           "id": "dull-stimulating",
@@ -55,7 +59,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Stimulating",
-          "leftLabel": "Dull"
+          "leftLabel": "Dull",
+          "withDontKnow": true
         },
         {
           "id": "rigid-flexible",
@@ -65,7 +70,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Flexible",
-          "leftLabel": "Rigid"
+          "leftLabel": "Rigid",
+          "withDontKnow": true
         }
       ]
   },
@@ -80,7 +86,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Easy to read",
-          "leftLabel": "Hard to read"
+          "leftLabel": "Hard to read",
+          "withDontKnow": true
         },
         {
           "id": "highlighting-helps",
@@ -90,7 +97,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Very much",
-          "leftLabel": "Not at all"
+          "leftLabel": "Not at all",
+          "withDontKnow": true
         },
         {
           "id": "screen-organization",
@@ -100,7 +108,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Very clear",
-          "leftLabel": "Confusing"
+          "leftLabel": "Confusing",
+          "withDontKnow": true
         },
         {
           "id": "screen-sequence",
@@ -110,7 +119,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Very clear",
-          "leftLabel": "Confusing"
+          "leftLabel": "Confusing",
+          "withDontKnow": true
         }
     ]
   },
@@ -125,7 +135,8 @@
           "type": "likert", 
           "numItems": 10,
           "rightLabel": "Consistent",
-          "leftLabel": "Inconsistent"
+          "leftLabel": "Inconsistent",
+          "withDontKnow": true
         },
         {
           "id": "term-relevance",
@@ -135,7 +146,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Always",
-          "leftLabel": "Never"
+          "leftLabel": "Never",
+          "withDontKnow": true
         },
         {
           "id": "message-position",
@@ -145,7 +157,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Consistent",
-          "leftLabel": "Inconsistent"
+          "leftLabel": "Inconsistent",
+          "withDontKnow": true
         },
         {
           "id": "input-prompts",
@@ -155,7 +168,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Clear",
-          "leftLabel": "Confusing"
+          "leftLabel": "Confusing",
+          "withDontKnow": true
         },
         {
           "id": "system-feedback",
@@ -165,7 +179,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Always",
-          "leftLabel": "Never"
+          "leftLabel": "Never",
+          "withDontKnow": true
         },
         {
           "id": "error-messages",
@@ -175,7 +190,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Helpful",
-          "leftLabel": "Unhelpful"
+          "leftLabel": "Unhelpful",
+          "withDontKnow": true
         }
     ]
   },
@@ -190,7 +206,8 @@
         "type": "likert",
         "numItems": 10,
         "rightLabel": "Easy",
-        "leftLabel": "Difficult"
+        "leftLabel": "Difficult",
+        "withDontKnow": true
       },
       {
         "id": "exploring-features",
@@ -200,7 +217,8 @@
         "type": "likert",
         "numItems": 10,
         "rightLabel": "Easy",
-        "leftLabel": "Difficult"
+        "leftLabel": "Difficult",
+        "withDontKnow": true
       },
       {
         "id": "remembering-commands",
@@ -210,7 +228,8 @@
         "type": "likert",
         "numItems": 10,
         "rightLabel": "Easy",
-        "leftLabel": "Difficult"
+        "leftLabel": "Difficult",
+        "withDontKnow": true
       },
       {
         "id": "straight-forward-tasks",
@@ -220,7 +239,8 @@
         "type": "likert",
         "numItems": 10,
         "rightLabel": "Always",
-        "leftLabel": "Never"
+        "leftLabel": "Never",
+        "withDontKnow": true
       },
       {
         "id": "help-messages",
@@ -230,7 +250,8 @@
         "type": "likert",
         "numItems": 10,
         "rightLabel": "Helpful",
-        "leftLabel": "Unhelpful"
+        "leftLabel": "Unhelpful",
+        "withDontKnow": true
       },
       {
         "id": "reference-materials",
@@ -240,7 +261,8 @@
         "type": "likert",
         "numItems": 10,
         "rightLabel": "Clear",
-        "leftLabel": "Confusing"
+        "leftLabel": "Confusing",
+        "withDontKnow": true
       }
     ]
   },
@@ -255,7 +277,8 @@
         "type": "likert",
         "numItems": 10,
         "rightLabel": "Fast enough",
-        "leftLabel": "Too slow"
+        "leftLabel": "Too slow",
+        "withDontKnow": true
       },
       {
         "id": "system-reliability", 
@@ -265,7 +288,8 @@
         "type": "likert",
         "numItems": 10,
         "rightLabel": "Reliable",
-        "leftLabel": "Unreliable"
+        "leftLabel": "Unreliable",
+        "withDontKnow": true
       },
       {
         "id": "system-noise",
@@ -275,7 +299,8 @@
         "type": "likert",
         "numItems": 10,
         "rightLabel": "Quiet",
-        "leftLabel": "Noisy"
+        "leftLabel": "Noisy",
+        "withDontKnow": true
       },
       {
         "id": "correcting-mistakes",
@@ -285,7 +310,8 @@
         "type": "likert",
         "numItems": 10,
         "rightLabel": "Easy",
-        "leftLabel": "Difficult"
+        "leftLabel": "Difficult",
+        "withDontKnow": true
       },
       {
         "id": "user-needs",
@@ -295,7 +321,8 @@
         "type": "likert",
         "numItems": 10,
         "rightLabel": "Always",
-        "leftLabel": "Never"
+        "leftLabel": "Never",
+        "withDontKnow": true
       }
     ]
   },
@@ -310,7 +337,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Good",
-          "leftLabel": "Poor"
+          "leftLabel": "Poor",
+          "withDontKnow": true
         },
         {
           "id": "system-feedback",
@@ -320,7 +348,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Good", 
-          "leftLabel": "Poor"
+          "leftLabel": "Poor",
+          "withDontKnow": true
         },
         {
           "id": "error-response",
@@ -330,7 +359,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Gracious",
-          "leftLabel": "Awkward"
+          "leftLabel": "Awkward",
+          "withDontKnow": true
         },
         {
           "id": "system-messages",
@@ -340,7 +370,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Good",
-          "leftLabel": "Poor"
+          "leftLabel": "Poor",
+          "withDontKnow": true
         },
         {
           "id": "system-clutter",
@@ -350,7 +381,8 @@
           "type": "likert",
           "numItems": 10,
           "rightLabel": "Good",
-          "leftLabel": "Poor"
+          "leftLabel": "Poor",
+          "withDontKnow": true
         }
     ]
   }

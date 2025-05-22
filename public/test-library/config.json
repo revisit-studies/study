@@ -23,7 +23,8 @@
   "importedLibraries": [
     "test",
     "mini-vlat",
-    "quis"
+    "quis",
+    "berlin-num"
   ],
   "components": {
     "my-test": {
@@ -55,6 +56,8 @@
     "order": "fixed",
     "components": [
       "$quis.sequences.quis-full",
+      "$berlin-num.sequences.berlin-num-classic",
+      "$berlin-num.sequences.berlin-num-single",
       "$test.sequences.small",
       "$test.se.long",
       "$test.components.test-md",
