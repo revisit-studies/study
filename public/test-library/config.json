@@ -22,7 +22,8 @@
   },
   "importedLibraries": [
     "test",
-    "mini-vlat"
+    "mini-vlat",
+    "quis"
   ],
   "components": {
     "my-test": {
@@ -53,6 +54,7 @@
   "sequence": {
     "order": "fixed",
     "components": [
+      "$quis.sequences.quis-full",
       "$test.sequences.small",
       "$test.se.long",
       "$test.components.test-md",
