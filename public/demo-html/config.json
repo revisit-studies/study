@@ -1,5 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/StudyConfigSchema.json",
+  "$schema": "https://raw.githubusercontent.com/revisit-studies/study/dev/src/parser/StudyConfigSchema.json",
   "studyMetadata": {
     "title": "HTML as a Stimulus",
     "version": "pilot",
@@ -53,7 +53,8 @@
     "external_website": {
       "type": "website",
       "path": "https://www.revisit.dev",
-      "response": []
+      "response": [],
+      "previousButton": true
     }
   },
   "sequence": {
