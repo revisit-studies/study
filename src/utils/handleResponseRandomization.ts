@@ -2,7 +2,7 @@ import { IndividualComponent, StringOption } from '../parser/types';
 
 export function randomizeForm(componentConfig: IndividualComponent) {
   return componentConfig.response.reduce((acc, response) => {
-    if (componentConfig.randomizeForm) {
+    if (componentConfig.responseOrder === 'random') {
       const shuffled = [...componentConfig.response]
         .map((value) => ({ value, sort: Math.random() }))
         .sort((a, b) => a.sort - b.sort)
