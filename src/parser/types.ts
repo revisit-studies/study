@@ -640,6 +640,8 @@ export interface BaseIndividualComponent {
   responseDividers?: boolean;
   /** Optional override for the help text. If present, will override the default help text path set in the uiConfig. */
   helpTextPathOverride?: string;
+  /** The order of the responses. Defaults to 'fixed'. */
+  responseOrder?: 'fixed' | 'random';
 }
 
 /**

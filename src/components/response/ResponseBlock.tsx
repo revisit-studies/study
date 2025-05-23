@@ -22,6 +22,7 @@ import { ResponseSwitcher } from './ResponseSwitcher';
 import { FormElementProvenance, StoredAnswer } from '../../store/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
+import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 
 type Props = {
   status?: StoredAnswer;
@@ -51,10 +52,13 @@ export function ResponseBlock({
   const {
     updateResponseBlockValidation, toggleShowHelpText, saveIncorrectAnswer, incrementHelpCounter,
   } = useStoreActions();
+
   const currentStep = useCurrentStep();
   const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]) as FormElementProvenance | undefined;
 
   const storedAnswer = useMemo(() => currentProvenance?.form || status?.answer, [currentProvenance, status]);
+  const storedAnswerData = useStoredAnswer();
+  const formOrders : Record<string, number[]> = useMemo(() => storedAnswerData?.formOrder || {}, [storedAnswerData]);
 
   const studyId = useStudyId();
 
@@ -62,7 +66,20 @@ export function ResponseBlock({
 
   const configInUse = config as IndividualComponent;
 
-  const responses = useMemo(() => configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [], [configInUse?.response, location]);
+  const filteredResponses = useMemo(() => configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [], [configInUse?.response, location]);
+
+  const responses = useMemo(() => {
+    // Randomized order
+    if (formOrders) {
+      // Sort responses based on their order in formOrders
+      return [...filteredResponses]
+        .map((value) => ({ value, sort: formOrders[value.id]?.[0] }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value);
+    }
+    // Fixed order
+    return filteredResponses;
+  }, [filteredResponses, formOrders]);
 
   const responsesWithDefaults = useMemo(() => responses.map((response) => {
     if (response.type !== 'textOnly') {
