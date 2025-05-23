@@ -178,7 +178,7 @@ export function ComponentController() {
     );
   }
   const instruction = currentConfig?.instruction || '';
-  const instructionLocation = currentConfig?.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
+  const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
   const instructionInSideBar = instructionLocation === 'sidebar';
 
   return (

@@ -54,7 +54,7 @@ export function ResponseSwitcher({
   const config = useStoreSelector((state) => state.config);
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[currentComponent] || {}, config), [currentComponent, config]);
 
-  const enumerateQuestions = componentConfig?.enumerateQuestions !== undefined ? componentConfig.enumerateQuestions : studyConfig.uiConfig.enumerateQuestions ?? false;
+  const enumerateQuestions = componentConfig.enumerateQuestions ?? studyConfig.uiConfig.enumerateQuestions ?? false;
 
   const isDisabled = useMemo(() => {
     if (response.paramCapture) {

@@ -27,7 +27,7 @@ export function StepRenderer() {
   const config = useStoreSelector((state) => state.config);
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[currentComponent] || {}, config), [currentComponent, config]);
 
-  const windowEventDebounceTime = componentConfig?.windowEventDebounceTime !== undefined ? componentConfig.windowEventDebounceTime : studyConfig.uiConfig.windowEventDebounceTime ?? 100;
+  const windowEventDebounceTime = componentConfig.windowEventDebounceTime ?? studyConfig.uiConfig.windowEventDebounceTime ?? 100;
 
   const showStudyBrowser = useStoreSelector((state) => state.showStudyBrowser);
   const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
@@ -111,9 +111,9 @@ export function StepRenderer() {
   const { studyNavigatorEnabled, dataCollectionEnabled } = useMemo(() => modes, [modes]);
 
   const asideOpen = useMemo(() => studyNavigatorEnabled && showStudyBrowser, [studyNavigatorEnabled, showStudyBrowser]);
-  const sidebarOpen = componentConfig.withSidebar !== undefined ? componentConfig.withSidebar : studyConfig.uiConfig.withSidebar;
-  const sidebarWidth = componentConfig.sidebarWidth !== undefined ? componentConfig.sidebarWidth : studyConfig.uiConfig.sidebarWidth ?? 300;
-  const showTitleBar = componentConfig?.showTitleBar !== undefined ? componentConfig.showTitleBar : studyConfig.uiConfig.showTitleBar ?? true;
+  const sidebarOpen = componentConfig.withSidebar ?? studyConfig.uiConfig.withSidebar;
+  const sidebarWidth = componentConfig?.sidebarWidth ?? studyConfig.uiConfig.sidebarWidth ?? 300;
+  const showTitleBar = componentConfig.showTitleBar ?? studyConfig.uiConfig.showTitleBar ?? true;
 
   const isAnalysis = useIsAnalysis();
 

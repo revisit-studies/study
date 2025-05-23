@@ -105,17 +105,18 @@ export function ResponseBlock({
 
   const studyConfig = useStudyConfig();
 
-  const hasCorrectAnswerFeedback = (configInUse?.provideFeedback ?? studyConfig.uiConfig.provideFeedback) && ((configInUse?.correctAnswer?.length || 0) > 0);
-  const allowFailedTraining = configInUse?.allowFailedTraining ?? studyConfig?.uiConfig?.allowFailedTraining ?? true;
+  const provideFeedback = configInUse.provideFeedback ?? studyConfig.uiConfig.provideFeedback;
+  const hasCorrectAnswerFeedback = provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
+  const allowFailedTraining = configInUse.allowFailedTraining ?? studyConfig.uiConfig.allowFailedTraining ?? true;
   const [attemptsUsed, setAttemptsUsed] = useState(0);
-  const trainingAttempts = configInUse?.trainingAttempts ?? studyConfig?.uiConfig?.trainingAttempts ?? 2;
+  const trainingAttempts = configInUse.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2;
   const [enableNextButton, setEnableNextButton] = useState(false);
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
 
   const identifier = useCurrentIdentifier();
-  const nextButtonLocation = configInUse?.nextButtonLocation !== undefined ? configInUse.nextButtonLocation : studyConfig.uiConfig.nextButtonLocation;
+  const nextButtonLocation = configInUse?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation;
   const showNextBtn = location === (nextButtonLocation || 'belowStimulus');
 
   useEffect(() => {
@@ -272,7 +273,7 @@ export function ResponseBlock({
     return () => {};
   }, [checkAnswerProvideFeedback, nextOnEnter]);
 
-  const nextButtonText = configInUse?.nextButtonText !== undefined ? configInUse.nextButtonText : studyConfig.uiConfig.nextButtonText || 'Next';
+  const nextButtonText = configInUse?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next';
 
   let index = 0;
   return (
