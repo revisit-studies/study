@@ -2426,6 +2426,14 @@
           "description": "The text to display on the next button.",
           "type": "string"
         },
+        "minHeightSize": {
+          "description": "The minimum screen height size for the study",
+          "type": "number"
+        },
+        "minWidthSize": {
+          "description": "The minimum screen width size for the study",
+          "type": "number"
+        },
         "nextOnEnter": {
           "description": "Whether enter key should move to the next question. Defaults to false.",
           "type": "boolean"

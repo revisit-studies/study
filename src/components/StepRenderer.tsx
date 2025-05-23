@@ -16,6 +16,7 @@ import { AnalysisFooter } from './interface/AnalysisFooter';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
 import { useCurrentComponent } from '../routes/utils';
+import { ResolutionWarning } from './interface/ResolutionWarning';
 
 export function StepRenderer() {
   const windowEvents = useRef<EventType[]>([]);
@@ -131,6 +132,7 @@ export function StepRenderer() {
         {showTitleBar && (
           <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} />
         )}
+        <ResolutionWarning />
         <HelpModal />
         <AlertModal />
         <AppShell.Main>
