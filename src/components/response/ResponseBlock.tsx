@@ -108,6 +108,9 @@ export function ResponseBlock({
   const [attemptsUsed, setAttemptsUsed] = useState(0);
   const trainingAttempts = configInUse?.trainingAttempts || 2;
   const [enableNextButton, setEnableNextButton] = useState(false);
+  const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
+  const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
+  const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
   const studyConfig = useStudyConfig();
   const identifier = useCurrentIdentifier();
 
