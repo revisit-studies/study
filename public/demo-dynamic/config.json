@@ -19,7 +19,8 @@
       "logoPath": "revisitAssets/revisitLogoSquare.svg",
       "withProgressBar": true,
       "autoDownloadStudy": false,
-      "sidebar": false
+      "sidebar": false,
+      "nextOnEnter": true
     },
     "components": {
         "introduction": {
@@ -38,19 +39,16 @@
                     "location": "belowStimulus",
                     "options": [
                         "Left",
+                        "Same",
                         "Right"
                     ]
                 }
             ],
             "correctAnswer": [
-                {
-                    "id": "buttonResponse",
-                    "answer": "Right"
-                }
             ],
             "provideFeedback": true,
             "allowFailedTraining": true,
-            "trainingAttempts": 1
+            "trainingAttempts": 2
         }
     },
     "sequence": {
