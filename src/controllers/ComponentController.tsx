@@ -71,7 +71,7 @@ export function ComponentController() {
   }, [setAlertModal, storageEngine, storeDispatch]);
 
   useEffect(() => {
-    if (!studyConfig || !studyConfig.uiConfig.recordStudyAudio || !storageEngine || storageEngine.getEngine() !== 'firebase' || (status && status.endTime > 0) || isAnalysis) {
+    if (!studyConfig || !studyConfig.uiConfig.recordAudio || !storageEngine || storageEngine.getEngine() !== 'firebase' || (status && status.endTime > 0) || isAnalysis) {
       return;
     }
 
@@ -177,10 +177,9 @@ export function ComponentController() {
       </Center>
     );
   }
-
-  const instruction = (currentConfig.instruction || '');
-  const { instructionLocation } = currentConfig;
-  const instructionInSideBar = studyConfig.uiConfig.sidebar && (instructionLocation === 'sidebar' || instructionLocation === undefined);
+  const instruction = currentConfig?.instruction || '';
+  const instructionLocation = currentConfig.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
+  const instructionInSideBar = instructionLocation === 'sidebar';
 
   return (
     <>

@@ -32,8 +32,8 @@ export function NextButton({
     goToNextStep();
   }, [goToNextStep, onClick]);
 
-  const nextButtonDisableTime = configInUse?.nextButtonDisableTime;
-  const nextButtonEnableTime = configInUse?.nextButtonEnableTime || 0;
+  const nextButtonDisableTime = configInUse?.nextButtonDisableTime ?? studyConfig.uiConfig.nextButtonDisableTime;
+  const nextButtonEnableTime = configInUse?.nextButtonEnableTime ?? studyConfig.uiConfig.nextButtonEnableTime ?? 0;
   const [timer, setTimer] = useState<number | undefined>(undefined);
   // Start a timer on first render, update timer every 100ms
   useEffect(() => {
@@ -61,6 +61,8 @@ export function NextButton({
     [nextButtonDisableTime, nextButtonEnableTime, timer],
   );
 
+  const nextOnEnter = configInUse?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
+
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Enter' && !disabled && !isNextDisabled && buttonTimerSatisfied) {
@@ -68,14 +70,14 @@ export function NextButton({
       }
     };
 
-    if (studyConfig.uiConfig.nextOnEnter) {
+    if (nextOnEnter) {
       window.addEventListener('keydown', handleKeyDown);
       return () => {
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
     return () => {};
-  }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, studyConfig.uiConfig.nextOnEnter]);
+  }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, nextOnEnter]);
 
   return (
     <>

@@ -22,20 +22,15 @@ export function HelpModal() {
 
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[component] || {}, config), [component, config]);
 
-  const helpPath = useMemo(() => {
-    if (componentConfig.helpTextPathOverride) {
-      return componentConfig.helpTextPathOverride;
-    }
-    return config.uiConfig.helpTextPath;
-  }, [componentConfig.helpTextPathOverride, config.uiConfig.helpTextPath]);
+  const helpTextPath = useMemo(() => componentConfig.helpTextPath ?? config.uiConfig.helpTextPath, [componentConfig.helpTextPath, config.uiConfig.helpTextPath]);
 
   useEffect(() => {
     async function fetchText() {
-      if (!helpPath) {
+      if (!helpTextPath) {
         setLoading(false);
         return;
       }
-      const asset = await getStaticAssetByPath(`${PREFIX}${helpPath}`);
+      const asset = await getStaticAssetByPath(`${PREFIX}${helpTextPath}`);
       if (asset !== undefined) {
         setHelpText(asset);
       }
@@ -43,7 +38,7 @@ export function HelpModal() {
     }
 
     fetchText();
-  }, [helpPath]);
+  }, [helpTextPath]);
 
   return (
     <Modal size="70%" opened={showHelpText} withCloseButton={false} onClose={() => storeDispatch(toggleShowHelpText())}>

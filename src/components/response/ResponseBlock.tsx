@@ -103,20 +103,21 @@ export function ResponseBlock({
 
   const matrixAnswers = useStoreSelector((state) => state.matrixAnswers);
 
-  const hasCorrectAnswerFeedback = configInUse?.provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
-  const allowFailedTraining = configInUse?.allowFailedTraining === undefined ? true : configInUse.allowFailedTraining;
+  const studyConfig = useStudyConfig();
+
+  const provideFeedback = configInUse.provideFeedback ?? studyConfig.uiConfig.provideFeedback;
+  const hasCorrectAnswerFeedback = provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
+  const allowFailedTraining = configInUse.allowFailedTraining ?? studyConfig.uiConfig.allowFailedTraining ?? true;
   const [attemptsUsed, setAttemptsUsed] = useState(0);
-  const trainingAttempts = configInUse?.trainingAttempts || 2;
+  const trainingAttempts = configInUse.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2;
   const [enableNextButton, setEnableNextButton] = useState(false);
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
 
-  const studyConfig = useStudyConfig();
-
   const identifier = useCurrentIdentifier();
-
-  const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
+  const nextButtonLocation = configInUse?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation;
+  const showNextBtn = location === (nextButtonLocation || 'belowStimulus');
 
   useEffect(() => {
     const ReactiveResponse = responsesWithDefaults.find((r) => r.type === 'reactive');
@@ -254,8 +255,10 @@ export function ResponseBlock({
     }
   }, [attemptsUsed, responsesWithDefaults, configInUse, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, storageEngine, studyId, navigate, identifier, storeDispatch, answerValidator, alertConfig, saveIncorrectAnswer]);
 
+  const nextOnEnter = configInUse?.nextOnEnter !== undefined ? configInUse.nextOnEnter : studyConfig.uiConfig.nextOnEnter;
+
   useEffect(() => {
-    if (studyConfig.uiConfig.nextOnEnter) {
+    if (nextOnEnter) {
       const handleKeyDown = (event: KeyboardEvent) => {
         if (event.key === 'Enter') {
           checkAnswerProvideFeedback();
@@ -268,7 +271,9 @@ export function ResponseBlock({
       };
     }
     return () => {};
-  }, [checkAnswerProvideFeedback, studyConfig]);
+  }, [checkAnswerProvideFeedback, nextOnEnter]);
+
+  const nextButtonText = configInUse?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next';
 
   let index = 0;
   return (
@@ -343,7 +348,7 @@ export function ResponseBlock({
         {showNextBtn && (
           <NextButton
             disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
-            label={configInUse.nextButtonText || 'Next'}
+            label={nextButtonText}
             configInUse={configInUse}
           />
         )}

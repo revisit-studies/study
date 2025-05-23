@@ -14,6 +14,8 @@ import { WindowEventsContext } from '../store/hooks/useWindowEvents';
 import { useStoreSelector, useStoreDispatch, useStoreActions } from '../store/store';
 import { AnalysisFooter } from './interface/AnalysisFooter';
 import { useIsAnalysis } from '../store/hooks/useIsAnalysis';
+import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
+import { useCurrentComponent } from '../routes/utils';
 import { ResolutionWarning } from './interface/ResolutionWarning';
 
 export function StepRenderer() {
@@ -22,7 +24,11 @@ export function StepRenderer() {
   const { toggleStudyBrowser } = useStoreActions();
 
   const studyConfig = useStudyConfig();
-  const windowEventDebounceTime = studyConfig.uiConfig.windowEventDebounceTime ?? 100;
+  const currentComponent = useCurrentComponent();
+  const config = useStoreSelector((state) => state.config);
+  const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[currentComponent] || {}, config), [currentComponent, config]);
+
+  const windowEventDebounceTime = componentConfig.windowEventDebounceTime ?? studyConfig.uiConfig.windowEventDebounceTime ?? 100;
 
   const showStudyBrowser = useStoreSelector((state) => state.showStudyBrowser);
   const analysisHasAudio = useStoreSelector((state) => state.analysisHasAudio);
@@ -103,11 +109,12 @@ export function StepRenderer() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const sidebarWidth = studyConfig.uiConfig.sidebarWidth ?? 300;
-
   const { studyNavigatorEnabled, dataCollectionEnabled } = useMemo(() => modes, [modes]);
 
   const asideOpen = useMemo(() => studyNavigatorEnabled && showStudyBrowser, [studyNavigatorEnabled, showStudyBrowser]);
+  const sidebarOpen = componentConfig.withSidebar ?? studyConfig.uiConfig.withSidebar;
+  const sidebarWidth = componentConfig?.sidebarWidth ?? studyConfig.uiConfig.sidebarWidth ?? 300;
+  const showTitleBar = componentConfig.showTitleBar ?? studyConfig.uiConfig.showTitleBar ?? true;
 
   const isAnalysis = useIsAnalysis();
 
@@ -115,21 +122,21 @@ export function StepRenderer() {
     <WindowEventsContext.Provider value={windowEvents}>
       <AppShell
         padding="md"
-        header={{ height: studyConfig.uiConfig.showTitleBar === false ? 0 : 70 }}
-        navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !studyConfig.uiConfig.sidebar, mobile: !studyConfig.uiConfig.sidebar } }}
+        header={{ height: showTitleBar ? 70 : 0 }}
+        navbar={{ width: sidebarWidth, breakpoint: 'xs', collapsed: { desktop: !sidebarOpen, mobile: !sidebarOpen } }}
         aside={{ width: 360, breakpoint: 'xs', collapsed: { desktop: !asideOpen, mobile: !asideOpen } }}
         footer={{ height: (isAnalysis ? 75 : 0) + (analysisHasAudio ? 50 : 0) }}
       >
         <AppNavBar />
         <AppAside />
-        {studyConfig.uiConfig.showTitleBar !== false && (
+        {showTitleBar && (
           <AppHeader studyNavigatorEnabled={studyNavigatorEnabled} dataCollectionEnabled={dataCollectionEnabled} />
         )}
         <ResolutionWarning />
         <HelpModal />
         <AlertModal />
         <AppShell.Main>
-          {studyConfig.uiConfig.showTitleBar === false && !showStudyBrowser && studyNavigatorEnabled && (
+          {!showTitleBar && !showStudyBrowser && studyNavigatorEnabled && (
             <Button
               variant="transparent"
               leftSection={<IconArrowLeft size={14} />}
