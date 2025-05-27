@@ -143,6 +143,10 @@ export async function studyStoreCreator(
           state.funcSequence[payload.funcName] = [];
         }
 
+        if (state.funcSequence[payload.funcName].length > payload.funcIndex) {
+          return;
+        }
+
         const componentConfig = studyComponentToIndividualComponent(state.config.components[payload.component] || { response: [] }, config);
 
         const identifier = `${payload.funcName}_${payload.index}_${payload.component}_${payload.funcIndex}`;
@@ -315,8 +319,13 @@ export async function studyStoreCreator(
         state.answers[question].incorrectAnswers[identifier].value.push(answer);
       },
       deleteDynamicBlockAnswers(state, { payload }) {
+        const { currentStep, funcIndex } = payload;
+
+        // regex to match all keys that start with the current step and funcIndex
+        const regex = new RegExp(`.*_${currentStep}_.*_${funcIndex}`);
+        // delete all keys that match the regex
         Object.keys(state.answers).forEach((key) => {
-          if (key.includes(`_${payload}_`)) {
+          if (key.match(regex)) {
             delete state.answers[key];
           }
         });

@@ -36,7 +36,8 @@ export function usePreviousStep() {
         navigate(`/${studyId}/${encryptIndex(previousStep)}${window.location.search}`);
       } else {
         // Delete current dynamic block component and go to previous
-        storeDispatch(deleteDynamicBlockAnswers(currentStep));
+
+        storeDispatch(deleteDynamicBlockAnswers({ currentStep, funcIndex: decryptIndex(funcIndex) }));
         navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(decryptIndex(funcIndex) - 1)}${window.location.search}`);
       }
     } else {
