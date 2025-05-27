@@ -77,7 +77,7 @@ export function NextButton({
     return () => { };
   }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, studyConfig.uiConfig.nextOnEnter]);
 
-  const buttonsDisabled = useMemo(() => disabled || isNextDisabled || !buttonTimerSatisfied, [disabled, isNextDisabled, buttonTimerSatisfied]);
+  const nextButtonDisabled = useMemo(() => disabled || isNextDisabled || !buttonTimerSatisfied, [disabled, isNextDisabled, buttonTimerSatisfied]);
 
   return (
     <>
@@ -92,7 +92,7 @@ export function NextButton({
         {checkAnswer}
         <Button
           type="submit"
-          disabled={buttonsDisabled}
+          disabled={nextButtonDisabled}
           onClick={handleClick}
           px={location === 'sidebar' && checkAnswer ? 8 : undefined}
         >
