@@ -138,13 +138,9 @@ export async function studyStoreCreator(
         state.isRecording = payload;
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      pushToFuncSequence(state, { payload }: PayloadAction<{component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any> | undefined, correctAnswer: Answer[] | undefined}>) {
+      pushToFuncSequence(state, { payload }: PayloadAction<{ component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any> | undefined, correctAnswer: Answer[] | undefined }>) {
         if (!state.funcSequence[payload.funcName]) {
           state.funcSequence[payload.funcName] = [];
-        }
-
-        if (state.funcSequence[payload.funcName].length > payload.funcIndex) {
-          return;
         }
 
         const componentConfig = studyComponentToIndividualComponent(state.config.components[payload.component] || { response: [] }, config);
@@ -200,7 +196,7 @@ export async function studyStoreCreator(
         state.reactiveAnswers = action.payload;
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      saveAnalysisState(state, { payload }: PayloadAction<{prov: any, location: ResponseBlockLocation}>) {
+      saveAnalysisState(state, { payload }: PayloadAction<{ prov: any, location: ResponseBlockLocation }>) {
         state.analysisProvState[payload.location] = payload.prov;
       },
       setAnalysisIsPlaying(state, { payload }: PayloadAction<boolean>) {
@@ -317,6 +313,13 @@ export async function studyStoreCreator(
         }
 
         state.answers[question].incorrectAnswers[identifier].value.push(answer);
+      },
+      deleteDynamicBlockAnswers(state, { payload }) {
+        Object.keys(state.answers).forEach((key) => {
+          if (key.includes(`_${payload}_`)) {
+            delete state.answers[key];
+          }
+        });
       },
     },
   });
