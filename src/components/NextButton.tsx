@@ -85,7 +85,6 @@ export function NextButton({
         {configInUse?.previousButton && (
           <PreviousButton
             label={configInUse.previousButtonText || 'Previous'}
-            configInUse={configInUse}
             px={location === 'sidebar' && checkAnswer ? 8 : undefined}
           />
         )}
