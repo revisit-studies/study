@@ -10,6 +10,7 @@ import { Registry, initializeTrrack } from '@trrack/core';
 import {
   IndividualComponent,
   ResponseBlockLocation,
+  Response,
 } from '../../parser/types';
 import { useCurrentIdentifier, useCurrentStep, useStudyId } from '../../routes/utils';
 import {
@@ -58,7 +59,7 @@ export function ResponseBlock({
 
   const storedAnswer = useMemo(() => currentProvenance?.form || status?.answer, [currentProvenance, status]);
   const storedAnswerData = useStoredAnswer();
-  const formOrders : Record<string, number[]> = useMemo(() => storedAnswerData?.formOrder || {}, [storedAnswerData]);
+  const formOrders: Record<string, string[]> = useMemo(() => storedAnswerData?.formOrder || {}, [storedAnswerData]);
 
   const studyId = useStudyId();
 
@@ -66,20 +67,9 @@ export function ResponseBlock({
 
   const configInUse = config as IndividualComponent;
 
-  const filteredResponses = useMemo(() => configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [], [configInUse?.response, location]);
-
-  const responses = useMemo(() => {
-    // Randomized order
-    if (formOrders) {
-      // Sort responses based on their order in formOrders
-      return [...filteredResponses]
-        .map((value) => ({ value, sort: formOrders[value.id]?.[0] }))
-        .sort((a, b) => a.sort - b.sort)
-        .map(({ value }) => value);
-    }
-    // Fixed order
-    return filteredResponses;
-  }, [filteredResponses, formOrders]);
+  const responses = useMemo(() => formOrders.response
+    .map((id) => configInUse.response.find((r) => r.id === id))
+    .filter((r): r is Response => r !== undefined && (r.location ? r.location === location : location === 'belowStimulus')), [configInUse.response, location, formOrders]);
 
   const responsesWithDefaults = useMemo(() => responses.map((response) => {
     if (response.type !== 'textOnly') {

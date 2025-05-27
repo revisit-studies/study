@@ -125,7 +125,7 @@ export interface StoredAnswer {
   /** The order of the questions in a matrix component. */
   questionOrders: Record<string, string[]>;
   /** The order of the form elements in a base response. */
-  formOrder?: Record<string, number[]>;
+  formOrder?: Record<string, string[]>;
 }
 
 export interface JumpFunctionParameters<T> {

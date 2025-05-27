@@ -1,16 +1,18 @@
 import { IndividualComponent, StringOption } from '../parser/types';
 
 export function randomizeForm(componentConfig: IndividualComponent) {
-  return componentConfig.response.reduce((acc, response) => {
-    if (componentConfig.responseOrder === 'random') {
-      const shuffled = [...componentConfig.response]
+  const response = componentConfig.response.map((r) => r.id);
+
+  if (componentConfig.responseOrder === 'random') {
+    return {
+      response: [...response]
         .map((value) => ({ value, sort: Math.random() }))
         .sort((a, b) => a.sort - b.sort)
-        .map(({ value }) => value);
-      acc[response.id] = [shuffled.findIndex((value) => value.id === response.id)];
-    }
-    return acc;
-  }, {} as Record<string, number[]>);
+        .map(({ value }) => value),
+    };
+  }
+
+  return { response };
 }
 
 export function randomizeOptions(componentConfig: IndividualComponent) {
