@@ -67,9 +67,9 @@ export function ResponseBlock({
 
   const configInUse = config as IndividualComponent;
 
-  const responses = useMemo(() => formOrders.response
-    .map((id) => configInUse.response.find((r) => r.id === id))
-    .filter((r): r is Response => r !== undefined && (r.location ? r.location === location : location === 'belowStimulus')), [configInUse.response, location, formOrders]);
+  const responses = useMemo(() => (formOrders?.response ? formOrders.response
+    .map((id) => configInUse?.response?.find((r) => r.id === id))
+    .filter((r): r is Response => r !== undefined && (r.location ? r.location === location : location === 'belowStimulus')) : []), [configInUse?.response, location, formOrders]);
 
   const responsesWithDefaults = useMemo(() => responses.map((response) => {
     if (response.type !== 'textOnly') {
@@ -152,7 +152,7 @@ export function ResponseBlock({
       // update answerValidator
       answerValidator.setValues(updatedValues);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matrixAnswers]);
 
   useEffect(() => {
@@ -274,7 +274,7 @@ export function ResponseBlock({
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
-    return () => {};
+    return () => { };
   }, [checkAnswerProvideFeedback, studyConfig]);
 
   let index = 0;
