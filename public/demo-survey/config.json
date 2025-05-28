@@ -220,49 +220,6 @@
       "type": "questionnaire",
       "response": [
         {
-          "id": "q-dropdown",
-          "prompt": "Dropdown example – which chart do you like best?",
-          "secondaryText": "You can specify secondary text to clarify your question.",
-          "location": "aboveStimulus",
-          "type": "dropdown",
-          "placeholder": "Enter your preference",
-          "options": [
-            "Bar",
-            "Bubble",
-            "Pie",
-            "Stacked Bar"
-          ]
-        },
-        {
-          "id": "textField",
-          "type": "textOnly",
-          "location": "aboveStimulus",
-          "prompt": "# This is a header that is text only with some text below\n\n## This is a subheader\n\nThis is some text that is not a question, but just some information to help the user understand what they are doing. You can use markdown to format this text. For example, you can make it **bold** or *italic*. You can also add links like [this](https://revisit.dev)",
-          "restartEnumeration": true          
-        },
-        {
-          "id": "q-numerical",
-          "prompt": "Numerical example, required",
-          "secondaryText": "A numeric example",
-          "location": "aboveStimulus",
-          "type": "numerical",
-          "placeholder": "Enter your age here, range from 0 - 100",
-          "max": 100,
-          "min": 0,
-          "withDontKnow": true
-        },
-        {
-          "id": "q-likert",
-          "prompt": "Likert scale example",
-          "secondaryText": "A likert example with 9 items, also showing how to add a divider after the element.",
-          "location": "aboveStimulus",
-          "type": "likert",
-          "numItems": 9,
-          "rightLabel": "Like",
-          "leftLabel": "Dislike",
-          "withDivider": true
-        },
-        {
           "id": "q-multi-satisfaction",
           "prompt": "Rate your satisfaction from 1 (Highly Unsatisfied) to 5 (Highly Satisfied) for the following items.",
           "secondaryText": "A simple matrix of Likert responses with predefined options for satisfaction.",
@@ -273,7 +230,8 @@
             "The tool we created",
             "The technique we developed",
             "The authors of the tools"
-          ]
+          ],
+          "questionOrder": "random"
         },
         {
           "id": "multi-custom",
@@ -292,23 +250,8 @@
             "Eagle",
             "Salmon",
             "Platypus"
-          ]
-        },
-        {
-          "id": "q-short-text",
-          "prompt": "Short text example",
-          "secondaryText": "A short text example",
-          "location": "aboveStimulus",
-          "type": "shortText",
-          "placeholder": "Enter your answer here"
-        },
-        {
-          "id": "q-long-text",
-          "prompt": "Long text example",
-          "secondaryText": "A text box for long text",
-          "location": "aboveStimulus",
-          "type": "longText",
-          "placeholder": "Enter your long comments here"
+          ],
+          "questionOrder": "random"
         },
         {
           "id": "q-checkbox",
@@ -323,6 +266,7 @@
             "Option 2",
             "Option 3"
           ],
+          "optionOrder": "random",
           "withOther": true
         },
         {
@@ -338,6 +282,7 @@
             "Option 2",
             "Option 3"
           ],
+          "optionOrder": "random",
           "horizontal": true,
           "withOther": true
         },
@@ -351,6 +296,7 @@
             "Option 1",
             "Option 2"
           ],
+          "optionOrder": "random",
           "withOther": true
         },
         {
@@ -364,29 +310,8 @@
             "Option 2 this is long a long option that will wrap"
           ],
           "horizontal": true,
+          "optionOrder": "random",
           "withOther": true
-        },
-        {
-          "id": "q-slider",
-          "prompt": "Slider example",
-          "secondaryText": "A slider for 0-100 with 3 breakpoints for bad, mid, and good",
-          "location": "aboveStimulus",
-          "type": "slider",
-          "startingValue": 50,
-          "options": [
-            {
-              "label": "Bad",
-              "value": 0
-            },
-            {
-              "label": "Mid",
-              "value": 50
-            },
-            {
-              "label": "Good",
-              "value": 100
-            }
-          ]
         },
         {
           "id": "q-buttons",
@@ -399,7 +324,8 @@
             "Option 2",
             "Option 3",
             "Option 4"
-          ]
+          ],
+          "optionOrder": "random"
         }
       ]
     },
