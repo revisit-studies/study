@@ -26,7 +26,7 @@ export function AppNavBar() {
 
   const status = useStoredAnswer();
   const instruction = currentConfig?.instruction || '';
-  const instructionLocation = currentConfig?.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar';
+  const instructionLocation = useMemo(() => currentConfig?.instructionLocation ?? studyConfig.uiConfig.instructionLocation ?? 'sidebar', [currentConfig, studyConfig]);
   const instructionInSideBar = instructionLocation === 'sidebar';
 
   return trialHasSideBar && currentConfig ? (

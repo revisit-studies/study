@@ -105,18 +105,18 @@ export function ResponseBlock({
 
   const studyConfig = useStudyConfig();
 
-  const provideFeedback = configInUse.provideFeedback ?? studyConfig.uiConfig.provideFeedback;
+  const provideFeedback = useMemo(() => configInUse.provideFeedback ?? studyConfig.uiConfig.provideFeedback, [configInUse, studyConfig]);
   const hasCorrectAnswerFeedback = provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
-  const allowFailedTraining = configInUse.allowFailedTraining ?? studyConfig.uiConfig.allowFailedTraining ?? true;
+  const allowFailedTraining = useMemo(() => configInUse.allowFailedTraining ?? studyConfig.uiConfig.allowFailedTraining ?? true, [configInUse, studyConfig]);
   const [attemptsUsed, setAttemptsUsed] = useState(0);
-  const trainingAttempts = configInUse.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2;
+  const trainingAttempts = useMemo(() => configInUse.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [configInUse, studyConfig]);
   const [enableNextButton, setEnableNextButton] = useState(false);
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
 
   const identifier = useCurrentIdentifier();
-  const nextButtonLocation = configInUse?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation;
+  const nextButtonLocation = useMemo(() => configInUse?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation, [configInUse, studyConfig]);
   const showNextBtn = location === (nextButtonLocation || 'belowStimulus');
 
   useEffect(() => {
@@ -273,7 +273,7 @@ export function ResponseBlock({
     return () => {};
   }, [checkAnswerProvideFeedback, nextOnEnter]);
 
-  const nextButtonText = configInUse?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next';
+  const nextButtonText = useMemo(() => configInUse?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [configInUse, studyConfig]);
 
   let index = 0;
   return (

@@ -54,7 +54,7 @@ export function ResponseSwitcher({
   const config = useStoreSelector((state) => state.config);
   const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[currentComponent] || {}, config), [currentComponent, config]);
 
-  const enumerateQuestions = componentConfig.enumerateQuestions ?? studyConfig.uiConfig.enumerateQuestions ?? false;
+  const enumerateQuestions = useMemo(() => componentConfig.enumerateQuestions ?? studyConfig.uiConfig.enumerateQuestions ?? false, [componentConfig, studyConfig]);
 
   const isDisabled = useMemo(() => {
     if (response.paramCapture) {
@@ -86,7 +86,7 @@ export function ResponseSwitcher({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [response.paramCapture, (response as MatrixResponse).questionOptions, (response as SliderResponse).startingValue, response.type, searchParams]);
 
-  const responseDividers = response.withDivider ?? configInUse.responseDividers ?? studyConfig.uiConfig.responseDividers;
+  const responseDividers = useMemo(() => response.withDivider ?? configInUse.responseDividers ?? studyConfig.uiConfig.responseDividers, [response.withDivider, configInUse.responseDividers, studyConfig.uiConfig.responseDividers]);
 
   return (
     <Box mb={response.withDivider || responseDividers ? 'xl' : 'lg'}>
