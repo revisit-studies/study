@@ -143,7 +143,7 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
               <Flex ml="auto" gap="sm" opacity={0.7}>
                 {modes?.studyNavigatorEnabled ? <Tooltip label="Study Navigator enabled" withinPortal><IconSchema size={16} /></Tooltip> : <Tooltip label="Study Navigator disabled" withinPortal><IconSchemaOff size={16} /></Tooltip>}
                 {modes?.analyticsInterfacePubliclyAccessible ? <Tooltip label="Analytics interface publicly accessible" withinPortal><IconGraph size={16} /></Tooltip> : <Tooltip label="Analytics interface not publicly accessible" withinPortal><IconGraphOff size={16} /></Tooltip>}
-                {storageEngine?.getEngine() !== 'localStorage' ? <Tooltip label="Local storage" withinPortal><IconDatabase size={16} /></Tooltip> : <Tooltip label="Firebase" withinPortal><IconFlame size={16} /></Tooltip>}
+                {storageEngine?.getEngine() === 'localStorage' ? <Tooltip label="Local storage" withinPortal><IconDatabase size={16} /></Tooltip> : <Tooltip label="Firebase" withinPortal><IconFlame size={16} /></Tooltip>}
               </Flex>
             </Flex>
 
