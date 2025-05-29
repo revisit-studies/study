@@ -86,8 +86,8 @@ export function AppAside() {
             mt={1}
           />
         </Flex>
-        <Flex direction="row" justify="space-between" mt="sm">
-          <Text size="sm" opacity={0.7}>
+        <Flex direction="row" justify="space-between" mt="sm" opacity={0.7}>
+          <Text size="sm">
             Study Status:
             {' '}
             {modes?.dataCollectionEnabled ? 'Collecting Data' : 'Data Collection Disabled'}
