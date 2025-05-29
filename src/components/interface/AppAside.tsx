@@ -64,7 +64,7 @@ export function AppAside() {
   return (
     <AppShell.Aside p="0">
       <AppShell.Section
-        p="md"
+        p="sm"
       >
         <Flex direction="row" justify="space-between">
           <Text size="md" fw={700} pt={3}>
@@ -86,7 +86,7 @@ export function AppAside() {
             mt={1}
           />
         </Flex>
-        <Flex direction="row" justify="space-between" mt="sm" opacity={0.7}>
+        <Flex direction="row" justify="space-between" mt="md" opacity={0.7}>
           <Text size="sm">
             Study Status:
             {' '}
@@ -102,7 +102,7 @@ export function AppAside() {
       <AppShell.Section
         grow
         component={ScrollArea}
-        p="md"
+        p="xs"
       >
         <Tabs value={activeTab} onChange={setActiveTab}>
           <Box style={{
