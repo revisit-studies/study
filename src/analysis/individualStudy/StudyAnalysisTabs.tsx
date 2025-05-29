@@ -5,6 +5,7 @@ import { useNavigate, useParams } from 'react-router';
 import {
   IconChartDonut2, IconPlayerPlay, IconTable, IconSettings,
   IconInfoCircle,
+  IconChartPie,
 } from '@tabler/icons-react';
 import React, {
   useCallback, useEffect, useMemo, useState,
@@ -13,6 +14,7 @@ import { AppHeader } from '../interface/AppHeader';
 import { GlobalConfig, ParticipantData, StudyConfig } from '../../parser/types';
 import { getStudyConfig } from '../../utils/fetchConfig';
 import { TableView } from './table/TableView';
+import { StudySummary } from './summary/StudySummary';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { ManageAccordion } from './management/ManageAccordion';
 import { useAuth } from '../../store/hooks/useAuth';
@@ -141,12 +143,16 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
           <Tabs variant="outline" value={analysisTab} onChange={(value) => navigate(`/analysis/stats/${studyId}/${value}`)} style={{ height: '100%' }}>
             <Tabs.List>
               <Tabs.Tab value="table" leftSection={<IconTable size={16} />}>Table View</Tabs.Tab>
+              <Tabs.Tab value="summary" leftSection={<IconChartPie size={16} />}>Study Summary</Tabs.Tab>
               <Tabs.Tab value="stats" leftSection={<IconChartDonut2 size={16} />}>Trial Stats</Tabs.Tab>
               <Tabs.Tab value="replay" leftSection={<IconPlayerPlay size={16} />}>Participant Replay</Tabs.Tab>
               <Tabs.Tab value="manage" leftSection={<IconSettings size={16} />} disabled={!user.isAdmin}>Manage</Tabs.Tab>
             </Tabs.List>
             <Tabs.Panel value="table" pt="xs">
               {studyConfig && <TableView visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={getData} />}
+            </Tabs.Panel>
+            <Tabs.Panel value="summary" pt="xs">
+              {studyConfig && <StudySummary />}
             </Tabs.Panel>
             <Tabs.Panel value="stats" pt="xs">
               {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
