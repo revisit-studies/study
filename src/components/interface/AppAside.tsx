@@ -93,8 +93,8 @@ export function AppAside() {
             {modes?.dataCollectionEnabled ? 'Collecting Data' : 'Data Collection Disabled'}
           </Text>
           <Flex gap="sm">
-            {modes?.analyticsInterfacePubliclyAccessible ? <Tooltip label="Analytics interface publicly accessible" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraph size={16} /></Tooltip> : <Tooltip label="Analytics interface not publicly accessible" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraphOff size={16} /></Tooltip>}
-            {storageEngine?.getEngine() === 'localStorage' ? <Tooltip label="Local storage" withinPortal position="bottom"><IconDatabase size={16} /></Tooltip> : <Tooltip label="Firebase" withinPortal position="bottom"><IconFlame size={16} /></Tooltip>}
+            {modes?.analyticsInterfacePubliclyAccessible ? <Tooltip label="Analytics interface publicly accessible" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip> : <Tooltip label="Analytics interface not publicly accessible" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
+            {storageEngine?.getEngine() === 'localStorage' ? <Tooltip label="Local storage" withinPortal position="bottom"><IconDatabase size={16} color="blue" /></Tooltip> : <Tooltip label="Firebase" withinPortal position="bottom"><IconFlame size={16} color="red" /></Tooltip>}
           </Flex>
         </Flex>
       </AppShell.Section>
