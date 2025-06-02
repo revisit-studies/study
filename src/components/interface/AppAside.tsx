@@ -65,6 +65,7 @@ export function AppAside() {
     <AppShell.Aside p="0">
       <AppShell.Section
         p="sm"
+        pb={0}
       >
         <Flex direction="row" justify="space-between">
           <Text size="md" fw={700} pt={3}>
@@ -86,15 +87,19 @@ export function AppAside() {
             mt={1}
           />
         </Flex>
-        <Flex direction="row" justify="space-between" mt="md" opacity={0.7}>
+        <Flex direction="row" justify="space-between" mt="xs" opacity={0.7}>
           <Text size="sm">
             Study Status:
             {' '}
             {modes?.dataCollectionEnabled ? 'Collecting Data' : 'Data Collection Disabled'}
           </Text>
           <Flex gap="sm">
-            {modes?.analyticsInterfacePubliclyAccessible ? <Tooltip label="Analytics interface publicly accessible" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip> : <Tooltip label="Analytics interface not publicly accessible" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
-            {storageEngine?.getEngine() === 'localStorage' ? <Tooltip label="Local storage" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip> : <Tooltip label="Firebase" withinPortal position="bottom"><IconFlame size={16} color="red" /></Tooltip>}
+            {modes?.analyticsInterfacePubliclyAccessible
+              ? <Tooltip label="Analytics interface publicly accessible" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip>
+              : <Tooltip label="Analytics interface not publicly accessible" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
+            {storageEngine?.getEngine() === 'localStorage'
+              ? <Tooltip label="Local storage" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip>
+              : <Tooltip label="Firebase" withinPortal position="bottom"><IconFlame size={16} color="green" /></Tooltip>}
           </Flex>
         </Flex>
       </AppShell.Section>
@@ -103,6 +108,7 @@ export function AppAside() {
         grow
         component={ScrollArea}
         p="xs"
+        pt={8}
       >
         <Tabs value={activeTab} onChange={setActiveTab}>
           <Box style={{
