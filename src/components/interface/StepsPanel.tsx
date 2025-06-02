@@ -186,17 +186,23 @@ function StepItem({
           }}
           label={(
             <Box>
-              {interruption && <IconBrain size={16} style={{ marginRight: 4, marginBottom: -2 }} color="orange" />}
+              {interruption && (
+                <Tooltip label="Interruption" position="right" withArrow>
+                  <IconBrain size={16} style={{ marginRight: 4, marginBottom: -2 }} color="orange" />
+                </Tooltip>
+              )}
               {step !== cleanedStep && (
-                <IconPackageImport size={16} style={{ marginRight: 4, marginBottom: -2 }} color="blue" />
+                <Tooltip label="Package import" position="right" withArrow>
+                  <IconPackageImport size={16} style={{ marginRight: 4, marginBottom: -2 }} color="blue" />
+                </Tooltip>
+              )}
+              {task?.responseOrder === 'random' && (
+                <Tooltip label="Random responses" position="right" withArrow>
+                  <IconDice3 size={16} opacity={0.8} style={{ marginRight: 4, marginTop: -4, verticalAlign: 'middle' }} color="black" />
+                </Tooltip>
               )}
               {correctIncorrectIcon}
               <Text size="sm" span={active} fw={active ? '700' : undefined} display="inline" style={{ textWrap: 'nowrap' }}>{cleanedStep}</Text>
-              {task?.responseOrder === 'random' && (
-                <Tooltip label="random" position="right" withArrow>
-                  <IconDice3 size="15" opacity={0.8} style={{ marginLeft: 4, marginTop: -2, verticalAlign: 'middle' }} color="black" />
-                </Tooltip>
-              )}
             </Box>
           )}
           onClick={navigateTo}
