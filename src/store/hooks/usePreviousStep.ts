@@ -31,13 +31,13 @@ export function usePreviousStep() {
 
     // Dynamic block component
     if (funcIndex) {
+      // Delete current dynamic block component and go to previous
+      storeDispatch(deleteDynamicBlockAnswers({ currentStep, funcIndex: decryptIndex(funcIndex), funcName: flatSequence[currentStep] }));
+
       // If we're at the first element of a dynamic block, exit the dynamic block
       if (decryptIndex(funcIndex) === 0) {
         navigate(`/${studyId}/${encryptIndex(previousStep)}${window.location.search}`);
       } else {
-        // Delete current dynamic block component and go to previous
-
-        storeDispatch(deleteDynamicBlockAnswers({ currentStep, funcIndex: decryptIndex(funcIndex) }));
         navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(decryptIndex(funcIndex) - 1)}${window.location.search}`);
       }
     } else {

@@ -318,8 +318,8 @@ export async function studyStoreCreator(
 
         state.answers[question].incorrectAnswers[identifier].value.push(answer);
       },
-      deleteDynamicBlockAnswers(state, { payload }) {
-        const { currentStep, funcIndex } = payload;
+      deleteDynamicBlockAnswers(state, { payload }: PayloadAction<{ currentStep: number, funcIndex: number, funcName: string }>) {
+        const { currentStep, funcIndex, funcName } = payload;
 
         // regex to match all keys that start with the current step and funcIndex
         const regex = new RegExp(`.*_${currentStep}_.*_${funcIndex}`);
@@ -329,6 +329,15 @@ export async function studyStoreCreator(
             delete state.answers[key];
           }
         });
+
+        // Handle the funcSequence as well
+        if (state.funcSequence[funcName]) {
+          state.funcSequence[funcName] = state.funcSequence[payload.funcName].filter((_, index) => index !== funcIndex);
+        }
+        // If the funcSequence is empty, delete it
+        if (state.funcSequence[funcName]?.length === 0) {
+          delete state.funcSequence[funcName];
+        }
       },
     },
   });
