@@ -1,6 +1,5 @@
 import {
-  Anchor, AppShell, Button, Card, Container, Divider, Flex, Image, rem, Tabs, Text,
-  Tooltip,
+  Anchor, AppShell, Button, Card, Container, Divider, Flex, Image, rem, Tabs, Text, Tooltip,
 } from '@mantine/core';
 import {
   IconAlertTriangle, IconChartHistogram, IconDatabase, IconExternalLink, IconFlame, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff,
