@@ -120,7 +120,8 @@ export function useCurrentComponent(): string {
         }
       }
     }
-  }, [_answers, currentStep, flatSequence, funcIndex, navigate, nextFunc, pushToFuncSequence, storeDispatch, studyConfig, studyId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep, funcIndex]);
 
   if (typeof currentStep === 'number' && flatSequence[currentStep] === 'end') {
     return 'end';
