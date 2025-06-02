@@ -12,7 +12,7 @@ import {
 import { getSequenceFlatMap } from '../utils/getSequenceFlatMap';
 import { REVISIT_MODE } from '../storage/engines/StorageEngine';
 import { studyComponentToIndividualComponent } from '../utils/handleComponentInheritance';
-import { randomizeOptions, randomizeQuestionOrder } from '../utils/handleResponseRandomization';
+import { randomizeOptions, randomizeQuestionOrder, randomizeForm } from '../utils/handleResponseRandomization';
 
 export async function studyStoreCreator(
   studyId: string,
@@ -57,6 +57,7 @@ export async function studyStoreCreator(
           correctAnswer: Object.hasOwn(componentConfig, 'correctAnswer') ? componentConfig.correctAnswer! : [],
           optionOrders: randomizeOptions(componentConfig),
           questionOrders: randomizeQuestionOrder(componentConfig),
+          formOrder: randomizeForm(componentConfig),
         } as StoredAnswer,
       ];
     }).filter((ans) => ans !== null));
@@ -173,6 +174,7 @@ export async function studyStoreCreator(
           correctAnswer: payload.correctAnswer || componentConfig.correctAnswer || [],
           optionOrders: randomizeOptions(componentConfig),
           questionOrders: randomizeQuestionOrder(componentConfig),
+          formOrder: randomizeForm(componentConfig),
         } as StoredAnswer;
         state.trialValidation[identifier] = {
           aboveStimulus: { valid: false, values: {} },
