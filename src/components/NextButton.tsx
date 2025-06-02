@@ -1,7 +1,5 @@
 import { Alert, Button, Group } from '@mantine/core';
-import {
-  useCallback, useEffect, useMemo, useState,
-} from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { IconInfoCircle, IconAlertTriangle } from '@tabler/icons-react';
 import { useNavigate } from 'react-router';
 import { useNextStep } from '../store/hooks/useNextStep';
@@ -27,10 +25,6 @@ export function NextButton({
   const { isNextDisabled, goToNextStep } = useNextStep();
   const studyConfig = useStudyConfig();
   const navigate = useNavigate();
-
-  const handleClick = useCallback(() => {
-    goToNextStep();
-  }, [goToNextStep]);
 
   const nextButtonDisableTime = configInUse?.nextButtonDisableTime;
   const nextButtonEnableTime = configInUse?.nextButtonEnableTime || 0;
@@ -92,7 +86,7 @@ export function NextButton({
         <Button
           type="submit"
           disabled={nextButtonDisabled}
-          onClick={handleClick}
+          onClick={() => goToNextStep()}
           px={location === 'sidebar' && checkAnswer ? 8 : undefined}
         >
           {label}
