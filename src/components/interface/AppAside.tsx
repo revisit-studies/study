@@ -98,8 +98,8 @@ export function AppAside() {
               ? <Tooltip label="Analytics interface publicly accessible" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip>
               : <Tooltip label="Analytics interface not publicly accessible" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
             {storageEngine?.getEngine() === 'localStorage'
-              ? <Tooltip label="Local storage" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip>
-              : <Tooltip label="Firebase" withinPortal position="bottom"><IconFlame size={16} color="green" /></Tooltip>}
+              ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip>
+              : <Tooltip label="Firebase enabled" withinPortal position="bottom"><IconFlame size={16} color="green" /></Tooltip>}
           </Flex>
         </Flex>
       </AppShell.Section>
