@@ -194,7 +194,7 @@ function StepItem({
               <Text size="sm" span={active} fw={active ? '700' : undefined} display="inline" style={{ textWrap: 'nowrap' }}>{cleanedStep}</Text>
               {task?.responseOrder === 'random' && (
                 <Tooltip label="random" position="right" withArrow>
-                  <IconDice3 size="15" opacity={0.5} style={{ marginLeft: '5px', verticalAlign: 'middle' }} />
+                  <IconDice3 size="15" opacity={0.8} style={{ marginLeft: 4, marginTop: -2, verticalAlign: 'middle' }} color="black" />
                 </Tooltip>
               )}
             </Box>

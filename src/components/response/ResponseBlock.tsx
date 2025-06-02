@@ -67,9 +67,12 @@ export function ResponseBlock({
 
   const configInUse = config as IndividualComponent;
 
-  const responses = useMemo(() => (formOrders?.response ? formOrders.response
-    .map((id) => configInUse?.response?.find((r) => r.id === id))
-    .filter((r): r is Response => r !== undefined && (r.location ? r.location === location : location === 'belowStimulus')) : []), [configInUse?.response, location, formOrders]);
+  const responses = useMemo(() => (formOrders?.response
+    ? formOrders.response
+      .map((id) => configInUse?.response?.find((r) => r.id === id))
+      .filter((r): r is Response => r !== undefined && (r.location ? r.location === location : location === 'belowStimulus'))
+    : []
+  ), [configInUse?.response, location, formOrders]);
 
   const responsesWithDefaults = useMemo(() => responses.map((response) => {
     if (response.type !== 'textOnly') {
