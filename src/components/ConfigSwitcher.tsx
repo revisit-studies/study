@@ -141,8 +141,8 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
                 && <ParticipantStatusBadges completed={studyStatusAndTiming.completed} inProgress={studyStatusAndTiming.inProgress} rejected={studyStatusAndTiming.rejected} />}
               <Flex ml="auto" gap="sm" opacity={0.7}>
                 {modes?.studyNavigatorEnabled
-                  ? <Tooltip label="Study Navigator enabled" withinPortal><IconSchema size={16} color="green" /></Tooltip>
-                  : <Tooltip label="Study Navigator disabled" withinPortal><IconSchemaOff size={16} color="red" /></Tooltip>}
+                  ? <Tooltip label="Study navigator enabled" withinPortal><IconSchema size={16} color="green" /></Tooltip>
+                  : <Tooltip label="Study navigator disabled" withinPortal><IconSchemaOff size={16} color="red" /></Tooltip>}
                 {modes?.analyticsInterfacePubliclyAccessible
                   ? <Tooltip label="Analytics interface publicly accessible" withinPortal><IconGraph size={16} color="green" /></Tooltip>
                   : <Tooltip label="Analytics interface not publicly accessible" withinPortal><IconGraphOff size={16} color="red" /></Tooltip>}
