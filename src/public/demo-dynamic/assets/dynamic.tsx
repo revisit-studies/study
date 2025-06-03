@@ -1,26 +1,20 @@
 import { JumpFunctionParameters, JumpFunctionReturnVal, StoredAnswer } from '../../../store/types';
 
-export default function dynamic({ answers }: JumpFunctionParameters<never>): JumpFunctionReturnVal {
+export default function dynamic({ answers, currentStep, currentBlock }: JumpFunctionParameters<never>): JumpFunctionReturnVal {
   // Check the length of the answers array
-  const topAnswerLength = Object.entries(answers)
-    .filter(([key, _]) => key.startsWith('dynamicBlock'))
-    .filter(([_, value]) => value.endTime > -1)
-    .length;
+  const filteredAnswers = Object.entries(answers)
+    .filter(([key, value]) => key.startsWith(`${currentBlock}_${currentStep}`) && value.endTime > -1);
 
   // If answer length reaches 10, return null to exit dynamic block
-  if (topAnswerLength === 10) {
+  if (filteredAnswers.length === 10) {
     return { component: null };
   }
-
-  // Look at the last answer to adjust next question's difficulty by setting a value for left and right
-  const validAnswers = Object.values(answers)
-    .filter((value) => value.endTime > -1 && value.componentName === 'HSLColorCodes');
 
   const checkCorrectness = (answer: StoredAnswer) => (answer.answer.buttonResponse === 'Left' && answer.parameters.left > answer.parameters.right)
     || (answer.answer.buttonResponse === 'Right' && answer.parameters.right > answer.parameters.left)
     || (answer.answer.buttonResponse === 'Same' && answer.parameters.left === answer.parameters.right);
 
-  const lastAnswer = validAnswers[validAnswers.length - 1];
+  const lastAnswer = filteredAnswers[filteredAnswers.length - 1]?.[1];
   let message = 'The answer difficulty will change based on your last answer';
   let color = 'blue';
 

@@ -96,6 +96,8 @@ export function useCurrentComponent(): string {
         const { component: currCompName, parameters: _params, correctAnswer } = nextFunc({
           answers: _answers,
           customParameters: findFuncBlock(flatSequence[currentStep], studyConfig.sequence)?.parameters,
+          currentStep,
+          currentBlock: flatSequence[currentStep],
         });
 
         if (currCompName !== null) {
