@@ -35,25 +35,23 @@ export function usePreviousStep() {
       storeDispatch(deleteDynamicBlockAnswers({ currentStep, funcIndex: decryptIndex(funcIndex), funcName: flatSequence[currentStep] }));
 
       // If we're at the first element of a dynamic block, exit the dynamic block
-      if (decryptIndex(funcIndex) === 0) {
-        navigate(`/${studyId}/${encryptIndex(previousStep)}${window.location.search}`);
-      } else {
+      if (decryptIndex(funcIndex) !== 0) {
         navigate(`/${studyId}/${encryptIndex(currentStep)}/${encryptIndex(decryptIndex(funcIndex) - 1)}${window.location.search}`);
+        return;
       }
-    } else {
-      const previousComponentId = flatSequence[previousStep];
-      // Check if previous component is a dynamic block
-      const isDynamicBlock = findFuncBlock(previousComponentId, studyConfig.sequence);
+    }
+    const previousComponentId = flatSequence[previousStep];
+    // Check if previous component is a dynamic block
+    const isDynamicBlock = findFuncBlock(previousComponentId, studyConfig.sequence);
 
-      if (isDynamicBlock) {
-        // Find the last component that has been answered in the dynamic block
-        const dynamicBlockAnswers = Object.keys(answers).filter((key) => key.startsWith(`${previousComponentId}_${previousStep}_`));
-        const previousDynamicBlockIndex = dynamicBlockAnswers.length - 1;
-        // Navigate to the last answered index in the dynamic block
-        navigate(`/${studyId}/${encryptIndex(previousStep)}/${encryptIndex(previousDynamicBlockIndex)}${window.location.search}`);
-      } else {
-        navigate(`/${studyId}/${encryptIndex(previousStep)}${window.location.search}`);
-      }
+    if (isDynamicBlock) {
+      // Find the last component that has been answered in the dynamic block
+      const dynamicBlockAnswers = Object.keys(answers).filter((key) => key.startsWith(`${previousComponentId}_${previousStep}_`));
+      const previousDynamicBlockIndex = dynamicBlockAnswers.length - 1;
+      // Navigate to the last answered index in the dynamic block
+      navigate(`/${studyId}/${encryptIndex(previousStep)}/${encryptIndex(previousDynamicBlockIndex)}${window.location.search}`);
+    } else {
+      navigate(`/${studyId}/${encryptIndex(previousStep)}${window.location.search}`);
     }
   }, [currentStep, funcIndex, navigate, studyId, studyConfig, storeDispatch, deleteDynamicBlockAnswers, answers]);
 
