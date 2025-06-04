@@ -1,5 +1,5 @@
 import {
-  Alert, Anchor, Button, Group,
+  Alert, Anchor, Button,
 } from '@mantine/core';
 
 import React, {
@@ -121,13 +121,10 @@ export function ResponseBlock({
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
-
   const studyConfig = useStudyConfig();
-
   const identifier = useCurrentIdentifier();
 
-  const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
-
+  const showBtnsInLocation = location === (configInUse?.nextButtonLocation || 'belowStimulus');
   useEffect(() => {
     const ReactiveResponse = responsesWithDefaults.find((r) => r.type === 'reactive');
     if (reactiveAnswers && ReactiveResponse) {
@@ -301,7 +298,7 @@ export function ResponseBlock({
               <>
                 <ResponseSwitcher
                   storedAnswer={storedAnswer}
-                  answer={{
+                  form={{
                     ...answerValidator.getInputProps(response.id, {
                       type: response.type === 'checkbox' ? 'checkbox' : 'input',
                     }),
@@ -341,23 +338,22 @@ export function ResponseBlock({
         );
       })}
 
-      <Group justify="right" gap="xs">
-        {hasCorrectAnswerFeedback && showNextBtn && (
+      {showBtnsInLocation && (
+      <NextButton
+        disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
+        label={configInUse.nextButtonText || 'Next'}
+        configInUse={configInUse}
+        location={location}
+        checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (
           <Button
             onClick={() => checkAnswerProvideFeedback()}
-            disabled={!answerValidator.isValid() || disabledAttempts}
+            px={location === 'sidebar' ? 8 : undefined}
           >
             Check Answer
           </Button>
-        )}
-        {showNextBtn && (
-          <NextButton
-            disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
-            label={configInUse.nextButtonText || 'Next'}
-            configInUse={configInUse}
-          />
-        )}
-      </Group>
+        ) : null}
+      />
+      )}
     </div>
   );
 }

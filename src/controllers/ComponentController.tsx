@@ -140,8 +140,14 @@ export function ComponentController() {
     if (typeof toReturn === 'object') {
       const funcParams = answers[currentIdentifier]?.parameters;
       const funcCorrectAnswer = answers[currentIdentifier]?.correctAnswer;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return { ...toReturn, parameters: funcParams || (toReturn as any).parameters || undefined, correctAnswer: funcCorrectAnswer || (toReturn as any).correctAnswer || undefined };
+
+      return {
+        ...toReturn,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        parameters: funcParams || (toReturn as any).parameters || {},
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        correctAnswer: funcCorrectAnswer || (toReturn as any).correctAnswer || undefined,
+      };
     }
     return toReturn as unknown as IndividualComponent;
   }, [answers, currentComponent, currentIdentifier, stepConfig, studyConfig]);

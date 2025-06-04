@@ -96,6 +96,8 @@ export function useCurrentComponent(): string {
         const { component: currCompName, parameters: _params, correctAnswer } = nextFunc({
           answers: _answers,
           customParameters: findFuncBlock(flatSequence[currentStep], studyConfig.sequence)?.parameters,
+          currentStep,
+          currentBlock: flatSequence[currentStep],
         });
 
         if (currCompName !== null) {
@@ -120,7 +122,8 @@ export function useCurrentComponent(): string {
         }
       }
     }
-  }, [_answers, currentStep, flatSequence, funcIndex, navigate, nextFunc, pushToFuncSequence, storeDispatch, studyConfig, studyId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentStep, funcIndex]);
 
   if (typeof currentStep === 'number' && flatSequence[currentStep] === 'end') {
     return 'end';

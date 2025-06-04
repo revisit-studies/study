@@ -130,7 +130,9 @@ export interface StoredAnswer {
 
 export interface JumpFunctionParameters<T> {
   answers: ParticipantData['answers'],
-  customParameters: T
+  customParameters: T,
+  currentStep: number,
+  currentBlock: string,
 }
 
 export interface JumpFunctionReturnVal {

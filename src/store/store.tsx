@@ -139,7 +139,7 @@ export async function studyStoreCreator(
         state.isRecording = payload;
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      pushToFuncSequence(state, { payload }: PayloadAction<{component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any> | undefined, correctAnswer: Answer[] | undefined}>) {
+      pushToFuncSequence(state, { payload }: PayloadAction<{ component: string, funcName: string, index: number, funcIndex: number, parameters: Record<string, any> | undefined, correctAnswer: Answer[] | undefined }>) {
         if (!state.funcSequence[payload.funcName]) {
           state.funcSequence[payload.funcName] = [];
         }
@@ -202,7 +202,7 @@ export async function studyStoreCreator(
         state.reactiveAnswers = action.payload;
       },
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      saveAnalysisState(state, { payload }: PayloadAction<{prov: any, location: ResponseBlockLocation}>) {
+      saveAnalysisState(state, { payload }: PayloadAction<{ prov: any, location: ResponseBlockLocation }>) {
         state.analysisProvState[payload.location] = payload.prov;
       },
       setAnalysisIsPlaying(state, { payload }: PayloadAction<boolean>) {
@@ -319,6 +319,27 @@ export async function studyStoreCreator(
         }
 
         state.answers[question].incorrectAnswers[identifier].value.push(answer);
+      },
+      deleteDynamicBlockAnswers(state, { payload }: PayloadAction<{ currentStep: number, funcIndex: number, funcName: string }>) {
+        const { currentStep, funcIndex, funcName } = payload;
+
+        // regex to match all keys that start with the current step and funcIndex
+        const regex = new RegExp(`.*_${currentStep}_.*_${funcIndex}`);
+        // delete all keys that match the regex
+        Object.keys(state.answers).forEach((key) => {
+          if (key.match(regex)) {
+            delete state.answers[key];
+          }
+        });
+
+        // Handle the funcSequence as well
+        if (state.funcSequence[funcName]) {
+          state.funcSequence[funcName] = state.funcSequence[payload.funcName].filter((_, index) => index !== funcIndex);
+        }
+        // If the funcSequence is empty, delete it
+        if (state.funcSequence[funcName]?.length === 0) {
+          delete state.funcSequence[funcName];
+        }
       },
     },
   });
