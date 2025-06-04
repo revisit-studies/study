@@ -115,11 +115,11 @@ export function ResponseBlock({
 
   const studyConfig = useStudyConfig();
 
-  const provideFeedback = useMemo(() => configInUse.provideFeedback ?? studyConfig.uiConfig.provideFeedback, [configInUse, studyConfig]);
+  const provideFeedback = useMemo(() => configInUse?.provideFeedback ?? studyConfig.uiConfig.provideFeedback, [configInUse, studyConfig]);
   const hasCorrectAnswerFeedback = provideFeedback && ((configInUse?.correctAnswer?.length || 0) > 0);
-  const allowFailedTraining = useMemo(() => configInUse.allowFailedTraining ?? studyConfig.uiConfig.allowFailedTraining ?? true, [configInUse, studyConfig]);
+  const allowFailedTraining = useMemo(() => configInUse?.allowFailedTraining ?? studyConfig.uiConfig.allowFailedTraining ?? true, [configInUse, studyConfig]);
   const [attemptsUsed, setAttemptsUsed] = useState(0);
-  const trainingAttempts = useMemo(() => configInUse.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [configInUse, studyConfig]);
+  const trainingAttempts = useMemo(() => configInUse?.trainingAttempts ?? studyConfig.uiConfig.trainingAttempts ?? 2, [configInUse, studyConfig]);
   const [enableNextButton, setEnableNextButton] = useState(false);
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
@@ -193,7 +193,7 @@ export function ResponseBlock({
     setAttemptsUsed(newAttemptsUsed);
 
     const correctAnswers = Object.fromEntries(responsesWithDefaults.map((response) => {
-      const configCorrectAnswer = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+      const configCorrectAnswer = configInUse?.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
       const suppliedAnswer = (answerValidator.values as Record<string, unknown>)[response.id];
 
       return [response.id, Array.isArray(suppliedAnswer)
@@ -238,7 +238,7 @@ export function ResponseBlock({
             message = `Please try again. You have ${trainingAttempts - newAttemptsUsed} attempts left.`;
           }
           if (response.type === 'checkbox') {
-            const correct = configInUse.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
+            const correct = configInUse?.correctAnswer?.find((answer) => answer.id === response.id)?.answer;
 
             const suppliedAnswer = (answerValidator.values as Record<string, unknown>)[response.id] as string[];
             const matches = findMatchingStrings(suppliedAnswer, correct);
@@ -263,7 +263,7 @@ export function ResponseBlock({
     }
   }, [attemptsUsed, responsesWithDefaults, configInUse, hasCorrectAnswerFeedback, trainingAttempts, allowFailedTraining, storageEngine, studyId, navigate, identifier, storeDispatch, answerValidator, alertConfig, saveIncorrectAnswer]);
 
-  const nextOnEnter = configInUse?.nextOnEnter !== undefined ? configInUse.nextOnEnter : studyConfig.uiConfig.nextOnEnter;
+  const nextOnEnter = configInUse?.nextOnEnter ?? studyConfig.uiConfig.nextOnEnter;
 
   useEffect(() => {
     if (nextOnEnter) {

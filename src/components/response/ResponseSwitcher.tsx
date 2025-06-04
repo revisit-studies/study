@@ -115,7 +115,7 @@ export function ResponseSwitcher({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [response.paramCapture, (response as MatrixResponse).questionOptions, (response as SliderResponse).startingValue, response.type, searchParams]);
 
-  const responseDividers = useMemo(() => response.withDivider ?? configInUse.responseDividers ?? studyConfig.uiConfig.responseDividers, [response.withDivider, configInUse.responseDividers, studyConfig.uiConfig.responseDividers]);
+  const responseDividers = useMemo(() => response.withDivider ?? configInUse?.responseDividers ?? studyConfig.uiConfig.responseDividers, [response, configInUse, studyConfig]);
 
   return (
     <Box mb={response.withDivider || responseDividers ? 'xl' : 'lg'}>
