@@ -33,6 +33,13 @@
       "type": "questionnaire",
       "response": [
         {
+          "id": "textField2",
+          "type": "textOnly",
+          "location": "aboveStimulus",
+          "prompt": "# Question Types and Form Element.\n\n This page shows all the question types and form elements that are supported in the reVISit platform.",
+          "restartEnumeration": true
+        },
+        {
           "id": "q-dropdown",
           "prompt": "Dropdown example – which chart do you like best?",
           "secondaryText": "You can specify secondary text to clarify your question.",
@@ -220,6 +227,13 @@
       "type": "questionnaire",
       "response": [
         {
+          "id": "textField",
+          "type": "textOnly",
+          "location": "aboveStimulus",
+          "prompt": "# Randomize Question and Randomize Option\n\n This shows how to randomize the order of questions for matrix questions and options for buttons, checkboxes and radio questions.",
+          "restartEnumeration": true
+        },
+        {
           "id": "q-multi-satisfaction",
           "prompt": "Matrix Radio Example",
           "secondaryText": "The question order is randomized",
@@ -330,6 +344,13 @@
     "survey_randomized_form": {
       "type": "questionnaire",
       "response": [
+        {
+          "id": "textField",
+          "type": "textOnly",
+          "location": "aboveStimulus",
+          "prompt": "# Randomize Form\n\n This shows how to randomize the order of questions in the form.",
+          "restartEnumeration": false
+        },
         {
           "id": "q-dropdown",
           "prompt": "Question 1 Dropdown example",
