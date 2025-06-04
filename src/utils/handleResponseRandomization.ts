@@ -1,5 +1,20 @@
 import { IndividualComponent, StringOption } from '../parser/types';
 
+export function randomizeForm(componentConfig: IndividualComponent) {
+  const response = componentConfig.response.map((r) => r.id);
+
+  if (componentConfig.responseOrder === 'random') {
+    return {
+      response: [...response]
+        .map((value) => ({ value, sort: Math.random() }))
+        .sort((a, b) => a.sort - b.sort)
+        .map(({ value }) => value),
+    };
+  }
+
+  return { response };
+}
+
 export function randomizeOptions(componentConfig: IndividualComponent) {
   return componentConfig.response.reduce((acc, response) => {
     if (response.type === 'radio' || response.type === 'checkbox' || response.type === 'buttons') {

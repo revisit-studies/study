@@ -625,6 +625,10 @@ export interface BaseIndividualComponent {
   response: Response[];
 
   // Optional fields
+  /** Whether to show the previous button. */
+  previousButton?: boolean;
+  /** The text that is displayed on the previous button. */
+  previousButtonText?:string;
   /** The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess. */
   correctAnswer?: Answer[];
   /** The meta data for the component. This is used to identify and provide additional information for the component in the admin panel. */
@@ -671,6 +675,8 @@ export interface BaseIndividualComponent {
   responseDividers?: boolean;
   /** Debounce time in milliseconds for automatically tracked window events. If present, will override the window event debounce time setting in the uiConfig. */
   windowEventDebounceTime?: number;
+  /** The order of the responses. Defaults to 'fixed'. */
+  responseOrder?: 'fixed' | 'random';
 }
 
 /**
@@ -1039,9 +1045,9 @@ export interface DeterministicInterruption {
  *
 ```js
 [
-  ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "component5", "interruption1", "interruption2", "component6],
-  ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "interruption1", "interruption2", "component5", "component6],
-  ["component1", "component2" "interruption1", "interruption2", "component3", "interruption1", "interruption2", "component4", "component5", "interruption1", "interruption2", "component6],
+  ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "component5", "interruption1", "interruption2", "component6"],
+  ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "interruption1", "interruption2", "component5", "component6"],
+  ["component1", "component2" "interruption1", "interruption2", "component3", "interruption1", "interruption2", "component4", "component5", "interruption1", "interruption2", "component6"],
   ...
 ]
 ```
