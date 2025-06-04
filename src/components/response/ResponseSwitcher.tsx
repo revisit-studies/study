@@ -23,9 +23,6 @@ import { useStoreSelector } from '../../store/store';
 import { getSequenceFlatMap } from '../../utils/getSequenceFlatMap';
 import { useCurrentStep } from '../../routes/utils';
 import { TextOnlyInput } from './TextOnlyInput';
-import { studyComponentToIndividualComponent } from '../../utils/handleComponentInheritance';
-import { useCurrentComponent } from '../../routes/utils';
-import { useStoreSelector } from '../../store/store';
 
 export function ResponseSwitcher({
   response,
@@ -57,10 +54,7 @@ export function ResponseSwitcher({
 
   const studyConfig = useStudyConfig();
 
-  const currentComponent = useCurrentComponent();
-  const config = useStoreSelector((state) => state.config);
-  const componentConfig = useMemo(() => studyComponentToIndividualComponent(config.components[currentComponent] || {}, config), [currentComponent, config]);
-  const enumerateQuestions = useMemo(() => componentConfig.enumerateQuestions ?? studyConfig.uiConfig.enumerateQuestions ?? false, [componentConfig, studyConfig]);
+  const enumerateQuestions = useMemo(() => configInUse?.enumerateQuestions ?? studyConfig.uiConfig.enumerateQuestions ?? false, [configInUse, studyConfig]);
 
   const sequence = useStoreSelector((state) => state.sequence);
   const flatSequence = getSequenceFlatMap(sequence);

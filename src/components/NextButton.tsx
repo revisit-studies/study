@@ -75,13 +75,14 @@ export function NextButton({
   }, [disabled, isNextDisabled, buttonTimerSatisfied, goToNextStep, nextOnEnter]);
 
   const nextButtonDisabled = useMemo(() => disabled || isNextDisabled || !buttonTimerSatisfied, [disabled, isNextDisabled, buttonTimerSatisfied]);
+  const previousButtonText = useMemo(() => configInUse?.previousButtonText ?? studyConfig.uiConfig.previousButtonText ?? 'Previous', [configInUse, studyConfig]);
 
   return (
     <>
       <Group justify="right" gap="xs">
         {configInUse?.previousButton && (
           <PreviousButton
-            label={configInUse.previousButtonText || 'Previous'}
+            label={previousButtonText}
             px={location === 'sidebar' && checkAnswer ? 8 : undefined}
           />
         )}

@@ -124,10 +124,8 @@ export function ResponseBlock({
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
-
+  const showBtnsInLocation = useMemo(() => location === (configInUse?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation ?? 'belowStimulus'), [configInUse, studyConfig, location]);
   const identifier = useCurrentIdentifier();
-  const nextButtonLocation = useMemo(() => configInUse?.nextButtonLocation ?? studyConfig.uiConfig.nextButtonLocation, [configInUse, studyConfig]);
-  const showNextBtn = location === (nextButtonLocation || 'belowStimulus');
 
   useEffect(() => {
     const ReactiveResponse = responsesWithDefaults.find((r) => r.type === 'reactive');
@@ -285,7 +283,6 @@ export function ResponseBlock({
 
   const nextButtonText = useMemo(() => configInUse?.nextButtonText ?? studyConfig.uiConfig.nextButtonText ?? 'Next', [configInUse, studyConfig]);
 
-
   let index = 0;
   return (
     <div style={style}>
@@ -350,7 +347,7 @@ export function ResponseBlock({
       {showBtnsInLocation && (
       <NextButton
         disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
-        label={configInUse.nextButtonText || 'Next'}
+        label={nextButtonText}
         configInUse={configInUse}
         location={location}
         checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (

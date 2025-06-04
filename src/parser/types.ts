@@ -118,6 +118,8 @@ export interface UIConfig {
   nextButtonEnableTime?: number;
   /** The time in milliseconds to wait before the next button is disabled. */
   nextButtonDisableTime?: number;
+  /** The text that is displayed on the previous button. */
+  previousButtonText?: string;
   /** Whether to redirect a timed out participant to a rejection page. This only works for components where the `nextButtonDisableTime` field is set. */
   timeoutReject?: boolean;
   /** Controls whether the component should provide feedback to the participant, such as in a training trial. Defaults to false. */
@@ -625,10 +627,6 @@ export interface BaseIndividualComponent {
   response: Response[];
 
   // Optional fields
-  /** Whether to show the previous button. */
-  previousButton?: boolean;
-  /** The text that is displayed on the previous button. */
-  previousButtonText?:string;
   /** The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess. */
   correctAnswer?: Answer[];
   /** The meta data for the component. This is used to identify and provide additional information for the component in the admin panel. */
@@ -661,6 +659,10 @@ export interface BaseIndividualComponent {
   nextButtonEnableTime?: number;
   /** The time in milliseconds to wait before the next button is disabled. If present, will override the next button disable time setting in the uiConfig. */
   nextButtonDisableTime?: number;
+  /** Whether to show the previous button. If present, will override the previous button setting in the uiConfig. */
+  previousButton?: boolean;
+  /** The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig. */
+  previousButtonText?:string;
   /** Controls whether the component should provide feedback to the participant, such as in a training trial. If present, will override the provide feedback setting in the uiConfig. */
   provideFeedback?: boolean;
   /** The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig. */

@@ -141,11 +141,11 @@
             "description": "The path to the markdown file. This should be a relative path from the public folder."
           },
           "previousButton": {
-            "description": "Whether to show the previous button.",
+            "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
             "type": "boolean"
           },
           "previousButtonText": {
-            "description": "The text that is displayed on the previous button.",
+            "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
             "type": "string"
           },
           "provideFeedback": {
@@ -167,6 +167,14 @@
             "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
             "type": "boolean"
           },
+          "responseOrder": {
+            "description": "The order of the responses. Defaults to 'fixed'.",
+            "enum": [
+              "fixed",
+              "random"
+            ],
+            "type": "string"
+          },
           "showTitle": {
             "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
             "type": "boolean"
@@ -178,13 +186,6 @@
           "sidebarWidth": {
             "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
             "type": "number"
-          "responseOrder": {
-            "description": "The order of the responses. Defaults to 'fixed'.",
-            "enum": [
-              "fixed",
-              "random"
-            ],
-            "type": "string"
           },
           "style": {
             "additionalProperties": {
@@ -708,11 +709,11 @@
           "type": "string"
         },
         "previousButton": {
-          "description": "Whether to show the previous button.",
+          "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
         },
         "previousButtonText": {
-          "description": "The text that is displayed on the previous button.",
+          "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
           "type": "string"
         },
         "provideFeedback": {
@@ -734,6 +735,14 @@
           "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
           "type": "boolean"
         },
+        "responseOrder": {
+          "description": "The order of the responses. Defaults to 'fixed'.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
+        },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
           "type": "boolean"
@@ -745,13 +754,6 @@
         "sidebarWidth": {
           "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
           "type": "number"
-        "responseOrder": {
-          "description": "The order of the responses. Defaults to 'fixed'.",
-          "enum": [
-            "fixed",
-            "random"
-          ],
-          "type": "string"
         },
         "style": {
           "additionalProperties": {
@@ -1001,11 +1003,11 @@
           "description": "The path to the markdown file. This should be a relative path from the public folder."
         },
         "previousButton": {
-          "description": "Whether to show the previous button.",
+          "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
         },
         "previousButtonText": {
-          "description": "The text that is displayed on the previous button.",
+          "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
           "type": "string"
         },
         "provideFeedback": {
@@ -1027,6 +1029,14 @@
           "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
           "type": "boolean"
         },
+        "responseOrder": {
+          "description": "The order of the responses. Defaults to 'fixed'.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
+        },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
           "type": "boolean"
@@ -1038,13 +1048,6 @@
         "sidebarWidth": {
           "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
           "type": "number"
-        "responseOrder": {
-          "description": "The order of the responses. Defaults to 'fixed'.",
-          "enum": [
-            "fixed",
-            "random"
-          ],
-          "type": "string"
         },
         "style": {
           "additionalProperties": {
@@ -1302,11 +1305,11 @@
           "type": "string"
         },
         "previousButton": {
-          "description": "Whether to show the previous button.",
+          "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
         },
         "previousButtonText": {
-          "description": "The text that is displayed on the previous button.",
+          "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
           "type": "string"
         },
         "provideFeedback": {
@@ -1328,6 +1331,14 @@
           "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
           "type": "boolean"
         },
+        "responseOrder": {
+          "description": "The order of the responses. Defaults to 'fixed'.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
+        },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
           "type": "boolean"
@@ -1339,13 +1350,6 @@
         "sidebarWidth": {
           "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
           "type": "number"
-        "responseOrder": {
-          "description": "The order of the responses. Defaults to 'fixed'.",
-          "enum": [
-            "fixed",
-            "random"
-          ],
-          "type": "string"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
@@ -1632,11 +1636,11 @@
           "type": "boolean"
         },
         "previousButton": {
-          "description": "Whether to show the previous button.",
+          "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
         },
         "previousButtonText": {
-          "description": "The text that is displayed on the previous button.",
+          "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
           "type": "string"
         },
         "provideFeedback": {
@@ -1658,6 +1662,14 @@
           "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
           "type": "boolean"
         },
+        "responseOrder": {
+          "description": "The order of the responses. Defaults to 'fixed'.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
+        },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
           "type": "boolean"
@@ -1669,13 +1681,6 @@
         "sidebarWidth": {
           "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
           "type": "number"
-        "responseOrder": {
-          "description": "The order of the responses. Defaults to 'fixed'.",
-          "enum": [
-            "fixed",
-            "random"
-          ],
-          "type": "string"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
@@ -1900,11 +1905,11 @@
           "type": "string"
         },
         "previousButton": {
-          "description": "Whether to show the previous button.",
+          "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
         },
         "previousButtonText": {
-          "description": "The text that is displayed on the previous button.",
+          "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
           "type": "string"
         },
         "provideFeedback": {
@@ -1926,6 +1931,14 @@
           "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
           "type": "boolean"
         },
+        "responseOrder": {
+          "description": "The order of the responses. Defaults to 'fixed'.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
+        },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
           "type": "boolean"
@@ -1937,13 +1950,6 @@
         "sidebarWidth": {
           "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
           "type": "number"
-        "responseOrder": {
-          "description": "The order of the responses. Defaults to 'fixed'.",
-          "enum": [
-            "fixed",
-            "random"
-          ],
-          "type": "string"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
@@ -2500,6 +2506,14 @@
           "description": "The path to the logo image. This is displayed on the landing page and the header.",
           "type": "string"
         },
+        "minHeightSize": {
+          "description": "The minimum screen height size for the study",
+          "type": "number"
+        },
+        "minWidthSize": {
+          "description": "The minimum screen width size for the study",
+          "type": "number"
+        },
         "nextButtonDisableTime": {
           "description": "The time in milliseconds to wait before the next button is disabled.",
           "type": "number"
@@ -2516,14 +2530,6 @@
           "description": "The text to display on the next button.",
           "type": "string"
         },
-        "minHeightSize": {
-          "description": "The minimum screen height size for the study",
-          "type": "number"
-        },
-        "minWidthSize": {
-          "description": "The minimum screen width size for the study",
-          "type": "number"
-        },
         "nextOnEnter": {
           "description": "Whether enter key should move to the next question. Defaults to false.",
           "type": "boolean"
@@ -2534,6 +2540,10 @@
         },
         "participantNameField": {
           "description": "The default name field for a participant. Directs revisit to use the task and response id as a name in UI elements. For example, if you wanted the response 'prolificId' from the task 'introduction' to be the name, this field would be 'introduction.prolificId'",
+          "type": "string"
+        },
+        "previousButtonText": {
+          "description": "The text that is displayed on the previous button.",
           "type": "string"
         },
         "provideFeedback": {
@@ -2672,11 +2682,11 @@
           "type": "boolean"
         },
         "previousButton": {
-          "description": "Whether to show the previous button.",
+          "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
         },
         "previousButtonText": {
-          "description": "The text that is displayed on the previous button.",
+          "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
           "type": "string"
         },
         "provideFeedback": {
@@ -2698,6 +2708,14 @@
           "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
           "type": "boolean"
         },
+        "responseOrder": {
+          "description": "The order of the responses. Defaults to 'fixed'.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
+        },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
           "type": "boolean"
@@ -2709,13 +2727,6 @@
         "sidebarWidth": {
           "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
           "type": "number"
-        "responseOrder": {
-          "description": "The order of the responses. Defaults to 'fixed'.",
-          "enum": [
-            "fixed",
-            "random"
-          ],
-          "type": "string"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
@@ -2810,11 +2821,11 @@
           "type": "string"
         },
         "previousButton": {
-          "description": "Whether to show the previous button.",
+          "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
         },
         "previousButtonText": {
-          "description": "The text that is displayed on the previous button.",
+          "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
           "type": "string"
         },
         "provideFeedback": {
@@ -2836,6 +2847,14 @@
           "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
           "type": "boolean"
         },
+        "responseOrder": {
+          "description": "The order of the responses. Defaults to 'fixed'.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
+        },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
           "type": "boolean"
@@ -2847,13 +2866,6 @@
         "sidebarWidth": {
           "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
           "type": "number"
-        "responseOrder": {
-          "description": "The order of the responses. Defaults to 'fixed'.",
-          "enum": [
-            "fixed",
-            "random"
-          ],
-          "type": "string"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
@@ -2952,11 +2964,11 @@
           "type": "string"
         },
         "previousButton": {
-          "description": "Whether to show the previous button.",
+          "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
         },
         "previousButtonText": {
-          "description": "The text that is displayed on the previous button.",
+          "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
           "type": "string"
         },
         "provideFeedback": {
@@ -2978,6 +2990,14 @@
           "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
           "type": "boolean"
         },
+        "responseOrder": {
+          "description": "The order of the responses. Defaults to 'fixed'.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
+        },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
           "type": "boolean"
@@ -2989,13 +3009,6 @@
         "sidebarWidth": {
           "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
           "type": "number"
-        "responseOrder": {
-          "description": "The order of the responses. Defaults to 'fixed'.",
-          "enum": [
-            "fixed",
-            "random"
-          ],
-          "type": "string"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
@@ -3099,11 +3112,11 @@
           "type": "string"
         },
         "previousButton": {
-          "description": "Whether to show the previous button.",
+          "description": "Whether to show the previous button. If present, will override the previous button setting in the uiConfig.",
           "type": "boolean"
         },
         "previousButtonText": {
-          "description": "The text that is displayed on the previous button.",
+          "description": "The text that is displayed on the previous button. If present, will override the previous button text setting in the uiConfig.",
           "type": "string"
         },
         "provideFeedback": {
@@ -3125,6 +3138,14 @@
           "description": "Whether to show the response dividers. If present, will override the response dividers setting in the uiConfig.",
           "type": "boolean"
         },
+        "responseOrder": {
+          "description": "The order of the responses. Defaults to 'fixed'.",
+          "enum": [
+            "fixed",
+            "random"
+          ],
+          "type": "string"
+        },
         "showTitle": {
           "description": "Controls whether the title should be hidden in the study. If present, will override the title setting in the uiConfig.",
           "type": "boolean"
@@ -3136,13 +3157,6 @@
         "sidebarWidth": {
           "description": "The width of the left sidebar. If present, will override the sidebar width setting in the uiConfig.",
           "type": "number"
-        "responseOrder": {
-          "description": "The order of the responses. Defaults to 'fixed'.",
-          "enum": [
-            "fixed",
-            "random"
-          ],
-          "type": "string"
         },
         "trainingAttempts": {
           "description": "The number of training attempts allowed for the component. If present, will override the training attempts setting in the uiConfig.",
