@@ -69,26 +69,26 @@ export function ResponseStats({ participantData }: { participantData: Participan
           <Text>No data available</Text>
         </Flex>
       ) : (
-        <Box style={{ maxWidth: '100%', overflowX: 'auto' }}>
-          <Table mb="md" style={{ width: '100%' }}>
+        <Box>
+          <Table>
             <Table.Thead>
               <Table.Tr>
-                <Table.Th style={{ width: '20%' }}>Component</Table.Th>
-                <Table.Th style={{ width: '30%' }}>Response Type</Table.Th>
-                <Table.Th style={{ width: '25%' }}>Correctness</Table.Th>
-                <Table.Th style={{ width: '25%' }}>Responses</Table.Th>
+                <Table.Th>Component</Table.Th>
+                <Table.Th>Response Type</Table.Th>
+                <Table.Th>Correctness</Table.Th>
+                <Table.Th>Responses</Table.Th>
               </Table.Tr>
             </Table.Thead>
             <Table.Tbody>
               {responseStats.map((stat) => (
                 <Table.Tr key={`${stat.name}_${stat.responseType}`}>
-                  <Table.Td style={{ width: '20%' }}>{stat.name}</Table.Td>
-                  <Table.Td style={{ width: '30%' }}>{stat.responseType}</Table.Td>
-                  <Table.Td style={{ width: '25%' }}>
+                  <Table.Td>{stat.name}</Table.Td>
+                  <Table.Td>{stat.responseType}</Table.Td>
+                  <Table.Td>
                     {stat.correctness.toFixed(1)}
                     %
                   </Table.Td>
-                  <Table.Td style={{ width: '25%' }}>
+                  <Table.Td>
                     {stat.correctResponses}
                     /
                     {stat.totalResponses}
