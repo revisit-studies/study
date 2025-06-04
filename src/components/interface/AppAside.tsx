@@ -9,8 +9,10 @@ import {
   AppShell,
   Tooltip,
 } from '@mantine/core';
-import React, { useMemo, useState } from 'react';
-import { IconInfoCircle, IconUserPlus } from '@tabler/icons-react';
+import { useMemo, useState } from 'react';
+import {
+  IconDatabase, IconFlame, IconGraph, IconGraphOff, IconInfoCircle, IconUserPlus,
+} from '@tabler/icons-react';
 import { useHref } from 'react-router';
 import { ComponentBlockWithOrderPath, StepsPanel } from './StepsPanel';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
@@ -57,10 +59,13 @@ export function AppAside() {
 
   const nextParticipantDisabled = useMemo(() => activeTab === 'allTrials' || isAnalysis, [activeTab, isAnalysis]);
 
+  const modes = useStoreSelector((state) => state.modes);
+
   return (
     <AppShell.Aside p="0">
       <AppShell.Section
-        p="md"
+        p="sm"
+        pb={0}
       >
         <Flex direction="row" justify="space-between">
           <Text size="md" fw={700} pt={3}>
@@ -82,12 +87,28 @@ export function AppAside() {
             mt={1}
           />
         </Flex>
+        <Flex direction="row" justify="space-between" mt="xs" opacity={0.7}>
+          <Text size="sm">
+            Study Status:
+            {' '}
+            {modes?.dataCollectionEnabled ? 'Collecting Data' : 'Data Collection Disabled'}
+          </Text>
+          <Flex gap="sm">
+            {modes?.analyticsInterfacePubliclyAccessible
+              ? <Tooltip label="Analytics interface publicly accessible" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraph size={16} color="green" /></Tooltip>
+              : <Tooltip label="Analytics interface not publicly accessible" multiline w={200} style={{ whiteSpace: 'normal' }} withinPortal position="bottom"><IconGraphOff size={16} color="red" /></Tooltip>}
+            {storageEngine?.getEngine() === 'localStorage'
+              ? <Tooltip label="Local storage enabled" withinPortal position="bottom"><IconDatabase size={16} color="green" /></Tooltip>
+              : <Tooltip label="Firebase enabled" withinPortal position="bottom"><IconFlame size={16} color="green" /></Tooltip>}
+          </Flex>
+        </Flex>
       </AppShell.Section>
 
       <AppShell.Section
         grow
         component={ScrollArea}
-        p="md"
+        p="xs"
+        pt={8}
       >
         <Tabs value={activeTab} onChange={setActiveTab}>
           <Box style={{

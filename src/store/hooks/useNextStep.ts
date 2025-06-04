@@ -99,7 +99,7 @@ export function useNextStep() {
     // Get current window events. Splice empties the array and returns the removed elements, which handles clearing the array
     const currentWindowEvents = windowEvents && 'current' in windowEvents && windowEvents.current ? windowEvents.current.splice(0, windowEvents.current.length) : [];
 
-    if (dataCollectionEnabled && storedAnswer.endTime === -1) { // === -1 means the answer has not been saved yet
+    if (dataCollectionEnabled) {
       const toSave = {
         ...storedAnswer,
         answer: collectData ? answer : {},

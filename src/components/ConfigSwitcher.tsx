@@ -1,8 +1,8 @@
 import {
-  Anchor, AppShell, Button, Card, Container, Divider, Flex, Image, rem, Tabs, Text,
+  Anchor, AppShell, Button, Card, Container, Divider, Flex, Image, rem, Tabs, Text, Tooltip,
 } from '@mantine/core';
 import {
-  IconAlertTriangle, IconChartHistogram, IconExternalLink, IconListCheck,
+  IconAlertTriangle, IconChartHistogram, IconDatabase, IconExternalLink, IconFlame, IconGraph, IconGraphOff, IconListCheck, IconSchema, IconSchemaOff,
 } from '@tabler/icons-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Timestamp } from 'firebase/firestore';
@@ -22,7 +22,7 @@ import { useAuth } from '../store/hooks/useAuth';
 function StudyCard({ configName, config, url }: { configName: string; config: ParsedConfig<StudyConfig>; url: string }) {
   const { storageEngine } = useStorageEngine();
 
-  const [studyStatusAndTiming, setStudyStatusAndTiming] = useState<{completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null} | null>(null);
+  const [studyStatusAndTiming, setStudyStatusAndTiming] = useState<{ completed: number; rejected: number; inProgress: number; minTime: Timestamp | number | null; maxTime: Timestamp | number | null } | null>(null);
   useEffect(() => {
     if (!storageEngine) return;
 
@@ -138,21 +138,32 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
                 {currentMode}
               </Text>
               {studyStatusAndTiming
-              && <ParticipantStatusBadges completed={studyStatusAndTiming.completed} inProgress={studyStatusAndTiming.inProgress} rejected={studyStatusAndTiming.rejected} />}
+                && <ParticipantStatusBadges completed={studyStatusAndTiming.completed} inProgress={studyStatusAndTiming.inProgress} rejected={studyStatusAndTiming.rejected} />}
+              <Flex ml="auto" gap="sm" opacity={0.7}>
+                {modes?.studyNavigatorEnabled
+                  ? <Tooltip label="Study navigator enabled" withinPortal><IconSchema size={16} color="green" /></Tooltip>
+                  : <Tooltip label="Study navigator disabled" withinPortal><IconSchemaOff size={16} color="red" /></Tooltip>}
+                {modes?.analyticsInterfacePubliclyAccessible
+                  ? <Tooltip label="Analytics interface publicly accessible" withinPortal><IconGraph size={16} color="green" /></Tooltip>
+                  : <Tooltip label="Analytics interface not publicly accessible" withinPortal><IconGraphOff size={16} color="red" /></Tooltip>}
+                {storageEngine?.getEngine() === 'localStorage'
+                  ? <Tooltip label="Local storage enabled" withinPortal><IconDatabase size={16} color="green" /></Tooltip>
+                  : <Tooltip label="Firebase enabled" withinPortal><IconFlame size={16} color="green" /></Tooltip>}
+              </Flex>
             </Flex>
 
             {minTime && maxTime
-            && (
-            <Text c="dimmed" mt={4}>
-              Activity:
-              {' '}
-              {minTime}
-              {' '}
-              –
-              {' '}
-              {maxTime}
-            </Text>
-            )}
+              && (
+                <Text c="dimmed" mt={4}>
+                  Activity:
+                  {' '}
+                  {minTime}
+                  {' '}
+                  –
+                  {' '}
+                  {maxTime}
+                </Text>
+              )}
 
             <Flex direction="row" align="end" gap="sm" mt="md">
               <Button
@@ -178,7 +189,7 @@ function StudyCard({ configName, config, url }: { configName: string; config: Pa
   );
 }
 
-function StudyCards({ configNames, studyConfigs } : { configNames: string[]; studyConfigs: Record<string, ParsedConfig<StudyConfig> | null> }) {
+function StudyCards({ configNames, studyConfigs }: { configNames: string[]; studyConfigs: Record<string, ParsedConfig<StudyConfig> | null> }) {
   return configNames.map((configName) => {
     const config = studyConfigs[configName];
     if (!config) {

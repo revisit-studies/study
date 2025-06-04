@@ -1,5 +1,5 @@
 import {
-  Alert, Anchor, Button, Group,
+  Alert, Anchor, Button,
 } from '@mantine/core';
 
 import React, {
@@ -10,6 +10,7 @@ import { Registry, initializeTrrack } from '@trrack/core';
 import {
   IndividualComponent,
   ResponseBlockLocation,
+  Response,
 } from '../../parser/types';
 import { useCurrentIdentifier, useCurrentStep, useStudyId } from '../../routes/utils';
 import {
@@ -22,6 +23,7 @@ import { ResponseSwitcher } from './ResponseSwitcher';
 import { FormElementProvenance, StoredAnswer } from '../../store/types';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { useStudyConfig } from '../../store/hooks/useStudyConfig';
+import { useStoredAnswer } from '../../store/hooks/useStoredAnswer';
 
 type Props = {
   status?: StoredAnswer;
@@ -51,10 +53,13 @@ export function ResponseBlock({
   const {
     updateResponseBlockValidation, toggleShowHelpText, saveIncorrectAnswer, incrementHelpCounter,
   } = useStoreActions();
+
   const currentStep = useCurrentStep();
   const currentProvenance = useStoreSelector((state) => state.analysisProvState[location]) as FormElementProvenance | undefined;
 
   const storedAnswer = useMemo(() => currentProvenance?.form || status?.answer, [currentProvenance, status]);
+  const storedAnswerData = useStoredAnswer();
+  const formOrders: Record<string, string[]> = useMemo(() => storedAnswerData?.formOrder || {}, [storedAnswerData]);
 
   const studyId = useStudyId();
 
@@ -62,7 +67,12 @@ export function ResponseBlock({
 
   const configInUse = config as IndividualComponent;
 
-  const responses = useMemo(() => configInUse?.response?.filter((r) => (r.location ? r.location === location : location === 'belowStimulus')) || [], [configInUse?.response, location]);
+  const responses = useMemo(() => (formOrders?.response
+    ? formOrders.response
+      .map((id) => configInUse?.response?.find((r) => r.id === id))
+      .filter((r): r is Response => r !== undefined && (r.location ? r.location === location : location === 'belowStimulus'))
+    : []
+  ), [configInUse?.response, location, formOrders]);
 
   const responsesWithDefaults = useMemo(() => responses.map((response) => {
     if (response.type !== 'textOnly') {
@@ -111,13 +121,10 @@ export function ResponseBlock({
   const [hasCorrectAnswer, setHasCorrectAnswer] = useState(false);
   const usedAllAttempts = attemptsUsed >= trainingAttempts && trainingAttempts >= 0;
   const disabledAttempts = usedAllAttempts || hasCorrectAnswer;
-
   const studyConfig = useStudyConfig();
-
   const identifier = useCurrentIdentifier();
 
-  const showNextBtn = location === (configInUse?.nextButtonLocation || 'belowStimulus');
-
+  const showBtnsInLocation = location === (configInUse?.nextButtonLocation || 'belowStimulus');
   useEffect(() => {
     const ReactiveResponse = responsesWithDefaults.find((r) => r.type === 'reactive');
     if (reactiveAnswers && ReactiveResponse) {
@@ -145,7 +152,7 @@ export function ResponseBlock({
       // update answerValidator
       answerValidator.setValues(updatedValues);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [matrixAnswers]);
 
   useEffect(() => {
@@ -267,7 +274,7 @@ export function ResponseBlock({
         window.removeEventListener('keydown', handleKeyDown);
       };
     }
-    return () => {};
+    return () => { };
   }, [checkAnswerProvideFeedback, studyConfig]);
 
   let index = 0;
@@ -291,7 +298,7 @@ export function ResponseBlock({
               <>
                 <ResponseSwitcher
                   storedAnswer={storedAnswer}
-                  answer={{
+                  form={{
                     ...answerValidator.getInputProps(response.id, {
                       type: response.type === 'checkbox' ? 'checkbox' : 'input',
                     }),
@@ -331,23 +338,22 @@ export function ResponseBlock({
         );
       })}
 
-      <Group justify="right" gap="xs">
-        {hasCorrectAnswerFeedback && showNextBtn && (
+      {showBtnsInLocation && (
+      <NextButton
+        disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
+        label={configInUse.nextButtonText || 'Next'}
+        configInUse={configInUse}
+        location={location}
+        checkAnswer={showBtnsInLocation && hasCorrectAnswerFeedback ? (
           <Button
             onClick={() => checkAnswerProvideFeedback()}
-            disabled={!answerValidator.isValid() || disabledAttempts}
+            px={location === 'sidebar' ? 8 : undefined}
           >
             Check Answer
           </Button>
-        )}
-        {showNextBtn && (
-          <NextButton
-            disabled={(hasCorrectAnswerFeedback && !enableNextButton) || !answerValidator.isValid()}
-            label={configInUse.nextButtonText || 'Next'}
-            configInUse={configInUse}
-          />
-        )}
-      </Group>
+        ) : null}
+      />
+      )}
     </div>
   );
 }
