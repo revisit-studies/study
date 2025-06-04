@@ -216,7 +216,7 @@
         }
       ]
     },
-    "survey_randomized": {
+    "survey_randomized_options": {
       "type": "questionnaire",
       "response": [
         {
@@ -388,7 +388,8 @@
             }
           ]
         }
-      ]
+      ],
+      "responseOrder": "random"
     }
   },
   "sequence": {
@@ -396,7 +397,7 @@
     "components": [
       "introduction",
       "survey",
-      "survey_randomized",
+      "survey_randomized_options",
       "survey_randomized_form"
     ]
   }
