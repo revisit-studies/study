@@ -14,7 +14,7 @@ import { AppHeader } from '../interface/AppHeader';
 import { GlobalConfig, ParticipantData, StudyConfig } from '../../parser/types';
 import { getStudyConfig } from '../../utils/fetchConfig';
 import { TableView } from './table/TableView';
-import { StudySummary } from './summary/StudySummary';
+import { SummaryView } from './summary/SummaryView';
 import { useStorageEngine } from '../../storage/storageEngineHooks';
 import { ManageAccordion } from './management/ManageAccordion';
 import { useAuth } from '../../store/hooks/useAuth';
@@ -152,7 +152,7 @@ export function StudyAnalysisTabs({ globalConfig }: { globalConfig: GlobalConfig
               {studyConfig && <TableView visibleParticipants={visibleParticipants} studyConfig={studyConfig} refresh={getData} />}
             </Tabs.Panel>
             <Tabs.Panel value="summary" pt="xs">
-              {studyConfig && <StudySummary />}
+              {studyConfig && <SummaryView visibleParticipants={visibleParticipants} studyConfig={studyConfig} />}
             </Tabs.Panel>
             <Tabs.Panel value="stats" pt="xs">
               {studyConfig && <StatsView studyConfig={studyConfig} visibleParticipants={visibleParticipants} />}
