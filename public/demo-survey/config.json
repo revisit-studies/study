@@ -241,9 +241,9 @@
           "type": "matrix-radio",
           "answerOptions": "satisfaction5",
           "questionOptions": [
-            "Question1",
-            "Question2",
-            "Question3"
+            "Question 1",
+            "Question 2",
+            "Question 3"
           ],
           "questionOrder": "random"
         },
@@ -254,14 +254,14 @@
           "location": "aboveStimulus",
           "type": "matrix-checkbox",
           "answerOptions": [
-            "Option1",
-            "Option2",
-            "Option3"
+            "Option 1",
+            "Option 2",
+            "Option 3"
           ],
           "questionOptions": [
-            "Question1",
-            "Question2",
-            "Question3"
+            "Question 1",
+            "Question 2",
+            "Question 3"
           ],
           "questionOrder": "random"
         },
