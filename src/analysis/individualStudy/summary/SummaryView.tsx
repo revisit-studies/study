@@ -17,7 +17,7 @@ export function SummaryView({ visibleParticipants, studyConfig }: StudyStatsProp
     <Flex justify="space-between">
       <OverviewStats visibleParticipants={visibleParticipants} />
       {studyConfig && <ComponentStats participantData={visibleParticipants} />}
-      {studyConfig && <ResponseStats participantData={visibleParticipants} />}
+      {studyConfig && <ResponseStats participantData={visibleParticipants} studyConfig={studyConfig} />}
     </Flex>
   );
 }
