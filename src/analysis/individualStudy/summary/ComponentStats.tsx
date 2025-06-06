@@ -1,108 +1,117 @@
 import {
-  Flex, Paper, Table, Text, Box,
+  Flex, Paper, Table, Text, Title,
 } from '@mantine/core';
 import { ParticipantData } from '../../../storage/types';
-import { getCleanedDuration } from '../../../utils/getCleanedDuration';
+// import { getCleanedDuration } from '../../../utils/getCleanedDuration';
+
+interface ComponentStatsProps {
+  participantData: ParticipantData[];
+}
+
+interface TaskStats {
+  name: string;
+  avgTime: number;
+  avgCleanTime: number;
+  attempts: number;
+  correctness: number;
+}
 
 function toDisplayData(milliseconds: number) {
   if (!Number.isFinite(milliseconds)) return 'N/A';
   const minutes = Math.floor(milliseconds / (1000 * 60));
-  const seconds = ((milliseconds % (1000 * 60)) / 1000).toFixed(2);
+  const seconds = ((milliseconds % (1000 * 60)) / 1000).toFixed(1);
   return minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
 }
 
-interface ComponentStats {
-  name: string;
-  avgTime: number;
-  avgCleanTime: number;
-  participants: number;
-}
+function calculateTaskStats(participants: ParticipantData[]): TaskStats[] {
+  const stats: Record<string, TaskStats> = {};
 
-function calculateComponentStats(participantData: ParticipantData[]) {
-  const componentStats: ComponentStats[] = [];
+  participants.forEach((participant) => {
+    Object.entries(participant.answers).forEach(([taskId, answer]) => {
+      const [taskName, trialNumber] = taskId.split('_');
+      const displayName = `${taskName}_${trialNumber}`;
 
-  // Group answers by component
-  const componentAnswers = new Map<string, ParticipantData['answers']>();
-
-  participantData.forEach((record) => {
-    Object.entries(record.answers).forEach(([_key, value]) => {
-      const componentId = _key.split('_')[0];
-      if (!componentAnswers.has(componentId)) {
-        componentAnswers.set(componentId, {});
+      if (!stats[displayName]) {
+        stats[displayName] = {
+          name: displayName,
+          avgTime: 0,
+          avgCleanTime: 0,
+          attempts: 0,
+          correctness: 0,
+        };
       }
-      componentAnswers.get(componentId)![_key] = value;
-    });
-  });
 
-  componentAnswers.forEach((answers, componentId) => {
-    let totalTime = 0;
-    let totalCleanTime = 0;
-    let validResponses = 0;
+      if (answer.endTime !== -1) {
+        const time = answer.endTime - answer.startTime;
+        const cleanTime = Math.max(0, time - (answer.windowEvents?.length || 0) * 100);
 
-    // Calculate times
-    Object.entries(answers).forEach(([_key, answer]) => {
-      if (Number.isFinite(answer.endTime) && Number.isFinite(answer.startTime)) {
-        const duration = (answer.endTime - answer.startTime) / 1000; // Convert to seconds
-        const cleanDuration = getCleanedDuration(answer as never);
+        stats[displayName].avgTime += time;
+        stats[displayName].avgCleanTime += cleanTime;
+        stats[displayName].attempts += 1;
 
-        if (duration >= 0) {
-          totalTime += duration;
-          validResponses += 1;
-        }
-
-        if (cleanDuration !== undefined && Number.isFinite(cleanDuration)) {
-          totalCleanTime += cleanDuration / 1000; // Convert to seconds
+        // Calculate correctness if correctAnswer exists
+        if (answer.correctAnswer && answer.correctAnswer.length > 0) {
+          const isCorrect = answer.correctAnswer.some((ca) => JSON.stringify(ca.answer) === JSON.stringify(answer.answer[ca.id]));
+          stats[displayName].correctness += isCorrect ? 1 : 0;
         }
       }
     });
-
-    // Count participants who have any response for this component
-    const participants = participantData.filter((participant) => Object.keys(participant.answers).some((key) => key.startsWith(`${componentId}_`))).length;
-
-    componentStats.push({
-      name: componentId,
-      avgTime: validResponses > 0 ? totalTime / validResponses : 0,
-      avgCleanTime: validResponses > 0 ? totalCleanTime / validResponses : 0,
-      participants,
-    });
   });
 
-  return componentStats;
+  // Calculate averages
+  Object.values(stats).forEach((stat) => {
+    if (stat.attempts > 0) {
+      stat.avgTime /= stat.attempts;
+      stat.avgCleanTime /= stat.attempts;
+      stat.correctness = (stat.correctness / stat.attempts) * 100;
+    }
+  });
+
+  return Object.values(stats).sort((a, b) => {
+    const [aComponent] = a.name.split('_');
+    const [bComponent] = b.name.split('_');
+    if (aComponent !== bComponent) {
+      return aComponent.localeCompare(bComponent);
+    }
+    const [, aTrial] = a.name.split('_');
+    const [, bTrial] = b.name.split('_');
+    return Number.parseInt(aTrial, 10) - Number.parseInt(bTrial, 10);
+  });
 }
 
-export function ComponentStats({ participantData }: { participantData: ParticipantData[]}) {
-  const componentStats = calculateComponentStats(participantData);
+export function ComponentStats({ participantData }: ComponentStatsProps) {
+  const taskStats = calculateTaskStats(participantData);
 
   return (
-    <Paper shadow="sm" p="md" withBorder>
-      <Text fw="bold">Component Stats</Text>
-      {(participantData.length === 0) ? (
+    <Paper withBorder p="md" radius="md">
+      <Title order={4} mb="md">Component Timing Statistics</Title>
+      {participantData.length === 0 ? (
         <Flex justify="center" align="center" pt="lg" pb="md">
           <Text>No data available</Text>
         </Flex>
       ) : (
-        <Box>
-          <Table mb="md">
-            <Table.Thead>
-              <Table.Tr>
-                <Table.Th>Component</Table.Th>
-                <Table.Th>Avg Time</Table.Th>
-                <Table.Th>Avg Clean Time</Table.Th>
-                <Table.Th>Participants</Table.Th>
+        <Table>
+          <Table.Thead>
+            <Table.Tr>
+              <Table.Th>Component</Table.Th>
+              <Table.Th>Avg Time</Table.Th>
+              <Table.Th>Avg Clean Time</Table.Th>
+              <Table.Th>Attempts</Table.Th>
+              <Table.Th>Correctness</Table.Th>
+            </Table.Tr>
+          </Table.Thead>
+          <Table.Tbody>
+            {taskStats.map((stat) => (
+              <Table.Tr key={stat.name}>
+                <Table.Td>{stat.name}</Table.Td>
+                <Table.Td>{toDisplayData(stat.avgTime)}</Table.Td>
+                <Table.Td>{toDisplayData(stat.avgCleanTime)}</Table.Td>
+                <Table.Td>{stat.attempts}</Table.Td>
+                <Table.Td>{`${stat.correctness.toFixed(1)}%`}</Table.Td>
               </Table.Tr>
-            </Table.Thead>
-            <Table.Tbody>
-              {componentStats.map((component) => (
-                <Table.Tr key={component.name}>
-                  <Table.Td>{component.name}</Table.Td>
-                  <Table.Td>{toDisplayData(component.avgTime * 1000)}</Table.Td>
-                  <Table.Td>{toDisplayData(component.avgCleanTime * 1000)}</Table.Td>
-                  <Table.Td>{component.participants}</Table.Td>
-                </Table.Tr>
-              ))}
-            </Table.Tbody>
-          </Table>
-        </Box>
+            ))}
+          </Table.Tbody>
+        </Table>
       )}
     </Paper>
   );
