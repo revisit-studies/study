@@ -75,7 +75,7 @@ test('test', async ({ page }) => {
   }
 
   // Matrix checkbox
-  const checkboxes3 = await page.locator('input[value="Option 1"]');
+  const checkboxes3 = await page.locator('input[value="Answer 1"]');
   for (let i = 0; i < await checkboxes3.count(); i += 1) {
     await checkboxes3.nth(i).click();
   }
@@ -89,12 +89,12 @@ test('test', async ({ page }) => {
   await page.getByRole('checkbox', { name: 'Option 3' }).nth(1).click();
 
   // Vertical Radio
-  await page.getByRole('radio', { name: 'Option 2' }).nth(0).click();
+  await page.getByRole('radio', { name: 'Option 4' }).nth(0).click();
   // Horizontal Radio
-  await page.getByRole('radio', { name: 'Option 1' }).nth(1).click();
+  await page.getByRole('radio', { name: 'Option 4' }).nth(1).click();
 
   // Button
-  await page.getByRole('radio', { name: 'Option 1' }).nth(2).click();
+  await page.getByRole('radio', { name: 'Option 4' }).nth(2).click();
 
   // Go to the next page
   await page.getByRole('button', { name: 'Next', exact: true }).click();
