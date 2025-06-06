@@ -1,4 +1,4 @@
-import { Flex } from '@mantine/core';
+import { Stack, Group } from '@mantine/core';
 import { ParticipantData } from '../../../storage/types';
 import { StudyConfig } from '../../../parser/types';
 import { OverviewStats } from './OverviewStats';
@@ -10,14 +10,16 @@ interface StudyStatsProps {
   studyConfig?: StudyConfig;
 }
 
-// First row: Overview Stats & Response Stats
-// Second row: Component Stats & Response Stats
 export function SummaryView({ visibleParticipants, studyConfig }: StudyStatsProps) {
   return (
-    <Flex justify="space-between">
+    <Stack gap="md">
       <OverviewStats visibleParticipants={visibleParticipants} />
-      {studyConfig && <ComponentStats participantData={visibleParticipants} />}
-      {studyConfig && <ResponseStats participantData={visibleParticipants} studyConfig={studyConfig} />}
-    </Flex>
+      {studyConfig && (
+        <Group align="flex-start" gap="md" grow>
+          <ComponentStats participantData={visibleParticipants} />
+          <ResponseStats participantData={visibleParticipants} studyConfig={studyConfig} />
+        </Group>
+      )}
+    </Stack>
   );
 }
