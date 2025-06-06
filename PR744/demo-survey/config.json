@@ -36,7 +36,7 @@
           "id": "textField2",
           "type": "textOnly",
           "location": "aboveStimulus",
-          "prompt": "# Question Types and Form Element.\n\n This page shows all the question types and form elements that are supported in the reVISit platform.",
+          "prompt": "# Question Types and Form Element\n\n This page shows all the question types and form elements that are supported in the reVISit platform.",
           "restartEnumeration": true
         },
         {
