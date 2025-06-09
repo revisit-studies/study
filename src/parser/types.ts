@@ -614,6 +614,10 @@ export interface BaseIndividualComponent {
   nextButtonText?: string;
   /** The location of the next button. */
   nextButtonLocation?: ConfigResponseBlockLocation;
+  /** Whether to show the previous button. */
+  previousButton?: boolean;
+  /** The text that is displayed on the previous button. */
+  previousButtonText?:string;
   /** The location of the instructions. */
   instructionLocation?: ConfigResponseBlockLocation;
   /** The correct answer to the component. This is used for training trials where the user is shown the correct answer after a guess. */
@@ -640,6 +644,8 @@ export interface BaseIndividualComponent {
   responseDividers?: boolean;
   /** Optional override for the help text. If present, will override the default help text path set in the uiConfig. */
   helpTextPathOverride?: string;
+  /** The order of the responses. Defaults to 'fixed'. */
+  responseOrder?: 'fixed' | 'random';
 }
 
 /**
@@ -1008,9 +1014,9 @@ export interface DeterministicInterruption {
  *
 ```js
 [
-  ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "component5", "interruption1", "interruption2", "component6],
-  ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "interruption1", "interruption2", "component5", "component6],
-  ["component1", "component2" "interruption1", "interruption2", "component3", "interruption1", "interruption2", "component4", "component5", "interruption1", "interruption2", "component6],
+  ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "component5", "interruption1", "interruption2", "component6"],
+  ["component1", "interruption1", "interruption2", "component2", "interruption1", "interruption2", "component3", "component4", "interruption1", "interruption2", "component5", "component6"],
+  ["component1", "component2" "interruption1", "interruption2", "component3", "interruption1", "interruption2", "component4", "component5", "interruption1", "interruption2", "component6"],
   ...
 ]
 ```
