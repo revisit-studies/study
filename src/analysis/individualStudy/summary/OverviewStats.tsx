@@ -1,23 +1,8 @@
 import {
-  Flex, Paper, Text, Group, Stack,
+  Flex, Paper, Text, Group,
 } from '@mantine/core';
 import { ParticipantData } from '../../../storage/types';
 
-// Number of participants
-// Number of completed participants
-// Number of in progress participants
-// Number of rejected participants
-// interface ParticipantCounts {
-//   total: number;
-//   completed: number;
-//   rejected: number;
-//   inProgress: number;
-// }
-
-// Time frame (Start and end date or time)
-
-// Average time
-// Average clean time
 interface TimeStats {
   avgTime: number;
   avgCleanTime: number;
@@ -98,46 +83,35 @@ export function OverviewStats({ visibleParticipants }: { visibleParticipants: Pa
 
   return (
     <Paper shadow="sm" p="md" withBorder>
-      <Stack gap="md">
-        <Text fw="bold">Overview Stats</Text>
-
-        <Flex gap="xl" wrap="wrap">
-          <Group gap="xl">
-            <div>
-              <Text size="xl" fw={700}>{participantCounts.total}</Text>
-              <Text size="xs" c="dimmed">Total Participants</Text>
-            </div>
-            <Stack gap={4}>
-              <Group gap="xs" wrap="nowrap">
-                <Text size="sm" fw={500} c="green.6" w={30} ta="right">{participantCounts.completed}</Text>
-                <Text size="xs" c="dimmed">Completed</Text>
-              </Group>
-              <Group gap="xs" wrap="nowrap">
-                <Text size="sm" fw={500} c="yellow.6" w={30} ta="right">{participantCounts.inProgress}</Text>
-                <Text size="xs" c="dimmed">In Progress</Text>
-              </Group>
-              <Group gap="xs" wrap="nowrap">
-                <Text size="sm" fw={500} c="red.6" w={30} ta="right">{participantCounts.rejected}</Text>
-                <Text size="xs" c="dimmed">Rejected</Text>
-              </Group>
-            </Stack>
-          </Group>
-
-          <Group gap="xl">
-            <div>
-              <Text size="xl" fw={700}>{startTime?.toLocaleDateString() || 'N/A'}</Text>
-              <Text size="xs" c="dimmed">Start Date</Text>
-            </div>
-            <div>
-              <Text size="xl" fw={700}>
-                {participantCounts.inProgress > 0 ? 'N/A' : endTime?.toLocaleDateString() || 'N/A'}
-              </Text>
-              <Text size="xs" c="dimmed">End Date</Text>
-            </div>
-          </Group>
-        </Flex>
-
-        <Flex gap="xl" wrap="wrap">
+      <Text fw="bold">Overview Stats</Text>
+      <Flex gap="xl" wrap="wrap">
+        <Group gap="xl">
+          <div>
+            <Text size="xl" fw="bold">{participantCounts.total}</Text>
+            <Text size="xs" c="dimmed">Total Participants</Text>
+          </div>
+          <div>
+            <Text size="xl" fw="bold" c="green">{participantCounts.completed}</Text>
+            <Text size="xs" c="dimmed">Completed</Text>
+          </div>
+          <div>
+            <Text size="xl" fw="bold" c="yellow">{participantCounts.inProgress}</Text>
+            <Text size="xs" c="dimmed">In Progress</Text>
+          </div>
+          <div>
+            <Text size="xl" fw="bold" c="red">{participantCounts.rejected}</Text>
+            <Text size="xs" c="dimmed">Rejected</Text>
+          </div>
+          <div>
+            <Text size="xl" fw={700}>{startTime?.toLocaleDateString() || 'N/A'}</Text>
+            <Text size="xs" c="dimmed">Start Date</Text>
+          </div>
+          <div>
+            <Text size="xl" fw={700}>
+              {participantCounts.inProgress > 0 ? 'N/A' : endTime?.toLocaleDateString() || 'N/A'}
+            </Text>
+            <Text size="xs" c="dimmed">End Date</Text>
+          </div>
           <div>
             <Text size="xl" fw={700}>
               {(timeStats.avgTime / 1000).toFixed(1)}
@@ -159,8 +133,9 @@ export function OverviewStats({ visibleParticipants }: { visibleParticipants: Pa
             </Text>
             <Text size="xs" c="dimmed">Correctness</Text>
           </div>
-        </Flex>
-      </Stack>
+        </Group>
+      </Flex>
+
     </Paper>
   );
 }
