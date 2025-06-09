@@ -1,5 +1,5 @@
 import {
-  Flex, Paper, Text, Group,
+  Flex, Paper, Text, Title,
 } from '@mantine/core';
 import { ParticipantData } from '../../../storage/types';
 
@@ -68,7 +68,6 @@ function calculateStudyTimes(participants: ParticipantData[]): { startTime: Date
   };
 }
 
-// Average correctness
 export function OverviewStats({ visibleParticipants }: { visibleParticipants: ParticipantData[] }) {
   const participantCounts = {
     total: visibleParticipants.length,
@@ -83,59 +82,56 @@ export function OverviewStats({ visibleParticipants }: { visibleParticipants: Pa
 
   return (
     <Paper shadow="sm" p="md" withBorder>
-      <Text fw="bold">Overview Stats</Text>
-      <Flex gap="xl" wrap="wrap">
-        <Group gap="xl">
-          <div>
-            <Text size="xl" fw="bold">{participantCounts.total}</Text>
-            <Text size="xs" c="dimmed">Total Participants</Text>
-          </div>
-          <div>
-            <Text size="xl" fw="bold" c="green">{participantCounts.completed}</Text>
-            <Text size="xs" c="dimmed">Completed</Text>
-          </div>
-          <div>
-            <Text size="xl" fw="bold" c="yellow">{participantCounts.inProgress}</Text>
-            <Text size="xs" c="dimmed">In Progress</Text>
-          </div>
-          <div>
-            <Text size="xl" fw="bold" c="red">{participantCounts.rejected}</Text>
-            <Text size="xs" c="dimmed">Rejected</Text>
-          </div>
-          <div>
-            <Text size="xl" fw={700}>{startTime?.toLocaleDateString() || 'N/A'}</Text>
-            <Text size="xs" c="dimmed">Start Date</Text>
-          </div>
-          <div>
-            <Text size="xl" fw={700}>
-              {participantCounts.inProgress > 0 ? 'N/A' : endTime?.toLocaleDateString() || 'N/A'}
-            </Text>
-            <Text size="xs" c="dimmed">End Date</Text>
-          </div>
-          <div>
-            <Text size="xl" fw={700}>
-              {(timeStats.avgTime / 1000).toFixed(1)}
-              s
-            </Text>
-            <Text size="xs" c="dimmed">Average Time</Text>
-          </div>
-          <div>
-            <Text size="xl" fw={700}>
-              {(timeStats.avgCleanTime / 1000).toFixed(1)}
-              s
-            </Text>
-            <Text size="xs" c="dimmed">Average Clean Time</Text>
-          </div>
-          <div>
-            <Text size="xl" fw={700}>
-              {correctnessStats.avgCorrectness.toFixed(1)}
-              %
-            </Text>
-            <Text size="xs" c="dimmed">Correctness</Text>
-          </div>
-        </Group>
+      <Title order={4} mb="md">Overview Stats</Title>
+      <Flex justify="space-between" m="xs">
+        <div>
+          <Text size="xl" fw="bold">{participantCounts.total}</Text>
+          <Text size="sm" c="dimmed">Total Participants</Text>
+        </div>
+        <div>
+          <Text size="xl" fw="bold" c="green">{participantCounts.completed}</Text>
+          <Text size="sm" c="dimmed">Completed</Text>
+        </div>
+        <div>
+          <Text size="xl" fw="bold" c="yellow">{participantCounts.inProgress}</Text>
+          <Text size="sm" c="dimmed">In Progress</Text>
+        </div>
+        <div>
+          <Text size="xl" fw="bold" c="red">{participantCounts.rejected}</Text>
+          <Text size="sm" c="dimmed">Rejected</Text>
+        </div>
+        <div>
+          <Text size="xl" fw="bold">{startTime?.toLocaleDateString() || 'N/A'}</Text>
+          <Text size="sm" c="dimmed">Start Date</Text>
+        </div>
+        <div>
+          <Text size="xl" fw="bold">
+            {participantCounts.inProgress > 0 ? 'N/A' : endTime?.toLocaleDateString() || 'N/A'}
+          </Text>
+          <Text size="sm" c="dimmed">End Date</Text>
+        </div>
+        <div>
+          <Text size="xl" fw="bold">
+            {(timeStats.avgTime / 1000).toFixed(1)}
+            s
+          </Text>
+          <Text size="sm" c="dimmed">Average Time</Text>
+        </div>
+        <div>
+          <Text size="xl" fw="bold">
+            {(timeStats.avgCleanTime / 1000).toFixed(1)}
+            s
+          </Text>
+          <Text size="sm" c="dimmed">Average Clean Time</Text>
+        </div>
+        <div>
+          <Text size="xl" fw="bold">
+            {correctnessStats.avgCorrectness.toFixed(1)}
+            %
+          </Text>
+          <Text size="sm" c="dimmed">Correctness</Text>
+        </div>
       </Flex>
-
     </Paper>
   );
 }
