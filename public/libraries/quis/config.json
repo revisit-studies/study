@@ -1,7 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/revisit-studies/study/v2.1.1/src/parser/LibraryConfigSchema.json",
-  "description": "The Questionnaire for User Interaction Satisfaction (QUIS) is a measurement tool designed to assess a computer user's subjective satisfaction with the human-computer interface.  It was developed at the Human-Computer Interaction Laboratory (HCIL), University of Maryland at College Park.  The QUIS contains a demographic questionnaire, a measure of overall system satisfaction, and a measure of specific interface factors such as screen visibility, terminology and system information, learning factors, and system capabilities. This library includes four components, one for each individual scale, as well as a sequence containing all four scales (the full PREVis).",
-  "reference": "B. D. Harper and K. L. Norman, “Improving user satisfaction: The Questionnaire for User Interaction Satisfaction version 5.5,” Proc. 1st Annu. Mid-Atlantic Human Factors Conf., pp. 224–228, Virginia Beach, VA, 1993.",
+  "description": "The Questionnaire for User Interaction Satisfaction (QUIS) is a measurement tool designed to assess a computer user's subjective satisfaction with the human-computer interface. The QUIS contains measures of overall system satisfaction and specific interface factors such as screen visibility, terminology and system information, learning factors, and system capabilities. This library includes six components, one for each individual dimension, as well as a sequence containing all dimensions.",
+  "reference": "B. D. Harper and K. L. Norman, “Improving user satisfaction: The Questionnaire for User Interaction Satisfaction version 5.5,” Proc. 1st Annu. Mid-Atlantic Human Factors Conf., pp. 224-228, Virginia Beach, VA, 1993.",
   "externalLink": "https://isr.umd.edu/news/story/quis-questionnaire-for-user-interaction-satisfaction-70-isr-ip",
   "components": {
     "overall": {
