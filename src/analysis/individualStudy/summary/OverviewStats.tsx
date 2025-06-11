@@ -87,50 +87,56 @@ export function OverviewStats({ visibleParticipants }: { visibleParticipants: Pa
   return (
     <Paper shadow="sm" p="md" withBorder>
       <Title order={4} mb="md">Overview Stats</Title>
-      <Flex justify="space-between" m="xs">
-        <div>
-          <Text size="xl" fw="bold">{participantCounts.total}</Text>
-          <Text size="sm" c="dimmed">Total Participants</Text>
-        </div>
-        <div>
-          <Text size="xl" fw="bold" c="green">{participantCounts.completed}</Text>
-          <Text size="sm" c="dimmed">Completed</Text>
-        </div>
-        <div>
-          <Text size="xl" fw="bold" c="yellow">{participantCounts.inProgress}</Text>
-          <Text size="sm" c="dimmed">In Progress</Text>
-        </div>
-        <div>
-          <Text size="xl" fw="bold" c="red">{participantCounts.rejected}</Text>
-          <Text size="sm" c="dimmed">Rejected</Text>
-        </div>
-        <div>
-          <Text size="xl" fw="bold">{startDate?.toLocaleDateString() || 'N/A'}</Text>
-          <Text size="sm" c="dimmed">Start Date</Text>
-        </div>
-        <div>
-          <Text size="xl" fw="bold">{endDate?.toLocaleDateString() || 'N/A'}</Text>
-          <Text size="sm" c="dimmed">End Date</Text>
-        </div>
-        <div>
-          <Text size="xl" fw="bold">
-            {Number.isFinite(avgTime) ? `${(avgTime).toFixed(1)} s` : 'N/A'}
-          </Text>
-          <Text size="sm" c="dimmed">Average Time</Text>
-        </div>
-        <div>
-          <Text size="xl" fw="bold">
-            {Number.isFinite(avgCleanTime) ? `${(avgCleanTime / 1000).toFixed(1)} s` : 'N/A'}
-          </Text>
-          <Text size="sm" c="dimmed">Average Clean Time</Text>
-        </div>
-        <div>
-          <Text size="xl" fw="bold">
-            {!Number.isNaN(correctnessStats.avgCorrectness) ? `${correctnessStats.avgCorrectness.toFixed(1)}%` : 'N/A'}
-          </Text>
-          <Text size="sm" c="dimmed">Correctness</Text>
-        </div>
-      </Flex>
+      {visibleParticipants.length === 0 ? (
+        <Flex justify="center" align="center" pt="lg" pb="md">
+          <Text>No data available</Text>
+        </Flex>
+      ) : (
+        <Flex justify="space-between" m="xs">
+          <div>
+            <Text size="xl" fw="bold">{participantCounts.total}</Text>
+            <Text size="sm" c="dimmed">Total Participants</Text>
+          </div>
+          <div>
+            <Text size="xl" fw="bold" c="green">{participantCounts.completed}</Text>
+            <Text size="sm" c="dimmed">Completed</Text>
+          </div>
+          <div>
+            <Text size="xl" fw="bold" c="yellow">{participantCounts.inProgress}</Text>
+            <Text size="sm" c="dimmed">In Progress</Text>
+          </div>
+          <div>
+            <Text size="xl" fw="bold" c="red">{participantCounts.rejected}</Text>
+            <Text size="sm" c="dimmed">Rejected</Text>
+          </div>
+          <div>
+            <Text size="xl" fw="bold">{startDate?.toLocaleDateString() || 'N/A'}</Text>
+            <Text size="sm" c="dimmed">Start Date</Text>
+          </div>
+          <div>
+            <Text size="xl" fw="bold">{endDate?.toLocaleDateString() || 'N/A'}</Text>
+            <Text size="sm" c="dimmed">End Date</Text>
+          </div>
+          <div>
+            <Text size="xl" fw="bold">
+              {Number.isFinite(avgTime) ? `${(avgTime).toFixed(1)} s` : 'N/A'}
+            </Text>
+            <Text size="sm" c="dimmed">Average Time</Text>
+          </div>
+          <div>
+            <Text size="xl" fw="bold">
+              {Number.isFinite(avgCleanTime) ? `${(avgCleanTime / 1000).toFixed(1)} s` : 'N/A'}
+            </Text>
+            <Text size="sm" c="dimmed">Average Clean Time</Text>
+          </div>
+          <div>
+            <Text size="xl" fw="bold">
+              {!Number.isNaN(correctnessStats.avgCorrectness) ? `${correctnessStats.avgCorrectness.toFixed(1)}%` : 'N/A'}
+            </Text>
+            <Text size="sm" c="dimmed">Correctness</Text>
+          </div>
+        </Flex>
+      )}
     </Paper>
   );
 }
